@@ -1,0 +1,4 @@
+#Hier können das Bot-Token sowie die Chat-ID für den Telegram-Messenger hinterlegt werden. 
+BOT_ID='abcdefg:hijklmnopqrst123456789'
+CHAT_ID='1234567'
+

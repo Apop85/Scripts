@@ -3,6 +3,7 @@
 
 #Lese Usernamen aus
 iam=$(who am i | awk '{print $1}')
+echo $iam
 
 
 #Color-Codes und Textsfx-Codes

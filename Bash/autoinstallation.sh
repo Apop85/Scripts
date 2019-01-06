@@ -445,7 +445,7 @@ function configstuff {
 	#Prüfe vorhandensein von user.inf
 	name="User.inf:"
 	target="$HOME/scripts/user.inf"
-	if [ -e $target ]
+	if [ -e $target ]; then
 		showok
 	else
 		showerror

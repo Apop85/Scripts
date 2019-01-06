@@ -33,7 +33,7 @@ function prepare2go {
 	newupdates=$(apt-get -q -y --ignore-hold --allow-unauthenticated -s upgrade | grep ^Inst | cut -d\  -f2 | wc -l)
 
 	if (( $newupdates =! 0 )); then
-		echo -e "$cRED Updates sind vorhanden! $cNOR Die Entsprechenden Updates werden vor dem fortfahren installiert"
+		echo -e "$cRED $newupdates Updates sind vorhanden! $cNOR Die Entsprechenden Updates werden vor dem fortfahren installiert"
 		sleep 3
 		apt-get update
 		apt-get upgrade -y

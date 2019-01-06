@@ -3,6 +3,9 @@
 
 #Lese Usernamen aus
 iam=$(whoami)
+if [ "$iamme" != "" ]; then
+	iam=$iamme
+fi
 
 #Color-Codes und Textsfx-Codes
 cGREEN="\e[92m"
@@ -63,7 +66,8 @@ function prepare2go {
 	name="Rootberechtigung"
 	if [ "$EUID" -ne 0 ]; then 
 		showerror
-		sudo -i
+		export iamme=$iam
+		[ `whoami` = root ] || exec su -c $0 root
 	else
 		showok
 	fi
@@ -71,6 +75,7 @@ function prepare2go {
 	export LANG=de_CH.UTF-8
 	
 	#Installiere vorhandene updates
+	newupdates=0
 	newupdates=$(apt-get -q -y --ignore-hold --allow-unauthenticated -s upgrade | grep ^Inst | cut -d\  -f2 | wc -l)
 
 	if (( $newupdates =! 0 )); then
@@ -500,7 +505,7 @@ function getscripts {
 			2)
 				name="Updatecheck:"
 				target="$HOME/scripts/updatecheck.sh"
-				if [ -e $target ]: then
+				if [ -e $target ]; then
 					showok
 				else
 					showerror
@@ -685,7 +690,7 @@ function moreoptions {
 			 5 "[VPN] User einrichten" off
 			 6 "[VPN] Scriptausführung einrichten" off
 			 7 "[Telegram] CHAT_ID und BOT_ID eintragen" off
-			 8 "[Telegram] Testnachricht versenden" off
+			 8 "[Telegram] Testnachricht versenden" off)
 	choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
 	clear
 	for choice in $choices

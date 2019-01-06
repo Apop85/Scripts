@@ -2,10 +2,8 @@
 #Script zum semiautomatischen Einrichten des Raspberry mit PiHole PiVPN FTP DUC und Fail2Ban
 
 #Lese Usernamen aus
-iam=$(whoami)
-if [ "$iamme" != "" ]; then
-	iam=$iamme
-fi
+iam=$(who am i | awk '{print $1}')
+
 
 #Color-Codes und Textsfx-Codes
 cGREEN="\e[92m"
@@ -66,7 +64,6 @@ function prepare2go {
 	name="Rootberechtigung"
 	if [ "$EUID" -ne 0 ]; then 
 		showerror
-		export iamme=$iam
 		[ `whoami` = root ] || exec su -c $0 root
 	else
 		showok
@@ -78,7 +75,7 @@ function prepare2go {
 	newupdates=0
 	newupdates=$(apt-get -q -y --ignore-hold --allow-unauthenticated -s upgrade | grep ^Inst | cut -d\  -f2 | wc -l)
 
-	if (( $newupdates =! 0 )); then
+	if (( $newupdates > 0 )); then
 		echo -e "${cRED}$newupdates Updates sind vorhanden!${cNOR} Die Entsprechenden Updates werden vor dem fortfahren installiert"
 		sleep 3
 		apt-get update
@@ -131,7 +128,7 @@ function userisok {
 	echo -e "Username: ${cGREEN}$iam${cNOR} ist sicher"
 	echo "Setze Rootberechtigungen für den neuen User"
 	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
-	if (( $sudocheck = 0 )); then
+	if (( $sudocheck == 0 )); then
 		usermod -aG sudo $uname
 	fi
 	userisroot

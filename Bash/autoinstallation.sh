@@ -64,7 +64,7 @@ function prepare2go {
 	name="Rootberechtigung"
 	if [ "$EUID" -ne 0 ]; then 
 		showerror
-		[ `whoami` = root ] || exec su -c $0 root
+		[ `whoami` = root ] || exec sudo $0
 	else
 		showok
 	fi
@@ -77,9 +77,11 @@ function prepare2go {
 
 	if (( $newupdates > 0 )); then
 		echo -e "${cRED}$newupdates Updates sind vorhanden!${cNOR} Die Entsprechenden Updates werden vor dem fortfahren installiert"
-		sleep 3
-		apt-get update
-		apt-get upgrade -y
+		echo -e "${cBLON}Die Installation kann eine Weile dauern. Bitte warten...${cBLOFF}"
+		apt-get update >/dev/null 2>&1
+		echo -e "Schritt ${cRED}1${cNOR} von 2 abgeschlossen."
+		apt-get upgrade -y >/dev/null 2>&1
+		echo -e "${cGREEN}Installation der Updates abgeschlossen${cNOR}"
 	else
 		echo -e "Updates vorhanden: ${cGREEN}Nein${cNOR}"
 	fi	
@@ -273,7 +275,7 @@ function installftp {
 	checkftp=$(ps ax | grep ftp | wc -l)
 	if (( $checkftp < 1 )); then
 		showerror
-		apt-get install vsftpd -y
+		apt-get install vsftpd -y >/dev/null 2>&1
 		echo -e "Entsprechende Ordner werden erstellt"
 		mkdir $target
 		mkdir $target/files
@@ -302,7 +304,7 @@ function installduc {
 		showerror
 		cd /usr/local/src/
 		echo "Downloade DUC Files"
-		wget http://www.no-ip.com/client/linux/noip-duclinux.tar.gz
+		wget http://www.no-ip.com/client/linux/noip-duclinux.tar.gz >/dev/null 2>&1
 		echo "Entpacke DUC Files"
 		tar xf noip-duc-linux.tar.gz
 		cd /usr/local/src/noip-*
@@ -331,7 +333,7 @@ function ducinitd {
 	else
 		showerror	
 		echo -e "noip2 wird gedownloaded"
-		wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/noip2
+		wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/noip2 >/dev/null 2>&1
 		mv noip2 $target
 		chown root:root $target
 		chmodit
@@ -350,7 +352,7 @@ function installf2b {
 	if (( $checkf2b < 1 )); then
 		showerror
 		echo "Installiere Fail2Ban"
-		apt-get install fail2ban -y
+		apt-get install fail2ban -y >/dev/null 2>&1
 		cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 		echo "${cRED}Editor wird geöffnet!${cNOR} Folgende Einträge anpassen: ${cGREEN}ignoreip, bantime, findtime, maxretry${cNOR}"
 		wait4it
@@ -494,7 +496,7 @@ function getscripts {
 				else
 					showerror
 					echo "Bootbenachrichtigungsscript wird gedownloaded"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/startup.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/startup.sh >/dev/null 2>&1
 					chownit
 					chmodit
 				fi
@@ -507,7 +509,7 @@ function getscripts {
 				else
 					showerror
 					echo "Updatecheck wird gedownloaded"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/updatecheck.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/updatecheck.sh >/dev/null 2>&1
 					chownit
 					chmodit
 				fi
@@ -520,7 +522,7 @@ function getscripts {
 				else
 					showerror
 					echo "VPN Zertifikatserneuerungsscript wird gedownloaded"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/VPN_renew_server_cert.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/VPN_renew_server_cert.sh >/dev/null 2>&1
 					chownit
 					chmodit
 				fi
@@ -533,7 +535,7 @@ function getscripts {
 				else
 					showerror
 					echo "Script zur überprüfung der öffentlichen IP wird gedownloaded"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/checkpublicip.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/checkpublicip.sh >/dev/null 2>&1
 					chownit
 					chmodit
 				fi
@@ -546,7 +548,7 @@ function getscripts {
 				else
 					showerror
 					echo "Benachrichtigungsscript für eingehende Mails von Noip wird gedownloaded"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Python/checkmail2.py
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Python/checkmail2.py >/dev/null 2>&1
 					chownit
 					chmodit
 				fi
@@ -559,7 +561,7 @@ function getscripts {
 				else
 					showerror
 					echo "Happy New Year Script wird gedownloaded"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Happy_New_Year.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Happy_New_Year.sh >/dev/null 2>&1
 					chownit
 					chmodit
 				fi
@@ -572,7 +574,7 @@ function getscripts {
 				else
 					showerror
 					echo "Benachrichtigungsscript für eingehende VPN-Verbindungen wird gedownloaded"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/VPNconnect.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/VPNconnect.sh >/dev/null 2>&1
 					chownit
 					chmodit
 				fi
@@ -585,7 +587,7 @@ function getscripts {
 				else	
 					showerror
 					echo "Benachrichtigungsscript für Fail2Ban wird gedownloaded"
-					wget https://github.com/Apop85/Scripts/blob/master/Bash/f2b_info.sh
+					wget https://github.com/Apop85/Scripts/blob/master/Bash/f2b_info.sh >/dev/null 2>&1
 					chownit
 					chmodit
 				fi
@@ -610,7 +612,7 @@ function getscripts {
 				else
 					showerror
 					echo "Command & Controlscript (slave) wird gedownloaded"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/remote_slave.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/remote_slave.sh >/dev/null 2>&1
 					chownit
 					chmodit
 				fi
@@ -624,7 +626,7 @@ function getscripts {
 				else
 					showerror
 					echo -e "Downloade $name"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/remote_reboot.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/remote_reboot.sh >/dev/null 2>&1
 					chmodit
 				fi
 				
@@ -634,7 +636,7 @@ function getscripts {
 					showok
 				else
 					showerror
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/remote_update.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/remote_update.sh >/dev/null 2>&1
 					chmodit
 				fi
 				
@@ -644,7 +646,7 @@ function getscripts {
 					showok
 				else
 					showerror
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/updateclient.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/updateclient.sh >/dev/null 2>&1
 					chownit
 					chmodit
 				fi
@@ -658,7 +660,7 @@ function getscripts {
 				else
 					showerror
 					echo "Logcleaner wird gedownloaded"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/logcleaner.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/logcleaner.sh >/dev/null 2>&1
 					chownit
 					chmodit
 				fi
@@ -697,7 +699,7 @@ function moreoptions {
 				target="/etc/pihole/whitelist.txt"
 				name="whitelist.txt"
 				echo "$name wird gedownloaded"
-				wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/whitelist.txt
+				wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/whitelist.txt >/dev/null 2>&1
 				echo -e "Verschiebe $name nach $target"
 				mv $name $target
 				echo -e "Zugriffsrechte für $name werden gesetzt."
@@ -711,7 +713,7 @@ function moreoptions {
 				name="adlists.list"
 				target="/etc/pihole/adlists.list"
 				echo "$name wird gedownloaded"
-				wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/adlists.list
+				wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/adlists.list >/dev/null 2>&1
 				mv $name $target
 				echo -e "Zugriffsrechte für $name werden gesetzt."
 				chown pihole:www-data $target 
@@ -724,7 +726,7 @@ function moreoptions {
 				name="jail.local"
 				target="/etc/fail2ban/jail.local"
 				echo "$name wird gedownloaded"
-				wget  https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/jail.local.noscript
+				wget  https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/jail.local.noscript >/dev/null 2>&1
 				echo -e "Zugriffsrechte für $name werden gesetzt."
 				mv $name $target
 				chown root:root $target
@@ -736,7 +738,7 @@ function moreoptions {
 				name="jail.local"
 				target="/etc/fail2ban/jail.local"	
 				echo "$name wird gedownloaded"
-				wget  https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/jail.local
+				wget  https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/jail.local >/dev/null 2>&1
 				echo -e "Zugriffsrechte für $name werden gesetzt."
 				mv $name $target
 				chown root:root $target
@@ -745,7 +747,7 @@ function moreoptions {
 				name="runscript.conf"
 				target="/etc/fail2ban/action.d/runscript.conf"
 				echo "$name wird gedownloaded"
-				wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/runscript.conf
+				wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/runscript.conf >/dev/null 2>&1
 				mv $name $target
 				chown root:root $target
 				chmod 664 $target
@@ -758,7 +760,7 @@ function moreoptions {
 				else
 					showerror
 					echo "$name wird gedownloaded"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/f2b_info.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/f2b_info.sh >/dev/null 2>&1
 					mv $name $target
 					chownit
 					chmodit
@@ -793,7 +795,7 @@ function moreoptions {
 				else
 					showerror
 					echo "$name wird gedownloaded"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/VPNconnect.sh
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/VPNconnect.sh >/dev/null 2>&1
 					mv $name $target
 					chownit
 					chmodit

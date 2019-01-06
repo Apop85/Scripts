@@ -30,11 +30,16 @@ function chmodit {
 }
 
 function showerror {
-	echo -e "$name $cRED nicht vorhanden! $cNOR"
+	echo -e "$name ${cRED}nicht vorhanden!${cNOR}"
 }
 
 function showok {
-	echo -e "$name $cGREEN Vorhanden $cNOR"
+	echo -e "$name ${cGREEN}Vorhanden${cNOR}"
+}
+
+function wait4it {
+	echo -e "${cGREEN}Enter${cNOR} zum fortfahren"
+	read blank
 }
 
 
@@ -62,17 +67,19 @@ function prepare2go {
 	else
 		showok
 	fi
-
+	
+	export LANG=de_CH.UTF-8
+	
 	#Installiere vorhandene updates
 	newupdates=$(apt-get -q -y --ignore-hold --allow-unauthenticated -s upgrade | grep ^Inst | cut -d\  -f2 | wc -l)
 
 	if (( $newupdates =! 0 )); then
-		echo -e "$cRED $newupdates Updates sind vorhanden! $cNOR Die Entsprechenden Updates werden vor dem fortfahren installiert"
+		echo -e "${cRED}$newupdates Updates sind vorhanden!${cNOR} Die Entsprechenden Updates werden vor dem fortfahren installiert"
 		sleep 3
 		apt-get update
 		apt-get upgrade -y
 	else
-		echo -e "Updates vorhanden: $cGREEN Nein $cNOR"
+		echo -e "Updates vorhanden: ${cGREEN}Nein${cNOR}"
 	fi	
 }
 
@@ -85,15 +92,15 @@ function prepare2go {
 #Neuer User bereits erstellt?
 function checkuser {
 	if [ "$iam" == "pi" ]; then
-		echo -e "Username: $cRED $iam $cNOR"
-		echo -e "Der Username ist $cRED unsicher$cNOR. Erstelle neuen User..."
+		echo -e "Username: ${cRED}$iam${cNOR}"
+		echo -e "Der Username ist ${cRED}unsicher${cNOR}. Erstelle neuen User..."
 		addnewuser
 		if [ -d "/home/$uname" ]; then
-			echo "Benutzer $cGREEN $uname $cNOR erfolgreich angelegt."
+			echo "Benutzer ${cGREEN}$uname${cNOR} erfolgreich angelegt."
 			userisok
 		else
-			echo -e "$cRED Fehler! $cNOR User konnte nicht angelegt werden!"
-			echo -e "$cRED Script wird abgebrochen, $cNOR bitte User manuell mittels dem Befehl $cGREEN sudo adduser $cBLON USERNAME $cBLOFF $cNOR anlegen."
+			echo -e "${cRED}Fehler!${cNOR} User konnte nicht angelegt werden!"
+			echo -e "${cRED}Script wird abgebrochen,${cNOR} bitte User manuell mittels dem Befehl ${cGREEN}sudo adduser ${cBLON}USERNAME${cBLOFF}${cNOR} anlegen."
 			exit 1
 		fi
 	else
@@ -105,7 +112,7 @@ function checkuser {
 function addnewuser {
 	echo "Bitte gewünschten Usernamen angeben:"
 	read uname
-	echo -e "Ist der Username [$cGREEN $uname $cNOR] korrekt? [Y/n]"
+	echo -e "Ist der Username [${cGREEN}$uname${cNOR}] korrekt? [Y/n]"
 	read input
 	if [ "$input" =! "y" ] || [ "$input" =! "" ]; then
 		addnewuser
@@ -116,7 +123,7 @@ function addnewuser {
 
 function userisok {
 	uname=$iam
-	echo -e "Username: $cGREEN $iam $cNOR ist sicher"
+	echo -e "Username: ${cGREEN}$iam${cNOR} ist sicher"
 	echo "Setze Rootberechtigungen für den neuen User"
 	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
 	if (( $sudocheck = 0 )); then
@@ -131,7 +138,7 @@ function userisroot {
 	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
 	if (( $sudocheck < 1 )); then 
 		showerror
-		echo -e "$cRED Script wird geschlossen! $cNOR Bitte Rootrechte manuell eintragen mittels dem Befehl $cGREEN sudo visudo $cNOR. Dort unterhalb von $cRED root    ALL=(ALL:ALL) ALL $cNOR die Zeile $cGREEN $cBLON $uname    ALL=(ALL:ALL) ALL $cBLOFF $cNOR einfügen."
+		echo -e "${cRED}Script wird geschlossen!${cNOR} Bitte Rootrechte manuell eintragen mittels dem Befehl ${cGREEN}sudo visudo${cNOR}. Dort unterhalb von ${cRED}root    ALL=(ALL:ALL) ALL${cNOR} die Zeile ${cGREEN}${cBLON}$uname    ALL=(ALL:ALL) ALL${cBLOFF}${cNOR} einfügen."
 		exit 1
 	else
 		showok
@@ -146,29 +153,41 @@ function userisroot {
 #|_|  \___|_| |_| |_|\___/ \_/ \___| .__/|_|\__,_|___/\___|_|   
 #                                  | |                          
 #                                  |_| 
-#Benutzer Pi entfernen. 
+#Benutzer Pi entfernen sowie Autologin, Lokalisation und Zeitzone setzen. 
 function removepiuser {
 	loggedin=$(who | grep ^"$uname" | wc -l)
 	if (( $loggedin < 1 )); then
 		if [ -d "/home/pi" ]; then
-			echo -e "Benutzer $cGREEN pi $cNOR ist noch vorhanden. Aus sicherheitsgründen wird dieser entfernt."
-			echo -e "$cGREEN raspi-config $cNOR wird gestartet. Bitte unter $cGREEN Bootoptions $cNOR dann $cGREEN Desktop/CLI $cNOR die Einstellung $cRED Console $cNOR wählen"
-			echo -e "Ebenfalls gleich zu erledigen $cGREEN Localisation-Options $cNOR die Einstellung auf $cGREEN de-ch UTF 8 $cNOR stellen"
-			echo -e "$cRED ACHTUNG! $cNOR Das Gerät wird nach erfolgreicher Anwendung neu gestartet und das Script geschlossen. Script muss nach neustart erneut gestartet werden. $cBLON Danach mit neuem Userdaten anmelden! $cBLOFF"
-			echo "Enter zum fortfahren"
-			read blank
-			raspi-config
+			echo -e "Benutzer ${cGREEN}pi${cNOR} ist noch vorhanden. Aus sicherheitsgründen wird dieser entfernt."
+			echo -e "Autologin für Benutzer ${cGREEN}pi${cNOR} wird auf Benutzer ${cGREEN}$uname${cNOR} geändert."
+			sed -i '/autologin-user=\(.*\)/c\autologin-user=$uname' /etc/lightdm/lightdm.conf
+			echo -e "Die Lokalisationseinstellung wird auf ${cGREEN}de-ch UTF 8${cNOR} gestellt"
+			echo -e "${cRED}ACHTUNG!${cNOR} Das Gerät wird nach erfolgreicher Anwendung neu gestartet und das Script geschlossen. Script muss nach neustart erneut manuell gestartet werden. ${cBLON}Nach Neustart mit neuem Userdaten anmelden!${cBLOFF}"
+			wait4it
+			echo -e "Wechsle Layout zu ${cGREEN}de_CH.UTF-8${cNOR}"
+			update-locale LANG=de_CH.UTF-8
+			echo -e "Wende neue Lokalisation auf vorhandene Anwendungen an"
+			locale-gen --purge "de_CH.UTF-8"
+			dpkg-reconfigure --frontend noninteractive locales
+			echo -e "Setze lokale Zeitzone auf ${cGREEN}Europa/Zürich${cNOR}"
+			timezonenow=$(cat /etc/timezone)
+			timezone="Europa/Zurich"
+			if [ "$timezonenow" =! "timezone" ]; then
+				echo $timezone > /etc/timezone
+				cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
+				/usr/sbin/ntpdate pool.ntp.org
+			fi
+			echo -e "${cRED}REBOOT IN 5 SEKUNDEN${cNOR}"
+			sleep 5
+			reboot
 		fi
 	else
 		if [ -d "/home/pi" ]; then
 			loggedin=$(who | grep ^"pi" | wc -l)
-			# if (( $loggedin > 0 )); then
-				# echo -e "$cRED ACHTUNG! $cNOR mit falschem User angemeldet! Bitte mit neuem User anmelden!"
-			# fi
-			echo -e "User $cGREEN pi $cNOR sowie die entsprechenden Ordner werden entfernt."
+			echo -e "User ${cGREEN}pi${cNOR} sowie die entsprechenden Ordner werden entfernt."
 			deluser -remove-home pi
 		else
-			echo -e "User pi: $cGREEN Nicht vorhanden $cNOR"
+			echo -e "User pi: ${cGREEN}Nicht vorhanden${cNOR}"
 		fi
 	fi
 }
@@ -189,9 +208,9 @@ function installpihole {
 		showok
 	else
 		showerror
-		echo -e "$cGREEN PiHole $cNOR wird installiert"
+		echo -e "${cGREEN}PiHole${cNOR} wird installiert"
 		curl -sSL https://install.pi-hole.net | bash
-		echo -e "$cGREEN Passwort $cNOR für PiHole Webclient eingeben. Leer lassen für kein Passwort"
+		echo -e "${cGREEN}Passwort${cNOR} für PiHole Webclient eingeben. Leer lassen für kein Passwort"
 		pihole -a -p
 	fi
 }
@@ -217,10 +236,20 @@ function installpivpn {
 		curl -L https://install.pivpn.io | bash
 		echo "listen-address=127.0.0.1" >> /etc/dnsmasq.conf
 		echo "listen-address=10.8.0.1" >> /etc/dnsmasq.conf
-		echo -e "$cRED ACHTUNG! $cNOR Es wird ein Editor geöffnet. Die Zeile welche $cGREEN push dhcp-option $cNOR beinhaltet folgendermassen abändern: $cBLON "'push "dhcp-option DNS 10.8.0.1"'" $cBLOFF ändern"
-		echo "Enter zum fortfahren"
-		read blank
-		nano /etc/openvpn/server.conf
+		sed -i '/push "dhcp-option\(.*\)/c\push "dhcp-option DNS 10.8.0.1"' /etc/openvpn/server.conf
+		countopt=$(cat /etc/openvpn/server.conf | grep 'push "dhcp-option DNS' | wc -l)
+		if (( $countopt != 1 )); then
+			if (( $countopt = 0 )); then
+				echo 'push "dhcp-option DNS 10.8.0.1"' >> /etc/openvpn/server.conf
+			else
+				echo -e "${cRED}ACHTUNG!${cNOR} Es sind $countopt Einträge mit der Option${cRED}"'push "dhcp-option DNS 10.8.0.1"'"${cNOR} vorhanden. Bitte manuell ${cBLON}alle bis auf einen${cBLOFF} Eintrag löschen. Editor wird geöffnet..."
+				wait4it
+				nano /etc/openvpn/server.conf
+			fi
+			continue
+		else
+			echo -e "Der Eintrag "'push "dhcp-option DNS 10.8.0.1"'" ist ordnungsgemäss."
+		fi
 		service dnsmasq restart
 		service openvpn restart
 	fi
@@ -275,17 +304,17 @@ function installduc {
 		echo "Entpacke DUC Files"
 		tar xf noip-duc-linux.tar.gz
 		cd /usr/local/src/noip-*
-		echo -e "$cRED ACHTUNG! $cNOR Spätestens jetzt sollte eine Dynamische DNS-Adresse auf http://noip.com erstellt worden sein!"
-		echo "Enter zum Fortfahren"
-		read blank
+		echo -e "${cRED}ACHTUNG!${cNOR} Spätestens jetzt sollte eine Dynamische DNS-Adresse auf http://noip.com erstellt worden sein!"
+		wait4it
 		echo "Installiere DUC"
 		make install
-		echo -e "$cGREEN Zugangsdaten $cNOR für noip.com eingeben:"
+		echo -e "${cGREEN}Zugangsdaten${cNOR} für noip.com eingeben:"
 		/usr/local/bin/noip2 -C
 		echo "Starte DUC Dienst"
 		/usr/local/bin/noip2
 		ducinitd
 		update-rc.d noip2 defaults
+		cd $HOME
 	else
 		showok
 	fi
@@ -357,9 +386,8 @@ function installf2b {
 		echo "Installiere Fail2Ban"
 		apt-get install fail2ban -y
 		cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
-		echo "$cRED Editor wird geöffnet! $cNOR Folgende Einträge anpassen: $cGREEN ignoreip, bantime, findtime, maxretry $cNOR"
-		echo "Enter zum fortfahren"
-		read blank
+		echo "${cRED}Editor wird geöffnet!${cNOR} Folgende Einträge anpassen: ${cGREEN}ignoreip, bantime, findtime, maxretry${cNOR}"
+		wait4it
 		nano /etc/fail2ban/jail.local
 		systemctl restart fail2ban.service
 	else
@@ -376,38 +404,43 @@ function installf2b {
 #Abschluss des Installationsscripts
 function abschluss {
 	clear
+	name="PiHole:"
 	if (( $(ps ax | grep "pihole" | wc -l) > 1 )); then
-		echo -e "PiHole: $cGREEN Installiert $cNOR"
+		showok
 	else
-		echo -e "PiHole: $cRED Nicht Installiert! $cNOR"
+		showerror
 	fi
 	
+	name="OpenVPN:"
 	if (( $(ps ax | grep "openvpn" | wc -l) > 1 )); then
-		echo -e "PiVPN: $cGREEN Installiert $cNOR"
+		showok
 	else
-		echo -e "PiVPN: $cRED Nicht Installiert! $cNOR"
+		showerror
 	fi
 	
+	name="FTP-Server:"
 	if (( $(ps ax | grep "ftp" | wc -l) > 1 )); then
-		echo -e "FTP-Server: $cGREEN Installiert $cNOR"
+		showok
 	else
-		echo -e "FTP-Server: $cRED Nicht Installiert! $cNOR"
+		showerror
 	fi	
 	
+	name="Dynamic Update Client (DUC) für Noip.com:"
 	if (( $(ps ax | grep "noip" | wc -l) > 1 )); then
-		echo -e "DUC: $cGREEN Installiert $cNOR"
+		showok
 	else
-		echo -e "DUC: $cRED Nicht Installiert! $cNOR"
+		showerror
 	fi	
 	
+	name="Fail2Ban:"
 	if (( $(ps ax | grep "fail2ban" | wc -l) > 1 )); then
-		echo -e "Fail2Ban: $cGREEN Installiert $cNOR"
+		showok
 	else
-		echo -e "Fail2Ban: $cRED Nicht Installiert! $cNOR"
+		showerror
 	fi
-	echo "Enter zum fortfahren"
+	wait4it
 	clear 
-	echo -e "$cGREEN Die Installation ist abgeschlossen. Starte Konfiguration $cNOR"
+	echo -e "${cGREEN}Die Installation ist abgeschlossen. Starte Konfiguration${cNOR}"
 }
 
 #                  __ _           _          __  __ 
@@ -472,7 +505,7 @@ function configstuff {
 function getscripts {
 	cd $HOME/scripts
 	cmd=(dialog --separate-output --checklist "Wähle zu verwendende Scripts aus:" 22 76 16)
-	options=(1 "Boot Benachrichtigung" off    # any option can be set to default to "on"
+	options=(1 "Boot Benachrichtigung" off
 			 2 "Updatecheck" off
 			 3 "VPN Zertifikaterneuerung" off
 			 4 "Benachrichtigung wenn Mail von noip eintrifft" off
@@ -666,6 +699,170 @@ function getscripts {
 				;;
 		esac
 	done
+	cd $HOME
+}
+
+
+#                                      _   _                 
+#                                     | | (_)                
+# _ __ ___   ___  _ __ ___  ___  _ __ | |_ _  ___  _ __  ___ 
+#| '_ ` _ \ / _ \| '__/ _ \/ _ \| '_ \| __| |/ _ \| '_ \/ __|
+#| | | | | | (_) | | |  __/ (_) | |_) | |_| | (_) | | | \__ \
+#|_| |_| |_|\___/|_|  \___|\___/| .__/ \__|_|\___/|_| |_|___/
+#                               | |                          
+#                               |_|
+#Weitere Optionen wie PiHole listen / whitelists / jail.conf downloaden
+function moreoptions {
+	cmd=(dialog --separate-output --checklist "Wähle Optionen:" 22 76 16)
+	options=(1 "[PiHole] Whitelist downloaden und anwenden" off
+			 2 "[PiHole] Gravitylisten downloaden und anwenden" off
+			 3 "[Fail2Ban] jail.local ohne Scriptausführung downloaden und anwenden" off
+			 4 "[Fail2Ban] jail.local mit Scriptausführung downloaden und anwenden" off
+			 5 "[VPN] User einrichten" off
+			 6 "[VPN] Scriptausführung einrichten" off
+			 7 "[Telegram] CHAT_ID und BOT_ID eintragen" off
+			 8 "[Telegram] Testnachricht versenden" off
+	choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+	clear
+	for choice in $choices
+	do
+		case $choice in
+			1)
+				target="/etc/pihole/whitelist.txt"
+				name="whitelist.txt"
+				echo "$name wird gedownloaded"
+				wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/whitelist.txt
+				echo -e "Verschiebe $name nach $target"
+				mv $name $target
+				echo -e "Zugriffsrechte für $name werden gesetzt."
+				chown pihole:www-data $target
+				chmod 664 $target
+				echo -e "Piholeliste wird upgedated."
+				pihole -g
+				echo -e "Konfiguration von $name abgeschlossen."
+				;;
+			2)
+				name="adlists.list"
+				target="/etc/pihole/adlists.list"
+				echo "$name wird gedownloaded"
+				wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/adlists.list
+				mv $name $target
+				echo -e "Zugriffsrechte für $name werden gesetzt."
+				chown pihole:www-data $target 
+				chmod 664 $target
+				echo -e "Piholeliste wird upgedated."
+				pihole -g
+				echo -e "Konfiguration von $name abgeschlossen."
+				;;
+			3)
+				name="jail.local"
+				target="/etc/fail2ban/jail.local"
+				echo "$name wird gedownloaded"
+				wget  https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/jail.local.noscript
+				echo -e "Zugriffsrechte für $name werden gesetzt."
+				mv $name $target
+				chown root:root $target
+				chmod 664 $target
+				echo -e "Starte ${cGREEN}Fail2Ban${cNOR} neu"
+				systemctl restart fail2ban.service
+				;;
+			4)
+				name="jail.local"
+				target="/etc/fail2ban/jail.local"	
+				echo "$name wird gedownloaded"
+				wget  https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/jail.local
+				echo -e "Zugriffsrechte für $name werden gesetzt."
+				mv $name $target
+				chown root:root $target
+				chmod 664 $target
+				echo "Scriptausführung wird eingerichtet." 
+				name="runscript.conf"
+				target="/etc/fail2ban/action.d/runscript.conf"
+				echo "$name wird gedownloaded"
+				wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/runscript.conf
+				mv $name $target
+				chown root:root $target
+				chmod 664 $target
+				echo -e "Fail2Ban mit Scriptausführung eingerichtet."
+				echo -e "Starte ${cGREEN}Fail2Ban${cNOR} neu"
+				name="f2b_info.sh"
+				target="$HOME/scripts/f2b_info.sh"
+				if [ -e $target ]; then
+					showok
+				else
+					showerror
+					echo "$name wird gedownloaded"
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/f2b_info.sh
+					mv $name $target
+					chownit
+					chmodit
+				fi
+				systemctl restart fail2ban.service
+				;;
+			5)
+				choose=n
+				if [ "$choose" == "y" ]; then
+					pivpn -a $vpnname
+				elif [ "$choose" == "n" ]; then
+					echo -e "Bitte gewünschten ${cGREEN}Usernamen${cNOR} für den VPN Client eingeben:"
+					read vpnname
+					echo -e "Ist ${cGREEN}${vpnname}${cNOR} korrekt? [y/n]"
+					read choose
+					continue
+				else
+					echo -e "${cRED}Fehlerhafte Eingabe, erneut versuchen${cNOR}"
+					choose=n
+					continue
+				fi
+				;;
+			6)
+				name="VPNconnect.sh"
+				target2="/etc/openvpn/server.conf"
+				target="$HOME/scripts/VPNconnect.sh"
+				echo -e "Scriptausführung bei eingehender VPN Verbindung wird eingerichtet"
+				echo "script-security 2" >> $target2
+				echo "client-connect $target2" >> $target2
+				if [ -e $target ]; then
+					showok
+				else
+					showerror
+					echo "$name wird gedownloaded"
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/VPNconnect.sh
+					mv $name $target
+					chownit
+					chmodit
+				fi
+				echo -e "Einrichtung abgeschlossen, Dienst wird neu gestartet"				
+				;;
+			7)
+				name="telegram.inf"
+				target="$HOME/scripts/telegram.inf"
+				if [ -e $target ]; then
+					showok
+					source $target
+				else
+					showerror
+					touch $target
+				fi
+				echo -e "Aktuelles Bot Token: ${cGREEN}${BOT_ID}${cNOR}"
+				echo -e "${cGREEN}Bot Token${cNOR} angeben:"
+				read BOT_ID
+				echo -e "Aktuelle Chat-ID: ${cGREEN}${CHAT_ID}${cNOR}"
+				echo -e "${cGREEN}Chat ID${cNOR} angeben:"
+				read CHAT_ID
+				echo "BOT_ID=${BOT_ID}" > $target
+				echo "CHAT_ID=${CHAT_ID}" > $target
+				echo Einrichtung von $name ist abgeschlossen.
+				;;
+			8)
+				target="$HOME/scripts/telegram.inf"
+				source $target
+				echo -e "Gewünschte ${cGREEN}Telegramnachricht${cNOR} angeben:"
+				read MESSAGE
+				curl -s -k "https://api.telegram.org/bot$BOT_ID/sendMessage" -d text="$MESSAGE" -d chat_id=$CHAT_ID
+				;;
+		esac
+	done
 }
 
 # _____ _   _______   ___________  ______ _   _ _   _ _____ _____ _____ _____ _   _  _____ 
@@ -691,5 +888,6 @@ installf2b
 abschluss
 configstuff
 getscripts
+moreoptions
 
 exit 0

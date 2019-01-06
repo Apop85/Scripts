@@ -47,25 +47,6 @@ function userisok {
 	userisroot
 }
 
-#Überprüfe ob das Script Rootprivilegien besitzt.
-if [ "$EUID" -ne 0 ]; then 
-	echo -e "Rootberechtigung $cRED Nein $cNOR"
-	sudo -i
-else
-	echo -e "Rootberechtigung \e[92mOK\e[0m"
-fi
-
-newupdates=$(apt-get -q -y --ignore-hold --allow-unauthenticated -s upgrade | grep ^Inst | cut -d\  -f2 | wc -l)
-
-if (( $newupdates =! 0 )); then
-	echo -e "$cRED Updates sind vorhanden! $cNOR Die Entsprechenden Updates werden vor dem fortfahren installiert"
-	sleep 3
-	apt-get update
-	apt-get upgrade -y
-else
-	echo -e "Updates vorhanden: $cGREEN Nein $cNOR"
-fi	
-
 #Neuer User bereits erstellt?
 function checkuser {
 	if [ "$iam" == "pi" ]; then
@@ -286,6 +267,27 @@ function abschluss {
 	clear 
 	echo -e "$cGREEN Die Installation ist abgeschlossen $cNOR"
 }
+
+#Überprüfe ob das Script Rootprivilegien besitzt.
+if [ "$EUID" -ne 0 ]; then 
+	echo -e "Rootberechtigung $cRED Nein $cNOR"
+	sudo -i
+else
+	echo -e "Rootberechtigung \e[92mOK\e[0m"
+fi
+
+#Updated installieren falls vorhanden. 
+newupdates=$(apt-get -q -y --ignore-hold --allow-unauthenticated -s upgrade | grep ^Inst | cut -d\  -f2 | wc -l)
+
+if (( $newupdates =! 0 )); then
+	echo -e "$cRED Updates sind vorhanden! $cNOR Die Entsprechenden Updates werden vor dem fortfahren installiert"
+	sleep 3
+	apt-get update
+	apt-get upgrade -y
+else
+	echo -e "Updates vorhanden: $cGREEN Nein $cNOR"
+fi	
+
 
 checkuser
 removepiuser

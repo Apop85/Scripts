@@ -328,46 +328,10 @@ function ducinitd {
 		showok
 	else
 		showerror	
-		touch $target
-		echo -e "Init.d Service wird eingerichtet"
-		echo '#! /bin/sh' >>$target
-		echo '# /etc/init.d/noip2.sh' >> $target
-		echo '### BEGIN INIT INFO' >> $target
-		echo '# Provides: noip2' >> $target
-		echo '# Required-Start: $remote_fs $local_fs' >> $target
-		echo '# Required-Stop: $remote_fs $local_fs' >> $target
-		echo '# Should-Start:' >> $target
-		echo '# Should-Stop:' >> $target
-		echo '# Default-Start: 2 3 4 5' >> $target
-		echo '# Default-Stop: 0 1 6' >> $target
-		echo '# Short-Description: Dynamic IP client updater' >> $target
-		echo '# Description:' >> $target
-		echo '### END INIT INFO' >> $target
-		echo 'DAEMON=/usr/local/bin/noip2' >> $target
-		echo 'NAME=noip2' >> $target
-		echo 'test -x $DAEMON || exit 0' >> $target
-		echo 'case "$1" in' >> $target
-		echo '    start)' >> $target
-		echo '    echo -n "Starting dynamic address update: "' >> $target
-		echo '    start-stop-daemon --start --exec $DAEMON' >> $target
-		echo '    echo "noip2."' >> $target
-		echo '    ;;' >> $target
-		echo '    stop)' >> $target
-		echo '    echo -n "Shutting down dynamic address update:"' >> $target
-		echo '    start-stop-daemon --stop --oknodo --retry 30 --exec $DAEMON' >> $target
-		echo '    echo "noip2."' >> $target
-		echo '    ;;' >> $target
-		echo '    restart)' >> $target
-		echo '    echo -n "Restarting dynamic address update: "' >> $target
-		echo '    start-stop-daemon --stop --oknodo --retry 30 --exec $DAEMON' >> $target
-		echo '    start-stop-daemon --start --exec $DAEMON' >> $target
-		echo '    echo "noip2."' >> $target
-		echo '    ;;' >> $target
-		echo '    *)' >> $target
-		echo '    echo "Usage: $0 {start|stop|restart}"' >> $target
-		echo '    exit 1' >> $target
-		echo 'esac' >> $target
-		echo 'exit 0' >> $target
+		echo -e "noip2 wird gedownloaded"
+		wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/noip2
+		mv noip2 $target
+		chown root:root $target
 		chmodit
 	fi
 }

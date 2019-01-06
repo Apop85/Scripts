@@ -11,42 +11,43 @@ cNOR="\e[0m"
 cBLON="\e[5m" #Blinken Ein
 cBLOFF="\e[25m" #Blinken Aus
 
-#Funktion Adduser
-function addnewuser {
-	echo "Bitte gewünschten Usernamen angeben:"
-	read uname
-	echo -e "Ist der Username [$cGREEN $uname $cNOR] korrekt? [Y/n]"
-	read input
-	if [ "$input" =! "y" ] || [ "$input" =! "" ]; then
-		addnewuser
-	fi
-	echo "Nutzer $uname wird angelegt"
-	adduser $uname
-}
-
-#Funktion zur Überprüfung der Privilegien des neuen Users
-function userisroot {
-	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
-	if (( $sudocheck < 1 )); then 
-		echo -e "$cRED ACHTUNG! $cNOR der angelegte User hat keine Root priviliegen!"
-		echo -e "$cRED Script wird geschlossen! $cNOR Bitte Rootrechte manuell eintragen mittels dem Befehl $cGREEN sudo visudo $cNOR. Dort unterhalb von $cRED root    ALL=(ALL:ALL) ALL $cNOR die Zeile $cGREEN $cBLON $uname    ALL=(ALL:ALL) ALL $cBLOFF $cNOR einfügen."
-		exit 1
+#                                      _____             
+#                                     / __  \            
+# _ __  _ __ ___ _ __   __ _ _ __ ___ `' / /' __ _  ___  
+#| '_ \| '__/ _ \ '_ \ / _` | '__/ _ \  / /  / _` |/ _ \ 
+#| |_) | | |  __/ |_) | (_| | | |  __/./ /__| (_| | (_) |
+#| .__/|_|  \___| .__/ \__,_|_|  \___|\_____/\__, |\___/ 
+#| |            | |                           __/ |      
+#|_|            |_|                          |___/ 
+#Teste ob Script Rootberechtigung besitzt und ob Updates vorhanden sind
+function prepare2go {
+	#Überprüfe ob das Script Rootprivilegien besitzt.
+	if [ "$EUID" -ne 0 ]; then 
+		echo -e "Rootberechtigung $cRED Nein $cNOR"
+		sudo -i
 	else
-		echo -e "Rootberechtigung für den User $uname: $cGREEN OK $cNOR"
+		echo -e "Rootberechtigung \e[92mOK\e[0m"
 	fi
+
+	#Installiere vorhandene updates
+	newupdates=$(apt-get -q -y --ignore-hold --allow-unauthenticated -s upgrade | grep ^Inst | cut -d\  -f2 | wc -l)
+
+	if (( $newupdates =! 0 )); then
+		echo -e "$cRED Updates sind vorhanden! $cNOR Die Entsprechenden Updates werden vor dem fortfahren installiert"
+		sleep 3
+		apt-get update
+		apt-get upgrade -y
+	else
+		echo -e "Updates vorhanden: $cGREEN Nein $cNOR"
+	fi	
 }
 
-function userisok {
-	uname=$iam
-	echo -e "Username: $cGREEN $iam $cNOR ist sicher"
-	echo "Setze Rootberechtigungen für den neuen User"
-	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
-	if (( $sudocheck = 0 )); then
-		usermod -aG sudo $uname
-	fi
-	userisroot
-}
-
+#      _               _                        
+#     | |             | |                       
+#  ___| |__   ___  ___| | ___   _ ___  ___ _ __ 
+# / __| '_ \ / _ \/ __| |/ / | | / __|/ _ \ '__|
+#| (__| | | |  __/ (__|   <| |_| \__ \  __/ |   
+# \___|_| |_|\___|\___|_|\_\\__,_|___/\___|_|  
 #Neuer User bereits erstellt?
 function checkuser {
 	if [ "$iam" == "pi" ]; then
@@ -66,6 +67,50 @@ function checkuser {
 	fi
 }
 
+#Funktion Adduser
+function addnewuser {
+	echo "Bitte gewünschten Usernamen angeben:"
+	read uname
+	echo -e "Ist der Username [$cGREEN $uname $cNOR] korrekt? [Y/n]"
+	read input
+	if [ "$input" =! "y" ] || [ "$input" =! "" ]; then
+		addnewuser
+	fi
+	echo "Nutzer $uname wird angelegt"
+	adduser $uname
+}
+
+function userisok {
+	uname=$iam
+	echo -e "Username: $cGREEN $iam $cNOR ist sicher"
+	echo "Setze Rootberechtigungen für den neuen User"
+	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
+	if (( $sudocheck = 0 )); then
+		usermod -aG sudo $uname
+	fi
+	userisroot
+}
+
+#Funktion zur Überprüfung der Privilegien des neuen Users
+function userisroot {
+	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
+	if (( $sudocheck < 1 )); then 
+		echo -e "$cRED ACHTUNG! $cNOR der angelegte User hat keine Root priviliegen!"
+		echo -e "$cRED Script wird geschlossen! $cNOR Bitte Rootrechte manuell eintragen mittels dem Befehl $cGREEN sudo visudo $cNOR. Dort unterhalb von $cRED root    ALL=(ALL:ALL) ALL $cNOR die Zeile $cGREEN $cBLON $uname    ALL=(ALL:ALL) ALL $cBLOFF $cNOR einfügen."
+		exit 1
+	else
+		echo -e "Rootberechtigung für den User $uname: $cGREEN OK $cNOR"
+	fi
+}
+
+#                                         _                     
+#                                        (_)                    
+# _ __ ___ _ __ ___   _____   _____ _ __  _ _   _ ___  ___ _ __ 
+#| '__/ _ \ '_ ` _ \ / _ \ \ / / _ \ '_ \| | | | / __|/ _ \ '__|
+#| | |  __/ | | | | | (_) \ V /  __/ |_) | | |_| \__ \  __/ |   
+#|_|  \___|_| |_| |_|\___/ \_/ \___| .__/|_|\__,_|___/\___|_|   
+#                                  | |                          
+#                                  |_| 
 #Benutzer Pi entfernen. 
 function removepiuser {
 	loggedin=$(who | grep ^"$uname" | wc -l)
@@ -93,6 +138,15 @@ function removepiuser {
 	fi
 }
 
+# _           _        _ _       _ _           _      
+#(_)         | |      | | |     (_) |         | |     
+# _ _ __  ___| |_ __ _| | |_ __  _| |__   ___ | | ___ 
+#| | '_ \/ __| __/ _` | | | '_ \| | '_ \ / _ \| |/ _ \
+#| | | | \__ \ || (_| | | | |_) | | | | | (_) | |  __/
+#|_|_| |_|___/\__\__,_|_|_| .__/|_|_| |_|\___/|_|\___|
+#                         | |                         
+#                         |_|
+#Falls noch nicht vorhanden PiHole installieren
 function installpihole {
 	checkpihole=$(ps ax | grep pihole | wc -l)
 	if (( $checkpihole > 1 )); then
@@ -106,6 +160,16 @@ function installpihole {
 	fi
 }
 
+
+# _           _        _ _       _                   
+#(_)         | |      | | |     (_)                  
+# _ _ __  ___| |_ __ _| | |_ __  ___   ___ __  _ __  
+#| | '_ \/ __| __/ _` | | | '_ \| \ \ / / '_ \| '_ \ 
+#| | | | \__ \ || (_| | | | |_) | |\ V /| |_) | | | |
+#|_|_| |_|___/\__\__,_|_|_| .__/|_| \_/ | .__/|_| |_|
+#                         | |           | |          
+#                         |_|           |_|  
+#Falls noch nicht vorhanden PiVPN installieren
 function installpivpn {
 	checkvpn=$(ps ax | grep openvpn | wc -l)
 	if (( $checkvpn > 1 )); then
@@ -125,6 +189,16 @@ function installpivpn {
 	fi
 }
 
+
+# _           _        _ _  __ _         
+#(_)         | |      | | |/ _| |        
+# _ _ __  ___| |_ __ _| | | |_| |_ _ __  
+#| | '_ \/ __| __/ _` | | |  _| __| '_ \ 
+#| | | | \__ \ || (_| | | | | | |_| |_) |
+#|_|_| |_|___/\__\__,_|_|_|_|  \__| .__/ 
+#                                 | |    
+#                                 |_| 
+#Falls noch nicht vorhanden FTP Service installieren.
 function installftp {
 	checkftp=$(ps ax | grep ftp | wc -l)
 	if (( $checkftp < 1 )); then
@@ -145,6 +219,13 @@ function installftp {
 		
 }
 
+# _           _        _ _     _            
+#(_)         | |      | | |   | |           
+# _ _ __  ___| |_ __ _| | | __| |_   _  ___ 
+#| | '_ \/ __| __/ _` | | |/ _` | | | |/ __|
+#| | | | \__ \ || (_| | | | (_| | |_| | (__ 
+#|_|_| |_|___/\__\__,_|_|_|\__,_|\__,_|\___|
+#Falls noch nicht vorhanden DUC für noip.com installieren. 
 function installduc {
 	checkduc=$(ps ax | grep noip | wc -l)
 	if (( $checkduc < 1 )); then 
@@ -171,6 +252,7 @@ function installduc {
 	fi
 }
 
+#Erstelle noip2 script in /etc/init.d/
 function ducinitd {
 	touch /etc/init.d/noip2
 	echo -e "Init.d Service wird eingerichtet"
@@ -215,6 +297,12 @@ function ducinitd {
 	chmod +x /etc/init.d/noip2
 }
 
+# _           _        _ _  __ _____  _     
+#(_)         | |      | | |/ _/ __  \| |    
+# _ _ __  ___| |_ __ _| | | |_`' / /'| |__  
+#| | '_ \/ __| __/ _` | | |  _| / /  | '_ \ 
+#| | | | \__ \ || (_| | | | | ./ /___| |_) |
+#|_|_| |_|___/\__\__,_|_|_|_| \_____/|_.__/
 function installf2b {
 	checkf2b=$(ps ax | grep fail2ban | wc -l)
 	if (( $checkf2b < 1 )); then
@@ -222,7 +310,7 @@ function installf2b {
 		echo "Installiere Fail2Ban"
 		apt-get install fail2ban -y
 		cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
-		echo "Folgende Einträge anpassen: $cGREEN ignoreip, bantime, findtime, maxretry $cNOR"
+		echo "$cRED Editor wird geöffnet! $cNOR Folgende Einträge anpassen: $cGREEN ignoreip, bantime, findtime, maxretry $cNOR"
 		echo "Enter zum fortfahren"
 		read blank
 		nano /etc/fail2ban/jail.local
@@ -232,6 +320,13 @@ function installf2b {
 	fi	
 }
 
+#       _              _     _               
+#      | |            | |   | |              
+#  __ _| |__  ___  ___| |__ | |_   _ ___ ___ 
+# / _` | '_ \/ __|/ __| '_ \| | | | / __/ __|
+#| (_| | |_) \__ \ (__| | | | | |_| \__ \__ \
+# \__,_|_.__/|___/\___|_| |_|_|\__,_|___/___/
+#Abschluss des Installationsscripts
 function abschluss {
 	clear
 	if (( $(ps ax | grep "pihole" | wc -l) > 1 )); then
@@ -268,27 +363,20 @@ function abschluss {
 	echo -e "$cGREEN Die Installation ist abgeschlossen $cNOR"
 }
 
-#Überprüfe ob das Script Rootprivilegien besitzt.
-if [ "$EUID" -ne 0 ]; then 
-	echo -e "Rootberechtigung $cRED Nein $cNOR"
-	sudo -i
-else
-	echo -e "Rootberechtigung \e[92mOK\e[0m"
-fi
-
-#Updated installieren falls vorhanden. 
-newupdates=$(apt-get -q -y --ignore-hold --allow-unauthenticated -s upgrade | grep ^Inst | cut -d\  -f2 | wc -l)
-
-if (( $newupdates =! 0 )); then
-	echo -e "$cRED Updates sind vorhanden! $cNOR Die Entsprechenden Updates werden vor dem fortfahren installiert"
-	sleep 3
-	apt-get update
-	apt-get upgrade -y
-else
-	echo -e "Updates vorhanden: $cGREEN Nein $cNOR"
-fi	
+# _____ _   _______   ___________  ______ _   _ _   _ _____ _____ _____ _____ _   _  _____ 
+#|  ___| \ | |  _  \ |  _  |  ___| |  ___| | | | \ | /  __ \_   _|_   _|  _  | \ | |/  ___|
+#| |__ |  \| | | | | | | | | |_    | |_  | | | |  \| | /  \/ | |   | | | | | |  \| |\ `--. 
+#|  __|| . ` | | | | | | | |  _|   |  _| | | | | . ` | |     | |   | | | | | | . ` | `--. \
+#| |___| |\  | |/ /  \ \_/ / |     | |   | |_| | |\  | \__/\ | |  _| |_\ \_/ / |\  |/\__/ /
+#\____/\_| \_/___/    \___/\_|     \_|    \___/\_| \_/\____/ \_/  \___/ \___/\_| \_/\____/ 
+                                                                                         
 
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~ Führe Funktionen aus ~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+prepare2go
 checkuser
 removepiuser
 installpihole

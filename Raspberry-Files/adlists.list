@@ -1,0 +1,62 @@
+# The below list amalgamates several lists we used previously.
+# See `https://github.com/StevenBlack/hosts` for details
+##StevenBlack's list
+https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+
+##MalwareDomains
+https://mirror1.malwaredomains.com/files/justdomains
+
+##Cameleon
+http://sysctl.org/cameleon/hosts
+
+##Zeustracker
+https://zeustracker.abuse.ch/blocklist.php?download=domainblocklist
+
+##Disconnect.me Tracking
+https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt
+
+##Disconnect.me Ads
+https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
+
+##Hosts-file.net
+https://hosts-file.net/ad_servers.txt
+
+##Microsoft-Spy
+https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/win10/spy.txt
+
+##Youtube Ads
+https://gist.githubusercontent.com/anudeepND/adac7982307fec6ee23605e281a57f1a/raw/5b8582b906a9497624c3f3187a49ebc23a9cf2fb/Test.txt
+https://raw.githubusercontent.com/anudeepND/youtubeadsblacklist/master/domainlist.txt
+
+##Samsung Blocklist
+https://v.firebog.net/hosts/static/SamsungSmart.txt
+
+##Tracking & Adds
+https://media.kuketz.de/lists/mobile_list.txt
+https://blocklist.kowabit.one/list.txt
+
+##Youtube
+https://gist.githubusercontent.com/anudeepND/adac7982307fec6ee23605e281a57f1a/raw/5b8582b906a9497624c3f3187a49ebc23a9cf2fb/Test.txt
+
+##Tracklist wally3k.github.io
+https://v.firebog.net/hosts/Airelle-trc.txt
+https://v.firebog.net/hosts/Easyprivacy.txt
+https://v.firebog.net/hosts/Prigent-Ads.txt
+https://raw.githubusercontent.com/quidsup/notrack/master/trackers.txt
+https://raw.githubusercontent.com/StevenBlack/hosts/master/data/add.2o7Net/hosts
+https://raw.githubusercontent.com/StevenBlack/hosts/master/data/tyzbit/hosts
+https://raw.githubusercontent.com/CHEF-KOCH/Canvas-Font-Fingerprinting-pages/master/Canvas.txt
+https://raw.githubusercontent.com/CHEF-KOCH/WebRTC-tracking/master/WebRTC.txt
+https://raw.githubusercontent.com/CHEF-KOCH/Audio-fingerprint-pages/master/AudioFp.txt
+https://raw.githubusercontent.com/CHEF-KOCH/Canvas-fingerprinting-pages/master/Canvas.txt
+https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV.txt
+
+##Adlist wally3k.github.io
+https://adaway.org/hosts.txt
+https://v.firebog.net/hosts/AdguardDNS.txt
+https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
+https://hosts-file.net/ad_servers.txt
+https://v.firebog.net/hosts/Easylist.txt
+https://raw.githubusercontent.com/CHEF-KOCH/Spotify-Ad-free/master/Spotifynulled.txt
+https://raw.githubusercontent.com/StevenBlack/hosts/master/data/UncheckyAds/hosts
+

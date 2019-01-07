@@ -1,12 +1,7 @@
 #!/bin/bash
 #Script zum semiautomatischen Einrichten des Raspberry mit PiHole PiVPN FTP DUC und Fail2Ban
-#Folgende Stellen noch prüfen: 186 - 778
-#Folgendes noch implementieren: Abhängigkeiten prüfen (dialog, gcc, make, tar, awk, cat, curl)
-
-
-#Lese Usernamen aus
-iam=$(who am i | awk '{print $1}')
-
+#Folgende Stellen noch prüfen: 781 (VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version)
+#Bei Scriptdownloads noch sendstoredmsg.sh hinzufügen
 
 #Color-Codes und Textsfx-Codes
 cGREEN="\e[92m"
@@ -19,6 +14,17 @@ cINVOFF="\e[27m"
 cBLU="\e[94m"
 wait4input="${cINVON}${cBLU}[EINGABE ERFORDERLICH]${cNOR}${cINVOFF}"
 info="${cINVON}[INFO]${cINVOFF}"
+errorout="${cRED}${cINVON}[ERROR]${cINVOFF}${cNOR}"
+
+#Lese Usernamen aus
+iam=$(who am i | awk '{print $1}')
+if [ "$iam" == "" ]; then
+	iam=$(who | awk '{print $1}')
+	if [ "$iam" == "" ]; then
+		echo -e "$errorout Benutzername konnte nicht festgestellt werden!"
+		echo -e "$errorout Script wird abgebrochen!"
+	fi
+fi
 
 # _____ _   _____________ _   _ _   _ _____ _____ _____ _____ _   _  _____ 
 #/  ___| | | | ___ \  ___| | | | \ | /  __ \_   _|_   _|  _  | \ | |/  ___|
@@ -91,7 +97,10 @@ function prepare2go {
 		echo -e "${info} ${cGREEN}Installation der Updates abgeschlossen${cNOR}"
 	else
 		echo -e "${info} Updates vorhanden: ${cGREEN}Nein${cNOR}"
-	fi	
+	fi
+	
+	echo -e "${info} Vorausgesetzte Pakete werden gegebenenfalls installiert."
+	apt-get install dialog make gcc tar curl -y >/dev/null 2>&1
 }
 
 #      _               _                        
@@ -103,15 +112,15 @@ function prepare2go {
 #Neuer User bereits erstellt?
 function checkuser {
 	if [ "$iam" == "pi" ]; then
-		echo -e "${info} Username: ${cRED}$iam${cNOR}"
+		echo -e "${info} Username: ${cRED}${iam}${cNOR}"
 		echo -e "${info} Der Username ist ${cRED}unsicher${cNOR}. Erstelle neuen User..."
 		addnewuser
 		if [ -d "/home/$uname" ]; then
 			echo -e "${info} Benutzer ${cGREEN}${uname}${cNOR} erfolgreich angelegt."
 			userisok
 		else
-			echo -e "${info} ${cRED}Fehler!${cNOR} User konnte nicht angelegt werden!"
-			echo -e "${info} ${cRED}Script wird abgebrochen,${cNOR} bitte User manuell mittels dem Befehl ${cGREEN}sudo adduser ${cBLON}USERNAME${cBLOFF}${cNOR} anlegen."
+			echo -e "${errorout} ${cRED}Fehler!${cNOR} User konnte nicht angelegt werden!"
+			echo -e "${errorout} ${cRED}Script wird abgebrochen,${cNOR} bitte User manuell mittels dem Befehl ${cGREEN}sudo adduser ${cINVON}USERNAME${cINVOFF}${cNOR} anlegen. Danach Script neu starten."
 			exit 1
 		fi
 	else
@@ -152,7 +161,7 @@ function userisroot {
 	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
 	if (( $sudocheck < 1 )); then 
 		showerror
-		echo -e "${info} ${cRED}Script wird geschlossen!${cNOR} Bitte Rootrechte manuell eintragen mittels dem Befehl ${cGREEN}sudo visudo${cNOR}. Dort unterhalb von ${cRED}root    ALL=(ALL:ALL) ALL${cNOR} die Zeile ${cGREEN}${cBLON}$uname    ALL=(ALL:ALL) ALL${cBLOFF}${cNOR} einfügen."
+		echo -e "${errorout} ${cRED}Script wird geschlossen!${cNOR} Bitte Rootrechte manuell eintragen mittels dem Befehl ${cGREEN}sudo visudo${cNOR}. Dort unterhalb von ${cRED}root    ALL=(ALL:ALL) ALL${cNOR} die Zeile ${cGREEN}${cINVON}$uname    ALL=(ALL:ALL) ALL${cINVOFF}${cNOR} einfügen."
 		exit 1
 	else
 		showok
@@ -189,7 +198,7 @@ function removepiuser {
 			if [ "$timezonenow" =! "timezone" ]; then
 				echo $timezone > /etc/timezone
 				cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
-				/usr/sbin/ntpdate pool.ntp.org
+				systemctl restart systemd-timesyncd.service
 			fi
 			echo -e "${info} ${cRED}REBOOT IN 5 SEKUNDEN${cNOR}"
 			sleep 5
@@ -694,7 +703,7 @@ function moreoptions {
 	options=(1 "[PiHole] Whitelist downloaden und anwenden" off
 			 2 "[PiHole] Gravitylisten downloaden und anwenden" off
 			 3 "[Fail2Ban] jail.local ohne Scriptausführung downloaden und anwenden" off
-			 4 "[Fail2Ban] jail.local mit Scriptausführung downloaden und anwenden" off
+			 4 "[Fail2Ban] jail.local mit Scriptausführung downloaden und anwenden (überschreibt Punkt 3)" off
 			 5 "[VPN] User einrichten" off
 			 6 "[VPN] Scriptausführung einrichten" off
 			 7 "[Telegram] CHAT_ID und BOT_ID eintragen" off

@@ -1,5 +1,8 @@
 #!/bin/bash
 #Script zum semiautomatischen Einrichten des Raspberry mit PiHole PiVPN FTP DUC und Fail2Ban
+#Folgende Stellen noch prüfen: 182 - 774
+#Folgendes noch implementieren: crontabeinträge ab 478
+
 
 #Lese Usernamen aus
 iam=$(who am i | awk '{print $1}')
@@ -276,7 +279,7 @@ function installftp {
 	name="FTP Dienst:"
 	target="$HOME/ftp"
 	checkftp=$(ps ax | grep ftp | wc -l)
-	if (( $checkftp < 1 )); then
+	if (( $checkftp < 2 )); then
 		showerror
 		apt-get install vsftpd -y >/dev/null 2>&1
 		echo -e "Entsprechende Ordner werden erstellt"
@@ -303,13 +306,14 @@ function installftp {
 function installduc {
 	name="DUC:"
 	checkduc=$(ps ax | grep noip | wc -l)
-	if (( $checkduc < 1 )); then 
+	if (( $checkduc < 2 )); then 
 		showerror
 		cd /usr/local/src/
 		echo "Downloade DUC Files"
-		wget http://www.no-ip.com/client/linux/noip-duclinux.tar.gz >/dev/null 2>&1
+		wget http://www.no-ip.com/client/linux/noip-duc-linux.tar.gz >/dev/null 2>&1
 		echo "Entpacke DUC Files"
 		tar xf noip-duc-linux.tar.gz
+		rm noip-duc-linux.tar.gz
 		cd /usr/local/src/noip-*
 		echo -e "${cRED}ACHTUNG!${cNOR} Spätestens jetzt sollte eine Dynamische DNS-Adresse auf http://noip.com erstellt worden sein!"
 		wait4it
@@ -318,7 +322,6 @@ function installduc {
 		echo -e "${cGREEN}Zugangsdaten${cNOR} für noip.com eingeben:"
 		/usr/local/bin/noip2 -C
 		echo "Starte DUC Dienst"
-		/usr/local/bin/noip2
 		ducinitd
 		update-rc.d noip2 defaults
 		cd $HOME
@@ -352,7 +355,7 @@ function ducinitd {
 function installf2b {
 	checkf2b=$(ps ax | grep fail2ban | wc -l)
 	name="Fail2Ban:"
-	if (( $checkf2b < 1 )); then
+	if (( $checkf2b < 2 )); then
 		showerror
 		echo "Installiere Fail2Ban"
 		apt-get install fail2ban -y >/dev/null 2>&1
@@ -854,6 +857,7 @@ checkuser
 removepiuser
 installpihole
 installpivpn
+installftp
 installduc
 installf2b
 abschluss

@@ -1,7 +1,7 @@
 #!/bin/bash
 #Script zum semiautomatischen Einrichten des Raspberry mit PiHole PiVPN FTP DUC und Fail2Ban
 #Folgende Stellen noch prüfen: 186 - 778
-#Folgendes noch implementieren: crontabeinträge ab 482 | Abhängigkeiten prüfen (dialog, gcc, make, tar, awk, cat, curl)
+#Folgendes noch implementieren: Abhängigkeiten prüfen (dialog, gcc, make, tar, awk, cat, curl)
 
 
 #Lese Usernamen aus
@@ -698,7 +698,8 @@ function moreoptions {
 			 5 "[VPN] User einrichten" off
 			 6 "[VPN] Scriptausführung einrichten" off
 			 7 "[Telegram] CHAT_ID und BOT_ID eintragen" off
-			 8 "[Telegram] Testnachricht versenden" off)
+			 8 "[Telegram] Testnachricht versenden" off
+			 9 "[CronJob] CronJobs einrichten" off)
 	choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
 	clear
 	for choice in $choices
@@ -837,6 +838,105 @@ function moreoptions {
 				echo -e "${wait4input} Gewünschte ${cGREEN}Telegramnachricht${cNOR} angeben:"
 				read MESSAGE
 				curl -s -k "https://api.telegram.org/bot$BOT_ID/sendMessage" -d text="$MESSAGE" -d chat_id=$CHAT_ID
+				;;			
+			9)
+				#Kopiere Usercron
+				echo -e "${info} Cronjobs für ${cGREEN}${iam}${cNOR} werden eingerichtet"
+				crontab -u $iam -l > cron${iam}
+				
+				#Logcleaner
+				name="logcleaner.sh"
+				target="$HOME/scripts/logcleaner.sh"
+				if [ -e $target ]; then
+					showok
+					echo "15 0 * * * /bin/bash $target" >> cron${iam}
+				fi
+				
+				#Remote_Slave
+				name="remote_slave.sh"
+				target="$HOME/scripts/remote/remote_slave.sh"
+				if [ -e $target ]; then
+					showok
+					echo "0 1/* * * * /bin/bash $target" >> cron${iam}
+				fi
+
+				#Happy_New_Year
+				name="Happy_New_Year.sh"
+				target="$HOME/scripts/Happy_New_Year.sh"
+				if [ -e $target ]; then
+					showok
+					echo "@yearly /bin/bash $target" >> cron${iam}
+				fi
+
+				#Checkmail
+				name="checkmail2.py"
+				target="$HOME/scripts/checkmail2.py"
+				if [ -e $target ]; then
+					showok
+					echo "0 12 * * * /usr/bin/python2 $target" >> cron${iam}
+				fi
+
+				#CheckpublicIP
+				name="checkpublicip.sh"
+				target="$HOME/scripts/checkpublicip.sh"
+				if [ -e $target ]; then
+					showok
+					echo "0 */1 * * * /bin/bash $target" >> cron${iam}
+				fi
+
+				#Updatecheck
+				name="updatecheck.sh"
+				target="$HOME/scripts/updatecheck.sh"
+				if [ -e $target ]; then
+					showok
+					echo "5 12 * * * /bin/bash $target" >> cron${iam}
+				fi
+
+				#Updatecheck
+				name="startup.sh"
+				target="$HOME/scripts/startup.sh"
+				if [ -e $target ]; then
+					showok
+					echo "@reboot /bin/bash $target" >> cron${iam}
+				fi
+				
+				#Installiere Cronjobs für User
+				crontab -u $iam cron${iam}
+				rm cron${iam}
+				echo -e "${info} Cronjobs für ${cGREEN}${iam}${cNOR} wurden eingerichtet"
+				
+				#Kopiere Rootcron
+				echo -e "${info} Cronjobs für ${cGREEN}root${cNOR} werden eingerichtet"
+				crontab -u root -l > cronroot
+
+				#Remote_Update
+				name="remote_update.sh"
+				target="$HOME/scripts/remote/remote_update.sh"
+				if [ -e $target ]; then
+					showok
+					echo "15 1/* * * * /bin/bash $target" >> cronroot
+				fi
+
+				#Remote_Reboot
+				name="remote_reboot.sh"
+				target="$HOME/scripts/remote/remote_reboot.sh"
+				if [ -e $target ]; then
+					showok
+					echo "30 1/* * * * /bin/bash $target" >> cronroot
+				fi
+
+				#VPN_renew_server_cert
+				name="VPN_renew_server_cert.sh"
+				target="$HOME/scripts/VPN_renew_server_cert.sh"
+				if [ -e $target ]; then
+					showok
+					echo "0 5 1 */4 * /bin/bash $target" >> cronroot
+				fi
+
+				#Installiere Cronjobs für Root
+				crontab -u root cronroot
+				rm cronroot
+				echo -e "${info} Cronjobs für ${cGREEN}root${cNOR} wurden eingerichtet"
 				;;
 		esac
 	done

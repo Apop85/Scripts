@@ -128,20 +128,19 @@ function addnewuser {
 function userisok {
 	if [ "$iam" != "pi" ]; then
 		echo -e "Username: ${cGREEN}${iam}${cNOR} ist sicher"
-	fi
-	echo "Setze Rootberechtigungen für den neuen User"
-	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
-	if (( $sudocheck == 0 )); then
-		echo "$uname  ALL=(ALL:ALL) ALL" >> /etc/sudoers
+		uname=$iam
+	else
+		echo "Setze Rootberechtigungen für den neuen User"
+		sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
+		if (( $sudocheck == 0 )); then
+			echo "$uname  ALL=(ALL:ALL) ALL" >> /etc/sudoers
+		fi
 	fi
 	userisroot
 }
 
 #Funktion zur Überprüfung der Privilegien des neuen Users
 function userisroot {
-	if [ "$uname" == "" ]; then
-		uname=$iam
-	fi
 	name="Rootberechtigung für den User $uname:"
 	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
 	if (( $sudocheck < 1 )); then 

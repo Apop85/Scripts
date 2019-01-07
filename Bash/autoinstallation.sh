@@ -1,12 +1,12 @@
 #!/bin/bash
 #Script zum semiautomatischen Einrichten des Raspberry mit PiHole PiVPN FTP DUC und Fail2Ban
 #Folgende Stellen noch prüfen: 781 (VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version)
-#Bei Scriptdownloads noch sendstoredmsg.sh hinzufügen
+#checkmail2.py gmaillogin und passwort noch abfragen
 
 #Color-Codes und Textsfx-Codes
 cGREEN="\e[92m"
 cRED="\e[31m"
-cNOR="\e[0m" #Farbcodierung aufheben
+cNOR="\e[0m"
 cBLON="\e[5m" #Blinken Ein
 cBLOFF="\e[25m"
 cINVON="\e[7m" #Invertiert
@@ -101,7 +101,7 @@ function prepare2go {
 	fi
 	
 	echo -e "${info} Vorausgesetzte Pakete werden gegebenenfalls installiert."
-	apt-get install dialog make gcc tar curl -y >/dev/null 2>&1
+	apt-get install dialog make gcc tar curl gpg -y >/dev/null 2>&1
 }
 
 #      _               _                        
@@ -129,7 +129,7 @@ function checkuser {
 	fi
 }
 
-#Funktion Adduser
+#Funktion zum Anlegen eines neuen Users
 function addnewuser {
 	echo -e "${wait4input} Bitte gewünschten Usernamen angeben:"  
 	read uname
@@ -142,6 +142,7 @@ function addnewuser {
 	adduser $uname
 }
 
+#Überprüfe Usernamen und falls noch Pi setze Rootberechtigungen für den neuen User
 function userisok {
 	if [ "$iam" != "pi" ]; then
 		echo -e "${info} Username: ${cGREEN}${iam}${cNOR} ist sicher"
@@ -184,15 +185,18 @@ function removepiuser {
 		if [ -d "/home/pi" ]; then
 			echo -e "${info} Benutzer ${cGREEN}pi${cNOR} ist noch vorhanden. Aus sicherheitsgründen wird dieser entfernt."
 			echo -e "${info} Autologin für Benutzer ${cGREEN}pi${cNOR} wird auf Benutzer ${cGREEN}$uname${cNOR} geändert."
+			#Ändere Autologin von Pi zu neuem User
 			sed -i '/autologin-user=\(.*\)/c\autologin-user=$uname' /etc/lightdm/lightdm.conf
 			echo -e "${info} Die Lokalisationseinstellung wird auf ${cGREEN}de-ch UTF 8${cNOR} gestellt"
 			echo -e "${info} ${cRED}ACHTUNG!${cNOR} Das Gerät wird nach erfolgreicher Anwendung neu gestartet und das Script geschlossen. Script muss nach neustart erneut manuell gestartet werden. ${cBLON}Nach Neustart mit neuem Userdaten anmelden!${cBLOFF}"
 			wait4it
+			#Lokalisation auf de_CH UTF-8 wechseln. 
 			echo -e "${info} Wechsle Layout zu ${cGREEN}de_CH.UTF-8${cNOR}"
 			update-locale LANG=de_CH.UTF-8
 			echo -e "${info} Wende neue Lokalisation auf vorhandene Anwendungen an"
 			locale-gen --purge "de_CH.UTF-8"
 			dpkg-reconfigure --frontend noninteractive locales
+			#Setze Zeitzone auf Europe/Zurich
 			echo -e "${info} Setze lokale Zeitzone auf ${cGREEN}Europa/Zürich${cNOR}"
 			timezonenow=$(cat /etc/timezone)
 			timezone="Europa/Zurich"
@@ -206,6 +210,7 @@ function removepiuser {
 			reboot
 		fi
 	else
+		#User Pi, falls noch vorhanden, entfernen. 
 		if [ -d "/home/pi" ]; then
 			loggedin=$(who | grep ^"pi" | wc -l)
 			echo -e "${info} User ${cGREEN}pi${cNOR} sowie die entsprechenden Ordner werden entfernt."
@@ -266,7 +271,7 @@ function installpivpn {
 			if (( $countopt = 0 )); then
 				echo 'push "dhcp-option DNS 10.8.0.1"' >> /etc/openvpn/server.conf
 			else
-				echo -e "${info} ${cRED}ACHTUNG!${cNOR} Es sind $countopt Einträge mit der Option${cRED}"'push "dhcp-option DNS 10.8.0.1"'"${cNOR} vorhanden. Bitte manuell ${cBLON}alle bis auf einen${cBLOFF} Eintrag löschen. Editor wird geöffnet..."
+				echo -e "${errorout} ${cRED}ACHTUNG!${cNOR} Es sind $countopt Einträge mit der Option${cRED}"'push "dhcp-option DNS 10.8.0.1"'"${cNOR} vorhanden. Bitte manuell ${cBLON}alle bis auf einen${cBLOFF} Eintrag löschen. Editor wird geöffnet..."
 				wait4it
 				nano /etc/openvpn/server.conf
 			fi
@@ -338,6 +343,7 @@ function installduc {
 		echo -e "${info} Starte DUC Dienst"
 		ducinitd
 		update-rc.d noip2 defaults
+		systemctl restart noip2.service
 		cd $HOME
 	else
 		showok
@@ -493,7 +499,7 @@ function getscripts {
 	options=(1 "Boot Benachrichtigung" off
 			 2 "Updatecheck" off
 			 3 "VPN Zertifikaterneuerung" off
-			 4 "Benachrichtigung wenn Mail von noip eintrifft" off
+			 4 "Benachrichtigung wenn Mail (gmail) von noip.com eintrifft" off
 			 5 "Benachricgtigung wenn öffentliche IP wechselt" off
 			 6 "Benachrichtigung bei Neujahr" off
 			 7 "Benachrichtigung bei eingehender VPN Verbindung" off
@@ -564,8 +570,36 @@ function getscripts {
 					showok
 				else
 					showerror
-					echo -e "${info} Benachrichtigungsscript für eingehende Mails von Noip wird gedownloaded"
+					echo -e "${info} Benachrichtigungsscript für eingehende Mails (gmail) von Noip wird gedownloaded"
 					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Python/checkmail2.py >/dev/null 2>&1
+					choose=n
+					if [ "$choose" == "y" ]; then
+						sed -i "s/'Login': ''/\'Login': '"$glogin"'/g" $target
+						sed -i "s/'Password': ''/\'Password': '"$gpw1"'/g" $target
+					elif [ "$choose" == "n" ]; then
+						echo -e "${wait4input} Gmaillogin:"
+						read glogin
+						echo -e "${wait4input} Gmailpasswort:"
+						read gpw1
+						echo -e "${wait4input} Passwort erneut eingeben:"
+						read gpw2
+						if [ "$gpw1" == "$gpw2" ]; then
+							echo -e "${info} Passwörter ${cGREEN}stimmen überein${cNOR}"
+							io=i
+						else
+							echo -e "${errorout} Passwörter ${cRED}stimmen nicht überein${cNOR}"
+							io=o
+						fi
+						echo -e "${wait4input} Sind die Angaben korrekt? [y/N]"
+						read choose
+						if [ "$io" == "o" ]; then
+							choose=x
+						fi
+						continue
+					else
+						echo -e "${cRED}Eingabe ungültig.${cNOR}"
+						continue
+					fi
 					chownit
 					chmodit
 				fi
@@ -610,6 +644,11 @@ function getscripts {
 				fi
 				;;
 			9)
+				echo -e "${wait4input} Bot Token des Administrators angeben:"
+				read admbot
+				echo -e "${wait4input} Chat-ID des Administrators angeben:"
+				read admcha
+				
 				name="Remote Slave Ordner:"
 				target="$HOME/scripts/remote"
 				if [ -d $target ]; then
@@ -630,13 +669,15 @@ function getscripts {
 					showerror
 					echo -e "${info} Command & Controlscript (slave) wird gedownloaded"
 					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/remote_slave.sh >/dev/null 2>&1
+					sed -i "/readonly BOT_ID\(.*\)/c\readonly BOT_ID=""'"$admbot"'" $target
+					sed -i "/readonly CHAT_ID\(.*\)/c\readonly CHAT_ID=""'"$admcha"'" $target
 					chownit
 					chmodit
 				fi
 				
 				echo -e "${info} Übrige Remotescripts werden gedownloaded."
 				
-				name="remote_reboot:"
+				name="remote_reboot.sh"
 				target="$HOME/scripts/remote/remote_reboot.sh"
 				if [ -e $target ]; then
 					showok
@@ -644,10 +685,12 @@ function getscripts {
 					showerror
 					echo -e "${info} Downloade $name"
 					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/remote_reboot.sh >/dev/null 2>&1
+					sed -i "/readonly BOT_ID\(.*\)/c\readonly BOT_ID=""'"$admbot"'" $target
+					sed -i "/readonly CHAT_ID\(.*\)/c\readonly CHAT_ID=""'"$admcha"'" $target
 					chmodit
 				fi
 				
-				name="remote_update"
+				name="remote_update.sh"
 				target="$HOME/scripts/remote/remote_update.sh"
 				if [ -e $target ]; then 
 					showok
@@ -655,10 +698,12 @@ function getscripts {
 					showerror
 					echo -e "${info} Downloade $name"
 					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/remote_update.sh >/dev/null 2>&1
+					sed -i "/readonly BOT_ID\(.*\)/c\readonly BOT_ID=""'"$admbot"'" $target
+					sed -i "/readonly CHAT_ID\(.*\)/c\readonly CHAT_ID=""'"$admcha"'" $target
 					chmodit
 				fi
 				
-				name="updateclient"
+				name="updateclient.sh"
 				target="$HOME/scripts/remote/updateclient.sh"
 				if [ -e $target ]; then
 					showok
@@ -666,13 +711,36 @@ function getscripts {
 					showerror
 					echo -e "${info} Downloade $name"
 					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/updateclient.sh >/dev/null 2>&1
+					sed -i "/readonly BOT_ID\(.*\)/c\readonly BOT_ID=""'"$admbot"'" $target
+					sed -i "/readonly CHAT_ID\(.*\)/c\readonly CHAT_ID=""'"$admcha"'" $target
 					chownit
-					chmodit
+					chmodit		
+				fi
+				
+				name="encrypt.sh"
+				target="$HOME/scripts/remote/encrypt.sh"
+				if [ -e $target ]; then
+					showok
+				else
+					showerror
+					echo -e "${info} Downloade $name"
+					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/encrypt.sh.gpg >/dev/null 2>&1
+					echo -e "${cRED}Passwort${cNOR} zum entschlüsseln von $name.sh.gpg notwendig!"
+					wait4it
+					gpg $target.gpg
+					if [ -e $target ]; then 
+						showok
+						chownit
+						chmodit
+					else
+						showerror
+					fi
+					rm $target.gpg
 				fi
 				cd $HOME/scripts
 				;;
 			10)
-				name="Logcleaner"
+				name="Logcleaner.sh"
 				target="$HOME/scripts/logcleaner.sh"				
 				if [ -e $target ]; then
 					showok
@@ -686,6 +754,18 @@ function getscripts {
 				;;
 		esac
 	done
+	name="sendstoredmsg.sh"
+	target="$HOME/scripts/sendstoredmsg.sh"
+	if [ -e $target ]; then
+		showok
+	else
+		showerror
+		echo -e "${info} $name wird gedownloaded"
+		wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/sendstoredmsg.sh >/dev/null 2>&1
+		mv $name $target
+		chownit
+		chmodit
+	fi
 	cd $HOME
 }
 
@@ -908,6 +988,14 @@ function moreoptions {
 				if [ -e $target ]; then
 					showok
 					echo "@reboot /bin/bash $target" >> cron${iam}
+				fi
+				
+				#Sendstoredmsg
+				name="sendstoredmsg.sh"
+				target="$HOME/scripts/sendstoredmsg.sh"
+				if [ -e $target ]; then
+					showok
+					echo "0 9 * * * /bin/bash $target" >> cron${iam}
 				fi
 				
 				#Installiere Cronjobs für User

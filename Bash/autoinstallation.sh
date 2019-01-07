@@ -6,7 +6,7 @@
 #Color-Codes und Textsfx-Codes
 cGREEN="\e[92m"
 cRED="\e[31m"
-cNOR="\e[0m"
+cNOR="\e[0m" #Farbcodierung aufheben
 cBLON="\e[5m" #Blinken Ein
 cBLOFF="\e[25m"
 cINVON="\e[7m" #Invertiert

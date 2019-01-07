@@ -23,6 +23,7 @@ if [ "$iam" == "" ]; then
 	if [ "$iam" == "" ]; then
 		echo -e "$errorout Benutzername konnte nicht festgestellt werden!"
 		echo -e "$errorout Script wird abgebrochen!"
+		exit 1
 	fi
 fi
 

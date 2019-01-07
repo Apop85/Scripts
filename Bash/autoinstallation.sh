@@ -3,7 +3,6 @@
 
 #Lese Usernamen aus
 iam=$(who am i | awk '{print $1}')
-echo $iam
 
 
 #Color-Codes und Textsfx-Codes
@@ -101,7 +100,7 @@ function checkuser {
 		echo -e "Der Username ist ${cRED}unsicher${cNOR}. Erstelle neuen User..."
 		addnewuser
 		if [ -d "/home/$uname" ]; then
-			echo "Benutzer ${cGREEN}$uname${cNOR} erfolgreich angelegt."
+			echo "Benutzer ${cGREEN}${uname}${cNOR} erfolgreich angelegt."
 			userisok
 		else
 			echo -e "${cRED}Fehler!${cNOR} User konnte nicht angelegt werden!"
@@ -119,7 +118,7 @@ function addnewuser {
 	read uname
 	echo -e "Ist der Username [${cGREEN}$uname${cNOR}] korrekt? [Y/n]"
 	read input
-	if [ "$input" =! "y" ] || [ "$input" =! "" ]; then
+	if [ "$input" =! "y" -o "$input" =! "" ]; then
 		addnewuser
 	fi
 	echo "Nutzer $uname wird angelegt"
@@ -127,18 +126,22 @@ function addnewuser {
 }
 
 function userisok {
-	uname=$iam
-	echo -e "Username: ${cGREEN}$iam${cNOR} ist sicher"
+	if [ "$iam" != "pi" ]; then
+		echo -e "Username: ${cGREEN}${iam}${cNOR} ist sicher"
+	fi
 	echo "Setze Rootberechtigungen für den neuen User"
 	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
 	if (( $sudocheck == 0 )); then
-		usermod -aG sudo $uname
+		echo "$uname  ALL=(ALL:ALL) ALL" >> /etc/sudoers
 	fi
 	userisroot
 }
 
 #Funktion zur Überprüfung der Privilegien des neuen Users
 function userisroot {
+	if [ "$uname" == "" ]; then
+		uname=$iam
+	fi
 	name="Rootberechtigung für den User $uname:"
 	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
 	if (( $sudocheck < 1 )); then 

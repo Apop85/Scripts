@@ -15,7 +15,7 @@ cNOR="\e[0m"
 cBLON="\e[5m" #Blinken Ein
 cBLOFF="\e[25m"
 cINVON="\e[7m" #Invertiert
-cINVOFF="\e[27"
+cINVOFF="\e[27m"
 info="${cINVON}[INFO]${cINVOFF}"
 
 # _____ _   _____________ _   _ _   _ _____ _____ _____ _____ _   _  _____ 

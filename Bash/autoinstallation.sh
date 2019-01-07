@@ -1,7 +1,7 @@
 #!/bin/bash
 #Script zum semiautomatischen Einrichten des Raspberry mit PiHole PiVPN FTP DUC und Fail2Ban
-#Folgende Stellen noch prüfen: 184 - 776
-#Folgendes noch implementieren: crontabeinträge ab 480 | Abhängigkeiten prüfen (dialog, gcc, make, tar, awk, cat, curl)
+#Folgende Stellen noch prüfen: 186 - 778
+#Folgendes noch implementieren: crontabeinträge ab 482 | Abhängigkeiten prüfen (dialog, gcc, make, tar, awk, cat, curl)
 
 
 #Lese Usernamen aus
@@ -16,6 +16,8 @@ cBLON="\e[5m" #Blinken Ein
 cBLOFF="\e[25m"
 cINVON="\e[7m" #Invertiert
 cINVOFF="\e[27m"
+cBLU="\e[94m"
+wait4input="${cINVON}${cBLU}[EINGABE ERFORDERLICH]${cNOR}${cINVOFF}"
 info="${cINVON}[INFO]${cINVOFF}"
 
 # _____ _   _____________ _   _ _   _ _____ _____ _____ _____ _   _  _____ 
@@ -44,7 +46,7 @@ function showok {
 }
 
 function wait4it {
-	echo -e "${cGREEN}Enter${cNOR} zum fortfahren" #### HIER NOCH ALTERNATIVER COLORCODE EINFÜGEN
+	echo -e "${wait4input} ${cGREEN}Enter${cNOR} zum fortfahren" 
 	read blank
 }
 
@@ -119,9 +121,9 @@ function checkuser {
 
 #Funktion Adduser
 function addnewuser {
-	echo -e "Bitte gewünschten Usernamen angeben:"  ####HIER NOCH ALTERNATIVEN COLORCODE EINFÜGEN
+	echo -e "${wait4input} Bitte gewünschten Usernamen angeben:"  
 	read uname
-	echo -e "Ist der Username [${cGREEN}$uname${cNOR}] korrekt? [Y/n]" ####HIER NOCH ALTERNATIVEN COLORCODE EINFÜGEN
+	echo -e "${wait4input} Ist der Username [${cGREEN}$uname${cNOR}] korrekt? [Y/n]" 
 	read input
 	if [ "$input" =! "y" -o "$input" =! "" ]; then
 		addnewuser
@@ -313,7 +315,7 @@ function installduc {
 		cd /usr/local/src/
 		echo -e "${info} Downloade DUC Files"
 		wget http://www.no-ip.com/client/linux/noip-duc-linux.tar.gz >/dev/null 2>&1
-		echo -r "${info} Entpacke DUC Files"
+		echo -e "${info} Entpacke DUC Files"
 		tar xf noip-duc-linux.tar.gz
 		rm noip-duc-linux.tar.gz
 		cd /usr/local/src/noip-*
@@ -362,9 +364,6 @@ function installf2b {
 		echo -e "${info} Installiere Fail2Ban"
 		apt-get install fail2ban -y >/dev/null 2>&1
 		cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
-		# echo -e "${info} ${cRED}Editor wird geöffnet!${cNOR} Folgende Einträge anpassen: ${cGREEN}ignoreip, bantime, findtime, maxretry${cNOR}"
-		# wait4it
-		# nano /etc/fail2ban/jail.local
 		systemctl restart fail2ban.service
 	else
 		showok
@@ -782,9 +781,9 @@ function moreoptions {
 				if [ "$choose" == "y" ]; then
 					pivpn -a $vpnname
 				elif [ "$choose" == "n" ]; then
-					echo -e "${info} Bitte gewünschten ${cGREEN}Usernamen${cNOR} für den VPN Client eingeben:"
+					echo -e "${wait4input} Bitte gewünschten ${cGREEN}Usernamen${cNOR} für den VPN Client eingeben:"
 					read vpnname
-					echo -e "${info} Ist ${cGREEN}${vpnname}${cNOR} korrekt? [y/n]"
+					echo -e "${wait4input} Ist ${cGREEN}${vpnname}${cNOR} korrekt? [y/n]"
 					read choose
 					continue
 				else
@@ -823,10 +822,10 @@ function moreoptions {
 					touch $target
 				fi
 				echo -e "${info} Aktuelles Bot Token: ${cGREEN}${BOT_ID}${cNOR}"
-				echo -e "${info} ${cGREEN}Bot Token${cNOR} angeben:"
+				echo -e "${wait4input} ${cGREEN}Bot Token${cNOR} angeben:"
 				read BOT_ID
 				echo -e "${info} Aktuelle Chat-ID: ${cGREEN}${CHAT_ID}${cNOR}"
-				echo -e "${info} ${cGREEN}Chat ID${cNOR} angeben:"
+				echo -e "${wait4input} ${cGREEN}Chat ID${cNOR} angeben:"
 				read CHAT_ID
 				echo "BOT_ID=${BOT_ID}" > $target
 				echo "CHAT_ID=${CHAT_ID}" > $target
@@ -835,7 +834,7 @@ function moreoptions {
 			8)
 				target="$HOME/scripts/telegram.inf"
 				source $target
-				echo -e "${info} Gewünschte ${cGREEN}Telegramnachricht${cNOR} angeben:"
+				echo -e "${wait4input} Gewünschte ${cGREEN}Telegramnachricht${cNOR} angeben:"
 				read MESSAGE
 				curl -s -k "https://api.telegram.org/bot$BOT_ID/sendMessage" -d text="$MESSAGE" -d chat_id=$CHAT_ID
 				;;

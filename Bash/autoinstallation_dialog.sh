@@ -7,6 +7,7 @@
 #Autologin wechseln auf VM nicht möglich
 #IpV6 bei PiHole conf noch eintragen
 #adduser $uname evt auch mit $passwd und ohne weitere fragen?
+#rootpasswort ändern echo $passwd | passwd $uname --stdin
 
 clear
 #Color-Codes und Textsfx-Codes
@@ -158,6 +159,12 @@ function checkuser {
 function addnewuser {
 	while true; do
 		uname=$(dialog --inputbox "Bitte gewünschten Benutzernamen angeben:" 15 60  --output-fd 1)
+		passwd=$(dialog --passwordbox "Passwort für $uname:" 10 30 3>&1- 1>&2- 2>&3-)
+		passwd1=$(dialog --passwordbox "Passwort bestätigen:" 10 30 3>&1- 1>&2- 2>&3-)
+		if [ "$passwd" != "passwd1" ]; then
+			dialog --backtitle INFO --title "ACHTUNG!" --msgbox "Passwörter stimmen nicht überein!" 15 70
+			continue
+		fi
 		dialog --backtitle INFO --title "Bestätigung" --yesno "Ist der Benutzername ${uname} korrekt?" 15 60 
 		input=${?}
 		if [ "$input" == "0" ]; then
@@ -166,7 +173,10 @@ function addnewuser {
 	done
 	clear
 	echo -e "${info} Nutzer $uname wird angelegt"
-	adduser $uname
+	useradd -m $uname -p $passwd
+	echo $passwd | passwd root --stdin
+	unset passwd
+	unset passwd1
 }
 
 #Überprüfe Usernamen und falls noch Pi setze Rootberechtigungen für den neuen User
@@ -1123,7 +1133,7 @@ checkuser
 removepiuser
 installmenu
 
-dialog --backtitle INFO --title "Installation Abgeschlossen" --yesno "Diue Installtion ist abgeschlossen, soll der Raspberry neu gestartet werden?" 15 60 
+dialog --backtitle INFO --title "Installation Abgeschlossen" --yesno "Die Installtion ist abgeschlossen, soll der Raspberry neu gestartet werden?" 15 60 
 choose=${?}
 if [ "$choose" == "0" ]; then
 	reboot

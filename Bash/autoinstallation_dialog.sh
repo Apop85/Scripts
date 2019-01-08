@@ -173,9 +173,9 @@ function addnewuser {
 	clear
 	echo -e "${info} Nutzer $uname wird angelegt"
 	useradd -m "$uname" -p "$passwd"
-	echo $passwd | passwd root --stdin
+	#echo $passwd | passwd root --stdin    #FUNKTIONIERT NICHT BEI ROOT
 	echo ">$passwd<"
-	wait4it
+
 	unset passwd
 	unset passwd1
 }

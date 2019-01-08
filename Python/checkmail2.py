@@ -1,4 +1,5 @@
 #!/usr/bin/python2
+#by Meigrafd @ forum-raspberry.de
 #Script zur Benachrichtigung einer bald ablaufenden DynDNS-Adresse bei No-IP.com
 #Übermittelt ebenfalls den Bestätigungslink
 

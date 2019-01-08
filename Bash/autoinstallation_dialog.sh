@@ -172,8 +172,10 @@ function addnewuser {
 	done
 	clear
 	echo -e "${info} Nutzer $uname wird angelegt"
-	useradd -m $uname -p $passwd
+	useradd -m "$uname" -p "$passwd"
 	echo $passwd | passwd root --stdin
+	echo ">$passwd<"
+	wait4it
 	unset passwd
 	unset passwd1
 }
@@ -236,7 +238,7 @@ function removepiuser {
 			echo -e "${info} Setze lokale Zeitzone auf ${cGREEN}Europa/Zürich${cNOR}"
 			timezonenow=$(cat /etc/timezone)
 			timezone="Europa/Zurich"
-			if [ "$timezonenow" =! "$timezone" ]; then
+			if [ "$timezonenow" =! "$timezone" -a "$timezonenow" != "" ]; then
 				echo $timezone > /etc/timezone
 				cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
 				systemctl restart systemd-timesyncd.service

@@ -174,6 +174,8 @@ function addnewuser {
 	echo -e "${info} Nutzer $uname wird angelegt"
 	passwdc=$(openssl passwd -1 $passwd2)
 	useradd -m "$uname" -p "$passwdc"
+	usermod -s /bin/bash $uname	#SHELL="/bin/bash"
+	wait4it
 	#echo $passwd | passwd root --stdin    #FUNKTIONIERT NICHT BEI ROOT
 	unset passwd2
 	unset passwd1
@@ -243,7 +245,6 @@ function removepiuser {
 				systemctl restart systemd-timesyncd.service
 			fi
 			path=$(realpath "$0")
-			export SHELL="/bin/bash"
 			cp $path /home/$uname/autoinstaller.sh
 			chown $uname:$uname /home/$uname/autoinstaller.sh
 			echo -e "${info} ${cRED}REBOOT IN 5 SEKUNDEN${cNOR}"

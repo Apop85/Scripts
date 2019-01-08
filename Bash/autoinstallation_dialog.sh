@@ -216,6 +216,7 @@ function removepiuser {
 			sed -i '/autologin-user=\(.*\)/c\autologin-user=$uname' /etc/lightdm/lightdm.conf
 			echo -e "${info} Die Lokalisationseinstellung wird auf ${cGREEN}de-ch UTF 8${cNOR} gestellt"
 			dialog --backtitle INFO --title "Raspberry Autoinstaller" --msgbox "ACHTUNG! \nDas Gerät wird nach erfolgreicher Anwendung der Lokalisationseinstellungen neu gestartet und das Script geschlossen. \n\nScript muss nach neustart erneut manuell gestartet werden. \n\nNach Neustart mit neuen Userdaten anmelden!" 15 70
+			clear
 			#Lokalisation auf de_CH UTF-8 wechseln. 
 			echo -e "${info} Wechsle Layout zu ${cGREEN}de_CH.UTF-8${cNOR}"
 			update-locale LANG=de_CH.UTF-8
@@ -231,8 +232,9 @@ function removepiuser {
 				cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
 				systemctl restart systemd-timesyncd.service
 			fi
-			cp $0 ${HOME}/${uname}/autoinstaller.sh
-			chown $uname:$uname ${HOME}/${uname}/autoinstaller.sh
+			path=$(realpath "$0")
+			cp $path $HOME/$uname/autoinstaller.sh
+			chown $uname:$uname $HOME/$uname/autoinstaller.sh
 			echo -e "${info} ${cRED}REBOOT IN 5 SEKUNDEN${cNOR}"
 			sleep 5
 			reboot
@@ -278,7 +280,7 @@ function installmenu {
 				dialog --backtitle INFO --title "PiVPN Installation" --msgbox "Nachfolgend wird die Software [PiVPN] installiert. Während der Installation werden nach einigen Angaben gefragt.\n\nUm den aktuell genutzten DNS-Server herauszufinden gehe zu http://whoer.org" 15 70
 				dialog --backtitle INFO --title "[VPN] noip.com IP-Updater" --yesno "Wird noip.com als DynDNS-Dienst verwendet?" 15 60 
 				wannahaveduc=${?}
-				installvpn
+				installpivpn
 				if [ "$wannahaveduc" == "0" ]; then
 					dialog --backtitle INFO --title DUC --msgbox "Der dynamische IP-Update Dienst für moip.com wird installiert. \nBitte Logindaten bereithalten." 15 70
 					installduc
@@ -418,8 +420,6 @@ function installduc {
 		tar xf noip-duc-linux.tar.gz
 		rm noip-duc-linux.tar.gz
 		cd /usr/local/src/noip-*
-		echo -e "${info} ${cRED}ACHTUNG!${cNOR} Spätestens jetzt sollte eine Dynamische DNS-Adresse auf http://noip.com erstellt worden sein!"
-		wait4it
 		echo -e "${info} Installiere DUC"
 		make install
 		ducinitd

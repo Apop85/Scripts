@@ -8,7 +8,7 @@
 #IpV6 bei PiHole conf noch eintragen
 #moreoptions punkt 7 obsolet
 
-
+clear
 #Color-Codes und Textsfx-Codes
 cGREEN="\e[92m"
 cRED="\e[31m"
@@ -117,6 +117,7 @@ function prepare2go {
 		apt-get update >/dev/null 2>&1
 		echo -e "${info} Schritt ${cRED}1${cNOR} von 2 abgeschlossen."
 		apt-get upgrade -y >/dev/null 2>&1
+		clear
 		echo -e "${info} ${cGREEN}Installation der Updates abgeschlossen${cNOR}"
 	else
 		echo -e "${info} Updates vorhanden: ${cGREEN}Nein${cNOR}"
@@ -157,7 +158,7 @@ function checkuser {
 function addnewuser {
 	while true; do
 		uname=$(dialog --inputbox "Bitte gewünschten Benutzernamen angeben:" 15 60  --output-fd 1)
-		dialog --backtitle INFO --title "Bestätigung" --yesno "Ist der Benutzername ${cBOON}${uname}${cNOR} korrekt?" 15 60 
+		dialog --backtitle INFO --title "Bestätigung" --yesno "Ist der Benutzername ${uname} korrekt?" 15 60 
 		input=${?}
 		if [ "$input" == "0" ]; then
 			break
@@ -214,8 +215,7 @@ function removepiuser {
 			#Ändere Autologin von Pi zu neuem User
 			sed -i '/autologin-user=\(.*\)/c\autologin-user=$uname' /etc/lightdm/lightdm.conf
 			echo -e "${info} Die Lokalisationseinstellung wird auf ${cGREEN}de-ch UTF 8${cNOR} gestellt"
-			echo -e "${info} ${cRED}ACHTUNG!${cNOR} Das Gerät wird nach erfolgreicher Anwendung neu gestartet und das Script geschlossen. Script muss nach neustart erneut manuell gestartet werden. ${cBLON}Nach Neustart mit neuen Userdaten anmelden!${cBLOFF}"
-			wait4it
+			dialog --backtitle INFO --title "Raspberry Autoinstaller" --msgbox "ACHTUNG! \nDas Gerät wird nach erfolgreicher Anwendung der Lokalisationseinstellungen neu gestartet und das Script geschlossen. \n\nScript muss nach neustart erneut manuell gestartet werden. \n\nNach Neustart mit neuen Userdaten anmelden!" 15 70
 			#Lokalisation auf de_CH UTF-8 wechseln. 
 			echo -e "${info} Wechsle Layout zu ${cGREEN}de_CH.UTF-8${cNOR}"
 			update-locale LANG=de_CH.UTF-8
@@ -226,11 +226,13 @@ function removepiuser {
 			echo -e "${info} Setze lokale Zeitzone auf ${cGREEN}Europa/Zürich${cNOR}"
 			timezonenow=$(cat /etc/timezone)
 			timezone="Europa/Zurich"
-			if [ "$timezonenow" =! "timezone" ]; then
+			if [ "$timezonenow" =! "$timezone" ]; then
 				echo $timezone > /etc/timezone
 				cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
 				systemctl restart systemd-timesyncd.service
 			fi
+			cp $0 ${HOME}/${uname}/autoinstaller.sh
+			chown $uname:$uname ${HOME}/${uname}/autoinstaller.sh
 			echo -e "${info} ${cRED}REBOOT IN 5 SEKUNDEN${cNOR}"
 			sleep 5
 			reboot
@@ -505,7 +507,7 @@ function configuserinf {
 #                   | |                    __/ |                    
 #                   |_|                   |___/  
 function setuptelegram {
-	while TRUE; do
+	while true; do
 		BOT_ID=$(dialog --inputbox "Bitte Telegram Bot Token angeben:" 15 60  --output-fd 1)
 		CHAT_ID=$(dialog --inputbox "Bitte Telegram Chat ID angeben:" 15 60  --output-fd 1)
 		dialog --backtitle INFO --title "Telegram Setup" --yesno "Sind die Angaben korrekt?\n\nBot Token: ${BOT_ID}\n\nChat ID: ${CHAT_ID}" 15 60 
@@ -616,34 +618,38 @@ function getscripts {
 				fi
 				;;
 			5)
-				name="Checkmail:"
-				target="$HOME/scripts/checkmail2.py"				
-				if [ -e $target ]; then
-					showok
-				else
-					showerror
-					echo -e "${info} Benachrichtigungsscript für eingehende Mails (gmail) von Noip wird gedownloaded"
-					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Python/checkmail2.py >/dev/null 2>&1
-					while true; do
-						glogin=$(dialog --inputbox "Gmaillogin:" 15 60  --output-fd 1)
-						gpw1=$(dialog --passwordbox "Gmailpasswort:" 10 30 3>&1- 1>&2- 2>&3-)
-						gpw2=$(dialog --passwordbox "Gmailpasswort erneut eingeben:" 10 30 3>&1- 1>&2- 2>&3-)
-						if [ "$gpw1" != "$gpw2" ]; then
-							dialog --backtitle INFO --title "ACHTUNG!" --msgbox "Passwörter stimmen nicht überein!" 15 70
-							continue
-						fi
-						dialog --backtitle INFO --title "Telegram Setup" --yesno "Sind die Angaben korrekt?\n\nLogin: ${glogin}" 15 60 
-						choose=${?}
-						if [ "$choose" == "0" ]; then
-							sed -i "s/'Login': ''/\'Login': '"$glogin"'/g" $target
-							sed -i "s/'Password': ''/\'Password': '"$gpw1"'/g" $target
-							unset gpw1
-							unset gpw2
-							break
-						fi
-					done
-					chownit
-					chmodit
+				dialog --backtitle INFO --title "Checkmail Script" --yesno "Das Checkmailscript benötigt ein Gmail-Login. Da das Abrufen des Mails unsicher ist bitte für den Raspberry eine seperate Mailadresse einrichten. Fortfahren?" 15 60 
+				choose=${?}
+				if [ "$choose" == "0" ]; then 
+					name="Checkmail:"
+					target="$HOME/scripts/checkmail2.py"				
+					if [ -e $target ]; then
+						showok
+					else
+						showerror
+						echo -e "${info} Benachrichtigungsscript für eingehende Mails (gmail) von Noip wird gedownloaded"
+						wget https://raw.githubusercontent.com/Apop85/Scripts/master/Python/checkmail2.py >/dev/null 2>&1
+						while true; do
+							glogin=$(dialog --inputbox "Gmaillogin:" 15 60  --output-fd 1)
+							gpw1=$(dialog --passwordbox "Gmailpasswort:" 10 30 3>&1- 1>&2- 2>&3-)
+							gpw2=$(dialog --passwordbox "Gmailpasswort erneut eingeben:" 10 30 3>&1- 1>&2- 2>&3-)
+							if [ "$gpw1" != "$gpw2" ]; then
+								dialog --backtitle INFO --title "ACHTUNG!" --msgbox "Passwörter stimmen nicht überein!" 15 70
+								continue
+							fi
+							dialog --backtitle INFO --title "Telegram Setup" --yesno "Sind die Angaben korrekt?\n\nLogin: ${glogin}" 15 60 
+							choose=${?}
+							if [ "$choose" == "0" ]; then
+								sed -i "s/'Login': ''/\'Login': '"$glogin"'/g" $target
+								sed -i "s/'Password': ''/\'Password': '"$gpw1"'/g" $target
+								unset gpw1
+								unset gpw2
+								break
+							fi
+						done
+						chownit
+						chmodit
+					fi
 				fi
 				;;
 			6)
@@ -734,7 +740,7 @@ function getscripts {
 
 function getccslave {
 	configuserinf
-	while TRUE; do
+	while true; do
 		admbot=$(dialog --inputbox "Administrator Telegram Bot Token angeben:" 15 60  --output-fd 1)
 		admcha=$(dialog --inputbox "Administrator Telegram Chat ID angeben:" 15 60  --output-fd 1)
 		dialog --backtitle INFO --title "Admin Telegram Setup" --yesno "Sind die Angaben korrekt?\n\nBot Token: ${admbot}\n\nChat ID: ${admcha}" 15 60 
@@ -819,8 +825,6 @@ function getccslave {
 		showerror
 		echo -e "${info} Downloade $name"
 		wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/encrypt.sh.gpg >/dev/null 2>&1
-		echo -e "${cRED}Passwort${cNOR} zum entschlüsseln von $name.sh.gpg notwendig!"
-		wait4it
 		gpg $target.gpg
 		if [ -e $target ]; then 
 			showok

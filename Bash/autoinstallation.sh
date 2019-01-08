@@ -3,8 +3,6 @@
 #Folgende Stellen noch prüfen: 781 (VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version)
 #checkmail2.py gmaillogin und passwort noch abfragen
 
-#347 Login für noip kommt 2x ???????????
-
 #Color-Codes und Textsfx-Codes
 cGREEN="\e[92m"
 cRED="\e[31m"
@@ -200,8 +198,8 @@ function removepiuser {
 			echo -e "${info} Wechsle Layout zu ${cGREEN}de_CH.UTF-8${cNOR}"
 			update-locale LANG=de_CH.UTF-8
 			echo -e "${info} Wende neue Lokalisation auf vorhandene Anwendungen an"
-			locale-gen --purge "de_CH.UTF-8"
-			dpkg-reconfigure --frontend noninteractive locales
+			locale-gen --purge "de_CH.UTF-8" >/dev/null 2>&1
+			dpkg-reconfigure --frontend noninteractive locales >/dev/null 2>&1
 			#Setze Zeitzone auf Europe/Zurich
 			echo -e "${info} Setze lokale Zeitzone auf ${cGREEN}Europa/Zürich${cNOR}"
 			timezonenow=$(cat /etc/timezone)
@@ -344,10 +342,11 @@ function installduc {
 		echo -e "${info} Installiere DUC"
 		make install
 		ducinitd
-		echo -e "${info} ${cGREEN}Zugangsdaten${cNOR} für noip.com eingeben:"
-		/usr/local/bin/noip2 -C
+#		echo -e "${info} ${cGREEN}Zugangsdaten${cNOR} für noip.com eingeben:"
+#		/usr/local/bin/noip2 -C
 		echo -e "${info} Starte DUC Dienst"
 		update-rc.d noip2 defaults
+		systemctl daemon-reload
 		systemctl restart noip2.service
 		cd $HOME
 	else
@@ -938,7 +937,8 @@ function moreoptions {
 					read choose
 					if [ "$choose" == "" -o "$choose" == "y" ]; then
 						echo "BOT_ID='"${BOT_ID}"'" > $target
-						echo "CHAT_ID='"${CHAT_ID}"'" > $target
+						echo "CHAT_ID='"${CHAT_ID}"'" >> $target
+						break
 					elif [ "$choose" == "n" ]; then
 						continue
 					else
@@ -973,7 +973,7 @@ function moreoptions {
 				target="$HOME/scripts/remote/remote_slave.sh"
 				if [ -e $target ]; then
 					showok
-					echo "0 1/* * * * /bin/bash $target" >> cron${iam}
+					echo "0 */1 * * * /bin/bash $target" >> cron${iam}
 				fi
 
 				#Happy_New_Year
@@ -1038,7 +1038,7 @@ function moreoptions {
 				target="$HOME/scripts/remote/remote_update.sh"
 				if [ -e $target ]; then
 					showok
-					echo "15 1/* * * * /bin/bash $target" >> cronroot
+					echo "15 */1 * * * /bin/bash $target" >> cronroot
 				fi
 
 				#Remote_Reboot
@@ -1046,7 +1046,7 @@ function moreoptions {
 				target="$HOME/scripts/remote/remote_reboot.sh"
 				if [ -e $target ]; then
 					showok
-					echo "30 1/* * * * /bin/bash $target" >> cronroot
+					echo "30 */1 * * * /bin/bash $target" >> cronroot
 				fi
 
 				#VPN_renew_server_cert
@@ -1092,9 +1092,9 @@ configstuff
 getscripts
 moreoptions
 
-clear
-echo -e "${info} ${cRED}Raspberry wird in 5 Sekunden neu gestartet${cNOR}"
-sleep 5
+echo -e "${info} Einrichtung des Raspberrys abgeschlossen."
+echo -e "${info} ${cRED}Raspberry wird neu gestartet${cNOR}"
+sleep 10
 reboot
 
 exit 0

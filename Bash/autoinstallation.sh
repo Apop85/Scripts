@@ -5,6 +5,7 @@
 #Installation von PiVPN nicht möglich auf VM
 #VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
 #Autologin wechseln auf VM nicht möglich
+#DUC init.d file wird bei download verwurschtelt. 
 
 
 #Color-Codes und Textsfx-Codes
@@ -367,8 +368,9 @@ function ducinitd {
 	else
 		showerror	
 		echo -e "${info} noip2 wird gedownloaded"
-		wget https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/noip2 >/dev/null 2>&1
-		mv noip2 $target
+		tmpfile=$(/bin/mktemp)
+		wget -q -O $tmpfile https://raw.githubusercontent.com/Apop85/Scripts/master/Raspberry-Files/noip2 >/dev/null 2>&1
+		mv $tmpfile $target
 		chown root:root $target
 		chmodit
 	fi

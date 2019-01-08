@@ -1,7 +1,11 @@
 #!/bin/bash
 #Script zum semiautomatischen Einrichten des Raspberry mit PiHole PiVPN FTP DUC und Fail2Ban
-#Folgende Stellen noch prüfen: 781 (VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version)
-#checkmail2.py gmaillogin und passwort noch abfragen
+
+#Noch zu prüfen:
+#Installation von PiVPN nicht möglich auf VM
+#VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
+#Autologin wechseln auf VM nicht möglich
+
 
 #Color-Codes und Textsfx-Codes
 cGREEN="\e[92m"
@@ -92,7 +96,7 @@ function prepare2go {
 	newupdates=$(apt-get -q -y --ignore-hold --allow-unauthenticated -s upgrade | grep ^Inst | cut -d\  -f2 | wc -l)
 
 	if (( $newupdates > 0 )); then
-		echo -e "${info} ${cRED}$newupdates Updates sind vorhanden!${cNOR} Die Entsprechenden Updates werden vor dem fortfahren installiert"
+		echo -e "${info} ${cRED}$newupdates Updates sind vorhanden!${cNOR} Die entsprechenden Updates werden vor dem fortfahren installiert"
 		echo -e "${info} ${cBLON}Die Installation kann eine Weile dauern. Bitte warten...${cBLOFF}"
 		apt-get update >/dev/null 2>&1
 		echo -e "${info} Schritt ${cRED}1${cNOR} von 2 abgeschlossen."
@@ -192,7 +196,7 @@ function removepiuser {
 			#Ändere Autologin von Pi zu neuem User
 			sed -i '/autologin-user=\(.*\)/c\autologin-user=$uname' /etc/lightdm/lightdm.conf
 			echo -e "${info} Die Lokalisationseinstellung wird auf ${cGREEN}de-ch UTF 8${cNOR} gestellt"
-			echo -e "${info} ${cRED}ACHTUNG!${cNOR} Das Gerät wird nach erfolgreicher Anwendung neu gestartet und das Script geschlossen. Script muss nach neustart erneut manuell gestartet werden. ${cBLON}Nach Neustart mit neuem Userdaten anmelden!${cBLOFF}"
+			echo -e "${info} ${cRED}ACHTUNG!${cNOR} Das Gerät wird nach erfolgreicher Anwendung neu gestartet und das Script geschlossen. Script muss nach neustart erneut manuell gestartet werden. ${cBLON}Nach Neustart mit neuen Userdaten anmelden!${cBLOFF}"
 			wait4it
 			#Lokalisation auf de_CH UTF-8 wechseln. 
 			echo -e "${info} Wechsle Layout zu ${cGREEN}de_CH.UTF-8${cNOR}"

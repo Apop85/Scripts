@@ -237,12 +237,13 @@ function removepiuser {
 			echo -e "${info} Setze lokale Zeitzone auf ${cGREEN}Europa/Zürich${cNOR}"
 			timezonenow=$(cat /etc/timezone)
 			timezone="Europa/Zurich"
-			if [ "$timezonenow" =! "$timezone" -a "$timezonenow" != "" ]; then
+			if [ "$timezonenow" != "$timezone" -a "$timezonenow" != "" ]; then
 				echo $timezone > /etc/timezone
-				cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
+				cp /usr/share/zoneinfo/${timezone} /etc/localtime
 				systemctl restart systemd-timesyncd.service
 			fi
 			path=$(realpath "$0")
+			export SHELL="/bin/bash"
 			cp $path /home/$uname/autoinstaller.sh
 			chown $uname:$uname /home/$uname/autoinstaller.sh
 			echo -e "${info} ${cRED}REBOOT IN 5 SEKUNDEN${cNOR}"

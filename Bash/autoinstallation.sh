@@ -3,15 +3,19 @@
 #Folgende Stellen noch prüfen: 781 (VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version)
 #checkmail2.py gmaillogin und passwort noch abfragen
 
+#347 Login für noip kommt 2x ???????????
+
 #Color-Codes und Textsfx-Codes
 cGREEN="\e[92m"
 cRED="\e[31m"
-cNOR="\e[0m"
+cNOR="\e[0m" #Reset to default
 cBLON="\e[5m" #Blinken Ein
 cBLOFF="\e[25m"
 cINVON="\e[7m" #Invertiert
 cINVOFF="\e[27m"
 cBLU="\e[94m"
+cBOON="\e[1m" # Fett/Weiss
+cWHITBG="\e[107m"
 wait4input="${cINVON}${cBLU}[EINGABE ERFORDERLICH]${cNOR}${cINVOFF}"
 info="${cINVON}[INFO]${cINVOFF}"
 errorout="${cRED}${cINVON}[ERROR]${cINVOFF}${cNOR}"
@@ -131,13 +135,15 @@ function checkuser {
 
 #Funktion zum Anlegen eines neuen Users
 function addnewuser {
-	echo -e "${wait4input} Bitte gewünschten Usernamen angeben:"  
-	read uname
-	echo -e "${wait4input} Ist der Username [${cGREEN}$uname${cNOR}] korrekt? [Y/n]" 
-	read input
-	if [ "$input" =! "y" -o "$input" =! "" ]; then
-		addnewuser
-	fi
+	while true; do
+		echo -e "${wait4input} Bitte gewünschten Usernamen angeben:"  
+		read uname
+		echo -e "${wait4input} Ist der Username [${cGREEN}$uname${cNOR}] korrekt? [Y/n]" 
+		read input
+		if [ "$input" == "y" -o "$input" == "" ]; then
+			break
+		fi
+	done
 	echo -e "${info} Nutzer $uname wird angelegt"
 	adduser $uname
 }
@@ -268,14 +274,13 @@ function installpivpn {
 		sed -i '/push "dhcp-option\(.*\)/c\push "dhcp-option DNS 10.8.0.1"' /etc/openvpn/server.conf
 		countopt=$(cat /etc/openvpn/server.conf | grep 'push "dhcp-option DNS' | wc -l)
 		if (( $countopt != 1 )); then
-			if (( $countopt = 0 )); then
+			if (( $countopt == 0 )); then
 				echo 'push "dhcp-option DNS 10.8.0.1"' >> /etc/openvpn/server.conf
 			else
 				echo -e "${errorout} ${cRED}ACHTUNG!${cNOR} Es sind $countopt Einträge mit der Option${cRED}"'push "dhcp-option DNS 10.8.0.1"'"${cNOR} vorhanden. Bitte manuell ${cBLON}alle bis auf einen${cBLOFF} Eintrag löschen. Editor wird geöffnet..."
 				wait4it
 				nano /etc/openvpn/server.conf
 			fi
-			continue
 		else
 			echo -e "${info} Der Eintrag "'push "dhcp-option DNS 10.8.0.1"'" ist ordnungsgemäss."
 		fi
@@ -338,10 +343,10 @@ function installduc {
 		wait4it
 		echo -e "${info} Installiere DUC"
 		make install
+		ducinitd
 		echo -e "${info} ${cGREEN}Zugangsdaten${cNOR} für noip.com eingeben:"
 		/usr/local/bin/noip2 -C
 		echo -e "${info} Starte DUC Dienst"
-		ducinitd
 		update-rc.d noip2 defaults
 		systemctl restart noip2.service
 		cd $HOME
@@ -572,34 +577,30 @@ function getscripts {
 					showerror
 					echo -e "${info} Benachrichtigungsscript für eingehende Mails (gmail) von Noip wird gedownloaded"
 					wget https://raw.githubusercontent.com/Apop85/Scripts/master/Python/checkmail2.py >/dev/null 2>&1
-					choose=n
-					if [ "$choose" == "y" ]; then
-						sed -i "s/'Login': ''/\'Login': '"$glogin"'/g" $target
-						sed -i "s/'Password': ''/\'Password': '"$gpw1"'/g" $target
-					elif [ "$choose" == "n" ]; then
+					while true; do
 						echo -e "${wait4input} Gmaillogin:"
 						read glogin
-						echo -e "${wait4input} Gmailpasswort:"
+						echo -e "${wait4input} Gmailpasswort:${cBOON}${cWHITBG}"
 						read gpw1
-						echo -e "${wait4input} Passwort erneut eingeben:"
+						echo -e "${cNOR}${wait4input} Passwort erneut eingeben:${cBOON}${cWHITBG}"
 						read gpw2
-						if [ "$gpw1" == "$gpw2" ]; then
-							echo -e "${info} Passwörter ${cGREEN}stimmen überein${cNOR}"
-							io=i
-						else
-							echo -e "${errorout} Passwörter ${cRED}stimmen nicht überein${cNOR}"
-							io=o
+						if [ "$gpw1" != "$gpw2" ]; then
+							echo -e "${cNOR}${errorout} Passwörter ${cRED}stimmen nicht überein!${cNOR}"
+							continue
 						fi
-						echo -e "${wait4input} Sind die Angaben korrekt? [y/N]"
+						echo -e "${cNOR}${wait4input} Sind die Angaben korrekt? [y/N]"
 						read choose
-						if [ "$io" == "o" ]; then
-							choose=x
+						if [ "$choose" == "y" ]; then
+							sed -i "s/'Login': ''/\'Login': '"$glogin"'/g" $target
+							sed -i "s/'Password': ''/\'Password': '"$gpw1"'/g" $target
+							break
+						elif [ "$choose" == "n" -o "$choose" == "" ]; then
+							continue
+						else
+							echo -e "${errorout} Eingabe ungültig. Bitte erneut versuchen."
+							continue
 						fi
-						continue
-					else
-						echo -e "${cRED}Eingabe ungültig.${cNOR}"
-						continue
-					fi
+					done
 					chownit
 					chmodit
 				fi
@@ -644,10 +645,22 @@ function getscripts {
 				fi
 				;;
 			9)
-				echo -e "${wait4input} Bot Token des Administrators angeben:"
-				read admbot
-				echo -e "${wait4input} Chat-ID des Administrators angeben:"
-				read admcha
+				while true; do
+					echo -e "${wait4input} Bot Token des Administrators angeben:"
+					read admbot
+					echo -e "${wait4input} Chat-ID des Administrators angeben:"
+					read admcha
+					echo -e "${wait4input} Sind die Angaben korrekt? [Y/n]"
+					read choose
+					if [ "$choose" == "" -o "$choose" == "y" ]; then
+						break
+					elif [ "$choose" == "n" ]; then
+						continue
+					else
+						echo -e "${errorout} Eingabe ungültig. Bitte erneut versuchen."
+						continue
+					fi
+				done
 				
 				name="Remote Slave Ordner:"
 				target="$HOME/scripts/remote"
@@ -868,20 +881,21 @@ function moreoptions {
 				systemctl restart fail2ban.service
 				;;
 			5)
-				choose=n
-				if [ "$choose" == "y" ]; then
-					pivpn -a $vpnname
-				elif [ "$choose" == "n" ]; then
+				while true; do 
 					echo -e "${wait4input} Bitte gewünschten ${cGREEN}Usernamen${cNOR} für den VPN Client eingeben:"
 					read vpnname
 					echo -e "${wait4input} Ist ${cGREEN}${vpnname}${cNOR} korrekt? [y/n]"
 					read choose
-					continue
-				else
-					echo -e "${info} ${cRED}Fehlerhafte Eingabe, erneut versuchen${cNOR}"
-					choose=n
-					continue
-				fi
+					if [ "$choose" == "y" ]; then
+						pivpn -a $vpnname
+						break
+					elif [ "$choose" == "n" ]; then
+						continue
+					else
+						echo -e "${info} ${cRED}Fehlerhafte Eingabe, erneut versuchen${cNOR}"
+						continue
+					fi
+				done
 				;;
 			6)
 				name="VPNconnect.sh"
@@ -912,14 +926,26 @@ function moreoptions {
 					showerror
 					touch $target
 				fi
-				echo -e "${info} Aktuelles Bot Token: ${cGREEN}${BOT_ID}${cNOR}"
-				echo -e "${wait4input} ${cGREEN}Bot Token${cNOR} angeben:"
-				read BOT_ID
-				echo -e "${info} Aktuelle Chat-ID: ${cGREEN}${CHAT_ID}${cNOR}"
-				echo -e "${wait4input} ${cGREEN}Chat ID${cNOR} angeben:"
-				read CHAT_ID
-				echo "BOT_ID=${BOT_ID}" > $target
-				echo "CHAT_ID=${CHAT_ID}" > $target
+				
+				while true; do
+					echo -e "${info} Aktuelles Bot Token: ${cGREEN}${BOT_ID}${cNOR}"
+					echo -e "${wait4input} ${cGREEN}Bot Token${cNOR} angeben:"
+					read BOT_ID
+					echo -e "${info} Aktuelle Chat-ID: ${cGREEN}${CHAT_ID}${cNOR}"
+					echo -e "${wait4input} ${cGREEN}Chat ID${cNOR} angeben:"
+					read CHAT_ID
+					echo -e "${wait4input} Sind die Angaben korrekt? [Y/n]"
+					read choose
+					if [ "$choose" == "" -o "$choose" == "y" ]; then
+						echo "BOT_ID='"${BOT_ID}"'" > $target
+						echo "CHAT_ID='"${CHAT_ID}"'" > $target
+					elif [ "$choose" == "n" ]; then
+						continue
+					else
+						echo -e "${errorout} Eingabe ungültig. Bitte erneut versuchen."
+						continue
+					fi
+				done
 				echo -e "${info} Einrichtung von $name ist abgeschlossen."
 				;;
 			8)

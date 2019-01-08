@@ -158,9 +158,9 @@ function checkuser {
 function addnewuser {
 	while true; do
 		uname=$(dialog --inputbox "Bitte gewünschten Benutzernamen angeben:" 15 60  --output-fd 1)
-		passwd=$(dialog --passwordbox "Passwort für $uname:" 10 30 3>&1- 1>&2- 2>&3-)
+		passwd2=$(dialog --passwordbox "Passwort für $uname:" 10 30 3>&1- 1>&2- 2>&3-)
 		passwd1=$(dialog --passwordbox "Passwort bestätigen:" 10 30 3>&1- 1>&2- 2>&3-)
-		if [ "$passwd" != "$passwd1" ]; then
+		if [ "$passwd2" != "$passwd1" ]; then
 			dialog --backtitle INFO --title "ACHTUNG!" --msgbox "Passwörter stimmen nicht überein!" 15 70
 			continue
 		fi
@@ -172,11 +172,10 @@ function addnewuser {
 	done
 	clear
 	echo -e "${info} Nutzer $uname wird angelegt"
-	useradd -m "$uname" -p "$passwd"
+	passwdc=$(openssl passwd -1 $passwd2)
+	useradd -m "$uname" -p "$passwdc"
 	#echo $passwd | passwd root --stdin    #FUNKTIONIERT NICHT BEI ROOT
-	echo ">$passwd<"
-
-	unset passwd
+	unset passwd2
 	unset passwd1
 }
 

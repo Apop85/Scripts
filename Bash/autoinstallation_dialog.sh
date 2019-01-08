@@ -6,7 +6,7 @@
 #VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
 #Autologin wechseln auf VM nicht möglich
 #IpV6 bei PiHole conf noch eintragen
-#moreoptions punkt 7 obsolet
+#adduser $uname evt auch mit $passwd und ohne weitere fragen?
 
 clear
 #Color-Codes und Textsfx-Codes
@@ -234,7 +234,7 @@ function removepiuser {
 			fi
 			path=$(realpath "$0")
 			cp $path /home/$uname/autoinstaller.sh
-			chown $uname:$uname $HOME/$uname/autoinstaller.sh
+			chown $uname:$uname /home/$uname/autoinstaller.sh
 			echo -e "${info} ${cRED}REBOOT IN 5 SEKUNDEN${cNOR}"
 			sleep 5
 			reboot

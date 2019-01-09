@@ -2,11 +2,7 @@
 #Script zum semiautomatischen Einrichten des Raspberry mit PiHole PiVPN FTP DUC und Fail2Ban
 
 #Noch zu prüfen:
-#Installation von PiVPN nicht möglich auf VM
 #VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
-#Autologin wechseln auf VM nicht möglich
-#IpV6 bei PiHole conf noch eintragen
-
 
 clear
 #Color-Codes und Textsfx-Codes
@@ -175,8 +171,6 @@ function addnewuser {
 	passwdc=$(openssl passwd -1 $passwd2)
 	useradd -m "$uname" -p "$passwdc"
 	usermod -s /bin/bash $uname	#SHELL="/bin/bash"
-	wait4it
-	#echo $passwd | passwd root --stdin    #FUNKTIONIERT NICHT BEI ROOT
 	unset passwd2
 	unset passwd1
 }
@@ -277,7 +271,7 @@ function installmenu {
 			 3 "[FTP-Server] Installieren" off
 			 4 "[Fail2Ban] Installieren" off
 			 5 "[Scripts] Vorgefertigte Scripts die Telegram verwenden installieren." off
-			 6 "[Konfigurationen] downloaden uns anwenden." off)
+			 6 "[Konfigurationen] downloaden und anwenden." off)
 	choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
 	clear
 	for choice in $choices
@@ -343,8 +337,11 @@ function installpihole {
 		showerror
 		echo -e "${info} ${cGREEN}PiHole${cNOR} wird installiert"
 		curl -sSL https://install.pi-hole.net | bash
-		echo -e "${info} ${cGREEN}Passwort${cNOR} für PiHole Webclient eingeben. Leer lassen für kein Passwort"
+		echo -e "${wait4input} ${cGREEN}Passwort${cNOR} für PiHole Webclient eingeben. Leer lassen für kein Passwort"
 		pihole -a -p
+		target="/etc/pihole/setupVars.conf"
+		ipv6=$(ip addr show dev eth0 | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d';)
+		sed -i "s/IPV6_ADDRESS=\(.*\)/\IPV6_ADDRESS=$ipv6/g" $target
 	fi
 }
 
@@ -1135,6 +1132,7 @@ checkuser
 removepiuser
 installmenu
 
+dialog --backtitle INFO --title "Installation Abgeschlossen" --yesno "Für den Benutzer Root muss noch das Passwort geändert werden.\n\nFolgenden Befehl ausführen: sudo passwd root" 15 60 
 dialog --backtitle INFO --title "Installation Abgeschlossen" --yesno "Die Installtion ist abgeschlossen, soll der Raspberry neu gestartet werden?" 15 60 
 choose=${?}
 if [ "$choose" == "0" ]; then

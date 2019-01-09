@@ -232,7 +232,7 @@ function removepiuser {
 			echo -e "${info} Setze lokale Zeitzone auf ${cGREEN}Europa/Zürich${cNOR}"
 			timezonenow=$(cat /etc/timezone)
 			timezone="Europa/Zurich"
-			if [ "$timezonenow" != "$timezone" -a "$timezonenow" != "" ]; then
+			if [ "$timezonenow" != "$timezone" ]; then
 				echo $timezone > /etc/timezone
 				cp -rf /usr/share/zoneinfo/$timezone /etc/localtime
 				systemctl restart systemd-timesyncd.service

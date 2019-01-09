@@ -65,7 +65,7 @@ function check4scriptdir {
 	name="Scriptsordner:"
 	target="$HOME/scripts"
 	#Prüfe vorhandensein des Scriptordners
-	if [ -d $target; then
+	if [ -d $target ]; then
 		showok
 	else
 		showerror

@@ -121,7 +121,6 @@ function prepare2go {
 	
 	echo -e "${info} Vorausgesetzte Pakete werden gegebenenfalls installiert."
 	apt-get install dialog make gcc tar curl gpg -y >/dev/null 2>&1
-	dialog --backtitle INFO --title "Raspberry Autoinstaller" --msgbox "Wilkommen im Raspberry-Autoinstaller von Apop85. Nachfolgend wird nach einigen Informationen gefragt welche zum automatischen Einrichten des Raspberrys benötigt werden.\n\nDie Installation wird mehrere Neustarts benötigen wobei das Script nach jedem Neustart manuell neu gestartet werden muss" 15 70
 	clear
 }
 
@@ -134,6 +133,7 @@ function prepare2go {
 #Neuer User bereits erstellt?
 function checkuser {
 	if [ "$iam" == "pi" ]; then
+		dialog --backtitle INFO --title "Raspberry Autoinstaller" --msgbox "Wilkommen im Raspberry-Autoinstaller von Apop85. Nachfolgend wird nach einigen Informationen gefragt welche zum automatischen Einrichten des Raspberrys benötigt werden.\n\nDie Installation wird mehrere Neustarts benötigen wobei das Script nach jedem Neustart manuell neu gestartet werden muss" 15 70
 		echo -e "${info} Username: ${cRED}${iam}${cNOR}"
 		echo -e "${info} Der Username ist ${cRED}unsicher${cNOR}. Erstelle neuen User..."
 		addnewuser
@@ -221,7 +221,6 @@ function removepiuser {
 			#Ändere Autologin von Pi zu neuem User
 			sed -i '/autologin-user=\(.*\)/c\autologin-user=$uname' /etc/lightdm/lightdm.conf
 			echo -e "${info} Die Lokalisationseinstellung wird auf ${cGREEN}de-ch UTF 8${cNOR} gestellt"
-			dialog --backtitle INFO --title "Raspberry Autoinstaller" --msgbox "ACHTUNG! \nDas Gerät wird nach erfolgreicher Anwendung der Lokalisationseinstellungen neu gestartet und das Script geschlossen. \n\nScript muss nach neustart erneut manuell gestartet werden. \n\nNach Neustart mit neuen Userdaten anmelden!" 15 70
 			clear
 			#Lokalisation auf de_CH UTF-8 wechseln. 
 			echo -e "${info} Wechsle Layout zu ${cGREEN}de_CH.UTF-8${cNOR}"
@@ -235,12 +234,14 @@ function removepiuser {
 			timezone="Europa/Zurich"
 			if [ "$timezonenow" != "$timezone" -a "$timezonenow" != "" ]; then
 				echo $timezone > /etc/timezone
-				cp /usr/share/zoneinfo/$timezone /etc/localtime
+				cp -rf /usr/share/zoneinfo/$timezone /etc/localtime
 				systemctl restart systemd-timesyncd.service
 			fi
 			path=$(realpath "$0")
 			cp $path /home/$uname/autoinstaller.sh
 			chown $uname:$uname /home/$uname/autoinstaller.sh
+			dialog --backtitle INFO --title "Raspberry Autoinstaller" --msgbox "ACHTUNG! \nDamit die Lokalisationseinstellungen übernommen werden muss der Raspberry nun neu gestartet werden.\n\nNach dem Neustart mit dem neuen Benutzer $uname anmelden und das Script mit folgendem Befehl neu starten: ./autoinstaller.sh" 15 70
+			clear
 			echo -e "${info} ${cRED}REBOOT IN 5 SEKUNDEN${cNOR}"
 			sleep 5
 			reboot

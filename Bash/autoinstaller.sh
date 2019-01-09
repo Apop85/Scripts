@@ -1,9 +1,11 @@
 #!/bin/bash
 #Script zum semiautomatischen Einrichten des Raspberry mit PiHole PiVPN FTP DUC und Fail2Ban
+iamswiss=yes
 
 #Noch zu prüfen:
 #VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
 #PiHole setupVars einfügen der IPv6 adresse erfolgreich?
+#iamswiss=yes noch prüfen bei lokalisation und zeitzone
 
 clear
 #Color-Codes und Textsfx-Codes
@@ -225,18 +227,23 @@ function removepiuser {
 			clear
 			#Lokalisation auf de_CH UTF-8 wechseln. 
 			echo -e "${info} Wechsle Layout zu ${cGREEN}de_CH.UTF-8${cNOR}"
-			update-locale LANG=de_CH.UTF-8
-			echo -e "${info} Wende neue Lokalisation auf vorhandene Anwendungen an"
-			locale-gen --purge "de_CH.UTF-8" >/dev/null 2>&1
-			dpkg-reconfigure --frontend noninteractive locales >/dev/null 2>&1
-			#Setze Zeitzone auf Europe/Zurich
-			echo -e "${info} Setze lokale Zeitzone auf ${cGREEN}Europa/Zürich${cNOR}"
-			timezonenow=$(cat /etc/timezone)
-			timezone="Europa/Zurich"
-			if [ "$timezonenow" != "$timezone" ]; then
-				echo $timezone > /etc/timezone
-				cp -rf /usr/share/zoneinfo/$timezone /etc/localtime
-				systemctl restart systemd-timesyncd.service
+			if [ "$iamswiss" == "yes" ]; then 
+				update-locale LANG=de_CH.UTF-8
+				echo -e "${info} Wende neue Lokalisation auf vorhandene Anwendungen an"
+				locale-gen --purge "de_CH.UTF-8" >/dev/null 2>&1
+				dpkg-reconfigure --frontend noninteractive locales >/dev/null 2>&1
+				#Setze Zeitzone auf Europe/Zurich
+				echo -e "${info} Setze lokale Zeitzone auf ${cGREEN}Europa/Zürich${cNOR}"
+				timezonenow=$(cat /etc/timezone)
+				timezone="Europa/Zurich"
+				if [ "$timezonenow" != "$timezone" ]; then
+					echo $timezone > /etc/timezone
+					cp -rf /usr/share/zoneinfo/$timezone /etc/localtime
+					systemctl restart systemd-timesyncd.service
+				fi
+			else
+				dpkg-reconfigure keyboard-configuration
+				dpkg-reconfigure tzdata
 			fi
 			path=$(realpath "$0")
 			cp $path /home/$uname/autoinstaller.sh

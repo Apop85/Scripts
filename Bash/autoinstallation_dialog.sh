@@ -235,7 +235,7 @@ function removepiuser {
 			timezone="Europa/Zurich"
 			if [ "$timezonenow" != "$timezone" -a "$timezonenow" != "" ]; then
 				echo $timezone > /etc/timezone
-				cp /usr/share/zoneinfo/${timezone} /etc/localtime
+				cp /usr/share/zoneinfo/$timezone /etc/localtime
 				systemctl restart systemd-timesyncd.service
 			fi
 			path=$(realpath "$0")

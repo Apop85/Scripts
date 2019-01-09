@@ -3,6 +3,7 @@
 
 #Noch zu prüfen:
 #VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
+#PiHole setupVars einfügen der IPv6 adresse erfolgreich?
 
 clear
 #Color-Codes und Textsfx-Codes
@@ -338,6 +339,7 @@ function installpihole {
 		showerror
 		echo -e "${info} ${cGREEN}PiHole${cNOR} wird installiert"
 		curl -sSL https://install.pi-hole.net | bash
+		clear
 		echo -e "${wait4input} ${cGREEN}Passwort${cNOR} für PiHole Webclient eingeben. Leer lassen für kein Passwort"
 		pihole -a -p
 		target="/etc/pihole/setupVars.conf"
@@ -1133,7 +1135,8 @@ checkuser
 removepiuser
 installmenu
 
-dialog --backtitle INFO --title "Installation Abgeschlossen" --yesno "Für den Benutzer Root muss noch das Passwort geändert werden.\n\nFolgenden Befehl ausführen: sudo passwd root" 15 60 
+
+dialog --backtitle INFO --title "Installation Abgeschlossen" --msgbox "Für den Benutzer Root muss noch das Passwort geändert werden.\n\nFolgenden Befehl ausführen: sudo passwd root" 15 60 
 dialog --backtitle INFO --title "Installation Abgeschlossen" --yesno "Die Installtion ist abgeschlossen, soll der Raspberry neu gestartet werden?" 15 60 
 choose=${?}
 if [ "$choose" == "0" ]; then

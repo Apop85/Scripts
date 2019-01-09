@@ -5,7 +5,6 @@ iamswiss=no
 #Noch zu prüfen:
 #VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
 #PiHole setupVars einfügen der IPv6 adresse erfolgreich?
-#iamswiss=yes noch prüfen bei lokalisation und zeitzone
 
 clear
 #Color-Codes und Textsfx-Codes

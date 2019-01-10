@@ -28,7 +28,7 @@ MAIL_SERVERS = {
                     },
 }
 
-subject = 'ACTION REQUIRED: rbaldinger.ddns.net is Expiring Soon'
+subject = 'ACTION REQUIRED: MYDNSADR.ddns.net is Expiring Soon'
 
 execfile("/home/pi/Autostart/telegram.inf")
 telegram_notice_text = 'No-IP Adresse muss verifiziert werden! %confirmlink%'

@@ -1,10 +1,5 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
-
-# by Meigrafd @ forum-raspberry.de
-# Script zur Benachrichtigung einer bald ablaufenden DynDNS-Adresse bei No-IP.com
-# Übermittelt ebenfalls den Bestätigungslink
-
 from __future__ import print_function
 import email
 import imaplib
@@ -21,15 +16,20 @@ with open('/home/pi/scriptexec.log', 'a') as att_file:
 MAIL_SERVERS = {
                 'gmail':
                     {
-                        'Login': '',
-                        'Password': '',
+                        'Login': 'rbaldingerpi@gmail.com',
+                        'Password': '479228826:AAG3SA5Edn5XqtnAqw3Bftw1kMVTv2kM0Ew',
                         'Server': 'imap.gmail.com',
                         'Port': 993,
                     },
 }
 
-subject = 'ACTION REQUIRED: MYDNSADR.ddns.net is Expiring Soon'
+# react only on eMails with exact this subject
+# subject = 'Confirm Your Hostname Now'
 
+subject = 'ACTION REQUIRED: rbaldinger.ddns.net is Expiring Soon'
+
+# BOT_TOKEN = '479228826:AAG3SA5Edn5XqtnAqw3Bftw1kMVTv2kM0Ew'
+# TELEGRAM_CHAT_ID = '8613670'
 execfile("/home/pi/Autostart/telegram.inf")
 telegram_notice_text = 'No-IP Adresse muss verifiziert werden! %confirmlink%'
 

@@ -1,16 +1,20 @@
-#!/usr/bin/python2
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
 from __future__ import print_function
 import email
 import imaplib
 import urllib
 import requests
 import time
+import os
+from os.path import expanduser
 from time import gmtime, strftime
+HOME = expanduser("~")
 
 logtime = time.strftime('%d.%m.%Y - %H:%M:%S')
-logmessage = logtime + ' checkmail2.py ausgeführt' + "\n"
-with open('/home/pi/scriptexec.log', 'a') as att_file:
+logmessage = logtime + ' checkmail2.py ausgefuehrt' + "\n"
+with open('{}/scriptexec.log'.format(HOME), 'a') as att_file:
     att_file.write(logmessage)
 
 MAIL_SERVERS = {
@@ -28,9 +32,7 @@ MAIL_SERVERS = {
 
 subject = 'ACTION REQUIRED: MYDNSADR.ddns.net is Expiring Soon'
 
-# BOT_TOKEN = '479228826:AAG3SA5Edn5XqtnAqw3Bftw1kMVTv2kM0Ew'
-# TELEGRAM_CHAT_ID = '8613670'
-execfile("/home/pi/Autostart/telegram.inf")
+execfile("{}/scripts/telegram.inf".format(HOME))
 telegram_notice_text = 'No-IP Adresse muss verifiziert werden! %confirmlink%'
 
 URL = 'https://api.telegram.org/bot{}/'.format(BOT_ID)

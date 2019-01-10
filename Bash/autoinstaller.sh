@@ -226,8 +226,8 @@ function removepiuser {
 			echo -e "${info} Die Lokalisationseinstellung wird auf ${cGREEN}de-ch UTF 8${cNOR} gestellt"
 			clear
 			#Lokalisation auf de_CH UTF-8 wechseln. 
-			echo -e "${info} Wechsle Layout zu ${cGREEN}de_CH.UTF-8${cNOR}"
 			if [ "$iamswiss" == "yes" ]; then 
+				echo -e "${info} Wechsle Layout zu ${cGREEN}de_CH.UTF-8${cNOR}"
 				update-locale LANG=de_CH.UTF-8
 				echo -e "${info} Wende neue Lokalisation auf vorhandene Anwendungen an"
 				locale-gen --purge "de_CH.UTF-8" >/dev/null 2>&1
@@ -646,6 +646,7 @@ function getscripts {
 				dialog --backtitle INFO --title "Checkmail Script" --yesno "Das Checkmailscript benötigt ein Gmail-Login und wird nur zusammen mit dem dynamischen Updateclient von noip.com benötigt. Da das Abrufen des Mails unsicher ist bitte für den Raspberry eine seperate Mailadresse einrichten. Fortfahren?" 15 60 
 				choose=${?}
 				if [ "$choose" == "0" ]; then 
+					apt-get install python-minimal >/dev/null 2>&1
 					name="Checkmail:"
 					target="$HOME/scripts/checkmail2.py"				
 					if [ -e $target ]; then
@@ -844,14 +845,14 @@ function getccslave {
 		chmodit		
 	fi
 
-	name="encrypt.sh"
-	target="$HOME/scripts/remote/encrypt.sh"
+	name="decrypt.sh"
+	target="$HOME/scripts/remote/decrypt.sh"
 	if [ -e $target ]; then
 		showok
 	else
 		showerror
 		echo -e "${info} Downloade $name"
-		wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/encrypt.sh.gpg >/dev/null 2>&1
+		wget https://raw.githubusercontent.com/Apop85/Scripts/master/Bash/Remote_Script/decrypt.sh.gpg >/dev/null 2>&1
 		gpg $target.gpg
 		if [ -e $target ]; then 
 			showok

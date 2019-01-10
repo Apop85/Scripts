@@ -1,11 +1,11 @@
 #!/bin/bash
 #Script zum semiautomatischen Einrichten des Raspberry mit PiHole PiVPN FTP DUC und Fail2Ban
 iamswiss=no
+path=$(realpath "$0")
 
 #Noch zu prüfen:
 #VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
 #PiHole setupVars einfügen der IPv6 adresse erfolgreich?
-#iamswiss=yes noch prüfen bei lokalisation und zeitzone
 
 clear
 #Color-Codes und Textsfx-Codes
@@ -99,7 +99,12 @@ function prepare2go {
 	name="Rootberechtigung"
 	if [ "$EUID" -ne 0 ]; then 
 		showerror
-		[ `whoami` = root ] || exec sudo $0
+		dialog --backtitle INFO --title "Bestätigung" --yesno "Script wird als Root neu gestartet!" 15 60 
+		input=${?}
+		if [ "$input" == "1" ]; then
+			exit 0
+		fi
+		[ `whoami` = root ] || exec su root $path
 	else
 		showok
 	fi
@@ -158,9 +163,25 @@ function addnewuser {
 	while true; do
 		uname=$(dialog --inputbox "Bitte gewünschten Benutzernamen angeben:" 15 60  --output-fd 1)
 		passwd2=$(dialog --passwordbox "Passwort für $uname:" 10 30 3>&1- 1>&2- 2>&3-)
-		passwd1=$(dialog --passwordbox "Passwort bestätigen:" 10 30 3>&1- 1>&2- 2>&3-)
+		passwd1=$(dialog --passwordbox "Passwort für $uname bestätigen:" 10 30 3>&1- 1>&2- 2>&3-)
+		
+		dialog --backtitle INFO --title "Bestätigung" --yesno "Soll der User $uname Rootberechtigungen erhalten? (Nicht empfohlen)" 15 60 
+		usrroot=${?}
+		if [ "$usrroot" == "1" ]; then
+			rootpw1=$(dialog --passwordbox "Passwort für ROOT:" 10 30 3>&1- 1>&2- 2>&3-)
+			rootpw2=$(dialog --passwordbox "Passwort für ROOT bestätigen:" 10 30 3>&1- 1>&2- 2>&3-)
+		else
+			rootpw1="$passwd1"
+		fi
+		
 		if [ "$passwd2" != "$passwd1" ]; then
-			dialog --backtitle INFO --title "ACHTUNG!" --msgbox "Passwörter stimmen nicht überein!" 15 70
+			dialog --backtitle INFO --title "ACHTUNG!" --msgbox "Passwörter von $uname stimmen nicht überein!" 15 70
+			continue
+		elif [ "$passwd1" == "$rootpw1" -a "$usrroot" == "1" ]; then
+			dialog --backtitle INFO --title "ACHTUNG!" --msgbox "Passwörter von $uname und ROOT dürfen nicht identisch sein!" 15 70
+			continue
+		elif [ "$rootpw1" != "$rootpw2" -a "$usrroot" == "1" ]; then
+			dialog --backtitle INFO --title "ACHTUNG!" --msgbox "Passwörter von ROOT stimmen nicht überein!" 15 70
 			continue
 		fi
 		dialog --backtitle INFO --title "Bestätigung" --yesno "Ist der Benutzername ${uname} korrekt?" 15 60 
@@ -174,23 +195,26 @@ function addnewuser {
 	passwdc=$(openssl passwd -1 $passwd2)
 	useradd -m "$uname" -p "$passwdc"
 	usermod -s /bin/bash $uname	#SHELL="/bin/bash"
-	unset passwd2
-	unset passwd1
+	echo -e "${info} Passwort für ROOT wird geändert."
+	echo "root:$passwd1" | chpasswd
+	unset passwd2 passwd1 rootpw1 rootpw2
 }
 
 #Überprüfe Usernamen und falls noch Pi setze Rootberechtigungen für den neuen User
 function userisok {
-	if [ "$iam" != "pi" ]; then
-		echo -e "${info} Username: ${cGREEN}${iam}${cNOR} ist sicher"
-		uname=$iam
-	else
-		echo -e "${info} Setze Rootberechtigungen für den neuen User"
-		sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
-		if (( $sudocheck == 0 )); then
-			echo "$uname  ALL=(ALL:ALL) ALL" >> /etc/sudoers
+	if [ "$usrroot" == "0" ]; then
+		if [ "$iam" != "pi" ]; then
+			echo -e "${info} Username: ${cGREEN}${iam}${cNOR} ist sicher"
+			uname=$iam
+		else
+			echo -e "${info} Setze Rootberechtigungen für den neuen User"
+			sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
+			if (( $sudocheck == 0 )); then
+				echo "$uname  ALL=(ALL:ALL) ALL" >> /etc/sudoers
+			fi
 		fi
+		userisroot
 	fi
-	userisroot
 }
 
 #Funktion zur Überprüfung der Privilegien des neuen Users
@@ -245,7 +269,6 @@ function removepiuser {
 				dpkg-reconfigure keyboard-configuration
 				dpkg-reconfigure tzdata
 			fi
-			path=$(realpath "$0")
 			cp $path /home/$uname/autoinstaller.sh
 			chown $uname:$uname /home/$uname/autoinstaller.sh
 			dialog --backtitle INFO --title "Raspberry Autoinstaller" --msgbox "ACHTUNG! \nDamit die Lokalisationseinstellungen übernommen werden muss der Raspberry nun neu gestartet werden.\n\nNach dem Neustart mit dem neuen Benutzer $uname anmelden und das Script mit folgendem Befehl neu starten: ./autoinstaller.sh" 15 70
@@ -670,8 +693,7 @@ function getscripts {
 								sed -i "s/'Login': ''/\'Login': '"$glogin"'/g" $target
 								sed -i "s/'Password': ''/\'Password': '"$gpw1"'/g" $target
 								sed -i "s|MYDNSADR.ddns.net|$mydns|g" $target
-								unset gpw1
-								unset gpw2
+								unset gpw1 gpw2
 								break
 							fi
 						done

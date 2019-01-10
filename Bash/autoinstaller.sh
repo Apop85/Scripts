@@ -222,7 +222,7 @@ function removepiuser {
 			echo -e "${info} Benutzer ${cGREEN}pi${cNOR} ist noch vorhanden. Aus sicherheitsgründen wird dieser entfernt."
 			echo -e "${info} Autologin für Benutzer ${cGREEN}pi${cNOR} wird auf Benutzer ${cGREEN}$uname${cNOR} geändert."
 			#Ändere Autologin von Pi zu neuem User
-			sed -i '/autologin-user=\(.*\)/c\autologin-user=$uname' /etc/lightdm/lightdm.conf
+			sed -i "s|autologin-user=\(.*\)|autologin-user=$uname|g" /etc/lightdm/lightdm.conf
 			echo -e "${info} Die Lokalisationseinstellung wird auf ${cGREEN}de-ch UTF 8${cNOR} gestellt"
 			clear
 			#Lokalisation auf de_CH UTF-8 wechseln. 
@@ -351,7 +351,7 @@ function installpihole {
 		pihole -a -p
 		target="/etc/pihole/setupVars.conf"
 		ipv6=$(ip addr show dev eth0 | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d';)
-		sed -i "s/IPV6_ADDRESS=\(.*\)/\IPV6_ADDRESS=$ipv6/g" $target
+		sed -i "s|IPV6_ADDRESS=\(.*\)|IPV6_ADDRESS=$ipv6|g" $target
 	fi
 }
 
@@ -668,7 +668,7 @@ function getscripts {
 							if [ "$choose" == "0" ]; then
 								sed -i "s/'Login': ''/\'Login': '"$glogin"'/g" $target
 								sed -i "s/'Password': ''/\'Password': '"$gpw1"'/g" $target
-								sed -i "/MYDNSADR.ddns.net/\${mydns}" $target
+								sed -i "s|MYDNSADR.ddns.net|$mydns|g" $target
 								unset gpw1
 								unset gpw2
 								break

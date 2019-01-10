@@ -16,8 +16,8 @@ with open('/home/pi/scriptexec.log', 'a') as att_file:
 MAIL_SERVERS = {
                 'gmail':
                     {
-                        'Login': 'rbaldingerpi@gmail.com',
-                        'Password': '479228826:AAG3SA5Edn5XqtnAqw3Bftw1kMVTv2kM0Ew',
+                        'Login': '',
+                        'Password': '',
                         'Server': 'imap.gmail.com',
                         'Port': 993,
                     },
@@ -26,7 +26,7 @@ MAIL_SERVERS = {
 # react only on eMails with exact this subject
 # subject = 'Confirm Your Hostname Now'
 
-subject = 'ACTION REQUIRED: rbaldinger.ddns.net is Expiring Soon'
+subject = 'ACTION REQUIRED: MYDNSADR.ddns.net is Expiring Soon'
 
 # BOT_TOKEN = '479228826:AAG3SA5Edn5XqtnAqw3Bftw1kMVTv2kM0Ew'
 # TELEGRAM_CHAT_ID = '8613670'

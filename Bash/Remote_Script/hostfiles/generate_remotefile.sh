@@ -1,17 +1,17 @@
 #!/bin/bash
 
-readonly KEYGEN="$HOME/RMF/keygen.sh"
+readonly KEYGEN="$HOME/RMF/encrypt.sh"
 readonly REM_DIR="$HOME/RMF/slave/update/remote.txt"
 readonly VER_DIR="$HOME/RMF/slave/update/update.txt"
 
 
 #FTP-Zugang:
-readonly USERFTP=''
-readonly FTP_HOST=''
-readonly FTP_PW=''
-readonly merk=""
+readonly USERFTP='apop85_raspberry'
+readonly FTP_HOST='apop85.bplaced.net'
+readonly FTP_PW='vw6/23SFD3'
+readonly merk="5536"
 readonly UPDATEFILE="$HOME/RMF/slave/update/remote_slave.sh.gpg"
-readonly UPDATE_URL='' 
+readonly UPDATE_URL='http://apop85.bplaced.net/raspiremote/update.txt' 
 updatedir="$HOME/RMF/slave/remote_slave.sh"
 
 #clear old files
@@ -28,58 +28,58 @@ let versionnow++
 
 #Auswahl Update planen oder Funktion ausführen
 function update_or_run {
-	clear
-	echo "Funktion ausführen (1) oder Update planen (2)?"
-	read inp
-	if [ "$inp" == "1" ]; then
-		choose_option
-	elif [ "$inp" == "2" ]; then
-		create_update
-	else
-		echo "Eingabe Falsch. Erneut versuchen"
-		sleep 5
-		update_or_run
-	fi
+	auswahl=$(dialog --stdout --backtitle "Bitte Wählen" --title Aktion --radiolist "Was soll ausgeführt werden?." 16 60 5 \
+		"CODE" "Code generieren" on \
+		"UPDATE" "Update einreihen" off)
+	case "$auswahl" in
+		CODE)
+			choose_option
+			;;
+		UPDATE)
+			create_update
+			;;
+	esac
 }
 
 #Generiere passwort für Updatefile und definiere Dateipfad
 function create_update {
-	echo "$updatedir als Ursprung verwenden? (Y/n)"
-	read inp2
-	if [ "$inp2" == "n" ]; then
-		echo "Pfad zur Datei angeben:"
-		read updatedir
+	dialog --backtitle INFO --title "Dateipfad" --yesno "$updatedir als Ursprung verwenden?" 15 60
+	inp2=${?}
+	if [ "$inp2" == "1" ]; then
+		while true; do
+			updatedir=$(dialog --inputbox "Dateipfad angeben:" 15 60  --output-fd 1)
 			if [ -e $updatedir ]; then
-				echo "OK"
+				break
 			else
-				echo "File nicht gefunden."
-				create_update
+				dialog --backtitle FEHLER --title Achtung --msgbox "Datei $updatedir nicht gefunden!" 15 40
+				continue
 			fi
-        elif [ "$inp2" != "" ]; then
-                if [ "$inp2" != "y" ]; then
-                        echo "Eingabe falsch [leer, y, n]"
-                        create_update
-                fi
-        fi
+		done
+	fi
 
 	encrypt_update
 }
 
 function encrypt_update {
-	export dec_var=$merk
-	passit=$($KEYGEN)
+	passit=$($KEYGEN $merk)
 	gpg -o $UPDATEFILE --yes --pinentry-mode loopback --passphrase $passit --symmetric $updatedir
 	if [ -e $UPDATEFILE ]; then
 		echo "Verschlüsselung erfolgreich mit $passit"
 		touch $VER_DIR
-		echo "ACHTUNG! Update mit der Versionsnummer $versionnow wird eingereiht! Ist dies Korrekt? Stimmt diese Nummer nicht mit der im Script hinterlegten Nummer überein endet das Script in einer Endlosschleife. [Y/n]"
-		read dangerinp
-		if [ "$dangerinp" != "" ];then 
-			echo "Welche Versionsnummer ist aktuell?"
-			read versionnow
-		fi
+		while true; do
+			clear
+			dialog --backtitle INFO --title "Versionsinfo" --yesno "Achtung! Update mit der Versionsnummer <<${versionnow}>> wird eingereiht! Bitte bestätigen oder ändern.\n\nWenn das neue Script eine niedrigere Versionsnummer aufweist wird das Script dauerhauft Loopen." 15 60
+			inp2=${?}
+			if [ "$inp2" == "0" ]; then
+				break
+			else
+				versionnow=$(dialog --inputbox "Aktuelle Version eingeben:" 15 60  --output-fd 1)
+				continue
+			fi
+		done
 		echo $versionnow > $VER_DIR
 		upload_update | grep uploaded
+		exit 0
 	else
 		echo "Verschlüsselung fehlgeschlagen!"
 		create_update
@@ -88,49 +88,32 @@ function encrypt_update {
 
 #Userinput
 function usr_inp {
-	clear
-	echo Yahr:
-	read var1
-	echo Monat:
-	read var2
-	echo Tag:
-	read var3
-	echo Stunde:
-	read var4
-
-	var4=$var4$var3
-	var3=$var2$var3
-	ver_code=$((-1*(3*(var4-var2-var3-(5*var1)))))
-	export dec_var=$ver_code
+	output=$(dialog --inputbox "Zeitstempel Angeben (YYYY MM DD HH):" 15 60  --output-fd 1)
 	code_now
 }
 
 function code_now {
-	ver_code=$($KEYGEN)
+	ver_code=$($KEYGEN $output)
 	code_output
 }
 
 function choose_option {
-	clear
-	echo 'Code für jetzt [leer] | Code für manuellen Zeitpunkt [1]'
-	echo Option eingeben:
-	read option
-
-	if [ "$option" == "" ]; then
-		code_now
-	fi
-	if [ "$option" == "1" ]; then
-		usr_inp
-	else
-		echo Eingabe falsch!
-		choose_option
-	fi
+	auswahl=$(dialog --stdout --backtitle "Bitte Wählen" --title Aktion --radiolist "Für welchen Zeitpunkt soll der Code generiert werden?." 16 60 5 \
+		 "JETZT" "Code generieren" on \
+		 "SPATER" "Update einreihen" off)
+	case "$auswahl" in
+		JETZT)
+			code_now
+			;;
+		SPATER)
+			usr_inp
+			;;
+	esac
 }
 
 function code_output {
+	client_user=$(dialog --inputbox "Generierter Code: \n>>${ver_code}<< \n\nUsernamen angeben (leer für alle):" 15 60  --output-fd 1)
 	echo Der Verifizierungscode lautet: [$ver_code]
-	echo 'Usernamen angeben (leer für alle Clients):'
-	read client_user
 	if [ "$client_user" == "" ]; then
 		client_user=alle
 	fi
@@ -143,25 +126,26 @@ function create {
 	echo setuser $client_user >> $REM_DIR
 	echo verify $ver_code
 	echo setuser $client_user
-	echo 'Befehl beim Client ausführen (Info: function Exit: Leer Abbrechen: x):'
 	get_commands
 }
 
 function get_commands {
-	echo Befehl eingeben:
-	input=''
-	read input
-	if [ "$input" == "x" ]; then
-		clear
-		echo Script abgebrochen
-		rm $REM_DIR
-		exit 0
-	elif [ "$input" != "" ];then
-		echo $input >> $REM_DIR
-		get_commands
-	else
-		upload_file | grep uploaded
-	fi
+	while true; do
+		unset input
+		input=$(dialog --inputbox "Auszuführender Befehl (leer für fertig):" 15 60  --output-fd 1)
+		if [ "$input" == "x" ]; then
+			clear
+			echo Script abgebrochen
+			rm $REM_DIR
+			exit 0
+		elif [ "$input" != "" ];then
+			echo $input >> $REM_DIR
+			continue
+		else
+			upload_file | grep uploaded
+			exit 0
+		fi
+	done
 }
 
 function upload_file {
@@ -173,15 +157,14 @@ function upload_file {
 ENDOFUPLOAD
 
 	rm $REM_DIR
-	sleep 5
-	clear
-	exit 0
 }
 
 function upload_update {
 	cd $HOME/RMF/slave/update/
 	ftp -inv $FTP_HOST << ENDOFUPLOAD
 	user $USERFTP $FTP_PW
+	# del remote_slave.sh.gpg
+	# del update.txt
 	put $UPDATEFILE /remote_slave.sh.gpg
 	put $VER_DIR /update.txt
 	bye
@@ -189,12 +172,8 @@ ENDOFUPLOAD
 
 	rm $UPDATEFILE
 	rm $VER_DIR
-	sleep 5
-	clear
-	exit 0
 }
 
 update_or_run
-clear
 
 #EOF

@@ -5,6 +5,7 @@ iamswiss=no
 #Noch zu prüfen:
 #VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
 #PiHole setupVars einfügen der IPv6 adresse erfolgreich?
+#iamswiss=yes noch prüfen bei lokalisation und zeitzone
 
 clear
 #Color-Codes und Textsfx-Codes
@@ -642,7 +643,7 @@ function getscripts {
 				fi
 				;;
 			5)
-				dialog --backtitle INFO --title "Checkmail Script" --yesno "Das Checkmailscript benötigt ein Gmail-Login. Da das Abrufen des Mails unsicher ist bitte für den Raspberry eine seperate Mailadresse einrichten. Fortfahren?" 15 60 
+				dialog --backtitle INFO --title "Checkmail Script" --yesno "Das Checkmailscript benötigt ein Gmail-Login und wird nur zusammen mit dem dynamischen Updateclient von noip.com benötigt. Da das Abrufen des Mails unsicher ist bitte für den Raspberry eine seperate Mailadresse einrichten. Fortfahren?" 15 60 
 				choose=${?}
 				if [ "$choose" == "0" ]; then 
 					name="Checkmail:"
@@ -661,11 +662,13 @@ function getscripts {
 								dialog --backtitle INFO --title "ACHTUNG!" --msgbox "Passwörter stimmen nicht überein!" 15 70
 								continue
 							fi
-							dialog --backtitle INFO --title "Telegram Setup" --yesno "Sind die Angaben korrekt?\n\nLogin: ${glogin}" 15 60 
+							mydns=$(dialog --inputbox "DNS-Adresse von noip.com angeben:" 15 60  --output-fd 1)
+							dialog --backtitle INFO --title "Telegram Setup" --yesno "Sind die Angaben korrekt?\n\nLogin: ${glogin}\n\nDNS Adresse: $mydns" 15 60 
 							choose=${?}
 							if [ "$choose" == "0" ]; then
 								sed -i "s/'Login': ''/\'Login': '"$glogin"'/g" $target
 								sed -i "s/'Password': ''/\'Password': '"$gpw1"'/g" $target
+								sed -i "s/MYDNSADR/\$mydns/g" $target
 								unset gpw1
 								unset gpw2
 								break

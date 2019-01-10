@@ -668,7 +668,7 @@ function getscripts {
 							if [ "$choose" == "0" ]; then
 								sed -i "s/'Login': ''/\'Login': '"$glogin"'/g" $target
 								sed -i "s/'Password': ''/\'Password': '"$gpw1"'/g" $target
-								sed -i "s/MYDNSADR/\$mydns/g" $target
+								sed -i "s/MYDNSADR.ddns.net/\${mydns}/g" $target
 								unset gpw1
 								unset gpw2
 								break

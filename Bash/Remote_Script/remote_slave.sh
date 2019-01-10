@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Scriptversion
-readonly VERSION_NOW="5"
+readonly VERSION_NOW="10"
 readonly USERDIR="$HOME/scripts/user.inf"
 source $USERDIR
 
@@ -24,7 +24,7 @@ readonly REBOOT_TMP="/var/tmp/rem_reboot.tmp"							#Pi Neustarten
 readonly LOGFILE="$HOME/remote_master.log"						#Logfile
 readonly MAXLINES=49												#Maximale Anzahl Zeilen im Logfile +1
 readonly STARTUPDATE="$HOME/scripts/remote/updateclient.sh &"	#Updatescript
-readonly ENCRYPT="$HOME/scripts/remote/encrypt.sh"
+readonly DECRYPT="$HOME/scripts/remote/decrypt.sh"
 
 touch $LOGFILE
 
@@ -36,8 +36,7 @@ fi
 #Funktion Verifizierungscode
 function remote_verify {
 	inp_code=$*
-	export code_hex=$inp_code
-	ver_code=$($ENCRYPT)
+	ver_code=$($DECRYPT $inp_code)
 	verify_check
 }
 
@@ -68,7 +67,7 @@ function remote_status {
 		gather_status
 	fi
 }
-+
+
 #Funktion PiHole - Update
 function remote_piholeupdate {
 	if [ “$userstatus“ == “ok“ ]; then

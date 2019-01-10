@@ -574,8 +574,8 @@ function getscripts {
 	options=(1 "Boot Benachrichtigung" off
 			 2 "Updatecheck" off
 			 3 "VPN Zertifikaterneuerung" off
-			 4 "Benachrichtigung wenn Mail (gmail) von noip.com eintrifft" off
-			 5 "Benachricgtigung wenn öffentliche IP wechselt" off
+			 4 "Benachricgtigung wenn öffentliche IP wechselt" off
+			 5 "Benachrichtigung wenn Mail (gmail) von noip.com eintrifft" off
 			 6 "Benachrichtigung bei Neujahr" off
 			 7 "Benachrichtigung bei eingehender VPN Verbindung" off
 			 8 "Benachrichtigung wenn Fail2Ban eine IP blockt/entblockt" off

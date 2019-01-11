@@ -310,6 +310,7 @@ function installmenu {
 				dialog --backtitle INFO --title "PiHole Installation" --msgbox "Nachfolgend wird die Software [PiHole] installiert. Während der Installation werden nach einigen Angaben gefragt.\n\nUm den aktuell genutzten DNS-Server herauszufinden gehe zu http://whoer.org" 15 70
 				installpihole
 				pihole=TRUE
+				clear
 				;;
 			2)
 				dialog --backtitle INFO --title "PiVPN Installation" --msgbox "Nachfolgend wird die Software [PiVPN] installiert. Während der Installation werden nach einigen Angaben gefragt.\n\nUm den aktuell genutzten DNS-Server herauszufinden gehe zu http://whoer.org" 15 70
@@ -321,21 +322,26 @@ function installmenu {
 					installduc
 				fi
 				vpn=TRUE
+				clear
 				#conf nur beschreiben wenn vpn installiert wird... evt schon erledigt
 				;;
 			3)
 				installftp
+				clear
 				;;
 			4)
 				installf2b
 				f2b=TRUE
+				clear
 				;;
 			5)
 				setuptelegram
 				getscripts
+				clear
 				;;
 			6)
 				moreoptions
+				clear
 				;;
 		esac
 	done
@@ -595,7 +601,6 @@ function getscripts {
 			 9 "Command & Control Script (slave)" off
 			 10 "Logcleaner" off)
 	choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
-	clear
 	for choice in $choices
 	do
 		case $choice in
@@ -898,7 +903,6 @@ function moreoptions {
 			 7 "[Telegram] Testnachricht versenden" off
 			 8 "[CronJob] CronJobs einrichten" off)
 	choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
-	clear
 	for choice in $choices
 	do
 		case $choice in

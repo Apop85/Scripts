@@ -104,7 +104,7 @@ function prepare2go {
 		if [ "$input" == "1" ]; then
 			exit 0
 		fi
-		[ `whoami` = root ] || exec su root $path
+		[ `whoami` = root ] || exec sudo $path
 	else
 		showok
 	fi

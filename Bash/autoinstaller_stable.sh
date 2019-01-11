@@ -6,6 +6,7 @@ path=$(realpath "$0")
 #Noch zu prüfen:
 #VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
 #PiHole setupVars einfügen der IPv6 adresse erfolgreich?
+#.bashrc mit 444 rechten
 
 clear
 #Color-Codes und Textsfx-Codes
@@ -153,6 +154,9 @@ function checkuser {
 		fi
 	else
 		userisok
+		echo -e "${info} .bashrc wird auf readonly gesetzt"
+		chmod 444 $HOME/.bashrc
+		chown root:root $HOME/.bashrc
 	fi
 }
 
@@ -204,10 +208,13 @@ function userisok {
 		uname=$iam
 	else
 		if [ "$usrroot" == "0" ]; then
-			echo -e "${info} Setze Rootberechtigungen für den neuen User"
-			sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
-			if (( $sudocheck == 0 )); then
-				echo "$uname  ALL=(ALL:ALL) ALL" >> /etc/sudoers
+			target="/etc/sudoers.d/010_$uname"
+			touch $target
+			if [ -e $target ]; then
+				echo -e "${info} Setze Rootberechtigungen für den neuen User"
+				echo "$uname  ALL=(ALL:ALL) ALL" >> $target
+				chmod 0440 $target
+				chown root:root $target
 			fi
 		fi
 	fi
@@ -217,14 +224,14 @@ function userisok {
 #Funktion zur Überprüfung der Privilegien des neuen Users
 function userisroot {
 	if [ "$usrroot" == "0" ]; then
-		^name="Rootberechtigung für den User $uname:"
-		sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
-		if (( $sudocheck < 1 )); then 
-			showerror
-			echo -e "${errorout} ${cRED}Script wird geschlossen!${cNOR} Bitte Rootrechte manuell eintragen mittels dem Befehl ${cGREEN}sudo visudo${cNOR}. Dort unterhalb von ${cRED}root    ALL=(ALL:ALL) ALL${cNOR} die Zeile ${cGREEN}${cINVON}$uname    ALL=(ALL:ALL) ALL${cINVOFF}${cNOR} einfügen."
-			exit 1
-		else
+		name="Rootberechtigung für den User $uname:"
+		target="/etc/sudoers.d/010_$uname"
+		if [ -e $target ]; then 
 			showok
+		else
+			showerror
+			echo -e "${errorout} ${cRED}Script wird geschlossen!${cNOR} Bitte Rootrechte manuell setzen."
+			exit 1
 		fi
 	fi
 }
@@ -277,9 +284,13 @@ function removepiuser {
 	else
 		#User Pi, falls noch vorhanden, entfernen. 
 		if [ -d "/home/pi" ]; then
+			target="/etc/sudoers.d/010_pi-nopasswd"
 			loggedin=$(who | grep ^"pi" | wc -l)
 			echo -e "${info} User ${cGREEN}pi${cNOR} sowie die entsprechenden Ordner werden entfernt."
 			deluser -remove-home pi
+			if [ -e $target ]; then
+				rm $target
+			fi
 		else
 			echo -e "${info} User pi: ${cGREEN}Nicht vorhanden${cNOR}"
 		fi

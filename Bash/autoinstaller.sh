@@ -209,6 +209,7 @@ function userisok {
 	else
 		if [ "$usrroot" == "0" ]; then
 			target="/etc/sudoers.d/010_$uname"
+			touch $target
 			if [ -e $target ]; then
 				echo -e "${info} Setze Rootberechtigungen für den neuen User"
 				echo "$uname  ALL=(ALL:ALL) ALL" >> $target

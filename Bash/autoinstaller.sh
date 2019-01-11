@@ -6,6 +6,7 @@ path=$(realpath "$0")
 #Noch zu prüfen:
 #VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
 #PiHole setupVars einfügen der IPv6 adresse erfolgreich?
+#.bashrc mit 444 rechten
 
 clear
 #Color-Codes und Textsfx-Codes
@@ -153,6 +154,9 @@ function checkuser {
 		fi
 	else
 		userisok
+		echo -e "${info} .bashrc wird auf readonly gesetzt"
+		chmod 444 $HOME/.bashrc
+		chown root:root $HOME/.bashrc
 	fi
 }
 
@@ -279,9 +283,13 @@ function removepiuser {
 	else
 		#User Pi, falls noch vorhanden, entfernen. 
 		if [ -d "/home/pi" ]; then
+			target="/etc/sudoers.d/010_pi-nopasswd"
 			loggedin=$(who | grep ^"pi" | wc -l)
 			echo -e "${info} User ${cGREEN}pi${cNOR} sowie die entsprechenden Ordner werden entfernt."
 			deluser -remove-home pi
+			if [ -e $target ]; then
+				rm $target
+			fi
 		else
 			echo -e "${info} User pi: ${cGREEN}Nicht vorhanden${cNOR}"
 		fi

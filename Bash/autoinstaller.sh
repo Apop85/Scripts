@@ -213,7 +213,7 @@ function userisok {
 			if [ -e $target ]; then
 				echo -e "${info} Setze Rootberechtigungen für den neuen User"
 				echo "$uname  ALL=(ALL:ALL) ALL" >> $target
-				chmod 440 $target
+				chmod 0440 $target
 				chown root:root $target
 			fi
 		fi

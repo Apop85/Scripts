@@ -204,10 +204,12 @@ function userisok {
 		uname=$iam
 	else
 		if [ "$usrroot" == "0" ]; then
-			echo -e "${info} Setze Rootberechtigungen für den neuen User"
-			sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
-			if (( $sudocheck == 0 )); then
-				echo "$uname  ALL=(ALL:ALL) ALL" >> /etc/sudoers
+			target="/etc/sudoers.d/010_$uname"
+			if [ -e $target ]; then
+				echo -e "${info} Setze Rootberechtigungen für den neuen User"
+				echo "$uname  ALL=(ALL:ALL) ALL" >> $target
+				chmod 440 $target
+				chown root:root $target
 			fi
 		fi
 	fi
@@ -217,11 +219,11 @@ function userisok {
 #Funktion zur Überprüfung der Privilegien des neuen Users
 function userisroot {
 	if [ "$usrroot" == "0" ]; then
-		^name="Rootberechtigung für den User $uname:"
-		sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
-		if (( $sudocheck < 1 )); then 
+		name="Rootberechtigung für den User $uname:"
+		target="/etc/sudoers.d/010_$uname"
+		if [ -e $target ]; then 
 			showerror
-			echo -e "${errorout} ${cRED}Script wird geschlossen!${cNOR} Bitte Rootrechte manuell eintragen mittels dem Befehl ${cGREEN}sudo visudo${cNOR}. Dort unterhalb von ${cRED}root    ALL=(ALL:ALL) ALL${cNOR} die Zeile ${cGREEN}${cINVON}$uname    ALL=(ALL:ALL) ALL${cINVOFF}${cNOR} einfügen."
+			echo -e "${errorout} ${cRED}Script wird geschlossen!${cNOR} Bitte Rootrechte manuell setzen."
 			exit 1
 		else
 			showok

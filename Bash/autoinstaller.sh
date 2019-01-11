@@ -194,39 +194,41 @@ function addnewuser {
 	echo -e "${info} Nutzer $uname wird angelegt"
 	passwdc=$(openssl passwd -1 $passwd2)
 	useradd -m "$uname" -p "$passwdc"
-	usermod -s /bin/bash $uname	#SHELL="/bin/bash"
+	usermod -s /bin/bash $uname
 	echo -e "${info} Passwort für ROOT wird geändert."
-	echo "root:$passwd1" | chpasswd
+	echo "root:$rootpw1" | chpasswd
 	unset passwd2 passwd1 rootpw1 rootpw2
 }
 
 #Überprüfe Usernamen und falls noch Pi setze Rootberechtigungen für den neuen User
 function userisok {
-	if [ "$usrroot" == "0" ]; then
-		if [ "$iam" != "pi" ]; then
-			echo -e "${info} Username: ${cGREEN}${iam}${cNOR} ist sicher"
-			uname=$iam
-		else
+	if [ "$iam" != "pi" ]; then
+		echo -e "${info} Username: ${cGREEN}${iam}${cNOR} ist sicher"
+		uname=$iam
+	else
+		if [ "$usrroot" == "0" ]; then
 			echo -e "${info} Setze Rootberechtigungen für den neuen User"
 			sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
 			if (( $sudocheck == 0 )); then
 				echo "$uname  ALL=(ALL:ALL) ALL" >> /etc/sudoers
 			fi
 		fi
-		userisroot
 	fi
+	userisroot	
 }
 
 #Funktion zur Überprüfung der Privilegien des neuen Users
 function userisroot {
-	name="Rootberechtigung für den User $uname:"
-	sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
-	if (( $sudocheck < 1 )); then 
-		showerror
-		echo -e "${errorout} ${cRED}Script wird geschlossen!${cNOR} Bitte Rootrechte manuell eintragen mittels dem Befehl ${cGREEN}sudo visudo${cNOR}. Dort unterhalb von ${cRED}root    ALL=(ALL:ALL) ALL${cNOR} die Zeile ${cGREEN}${cINVON}$uname    ALL=(ALL:ALL) ALL${cINVOFF}${cNOR} einfügen."
-		exit 1
-	else
-		showok
+	if [ "$usrroot" == "0" ]; then
+		^name="Rootberechtigung für den User $uname:"
+		sudocheck=$(cat /etc/sudoers | grep $uname | wc -l)
+		if (( $sudocheck < 1 )); then 
+			showerror
+			echo -e "${errorout} ${cRED}Script wird geschlossen!${cNOR} Bitte Rootrechte manuell eintragen mittels dem Befehl ${cGREEN}sudo visudo${cNOR}. Dort unterhalb von ${cRED}root    ALL=(ALL:ALL) ALL${cNOR} die Zeile ${cGREEN}${cINVON}$uname    ALL=(ALL:ALL) ALL${cINVOFF}${cNOR} einfügen."
+			exit 1
+		else
+			showok
+		fi
 	fi
 }
 

@@ -302,6 +302,7 @@ function installmenu {
 			 5 "[Scripts] Vorgefertigte Scripts die Telegram verwenden installieren." off
 			 6 "[Konfigurationen] downloaden und anwenden." off)
 	choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+	clear
 	for choice in $choices
 	do
 		case $choice in
@@ -594,6 +595,7 @@ function getscripts {
 			 9 "Command & Control Script (slave)" off
 			 10 "Logcleaner" off)
 	choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+	clear
 	for choice in $choices
 	do
 		case $choice in
@@ -896,6 +898,7 @@ function moreoptions {
 			 7 "[Telegram] Testnachricht versenden" off
 			 8 "[CronJob] CronJobs einrichten" off)
 	choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+	clear
 	for choice in $choices
 	do
 		case $choice in

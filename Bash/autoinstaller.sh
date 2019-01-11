@@ -227,11 +227,11 @@ function userisroot {
 		name="Rootberechtigung für den User $uname:"
 		target="/etc/sudoers.d/010_$uname"
 		if [ -e $target ]; then 
+			showok
+		else
 			showerror
 			echo -e "${errorout} ${cRED}Script wird geschlossen!${cNOR} Bitte Rootrechte manuell setzen."
 			exit 1
-		else
-			showok
 		fi
 	fi
 }

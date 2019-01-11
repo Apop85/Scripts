@@ -121,7 +121,6 @@ function prepare2go {
 		apt-get update >/dev/null 2>&1
 		echo -e "${info} Schritt ${cRED}1${cNOR} von 2 abgeschlossen."
 		apt-get upgrade -y >/dev/null 2>&1
-		clear
 		echo -e "${info} ${cGREEN}Installation der Updates abgeschlossen${cNOR}"
 	else
 		echo -e "${info} Updates vorhanden: ${cGREEN}Nein${cNOR}"
@@ -129,7 +128,6 @@ function prepare2go {
 	
 	echo -e "${info} Vorausgesetzte Pakete werden gegebenenfalls installiert."
 	apt-get install dialog make gcc tar curl gpg -y >/dev/null 2>&1
-	clear
 }
 
 #      _               _                        
@@ -190,7 +188,6 @@ function addnewuser {
 			break
 		fi
 	done
-	clear
 	echo -e "${info} Nutzer $uname wird angelegt"
 	passwdc=$(openssl passwd -1 $passwd2)
 	useradd -m "$uname" -p "$passwdc"
@@ -250,7 +247,6 @@ function removepiuser {
 			#Ändere Autologin von Pi zu neuem User
 			sed -i "s|autologin-user=\(.*\)|autologin-user=$uname|g" /etc/lightdm/lightdm.conf
 			echo -e "${info} Die Lokalisationseinstellung wird auf ${cGREEN}de-ch UTF 8${cNOR} gestellt"
-			clear
 			#Lokalisation auf de_CH UTF-8 wechseln. 
 			if [ "$iamswiss" == "yes" ]; then 
 				echo -e "${info} Wechsle Layout zu ${cGREEN}de_CH.UTF-8${cNOR}"
@@ -274,7 +270,6 @@ function removepiuser {
 			cp $path /home/$uname/autoinstaller.sh
 			chown $uname:$uname /home/$uname/autoinstaller.sh
 			dialog --backtitle INFO --title "Raspberry Autoinstaller" --msgbox "ACHTUNG! \nDamit die Lokalisationseinstellungen übernommen werden muss der Raspberry nun neu gestartet werden.\n\nNach dem Neustart mit dem neuen Benutzer $uname anmelden und das Script mit folgendem Befehl neu starten: ./autoinstaller.sh" 15 70
-			clear
 			echo -e "${info} ${cRED}REBOOT IN 5 SEKUNDEN${cNOR}"
 			sleep 5
 			reboot
@@ -307,7 +302,6 @@ function installmenu {
 			 5 "[Scripts] Vorgefertigte Scripts die Telegram verwenden installieren." off
 			 6 "[Konfigurationen] downloaden und anwenden." off)
 	choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
-	clear
 	for choice in $choices
 	do
 		case $choice in
@@ -315,7 +309,6 @@ function installmenu {
 				dialog --backtitle INFO --title "PiHole Installation" --msgbox "Nachfolgend wird die Software [PiHole] installiert. Während der Installation werden nach einigen Angaben gefragt.\n\nUm den aktuell genutzten DNS-Server herauszufinden gehe zu http://whoer.org" 15 70
 				installpihole
 				pihole=TRUE
-				clear
 				;;
 			2)
 				dialog --backtitle INFO --title "PiVPN Installation" --msgbox "Nachfolgend wird die Software [PiVPN] installiert. Während der Installation werden nach einigen Angaben gefragt.\n\nUm den aktuell genutzten DNS-Server herauszufinden gehe zu http://whoer.org" 15 70
@@ -327,26 +320,21 @@ function installmenu {
 					installduc
 				fi
 				vpn=TRUE
-				clear
 				#conf nur beschreiben wenn vpn installiert wird... evt schon erledigt
 				;;
 			3)
 				installftp
-				clear
 				;;
 			4)
 				installf2b
 				f2b=TRUE
-				clear
 				;;
 			5)
 				setuptelegram
 				getscripts
-				clear
 				;;
 			6)
 				moreoptions
-				clear
 				;;
 		esac
 	done
@@ -371,7 +359,6 @@ function installpihole {
 		showerror
 		echo -e "${info} ${cGREEN}PiHole${cNOR} wird installiert"
 		curl -sSL https://install.pi-hole.net | bash
-		clear
 		echo -e "${wait4input} ${cGREEN}Passwort${cNOR} für PiHole Webclient eingeben. Leer lassen für kein Passwort"
 		pihole -a -p
 		target="/etc/pihole/setupVars.conf"
@@ -607,7 +594,6 @@ function getscripts {
 			 9 "Command & Control Script (slave)" off
 			 10 "Logcleaner" off)
 	choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
-	clear
 	for choice in $choices
 	do
 		case $choice in
@@ -910,7 +896,6 @@ function moreoptions {
 			 7 "[Telegram] Testnachricht versenden" off
 			 8 "[CronJob] CronJobs einrichten" off)
 	choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
-	clear
 	for choice in $choices
 	do
 		case $choice in

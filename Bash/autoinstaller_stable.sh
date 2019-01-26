@@ -6,7 +6,7 @@ path=$(realpath "$0")
 #Noch zu prüfen:
 #VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
 #PiHole setupVars einfügen der IPv6 adresse erfolgreich?
-#.bashrc mit 444 rechten
+
 
 clear
 #Color-Codes und Textsfx-Codes
@@ -291,6 +291,11 @@ function removepiuser {
 			if [ -e $target ]; then
 				rm $target
 			fi
+			groupdel pi
+			sed -i '/pi:/d' /etc/shadow
+			sed -i -e 's/::pi/::/g' /etc/gshadow
+			sed -i '/autologin pi/d' /etc/systemd/system/autologin@.service
+			sed -i -e "s/:pi;/:$uname;/g" /etc/polkit-1/localauthority.conf.d/60-desktop-policy.conf
 		else
 			echo -e "${info} User pi: ${cGREEN}Nicht vorhanden${cNOR}"
 		fi

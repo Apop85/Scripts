@@ -1,19 +1,35 @@
+print('Beispielanwendung für Alters- und Namensangabe mit \nisdecimal(), isalpha() und istitle()')
 while True:
     print('\n\n\n')
-    age=input('\t\t\t Wie alt bist du? ')
+    age=input('Wie alt bist du? ')
     if age.isdecimal():
-        print('\t\t\t OK')
+        print('OK')
         break
     else:
-        print('\t\t\t WHUUT? Das ist keine Zahl!')
+        print('WHUUT? Das ist keine Zahl!')
 
 while True:
     print('\n\n\n')
-    name=input('\t\t\t Wie ist dein Name? ')
+    name=input('Wie ist dein Name? ')
     if name.istitle() and name.isalpha():
-        print('\t\t\t OK')
+        print('OK')
         break
     else:
-        print('\t\t\t Das ist kein Name.')
+        print('Das ist kein Name.')
 
-print('\n\n\t\t\tHallo', name, '\n\t\t\tNächstes Jahr wirst du', int(age)+1, 'Jahre alt!')
+print('\n\nHallo', name, 'Nächstes Jahr wirst du', int(age)+1, 'Jahre alt!')
+print()
+input()
+
+print('Das nächste Beispiel ist startswith() und endswith().\nHier muss der String mit "Hallo" beginnen und mit "Welt" enden.')
+string=input()
+if string.startswith('Hallo') and string.endswith('Welt'):
+    print('True')
+else:
+    print('False')
+print()
+input()
+
+
+
+

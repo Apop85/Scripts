@@ -42,7 +42,7 @@ if '   '.isspace():
 print()
 input()
 
-print('Das ,letzte Besipiel ist istitle(). Diese Funktion prüft ob der \nAnfangsbuchstabe des Strings gross geschrieben ist.')
+print('Das fünfte Besipiel ist istitle(). Diese Funktion prüft ob der \nAnfangsbuchstabe des Strings gross geschrieben ist.')
 print('Beispiel: \'Hallo\'.istitle()')
 if 'Hallo'.istitle():
     print('True')
@@ -50,4 +50,18 @@ print('Beispiel: \'hallo\'.istitle()')
 if not 'hallo'.istitle():
     print('False')
 print()
+input()
+
+print('Man Kann auch testen ob ein String in Gross- \noder Kleinbuchstaben geschrieben ist. mittels isupper() oder islower()')
+print('Beispiel mit [' + low + '] low.islower():')
+if low.islower():
+    print('low.islower() = True')
+print('Beispiel mit [' + upp + '] upp.isupper():')
+if upp.isupper():
+    print('upp.isupper() = True')
+print()
+input()
+
+
+
 

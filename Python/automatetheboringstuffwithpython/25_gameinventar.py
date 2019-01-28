@@ -34,8 +34,11 @@ def getitem():
 def showinv():
     global message
     message=''
+    total=0
     for i, k in inventory.items():
         print('              ', i, ':', k)
+        total+=k
+    print('               Total:', total)
     input()
 
 while True:

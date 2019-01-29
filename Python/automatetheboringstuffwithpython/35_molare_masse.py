@@ -1,3 +1,5 @@
+# Berechne molare Masse anhand chemischer Summenformel
+
 periodensystem={ 'H' : 1.0079, 'He' : 4.0026,
                  'Li' : 6.941, 'Be' : 9.0122, 'B' : 10.811, 'C' : 12.011, 'N' : 14.007, 'O' : 15.999, 'F' : 18.988, 'Ne' : 20.180,
                  'Na' : 22.990, 'Mg' : 24.305, 'Al' : 26.982, 'Si' : 28.086, 'P' : 30.974, 'S' : 32.065, 'Cl' : 35.453, 'Ar' : 39.948,
@@ -8,22 +10,30 @@ periodensystem={ 'H' : 1.0079, 'He' : 4.0026,
                  'La' : 138.91, 'Ce' : 140.12, 'Pr' : 140.91, 'Nd' : 144.24, 'Pm' : 146.90, 'Sm' : 146.90, 'Eu' : 151.96, 'Gd' : 157.25, 'Tb' : 158.93, 'Dy' : 162.50, 'Ho' : 164.93, 'Er' : 167.26, 'Tm' : 168.93, 'Yb' : 173.05, 'Lu' : 174.97,
                  'Ac' : 227, 'Th' : 232.04, 'Pa' : 231.04, 'U' : 238.03, 'Np' : 237.05, 'Pu' : 244.10, 'Am' : 243.10, 'Cm' : 247.10, 'Bk' : 247.10, 'Cf' : 251.10, 'Es' : 254.10, 'Fm' : 257.10, 'Md' : 258, 'No' : 259, 'Lr' : 260}
 
-def checknum(i):
-    zahl=''
+def checknum(i, nummer):
+    zahl=str(nummer)
     global z
     z=0
+    # Prüfe auf Folgezahlen.
     for n in range(i+1, len(sformel)):
-        if sformel[n].isdecimal():
+        # Falls Zahl gefunden, hänge an vorherige an
+        if sformel[n].isdecimal(): 
             zahl+=str(sformel[n])
             z+=1
         else:
-            if sformel[n].isupper():
+        # Beende Loop wenn keine Zahl folgt
+            if not sformel[n].isdecimal(): 
                 break
     return zahl
-            
-    
-H2O=float(periodensystem['H'])*2+float(periodensystem['O'])
-print(H2O)
+
+def checkelement(i, element, gew):
+    # Wenn letzter Buchstabe in Liste
+    if i == len(sformel)-1:
+        gew+=float(periodensystem[element])
+    # Wenn nächster Buchstabe gross
+    elif i < len(sformel)-1 and sformel[i+1].isupper():
+        gew+=float(periodensystem[element])
+    return gew
 
 print('Summenformel eingeben:')
 sformel=input('Summenformel: ')
@@ -32,20 +42,21 @@ i=-1
 gew=0
 while i != len(sformel)-1:
     i+=1
+    # Wenn Grossbuchstabe
     if sformel[i].isupper():
         element=sformel[i]
-        if i == len(sformel)-1:
-            gew+=float(periodensystem[element])
+        gew=checkelement(i, element, gew)
+    # Wenn Buchstabe klein, hänge an vorherigen an
     elif sformel[i].islower():
         element+=sformel[i]
-        if i == len(sformel)-1:
-            gew+=float(periodensystem[element])
-    elif sformel[i].isdecimal():
-        num=str(sformel[i]) + str(checknum(i))
+        gew=checkelement(i, element, gew)
+    # Wenn Element eine Zahl
+    elif sformel[i].isdecimal(): 
+        num=str(checknum(i, sformel[i]))
         i+=z
         gew+=float(periodensystem[element])*float(num)
     else:
         print('Error')
         break
 
-print('Die molare Masse von', ''.join(sformel), 'ist', round(gew, 4), 'g/mol')
+print('Die molare Masse von', ''.join(sformel), 'ist', str(round(gew, 4)) + 'g/mol')

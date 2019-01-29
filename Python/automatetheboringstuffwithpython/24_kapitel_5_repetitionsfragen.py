@@ -1,3 +1,4 @@
+# Repetitionsfragen des 5. Kapitels
 def cls():
     for i in range(15):
         print('')

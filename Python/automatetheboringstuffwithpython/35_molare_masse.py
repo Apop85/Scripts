@@ -40,23 +40,26 @@ sformel=input('Summenformel: ')
 sformel=list(sformel)
 i=-1
 gew=0
-while i != len(sformel)-1:
-    i+=1
-    # Wenn Grossbuchstabe
-    if sformel[i].isupper():
-        element=sformel[i]
-        gew=checkelement(i, element, gew)
-    # Wenn Buchstabe klein, hänge an vorherigen an
-    elif sformel[i].islower():
-        element+=sformel[i]
-        gew=checkelement(i, element, gew)
-    # Wenn Element eine Zahl
-    elif sformel[i].isdecimal(): 
-        num=str(checknum(i, sformel[i]))
-        i+=z
-        gew+=float(periodensystem[element])*float(num)
-    else:
-        print('Error')
-        break
+try:
+    while i != len(sformel)-1:
+        i+=1
+        # Wenn Grossbuchstabe
+        if sformel[i].isupper():
+            element=sformel[i]
+            gew=checkelement(i, element, gew)
+        # Wenn Buchstabe klein, hänge an vorherigen an
+        elif sformel[i].islower():
+            element+=sformel[i]
+            gew=checkelement(i, element, gew)
+        # Wenn Element eine Zahl
+        elif sformel[i].isdecimal(): 
+            num=str(checknum(i, sformel[i]))
+            i+=z
+            gew+=float(periodensystem[element])*float(num)
+        else:
+            print('Error')
+            break
 
-print('Die molare Masse von', ''.join(sformel), 'ist', str(round(gew, 4)) + 'g/mol')
+    print('Die molare Masse von', ''.join(sformel), 'ist', str(round(gew, 4)) + 'g/mol')
+except NameError:
+    print('Der Eintrag konnte nicht gefunden werden.')

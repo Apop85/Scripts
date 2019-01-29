@@ -1,3 +1,5 @@
+# Die Theorie der Strings, wie sie verwendet und verarbeitet werden können
+
 st='stri'
 stri1=('Gehen wir durch die Theorie von Strings.')
 stri2=('Strings können zusammenhängend wie dieser Satz sein.')
@@ -36,6 +38,4 @@ print()
 print('Beispiel: \'wir\' not in stri1:')
 if 'wir' not in stri1:
     print('True')
-else:
-    print('False')
 input()

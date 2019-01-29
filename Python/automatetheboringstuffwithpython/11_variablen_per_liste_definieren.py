@@ -1,3 +1,5 @@
+# Zuweisen des Inhalts von mehreren Variablen mit Listen
+
 liste=['dick', 'rot', 'böbbi']
 woliste=[]
 

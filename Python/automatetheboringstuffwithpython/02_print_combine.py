@@ -1,3 +1,5 @@
+# Einfache Kombination von Strings durch Modifizieren der print-Funktion
+
 print('Hallo ', end='')
 print('World', end='\n')
 

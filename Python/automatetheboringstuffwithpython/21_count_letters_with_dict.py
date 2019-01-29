@@ -1,3 +1,5 @@
+# Zähle wie oft die einzelnen Buchstaben in einem String vorkommen. 
+
 print('Gebe einen beliebigen Satz oder eine beliebige Zeichenfolge ein')
 string=input()
 

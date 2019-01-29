@@ -61,4 +61,4 @@ try:
 
     print('Die molare Masse von', ''.join(sformel), 'ist', str(round(gew, 4)) + 'g/mol')
 except NameError:
-    print('Der Eintrag konnte nicht gefunden werden.')
+    print('Summenformel falsch formuliert. Beispiel: CO2, H2O, C9H8O4')

@@ -1,3 +1,5 @@
+# Verwerten und Überschreiben von globalen und lokalen Variablen
+
 def chgglob():
     global var           # Variable von Funktion an globale Variable übergeben
     var = 'Overwritten'

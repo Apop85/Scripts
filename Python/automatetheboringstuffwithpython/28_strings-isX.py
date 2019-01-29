@@ -1,3 +1,5 @@
+# Stringprüfung durch isX-Funktionen
+
 print('Hier geht es um die isX Anweisungen für Strings, mit dieser lassen \nsich viele Eigenshaften eines Strings liecht prüfen')
 print()
 input()

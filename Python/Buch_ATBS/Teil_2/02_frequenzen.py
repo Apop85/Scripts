@@ -38,9 +38,9 @@ def zickzack():
         freq=getfreq()
         while True:
             for i in range(maxl//freq-1):
-                print(('@'*freq).rjust((i+1)*freq))
+                print(('@'*freq).rjust((i+1)*freq, '▒'))
             for i in range(maxl//freq-1):
-                print(('@'*freq).rjust(maxl-i*freq))
+                print(('@'*freq).rjust(maxl-i*freq, '▒'))
     except KeyboardInterrupt:
         print('\nAusgabe abgebrochen')
 
@@ -52,7 +52,7 @@ def binary():
                 print('@'.ljust(maxl))
             print('@'.center(maxl, '@'))
             for i in range(freq):
-                print('@'.rjust(maxl))
+                print('@'.rjust(maxl, '▒'))
             print('@'.center(maxl, '@'))
     except KeyboardInterrupt:
         print('\nAusgabe abgebrochen')
@@ -65,8 +65,10 @@ def sinus():
     try:
         while True:
             i+=1
-            position=int((((sin(2*pi*500*i/freq))*25))+25)
-            print('@'.rjust(position))
+            position=int((((sin(2*pi*500*i/freq))*(maxl//2)))+maxl//2+1)
+            if position == 51:
+                position = 50
+            print(('@').rjust(position, '▒'))
     except KeyboardInterrupt:
         print('\nAusgabe abgebrochen')
 

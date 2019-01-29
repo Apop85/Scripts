@@ -1,3 +1,5 @@
+# Klassisches Tic-Tac-Toe für zwei Spieler
+
 grid={'f7' : ' ', 'f8' : ' ', 'f9' : ' ',
       'f4' : ' ', 'f5' : ' ', 'f6' : ' ',
       'f1' : ' ', 'f2' : ' ', 'f3' : ' '}

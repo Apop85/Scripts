@@ -1,3 +1,5 @@
+# Möglichkeiten zur Überprüfung eines Strings
+
 print('Beispielanwendung für Alters- und Namensangabe mit \nisdecimal(), isalpha() und istitle()')
 while True:
     print('\n\n\n')

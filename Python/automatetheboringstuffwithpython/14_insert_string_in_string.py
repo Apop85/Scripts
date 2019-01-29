@@ -1,3 +1,5 @@
+# Strings slicen und Strings in Strings einfügen
+
 string='Das ist schön.'
 inp=' nicht '
 print(string)

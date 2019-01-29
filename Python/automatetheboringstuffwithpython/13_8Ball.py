@@ -1,3 +1,5 @@
+# Kleines Zufallsspiel bei welchem man eine Frage stellen kann und evt die richtige Antwort kriegt
+
 from random import randint as rng
 print('Kennst du 8-Ball? Die Kugel die dir die Zukunft voraussagen soll? \nNein? Dann versuchs doch gleich mal')
 print('Stelle der Magischen Kugel nun deine Frage')

@@ -1,3 +1,5 @@
+# Abfangen von Fehlermeldungen um zu verhindern dass das Script abstürzt.
+
 def divide(numb):        # Division ohne Errorhandling
     return 42 / numb
 

@@ -1,3 +1,5 @@
+# Abbildung der Collatzfolge mit der Zahl x
+
 actor1='Mr. Collatz:'
 actor2='Mr. Miller:'
 

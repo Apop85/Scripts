@@ -10,6 +10,7 @@ periodensystem={ 'H' : 1.0079, 'He' : 4.0026,
                  'La' : 138.91, 'Ce' : 140.12, 'Pr' : 140.91, 'Nd' : 144.24, 'Pm' : 146.90, 'Sm' : 146.90, 'Eu' : 151.96, 'Gd' : 157.25, 'Tb' : 158.93, 'Dy' : 162.50, 'Ho' : 164.93, 'Er' : 167.26, 'Tm' : 168.93, 'Yb' : 173.05, 'Lu' : 174.97,
                  'Ac' : 227, 'Th' : 232.04, 'Pa' : 231.04, 'U' : 238.03, 'Np' : 237.05, 'Pu' : 244.10, 'Am' : 243.10, 'Cm' : 247.10, 'Bk' : 247.10, 'Cf' : 251.10, 'Es' : 254.10, 'Fm' : 257.10, 'Md' : 258, 'No' : 259, 'Lr' : 260}
 
+# Prüfe wie lange die entdeckte Zahl ist
 def checknum(i, nummer):
     zahl=str(nummer)
     global z
@@ -26,6 +27,7 @@ def checknum(i, nummer):
                 break
     return zahl
 
+# Prüfe ob das Element vollständig ist
 def checkelement(i, element, gew):
     # Wenn letzter Buchstabe in Liste
     if i == len(sformel)-1:

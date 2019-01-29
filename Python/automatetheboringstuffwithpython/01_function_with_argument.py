@@ -1,3 +1,5 @@
+# Einleitung mit Funktion und Argument
+
 def test(name, age):
     print('Hallo', name + '. Bist du wirklich schon', str(age), 'Jahre alt?')
 

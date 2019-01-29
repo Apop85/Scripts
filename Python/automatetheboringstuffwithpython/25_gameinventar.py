@@ -1,3 +1,5 @@
+# Ein "Spiel" in welchem man Items einsammeln kann welche dann im Inventar mit der entsprechenden Anzahl angezeigt werden. 
+
 from random import randint as rng
 inventory={}
 message=''

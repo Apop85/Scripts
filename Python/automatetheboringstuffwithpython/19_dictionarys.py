@@ -1,3 +1,5 @@
+# Verwenden und Ausgabe von Dictionarys
+
 mycat={'size' : 'normal', 'color' : 'schwarzes', 'eyes' : 'grün'}
 mycat2={'size' : 'normal', 'eyes' : 'grün', 'color' : 'schwarzes'}
 

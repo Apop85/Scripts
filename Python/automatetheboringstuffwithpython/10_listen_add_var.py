@@ -1,3 +1,5 @@
+# Erstellen, auslesen und ändern von variablen Listen
+
 print('Lass uns eine Party organisieren!\nWen sollen wir alles einladen?')
 liste=[]
 counter=[0, 0]

@@ -1,3 +1,5 @@
+# Unterschied von Listen und Tuples
+
 KONSTANTE=('Shadow', 'grün', 'schwarz')
 variable=['eintrag1', 'eintrag2', 'eintrag3']
 print('Meine Katze heisst', KONSTANTE[0], 'seine Augen sind', KONSTANTE[1], 'und sein Fell ist', KONSTANTE[2] + '.')

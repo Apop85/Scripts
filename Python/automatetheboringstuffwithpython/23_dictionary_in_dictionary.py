@@ -1,3 +1,5 @@
+# Das Verwenden von Dictionarys innerhalb von Dictionarys
+
 allguests={'Ronny' : {'Äpfel' : 3, 'Grillfleisch': 1},
            'Miriam' : {'Grillfleisch' : 3, 'Getränke' : 2},
            'Tony' : {'Äpfel' : 2, 'Getränke' : 4}}

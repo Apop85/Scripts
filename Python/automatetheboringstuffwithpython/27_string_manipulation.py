@@ -1,3 +1,5 @@
+# Manipulation von Strings
+
 teststring='das ist EIN TEsTsTRInG'
 low='lower'
 upp='UPPER'

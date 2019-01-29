@@ -1,3 +1,5 @@
+# Verwenden von get() in Dictionarys
+
 print('Die get() Anweisung auf ein Dictionary prüft ob ein\nentsprechender Eintrag vorhanden ist, \nfalls nicht wird ein zuvor angegebener Standardwert ausgegeben.')
 
 dicti={'katze' : 13, 'hund' : 15, 'maus' : 5}

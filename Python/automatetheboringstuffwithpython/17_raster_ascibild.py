@@ -1,3 +1,5 @@
+# Ausgabe eines 2-Dimensionalen Rasters
+
 list1=['.']*6
 list2=['.']+2*['@']+3*['.']
 list3=4*['@']+2*['.']

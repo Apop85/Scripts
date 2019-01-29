@@ -1,3 +1,5 @@
+# Würfle x mal eine Zahl zwischen 0 und 9 und werte aus wie oft die einzelnen Zahlen gewürfelt wurden. 
+
 import random
 rngvar=[0]*10
 while True:

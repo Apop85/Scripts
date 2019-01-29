@@ -1,3 +1,5 @@
+# Inhalte von Strings umdrehen oder alphabetisch sortieren
+
 print('Gib deinen Vollständigen Namen ein')
 name=input()
 liste=list(name)

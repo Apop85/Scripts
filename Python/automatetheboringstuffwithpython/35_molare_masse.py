@@ -34,11 +34,18 @@ def checkelement(i, element, gew):
         gew+=float(periodensystem[element])
     return gew
 
-print('Summenformel eingeben:')
-sformel=input('Summenformel: ')
+while True:
+    print('Summenformel eingeben:')
+    sformel=input('Summenformel: ')
+    if not sformel.isalnum():
+        print ('Elemente besitzen keine Sonderzeichen!')
+        continue
+    break
+
 sformel=list(sformel)
 i=-1
 gew=0
+
 try:
     while i != len(sformel)-1:
         i+=1
@@ -48,13 +55,17 @@ try:
             gew=checkelement(i, element, gew)
         # Wenn Buchstabe klein, hänge an vorherigen an
         elif sformel[i].islower():
-            element+=sformel[i]
-            gew=checkelement(i, element, gew)
+            if element[0].isupper():
+                element+=sformel[i]
+                gew=checkelement(i, element, gew)
+            else:
+                print(periodensystem['Error'])
         # Wenn Element eine Zahl
         elif sformel[i].isdecimal(): 
             num=str(checknum(i, sformel[i]))
             i+=z
             gew+=float(periodensystem[element])*float(num)
+            element=''
         else:
             print('Error')
             break

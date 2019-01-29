@@ -1,5 +1,5 @@
+# Kleines Spiel bei welchem eine Zahl zwischen 1 und x erraten werden soll.
 from random import randint as rng
-
 
 print('Lass uns ein Spiel spielen.\n\nIch denke mir eine Zahl zwischen 1 und X aus \nund du musst sie erraten.')
 print('Welche Zahl sollen wir für X nehmen?')

@@ -8,8 +8,8 @@ Tino: Meine neue nummer lautet 345-243-2354.'''
 regex_pattern1=re.compile(r'\W\d\d\d-\d\d\d-\d\d\d\d\W')
 regex_pattern2=re.compile(r'\W\d\d\d\W-\d\d\d-\d\d\d\d')
 
-# Regex Syntax: \d=(0-9) \D=(^0-9) \s=(\n\t\r\f\v) \S=(^\n\t\r\f\v)
-# \w=(a-z,A-Z,0-9, ) \W=(^a-z,A-Z,0-9, )
+# Regex Syntax: \d=(0-9) \D=(alles ausser: 0-9) \s=(\n\t\r\f\v) \S=(alles ausser: \n\t\r\f\v)
+# \w=(a-z,A-Z,0-9, ) \W=(alles ausser: a-z,A-Z,0-9, )
 # Regex testen: https://www.regexpal.com/
 
 for i in range(len(checkme)-13):

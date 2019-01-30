@@ -12,7 +12,7 @@ def exreg():
             sleep(delay)
             print(ergebnis.group(), end=' ')
             
-string=('Batman, Batwoman, Batwowoman')
+string=('Batman, Batwoman, Batwowoman.')
 print('Der Teststring lautet:')
 print(string)
 input()
@@ -69,6 +69,17 @@ suchnach=re.compile(suchmuster)
 ergebnis=suchnach.findall(string)
 if ergebnis != False:
     print((''.join(ergebnis[0])),(''.join(ergebnis[1])), (''.join(ergebnis[2])))
+print()
+input()
+
+# Man kann auch ein Muster überprüfen von welchem man den genauen Aufbau nicht kennt.
+print('Mit ((\\w+)\\W+) wird nach einem String gesucht der \naus ainer unbekannten Anzahl Buchstaben besteht \nund mit einem Satzzeichen auffhört')
+print('Suchergebnis in:', string)
+suchmuster=(r'(\w+)\W+')
+suchnach=re.compile(suchmuster)
+ergebnis=suchnach.findall(string)
+if ergebnis != False:
+    print(' '.join(ergebnis))
 print()
 input()
 

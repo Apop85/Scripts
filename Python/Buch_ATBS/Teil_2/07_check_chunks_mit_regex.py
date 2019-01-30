@@ -10,6 +10,7 @@ regex_pattern2=re.compile(r'\W\d\d\d\W-\d\d\d-\d\d\d\d')
 
 # Regex Syntax: \d=(0-9) \D=(^0-9) \s=(\n\t\r\f\v) \S=(^\n\t\r\f\v)
 # \w=(a-z,A-Z,0-9, ) \W=(^a-z,A-Z,0-9, )
+# Regex testen: https://www.regexpal.com/
 
 for i in range(len(checkme)-13):
     chunk=checkme[i:i+14]

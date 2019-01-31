@@ -152,3 +152,16 @@ if ergebnis != False:
     print(ergebnis.group())
 foobar()
 input()
+
+# Um komplizierte Regexausdrücke einfacher darzustellen kann man re.VERBOSE an den Suchstring anhängen und diesen dann Mehrzeilig schreiben
+print('Telefonnummer eingeben:')
+phoneregex=re.compile(r'''
+    (\D\d{2})           # Ländervorwahl
+    \D(\d{3}|\d{2})           # Vorwahl
+    \D(\d{3})           # Nummer
+    \D(\d{2})
+    \D*(\d{2})*
+    ''', re.VERBOSE)
+string=input()
+find=phoneregex.findall(string)
+print(find)

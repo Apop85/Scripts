@@ -10,7 +10,7 @@ frage=suchnach.search(story)
 print(''.center(50, '▼'))
 print('Anzahl Fragen:'.ljust(15), len(fragen))
 print('Erste Frage:'.ljust(15), (frage.group()).strip())
-print(''.center(50, '▲'))
+
 
 # Suche nach Sätzen
 suchmuster=(r"\w[a-zA-z ’']+[.!:;]")
@@ -20,7 +20,7 @@ sat=suchnach.search(story)
 print(''.center(50, '▼'))
 print('Anzahl Sätze:'.ljust(15), len(satz), '+', len(fragen))
 print('Erster Satz:'.ljust(15), (sat.group()).strip())
-print(''.center(50, '▲'))
+
 
 # Suche nach Zitaten
 suchmuster=(r'"(.*?)"')
@@ -30,7 +30,7 @@ zitat=suchnach.search(story)
 print(''.center(50, '▼'))
 print('Anzahl Zitate:'.ljust(15), len(zitate))
 print('Erstes Zitat:'.ljust(15), (zitat.group()).strip())
-print(''.center(50, '▲'))
+
 
 # Suche nach Wörtern
 suchmuster=(r"[a-zA-Z’']+")
@@ -40,4 +40,4 @@ wor=suchnach.search(story)
 print(''.center(50, '▼'))
 print('Anzahl Wörter:'.ljust(15), len(wort))
 print('Erstes Wort:'.ljust(15), (wor.group()).strip())
-print(''.center(50, '▲'))
+

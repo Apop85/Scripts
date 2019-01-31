@@ -2,7 +2,7 @@
 from time import sleep
 from math import sin, pi
 from random import randint as rng
-
+global maxl
 maxl=50
 sleeptimer=0.1
 def choose():
@@ -11,10 +11,12 @@ def choose():
             print(''.center(maxl, '█'))
             print(' Wähle Frequenzmuster: '.center(maxl, '█'))
             print(''.center(maxl, '█'))
-            print('    Binär  : 1  '.center(maxl, '█'))
-            print('   Dreieck : 2  '.center(maxl, '█'))
-            print('    Sinus  : 3  '.center(maxl, '█'))
-            print(' Aktienkurs: 4  '.center(maxl, '█'))
+            print('      Binär: 1  '.center(maxl, '█'))
+            print('    Dreieck: 2  '.center(maxl, '█'))
+            print('      Sinus: 3  '.center(maxl, '█'))
+            print('RandomSinus: 4  '.center(maxl, '█'))
+            print(' JumpingSin: 5  '.center(maxl, '█'))
+            print(' Aktienkurs: 6  '.center(maxl, '█'))
             print(''.center(maxl, '█'))
             choose=input()
             if choose == '1':
@@ -24,6 +26,10 @@ def choose():
             elif choose == '3':
                 sinus()
             elif choose == '4':
+                ransin()
+            elif choose == '5':
+                jmpsin()
+            elif choose == '6':
                 stock()
             else:
                 continue
@@ -83,6 +89,86 @@ def sinus():
                 position = 50
             print(('@').rjust(position, '▒'))
             sleep(sleeptimer)
+    except KeyboardInterrupt:
+        print('\nAusgabe abgebrochen')
+
+def ransin():
+    cnt, i=0, 0
+    try:
+        freq=100000/getfreq()
+        while True:
+            inverter=rng(0,1)
+            target=rng(5,25)
+            while cnt != target:
+                if inverter == 0:
+                    i+=1
+                else:
+                    i-=1
+                cnt+=1
+                position=int((((sin(2*pi*500*i/freq))*(maxl//2)))+maxl//2+1)
+                if position == 51:
+                    position = 50
+                print(('@').rjust(position, '▒'))
+                sleep(sleeptimer)
+            cnt=0
+    except KeyboardInterrupt:
+        print('\nAusgabe abgebrochen')
+
+def jmpsin():
+    cnt, i, inverter=1, 10, 0
+    maxll=maxl
+    try:
+        freq=100000/getfreq()
+        freqs=freq
+        while True:
+            if inverter == 1:
+                inverter = 0
+                i+=1
+            else:
+                inverter = 1
+                i-=1
+            
+            while True:
+                if inverter == 0:
+                    i+=1
+                else:
+                    i-=1
+                position=int((((sin(2*pi*500*i/freqs))*(maxll//2)))+maxll//2+1)
+                if position == maxll+1:
+                    position = maxll
+                elif position < maxll//10 or position == 3:
+                    break
+                elif position <= 2:
+                    position=4
+                    break
+                elif maxll <= 8:
+                    for z in range(120):
+                        maxll=7
+                        if inverter == 0:
+                            i+=1
+                        else:
+                            if i == 0:
+                                inverter=1
+                            else:
+                                i-=1
+                        position=int((((sin(2*pi*500*i/freqs))*(maxll//2)))+maxll//2+1)
+                        print(('@').rjust(position, '▒'))
+                        sleep((sleeptimer-0.07))
+                        if freqs > 8500:
+                            freqs=int(freqs*0.99)
+                    maxll=maxl
+                    freqs=freq
+                    i=10
+                    inverter=0
+                    break
+                print(('@').rjust(position, '▒'))
+                sleep((sleeptimer-0.07))
+
+            maxll-=3
+            freqs=int(freqs*0.9499)
+            
+
+            
     except KeyboardInterrupt:
         print('\nAusgabe abgebrochen')
 

@@ -3,7 +3,7 @@ from time import sleep
 from math import sin, pi
 from random import randint as rng
 global maxl
-maxl=50
+maxl=70
 sleeptimer=0.1
 def choose():
     try:

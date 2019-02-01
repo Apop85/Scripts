@@ -14,13 +14,13 @@ def output(string):
     for i in range(len(output)):
         print(output[i].strip(' '))
     print(''.center(maxl+2, '█'))
-    # input()
+    input()
 
 dictionary=[{"Ratten": 5, r"Maus": 12}, {"Tiger": 1, "Katze": 4}, { "Hund": 2, 'Wolf': 1 }]
 
 string='Das Modul pprint.format() erstellt eine Ausgabe welche von Python interpretiert werden kann, daher ist dieses Modul optimal um damit beispielsweise ein eigenes Modul zu erstelen oder automatisch andere Pythonscripts zu erzeugen.'
 output(string)
-# input()
+
 if os.path.exists('meinmodul.py'):
     os.remove('meinmodul.py')
 

@@ -60,7 +60,7 @@ def genquest():
 	while counter != len(content):
 		for frage in fragen:
 			fragebogen=[]
-			testfrage='Was bedeutet ' + fragen[counter] +'?\n\n'
+			testfrage='Was bedeutet: ' + fragen[counter] +'?\n\n'
 			fragebogen+=[content[frage]]
 			counter+=1
 			fragenummer=counter

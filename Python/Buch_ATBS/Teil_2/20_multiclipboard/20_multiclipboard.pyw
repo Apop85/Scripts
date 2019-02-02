@@ -3,8 +3,8 @@
 # Die Endung pyw heisst dass Python beim ausführen kein Shellfenster anzeigt.
 
 # Dieses File solle mit der entsprechenden Bat-Datei gestartet werden mit dem Schlüsselname als Anhang 
-# z.b. python3 filename.pyw save schlüssel    --> Speichert Inhalt der Zwischenablage unter dem Schlüssel
-# und python3 filename.pyw keys				  --> Speichert die Keys zu dem vorhergehenden Schlüssel
+# z.b. python3 filename.pyw save <schlüssel>  --> Speichert Inhalt der Zwischenablage unter dem Schlüssel
+# und python3 filename.pyw keys <schlüssel>   --> Speichert die Keys zu dem vorhergehenden Schlüssel
 # oder python3 filename.pyw load              --> Lädt die Schlüsselwörter in die Zwischenablage
 
 import shelve, sys, os

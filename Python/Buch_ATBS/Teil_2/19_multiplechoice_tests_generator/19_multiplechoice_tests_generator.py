@@ -3,9 +3,9 @@
 from random import randint as rng
 from random import shuffle
 from copy import deepcopy as dcopy
-import pprint, os
+import pprint, os, shelve
 
-fragenpfad=r'C:\Users\Apop85\Desktop\ScriptProjekte\GitHub\Python\Buch_ATBS\Teil_2\19_multiplechoice_tests_generator\Fragebogen'
+fragenpfad=os.path.dirname(__file__)+r'\Fragebogen'
 
 if not os.path.exists(fragenpfad):
 	os.mkdir(fragenpfad)
@@ -19,7 +19,7 @@ content={'pprint.pformat()' : 'Formatierte, Pythongerechte ausgabe',
 'for namen in liste:' : 'Loop welcher die Inhalte einer Liste durchgeht', 
 'string[:7]' : 'String von anfang bis zu einem bestimmten Punkt ausgeben',
 '(a, b, c, d)' : 'Tuple erstellen',
-'string.append(\'text\'' : 'Text am ende eines Strings oder einer Liste anfügen',
+'string.append(\'text\')' : 'Text am ende eines Strings oder einer Liste anfügen',
 'string=copy(variable)' : 'String in eine neue Variable kopieren',
 'string=dcopy(variable)' : 'Liste oder Dictionary in eine neue Variable kopieren',
 'string[2]=\'Blah\'' : 'Wert in einer Liste ändern',
@@ -80,7 +80,6 @@ def frageblock():
 	return
 
 def output():
-	
 	file.write(((' Frage ' + str(fragenummer) + ' ').center(100, '#'))+'\n')
 	file.write((testfrage).center(100)+'\n')
 	for i in range(len(fragebogen)):
@@ -88,11 +87,11 @@ def output():
 	file.write('\n\n\n')
 	return
 
-
-
-			
-
+def save():
+    save=shelve.open('data')
+    save['content'] = content
+    save.close()
 
 gentests()
-
+save()
 

@@ -8,7 +8,7 @@ Test vermasselst gibt es Prügel!
                                 
                   []  Zufallszahl zwischen 9 und 10
                   []  Liste oder Dictionary in eine neue Variable kopieren
-                  []  String in eine neue Variable kopieren
+                  [x]  String in eine neue Variable kopieren
                   []  Tuple erstellen
                   []  Formatierte, Pythongerechte ausgabe
 

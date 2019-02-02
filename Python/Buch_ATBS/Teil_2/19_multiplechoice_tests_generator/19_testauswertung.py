@@ -10,8 +10,6 @@ load.close()
 points=0
 maxpoints=len(content)
 
-
-
 def fragen():
 	for filename in testfiles:
 		global points
@@ -25,21 +23,17 @@ def fragen():
 		checkboxinquest(gefunden)
 		score=6/maxpoints*points
 		print('Note:', round(score, 2))
-
-
-		
-
+		break
 def checkboxinquest(gefunden):
 	for i in range(len(gefunden)):
-		suchmuster=re.compile(r'(Was bedeutet[^\n]+)|(\[.*\][^\n]+)')
+		suchmuster=re.compile(r'Was bedeutet[ |:]([^\n|\?]+)|(\[.*\][^\n]+)')
 		fragebox=suchmuster.findall(gefunden[i])
 		checkforX(fragebox)
 
-
 def checkforX(fragebox):
 	for i in range(len(fragebox)):
-		if 'Was bedeutet' in fragebox[i][0]:
-			frage=fragebox[i][0]
+		global frage
+		frage=fragebox[0][0]
 		suchmuster=re.compile(r'\[.\]( .+)')
 		antworten=suchmuster.findall(fragebox[i][1])
 		if len(antworten) != 0: 
@@ -47,7 +41,8 @@ def checkforX(fragebox):
 
 def checkanswer(antwort):
 	antwort=antwort[0].strip()
-	if antwort in content.values():
+	print(antwort)
+	if antwort in content[frage]:
 		global points
 		points+=1
 

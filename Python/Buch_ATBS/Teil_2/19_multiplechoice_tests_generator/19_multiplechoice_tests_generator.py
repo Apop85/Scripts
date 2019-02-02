@@ -80,10 +80,14 @@ def frageblock():
 	return
 
 def output():
+	r2=rng(0,4)
 	file.write(((' Frage ' + str(fragenummer) + ' ').center(100, '#'))+'\n')
 	file.write((testfrage).center(100)+'\n')
 	for i in range(len(fragebogen)):
-		file.write(('[]'.rjust(20))+'  '+fragebogen[i]+'\n')
+		if i != r2:
+			file.write(('[]'.rjust(20))+'  '+fragebogen[i]+'\n')
+		else:
+			file.write(('[x]'.rjust(20))+'  '+fragebogen[i]+'\n')
 	file.write('\n\n\n')
 	return
 

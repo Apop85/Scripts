@@ -27,9 +27,10 @@ def fragen():
 			score=1.0
 		print('Note:', round(score, 2))
 
+
 def checkboxinquest(gefunden):
 	for i in range(len(gefunden)):
-		suchmuster=re.compile(r'Was bedeutet[ |:]([^\n|\?]+)|(\[.*\][^\n]+)')
+		suchmuster=re.compile(r'Was bedeutet[ |:]+([^\n|\?]+)|(\[.*\][^\n]+)')
 		fragebox=suchmuster.findall(gefunden[i])
 		checkforX(fragebox)
 

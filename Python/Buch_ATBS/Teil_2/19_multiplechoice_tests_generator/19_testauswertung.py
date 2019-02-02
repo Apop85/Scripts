@@ -1,4 +1,5 @@
 # Mit diesem Script sollen die Antworten der Schüler überprüft werden und die Note berechnet werden
+
 import os, re, pprint, shelve
 filepath=os.path.dirname(__file__)+r'\Fragebogen'
 
@@ -22,8 +23,10 @@ def fragen():
 		gefunden=suchmuster.findall(content)
 		checkboxinquest(gefunden)
 		score=6/maxpoints*points
+		if score < 1:
+			score=1.0
 		print('Note:', round(score, 2))
-		break
+
 def checkboxinquest(gefunden):
 	for i in range(len(gefunden)):
 		suchmuster=re.compile(r'Was bedeutet[ |:]([^\n|\?]+)|(\[.*\][^\n]+)')
@@ -41,7 +44,6 @@ def checkforX(fragebox):
 
 def checkanswer(antwort):
 	antwort=antwort[0].strip()
-	print(antwort)
 	if antwort in content[frage]:
 		global points
 		points+=1

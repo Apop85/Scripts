@@ -4,7 +4,7 @@
 
 # Dieses File solle mit der entsprechenden Bat-Datei gestartet werden mit dem Schlüsselname als Anhang 
 # python3 filename.pyw save <schlüssel>   --> Speichert Inhalt der Zwischenablage unter dem Schlüssel
-# python3 filename.pyw load <schlüssel>   --> Lädt den Inhalt des Schlüssels
+# python3 filename.pyw load <schlüssel>   --> Lädt den Inhalt des Schlüssels in die Zwischenablage
 # python3 filename.pyw del                --> löscht gespeicherte inhalte
 
 import shelve, sys, os

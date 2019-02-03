@@ -28,32 +28,24 @@ total=0.00
 sumf+='  '
 for i in range((len(sumf))-2):
     chunk=sumf[i:i+3]
-    # Wenn Element mit einem Buchstaben ohne Zahl (z.b. [►HH◄e])
-    if chunk[0].isupper() and chunk[1].isupper():
+    if chunk[0].isupper() and chunk[1].isupper():                   # [►HH◄e]
         total+=getmass(chunk[0])
-    # Wenn Element mit zwei Buchstaben ohne Zahl (z.b. [►He◄H])
-    elif (chunk[0] + chunk[2]).isupper() and chunk[1].islower():
+    elif (chunk[0] + chunk[2]).isupper() and chunk[1].islower():    # [►He◄H]
         if not chunk[2].isdecimal():
             total+=getmass(chunk[:2])
         else:
             element=chunk[:2]
-    # Wenn Zahl zu Grossbuchstabe (z.b. [►H9◄4])
-    elif chunk[0].isupper() and chunk[1].isdecimal():
+    elif chunk[0].isupper() and chunk[1].isdecimal():               # [►H9◄4]
         element=chunk[0]+chunk[1]
-    # Wenn Zahl nach Kleinbuchstabe (z.b. [►e2◄2])
-    elif chunk[0].islower() and chunk[1].isdecimal():
+    elif chunk[0].islower() and chunk[1].isdecimal():               # [►e2◄2]
         element+=chunk[1]
-    # Wenn Zahl grösser als 9 (z.b. [►22◄C])
-    elif chunk[0].isdecimal() and chunk[1].isdecimal():
+    elif chunk[0].isdecimal() and chunk[1].isdecimal():             # [►22◄C]
         element+=chunk[1]
-    # Wenn Zahl grösser 9 ausgelesen (z.b. [►9H◄e])
-    elif chunk[0].isdecimal() and chunk[1].isupper():
+    elif chunk[0].isdecimal() and chunk[1].isupper():               # [►9H◄e]
         total+=getmass(element)
-    # Wenn letzter Eintrag Grossbuchstabe (z.b. [►H ◄ ])
-    elif chunk[1].isspace() and chunk[0].isupper():
+    elif chunk[1].isspace() and chunk[0].isupper():                 # [►H ◄ ]
         total+=getmass(chunk[0])
-    # Wenn letzter Eintrag Zahl (z.b. [►7 ◄ ])
-    elif chunk[0].isdecimal() and chunk[1].isspace():
+    elif chunk[0].isdecimal() and chunk[1].isspace():               # [►7 ◄ ]
         total+=getmass(element)
 
 total=round(total, 3)

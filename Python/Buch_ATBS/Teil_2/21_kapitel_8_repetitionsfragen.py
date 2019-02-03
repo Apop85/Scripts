@@ -11,7 +11,7 @@ def output():
 	ergebnis=suchmuster.findall(string)
 	for abschnitt in ergebnis:
 		print(abschnitt)
-#	print(''.center(maxl, '█'))
+
 
 string='Wozu ist ein relativer Pfad relativ?'
 output()

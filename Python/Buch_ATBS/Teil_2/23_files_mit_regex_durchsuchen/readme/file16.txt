@@ -1,0 +1,10 @@
+Auto
+
+Ein Maschinenbauer, ein Chemiker und ein Informatiker fahren in einem Auto durch die Wüste. Plötzlich bleibt das Auto stehen, und die drei beginnen über die Ausfallursache zu streiten:
+
+Der Chemiker:
+    "Sicher ein unvermuteter Entropiezuwachs im Motorraum!"
+Der Maschinenbauer:
+    "Blödsinn, es ist einfach der Keilriemen gerissen oder der Zündverteiler hat sich verabschiedet oder sowas!... usw...usw..."
+Bis es dem Informatiker zu dumm wird:
+    "Ist doch egal, wir steigen einfach aus und wieder ein, dann wird's schon wieder laufen." 

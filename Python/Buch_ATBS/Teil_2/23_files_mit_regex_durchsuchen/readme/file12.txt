@@ -1,0 +1,4 @@
+Ein leerer Bus kommt an eine Haltestelle, zehn Fahrgäste steigen ein. An der nächsten Haltestelle steigen elf Menschen aus, und der Bus fährt weiter. Drei Wissenschaftler kommentieren das Geschehen.
+Biologe: „Ganz einfach! Die Fahrgäste haben sich vermehrt.“
+Physiker: „Zehn Prozent Messtoleranz müssen immer drin sein.“
+Mathematiker: „Wenn jetzt einer einsteigt, ist der Bus leer.“ 

@@ -1,0 +1,8 @@
+Aus Sicht der Anwender gibt es 3 zentrale Begriffe, die sein tägliches Leben mit dem Computer und Software bestimmen:
+
+Benutzerfreundlichkeit:
+    Alles, was einem Programmierer logisch erscheint.
+Fehlermeldung:
+    Kurze, treffende Bemerkungen die dem Anwender sämtliche Schuld an allen Programmfehlern zuschiebt.
+Handbuch:
+    Wichtiges Teil der Hardware, das den Monitor auf Augenhöhe bringt. 

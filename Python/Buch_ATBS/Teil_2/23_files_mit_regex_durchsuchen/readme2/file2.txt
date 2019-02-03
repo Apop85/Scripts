@@ -1,0 +1,1 @@
+Es ist Funktionen-Party. Tan(y), Log(x) et cetera sind gut drauf, tanzen und lachen. Nur Exp(x) steht einsam in der Ecke. Log(x): "Was ist denn los?" Exp(x): "Ich versuche mich ja zu integrieren, aber es kommt immer dasselbe dabei raus..." 

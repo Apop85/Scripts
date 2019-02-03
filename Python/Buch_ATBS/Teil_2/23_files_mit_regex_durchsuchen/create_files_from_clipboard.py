@@ -1,7 +1,7 @@
 import os
 from pyperclip import copy, paste
 from time import sleep
-os.chdir(os.path.dirname(__file__)+r'\\readme')
+os.chdir(os.path.dirname(__file__)+r'\\readme2')
 pfad=os.getcwd()
 counter=len(os.listdir(pfad))
 

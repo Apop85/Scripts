@@ -11,6 +11,6 @@ zipname=zipfile.ZipFile(targetpath+'\\backup'+str(backupcounter+1)+'.zip', 'w')
 
 for folder, subfolder, files in os.walk(backuppath):
     for file in files:
-        zipname.write(backuppath+'\\'+file, compress_type=zipfile.ZIP_DEFLATED)
+        zipname.write(folder+'\\'+file, compress_type=zipfile.ZIP_DEFLATED)
 
 zipname.close()

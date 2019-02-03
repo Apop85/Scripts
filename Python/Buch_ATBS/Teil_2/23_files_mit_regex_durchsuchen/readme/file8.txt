@@ -1,0 +1,1 @@
+Was ist der Unterschied zwischen einem Informatiker und einem Physiker? Der Physiker glaubt, ein Kilobyte sind 1000 Byte. Der Informatiker glaubt, ein Kilometer sind 1024 Meter.

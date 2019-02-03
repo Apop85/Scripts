@@ -7,16 +7,14 @@ zielordner=os.path.dirname(__file__)+'\\umbenannt'
 
 def check_4_files():
     for folder, subfolder, files in os.walk('.\\'):
-        suchmuster=re.compile(r'(\d{2})(-?)(\d{2})(-?)(20\d\d)')
+        suchmuster=re.compile(r'([0|1]?\d)-?([0|1|2|3]\d)-?(20\d{2})')
         ergebnis=suchmuster.findall(' '.join(files))
         i=0
         if ergebnis != []:
             for file in files:
                 if ergebnis[i][0] and ergebnis[i][2] and ergebnis[i][4] in file:
                     filename=suchmuster.sub(r'\3\2\1\4\5', file)
-                    # print(folder+'\\'+file, zielordner+'\\'+filename)
                     shutil.copy(folder+'\\'+file, zielordner+'\\'+filename)
                     i+=1
-
 
 check_4_files()

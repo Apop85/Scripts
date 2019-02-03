@@ -8,7 +8,6 @@ os.chdir(os.path.dirname(__file__))
 
 def output(string):
 	print(''.center(maxl, '█'))
-	delta=len(string) % maxl
 	string+=' '*(maxl)
 	suchmuster=re.compile(r'.{'+str(maxl-dv) + r',' + str(maxl) +r'}[,|\.|\n| ]', re.DOTALL)
 	ergebnis=suchmuster.findall(string)

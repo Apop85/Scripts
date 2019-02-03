@@ -24,7 +24,7 @@ def check_dir(ordnerliste):
 		os.chdir(pfad+'\\'+ordner)
 		files=os.listdir(os.getcwd())
 		for file in files:
-			if '.txt' in file:
+			if file.endswith('.txt'):
 				open_file=open(file, 'r')
 				content=open_file.read()
 				open_file.close()

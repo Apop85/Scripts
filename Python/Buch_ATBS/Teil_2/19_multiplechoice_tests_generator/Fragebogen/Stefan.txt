@@ -3,98 +3,98 @@ vorbereitet. Es gibt keine zweite chance also nutze sie gut. Wenn du den
 Test vermasselst gibt es Prügel!
 
 ############################################# Frage 1 ##############################################
-                                 Was bedeutet: pprint.pformat()?
+                              Was bedeutet: string=dcopy(variable)?
 
-                                  
-                  []  Formatierte, Pythongerechte ausgabe
-                  []  Loop welcher die Inhalte einer Liste durchgeht
-                 [x]  Text am ende eines Strings oder einer Liste anfügen
-                  []  Falls Eintrag nicht vorhanden Wert setzen
-                  []  Errorhandling
+                               
+                 [x]  Liste oder Dictionary in eine neue Variable kopieren
+                  []  String in eine neue Variable kopieren
+                  []  Zentrierte Ausrichtung
+                  []  Zufallszahl zwischen 9 und 10
+                  []  Prüft auf Grossbuchstaben
 
 
 
 ############################################# Frage 2 ##############################################
-                             Was bedeutet: string.sort(reverse=true)?
+                                   Was bedeutet: (a, b, c, d)?
 
-                             
-                 [x]  String in eine neue Variable kopieren
+                                    
                   []  Tuple erstellen
-                  []  Entgegen dem Alphabet sortieren
-                  []  Ausgabe einer Liste in einer Liste
                   []  Liste oder Dictionary in eine neue Variable kopieren
+                  []  Ausgabe einer Liste in einer Liste
+                 [x]  Ausgabe in Grossbuchstaben
+                  []  Entgegen dem Alphabet sortieren
 
 
 
 ############################################# Frage 3 ##############################################
-                                 Was bedeutet: string.isupper()?
+                            Was bedeutet: string.sort(key=str.lower)?
 
-                                  
-                  []  Liste oder Dictionary in eine neue Variable kopieren
-                  []  Falls Eintrag nicht vorhanden Wert setzen
-                  []  Prüft auf Grossbuchstaben
+                             
+                  []  Entgegen dem Alphabet sortieren
                  [x]  Wert in einer Liste ändern
-                  []  Zufallszahl zwischen 9 und 10
-
-
-
-############################################# Frage 4 ##############################################
-                                 Was bedeutet: string[2]='Blah'?
-
-                                  
-                 [x]  Leerzeichen am anfang und Ende entfernen
-                  []  Wert in einer Liste ändern
-                  []  Text am ende eines Strings oder einer Liste anfügen
-                  []  Entgegen dem Alphabet sortieren
-                  []  Liste oder Dictionary in eine neue Variable kopieren
-
-
-
-############################################# Frage 5 ##############################################
-                                  Was bedeutet: string.center()?
-
-                                  
-                  []  Entgegen dem Alphabet sortieren
-                  []  Zufallszahl zwischen 9 und 10
-                  []  Loop welcher die Inhalte einer Liste durchgeht
-                 [x]  Eintrag in einem Dictionary ändern
-                  []  Zentrierte Ausrichtung
-
-
-
-############################################# Frage 6 ##############################################
-                               Was bedeutet: string=copy(variable)?
-
-                               
-                  []  Prüft auf Grossbuchstaben
-                  []  Zentrierte Ausrichtung
-                  []  Wert in einer Liste ändern
-                 [x]  Eintrag in einem Dictionary ändern
+                  []  Sortiere ungeachtet Grossschreibung
+                  []  Ausgabe in Grossbuchstaben
                   []  String in eine neue Variable kopieren
 
 
 
-############################################# Frage 7 ##############################################
-                                  Was bedeutet: string.upper()?
+############################################# Frage 4 ##############################################
+                                 Was bedeutet: pprint.pformat()?
 
-                                   
-                  []  Entgegen dem Alphabet sortieren
-                  []  Ausgabe in Grossbuchstaben
+                                  
+                  []  Zufallszahl zwischen 9 und 10
                   []  Ausgabe einer Liste in einer Liste
+                  []  Formatierte, Pythongerechte ausgabe
+                 [x]  Entgegen dem Alphabet sortieren
+                  []  Text am ende eines Strings oder einer Liste anfügen
+
+
+
+############################################# Frage 5 ##############################################
+                               Was bedeutet: string.append('text')?
+
+                               
                   []  Wert in einer Liste ändern
-                 [x]  Formatierte, Pythongerechte ausgabe
+                 [x]  Loop welcher die Inhalte einer Liste durchgeht
+                  []  Prüft auf Grossbuchstaben
+                  []  String in eine neue Variable kopieren
+                  []  Text am ende eines Strings oder einer Liste anfügen
+
+
+
+############################################# Frage 6 ##############################################
+                                 Was bedeutet: string.isupper()?
+
+                                  
+                  []  String in eine neue Variable kopieren
+                  []  Prüft auf Grossbuchstaben
+                  []  Eintrag in einem Dictionary ändern
+                 [x]  Sortiere ungeachtet Grossschreibung
+                  []  Formatierte, Pythongerechte ausgabe
+
+
+
+############################################# Frage 7 ##############################################
+                               Was bedeutet: string=copy(variable)?
+
+                               
+                 [x]  Ausgabe in Grossbuchstaben
+                  []  Ausgabe einer Liste in einer Liste
+                  []  String in eine neue Variable kopieren
+                  []  Eintrag in einem Dictionary ändern
+                  []  Text am ende eines Strings oder einer Liste anfügen
 
 
 
 ############################################# Frage 8 ##############################################
-                               Was bedeutet: random.randint(9,10)?
+                                  Was bedeutet: string.center()?
 
-                                
-                 [x]  String von anfang bis zu einem bestimmten Punkt ausgeben
-                  []  Zufallszahl zwischen 9 und 10
-                  []  Loop welcher die Inhalte einer Liste durchgeht
+                                  
                   []  Errorhandling
-                  []  Tuple erstellen
+                  []  Eintrag in einem Dictionary ändern
+                 [x]  Text am ende eines Strings oder einer Liste anfügen
+                  []  Zentrierte Ausrichtung
+                  []  Falls Eintrag nicht vorhanden Wert setzen
 
 
 
@@ -102,107 +102,107 @@ Test vermasselst gibt es Prügel!
                                     Was bedeutet: string[:7]?
 
                                      
-                  []  Loop welcher die Inhalte einer Liste durchgeht
-                  []  Wert in einer Liste ändern
-                  []  Text am ende eines Strings oder einer Liste anfügen
-                 [x]  String in eine neue Variable kopieren
+                  []  Formatierte, Pythongerechte ausgabe
+                 [x]  Entgegen dem Alphabet sortieren
                   []  String von anfang bis zu einem bestimmten Punkt ausgeben
+                  []  Sortiere ungeachtet Grossschreibung
+                  []  Zufallszahl zwischen 9 und 10
 
 
 
 ############################################# Frage 10 #############################################
-                              Was bedeutet: string['Name:']=Michael?
+                                   Was bedeutet: try: except:?
 
-                              
-                 [x]  Ausgabe in Grossbuchstaben
+                                    
+                 [x]  Eintrag in einem Dictionary ändern
+                  []  Errorhandling
+                  []  Wert in einer Liste ändern
                   []  Zufallszahl zwischen 9 und 10
-                  []  Eintrag in einem Dictionary ändern
-                  []  Sortiere ungeachtet Grossschreibung
-                  []  Tuple erstellen
+                  []  Text am ende eines Strings oder einer Liste anfügen
 
 
 
 ############################################# Frage 11 #############################################
-                                  Was bedeutet: string.strip()?
+                             Was bedeutet: string.sort(reverse=true)?
 
-                                   
-                  []  Falls Eintrag nicht vorhanden Wert setzen
-                  []  Liste oder Dictionary in eine neue Variable kopieren
-                 [x]  Entgegen dem Alphabet sortieren
-                  []  Leerzeichen am anfang und Ende entfernen
-                  []  Text am ende eines Strings oder einer Liste anfügen
+                             
+                  []  Ausgabe einer Liste in einer Liste
+                 [x]  Errorhandling
+                  []  Wert in einer Liste ändern
+                  []  String in eine neue Variable kopieren
+                  []  Entgegen dem Alphabet sortieren
 
 
 
 ############################################# Frage 12 #############################################
-                                   Was bedeutet: (a, b, c, d)?
+                                 Was bedeutet: string[2]='Blah'?
 
-                                    
-                  []  Sortiere ungeachtet Grossschreibung
-                  []  Tuple erstellen
+                                  
+                  []  Wert in einer Liste ändern
+                  []  Leerzeichen am anfang und Ende entfernen
                   []  Text am ende eines Strings oder einer Liste anfügen
-                  []  Eintrag in einem Dictionary ändern
-                 [x]  Wert in einer Liste ändern
+                  []  Falls Eintrag nicht vorhanden Wert setzen
+                 [x]  Zufallszahl zwischen 9 und 10
 
 
 
 ############################################# Frage 13 #############################################
-                                Was bedeutet: for namen in liste:?
+                                  Was bedeutet: string.upper()?
 
-                                
-                 [x]  Falls Eintrag nicht vorhanden Wert setzen
+                                   
                   []  String von anfang bis zu einem bestimmten Punkt ausgeben
-                  []  Ausgabe einer Liste in einer Liste
-                  []  Loop welcher die Inhalte einer Liste durchgeht
-                  []  String in eine neue Variable kopieren
-
-
-
-############################################# Frage 14 #############################################
-                                   Was bedeutet: try: except:?
-
-                                    
-                 [x]  Loop welcher die Inhalte einer Liste durchgeht
-                  []  Sortiere ungeachtet Grossschreibung
-                  []  Zentrierte Ausrichtung
+                 [x]  Sortiere ungeachtet Grossschreibung
                   []  Ausgabe in Grossbuchstaben
+                  []  Zufallszahl zwischen 9 und 10
                   []  Errorhandling
 
 
 
-############################################# Frage 15 #############################################
-                               Was bedeutet: string.append('text')?
+############################################# Frage 14 #############################################
+                                  Was bedeutet: string.strip()?
 
-                               
-                  []  Zufallszahl zwischen 9 und 10
+                                   
+                  []  Ausgabe in Grossbuchstaben
                   []  Text am ende eines Strings oder einer Liste anfügen
-                  []  Loop welcher die Inhalte einer Liste durchgeht
-                  []  Liste oder Dictionary in eine neue Variable kopieren
-                 [x]  Tuple erstellen
+                  []  Errorhandling
+                  []  Formatierte, Pythongerechte ausgabe
+                 [x]  Leerzeichen am anfang und Ende entfernen
+
+
+
+############################################# Frage 15 #############################################
+                              Was bedeutet: string['Name:']=Michael?
+
+                              
+                  []  String von anfang bis zu einem bestimmten Punkt ausgeben
+                  []  Eintrag in einem Dictionary ändern
+                  []  Zufallszahl zwischen 9 und 10
+                  []  Sortiere ungeachtet Grossschreibung
+                 [x]  Ausgabe einer Liste in einer Liste
 
 
 
 ############################################# Frage 16 #############################################
-                       Was bedeutet: string.setdefault('Hund', 'Schwarz')?
+                                Was bedeutet: for namen in liste:?
 
-                        
-                  []  Text am ende eines Strings oder einer Liste anfügen
+                                
+                  []  Loop welcher die Inhalte einer Liste durchgeht
                   []  Eintrag in einem Dictionary ändern
-                  []  Falls Eintrag nicht vorhanden Wert setzen
-                 [x]  Tuple erstellen
-                  []  Wert in einer Liste ändern
+                  []  Sortiere ungeachtet Grossschreibung
+                  []  Zentrierte Ausrichtung
+                 [x]  Leerzeichen am anfang und Ende entfernen
 
 
 
 ############################################# Frage 17 #############################################
-                              Was bedeutet: string=dcopy(variable)?
+                               Was bedeutet: random.randint(9,10)?
 
-                               
-                  []  Zentrierte Ausrichtung
-                  []  Loop welcher die Inhalte einer Liste durchgeht
-                 [x]  Prüft auf Grossbuchstaben
+                                
                   []  Formatierte, Pythongerechte ausgabe
-                  []  Liste oder Dictionary in eine neue Variable kopieren
+                 [x]  Zufallszahl zwischen 9 und 10
+                  []  Ausgabe in Grossbuchstaben
+                  []  Ausgabe einer Liste in einer Liste
+                  []  Entgegen dem Alphabet sortieren
 
 
 
@@ -210,23 +210,23 @@ Test vermasselst gibt es Prügel!
                                    Was bedeutet: string[2][3]?
 
                                     
-                 [x]  Errorhandling
-                  []  Ausgabe in Grossbuchstaben
-                  []  Sortiere ungeachtet Grossschreibung
-                  []  Ausgabe einer Liste in einer Liste
+                  []  Leerzeichen am anfang und Ende entfernen
+                  []  Tuple erstellen
                   []  Loop welcher die Inhalte einer Liste durchgeht
+                 [x]  Ausgabe einer Liste in einer Liste
+                  []  Prüft auf Grossbuchstaben
 
 
 
 ############################################# Frage 19 #############################################
-                            Was bedeutet: string.sort(key=str.lower)?
+                       Was bedeutet: string.setdefault('Hund', 'Schwarz')?
 
-                             
-                  []  Entgegen dem Alphabet sortieren
-                 [x]  Ausgabe einer Liste in einer Liste
-                  []  String von anfang bis zu einem bestimmten Punkt ausgeben
+                        
+                  []  Falls Eintrag nicht vorhanden Wert setzen
+                  []  Prüft auf Grossbuchstaben
                   []  Sortiere ungeachtet Grossschreibung
-                  []  Loop welcher die Inhalte einer Liste durchgeht
+                  []  Formatierte, Pythongerechte ausgabe
+                 [x]  String von anfang bis zu einem bestimmten Punkt ausgeben
 
 
 

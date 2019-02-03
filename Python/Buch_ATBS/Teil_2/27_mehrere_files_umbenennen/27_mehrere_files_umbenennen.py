@@ -7,7 +7,7 @@ zielordner=os.path.dirname(__file__)+'\\umbenannt'
 
 def check_4_files():
     for folder, subfolder, files in os.walk('.\\'):
-        suchmuster=re.compile(r'([0|1]?\d)-?([0|1|2|3]\d)-?(20\d{2})')
+        suchmuster=re.compile(r'([0|1]?\d)(-?)([0|1|2|3]\d)(-?)(20\d{2})')
         ergebnis=suchmuster.findall(' '.join(files))
         i=0
         if ergebnis != []:

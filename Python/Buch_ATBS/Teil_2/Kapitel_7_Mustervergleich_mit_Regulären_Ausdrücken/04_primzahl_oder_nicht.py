@@ -14,6 +14,7 @@ def getnum():
 
 
 
+
 def checknum():
     num=getnum()
     maxtry=int(round(sqrt(num)))
@@ -30,4 +31,4 @@ try:
     while True:
         checknum()
 except KeyboardInterrupt:
-    prnit('Bye')
+    print('Bye')

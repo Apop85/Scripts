@@ -1,9 +1,9 @@
 # Übung: Erstelle ein Script welches X Multiplechoice tests als Textfile erstellt. Die Reihenfolge der Fragen und Antworten sollen sich in jedem Dokument unterscheiden.
 
+import os, pprint, shelve
+from copy import deepcopy as dcopy
 from random import randint as rng
 from random import shuffle
-from copy import deepcopy as dcopy
-import pprint, os, shelve
 
 fragenpfad=os.path.dirname(__file__)+r'\Fragebogen'
 
@@ -98,4 +98,3 @@ def save():
 
 gentests()
 save()
-

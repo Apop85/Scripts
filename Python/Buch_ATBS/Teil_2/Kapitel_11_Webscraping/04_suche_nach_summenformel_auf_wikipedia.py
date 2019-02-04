@@ -4,7 +4,7 @@
 import requests, logging, re, os
 os.chdir(os.path.dirname(__file__))
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.CRITICAL, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def search_in_string(content):
     global attempt
@@ -50,6 +50,7 @@ def read_content():
         print('Fehler aufgetreten: %s' % [error_message])
         return
     temp_file.close()
+    os.remove('.\\tempfile.tmp')
     search_in_string(str(content))
 
 def get_content(url_name):

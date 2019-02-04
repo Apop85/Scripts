@@ -1,7 +1,6 @@
 # 34_errors_in_log_ausgeben.py
 # Um eine Fehlermeldung in ein log schreiben zu lassen kann man das Modul traceback importieren
 import traceback, re, os
-print(os.getcwd())
 os.chdir(os.path.dirname(__file__))
 
 maxl, dv= 50, 15

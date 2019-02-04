@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "c:\Users\Apop85\Desktop\ScriptProjekte\GitHub\Python\Buch_ATBS\Teil_2\34_errors_in_log_ausgeben\34_errors_in_log_ausgeben.py", line 22, in <module>
+    if int(choose) < 3:
+ValueError: invalid literal for int() with base 10: ''

@@ -1,5 +1,5 @@
 # Umrechnen zwischen unterschiedlichen Einheiten im molaren und metrischen System
-# ToDo: Was tun wenn auf wiki nichts gefunden wurde?, mol_hard_calculate
+# ToDo: Was tun wenn auf wiki nichts gefunden wurde?, mol_hard_calculate <-- formel recherchieren
 
 import re, requests, os, logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -175,7 +175,7 @@ def check_input(choose_value, target_unit):
                 molar_mass, substance, substance_names=get_substance()
                 output_results(substance, molar_mass, result, source_value, source_unit, target_unit, substance_names)
                 #### CALC MISSING
-            elif 'mol' in target_unit[1] or source_unit[1]:
+            elif 'mol' in target_unit[1] or 'mol' in source_unit[1]:
                 raise Exception('Berechnung kann mit diesen Einheiten nicht durchgeführt werden.'+'/'.join(source_unit)+' zu '+'/'.join(target_unit))
             else:
                 logging.critical('Da ging was ziemlich schief:'+str(source_unit)+' - '+str(target_unit))

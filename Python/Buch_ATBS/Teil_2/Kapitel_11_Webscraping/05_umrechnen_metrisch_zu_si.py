@@ -1,5 +1,4 @@
 # Umrechnen zwischen unterschiedlichen Einheiten im molaren und metrischen System
-# ToDo: Lookup des Namens einer Summenformel, Berechnungen innerhalb der selben Bezugsysteme
 # ToDo: Was tun wenn auf wiki nichts gefunden wurde?, mol_hard_calculate
 
 import re, requests, os, logging
@@ -30,25 +29,37 @@ def get_substance():
     if len(capital) > len(lower_case):
         logging.debug('Summenformel erkannt. A-Z0-9:'+str(len(capital))+' > a-z:'+str(len(lower_case)))
         molar_mass=calculate_molar_mass(substance)
-        return molar_mass, substance
+        substance, substance_names=lookup_sum_formula(substance)
+        return molar_mass, substance, substance_names
         ## GET CHEMICAL NAME @SUMFORMULA_LOOKUP_WEBSITE
     else:
         logging.debug('Stoffname erkannt. A-Z0-9:'+str(len(capital))+' < a-z:'+str(len(lower_case)))
         molar_mass=get_molar_mass_by_name(substance)
-        return molar_mass, substance
+        return molar_mass, substance, ''
 
-def calculate_molar_mass(sum_formula):
-    molar_mass=0
-    pattern=re.compile(r'[A-Z][^A-Z]*')
-    pattern2=re.compile(r'([a-zA-Z]+)(\d+)')
-    elemente=re.findall(pattern, sum_formula)
-    for element in elemente:
-        zahl=re.findall(pattern2, element)
-        if len(zahl) != 0:
-            molar_mass+=periodic_table[zahl[0][0]]*int(zahl[0][1])
-        else:
-            molar_mass+=periodic_table[element]
-    return molar_mass
+def lookup_sum_formula(substance):
+    url_name='https://webbook.nist.gov/cgi/cbook.cgi?Formula=+'+substance+'&NoIon=on&Units=SI'
+    url_content=requests.get(url_name)
+    check=check_url(url_content)
+    if check == 1:
+        substance_name = 'UNKNOWN'
+        return substance_name, ''
+    tmpfile=open('.\\tmpfile.tmp', 'wb')
+    for chunk in url_content.iter_content(10**6):
+        tmpfile.write(chunk)
+    tmpfile.close()
+    tmpfile=open('.\\tmpfile.tmp', encoding='UTF-8')
+    content=tmpfile.read()
+    tmpfile.close()
+    os.remove('.\\tmpfile.tmp')
+    substance_names=search_substance_name(content)
+    return substance, substance_names
+
+def search_substance_name(content):
+    possible_substance_names=re.compile(r'SI">([A-Z|a-z|,| |0-9|-]*?)</a>')
+    substance_names=possible_substance_names.findall(content)
+    input()
+    return substance_names
 
 def get_molar_mass_by_name(substance):
     url_name='https://de.wikipedia.org/wiki/'+substance.title()
@@ -58,7 +69,7 @@ def get_molar_mass_by_name(substance):
         url_name='https://de.wikipedia.org/wiki/'+substance.title()+'eigenschaften'
         url_content=requests.get(url_name)
         check=check_url(url_content)
-    if check ==1:
+    if check == 1:
         logging.error('Wikipediaeintrag nicht gefunden.')
         raise Exception('Wikipediaeintrag nicht gefunden!')
     tmpfile=open(r'.\tmpfile.tmp', 'wb')
@@ -89,8 +100,21 @@ def check_url(url_content):
         logging.debug('URL nicht gefunden')
         return 1
 
+def calculate_molar_mass(sum_formula):
+    molar_mass=0
+    pattern=re.compile(r'[A-Z][^A-Z]*')
+    pattern2=re.compile(r'([a-zA-Z]+)(\d+)')
+    elemente=re.findall(pattern, sum_formula)
+    for element in elemente:
+        zahl=re.findall(pattern2, element)
+        if len(zahl) != 0:
+            molar_mass+=periodic_table[zahl[0][0]]*int(zahl[0][1])
+        else:
+            molar_mass+=periodic_table[element]
+    return molar_mass
+
 def mol_easy_calculate(molar_mass, source_unit, target_unit, source_value):
-    conversion_factor=(conversion_factors[source_unit[0]]/conversion_factors[target_unit[0]])*(conversion_factors[source_unit[1]]/conversion_factors[target_unit[1]])
+    conversion_factor=(conversion_factors[source_unit[0]]/conversion_factors[target_unit[0]])/(conversion_factors[source_unit[1]]/conversion_factors[target_unit[1]])
     if 'mol' in source_unit[0]:
         logging.debug('Rechne von molarem System zu metrisch: '+'/'.join(source_unit)+' nach '+'/'.join(target_unit))
         # Stoffmenge(n) = konzentration(m) * molare_masse(M) * umrechnungsfaktor(u) --> n=m/M*u
@@ -107,6 +131,12 @@ def mol_easy_calculate(molar_mass, source_unit, target_unit, source_value):
 def mol_hard_calculate(molar_mass, source_unit, target_unit, source_value):
     print('No Idea Yet')
 
+def nomol_calculate(source_unit, source_value, target_unit):
+    conversion_factor=(conversion_factors[source_unit[0]]/conversion_factors[target_unit[0]])/(conversion_factors[source_unit[1]]/conversion_factors[target_unit[1]])
+    result=float(source_value)/conversion_factor
+    logging.debug('Umrechung im selben Bezugssystem. Umrechnungsfaktor: '+str(conversion_factor)+', Resultat: '+str(result))
+    return result
+
 def check_input(choose_value, target_unit):
     try:
         choose_value=choose_value.split(' ')
@@ -120,22 +150,29 @@ def check_input(choose_value, target_unit):
                 raise Exception('Diese Angabe macht keinen Sinn.')
             elif 'l' in target_unit[1] and 'l' in source_unit[1] and 'mol' not in source_unit[0] and 'mol' not in target_unit[0]:
                 logging.debug('Angabe des Stoffs unnötig da beide Einheiten im Metrischen-System (Liter) sind')
-                ## CALCULATE g/l <--> mg/l
+                molar_mass, substance='UNKNOWN', 'UNKNOWN'
+                result=nomol_calculate(source_unit, source_value, target_unit)
+                output_results(substance, molar_mass, result, source_value, source_unit, target_unit, '')
             elif 'mol' in target_unit[0] and 'mol' in source_unit[0] and target_unit[1][-1:] == source_unit[1][-1:]:
                 logging.debug('Angabe des Stoffs unnötig da beide Einheiten im Mol-System')
-                ## CALCULATE mol/l <--> mmol/l
+                molar_mass, substance='UNKNOWN', 'UNKNOWN'
+                result=nomol_calculate(source_unit, source_value, target_unit)
+                output_results(substance, molar_mass, result, source_value, source_unit, target_unit, '')
             elif 'g' in target_unit[0][-1:] and 'g' in source_unit[0][-1:]:
                 logging.debug('Angabe des Stoffs unnötig da beide Einheiten im Metrischen-System (Gramm) sind')
-                ## CALCULATE g/l <--> mg/l
+                molar_mass, substance='UNKNOWN', 'UNKNOWN'
+                result=nomol_calculate(source_unit, source_value, target_unit)
+                output_results(substance, molar_mass, result, source_value, source_unit, target_unit, '')
             elif source_unit[1][-1:] == target_unit[1][-1:] and 'mol' not in target_unit[1] or 'mol' in source_unit[1]:
                 logging.debug('Umrechnung von Metrischem zu Molarem System notwendig. (Im selben Bezugssystem)'+str(source_unit[1][-1:])+'='+str(target_unit[1][-1:])) # z.b. nmol/l nach mg/ml und nicht nmol/l nach mg/kg
-                molar_mass, substance=get_substance()
+                molar_mass, substance, substance_names=get_substance()
                 result=mol_easy_calculate(molar_mass, source_unit, target_unit, source_value)
-                output_results(substance, molar_mass, result, source_value, source_unit, target_unit)
+                output_results(substance, molar_mass, result, source_value, source_unit, target_unit, substance_names)
             elif 'mol' not in target_unit[1] or 'mol' in source_unit[1]:
                 logging.debug('Umrechnung von Metrischem zu Molarem System notwendig. (Nicht im selben Bezugssystem)'+str(source_unit[1][-1:])+'='+str(target_unit[1][-1:])) # z.b. nmol/l nach mg/ml und nicht nmol/l nach mg/kg
-                molar_mass=get_substance()
-                mol_hard_calculate(molar_mass, source_unit, target_unit, source_value)
+                molar_mass, substance, substance_names=get_substance()
+                output_results(substance, molar_mass, result, source_value, source_unit, target_unit, substance_names)
+                #### CALC MISSING
             elif 'mol' in target_unit[1] or source_unit[1]:
                 raise Exception('Berechnung kann mit diesen Einheiten nicht durchgeführt werden.'+'/'.join(source_unit)+' zu '+'/'.join(target_unit))
             else:
@@ -155,20 +192,27 @@ def choose_menu():
         target_unit=target_unit.lower()
         check_input(choose_value, target_unit)
 
-def output_results(name, molar_mass, result, source_value, source_unit, target_unit):
+def output_results(name, molar_mass, result, source_value, source_unit, target_unit, substance_names):
     breakpoint
-    line1=' Umrechnung von '+str(source_value)+'/'.join(source_unit)+' zu '+'/'.join(target_unit)+' '
+    line1=' Umrechnung von '+str(source_value)+' '+'/'.join(source_unit)+' zu '+'/'.join(target_unit)+' '
     line2=' Stoffname: '+str(name)+' '
     line3=' Molare Masse: '+str(molar_mass)+' g/mol '
     line4=' Resultat: '+str(round(result, 4))+' '+'/'.join(target_unit)+' '
     print(''.center(80, '█'))
     print(''.center(15, '█')+line1.center(50)+''.center(15, '█'))
     print(''.center(80, '█'))
-    print(''.center(15, '█')+line2.center(50)+''.center(15, '█'))
-    print(''.center(15, '█')+line3.center(50)+''.center(15, '█'))
-    print(''.center(80, '█'))
+    if molar_mass != 'UNKNOWN':
+        print(''.center(15, '█')+line2.center(50)+''.center(15, '█'))
+        print(''.center(15, '█')+line3.center(50)+''.center(15, '█'))
+        print(''.center(80, '█'))
     print(''.center(15, '█')+line4.center(50)+''.center(15, '█'))
     print(''.center(80, '█'))
+    if substance_names != '':
+        print(''.center(15, '█')+' Mögliche Stoffbezeichnungen: '.center(50)+''.center(15, '█'))
+        for name in substance_names:
+            if len(name) < 50:
+                print(''.center(15, '█')+name.center(50)+''.center(15, '█'))
+        print(''.center(80, '█'))
     input()
 
 choose_menu()

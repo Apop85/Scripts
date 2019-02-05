@@ -1,5 +1,6 @@
 # Umrechnen zwischen unterschiedlichen Einheiten im molaren und metrischen System
 # ToDo: Was tun wenn auf wiki nichts gefunden wurde?, mol_hard_calculate <-- formel recherchieren
+# Molare Masse bei Stoffangabe auch raussuchen und ausgeben?
 
 import re, requests, os, logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

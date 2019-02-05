@@ -20,6 +20,10 @@ url_content.raise_for_status()
 bs4_objekt=bs4.BeautifulSoup(url_content.text, features="html.parser")
 print(type(bs4_objekt))
 a_classes=bs4_objekt.select('.r a') # Suche a-Elemente mit der Klasse r
-for i in range(3):
+if len(a_classes) < 3:
+    range_amount=len(a_classes)
+else:
+    range_amount=3
+for i in range(range_amount):
     url_in_a_classes=a_classes[i].get('href') # hole href Element aus der c Klasse
     webbrowser.open('https://www.google.ch/'+url_in_a_classes)

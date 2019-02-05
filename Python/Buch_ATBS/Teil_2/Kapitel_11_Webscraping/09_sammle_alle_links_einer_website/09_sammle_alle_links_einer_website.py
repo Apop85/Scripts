@@ -4,6 +4,8 @@
 ##### Probleme: Keine Ausgabe in Datei und url_name wird nach abschluss der durchsuchung eines 
 ##### links nicht zurückgesetzt. Anstatt blah.com/chapter1 --> blah.com/chapter2
 ##### entsteht blah.com/chapter1 --> blah.com/chapter1/chapter2
+##### adressen in liste speichern und mit der variabel link_depth den richtigen unterordner finden?
+
 
 import requests, bs4, os, logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

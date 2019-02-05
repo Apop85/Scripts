@@ -4,6 +4,7 @@
 
 import requests, bs4, os, shutil
 os.chdir(os.path.dirname(__file__))
+
 if not os.path.exists('.\\comics'):
     os.mkdir('.\\comics')
 else:
@@ -12,8 +13,8 @@ else:
 os.chdir('.\\comics')
 
 url_name='https://xkcd.com/'
-next_url=''
-counter=1
+next_url, counter='', 0
+
 
 def get_file_and_url(url_name):
     global counter
@@ -21,24 +22,21 @@ def get_file_and_url(url_name):
     url_content.raise_for_status()
     bs4_element=bs4.BeautifulSoup(url_content.text, features='html.parser')
     buttons=bs4_element.select('a[rel="prev"]')
+    next_url=buttons[0].get('href')
     picture=bs4_element.select('#comic img')
     picture_url=picture[0].get('src')
-    next_url=buttons[0].get('href')
     if counter < 10:
         filename='000'+str(counter)+' '+picture_url.split('/')[-1]
-        counter+=1
     elif counter < 100:
         filename='00'+str(counter)+' '+picture_url.split('/')[-1]
-        counter+=1
     elif counter < 1000:
         filename='0'+str(counter)+' '+picture_url.split('/')[-1]
-        counter+=1
     elif counter < 10000:
         filename=str(counter)+' '+picture_url.split('/')[-1]
-        counter+=1
     else:
         print('End of possible Filenameiterations')
         return ''
+    counter+=1
     download_file_now(filename, picture_url)
     return next_url
 

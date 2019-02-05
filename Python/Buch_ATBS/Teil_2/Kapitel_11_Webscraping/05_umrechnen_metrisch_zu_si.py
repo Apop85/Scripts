@@ -26,7 +26,7 @@ def get_substance():
     capital=check_pattern.findall(substance)
     check_pattern=re.compile(r'[a-z]')
     lower_case=check_pattern.findall(substance)
-    if len(capital) > len(lower_case):
+    if len(capital) >= len(lower_case):
         logging.debug('Summenformel erkannt. A-Z0-9:'+str(len(capital))+' > a-z:'+str(len(lower_case)))
         molar_mass=calculate_molar_mass(substance)
         substance, substance_names=lookup_sum_formula(substance)
@@ -58,7 +58,9 @@ def lookup_sum_formula(substance):
 def search_substance_name(content):
     possible_substance_names=re.compile(r'SI">([A-Z|a-z|,| |0-9|-]*?)</a>')
     substance_names=possible_substance_names.findall(content)
-    input()
+    if len(substance_names) == 0:
+        possible_substance_names=re.compile(r'title>(.*?)</title')
+        substance_names=possible_substance_names.findall(content)
     return substance_names
 
 def get_molar_mass_by_name(substance):
@@ -209,9 +211,13 @@ def output_results(name, molar_mass, result, source_value, source_unit, target_u
     print(''.center(80, '█'))
     if substance_names != '':
         print(''.center(15, '█')+' Mögliche Stoffbezeichnungen: '.center(50)+''.center(15, '█'))
-        for name in substance_names:
-            if len(name) < 50:
-                print(''.center(15, '█')+name.center(50)+''.center(15, '█'))
+        print(''.center(15, '█')+''.center(50, '▄')+''.center(15, '█'))
+        if type(substance_names) == list:
+            for name in substance_names:
+                if len(name) < 50:
+                    print(''.center(15, '█')+name.center(50)+''.center(15, '█'))
+        else:
+            print(''.center(15, '█')+substance_names.center(50)+''.center(15, '█'))
         print(''.center(80, '█'))
     input()
 

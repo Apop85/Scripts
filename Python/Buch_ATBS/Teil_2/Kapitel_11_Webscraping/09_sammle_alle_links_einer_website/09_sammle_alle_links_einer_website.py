@@ -2,6 +2,9 @@
 # Dieses Script soll eine beliebige Webseite nach links in allen Unterseiten der Webseite suchen 
 # und in einem File übersichtlich speichern
 
+### Erst verzeichnis scannen dann erst einträge prüfen um so die links der ersten seite 
+### auf den folgenden seiten zu ignorieren um die suche linearer zu gestalten. 
+
 import requests, bs4, os, logging
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 os.chdir(os.path.dirname(__file__))

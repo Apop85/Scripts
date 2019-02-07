@@ -10,7 +10,7 @@ url_content.raise_for_status()
 bs4_element=bs4.BeautifulSoup(url_content.text)
 print(type(bs4_element))
 titel=bs4_element.select('title')
-print(titel)
+print(titel['title'])
 print('\n')
 span=bs4_element.findAll('span')[0]
 print(span)

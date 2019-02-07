@@ -67,36 +67,42 @@ def crawl_loop(url_name):
                 if '#' in entry or '/' in entry:
                     for i in range(len(entry)):
                         chunk_size=len(entry)-i
-                        print(entry[:chunk_size])
-                        if entry[:chunk_size] in url_name:
+                        if entry[:chunk_size] in used_path[crawl_loop_number][-chunk_size:]:
                             if i == len(entry)-1:
-                                test=url_name+entry 
-                                ### Wo schneiden?? 
-                                # test=url_name+entry[len(entry):]
+                                new_url=used_path[crawl_loop_number]+entry 
+                            elif len(entry.split('/')) <= 2 and crawl_loop_number > 0:
+                                if used_path[crawl_loop_number-3]+entry != url_name:
+                                    new_url=used_path[crawl_loop_number]+entry
+                                else:
+                                    new_url=used_path[crawl_loop_number]
+                            elif i == 0 and entry == used_path[crawl_loop_number][-len(entry):]:
+                                new_url=used_path[crawl_loop_number]
+                            elif len(entry.split('/')) <= 2 and crawl_loop_number == 0:
+                                new_url=used_path[crawl_loop_number]+entry
                             else:
                                 chunk_location=len(entry)-i
-                                test=url_name[:-chunk_location]+entry
-                            # if i+1 == len(entry):
-                                
+                                new_url=used_path[crawl_loop_number][:-chunk_location]+entry
                             breakpoint
                             break
-                    if crawl_loop_number == 0:
-                        new_url=used_path[crawl_loop_number]+'/'+entry.strip('/')
-                        logging.info('Neue URL gefunden:'+new_url)
-                    else:
-                        new_url=used_path[crawl_loop_number-3]+entry
-                        logging.info('Neue URL gefunden:'+new_url)
+                        elif i == len(entry)-1:
+                            new_url=used_path[crawl_loop_number]+entry
+                    # if crawl_loop_number == 0:
+                    #     new_url=used_path[crawl_loop_number]+'/'+entry.strip('/')
+                    #     logging.info('Neue URL gefunden:'+new_url)
+                    # else:
+                    #     new_url=used_path[crawl_loop_number-3]+entry
+                    #     logging.info('Neue URL gefunden:'+new_url)
                     # new_url=used_path[crawl_loop_number]+'/'+entry.strip('/')
                     # logging.info('Neue URL gefunden:'+new_url)
-                    if len(new_url) < len(base_name):
-                        new_url=base_name+entry
-                        breakpoint
+                    # if len(new_url) < len(base_name):
+                    #     new_url=base_name+entry
+                    #     breakpoint
         else:
             if base_name in entry:
                 new_url=entry
             else:
                 continue
-            logging.info('Neue URL gefunden:'+new_url)
+        logging.info('Neue URL gefunden:'+new_url)
         check_value=check_if_ignored(new_url)
         if base_name in new_url and check_value == False:
             logging.info('Starte neuen Loop in der Tiefe: '+str(crawl_loop_number/3+1))

@@ -2024,13 +2024,17 @@ console.error: BroadcastService:
   Stack:
     remoteSettingsFunction/remoteSettings.pollChanges@resource://services-settings/remote-settings.js:188:13
 
-ding manifest: Invalid host permission: resource://pdf.js/
-1549557598215	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid host permission: about:reader*
-1549557599478	Marionette	INFO	Listening on port 52028
-1549557599505	Marionette	WARN	TLS certificate errors will be ignored for this session
-[Parent 29172, Gecko_IOThread] WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/src/chrome/common/ipc_channel_win.cc, line 332
-[Child 20164, Chrome_ChildThread] WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/src/chrome/common/ipc_channel_win.cc, line 332
-[Child 349[8Ch8, Chrome_ChildThread] WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/src/chrome/common/ipc_channel_win.cc, line 332
+[Parent 4240, Gecko_IOThread] WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/src/chrome/common/ipc_channel_win.cc, line 332
+[Child 16620, Chrome_ChildThread] WARNING: pipe error: 109: file z:/b[Child 21096, Chrome_ChildThread] WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/uild/build/src/ipc/chromium/src/chrome/csrc/ommon/ipc_channel_win.cc, chrome/common/ipc_channel_win.cc, line 332line 332
+
+[Child[1549562361026	Marionette	INFO	Stopped listening on port 51997
+
+###!!! [Child][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost
+
+[G
+###!!! [Child][MessageChannel::SendAndWait] Error: Channel error: cannot send/recv
+
+WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/src/chrome/common/ipc_channel_win.cc, line 332
 [Child 349881549557613326	Marionette	INFO	Stopped listening on port 52028
 
 ###!!! [Child][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost

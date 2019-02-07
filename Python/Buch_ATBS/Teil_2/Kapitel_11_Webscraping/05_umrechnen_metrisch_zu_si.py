@@ -3,7 +3,7 @@
 # Molare Masse bei Stoffangabe auch raussuchen und ausgeben?
 
 import re, requests, os, logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 os.chdir(os.path.dirname(__file__))
 
 periodic_table={ 'H' : 1.0079, 'He' : 4.0026,

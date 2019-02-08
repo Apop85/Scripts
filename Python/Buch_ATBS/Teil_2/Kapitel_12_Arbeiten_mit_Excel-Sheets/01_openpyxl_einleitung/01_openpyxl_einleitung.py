@@ -33,10 +33,10 @@ sheet_names=work_sheet.sheetnames
 output('.sheetnames', 'mit .sheetnames lassen sich die Namen der Arbeitsblätter in dieser Arbeitsmappe abrufen die in diesem Beispiel wie folgt lauten '+str(sheet_names))
 
 output('<excel_file>[\'Mappenname\']', 'Mit <excel_file>[\'Mappenname\'] lässt sich das dabei angegebene Arbeitsblatt einlesen.')
-sheet_1=work_sheet.get_sheet_by_name('Tabelle1')
+sheet_1=work_sheet['Tabelle1']
 
-sheet_1=work_sheet.get_active_sheet()
-output('get_active_sheet()', 'Mit Dem Befehl .get_active_sheet() kann die Arbeitsmappe ausgelesen werden die im Dokument zuletzt geöffnet war.')
+sheet_1=work_sheet.active
+output('.active', 'Mit Dem Befehl .active kann die Arbeitsmappe ausgelesen werden die im Dokument zuletzt geöffnet war.')
 
 sheet_A1=sheet_1['A1'].value
 output('Auf Zellen zugreiffen', 'Mittels sheet_1[\'A1\'].value lässt sich beispielsweise auf die Zelle A1 des entsprechenden Excel-Sheets zugreiffen und auslesen. In diesem Beispiel ist der Eintrag der Zelle A1 folgender:  '+sheet_A1)

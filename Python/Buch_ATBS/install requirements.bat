@@ -6,3 +6,5 @@ pip3 install requests
 pip3 install BeautifulSoup
 pip3 install selenium
 pip3 install openpylx
+pip3 install PyPDF2
+pip3 install python-docx

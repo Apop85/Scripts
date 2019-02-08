@@ -1,0 +1,3348 @@
+
+╔═>>> AL
+╠════ Autauga: 54571
+╠════ Baldwin: 182265
+╠════ Barbour: 27457
+╠════ Bibb: 22915
+╠════ Blount: 57322
+╠════ Bullock: 10914
+╠════ Butler: 20947
+╠════ Calhoun: 118572
+╠════ Chambers: 34215
+╠════ Cherokee: 25989
+╠════ Chilton: 43643
+╠════ Choctaw: 13859
+╠════ Clarke: 25833
+╠════ Clay: 13932
+╠════ Cleburne: 14972
+╠════ Coffee: 49948
+╠════ Colbert: 54428
+╠════ Conecuh: 13228
+╠════ Coosa: 11539
+╠════ Covington: 37765
+╠════ Crenshaw: 13906
+╠════ Cullman: 80406
+╠════ Dale: 50251
+╠════ Dallas: 43820
+╠════ DeKalb: 71109
+╠════ Elmore: 79303
+╠════ Escambia: 38319
+╠════ Etowah: 104430
+╠════ Fayette: 17241
+╠════ Franklin: 31704
+╠════ Geneva: 26790
+╠════ Greene: 9045
+╠════ Hale: 15760
+╠════ Henry: 17302
+╠════ Houston: 101547
+╠════ Jackson: 53227
+╠════ Jefferson: 658466
+╠════ Lamar: 14564
+╠════ Lauderdale: 92709
+╠════ Lawrence: 34339
+╠════ Lee: 140247
+╠════ Limestone: 82782
+╠════ Lowndes: 11299
+╠════ Macon: 21452
+╠════ Madison: 334811
+╠════ Marengo: 21027
+╠════ Marion: 30776
+╠════ Marshall: 93019
+╠════ Mobile: 412992
+╠════ Monroe: 23068
+╠════ Montgomery: 229363
+╠════ Morgan: 119490
+╠════ Perry: 10591
+╠════ Pickens: 19746
+╠════ Pike: 32899
+╠════ Randolph: 22913
+╠════ Russell: 52947
+╠════ St. Clair: 83593
+╠════ Shelby: 195085
+╠════ Sumter: 13763
+╠════ Talladega: 82291
+╠════ Tallapoosa: 41616
+╠════ Tuscaloosa: 194656
+╠════ Walker: 67023
+╠════ Washington: 17581
+╠════ Wilcox: 11670
+╠════ Winston: 24484
+╠════════════════ Anzahl Countys: 67
+╚═>>> Total für den Bundesstaat AL: 4779736
+
+╔═>>> AK
+╠════ Aleutians East: 3141
+╠════ Aleutians West: 5561
+╠════ Anchorage: 291826
+╠════ Bethel: 17013
+╠════ Bristol Bay: 997
+╠════ Denali: 1826
+╠════ Dillingham: 4847
+╠════ Fairbanks North Star: 97581
+╠════ Haines: 2508
+╠════ Hoonah-Angoon: 2150
+╠════ Juneau: 31275
+╠════ Kenai Peninsula: 55400
+╠════ Ketchikan Gateway: 13477
+╠════ Kodiak Island: 13592
+╠════ Lake and Peninsula: 1631
+╠════ Matanuska-Susitna: 88995
+╠════ Nome: 9492
+╠════ North Slope: 9430
+╠════ Northwest Arctic: 7523
+╠════ Petersburg: 3815
+╠════ Prince of Wales-Hyder: 5559
+╠════ Sitka: 8881
+╠════ Skagway: 968
+╠════ Southeast Fairbanks: 7029
+╠════ Valdez-Cordova: 9636
+╠════ Wade Hampton: 7459
+╠════ Wrangell: 2369
+╠════ Yakutat: 662
+╠════ Yukon-Koyukuk: 5588
+╠════════════════ Anzahl Countys: 29
+╚═>>> Total für den Bundesstaat AK: 710231
+
+╔═>>> AZ
+╠════ Apache: 71518
+╠════ Cochise: 131346
+╠════ Coconino: 134421
+╠════ Gila: 53597
+╠════ Graham: 37220
+╠════ Greenlee: 8437
+╠════ La Paz: 20489
+╠════ Maricopa: 3817117
+╠════ Mohave: 200186
+╠════ Navajo: 107449
+╠════ Pima: 980263
+╠════ Pinal: 375770
+╠════ Santa Cruz: 47420
+╠════ Yavapai: 211033
+╠════ Yuma: 195751
+╠════════════════ Anzahl Countys: 15
+╚═>>> Total für den Bundesstaat AZ: 6392017
+
+╔═>>> AR
+╠════ Arkansas: 19019
+╠════ Ashley: 21853
+╠════ Baxter: 41513
+╠════ Benton: 221339
+╠════ Boone: 36903
+╠════ Bradley: 11508
+╠════ Calhoun: 5368
+╠════ Carroll: 27446
+╠════ Chicot: 11800
+╠════ Clark: 22995
+╠════ Clay: 16083
+╠════ Cleburne: 25970
+╠════ Cleveland: 8689
+╠════ Columbia: 24552
+╠════ Conway: 21273
+╠════ Craighead: 96443
+╠════ Crawford: 61948
+╠════ Crittenden: 50902
+╠════ Cross: 17870
+╠════ Dallas: 8116
+╠════ Desha: 13008
+╠════ Drew: 18509
+╠════ Faulkner: 113237
+╠════ Franklin: 18125
+╠════ Fulton: 12245
+╠════ Garland: 96024
+╠════ Grant: 17853
+╠════ Greene: 42090
+╠════ Hempstead: 22609
+╠════ Hot Spring: 32923
+╠════ Howard: 13789
+╠════ Independence: 36647
+╠════ Izard: 13696
+╠════ Jackson: 17997
+╠════ Jefferson: 77435
+╠════ Johnson: 25540
+╠════ Lafayette: 7645
+╠════ Lawrence: 17415
+╠════ Lee: 10424
+╠════ Lincoln: 14134
+╠════ Little River: 13171
+╠════ Logan: 22353
+╠════ Lonoke: 68356
+╠════ Madison: 15717
+╠════ Marion: 16653
+╠════ Miller: 43462
+╠════ Mississippi: 46480
+╠════ Monroe: 8149
+╠════ Montgomery: 9487
+╠════ Nevada: 8997
+╠════ Newton: 8330
+╠════ Ouachita: 26120
+╠════ Perry: 10445
+╠════ Phillips: 21757
+╠════ Pike: 11291
+╠════ Poinsett: 24583
+╠════ Polk: 20662
+╠════ Pope: 61754
+╠════ Prairie: 8715
+╠════ Pulaski: 382748
+╠════ Randolph: 17969
+╠════ St. Francis: 28258
+╠════ Saline: 107118
+╠════ Scott: 11233
+╠════ Searcy: 8195
+╠════ Sebastian: 125744
+╠════ Sevier: 17058
+╠════ Sharp: 17264
+╠════ Stone: 12394
+╠════ Union: 41639
+╠════ Van Buren: 17295
+╠════ Washington: 203065
+╠════ White: 77076
+╠════ Woodruff: 7260
+╠════ Yell: 22185
+╠════════════════ Anzahl Countys: 75
+╚═>>> Total für den Bundesstaat AR: 2915918
+
+╔═>>> CA
+╠════ Alameda: 1510271
+╠════ Alpine: 1175
+╠════ Amador: 38091
+╠════ Butte: 220000
+╠════ Calaveras: 45578
+╠════ Colusa: 21419
+╠════ Contra Costa: 1049025
+╠════ Del Norte: 28610
+╠════ El Dorado: 181058
+╠════ Fresno: 930450
+╠════ Glenn: 28122
+╠════ Humboldt: 134623
+╠════ Imperial: 174528
+╠════ Inyo: 18546
+╠════ Kern: 839631
+╠════ Kings: 152982
+╠════ Lake: 64665
+╠════ Lassen: 34895
+╠════ Los Angeles: 9818605
+╠════ Madera: 150865
+╠════ Marin: 252409
+╠════ Mariposa: 18251
+╠════ Mendocino: 87841
+╠════ Merced: 255793
+╠════ Modoc: 9686
+╠════ Mono: 14202
+╠════ Monterey: 415057
+╠════ Napa: 136484
+╠════ Nevada: 98764
+╠════ Orange: 3010232
+╠════ Placer: 348432
+╠════ Plumas: 20007
+╠════ Riverside: 2189641
+╠════ Sacramento: 1418788
+╠════ San Benito: 55269
+╠════ San Bernardino: 2035210
+╠════ San Diego: 3095313
+╠════ San Francisco: 805235
+╠════ San Joaquin: 685306
+╠════ San Luis Obispo: 269637
+╠════ San Mateo: 718451
+╠════ Santa Barbara: 423895
+╠════ Santa Clara: 1781642
+╠════ Santa Cruz: 262382
+╠════ Shasta: 177223
+╠════ Sierra: 3240
+╠════ Siskiyou: 44900
+╠════ Solano: 413344
+╠════ Sonoma: 483878
+╠════ Stanislaus: 514453
+╠════ Sutter: 94737
+╠════ Tehama: 63463
+╠════ Trinity: 13786
+╠════ Tulare: 442179
+╠════ Tuolumne: 55365
+╠════ Ventura: 823318
+╠════ Yolo: 200849
+╠════ Yuba: 72155
+╠════════════════ Anzahl Countys: 58
+╚═>>> Total für den Bundesstaat CA: 37253956
+
+╔═>>> CO
+╠════ Adams: 441603
+╠════ Alamosa: 15445
+╠════ Arapahoe: 572003
+╠════ Archuleta: 12084
+╠════ Baca: 3788
+╠════ Bent: 6499
+╠════ Boulder: 294567
+╠════ Broomfield: 55889
+╠════ Chaffee: 17809
+╠════ Cheyenne: 1836
+╠════ Clear Creek: 9088
+╠════ Conejos: 8256
+╠════ Costilla: 3524
+╠════ Crowley: 5823
+╠════ Custer: 4255
+╠════ Delta: 30952
+╠════ Denver: 600158
+╠════ Dolores: 2064
+╠════ Douglas: 285465
+╠════ Eagle: 52197
+╠════ Elbert: 23086
+╠════ El Paso: 622263
+╠════ Fremont: 46824
+╠════ Garfield: 56389
+╠════ Gilpin: 5441
+╠════ Grand: 14843
+╠════ Gunnison: 15324
+╠════ Hinsdale: 843
+╠════ Huerfano: 6711
+╠════ Jackson: 1394
+╠════ Jefferson: 534543
+╠════ Kiowa: 1398
+╠════ Kit Carson: 8270
+╠════ Lake: 7310
+╠════ La Plata: 51334
+╠════ Larimer: 299630
+╠════ Las Animas: 15507
+╠════ Lincoln: 5467
+╠════ Logan: 22709
+╠════ Mesa: 146723
+╠════ Mineral: 712
+╠════ Moffat: 13795
+╠════ Montezuma: 25535
+╠════ Montrose: 41276
+╠════ Morgan: 28159
+╠════ Otero: 18831
+╠════ Ouray: 4436
+╠════ Park: 16206
+╠════ Phillips: 4442
+╠════ Pitkin: 17148
+╠════ Prowers: 12551
+╠════ Pueblo: 159063
+╠════ Rio Blanco: 6666
+╠════ Rio Grande: 11982
+╠════ Routt: 23509
+╠════ Saguache: 6108
+╠════ San Juan: 699
+╠════ San Miguel: 7359
+╠════ Sedgwick: 2379
+╠════ Summit: 27994
+╠════ Teller: 23350
+╠════ Washington: 4814
+╠════ Weld: 252825
+╠════ Yuma: 10043
+╠════════════════ Anzahl Countys: 64
+╚═>>> Total für den Bundesstaat CO: 5029196
+
+╔═>>> CT
+╠════ Fairfield: 916829
+╠════ Hartford: 894014
+╠════ Litchfield: 189927
+╠════ Middlesex: 165676
+╠════ New Haven: 862477
+╠════ New London: 274055
+╠════ Tolland: 152691
+╠════ Windham: 118428
+╠════════════════ Anzahl Countys: 8
+╚═>>> Total für den Bundesstaat CT: 3574097
+
+╔═>>> DE
+╠════ Kent: 162310
+╠════ New Castle: 538479
+╠════ Sussex: 197145
+╠════════════════ Anzahl Countys: 3
+╚═>>> Total für den Bundesstaat DE: 897934
+
+╔═>>> DC
+╠════ District of Columbia: 601723
+╠════════════════ Anzahl Countys: 1
+╚═>>> Total für den Bundesstaat DC: 601723
+
+╔═>>> FL
+╠════ Alachua: 247336
+╠════ Baker: 27115
+╠════ Bay: 168852
+╠════ Bradford: 28520
+╠════ Brevard: 543376
+╠════ Broward: 1748066
+╠════ Calhoun: 14625
+╠════ Charlotte: 159978
+╠════ Citrus: 141236
+╠════ Clay: 190865
+╠════ Collier: 321520
+╠════ Columbia: 67531
+╠════ DeSoto: 34862
+╠════ Dixie: 16422
+╠════ Duval: 864263
+╠════ Escambia: 297619
+╠════ Flagler: 95696
+╠════ Franklin: 11549
+╠════ Gadsden: 46389
+╠════ Gilchrist: 16939
+╠════ Glades: 12884
+╠════ Gulf: 15863
+╠════ Hamilton: 14799
+╠════ Hardee: 27731
+╠════ Hendry: 39140
+╠════ Hernando: 172778
+╠════ Highlands: 98786
+╠════ Hillsborough: 1229226
+╠════ Holmes: 19927
+╠════ Indian River: 138028
+╠════ Jackson: 49746
+╠════ Jefferson: 14761
+╠════ Lafayette: 8870
+╠════ Lake: 297052
+╠════ Lee: 618754
+╠════ Leon: 275487
+╠════ Levy: 40801
+╠════ Liberty: 8365
+╠════ Madison: 19224
+╠════ Manatee: 322833
+╠════ Marion: 331298
+╠════ Martin: 146318
+╠════ Miami-Dade: 2496435
+╠════ Monroe: 73090
+╠════ Nassau: 73314
+╠════ Okaloosa: 180822
+╠════ Okeechobee: 39996
+╠════ Orange: 1145956
+╠════ Osceola: 268685
+╠════ Palm Beach: 1320134
+╠════ Pasco: 464697
+╠════ Pinellas: 916542
+╠════ Polk: 602095
+╠════ Putnam: 74364
+╠════ St. Johns: 190039
+╠════ St. Lucie: 277789
+╠════ Santa Rosa: 151372
+╠════ Sarasota: 379448
+╠════ Seminole: 422718
+╠════ Sumter: 93420
+╠════ Suwannee: 41551
+╠════ Taylor: 22570
+╠════ Union: 15535
+╠════ Volusia: 494593
+╠════ Wakulla: 30776
+╠════ Walton: 55043
+╠════ Washington: 24896
+╠════════════════ Anzahl Countys: 67
+╚═>>> Total für den Bundesstaat FL: 18801310
+
+╔═>>> GA
+╠════ Appling: 18236
+╠════ Atkinson: 8375
+╠════ Bacon: 11096
+╠════ Baker: 3451
+╠════ Baldwin: 45720
+╠════ Banks: 18395
+╠════ Barrow: 69367
+╠════ Bartow: 100157
+╠════ Ben Hill: 17634
+╠════ Berrien: 19286
+╠════ Bibb: 155547
+╠════ Bleckley: 13063
+╠════ Brantley: 18411
+╠════ Brooks: 16243
+╠════ Bryan: 30233
+╠════ Bulloch: 70217
+╠════ Burke: 23316
+╠════ Butts: 23655
+╠════ Calhoun: 6694
+╠════ Camden: 50513
+╠════ Candler: 10998
+╠════ Carroll: 110527
+╠════ Catoosa: 63942
+╠════ Charlton: 12171
+╠════ Chatham: 265128
+╠════ Chattahoochee: 11267
+╠════ Chattooga: 26015
+╠════ Cherokee: 214346
+╠════ Clarke: 116714
+╠════ Clay: 3183
+╠════ Clayton: 259424
+╠════ Clinch: 6798
+╠════ Cobb: 688078
+╠════ Coffee: 42356
+╠════ Colquitt: 45498
+╠════ Columbia: 124053
+╠════ Cook: 17212
+╠════ Coweta: 127317
+╠════ Crawford: 12630
+╠════ Crisp: 23439
+╠════ Dade: 16633
+╠════ Dawson: 22330
+╠════ Decatur: 27842
+╠════ DeKalb: 691893
+╠════ Dodge: 21796
+╠════ Dooly: 14918
+╠════ Dougherty: 94565
+╠════ Douglas: 132403
+╠════ Early: 11008
+╠════ Echols: 4034
+╠════ Effingham: 52250
+╠════ Elbert: 20166
+╠════ Emanuel: 22598
+╠════ Evans: 11000
+╠════ Fannin: 23682
+╠════ Fayette: 106567
+╠════ Floyd: 96317
+╠════ Forsyth: 175511
+╠════ Franklin: 22084
+╠════ Fulton: 920581
+╠════ Gilmer: 28292
+╠════ Glascock: 3082
+╠════ Glynn: 79626
+╠════ Gordon: 55186
+╠════ Grady: 25011
+╠════ Greene: 15994
+╠════ Gwinnett: 805321
+╠════ Habersham: 43041
+╠════ Hall: 179684
+╠════ Hancock: 9429
+╠════ Haralson: 28780
+╠════ Harris: 32024
+╠════ Hart: 25213
+╠════ Heard: 11834
+╠════ Henry: 203922
+╠════ Houston: 139900
+╠════ Irwin: 9538
+╠════ Jackson: 60485
+╠════ Jasper: 13900
+╠════ Jeff Davis: 15068
+╠════ Jefferson: 16930
+╠════ Jenkins: 8340
+╠════ Johnson: 9980
+╠════ Jones: 28669
+╠════ Lamar: 18317
+╠════ Lanier: 10078
+╠════ Laurens: 48434
+╠════ Lee: 28298
+╠════ Liberty: 63453
+╠════ Lincoln: 7996
+╠════ Long: 14464
+╠════ Lowndes: 109233
+╠════ Lumpkin: 29966
+╠════ McDuffie: 21875
+╠════ McIntosh: 14333
+╠════ Macon: 14740
+╠════ Madison: 28120
+╠════ Marion: 8742
+╠════ Meriwether: 21992
+╠════ Miller: 6125
+╠════ Mitchell: 23498
+╠════ Monroe: 26424
+╠════ Montgomery: 9123
+╠════ Morgan: 17868
+╠════ Murray: 39628
+╠════ Muscogee: 189885
+╠════ Newton: 99958
+╠════ Oconee: 32808
+╠════ Oglethorpe: 14899
+╠════ Paulding: 142324
+╠════ Peach: 27695
+╠════ Pickens: 29431
+╠════ Pierce: 18758
+╠════ Pike: 17869
+╠════ Polk: 41475
+╠════ Pulaski: 12010
+╠════ Putnam: 21218
+╠════ Quitman: 2513
+╠════ Rabun: 16276
+╠════ Randolph: 7719
+╠════ Richmond: 200549
+╠════ Rockdale: 85215
+╠════ Schley: 5010
+╠════ Screven: 14593
+╠════ Seminole: 8729
+╠════ Spalding: 64073
+╠════ Stephens: 26175
+╠════ Stewart: 6058
+╠════ Sumter: 32819
+╠════ Talbot: 6865
+╠════ Taliaferro: 1717
+╠════ Tattnall: 25520
+╠════ Taylor: 8906
+╠════ Telfair: 16500
+╠════ Terrell: 9315
+╠════ Thomas: 44720
+╠════ Tift: 40118
+╠════ Toombs: 27223
+╠════ Towns: 10471
+╠════ Treutlen: 6885
+╠════ Troup: 67044
+╠════ Turner: 8930
+╠════ Twiggs: 9023
+╠════ Union: 21356
+╠════ Upson: 27153
+╠════ Walker: 68756
+╠════ Walton: 83768
+╠════ Ware: 36312
+╠════ Warren: 5834
+╠════ Washington: 21187
+╠════ Wayne: 30099
+╠════ Webster: 2799
+╠════ Wheeler: 7421
+╠════ White: 27144
+╠════ Whitfield: 102599
+╠════ Wilcox: 9255
+╠════ Wilkes: 10593
+╠════ Wilkinson: 9563
+╠════ Worth: 21679
+╠════════════════ Anzahl Countys: 159
+╚═>>> Total für den Bundesstaat GA: 9687653
+
+╔═>>> HI
+╠════ Hawaii: 185079
+╠════ Honolulu: 953207
+╠════ Kalawao: 90
+╠════ Kauai: 67091
+╠════ Maui: 154834
+╠════════════════ Anzahl Countys: 5
+╚═>>> Total für den Bundesstaat HI: 1360301
+
+╔═>>> ID
+╠════ Ada: 392365
+╠════ Adams: 3976
+╠════ Bannock: 82839
+╠════ Bear Lake: 5986
+╠════ Benewah: 9285
+╠════ Bingham: 45607
+╠════ Blaine: 21376
+╠════ Boise: 7028
+╠════ Bonner: 40877
+╠════ Bonneville: 104234
+╠════ Boundary: 10972
+╠════ Butte: 2891
+╠════ Camas: 1117
+╠════ Canyon: 188923
+╠════ Caribou: 6963
+╠════ Cassia: 22952
+╠════ Clark: 982
+╠════ Clearwater: 8761
+╠════ Custer: 4368
+╠════ Elmore: 27038
+╠════ Franklin: 12786
+╠════ Fremont: 13242
+╠════ Gem: 16719
+╠════ Gooding: 15464
+╠════ Idaho: 16267
+╠════ Jefferson: 26140
+╠════ Jerome: 22374
+╠════ Kootenai: 138494
+╠════ Latah: 37244
+╠════ Lemhi: 7936
+╠════ Lewis: 3821
+╠════ Lincoln: 5208
+╠════ Madison: 37536
+╠════ Minidoka: 20069
+╠════ Nez Perce: 39265
+╠════ Oneida: 4286
+╠════ Owyhee: 11526
+╠════ Payette: 22623
+╠════ Power: 7817
+╠════ Shoshone: 12765
+╠════ Teton: 10170
+╠════ Twin Falls: 77230
+╠════ Valley: 9862
+╠════ Washington: 10198
+╠════════════════ Anzahl Countys: 44
+╚═>>> Total für den Bundesstaat ID: 1567582
+
+╔═>>> IL
+╠════ Adams: 67103
+╠════ Alexander: 8238
+╠════ Bond: 17768
+╠════ Boone: 54165
+╠════ Brown: 6937
+╠════ Bureau: 34978
+╠════ Calhoun: 5089
+╠════ Carroll: 15387
+╠════ Cass: 13642
+╠════ Champaign: 201081
+╠════ Christian: 34800
+╠════ Clark: 16335
+╠════ Clay: 13815
+╠════ Clinton: 37762
+╠════ Coles: 53873
+╠════ Cook: 5194675
+╠════ Crawford: 19817
+╠════ Cumberland: 11048
+╠════ DeKalb: 105160
+╠════ De Witt: 16561
+╠════ Douglas: 19980
+╠════ DuPage: 916924
+╠════ Edgar: 18576
+╠════ Edwards: 6721
+╠════ Effingham: 34242
+╠════ Fayette: 22140
+╠════ Ford: 14081
+╠════ Franklin: 39561
+╠════ Fulton: 37069
+╠════ Gallatin: 5589
+╠════ Greene: 13886
+╠════ Grundy: 50063
+╠════ Hamilton: 8457
+╠════ Hancock: 19104
+╠════ Hardin: 4320
+╠════ Henderson: 7331
+╠════ Henry: 50486
+╠════ Iroquois: 29718
+╠════ Jackson: 60218
+╠════ Jasper: 9698
+╠════ Jefferson: 38827
+╠════ Jersey: 22985
+╠════ Jo Daviess: 22678
+╠════ Johnson: 12582
+╠════ Kane: 515269
+╠════ Kankakee: 113449
+╠════ Kendall: 114736
+╠════ Knox: 52919
+╠════ Lake: 703462
+╠════ La Salle: 113924
+╠════ Lawrence: 16833
+╠════ Lee: 36031
+╠════ Livingston: 38950
+╠════ Logan: 30305
+╠════ McDonough: 32612
+╠════ McHenry: 308760
+╠════ McLean: 169572
+╠════ Macon: 110768
+╠════ Macoupin: 47765
+╠════ Madison: 269282
+╠════ Marion: 39437
+╠════ Marshall: 12640
+╠════ Mason: 14666
+╠════ Massac: 15429
+╠════ Menard: 12705
+╠════ Mercer: 16434
+╠════ Monroe: 32957
+╠════ Montgomery: 30104
+╠════ Morgan: 35547
+╠════ Moultrie: 14846
+╠════ Ogle: 53497
+╠════ Peoria: 186494
+╠════ Perry: 22350
+╠════ Piatt: 16729
+╠════ Pike: 16430
+╠════ Pope: 4470
+╠════ Pulaski: 6161
+╠════ Putnam: 6006
+╠════ Randolph: 33476
+╠════ Richland: 16233
+╠════ Rock Island: 147546
+╠════ St. Clair: 270056
+╠════ Saline: 24913
+╠════ Sangamon: 197465
+╠════ Schuyler: 7544
+╠════ Scott: 5355
+╠════ Shelby: 22363
+╠════ Stark: 5994
+╠════ Stephenson: 47711
+╠════ Tazewell: 135394
+╠════ Union: 17808
+╠════ Vermilion: 81625
+╠════ Wabash: 11947
+╠════ Warren: 17707
+╠════ Washington: 14716
+╠════ Wayne: 16760
+╠════ White: 14665
+╠════ Whiteside: 58498
+╠════ Will: 677560
+╠════ Williamson: 66357
+╠════ Winnebago: 295266
+╠════ Woodford: 38664
+╠════════════════ Anzahl Countys: 102
+╚═>>> Total für den Bundesstaat IL: 12830632
+
+╔═>>> IN
+╠════ Adams: 34387
+╠════ Allen: 355329
+╠════ Bartholomew: 76794
+╠════ Benton: 8854
+╠════ Blackford: 12766
+╠════ Boone: 56640
+╠════ Brown: 15242
+╠════ Carroll: 20155
+╠════ Cass: 38966
+╠════ Clark: 110232
+╠════ Clay: 26890
+╠════ Clinton: 33224
+╠════ Crawford: 10713
+╠════ Daviess: 31648
+╠════ Dearborn: 50047
+╠════ Decatur: 25740
+╠════ DeKalb: 42223
+╠════ Delaware: 117671
+╠════ Dubois: 41889
+╠════ Elkhart: 197559
+╠════ Fayette: 24277
+╠════ Floyd: 74578
+╠════ Fountain: 17240
+╠════ Franklin: 23087
+╠════ Fulton: 20836
+╠════ Gibson: 33503
+╠════ Grant: 70061
+╠════ Greene: 33165
+╠════ Hamilton: 274569
+╠════ Hancock: 70002
+╠════ Harrison: 39364
+╠════ Hendricks: 145448
+╠════ Henry: 49462
+╠════ Howard: 82752
+╠════ Huntington: 37124
+╠════ Jackson: 42376
+╠════ Jasper: 33478
+╠════ Jay: 21253
+╠════ Jefferson: 32428
+╠════ Jennings: 28525
+╠════ Johnson: 139654
+╠════ Knox: 38440
+╠════ Kosciusko: 77358
+╠════ LaGrange: 37128
+╠════ Lake: 496005
+╠════ LaPorte: 111467
+╠════ Lawrence: 46134
+╠════ Madison: 131636
+╠════ Marion: 903393
+╠════ Marshall: 47051
+╠════ Martin: 10334
+╠════ Miami: 36903
+╠════ Monroe: 137974
+╠════ Montgomery: 38124
+╠════ Morgan: 68894
+╠════ Newton: 14244
+╠════ Noble: 47536
+╠════ Ohio: 6128
+╠════ Orange: 19840
+╠════ Owen: 21575
+╠════ Parke: 17339
+╠════ Perry: 19338
+╠════ Pike: 12845
+╠════ Porter: 164343
+╠════ Posey: 25910
+╠════ Pulaski: 13402
+╠════ Putnam: 37963
+╠════ Randolph: 26171
+╠════ Ripley: 28818
+╠════ Rush: 17392
+╠════ St. Joseph: 266931
+╠════ Scott: 24181
+╠════ Shelby: 44436
+╠════ Spencer: 20952
+╠════ Starke: 23363
+╠════ Steuben: 34185
+╠════ Sullivan: 21475
+╠════ Switzerland: 10613
+╠════ Tippecanoe: 172780
+╠════ Tipton: 15936
+╠════ Union: 7516
+╠════ Vanderburgh: 179703
+╠════ Vermillion: 16212
+╠════ Vigo: 107848
+╠════ Wabash: 32888
+╠════ Warren: 8508
+╠════ Warrick: 59689
+╠════ Washington: 28262
+╠════ Wayne: 68917
+╠════ Wells: 27636
+╠════ White: 24643
+╠════ Whitley: 33292
+╠════════════════ Anzahl Countys: 92
+╚═>>> Total für den Bundesstaat IN: 6483802
+
+╔═>>> IA
+╠════ Adair: 7682
+╠════ Adams: 4029
+╠════ Allamakee: 14330
+╠════ Appanoose: 12887
+╠════ Audubon: 6119
+╠════ Benton: 26076
+╠════ Black Hawk: 131090
+╠════ Boone: 26306
+╠════ Bremer: 24276
+╠════ Buchanan: 20958
+╠════ Buena Vista: 20260
+╠════ Butler: 14867
+╠════ Calhoun: 9670
+╠════ Carroll: 20816
+╠════ Cass: 13956
+╠════ Cedar: 18499
+╠════ Cerro Gordo: 44151
+╠════ Cherokee: 12072
+╠════ Chickasaw: 12439
+╠════ Clarke: 9286
+╠════ Clay: 16667
+╠════ Clayton: 18129
+╠════ Clinton: 49116
+╠════ Crawford: 17096
+╠════ Dallas: 66135
+╠════ Davis: 8753
+╠════ Decatur: 8457
+╠════ Delaware: 17764
+╠════ Des Moines: 40325
+╠════ Dickinson: 16667
+╠════ Dubuque: 93653
+╠════ Emmet: 10302
+╠════ Fayette: 20880
+╠════ Floyd: 16303
+╠════ Franklin: 10680
+╠════ Fremont: 7441
+╠════ Greene: 9336
+╠════ Grundy: 12453
+╠════ Guthrie: 10954
+╠════ Hamilton: 15673
+╠════ Hancock: 11341
+╠════ Hardin: 17534
+╠════ Harrison: 14928
+╠════ Henry: 20145
+╠════ Howard: 9566
+╠════ Humboldt: 9815
+╠════ Ida: 7089
+╠════ Iowa: 16355
+╠════ Jackson: 19848
+╠════ Jasper: 36842
+╠════ Jefferson: 16843
+╠════ Johnson: 130882
+╠════ Jones: 20638
+╠════ Keokuk: 10511
+╠════ Kossuth: 15543
+╠════ Lee: 35862
+╠════ Linn: 211226
+╠════ Louisa: 11387
+╠════ Lucas: 8898
+╠════ Lyon: 11581
+╠════ Madison: 15679
+╠════ Mahaska: 22381
+╠════ Marion: 33309
+╠════ Marshall: 40648
+╠════ Mills: 15059
+╠════ Mitchell: 10776
+╠════ Monona: 9243
+╠════ Monroe: 7970
+╠════ Montgomery: 10740
+╠════ Muscatine: 42745
+╠════ O'Brien: 14398
+╠════ Osceola: 6462
+╠════ Page: 15932
+╠════ Palo Alto: 9421
+╠════ Plymouth: 24986
+╠════ Pocahontas: 7310
+╠════ Polk: 430640
+╠════ Pottawattamie: 93158
+╠════ Poweshiek: 18914
+╠════ Ringgold: 5131
+╠════ Sac: 10350
+╠════ Scott: 165224
+╠════ Shelby: 12167
+╠════ Sioux: 33704
+╠════ Story: 89542
+╠════ Tama: 17767
+╠════ Taylor: 6317
+╠════ Union: 12534
+╠════ Van Buren: 7570
+╠════ Wapello: 35625
+╠════ Warren: 46225
+╠════ Washington: 21704
+╠════ Wayne: 6403
+╠════ Webster: 38013
+╠════ Winnebago: 10866
+╠════ Winneshiek: 21056
+╠════ Woodbury: 102172
+╠════ Worth: 7598
+╠════ Wright: 13229
+╠════════════════ Anzahl Countys: 99
+╚═>>> Total für den Bundesstaat IA: 3046355
+
+╔═>>> KS
+╠════ Allen: 13371
+╠════ Anderson: 8102
+╠════ Atchison: 16924
+╠════ Barber: 4861
+╠════ Barton: 27674
+╠════ Bourbon: 15173
+╠════ Brown: 9984
+╠════ Butler: 65880
+╠════ Chase: 2790
+╠════ Chautauqua: 3669
+╠════ Cherokee: 21603
+╠════ Cheyenne: 2726
+╠════ Clark: 2215
+╠════ Clay: 8535
+╠════ Cloud: 9533
+╠════ Coffey: 8601
+╠════ Comanche: 1891
+╠════ Cowley: 36311
+╠════ Crawford: 39134
+╠════ Decatur: 2961
+╠════ Dickinson: 19754
+╠════ Doniphan: 7945
+╠════ Douglas: 110826
+╠════ Edwards: 3037
+╠════ Elk: 2882
+╠════ Ellis: 28452
+╠════ Ellsworth: 6497
+╠════ Finney: 36776
+╠════ Ford: 33848
+╠════ Franklin: 25992
+╠════ Geary: 34362
+╠════ Gove: 2695
+╠════ Graham: 2597
+╠════ Grant: 7829
+╠════ Gray: 6006
+╠════ Greeley: 1247
+╠════ Greenwood: 6689
+╠════ Hamilton: 2690
+╠════ Harper: 6034
+╠════ Harvey: 34684
+╠════ Haskell: 4256
+╠════ Hodgeman: 1916
+╠════ Jackson: 13462
+╠════ Jefferson: 19126
+╠════ Jewell: 3077
+╠════ Johnson: 544179
+╠════ Kearny: 3977
+╠════ Kingman: 7858
+╠════ Kiowa: 2553
+╠════ Labette: 21607
+╠════ Lane: 1750
+╠════ Leavenworth: 76227
+╠════ Lincoln: 3241
+╠════ Linn: 9656
+╠════ Logan: 2756
+╠════ Lyon: 33690
+╠════ McPherson: 29180
+╠════ Marion: 12660
+╠════ Marshall: 10117
+╠════ Meade: 4575
+╠════ Miami: 32787
+╠════ Mitchell: 6373
+╠════ Montgomery: 35471
+╠════ Morris: 5923
+╠════ Morton: 3233
+╠════ Nemaha: 10178
+╠════ Neosho: 16512
+╠════ Ness: 3107
+╠════ Norton: 5671
+╠════ Osage: 16295
+╠════ Osborne: 3858
+╠════ Ottawa: 6091
+╠════ Pawnee: 6973
+╠════ Phillips: 5642
+╠════ Pottawatomie: 21604
+╠════ Pratt: 9656
+╠════ Rawlins: 2519
+╠════ Reno: 64511
+╠════ Republic: 4980
+╠════ Rice: 10083
+╠════ Riley: 71115
+╠════ Rooks: 5181
+╠════ Rush: 3307
+╠════ Russell: 6970
+╠════ Saline: 55606
+╠════ Scott: 4936
+╠════ Sedgwick: 498365
+╠════ Seward: 22952
+╠════ Shawnee: 177934
+╠════ Sheridan: 2556
+╠════ Sherman: 6010
+╠════ Smith: 3853
+╠════ Stafford: 4437
+╠════ Stanton: 2235
+╠════ Stevens: 5724
+╠════ Sumner: 24132
+╠════ Thomas: 7900
+╠════ Trego: 3001
+╠════ Wabaunsee: 7053
+╠════ Wallace: 1485
+╠════ Washington: 5799
+╠════ Wichita: 2234
+╠════ Wilson: 9409
+╠════ Woodson: 3309
+╠════ Wyandotte: 157505
+╠════════════════ Anzahl Countys: 105
+╚═>>> Total für den Bundesstaat KS: 2853118
+
+╔═>>> KY
+╠════ Adair: 18656
+╠════ Allen: 19956
+╠════ Anderson: 21421
+╠════ Ballard: 8249
+╠════ Barren: 42173
+╠════ Bath: 11591
+╠════ Bell: 28691
+╠════ Boone: 118811
+╠════ Bourbon: 19985
+╠════ Boyd: 49542
+╠════ Boyle: 28432
+╠════ Bracken: 8488
+╠════ Breathitt: 13878
+╠════ Breckinridge: 20059
+╠════ Bullitt: 74319
+╠════ Butler: 12690
+╠════ Caldwell: 12984
+╠════ Calloway: 37191
+╠════ Campbell: 90336
+╠════ Carlisle: 5104
+╠════ Carroll: 10811
+╠════ Carter: 27720
+╠════ Casey: 15955
+╠════ Christian: 73955
+╠════ Clark: 35613
+╠════ Clay: 21730
+╠════ Clinton: 10272
+╠════ Crittenden: 9315
+╠════ Cumberland: 6856
+╠════ Daviess: 96656
+╠════ Edmonson: 12161
+╠════ Elliott: 7852
+╠════ Estill: 14672
+╠════ Fayette: 295803
+╠════ Fleming: 14348
+╠════ Floyd: 39451
+╠════ Franklin: 49285
+╠════ Fulton: 6813
+╠════ Gallatin: 8589
+╠════ Garrard: 16912
+╠════ Grant: 24662
+╠════ Graves: 37121
+╠════ Grayson: 25746
+╠════ Green: 11258
+╠════ Greenup: 36910
+╠════ Hancock: 8565
+╠════ Hardin: 105543
+╠════ Harlan: 29278
+╠════ Harrison: 18846
+╠════ Hart: 18199
+╠════ Henderson: 46250
+╠════ Henry: 15416
+╠════ Hickman: 4902
+╠════ Hopkins: 46920
+╠════ Jackson: 13494
+╠════ Jefferson: 741096
+╠════ Jessamine: 48586
+╠════ Johnson: 23356
+╠════ Kenton: 159720
+╠════ Knott: 16346
+╠════ Knox: 31883
+╠════ Larue: 14193
+╠════ Laurel: 58849
+╠════ Lawrence: 15860
+╠════ Lee: 7887
+╠════ Leslie: 11310
+╠════ Letcher: 24519
+╠════ Lewis: 13870
+╠════ Lincoln: 24742
+╠════ Livingston: 9519
+╠════ Logan: 26835
+╠════ Lyon: 8314
+╠════ McCracken: 65565
+╠════ McCreary: 18306
+╠════ McLean: 9531
+╠════ Madison: 82916
+╠════ Magoffin: 13333
+╠════ Marion: 19820
+╠════ Marshall: 31448
+╠════ Martin: 12929
+╠════ Mason: 17490
+╠════ Meade: 28602
+╠════ Menifee: 6306
+╠════ Mercer: 21331
+╠════ Metcalfe: 10099
+╠════ Monroe: 10963
+╠════ Montgomery: 26499
+╠════ Morgan: 13923
+╠════ Muhlenberg: 31499
+╠════ Nelson: 43437
+╠════ Nicholas: 7135
+╠════ Ohio: 23842
+╠════ Oldham: 60316
+╠════ Owen: 10841
+╠════ Owsley: 4755
+╠════ Pendleton: 14877
+╠════ Perry: 28712
+╠════ Pike: 65024
+╠════ Powell: 12613
+╠════ Pulaski: 63063
+╠════ Robertson: 2282
+╠════ Rockcastle: 17056
+╠════ Rowan: 23333
+╠════ Russell: 17565
+╠════ Scott: 47173
+╠════ Shelby: 42074
+╠════ Simpson: 17327
+╠════ Spencer: 17061
+╠════ Taylor: 24512
+╠════ Todd: 12460
+╠════ Trigg: 14339
+╠════ Trimble: 8809
+╠════ Union: 15007
+╠════ Warren: 113792
+╠════ Washington: 11717
+╠════ Wayne: 20813
+╠════ Webster: 13621
+╠════ Whitley: 35637
+╠════ Wolfe: 7355
+╠════ Woodford: 24939
+╠════════════════ Anzahl Countys: 120
+╚═>>> Total für den Bundesstaat KY: 4339367
+
+╔═>>> LA
+╠════ Acadia: 61773
+╠════ Allen: 25764
+╠════ Ascension: 107215
+╠════ Assumption: 23421
+╠════ Avoyelles: 42073
+╠════ Beauregard: 35654
+╠════ Bienville: 14353
+╠════ Bossier: 116979
+╠════ Caddo: 254969
+╠════ Calcasieu: 192768
+╠════ Caldwell: 10132
+╠════ Cameron: 6839
+╠════ Catahoula: 10407
+╠════ Claiborne: 17195
+╠════ Concordia: 20822
+╠════ De Soto: 26656
+╠════ East Baton Rouge: 440171
+╠════ East Carroll: 7759
+╠════ East Feliciana: 20267
+╠════ Evangeline: 33984
+╠════ Franklin: 20767
+╠════ Grant: 22309
+╠════ Iberia: 73240
+╠════ Iberville: 33387
+╠════ Jackson: 16274
+╠════ Jefferson: 432552
+╠════ Jefferson Davis: 31594
+╠════ Lafayette: 221578
+╠════ Lafourche: 96318
+╠════ La Salle: 14890
+╠════ Lincoln: 46735
+╠════ Livingston: 128026
+╠════ Madison: 12093
+╠════ Morehouse: 27979
+╠════ Natchitoches: 39566
+╠════ Orleans: 343829
+╠════ Ouachita: 153720
+╠════ Plaquemines: 23042
+╠════ Pointe Coupee: 22802
+╠════ Rapides: 131613
+╠════ Red River: 9091
+╠════ Richland: 20725
+╠════ Sabine: 24233
+╠════ St. Bernard: 35897
+╠════ St. Charles: 52780
+╠════ St. Helena: 11203
+╠════ St. James: 22102
+╠════ St. John the Baptist: 45924
+╠════ St. Landry: 83384
+╠════ St. Martin: 52160
+╠════ St. Mary: 54650
+╠════ St. Tammany: 233740
+╠════ Tangipahoa: 121097
+╠════ Tensas: 5252
+╠════ Terrebonne: 111860
+╠════ Union: 22721
+╠════ Vermilion: 57999
+╠════ Vernon: 52334
+╠════ Washington: 47168
+╠════ Webster: 41207
+╠════ West Baton Rouge: 23788
+╠════ West Carroll: 11604
+╠════ West Feliciana: 15625
+╠════ Winn: 15313
+╠════════════════ Anzahl Countys: 64
+╚═>>> Total für den Bundesstaat LA: 4533372
+
+╔═>>> ME
+╠════ Androscoggin: 107702
+╠════ Aroostook: 71870
+╠════ Cumberland: 281674
+╠════ Franklin: 30768
+╠════ Hancock: 54418
+╠════ Kennebec: 122151
+╠════ Knox: 39736
+╠════ Lincoln: 34457
+╠════ Oxford: 57833
+╠════ Penobscot: 153923
+╠════ Piscataquis: 17535
+╠════ Sagadahoc: 35293
+╠════ Somerset: 52228
+╠════ Waldo: 38786
+╠════ Washington: 32856
+╠════ York: 197131
+╠════════════════ Anzahl Countys: 16
+╚═>>> Total für den Bundesstaat ME: 1328361
+
+╔═>>> MD
+╠════ Allegany: 75087
+╠════ Anne Arundel: 537656
+╠════ Baltimore: 805029
+╠════ Calvert: 88737
+╠════ Caroline: 33066
+╠════ Carroll: 167134
+╠════ Cecil: 101108
+╠════ Charles: 146551
+╠════ Dorchester: 32618
+╠════ Frederick: 233385
+╠════ Garrett: 30097
+╠════ Harford: 244826
+╠════ Howard: 287085
+╠════ Kent: 20197
+╠════ Montgomery: 971777
+╠════ Prince George's: 863420
+╠════ Queen Anne's: 47798
+╠════ St. Mary's: 105151
+╠════ Somerset: 26470
+╠════ Talbot: 37782
+╠════ Washington: 147430
+╠════ Wicomico: 98733
+╠════ Worcester: 51454
+╠════ Baltimore City: 620961
+╠════════════════ Anzahl Countys: 24
+╚═>>> Total für den Bundesstaat MD: 5773552
+
+╔═>>> MA
+╠════ Barnstable: 215888
+╠════ Berkshire: 131219
+╠════ Bristol: 548285
+╠════ Dukes: 16535
+╠════ Essex: 743159
+╠════ Franklin: 71372
+╠════ Hampden: 463490
+╠════ Hampshire: 158080
+╠════ Middlesex: 1503085
+╠════ Nantucket: 10172
+╠════ Norfolk: 670850
+╠════ Plymouth: 494919
+╠════ Suffolk: 722023
+╠════ Worcester: 798552
+╠════════════════ Anzahl Countys: 14
+╚═>>> Total für den Bundesstaat MA: 6547629
+
+╔═>>> MI
+╠════ Alcona: 10942
+╠════ Alger: 9601
+╠════ Allegan: 111408
+╠════ Alpena: 29598
+╠════ Antrim: 23580
+╠════ Arenac: 15899
+╠════ Baraga: 8860
+╠════ Barry: 59173
+╠════ Bay: 107771
+╠════ Benzie: 17525
+╠════ Berrien: 156813
+╠════ Branch: 45248
+╠════ Calhoun: 136146
+╠════ Cass: 52293
+╠════ Charlevoix: 25949
+╠════ Cheboygan: 26152
+╠════ Chippewa: 38520
+╠════ Clare: 30926
+╠════ Clinton: 75382
+╠════ Crawford: 14074
+╠════ Delta: 37069
+╠════ Dickinson: 26168
+╠════ Eaton: 107759
+╠════ Emmet: 32694
+╠════ Genesee: 425790
+╠════ Gladwin: 25692
+╠════ Gogebic: 16427
+╠════ Grand Traverse: 86986
+╠════ Gratiot: 42476
+╠════ Hillsdale: 46688
+╠════ Houghton: 36628
+╠════ Huron: 33118
+╠════ Ingham: 280895
+╠════ Ionia: 63905
+╠════ Iosco: 25887
+╠════ Iron: 11817
+╠════ Isabella: 70311
+╠════ Jackson: 160248
+╠════ Kalamazoo: 250331
+╠════ Kalkaska: 17153
+╠════ Kent: 602622
+╠════ Keweenaw: 2156
+╠════ Lake: 11539
+╠════ Lapeer: 88319
+╠════ Leelanau: 21708
+╠════ Lenawee: 99892
+╠════ Livingston: 180967
+╠════ Luce: 6631
+╠════ Mackinac: 11113
+╠════ Macomb: 840978
+╠════ Manistee: 24733
+╠════ Marquette: 67077
+╠════ Mason: 28705
+╠════ Mecosta: 42798
+╠════ Menominee: 24029
+╠════ Midland: 83629
+╠════ Missaukee: 14849
+╠════ Monroe: 152021
+╠════ Montcalm: 63342
+╠════ Montmorency: 9765
+╠════ Muskegon: 172188
+╠════ Newaygo: 48460
+╠════ Oakland: 1202362
+╠════ Oceana: 26570
+╠════ Ogemaw: 21699
+╠════ Ontonagon: 6780
+╠════ Osceola: 23528
+╠════ Oscoda: 8640
+╠════ Otsego: 24164
+╠════ Ottawa: 263801
+╠════ Presque Isle: 13376
+╠════ Roscommon: 24449
+╠════ Saginaw: 200169
+╠════ St. Clair: 163040
+╠════ St. Joseph: 61295
+╠════ Sanilac: 43114
+╠════ Schoolcraft: 8485
+╠════ Shiawassee: 70648
+╠════ Tuscola: 55729
+╠════ Van Buren: 76258
+╠════ Washtenaw: 344791
+╠════ Wayne: 1820584
+╠════ Wexford: 32735
+╠════════════════ Anzahl Countys: 83
+╚═>>> Total für den Bundesstaat MI: 9883640
+
+╔═>>> MN
+╠════ Aitkin: 16202
+╠════ Anoka: 330844
+╠════ Becker: 32504
+╠════ Beltrami: 44442
+╠════ Benton: 38451
+╠════ Big Stone: 5269
+╠════ Blue Earth: 64013
+╠════ Brown: 25893
+╠════ Carlton: 35386
+╠════ Carver: 91042
+╠════ Cass: 28567
+╠════ Chippewa: 12441
+╠════ Chisago: 53887
+╠════ Clay: 58999
+╠════ Clearwater: 8695
+╠════ Cook: 5176
+╠════ Cottonwood: 11687
+╠════ Crow Wing: 62500
+╠════ Dakota: 398552
+╠════ Dodge: 20087
+╠════ Douglas: 36009
+╠════ Faribault: 14553
+╠════ Fillmore: 20866
+╠════ Freeborn: 31255
+╠════ Goodhue: 46183
+╠════ Grant: 6018
+╠════ Hennepin: 1152425
+╠════ Houston: 19027
+╠════ Hubbard: 20428
+╠════ Isanti: 37816
+╠════ Itasca: 45058
+╠════ Jackson: 10266
+╠════ Kanabec: 16239
+╠════ Kandiyohi: 42239
+╠════ Kittson: 4552
+╠════ Koochiching: 13311
+╠════ Lac qui Parle: 7259
+╠════ Lake: 10866
+╠════ Lake of the Woods: 4045
+╠════ Le Sueur: 27703
+╠════ Lincoln: 5896
+╠════ Lyon: 25857
+╠════ McLeod: 36651
+╠════ Mahnomen: 5413
+╠════ Marshall: 9439
+╠════ Martin: 20840
+╠════ Meeker: 23300
+╠════ Mille Lacs: 26097
+╠════ Morrison: 33198
+╠════ Mower: 39163
+╠════ Murray: 8725
+╠════ Nicollet: 32727
+╠════ Nobles: 21378
+╠════ Norman: 6852
+╠════ Olmsted: 144248
+╠════ Otter Tail: 57303
+╠════ Pennington: 13930
+╠════ Pine: 29750
+╠════ Pipestone: 9596
+╠════ Polk: 31600
+╠════ Pope: 10995
+╠════ Ramsey: 508640
+╠════ Red Lake: 4089
+╠════ Redwood: 16059
+╠════ Renville: 15730
+╠════ Rice: 64142
+╠════ Rock: 9687
+╠════ Roseau: 15629
+╠════ St. Louis: 200226
+╠════ Scott: 129928
+╠════ Sherburne: 88499
+╠════ Sibley: 15226
+╠════ Stearns: 150642
+╠════ Steele: 36576
+╠════ Stevens: 9726
+╠════ Swift: 9783
+╠════ Todd: 24895
+╠════ Traverse: 3558
+╠════ Wabasha: 21676
+╠════ Wadena: 13843
+╠════ Waseca: 19136
+╠════ Washington: 238136
+╠════ Watonwan: 11211
+╠════ Wilkin: 6576
+╠════ Winona: 51461
+╠════ Wright: 124700
+╠════ Yellow Medicine: 10438
+╠════════════════ Anzahl Countys: 87
+╚═>>> Total für den Bundesstaat MN: 5303925
+
+╔═>>> MS
+╠════ Adams: 32297
+╠════ Alcorn: 37057
+╠════ Amite: 13131
+╠════ Attala: 19564
+╠════ Benton: 8729
+╠════ Bolivar: 34145
+╠════ Calhoun: 14962
+╠════ Carroll: 10597
+╠════ Chickasaw: 17392
+╠════ Choctaw: 8547
+╠════ Claiborne: 9604
+╠════ Clarke: 16732
+╠════ Clay: 20634
+╠════ Coahoma: 26151
+╠════ Copiah: 29449
+╠════ Covington: 19568
+╠════ DeSoto: 161252
+╠════ Forrest: 74934
+╠════ Franklin: 8118
+╠════ George: 22578
+╠════ Greene: 14400
+╠════ Grenada: 21906
+╠════ Hancock: 43929
+╠════ Harrison: 187105
+╠════ Hinds: 245285
+╠════ Holmes: 19198
+╠════ Humphreys: 9375
+╠════ Issaquena: 1406
+╠════ Itawamba: 23401
+╠════ Jackson: 139668
+╠════ Jasper: 17062
+╠════ Jefferson: 7726
+╠════ Jefferson Davis: 12487
+╠════ Jones: 67761
+╠════ Kemper: 10456
+╠════ Lafayette: 47351
+╠════ Lamar: 55658
+╠════ Lauderdale: 80261
+╠════ Lawrence: 12929
+╠════ Leake: 23805
+╠════ Lee: 82910
+╠════ Leflore: 32317
+╠════ Lincoln: 34869
+╠════ Lowndes: 59779
+╠════ Madison: 95203
+╠════ Marion: 27088
+╠════ Marshall: 37144
+╠════ Monroe: 36989
+╠════ Montgomery: 10925
+╠════ Neshoba: 29676
+╠════ Newton: 21720
+╠════ Noxubee: 11545
+╠════ Oktibbeha: 47671
+╠════ Panola: 34707
+╠════ Pearl River: 55834
+╠════ Perry: 12250
+╠════ Pike: 40404
+╠════ Pontotoc: 29957
+╠════ Prentiss: 25276
+╠════ Quitman: 8223
+╠════ Rankin: 141617
+╠════ Scott: 28264
+╠════ Sharkey: 4916
+╠════ Simpson: 27503
+╠════ Smith: 16491
+╠════ Stone: 17786
+╠════ Sunflower: 29450
+╠════ Tallahatchie: 15378
+╠════ Tate: 28886
+╠════ Tippah: 22232
+╠════ Tishomingo: 19593
+╠════ Tunica: 10778
+╠════ Union: 27134
+╠════ Walthall: 15443
+╠════ Warren: 48773
+╠════ Washington: 51137
+╠════ Wayne: 20747
+╠════ Webster: 10253
+╠════ Wilkinson: 9878
+╠════ Winston: 19198
+╠════ Yalobusha: 12678
+╠════ Yazoo: 28065
+╠════════════════ Anzahl Countys: 82
+╚═>>> Total für den Bundesstaat MS: 2967297
+
+╔═>>> MO
+╠════ Adair: 25607
+╠════ Andrew: 17291
+╠════ Atchison: 5685
+╠════ Audrain: 25529
+╠════ Barry: 35597
+╠════ Barton: 12402
+╠════ Bates: 17049
+╠════ Benton: 19056
+╠════ Bollinger: 12363
+╠════ Boone: 162642
+╠════ Buchanan: 89201
+╠════ Butler: 42794
+╠════ Caldwell: 9424
+╠════ Callaway: 44332
+╠════ Camden: 44002
+╠════ Cape Girardeau: 75674
+╠════ Carroll: 9295
+╠════ Carter: 6265
+╠════ Cass: 99478
+╠════ Cedar: 13982
+╠════ Chariton: 7831
+╠════ Christian: 77422
+╠════ Clark: 7139
+╠════ Clay: 221939
+╠════ Clinton: 20743
+╠════ Cole: 75990
+╠════ Cooper: 17601
+╠════ Crawford: 24696
+╠════ Dade: 7883
+╠════ Dallas: 16777
+╠════ Daviess: 8433
+╠════ DeKalb: 12892
+╠════ Dent: 15657
+╠════ Douglas: 13684
+╠════ Dunklin: 31953
+╠════ Franklin: 101492
+╠════ Gasconade: 15222
+╠════ Gentry: 6738
+╠════ Greene: 275174
+╠════ Grundy: 10261
+╠════ Harrison: 8957
+╠════ Henry: 22272
+╠════ Hickory: 9627
+╠════ Holt: 4912
+╠════ Howard: 10144
+╠════ Howell: 40400
+╠════ Iron: 10630
+╠════ Jackson: 674158
+╠════ Jasper: 117404
+╠════ Jefferson: 218733
+╠════ Johnson: 52595
+╠════ Knox: 4131
+╠════ Laclede: 35571
+╠════ Lafayette: 33381
+╠════ Lawrence: 38634
+╠════ Lewis: 10211
+╠════ Lincoln: 52566
+╠════ Linn: 12761
+╠════ Livingston: 15195
+╠════ McDonald: 23083
+╠════ Macon: 15566
+╠════ Madison: 12226
+╠════ Maries: 9176
+╠════ Marion: 28781
+╠════ Mercer: 3785
+╠════ Miller: 24748
+╠════ Mississippi: 14358
+╠════ Moniteau: 15607
+╠════ Monroe: 8840
+╠════ Montgomery: 12236
+╠════ Morgan: 20565
+╠════ New Madrid: 18956
+╠════ Newton: 58114
+╠════ Nodaway: 23370
+╠════ Oregon: 10881
+╠════ Osage: 13878
+╠════ Ozark: 9723
+╠════ Pemiscot: 18296
+╠════ Perry: 18971
+╠════ Pettis: 42201
+╠════ Phelps: 45156
+╠════ Pike: 18516
+╠════ Platte: 89322
+╠════ Polk: 31137
+╠════ Pulaski: 52274
+╠════ Putnam: 4979
+╠════ Ralls: 10167
+╠════ Randolph: 25414
+╠════ Ray: 23494
+╠════ Reynolds: 6696
+╠════ Ripley: 14100
+╠════ St. Charles: 360485
+╠════ St. Clair: 9805
+╠════ Ste. Genevieve: 18145
+╠════ St. Francois: 65359
+╠════ St. Louis: 998954
+╠════ Saline: 23370
+╠════ Schuyler: 4431
+╠════ Scotland: 4843
+╠════ Scott: 39191
+╠════ Shannon: 8441
+╠════ Shelby: 6373
+╠════ Stoddard: 29968
+╠════ Stone: 32202
+╠════ Sullivan: 6714
+╠════ Taney: 51675
+╠════ Texas: 26008
+╠════ Vernon: 21159
+╠════ Warren: 32513
+╠════ Washington: 25195
+╠════ Wayne: 13521
+╠════ Webster: 36202
+╠════ Worth: 2171
+╠════ Wright: 18815
+╠════ St. Louis City: 319294
+╠════════════════ Anzahl Countys: 115
+╚═>>> Total für den Bundesstaat MO: 5988927
+
+╔═>>> MT
+╠════ Beaverhead: 9246
+╠════ Big Horn: 12865
+╠════ Blaine: 6491
+╠════ Broadwater: 5612
+╠════ Carbon: 10078
+╠════ Carter: 1160
+╠════ Cascade: 81327
+╠════ Chouteau: 5813
+╠════ Custer: 11699
+╠════ Daniels: 1751
+╠════ Dawson: 8966
+╠════ Deer Lodge: 9298
+╠════ Fallon: 2890
+╠════ Fergus: 11586
+╠════ Flathead: 90928
+╠════ Gallatin: 89513
+╠════ Garfield: 1206
+╠════ Glacier: 13399
+╠════ Golden Valley: 884
+╠════ Granite: 3079
+╠════ Hill: 16096
+╠════ Jefferson: 11406
+╠════ Judith Basin: 2072
+╠════ Lake: 28746
+╠════ Lewis and Clark: 63395
+╠════ Liberty: 2339
+╠════ Lincoln: 19687
+╠════ McCone: 1734
+╠════ Madison: 7691
+╠════ Meagher: 1891
+╠════ Mineral: 4223
+╠════ Missoula: 109299
+╠════ Musselshell: 4538
+╠════ Park: 15636
+╠════ Petroleum: 494
+╠════ Phillips: 4253
+╠════ Pondera: 6153
+╠════ Powder River: 1743
+╠════ Powell: 7027
+╠════ Prairie: 1179
+╠════ Ravalli: 40212
+╠════ Richland: 9746
+╠════ Roosevelt: 10425
+╠════ Rosebud: 9233
+╠════ Sanders: 11413
+╠════ Sheridan: 3384
+╠════ Silver Bow: 34200
+╠════ Stillwater: 9117
+╠════ Sweet Grass: 3651
+╠════ Teton: 6073
+╠════ Toole: 5324
+╠════ Treasure: 718
+╠════ Valley: 7369
+╠════ Wheatland: 2168
+╠════ Wibaux: 1017
+╠════ Yellowstone: 147972
+╠════════════════ Anzahl Countys: 56
+╚═>>> Total für den Bundesstaat MT: 989415
+
+╔═>>> NE
+╠════ Adams: 31364
+╠════ Antelope: 6685
+╠════ Arthur: 460
+╠════ Banner: 690
+╠════ Blaine: 478
+╠════ Boone: 5505
+╠════ Box Butte: 11308
+╠════ Boyd: 2099
+╠════ Brown: 3145
+╠════ Buffalo: 46102
+╠════ Burt: 6858
+╠════ Butler: 8395
+╠════ Cass: 25241
+╠════ Cedar: 8852
+╠════ Chase: 3966
+╠════ Cherry: 5713
+╠════ Cheyenne: 9998
+╠════ Clay: 6542
+╠════ Colfax: 10515
+╠════ Cuming: 9139
+╠════ Custer: 10939
+╠════ Dakota: 21006
+╠════ Dawes: 9182
+╠════ Dawson: 24326
+╠════ Deuel: 1941
+╠════ Dixon: 6000
+╠════ Dodge: 36691
+╠════ Douglas: 517110
+╠════ Dundy: 2008
+╠════ Fillmore: 5890
+╠════ Franklin: 3225
+╠════ Frontier: 2756
+╠════ Furnas: 4959
+╠════ Gage: 22311
+╠════ Garden: 2057
+╠════ Garfield: 2049
+╠════ Gosper: 2044
+╠════ Grant: 614
+╠════ Greeley: 2538
+╠════ Hall: 58607
+╠════ Hamilton: 9124
+╠════ Harlan: 3423
+╠════ Hayes: 967
+╠════ Hitchcock: 2908
+╠════ Holt: 10435
+╠════ Hooker: 736
+╠════ Howard: 6274
+╠════ Jefferson: 7547
+╠════ Johnson: 5217
+╠════ Kearney: 6489
+╠════ Keith: 8368
+╠════ Keya Paha: 824
+╠════ Kimball: 3821
+╠════ Knox: 8701
+╠════ Lancaster: 285407
+╠════ Lincoln: 36288
+╠════ Logan: 763
+╠════ Loup: 632
+╠════ McPherson: 539
+╠════ Madison: 34876
+╠════ Merrick: 7845
+╠════ Morrill: 5042
+╠════ Nance: 3735
+╠════ Nemaha: 7248
+╠════ Nuckolls: 4500
+╠════ Otoe: 15740
+╠════ Pawnee: 2773
+╠════ Perkins: 2970
+╠════ Phelps: 9188
+╠════ Pierce: 7266
+╠════ Platte: 32237
+╠════ Polk: 5406
+╠════ Red Willow: 11055
+╠════ Richardson: 8363
+╠════ Rock: 1526
+╠════ Saline: 14200
+╠════ Sarpy: 158840
+╠════ Saunders: 20780
+╠════ Scotts Bluff: 36970
+╠════ Seward: 16750
+╠════ Sheridan: 5469
+╠════ Sherman: 3152
+╠════ Sioux: 1311
+╠════ Stanton: 6129
+╠════ Thayer: 5228
+╠════ Thomas: 647
+╠════ Thurston: 6940
+╠════ Valley: 4260
+╠════ Washington: 20234
+╠════ Wayne: 9595
+╠════ Webster: 3812
+╠════ Wheeler: 818
+╠════ York: 13665
+╠════════════════ Anzahl Countys: 93
+╚═>>> Total für den Bundesstaat NE: 1826341
+
+╔═>>> NV
+╠════ Churchill: 24877
+╠════ Clark: 1951269
+╠════ Douglas: 46997
+╠════ Elko: 48818
+╠════ Esmeralda: 783
+╠════ Eureka: 1987
+╠════ Humboldt: 16528
+╠════ Lander: 5775
+╠════ Lincoln: 5345
+╠════ Lyon: 51980
+╠════ Mineral: 4772
+╠════ Nye: 43946
+╠════ Pershing: 6753
+╠════ Storey: 4010
+╠════ Washoe: 421407
+╠════ White Pine: 10030
+╠════ Carson City: 55274
+╠════════════════ Anzahl Countys: 17
+╚═>>> Total für den Bundesstaat NV: 2700551
+
+╔═>>> NH
+╠════ Belknap: 60088
+╠════ Carroll: 47818
+╠════ Cheshire: 77117
+╠════ Coos: 33055
+╠════ Grafton: 89118
+╠════ Hillsborough: 400721
+╠════ Merrimack: 146445
+╠════ Rockingham: 295223
+╠════ Strafford: 123143
+╠════ Sullivan: 43742
+╠════════════════ Anzahl Countys: 10
+╚═>>> Total für den Bundesstaat NH: 1316470
+
+╔═>>> NJ
+╠════ Atlantic: 274549
+╠════ Bergen: 905116
+╠════ Burlington: 448734
+╠════ Camden: 513657
+╠════ Cape May: 97265
+╠════ Cumberland: 156898
+╠════ Essex: 783969
+╠════ Gloucester: 288288
+╠════ Hudson: 634266
+╠════ Hunterdon: 128349
+╠════ Mercer: 366513
+╠════ Middlesex: 809858
+╠════ Monmouth: 630380
+╠════ Morris: 492276
+╠════ Ocean: 576567
+╠════ Passaic: 501226
+╠════ Salem: 66083
+╠════ Somerset: 323444
+╠════ Sussex: 149265
+╠════ Union: 536499
+╠════ Warren: 108692
+╠════════════════ Anzahl Countys: 21
+╚═>>> Total für den Bundesstaat NJ: 8791894
+
+╔═>>> NM
+╠════ Bernalillo: 662564
+╠════ Catron: 3725
+╠════ Chaves: 65645
+╠════ Cibola: 27213
+╠════ Colfax: 13750
+╠════ Curry: 48376
+╠════ De Baca: 2022
+╠════ Dona Ana: 209233
+╠════ Eddy: 53829
+╠════ Grant: 29514
+╠════ Guadalupe: 4687
+╠════ Harding: 695
+╠════ Hidalgo: 4894
+╠════ Lea: 64727
+╠════ Lincoln: 20497
+╠════ Los Alamos: 17950
+╠════ Luna: 25095
+╠════ McKinley: 71492
+╠════ Mora: 4881
+╠════ Otero: 63797
+╠════ Quay: 9041
+╠════ Rio Arriba: 40246
+╠════ Roosevelt: 19846
+╠════ Sandoval: 131561
+╠════ San Juan: 130044
+╠════ San Miguel: 29393
+╠════ Santa Fe: 144170
+╠════ Sierra: 11988
+╠════ Socorro: 17866
+╠════ Taos: 32937
+╠════ Torrance: 16383
+╠════ Union: 4549
+╠════ Valencia: 76569
+╠════════════════ Anzahl Countys: 33
+╚═>>> Total für den Bundesstaat NM: 2059179
+
+╔═>>> NY
+╠════ Albany: 304204
+╠════ Allegany: 48946
+╠════ Bronx: 1385108
+╠════ Broome: 200600
+╠════ Cattaraugus: 80317
+╠════ Cayuga: 80026
+╠════ Chautauqua: 134905
+╠════ Chemung: 88830
+╠════ Chenango: 50477
+╠════ Clinton: 82128
+╠════ Columbia: 63096
+╠════ Cortland: 49336
+╠════ Delaware: 47980
+╠════ Dutchess: 297488
+╠════ Erie: 919040
+╠════ Essex: 39370
+╠════ Franklin: 51599
+╠════ Fulton: 55531
+╠════ Genesee: 60079
+╠════ Greene: 49221
+╠════ Hamilton: 4836
+╠════ Herkimer: 64519
+╠════ Jefferson: 116229
+╠════ Kings: 2504700
+╠════ Lewis: 27087
+╠════ Livingston: 65393
+╠════ Madison: 73442
+╠════ Monroe: 744344
+╠════ Montgomery: 50219
+╠════ Nassau: 1339532
+╠════ New York: 1585873
+╠════ Niagara: 216469
+╠════ Oneida: 234878
+╠════ Onondaga: 467026
+╠════ Ontario: 107931
+╠════ Orange: 372813
+╠════ Orleans: 42883
+╠════ Oswego: 122109
+╠════ Otsego: 62259
+╠════ Putnam: 99710
+╠════ Queens: 2230722
+╠════ Rensselaer: 159429
+╠════ Richmond: 468730
+╠════ Rockland: 311687
+╠════ St. Lawrence: 111944
+╠════ Saratoga: 219607
+╠════ Schenectady: 154727
+╠════ Schoharie: 32749
+╠════ Schuyler: 18343
+╠════ Seneca: 35251
+╠════ Steuben: 98990
+╠════ Suffolk: 1493350
+╠════ Sullivan: 77547
+╠════ Tioga: 51125
+╠════ Tompkins: 101564
+╠════ Ulster: 182493
+╠════ Warren: 65707
+╠════ Washington: 63216
+╠════ Wayne: 93772
+╠════ Westchester: 949113
+╠════ Wyoming: 42155
+╠════ Yates: 25348
+╠════════════════ Anzahl Countys: 62
+╚═>>> Total für den Bundesstaat NY: 19378102
+
+╔═>>> NC
+╠════ Alamance: 151131
+╠════ Alexander: 37198
+╠════ Alleghany: 11155
+╠════ Anson: 26948
+╠════ Ashe: 27281
+╠════ Avery: 17797
+╠════ Beaufort: 47759
+╠════ Bertie: 21282
+╠════ Bladen: 35190
+╠════ Brunswick: 107431
+╠════ Buncombe: 238318
+╠════ Burke: 90912
+╠════ Cabarrus: 178011
+╠════ Caldwell: 83029
+╠════ Camden: 9980
+╠════ Carteret: 66469
+╠════ Caswell: 23719
+╠════ Catawba: 154358
+╠════ Chatham: 63505
+╠════ Cherokee: 27444
+╠════ Chowan: 14793
+╠════ Clay: 10587
+╠════ Cleveland: 98078
+╠════ Columbus: 58098
+╠════ Craven: 103505
+╠════ Cumberland: 319431
+╠════ Currituck: 23547
+╠════ Dare: 33920
+╠════ Davidson: 162878
+╠════ Davie: 41240
+╠════ Duplin: 58505
+╠════ Durham: 267587
+╠════ Edgecombe: 56552
+╠════ Forsyth: 350670
+╠════ Franklin: 60619
+╠════ Gaston: 206086
+╠════ Gates: 12197
+╠════ Graham: 8861
+╠════ Granville: 59916
+╠════ Greene: 21362
+╠════ Guilford: 488406
+╠════ Halifax: 54691
+╠════ Harnett: 114678
+╠════ Haywood: 59036
+╠════ Henderson: 106740
+╠════ Hertford: 24669
+╠════ Hoke: 46952
+╠════ Hyde: 5810
+╠════ Iredell: 159437
+╠════ Jackson: 40271
+╠════ Johnston: 168878
+╠════ Jones: 10153
+╠════ Lee: 57866
+╠════ Lenoir: 59495
+╠════ Lincoln: 78265
+╠════ McDowell: 44996
+╠════ Macon: 33922
+╠════ Madison: 20764
+╠════ Martin: 24505
+╠════ Mecklenburg: 919628
+╠════ Mitchell: 15579
+╠════ Montgomery: 27798
+╠════ Moore: 88247
+╠════ Nash: 95840
+╠════ New Hanover: 202667
+╠════ Northampton: 22099
+╠════ Onslow: 177772
+╠════ Orange: 133801
+╠════ Pamlico: 13144
+╠════ Pasquotank: 40661
+╠════ Pender: 52217
+╠════ Perquimans: 13453
+╠════ Person: 39464
+╠════ Pitt: 168148
+╠════ Polk: 20510
+╠════ Randolph: 141752
+╠════ Richmond: 46639
+╠════ Robeson: 134168
+╠════ Rockingham: 93643
+╠════ Rowan: 138428
+╠════ Rutherford: 67810
+╠════ Sampson: 63431
+╠════ Scotland: 36157
+╠════ Stanly: 60585
+╠════ Stokes: 47401
+╠════ Surry: 73673
+╠════ Swain: 13981
+╠════ Transylvania: 33090
+╠════ Tyrrell: 4407
+╠════ Union: 201292
+╠════ Vance: 45422
+╠════ Wake: 900993
+╠════ Warren: 20972
+╠════ Washington: 13228
+╠════ Watauga: 51079
+╠════ Wayne: 122623
+╠════ Wilkes: 69340
+╠════ Wilson: 81234
+╠════ Yadkin: 38406
+╠════ Yancey: 17818
+╠════════════════ Anzahl Countys: 100
+╚═>>> Total für den Bundesstaat NC: 9535483
+
+╔═>>> ND
+╠════ Adams: 2343
+╠════ Barnes: 11066
+╠════ Benson: 6660
+╠════ Billings: 783
+╠════ Bottineau: 6429
+╠════ Bowman: 3151
+╠════ Burke: 1968
+╠════ Burleigh: 81308
+╠════ Cass: 149778
+╠════ Cavalier: 3993
+╠════ Dickey: 5289
+╠════ Divide: 2071
+╠════ Dunn: 3536
+╠════ Eddy: 2385
+╠════ Emmons: 3550
+╠════ Foster: 3343
+╠════ Golden Valley: 1680
+╠════ Grand Forks: 66861
+╠════ Grant: 2394
+╠════ Griggs: 2420
+╠════ Hettinger: 2477
+╠════ Kidder: 2435
+╠════ LaMoure: 4139
+╠════ Logan: 1990
+╠════ McHenry: 5395
+╠════ McIntosh: 2809
+╠════ McKenzie: 6360
+╠════ McLean: 8962
+╠════ Mercer: 8424
+╠════ Morton: 27471
+╠════ Mountrail: 7673
+╠════ Nelson: 3126
+╠════ Oliver: 1846
+╠════ Pembina: 7413
+╠════ Pierce: 4357
+╠════ Ramsey: 11451
+╠════ Ransom: 5457
+╠════ Renville: 2470
+╠════ Richland: 16321
+╠════ Rolette: 13937
+╠════ Sargent: 3829
+╠════ Sheridan: 1321
+╠════ Sioux: 4153
+╠════ Slope: 727
+╠════ Stark: 24199
+╠════ Steele: 1975
+╠════ Stutsman: 21100
+╠════ Towner: 2246
+╠════ Traill: 8121
+╠════ Walsh: 11119
+╠════ Ward: 61675
+╠════ Wells: 4207
+╠════ Williams: 22398
+╠════════════════ Anzahl Countys: 53
+╚═>>> Total für den Bundesstaat ND: 672591
+
+╔═>>> OH
+╠════ Adams: 28550
+╠════ Allen: 106331
+╠════ Ashland: 53139
+╠════ Ashtabula: 101497
+╠════ Athens: 64757
+╠════ Auglaize: 45949
+╠════ Belmont: 70400
+╠════ Brown: 44846
+╠════ Butler: 368130
+╠════ Carroll: 28836
+╠════ Champaign: 40097
+╠════ Clark: 138333
+╠════ Clermont: 197363
+╠════ Clinton: 42040
+╠════ Columbiana: 107841
+╠════ Coshocton: 36901
+╠════ Crawford: 43784
+╠════ Cuyahoga: 1280122
+╠════ Darke: 52959
+╠════ Defiance: 39037
+╠════ Delaware: 174214
+╠════ Erie: 77079
+╠════ Fairfield: 146156
+╠════ Fayette: 29030
+╠════ Franklin: 1163414
+╠════ Fulton: 42698
+╠════ Gallia: 30934
+╠════ Geauga: 93389
+╠════ Greene: 161573
+╠════ Guernsey: 40087
+╠════ Hamilton: 802374
+╠════ Hancock: 74782
+╠════ Hardin: 32058
+╠════ Harrison: 15864
+╠════ Henry: 28215
+╠════ Highland: 43589
+╠════ Hocking: 29380
+╠════ Holmes: 42366
+╠════ Huron: 59626
+╠════ Jackson: 33225
+╠════ Jefferson: 69709
+╠════ Knox: 60921
+╠════ Lake: 230041
+╠════ Lawrence: 62450
+╠════ Licking: 166492
+╠════ Logan: 45858
+╠════ Lorain: 301356
+╠════ Lucas: 441815
+╠════ Madison: 43435
+╠════ Mahoning: 238823
+╠════ Marion: 66501
+╠════ Medina: 172332
+╠════ Meigs: 23770
+╠════ Mercer: 40814
+╠════ Miami: 102506
+╠════ Monroe: 14642
+╠════ Montgomery: 535153
+╠════ Morgan: 15054
+╠════ Morrow: 34827
+╠════ Muskingum: 86074
+╠════ Noble: 14645
+╠════ Ottawa: 41428
+╠════ Paulding: 19614
+╠════ Perry: 36058
+╠════ Pickaway: 55698
+╠════ Pike: 28709
+╠════ Portage: 161419
+╠════ Preble: 42270
+╠════ Putnam: 34499
+╠════ Richland: 124475
+╠════ Ross: 78064
+╠════ Sandusky: 60944
+╠════ Scioto: 79499
+╠════ Seneca: 56745
+╠════ Shelby: 49423
+╠════ Stark: 375586
+╠════ Summit: 541781
+╠════ Trumbull: 210312
+╠════ Tuscarawas: 92582
+╠════ Union: 52300
+╠════ Van Wert: 28744
+╠════ Vinton: 13435
+╠════ Warren: 212693
+╠════ Washington: 61778
+╠════ Wayne: 114520
+╠════ Williams: 37642
+╠════ Wood: 125488
+╠════ Wyandot: 22615
+╠════════════════ Anzahl Countys: 88
+╚═>>> Total für den Bundesstaat OH: 11536504
+
+╔═>>> OK
+╠════ Adair: 22683
+╠════ Alfalfa: 5642
+╠════ Atoka: 14182
+╠════ Beaver: 5636
+╠════ Beckham: 22119
+╠════ Blaine: 11943
+╠════ Bryan: 42416
+╠════ Caddo: 29600
+╠════ Canadian: 115541
+╠════ Carter: 47557
+╠════ Cherokee: 46987
+╠════ Choctaw: 15205
+╠════ Cimarron: 2475
+╠════ Cleveland: 255755
+╠════ Coal: 5925
+╠════ Comanche: 124098
+╠════ Cotton: 6193
+╠════ Craig: 15029
+╠════ Creek: 69967
+╠════ Custer: 27469
+╠════ Delaware: 41487
+╠════ Dewey: 4810
+╠════ Ellis: 4151
+╠════ Garfield: 60580
+╠════ Garvin: 27576
+╠════ Grady: 52431
+╠════ Grant: 4527
+╠════ Greer: 6239
+╠════ Harmon: 2922
+╠════ Harper: 3685
+╠════ Haskell: 12769
+╠════ Hughes: 14003
+╠════ Jackson: 26446
+╠════ Jefferson: 6472
+╠════ Johnston: 10957
+╠════ Kay: 46562
+╠════ Kingfisher: 15034
+╠════ Kiowa: 9446
+╠════ Latimer: 11154
+╠════ Le Flore: 50384
+╠════ Lincoln: 34273
+╠════ Logan: 41848
+╠════ Love: 9423
+╠════ McClain: 34506
+╠════ McCurtain: 33151
+╠════ McIntosh: 20252
+╠════ Major: 7527
+╠════ Marshall: 15840
+╠════ Mayes: 41259
+╠════ Murray: 13488
+╠════ Muskogee: 70990
+╠════ Noble: 11561
+╠════ Nowata: 10536
+╠════ Okfuskee: 12191
+╠════ Oklahoma: 718633
+╠════ Okmulgee: 40069
+╠════ Osage: 47472
+╠════ Ottawa: 31848
+╠════ Pawnee: 16577
+╠════ Payne: 77350
+╠════ Pittsburg: 45837
+╠════ Pontotoc: 37492
+╠════ Pottawatomie: 69442
+╠════ Pushmataha: 11572
+╠════ Roger Mills: 3647
+╠════ Rogers: 86905
+╠════ Seminole: 25482
+╠════ Sequoyah: 42391
+╠════ Stephens: 45048
+╠════ Texas: 20640
+╠════ Tillman: 7992
+╠════ Tulsa: 603403
+╠════ Wagoner: 73085
+╠════ Washington: 50976
+╠════ Washita: 11629
+╠════ Woods: 8878
+╠════ Woodward: 20081
+╠════════════════ Anzahl Countys: 77
+╚═>>> Total für den Bundesstaat OK: 3751351
+
+╔═>>> OR
+╠════ Baker: 16134
+╠════ Benton: 85579
+╠════ Clackamas: 375992
+╠════ Clatsop: 37039
+╠════ Columbia: 49351
+╠════ Coos: 63043
+╠════ Crook: 20978
+╠════ Curry: 22364
+╠════ Deschutes: 157733
+╠════ Douglas: 107667
+╠════ Gilliam: 1871
+╠════ Grant: 7445
+╠════ Harney: 7422
+╠════ Hood River: 22346
+╠════ Jackson: 203206
+╠════ Jefferson: 21720
+╠════ Josephine: 82713
+╠════ Klamath: 66380
+╠════ Lake: 7895
+╠════ Lane: 351715
+╠════ Lincoln: 46034
+╠════ Linn: 116672
+╠════ Malheur: 31313
+╠════ Marion: 315335
+╠════ Morrow: 11173
+╠════ Multnomah: 735334
+╠════ Polk: 75403
+╠════ Sherman: 1765
+╠════ Tillamook: 25250
+╠════ Umatilla: 75889
+╠════ Union: 25748
+╠════ Wallowa: 7008
+╠════ Wasco: 25213
+╠════ Washington: 529710
+╠════ Wheeler: 1441
+╠════ Yamhill: 99193
+╠════════════════ Anzahl Countys: 36
+╚═>>> Total für den Bundesstaat OR: 3831074
+
+╔═>>> PA
+╠════ Adams: 101407
+╠════ Allegheny: 1223348
+╠════ Armstrong: 68941
+╠════ Beaver: 170539
+╠════ Bedford: 49762
+╠════ Berks: 411442
+╠════ Blair: 127089
+╠════ Bradford: 62622
+╠════ Bucks: 625249
+╠════ Butler: 183862
+╠════ Cambria: 143679
+╠════ Cameron: 5085
+╠════ Carbon: 65249
+╠════ Centre: 153990
+╠════ Chester: 498886
+╠════ Clarion: 39988
+╠════ Clearfield: 81642
+╠════ Clinton: 39238
+╠════ Columbia: 67295
+╠════ Crawford: 88765
+╠════ Cumberland: 235406
+╠════ Dauphin: 268100
+╠════ Delaware: 558979
+╠════ Elk: 31946
+╠════ Erie: 280566
+╠════ Fayette: 136606
+╠════ Forest: 7716
+╠════ Franklin: 149618
+╠════ Fulton: 14845
+╠════ Greene: 38686
+╠════ Huntingdon: 45913
+╠════ Indiana: 88880
+╠════ Jefferson: 45200
+╠════ Juniata: 24636
+╠════ Lackawanna: 214437
+╠════ Lancaster: 519445
+╠════ Lawrence: 91108
+╠════ Lebanon: 133568
+╠════ Lehigh: 349497
+╠════ Luzerne: 320918
+╠════ Lycoming: 116111
+╠════ McKean: 43450
+╠════ Mercer: 116638
+╠════ Mifflin: 46682
+╠════ Monroe: 169842
+╠════ Montgomery: 799874
+╠════ Montour: 18267
+╠════ Northampton: 297735
+╠════ Northumberland: 94528
+╠════ Perry: 45969
+╠════ Philadelphia: 1526006
+╠════ Pike: 57369
+╠════ Potter: 17457
+╠════ Schuylkill: 148289
+╠════ Snyder: 39702
+╠════ Somerset: 77742
+╠════ Sullivan: 6428
+╠════ Susquehanna: 43356
+╠════ Tioga: 41981
+╠════ Union: 44947
+╠════ Venango: 54984
+╠════ Warren: 41815
+╠════ Washington: 207820
+╠════ Wayne: 52822
+╠════ Westmoreland: 365169
+╠════ Wyoming: 28276
+╠════ York: 434972
+╠════════════════ Anzahl Countys: 67
+╚═>>> Total für den Bundesstaat PA: 12702379
+
+╔═>>> RI
+╠════ Bristol: 49875
+╠════ Kent: 166158
+╠════ Newport: 82888
+╠════ Providence: 626667
+╠════ Washington: 126979
+╠════════════════ Anzahl Countys: 5
+╚═>>> Total für den Bundesstaat RI: 1052567
+
+╔═>>> SC
+╠════ Abbeville: 25417
+╠════ Aiken: 160099
+╠════ Allendale: 10419
+╠════ Anderson: 187126
+╠════ Bamberg: 15987
+╠════ Barnwell: 22621
+╠════ Beaufort: 162233
+╠════ Berkeley: 177843
+╠════ Calhoun: 15175
+╠════ Charleston: 350209
+╠════ Cherokee: 55342
+╠════ Chester: 33140
+╠════ Chesterfield: 46734
+╠════ Clarendon: 34971
+╠════ Colleton: 38892
+╠════ Darlington: 68681
+╠════ Dillon: 32062
+╠════ Dorchester: 136555
+╠════ Edgefield: 26985
+╠════ Fairfield: 23956
+╠════ Florence: 136885
+╠════ Georgetown: 60158
+╠════ Greenville: 451225
+╠════ Greenwood: 69661
+╠════ Hampton: 21090
+╠════ Horry: 269291
+╠════ Jasper: 24777
+╠════ Kershaw: 61697
+╠════ Lancaster: 76652
+╠════ Laurens: 66537
+╠════ Lee: 19220
+╠════ Lexington: 262391
+╠════ McCormick: 10233
+╠════ Marion: 33062
+╠════ Marlboro: 28933
+╠════ Newberry: 37508
+╠════ Oconee: 74273
+╠════ Orangeburg: 92501
+╠════ Pickens: 119224
+╠════ Richland: 384504
+╠════ Saluda: 19875
+╠════ Spartanburg: 284307
+╠════ Sumter: 107456
+╠════ Union: 28961
+╠════ Williamsburg: 34423
+╠════ York: 226073
+╠════════════════ Anzahl Countys: 46
+╚═>>> Total für den Bundesstaat SC: 4625364
+
+╔═>>> SD
+╠════ Aurora: 2710
+╠════ Beadle: 17398
+╠════ Bennett: 3431
+╠════ Bon Homme: 7070
+╠════ Brookings: 31965
+╠════ Brown: 36531
+╠════ Brule: 5255
+╠════ Buffalo: 1912
+╠════ Butte: 10110
+╠════ Campbell: 1466
+╠════ Charles Mix: 9129
+╠════ Clark: 3691
+╠════ Clay: 13864
+╠════ Codington: 27227
+╠════ Corson: 4050
+╠════ Custer: 8216
+╠════ Davison: 19504
+╠════ Day: 5710
+╠════ Deuel: 4364
+╠════ Dewey: 5301
+╠════ Douglas: 3002
+╠════ Edmunds: 4071
+╠════ Fall River: 7094
+╠════ Faulk: 2364
+╠════ Grant: 7356
+╠════ Gregory: 4271
+╠════ Haakon: 1937
+╠════ Hamlin: 5903
+╠════ Hand: 3431
+╠════ Hanson: 3331
+╠════ Harding: 1255
+╠════ Hughes: 17022
+╠════ Hutchinson: 7343
+╠════ Hyde: 1420
+╠════ Jackson: 3031
+╠════ Jerauld: 2071
+╠════ Jones: 1006
+╠════ Kingsbury: 5148
+╠════ Lake: 11200
+╠════ Lawrence: 24097
+╠════ Lincoln: 44828
+╠════ Lyman: 3755
+╠════ McCook: 5618
+╠════ McPherson: 2459
+╠════ Marshall: 4656
+╠════ Meade: 25434
+╠════ Mellette: 2048
+╠════ Miner: 2389
+╠════ Minnehaha: 169468
+╠════ Moody: 6486
+╠════ Pennington: 100948
+╠════ Perkins: 2982
+╠════ Potter: 2329
+╠════ Roberts: 10149
+╠════ Sanborn: 2355
+╠════ Shannon: 13586
+╠════ Spink: 6415
+╠════ Stanley: 2966
+╠════ Sully: 1373
+╠════ Todd: 9612
+╠════ Tripp: 5644
+╠════ Turner: 8347
+╠════ Union: 14399
+╠════ Walworth: 5438
+╠════ Yankton: 22438
+╠════ Ziebach: 2801
+╠════════════════ Anzahl Countys: 66
+╚═>>> Total für den Bundesstaat SD: 814180
+
+╔═>>> TN
+╠════ Anderson: 75129
+╠════ Bedford: 45058
+╠════ Benton: 16489
+╠════ Bledsoe: 12876
+╠════ Blount: 123010
+╠════ Bradley: 98963
+╠════ Campbell: 40716
+╠════ Cannon: 13801
+╠════ Carroll: 28522
+╠════ Carter: 57424
+╠════ Cheatham: 39105
+╠════ Chester: 17131
+╠════ Claiborne: 32213
+╠════ Clay: 7861
+╠════ Cocke: 35662
+╠════ Coffee: 52796
+╠════ Crockett: 14586
+╠════ Cumberland: 56053
+╠════ Davidson: 626681
+╠════ Decatur: 11757
+╠════ DeKalb: 18723
+╠════ Dickson: 49666
+╠════ Dyer: 38335
+╠════ Fayette: 38413
+╠════ Fentress: 17959
+╠════ Franklin: 41052
+╠════ Gibson: 49683
+╠════ Giles: 29485
+╠════ Grainger: 22657
+╠════ Greene: 68831
+╠════ Grundy: 13703
+╠════ Hamblen: 62544
+╠════ Hamilton: 336463
+╠════ Hancock: 6819
+╠════ Hardeman: 27253
+╠════ Hardin: 26026
+╠════ Hawkins: 56833
+╠════ Haywood: 18787
+╠════ Henderson: 27769
+╠════ Henry: 32330
+╠════ Hickman: 24690
+╠════ Houston: 8426
+╠════ Humphreys: 18538
+╠════ Jackson: 11638
+╠════ Jefferson: 51407
+╠════ Johnson: 18244
+╠════ Knox: 432226
+╠════ Lake: 7832
+╠════ Lauderdale: 27815
+╠════ Lawrence: 41869
+╠════ Lewis: 12161
+╠════ Lincoln: 33361
+╠════ Loudon: 48556
+╠════ McMinn: 52266
+╠════ McNairy: 26075
+╠════ Macon: 22248
+╠════ Madison: 98294
+╠════ Marion: 28237
+╠════ Marshall: 30617
+╠════ Maury: 80956
+╠════ Meigs: 11753
+╠════ Monroe: 44519
+╠════ Montgomery: 172331
+╠════ Moore: 6362
+╠════ Morgan: 21987
+╠════ Obion: 31807
+╠════ Overton: 22083
+╠════ Perry: 7915
+╠════ Pickett: 5077
+╠════ Polk: 16825
+╠════ Putnam: 72321
+╠════ Rhea: 31809
+╠════ Roane: 54181
+╠════ Robertson: 66283
+╠════ Rutherford: 262604
+╠════ Scott: 22228
+╠════ Sequatchie: 14112
+╠════ Sevier: 89889
+╠════ Shelby: 927644
+╠════ Smith: 19166
+╠════ Stewart: 13324
+╠════ Sullivan: 156823
+╠════ Sumner: 160645
+╠════ Tipton: 61081
+╠════ Trousdale: 7870
+╠════ Unicoi: 18313
+╠════ Union: 19109
+╠════ Van Buren: 5548
+╠════ Warren: 39839
+╠════ Washington: 122979
+╠════ Wayne: 17021
+╠════ Weakley: 35021
+╠════ White: 25841
+╠════ Williamson: 183182
+╠════ Wilson: 113993
+╠════════════════ Anzahl Countys: 95
+╚═>>> Total für den Bundesstaat TN: 6346105
+
+╔═>>> TX
+╠════ Anderson: 58458
+╠════ Andrews: 14786
+╠════ Angelina: 86771
+╠════ Aransas: 23158
+╠════ Archer: 9054
+╠════ Armstrong: 1901
+╠════ Atascosa: 44911
+╠════ Austin: 28417
+╠════ Bailey: 7165
+╠════ Bandera: 20485
+╠════ Bastrop: 74171
+╠════ Baylor: 3726
+╠════ Bee: 31861
+╠════ Bell: 310235
+╠════ Bexar: 1714773
+╠════ Blanco: 10497
+╠════ Borden: 641
+╠════ Bosque: 18212
+╠════ Bowie: 92565
+╠════ Brazoria: 313166
+╠════ Brazos: 194851
+╠════ Brewster: 9232
+╠════ Briscoe: 1637
+╠════ Brooks: 7223
+╠════ Brown: 38106
+╠════ Burleson: 17187
+╠════ Burnet: 42750
+╠════ Caldwell: 38066
+╠════ Calhoun: 21381
+╠════ Callahan: 13544
+╠════ Cameron: 406220
+╠════ Camp: 12401
+╠════ Carson: 6182
+╠════ Cass: 30464
+╠════ Castro: 8062
+╠════ Chambers: 35096
+╠════ Cherokee: 50845
+╠════ Childress: 7041
+╠════ Clay: 10752
+╠════ Cochran: 3127
+╠════ Coke: 3320
+╠════ Coleman: 8895
+╠════ Collin: 782341
+╠════ Collingsworth: 3057
+╠════ Colorado: 20874
+╠════ Comal: 108472
+╠════ Comanche: 13974
+╠════ Concho: 4087
+╠════ Cooke: 38437
+╠════ Coryell: 75388
+╠════ Cottle: 1505
+╠════ Crane: 4375
+╠════ Crockett: 3719
+╠════ Crosby: 6059
+╠════ Culberson: 2398
+╠════ Dallam: 6703
+╠════ Dallas: 2368139
+╠════ Dawson: 13833
+╠════ Deaf Smith: 19372
+╠════ Delta: 5231
+╠════ Denton: 662614
+╠════ DeWitt: 20097
+╠════ Dickens: 2444
+╠════ Dimmit: 9996
+╠════ Donley: 3677
+╠════ Duval: 11782
+╠════ Eastland: 18583
+╠════ Ector: 137130
+╠════ Edwards: 2002
+╠════ Ellis: 149610
+╠════ El Paso: 800647
+╠════ Erath: 37890
+╠════ Falls: 17866
+╠════ Fannin: 33915
+╠════ Fayette: 24554
+╠════ Fisher: 3974
+╠════ Floyd: 6446
+╠════ Foard: 1336
+╠════ Fort Bend: 585375
+╠════ Franklin: 10605
+╠════ Freestone: 19816
+╠════ Frio: 17217
+╠════ Gaines: 17526
+╠════ Galveston: 291309
+╠════ Garza: 6461
+╠════ Gillespie: 24837
+╠════ Glasscock: 1226
+╠════ Goliad: 7210
+╠════ Gonzales: 19807
+╠════ Gray: 22535
+╠════ Grayson: 120877
+╠════ Gregg: 121730
+╠════ Grimes: 26604
+╠════ Guadalupe: 131533
+╠════ Hale: 36273
+╠════ Hall: 3353
+╠════ Hamilton: 8517
+╠════ Hansford: 5613
+╠════ Hardeman: 4139
+╠════ Hardin: 54635
+╠════ Harris: 4092459
+╠════ Harrison: 65631
+╠════ Hartley: 6062
+╠════ Haskell: 5899
+╠════ Hays: 157107
+╠════ Hemphill: 3807
+╠════ Henderson: 78532
+╠════ Hidalgo: 774769
+╠════ Hill: 35089
+╠════ Hockley: 22935
+╠════ Hood: 51182
+╠════ Hopkins: 35161
+╠════ Houston: 23732
+╠════ Howard: 35012
+╠════ Hudspeth: 3476
+╠════ Hunt: 86129
+╠════ Hutchinson: 22150
+╠════ Irion: 1599
+╠════ Jack: 9044
+╠════ Jackson: 14075
+╠════ Jasper: 35710
+╠════ Jeff Davis: 2342
+╠════ Jefferson: 252273
+╠════ Jim Hogg: 5300
+╠════ Jim Wells: 40838
+╠════ Johnson: 150934
+╠════ Jones: 20202
+╠════ Karnes: 14824
+╠════ Kaufman: 103350
+╠════ Kendall: 33410
+╠════ Kenedy: 416
+╠════ Kent: 808
+╠════ Kerr: 49625
+╠════ Kimble: 4607
+╠════ King: 286
+╠════ Kinney: 3598
+╠════ Kleberg: 32061
+╠════ Knox: 3719
+╠════ Lamar: 49793
+╠════ Lamb: 13977
+╠════ Lampasas: 19677
+╠════ La Salle: 6886
+╠════ Lavaca: 19263
+╠════ Lee: 16612
+╠════ Leon: 16801
+╠════ Liberty: 75643
+╠════ Limestone: 23384
+╠════ Lipscomb: 3302
+╠════ Live Oak: 11531
+╠════ Llano: 19301
+╠════ Loving: 82
+╠════ Lubbock: 278831
+╠════ Lynn: 5915
+╠════ McCulloch: 8283
+╠════ McLennan: 234906
+╠════ McMullen: 707
+╠════ Madison: 13664
+╠════ Marion: 10546
+╠════ Martin: 4799
+╠════ Mason: 4012
+╠════ Matagorda: 36702
+╠════ Maverick: 54258
+╠════ Medina: 46006
+╠════ Menard: 2242
+╠════ Midland: 136872
+╠════ Milam: 24757
+╠════ Mills: 4936
+╠════ Mitchell: 9403
+╠════ Montague: 19719
+╠════ Montgomery: 455746
+╠════ Moore: 21904
+╠════ Morris: 12934
+╠════ Motley: 1210
+╠════ Nacogdoches: 64524
+╠════ Navarro: 47735
+╠════ Newton: 14445
+╠════ Nolan: 15216
+╠════ Nueces: 340223
+╠════ Ochiltree: 10223
+╠════ Oldham: 2052
+╠════ Orange: 81837
+╠════ Palo Pinto: 28111
+╠════ Panola: 23796
+╠════ Parker: 116927
+╠════ Parmer: 10269
+╠════ Pecos: 15507
+╠════ Polk: 45413
+╠════ Potter: 121073
+╠════ Presidio: 7818
+╠════ Rains: 10914
+╠════ Randall: 120725
+╠════ Reagan: 3367
+╠════ Real: 3309
+╠════ Red River: 12860
+╠════ Reeves: 13783
+╠════ Refugio: 7383
+╠════ Roberts: 929
+╠════ Robertson: 16622
+╠════ Rockwall: 78337
+╠════ Runnels: 10501
+╠════ Rusk: 53330
+╠════ Sabine: 10834
+╠════ San Augustine: 8865
+╠════ San Jacinto: 26384
+╠════ San Patricio: 64804
+╠════ San Saba: 6131
+╠════ Schleicher: 3461
+╠════ Scurry: 16921
+╠════ Shackelford: 3378
+╠════ Shelby: 25448
+╠════ Sherman: 3034
+╠════ Smith: 209714
+╠════ Somervell: 8490
+╠════ Starr: 60968
+╠════ Stephens: 9630
+╠════ Sterling: 1143
+╠════ Stonewall: 1490
+╠════ Sutton: 4128
+╠════ Swisher: 7854
+╠════ Tarrant: 1809034
+╠════ Taylor: 131506
+╠════ Terrell: 984
+╠════ Terry: 12651
+╠════ Throckmorton: 1641
+╠════ Titus: 32334
+╠════ Tom Green: 110224
+╠════ Travis: 1024266
+╠════ Trinity: 14585
+╠════ Tyler: 21766
+╠════ Upshur: 39309
+╠════ Upton: 3355
+╠════ Uvalde: 26405
+╠════ Val Verde: 48879
+╠════ Van Zandt: 52579
+╠════ Victoria: 86793
+╠════ Walker: 67861
+╠════ Waller: 43205
+╠════ Ward: 10658
+╠════ Washington: 33718
+╠════ Webb: 250304
+╠════ Wharton: 41280
+╠════ Wheeler: 5410
+╠════ Wichita: 131500
+╠════ Wilbarger: 13535
+╠════ Willacy: 22134
+╠════ Williamson: 422679
+╠════ Wilson: 42918
+╠════ Winkler: 7110
+╠════ Wise: 59127
+╠════ Wood: 41964
+╠════ Yoakum: 7879
+╠════ Young: 18550
+╠════ Zapata: 14018
+╠════ Zavala: 11677
+╠════════════════ Anzahl Countys: 254
+╚═>>> Total für den Bundesstaat TX: 25145561
+
+╔═>>> UT
+╠════ Beaver: 6629
+╠════ Box Elder: 49975
+╠════ Cache: 112656
+╠════ Carbon: 21403
+╠════ Daggett: 1059
+╠════ Davis: 306479
+╠════ Duchesne: 18607
+╠════ Emery: 10976
+╠════ Garfield: 5172
+╠════ Grand: 9225
+╠════ Iron: 46163
+╠════ Juab: 10246
+╠════ Kane: 7125
+╠════ Millard: 12503
+╠════ Morgan: 9469
+╠════ Piute: 1556
+╠════ Rich: 2264
+╠════ Salt Lake: 1029655
+╠════ San Juan: 14746
+╠════ Sanpete: 27822
+╠════ Sevier: 20802
+╠════ Summit: 36324
+╠════ Tooele: 58218
+╠════ Uintah: 32588
+╠════ Utah: 516564
+╠════ Wasatch: 23530
+╠════ Washington: 138115
+╠════ Wayne: 2778
+╠════ Weber: 231236
+╠════════════════ Anzahl Countys: 29
+╚═>>> Total für den Bundesstaat UT: 2763885
+
+╔═>>> VT
+╠════ Addison: 36821
+╠════ Bennington: 37125
+╠════ Caledonia: 31227
+╠════ Chittenden: 156545
+╠════ Essex: 6306
+╠════ Franklin: 47746
+╠════ Grand Isle: 6970
+╠════ Lamoille: 24475
+╠════ Orange: 28936
+╠════ Orleans: 27231
+╠════ Rutland: 61642
+╠════ Washington: 59534
+╠════ Windham: 44513
+╠════ Windsor: 56670
+╠════════════════ Anzahl Countys: 14
+╚═>>> Total für den Bundesstaat VT: 625741
+
+╔═>>> VA
+╠════ Accomack: 33164
+╠════ Albemarle: 98970
+╠════ Alleghany: 16250
+╠════ Amelia: 12690
+╠════ Amherst: 32353
+╠════ Appomattox: 14973
+╠════ Arlington: 207627
+╠════ Augusta: 73750
+╠════ Bath: 4731
+╠════ Bedford: 68676
+╠════ Bland: 6824
+╠════ Botetourt: 33148
+╠════ Brunswick: 17434
+╠════ Buchanan: 24098
+╠════ Buckingham: 17146
+╠════ Campbell: 54842
+╠════ Caroline: 28545
+╠════ Carroll: 30042
+╠════ Charles City: 7256
+╠════ Charlotte: 12586
+╠════ Chesterfield: 316236
+╠════ Clarke: 14034
+╠════ Craig: 5190
+╠════ Culpeper: 46689
+╠════ Cumberland: 10052
+╠════ Dickenson: 15903
+╠════ Dinwiddie: 28001
+╠════ Essex: 11151
+╠════ Fairfax: 1081726
+╠════ Fauquier: 65203
+╠════ Floyd: 15279
+╠════ Fluvanna: 25691
+╠════ Franklin: 56159
+╠════ Frederick: 78305
+╠════ Giles: 17286
+╠════ Gloucester: 36858
+╠════ Goochland: 21717
+╠════ Grayson: 15533
+╠════ Greene: 18403
+╠════ Greensville: 12243
+╠════ Halifax: 36241
+╠════ Hanover: 99863
+╠════ Henrico: 306935
+╠════ Henry: 54151
+╠════ Highland: 2321
+╠════ Isle of Wight: 35270
+╠════ James City: 67009
+╠════ King and Queen: 6945
+╠════ King George: 23584
+╠════ King William: 15935
+╠════ Lancaster: 11391
+╠════ Lee: 25587
+╠════ Loudoun: 312311
+╠════ Louisa: 33153
+╠════ Lunenburg: 12914
+╠════ Madison: 13308
+╠════ Mathews: 8978
+╠════ Mecklenburg: 32727
+╠════ Middlesex: 10959
+╠════ Montgomery: 94392
+╠════ Nelson: 15020
+╠════ New Kent: 18429
+╠════ Northampton: 12389
+╠════ Northumberland: 12330
+╠════ Nottoway: 15853
+╠════ Orange: 33481
+╠════ Page: 24042
+╠════ Patrick: 18490
+╠════ Pittsylvania: 63506
+╠════ Powhatan: 28046
+╠════ Prince Edward: 23368
+╠════ Prince George: 35725
+╠════ Prince William: 402002
+╠════ Pulaski: 34872
+╠════ Rappahannock: 7373
+╠════ Richmond: 9254
+╠════ Roanoke: 92376
+╠════ Rockbridge: 22307
+╠════ Rockingham: 76314
+╠════ Russell: 28897
+╠════ Scott: 23177
+╠════ Shenandoah: 41993
+╠════ Smyth: 32208
+╠════ Southampton: 18570
+╠════ Spotsylvania: 122397
+╠════ Stafford: 128961
+╠════ Surry: 7058
+╠════ Sussex: 12087
+╠════ Tazewell: 45078
+╠════ Warren: 37575
+╠════ Washington: 54876
+╠════ Westmoreland: 17454
+╠════ Wise: 41452
+╠════ Wythe: 29235
+╠════ York: 65464
+╠════ Alexandria: 139966
+╠════ Bedford City: 6222
+╠════ Bristol: 17835
+╠════ Buena Vista: 6650
+╠════ Charlottesville: 43475
+╠════ Chesapeake: 222209
+╠════ Colonial Heights: 17411
+╠════ Covington: 5961
+╠════ Danville: 43055
+╠════ Emporia: 5927
+╠════ Fairfax City: 22565
+╠════ Falls Church: 12332
+╠════ Franklin City: 8582
+╠════ Fredericksburg: 24286
+╠════ Galax: 7042
+╠════ Hampton: 137436
+╠════ Harrisonburg: 48914
+╠════ Hopewell: 22591
+╠════ Lexington: 7042
+╠════ Lynchburg: 75568
+╠════ Manassas: 37821
+╠════ Manassas Park: 14273
+╠════ Martinsville: 13821
+╠════ Newport News: 180719
+╠════ Norfolk: 242803
+╠════ Norton: 3958
+╠════ Petersburg: 32420
+╠════ Poquoson: 12150
+╠════ Portsmouth: 95535
+╠════ Radford: 16408
+╠════ Richmond City: 204214
+╠════ Roanoke City: 97032
+╠════ Salem: 24802
+╠════ Staunton: 23746
+╠════ Suffolk: 84585
+╠════ Virginia Beach: 437994
+╠════ Waynesboro: 21006
+╠════ Williamsburg: 14068
+╠════ Winchester: 26203
+╠════════════════ Anzahl Countys: 134
+╚═>>> Total für den Bundesstaat VA: 8001024
+
+╔═>>> WA
+╠════ Adams: 18728
+╠════ Asotin: 21623
+╠════ Benton: 175177
+╠════ Chelan: 72453
+╠════ Clallam: 71404
+╠════ Clark: 425363
+╠════ Columbia: 4078
+╠════ Cowlitz: 102410
+╠════ Douglas: 38431
+╠════ Ferry: 7551
+╠════ Franklin: 78163
+╠════ Garfield: 2266
+╠════ Grant: 89120
+╠════ Grays Harbor: 72797
+╠════ Island: 78506
+╠════ Jefferson: 29872
+╠════ King: 1931249
+╠════ Kitsap: 251133
+╠════ Kittitas: 40915
+╠════ Klickitat: 20318
+╠════ Lewis: 75455
+╠════ Lincoln: 10570
+╠════ Mason: 60699
+╠════ Okanogan: 41120
+╠════ Pacific: 20920
+╠════ Pend Oreille: 13001
+╠════ Pierce: 795225
+╠════ San Juan: 15769
+╠════ Skagit: 116901
+╠════ Skamania: 11066
+╠════ Snohomish: 713335
+╠════ Spokane: 471221
+╠════ Stevens: 43531
+╠════ Thurston: 252264
+╠════ Wahkiakum: 3978
+╠════ Walla Walla: 58781
+╠════ Whatcom: 201140
+╠════ Whitman: 44776
+╠════ Yakima: 243231
+╠════════════════ Anzahl Countys: 39
+╚═>>> Total für den Bundesstaat WA: 6724540
+
+╔═>>> WV
+╠════ Barbour: 16589
+╠════ Berkeley: 104169
+╠════ Boone: 24629
+╠════ Braxton: 14523
+╠════ Brooke: 24069
+╠════ Cabell: 96319
+╠════ Calhoun: 7627
+╠════ Clay: 9386
+╠════ Doddridge: 8202
+╠════ Fayette: 46039
+╠════ Gilmer: 8693
+╠════ Grant: 11937
+╠════ Greenbrier: 35480
+╠════ Hampshire: 23964
+╠════ Hancock: 30676
+╠════ Hardy: 14025
+╠════ Harrison: 69099
+╠════ Jackson: 29211
+╠════ Jefferson: 53498
+╠════ Kanawha: 193063
+╠════ Lewis: 16372
+╠════ Lincoln: 21720
+╠════ Logan: 36743
+╠════ McDowell: 22113
+╠════ Marion: 56418
+╠════ Marshall: 33107
+╠════ Mason: 27324
+╠════ Mercer: 62264
+╠════ Mineral: 28212
+╠════ Mingo: 26839
+╠════ Monongalia: 96189
+╠════ Monroe: 13502
+╠════ Morgan: 17541
+╠════ Nicholas: 26233
+╠════ Ohio: 44443
+╠════ Pendleton: 7695
+╠════ Pleasants: 7605
+╠════ Pocahontas: 8719
+╠════ Preston: 33520
+╠════ Putnam: 55486
+╠════ Raleigh: 78859
+╠════ Randolph: 29405
+╠════ Ritchie: 10449
+╠════ Roane: 14926
+╠════ Summers: 13927
+╠════ Taylor: 16895
+╠════ Tucker: 7141
+╠════ Tyler: 9208
+╠════ Upshur: 24254
+╠════ Wayne: 42481
+╠════ Webster: 9154
+╠════ Wetzel: 16583
+╠════ Wirt: 5717
+╠════ Wood: 86956
+╠════ Wyoming: 23796
+╠════════════════ Anzahl Countys: 55
+╚═>>> Total für den Bundesstaat WV: 1852994
+
+╔═>>> WI
+╠════ Adams: 20875
+╠════ Ashland: 16157
+╠════ Barron: 45870
+╠════ Bayfield: 15014
+╠════ Brown: 248007
+╠════ Buffalo: 13587
+╠════ Burnett: 15457
+╠════ Calumet: 48971
+╠════ Chippewa: 62415
+╠════ Clark: 34690
+╠════ Columbia: 56833
+╠════ Crawford: 16644
+╠════ Dane: 488073
+╠════ Dodge: 88759
+╠════ Door: 27785
+╠════ Douglas: 44159
+╠════ Dunn: 43857
+╠════ Eau Claire: 98736
+╠════ Florence: 4423
+╠════ Fond du Lac: 101633
+╠════ Forest: 9304
+╠════ Grant: 51208
+╠════ Green: 36842
+╠════ Green Lake: 19051
+╠════ Iowa: 23687
+╠════ Iron: 5916
+╠════ Jackson: 20449
+╠════ Jefferson: 83686
+╠════ Juneau: 26664
+╠════ Kenosha: 166426
+╠════ Kewaunee: 20574
+╠════ La Crosse: 114638
+╠════ Lafayette: 16836
+╠════ Langlade: 19977
+╠════ Lincoln: 28743
+╠════ Manitowoc: 81442
+╠════ Marathon: 134063
+╠════ Marinette: 41749
+╠════ Marquette: 15404
+╠════ Menominee: 4232
+╠════ Milwaukee: 947735
+╠════ Monroe: 44673
+╠════ Oconto: 37660
+╠════ Oneida: 35998
+╠════ Outagamie: 176695
+╠════ Ozaukee: 86395
+╠════ Pepin: 7469
+╠════ Pierce: 41019
+╠════ Polk: 44205
+╠════ Portage: 70019
+╠════ Price: 14159
+╠════ Racine: 195408
+╠════ Richland: 18021
+╠════ Rock: 160331
+╠════ Rusk: 14755
+╠════ St. Croix: 84345
+╠════ Sauk: 61976
+╠════ Sawyer: 16557
+╠════ Shawano: 41949
+╠════ Sheboygan: 115507
+╠════ Taylor: 20689
+╠════ Trempealeau: 28816
+╠════ Vernon: 29773
+╠════ Vilas: 21430
+╠════ Walworth: 102228
+╠════ Washburn: 15911
+╠════ Washington: 131887
+╠════ Waukesha: 389891
+╠════ Waupaca: 52410
+╠════ Waushara: 24496
+╠════ Winnebago: 166994
+╠════ Wood: 74749
+╠════════════════ Anzahl Countys: 72
+╚═>>> Total für den Bundesstaat WI: 5686986
+
+╔═>>> WY
+╠════ Albany: 36299
+╠════ Big Horn: 11668
+╠════ Campbell: 46133
+╠════ Carbon: 15885
+╠════ Converse: 13833
+╠════ Crook: 7083
+╠════ Fremont: 40123
+╠════ Goshen: 13249
+╠════ Hot Springs: 4812
+╠════ Johnson: 8569
+╠════ Laramie: 91738
+╠════ Lincoln: 18106
+╠════ Natrona: 75450
+╠════ Niobrara: 2484
+╠════ Park: 28205
+╠════ Platte: 8667
+╠════ Sheridan: 29116
+╠════ Sublette: 10247
+╠════ Sweetwater: 43806
+╠════ Teton: 21294
+╠════ Uinta: 21118
+╠════ Washakie: 8533
+╠════ Weston: 7208
+╠════════════════ Anzahl Countys: 23
+╚═>>> Total für den Bundesstaat WY: 563626
+▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Total: 308745538 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒

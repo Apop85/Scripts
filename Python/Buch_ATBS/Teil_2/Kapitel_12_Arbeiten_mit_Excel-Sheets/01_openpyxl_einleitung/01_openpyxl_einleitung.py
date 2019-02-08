@@ -29,10 +29,10 @@ work_sheet=openpyxl.load_workbook(excel_sheet)
 output('Datentyp', 'Der Datentyp des mit load.worbook() geladenen Werts ist "workbook"')
 print(type(work_sheet))
 
-sheet_names=work_sheet.get_sheet_names()
-output('get_sheet_names()', 'mit .get_sheet_names lassen sich die Namen der Arbeitsblätter in dieser Arbeitsmappe abrufen die in diesem Beispiel wie folgt lauten '+str(sheet_names))
+sheet_names=work_sheet.sheetnames
+output('.sheetnames', 'mit .sheetnames lassen sich die Namen der Arbeitsblätter in dieser Arbeitsmappe abrufen die in diesem Beispiel wie folgt lauten '+str(sheet_names))
 
-output('get_sheet_by_name()', 'Mit .get_sheet_by_name lässt sich das dabei angegebene Arbeitsblatt einlesen.')
+output('<excel_file>[\'Mappenname\']', 'Mit <excel_file>[\'Mappenname\'] lässt sich das dabei angegebene Arbeitsblatt einlesen.')
 sheet_1=work_sheet.get_sheet_by_name('Tabelle1')
 
 sheet_1=work_sheet.get_active_sheet()
@@ -53,7 +53,7 @@ for i in range(2, 8, 2):
     print(sheet_1.cell(row=i, column=2).value)
 input()
 
-sheet_1=work_sheet.get_sheet_by_name('Tabelle1')
+sheet_1=work_sheet['Tabelle1']
 maxrow=sheet_1.max_row
 maxcolumn=sheet_1.max_column
 
@@ -72,10 +72,14 @@ for colums in sheet_1['A1':'C3']:
         print(cell_values.coordinate, cell_values.value)
     print('Ende dieser Reihe')
 
-output('colums() und rows()', 'Man Kann auch direkt ganze Zeilen und Spalten auslesen durch coulums() oder rows()')
-colum_A=sheet_1.coulums[1]
-for entry in colum_A:
-    print(entry.value)
+
+sheet=work_sheet.active
+columns=list(sheet)
+output('work_sheet.active.colums', 'Man Kann auch direkt ganze Zeilen und Spalten auslesen durch .active_colums')
+# for entry in colums:
+#     print(entry.value)
+for i in range(len(columns)):
+    print(columns[i][1].value)
     
 output('', '')
 output('', '')

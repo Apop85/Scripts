@@ -19,9 +19,9 @@ got_result=False
 
 def brute_force_it(char_set):
     global counter, password, got_result, pdf_file
-    if got_result == True:
-        return
     while True:
+        if got_result == True:
+            return
         for letter in bruteforce_characters:
             if len(char_set) <= max_password_length:
                 if counter == 0:
@@ -36,8 +36,8 @@ def brute_force_it(char_set):
                     return
                 if len(char_set) < max_password_length:
                     brute_force_it(char_set)
-                else:
-                    return
+                # else:
+                #     return
                 char_set=char_set[:-1]
                 counter-=1
             else:

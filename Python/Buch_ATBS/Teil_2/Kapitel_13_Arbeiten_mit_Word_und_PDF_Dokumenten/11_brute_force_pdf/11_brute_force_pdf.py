@@ -71,6 +71,9 @@ def choose_password_lenght():
     print(''.center(70, '█'))
     max_password_length=input(''.center(25))
     if max_password_length.isdecimal():
+        print(''.center(70, '█'))
+        print(' Passwort wird gesucht... '.center(70, '█'))
+        print(''.center(70, '█'))
         max_password_length=int(max_password_length)
         brute_force_it('')
 
@@ -82,12 +85,12 @@ def choose_file():
     file_name=input(''.center(25))
     if os.path.isfile(file_name) and file_name.endswith('.pdf'):
         pdf_file=PyPDF2.PdfFileReader(file_name)
-        print(''.center(70, '█'))
-        print(' Passwort wird gesucht... '.center(70, '█'))
-        print(''.center(70, '█'))
         if attack == 1:
             choose_password_lenght()
         else:
+            print(''.center(70, '█'))
+            print(' Passwort wird gesucht... '.center(70, '█'))
+            print(''.center(70, '█'))
             dictionary_attack()
 
 

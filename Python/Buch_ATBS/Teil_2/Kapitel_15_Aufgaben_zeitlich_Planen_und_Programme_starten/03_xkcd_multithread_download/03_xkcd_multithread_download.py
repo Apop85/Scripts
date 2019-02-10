@@ -18,18 +18,28 @@ except:
 def download_comic(comic_url):
     None
 
-def scrape_comic_links():
-    # while link_counter != comic_target_amount:
-    bs4_object=bs4.BeautifulSoup(url_content.text, features='html.parser')
-    bs4_next_result=bs4_object.select('a[rel="prev"]')
-    next_url=bs4_next_result[0].get('href')
-    bs4_comic_result=bs4_object.select('div #comic img ')
-    # link_counter+=1
+link_counter=0
+def scrape_comic_links(url_name):
+    global link_counter
+    while link_counter != comic_target_amount:
+        url_content=requests.get(url_name)
+        try:
+            url_content.raise_for_status
+            bs4_object=bs4.BeautifulSoup(url_content.text, features='html.parser')
+            bs4_next_result=bs4_object.select('a[rel="prev"]')
+            next_url=bs4_next_result[0].get('href')
+            bs4_comic_result=bs4_object.select('div #comic img')
+            comic_url=bs4_comic_result[0].get('src')
+            comic_url='https://'+comic_url.lstrip('/')
+            link_counter+=1
+            scrape_comic_links(source_url+next_url)
+        except:
+            print('URL nicht gefunden.')
+            return
     # threading.Thread(target=download_comic, args=[source_url+comic_url])
-    print(bs4_comic_result)   
 
 while True:
     print('Wieviele Comics sollen heruntergeladen werden?')
     comic_target_amount=input()
     if comic_target_amount.isdecimal():
-        scrape_comic_links()
+        scrape_comic_links(source_url)

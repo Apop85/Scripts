@@ -8,15 +8,14 @@ teilnehmer=['Claudia', 'Sarah', 'Miri', 'Lexi', 'Sandra']
 # Schonliste für Mitglieder die weniger Arbeit verrichten können.
 schonliste=['Lexi']
 # Zu verteilende Aufgaben:
-aufgaben=['Suchstrategie',
-        'Conflict of Interest',
-        'Studienanalyse',
+aufgaben=['Kriterienliste Interventionsstudie',
+        'Messinstrument',
+        'Kontrolle',
+        'Zielsetzung',
         'Stichprobe',
-        'Interventionen und Kontrolle',
-        'Zielkriterien und Messinstrumente',
-        'Studienablauf',
-        'Datenanalyse',
-        'Ergebnisse']
+        'Intervention',
+        'Kontrolle',
+        'Datenanalyse']
 
 # Randomisierte Zuweisung der Aufgaben:
 aufgaben_verteilung={}

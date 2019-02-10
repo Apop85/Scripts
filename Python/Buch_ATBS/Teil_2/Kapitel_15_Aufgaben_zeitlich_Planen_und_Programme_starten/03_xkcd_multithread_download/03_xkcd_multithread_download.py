@@ -31,8 +31,9 @@ def download_comic(comic_url):
 
 # Sammle die Links zu den Comics und den weiterführenden Seiten
 link_counter=0
+threads=[]
 def scrape_comic_links(url_name):
-    global link_counter
+    global link_counter, threads
     while link_counter != int(comic_target_amount):
         url_content=requests.get(url_name)
         try:
@@ -46,7 +47,9 @@ def scrape_comic_links(url_name):
             url_name=source_url+next_url
             link_counter+=1
             # Starte Downloadthread
-            threading.Thread(target=download_comic, args=[comic_url]).start()
+            thread_object=threading.Thread(name='Download_Comic', target=download_comic, args=[comic_url])
+            thread_object.start()
+            threads.append(thread_object)
         except:
             print('URL nicht gefunden.')
             return
@@ -59,3 +62,7 @@ while True:
     comic_target_amount=input()
     if comic_target_amount.isdecimal():
         scrape_comic_links(source_url)
+        for thread in threads:
+            thread.join()
+        print('Downloads abgeschlossen')
+        break

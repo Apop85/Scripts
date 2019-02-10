@@ -15,7 +15,11 @@ aufgaben=['Kriterienliste Interventionsstudie',
         'Stichprobe',
         'Intervention',
         'Kontrolle',
-        'Datenanalyse']
+        'Datenanalyse',
+        'Conflict of Interest',
+        'Studienablauf bei Klinische Studien',
+        'Ergebnisse',
+        'Schlussfolgerungen']
 
 # Randomisierte Zuweisung der Aufgaben:
 aufgaben_verteilung={}
@@ -26,7 +30,7 @@ for aufgabe in aufgaben:
     zuweisung=True
     while zuweisung:
         random=rng(0, len(teilnehmer)-1)
-        if len(aufgaben_verteilung[teilnehmer[random]]) < round(len(aufgaben)/len(teilnehmer)):
+        if len(aufgaben_verteilung[teilnehmer[random]]) < round(len(aufgaben)/len(teilnehmer)+1):
             if teilnehmer[random] in schonliste and len(aufgaben_verteilung[teilnehmer[random]]) == round(len(aufgaben)/len(teilnehmer)/2):
                 continue
             aufgaben_verteilung[teilnehmer[random]]+=[aufgabe]

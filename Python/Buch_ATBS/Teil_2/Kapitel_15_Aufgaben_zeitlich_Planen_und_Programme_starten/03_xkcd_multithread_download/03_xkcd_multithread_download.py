@@ -8,6 +8,7 @@ os.chdir(os.path.dirname(__file__))
 target_dir='.\\comics'
 source_url='https://xkcd.com'
 
+# Prüfe ob Seite erreichbar
 url_content=requests.get(source_url)
 try:
     url_content.raise_for_status()
@@ -15,6 +16,7 @@ except:
     print('URL xkcd.com kann nicht aufgerufen werden. Script wird beendet.')
     exit()
 
+# Downloade die Comics als Thread
 def download_comic(comic_url):
     file_name=comic_url.split('/')[-1]
     new_file=open(target_dir+'\\'+file_name, 'wb')
@@ -27,6 +29,7 @@ def download_comic(comic_url):
     except:
         print('Bild-URL %s ist fehlerhaft') % (comic_url)
 
+# Sammle die Links zu den Comics und den weiterführenden Seiten
 link_counter=0
 def scrape_comic_links(url_name):
     global link_counter
@@ -42,6 +45,7 @@ def scrape_comic_links(url_name):
             comic_url='https://'+comic_url.lstrip('/')
             url_name=source_url+next_url
             link_counter+=1
+            # Starte Downloadthread
             threading.Thread(target=download_comic, args=[comic_url]).start()
         except:
             print('URL nicht gefunden.')

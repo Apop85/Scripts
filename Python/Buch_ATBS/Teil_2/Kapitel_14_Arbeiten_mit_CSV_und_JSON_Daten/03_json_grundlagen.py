@@ -1,7 +1,6 @@
 # 03_json_grundlagen.py
 
-import os, re, json
-os.chdir(os.path.dirname(__file__))
+import re, json
 
 max_text_length=70
 max_text_delta=24

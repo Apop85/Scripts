@@ -34,8 +34,8 @@ for aufgabe in aufgaben:
             zuweisung=False
 
 # Ausgabe der Aufgaben:
-for i in range(len(aufgaben_verteilung)):
-    print(teilnehmer[i]+':')
-    for aufgabe in aufgaben_verteilung[teilnehmer[i]]:
-        print(' ╚══ '+aufgabe)
+for name in aufgaben_verteilung:
+    print(name+':')
+    for aufgabe in aufgaben_verteilung[name]:
+        print('  ╚══ '+aufgabe)
 

@@ -46,9 +46,10 @@ def scrape_comic_links(url_name):
             comic_url='https://'+comic_url.lstrip('/')
             url_name=source_url+next_url
             link_counter+=1
-            # Starte Downloadthread
+            # Starte Download-Thread
             thread_object=threading.Thread(name='Download_Comic', target=download_comic, args=[comic_url])
             thread_object.start()
+            # Füge diesen Thread einer Liste hinzu um später zu prüfen ob alles Abgearbeitet wurde.
             threads.append(thread_object)
         except:
             print('URL nicht gefunden.')
@@ -62,6 +63,7 @@ while True:
     comic_target_amount=input()
     if comic_target_amount.isdecimal():
         scrape_comic_links(source_url)
+        # Warte bis alle Prozesse abgeschlossen sind.
         for thread in threads:
             thread.join()
         print('Downloads abgeschlossen')

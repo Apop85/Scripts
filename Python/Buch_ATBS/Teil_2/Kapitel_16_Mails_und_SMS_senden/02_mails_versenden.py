@@ -18,10 +18,8 @@ password=input()
 try:
     smtp_object=smtplib.SMTP(smtp_server, int(smtp_port))
     TLS=True
-    print('TLS=True')
 except:
     smtp_object=smtplib.SMTP_SSL(smtp_server, int(smtp_port))
-    print('TLS=False')
     TLS=False
 
 # Begrüssung bei Server

@@ -8,3 +8,5 @@ pip3 install selenium
 pip3 install openpylx
 pip3 install PyPDF2
 pip3 install python-docx
+pip3 install imapclient
+pip3 install pyzmail36

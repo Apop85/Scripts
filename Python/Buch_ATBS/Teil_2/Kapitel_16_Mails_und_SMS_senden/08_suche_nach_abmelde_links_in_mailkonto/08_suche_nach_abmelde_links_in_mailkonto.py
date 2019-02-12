@@ -26,6 +26,7 @@ def check_for_subfolder():
         imap_object.select_folder(folder, readonly=True)
         uids=imap_object.search('ALL')
         check_mails(uids)
+    imap_object.logout()
                 
 def check_mails(uids):
     # Durchsuche alle Mails des aktuellen Unterordners
@@ -63,4 +64,3 @@ def get_link(results):
                         already_found_links+=[entry['href']]
 
 check_for_subfolder()
-

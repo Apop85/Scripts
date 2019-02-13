@@ -19,15 +19,18 @@ def file_generator():
         if file_name.endswith('png'):
             os.remove(target_dir+'\\'+file_name)
     for i in range(50):
+        # Erstelle 50 zufällig gefärbte Bilder mit der Grösse 500px x 500px
         new_image=Image.new('RGBA', (500,500), (rng(0,255), rng(0,255), rng(0,255)))
         new_image.save(target_dir+'\\picture'+str(i)+'.png')
 
 def get_pic_names():
+    # Suche alle png- und jpg- Files
     for file_name in os.listdir(target_dir):
         if file_name.lower().endswith('png') or file_name.lower().endswith('.jpg'):
             place_logo(file_name)
 
 def place_logo(file_name):
+    # Platziere Logo auf vorhandenen Files
     image_object=Image.open(target_dir+'\\'+file_name)
     dimensions=image_object.size
     position=(dimensions[0]-logo_dimensions[0],0)

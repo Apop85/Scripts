@@ -46,4 +46,5 @@ def send_confirmation(commands):
     telegram_message='Folgende Befehle wurden empfangen: \n'+'\n'.join(commands)
     telegram_api='https://api.telegram.org/bot'+telegram_bot_token+'/sendMessage?chat_id='+telegram_chat_id+'&text='+telegram_message
     requests.get(telegram_api)
+
 get_mail()

@@ -11,3 +11,4 @@ pip3 install python-docx
 pip3 install imapclient
 pip3 install pyzmail36
 pip3 install pillow
+pip3 install pyautogui

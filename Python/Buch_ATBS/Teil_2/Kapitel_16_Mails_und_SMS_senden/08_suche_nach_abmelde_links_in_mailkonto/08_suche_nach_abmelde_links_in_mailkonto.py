@@ -34,11 +34,14 @@ def check_mails(uids):
         mail_content=imap_object.fetch(uid, ['BODY[]'])
         raw_mail=pyzmail.PyzMessage.factory(mail_content[uid][b'BODY[]'])
         # Prüfe ob HTML oder Text-Mail und decodiere Inhalt
-        if raw_mail.html_part != None and raw_mail.html_part.charset != None:
-            mail_decoded=raw_mail.html_part.get_payload().decode(raw_mail.html_part.charset)
-        elif raw_mail.text_part != None and raw_mail.text_part.charset != None:
-            mail_decoded=raw_mail.text_part.get_payload().decode(raw_mail.text_part.charset)
-        else:
+        try:
+            if raw_mail.html_part != None and raw_mail.html_part.charset != None:
+                mail_decoded=raw_mail.html_part.get_payload().decode(raw_mail.html_part.charset)
+            elif raw_mail.text_part != None and raw_mail.text_part.charset != None:
+                mail_decoded=raw_mail.text_part.get_payload().decode(raw_mail.text_part.charset)
+            else:
+                continue
+        except:
             continue
         # Suche nach abmelden oder unsubscribe
         if 'abmelden' in mail_decoded:

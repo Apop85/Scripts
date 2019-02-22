@@ -6,7 +6,7 @@
 # Created Date: Friday 22.02.2019, 20:25
 # Author: Apop85
 # -----
-# Last Modified: Friday 22.02.2019, 21:11
+# Last Modified: Friday 22.02.2019, 22:06
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -17,14 +17,14 @@
 import re
 
 max_text_length=70
-max_text_delta=24
+max_text_delta=14
 
 def output(title, string):
     print('╔'+''.center(max_text_length+8, '═')+'╗')
     print('║ '+title.center(max_text_length+7).upper()+'║')
     print('╠'+''.center(max_text_length+8, '═')+'╣')
     string=string+' '*max_text_length
-    search_pattern=re.compile(r'\w+.{'+str(max_text_length-max_text_delta-7)+r','+str(max_text_length-7)+r'}[ |.|,|\n|>|\W]', re.DOTALL)
+    search_pattern=re.compile(r'\w+.{'+str(max_text_length-max_text_delta-7)+r','+str(max_text_length-9)+r'}[ |.|,|\n|>|\W|\)|-]', re.DOTALL)
     results=search_pattern.findall(string)
     for line in results:
         print('║ '+line.strip()+'║'.rjust(max_text_length+8-len(line.strip())))
@@ -43,7 +43,10 @@ output('Fliesskommazahlen','Fliesskommazahlen sind Zahlen mit Kommastellen also 
 output('Komplexe Zahlen','Komplexe Zahlen bestehen einem realen Part (Ganzzahl oder Fliesskommazahl) und einem immaginären Part (j oder J)')
 
 output('Kollektionen','Kollektionen werden in drei Unterkategorien unterteilt. Sequenzen, Mengen und Abbildungen.')
+
 output('Sequenzen','Sequenzen werden wiederum in veränderbar und unveränderbar unterteilt. Zu den Unveränderbaren gehören: String, Bytestring und Tuple. Zu den Veränderbaren gehören: Listen und Bytearrays.')
+output('Eigenschaften von Sequenzen','Was jedoch alle Sequenzen gemeinsam haben ist dass sie einen Index für die enthaltenen Werte besitzt. Wobei das erste Listenelement immer dem Index 0 entspricht. Somit ist das Letzte Item mit n-1 aufrufbar.')
+
 output('Mengen','Als Mengen bezeichnet man eine untergeordnete Kollektion von Objekten, wobei jedes Objekt nur einmal vorkommen darf. Dazu gehören set und frozenset')
 output('Abbildungen','Die einzige Datentyp von Python der als Abbildung bezeichnet wird ist das Dictionary.')
 

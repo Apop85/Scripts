@@ -1,5 +1,18 @@
-# 00_Kapitel_01_bis_xx_Repetitionsfragen.py
-# Repetitionsfragen Kapitel 1 bis 
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+###
+# File: 00_Kapitel_01_bis_xx_Repetitionsfragen.py
+# Project: Buch_Python3_Das_umfassende_Praxisbuch
+# Created Date: Thursday 21.02.2019, 20:52
+# Author: Apop85
+# -----
+# Last Modified: Friday 22.02.2019, 11:58
+# -----
+# Copyright (c) 2019 Apop85
+# This software is published under the MIT license.
+# Check http://www.opensource.org/licenses/MIT for further informations
+# -----
+###
 
 import re
 

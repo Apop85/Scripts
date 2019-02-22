@@ -6,7 +6,7 @@
 # Created Date: Friday 22.02.2019, 19:59
 # Author: Apop85
 # -----
-# Last Modified: Friday 22.02.2019, 20:08
+# Last Modified: Friday 22.02.2019, 20:10
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -16,12 +16,12 @@
 # them and divide them by the total amount of participants
 ###
 print('-----------------------------------')
-total_travel_cost=int(input('Kosten für den Reisebus: '))
-total_hotel_cost=int(input('Kosten für das Hotel: '))
-total_event_cost=int(input('Kosten für touristische Ausflüge: '))
+total_travel_cost=float(input('Kosten für den Reisebus: '))
+total_hotel_cost=float(input('Kosten für das Hotel: '))
+total_event_cost=float(input('Kosten für touristische Ausflüge: '))
 total_participants=int(input('Totale Anzahl Teilnehmer: '))
 print('-----------------------------------')
 total_cost=total_event_cost+total_hotel_cost+total_travel_cost
-print('Die Gesammtkosten betragen: '+str(total_cost)+' CHF')
+print('Die Gesammtkosten betragen: '+str(total_cost)+' CHF.')
 print('Pro Person müssen '+str(round(total_cost/total_participants,2))+' CHF entrichtet werden.')
 

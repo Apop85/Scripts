@@ -2,11 +2,11 @@
 # -*- coding:utf-8 -*-
 ###
 # File: 03_kapitel_04_repetitionsaufgabe_check_isbn.py
-# Project: Kapitel_4_Standarddatentypen
+# Project: Kapitel_04_Standarddatentypen
 # Created Date: Saturday 23.02.2019, 12:45
 # Author: Apop85
 # -----
-# Last Modified: Saturday 23.02.2019, 13:09
+# Last Modified: Saturday 23.02.2019, 14:51
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.

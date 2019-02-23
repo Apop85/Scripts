@@ -2,11 +2,11 @@
 # -*- coding:utf-8 -*-
 ###
 # File: 01_fibonacci.py
-# Project: Kapitel_5_Kontrollstrukturen
+# Project: Kapitel_05_Kontrollstrukturen
 # Created Date: Saturday 23.02.2019, 14:00
 # Author: Apop85
 # -----
-# Last Modified: Saturday 23.02.2019, 14:08
+# Last Modified: Saturday 23.02.2019, 14:51
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.

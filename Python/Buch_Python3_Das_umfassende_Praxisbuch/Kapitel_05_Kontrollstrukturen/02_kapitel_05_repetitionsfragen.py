@@ -2,11 +2,11 @@
 # -*- coding:utf-8 -*-
 ###
 # File: 02_kapitel_05_repetitionsfragen.py
-# Project: Kapitel_5_Kontrollstrukturen
+# Project: Kapitel_05_Kontrollstrukturen
 # Created Date: Saturday 23.02.2019, 14:48
 # Author: Apop85
 # -----
-# Last Modified: Saturday 23.02.2019, 14:50
+# Last Modified: Saturday 23.02.2019, 14:52
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.

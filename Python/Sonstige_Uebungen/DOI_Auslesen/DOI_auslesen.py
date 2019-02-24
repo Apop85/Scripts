@@ -6,7 +6,7 @@
 # Created Date: Sunday 24.02.2019, 19:05
 # Author: Apop85
 # -----
-# Last Modified: Sunday 24.02.2019, 23:36
+# Last Modified: Sunday 24.02.2019, 23:40
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -114,11 +114,11 @@ def write_it(id_dictionary, file_list):
         file_writer.write(''.center(70, '▼')+'\n')
         for entry in id_dictionary[file_name]:
             if isinstance(entry, tuple):
-                file_writer.write(str(counter)+'. Title: '+entry[0][0]+'\n')
-                file_writer.write(str(counter)+'. Authors: '+' '.join(entry[1][0].split('[Author]'))+'\n')
+                file_writer.write(str(counter)+'.\tTitle: '+entry[0][0]+'\n')
+                file_writer.write(str(counter)+'.\tAuthors: '+' '.join(entry[1][0].split('[Author]'))+'\n')
                 counter+=1
             else:
-                file_writer.write(str(counter)+'.  '+entry+'\n')
+                file_writer.write(str(counter)+'.\t'+entry+'\n')
                 counter+=1
         file_writer.write(''.center(70, '▲')+'\n')
         file_writer.write('End of file: '+file_name+'\tAmount: '+str(counter)+'\n')

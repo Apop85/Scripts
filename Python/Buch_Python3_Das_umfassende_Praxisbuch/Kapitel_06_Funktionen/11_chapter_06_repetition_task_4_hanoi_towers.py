@@ -6,7 +6,7 @@
 # Created Date: Sunday 24.02.2019, 15:09
 # Author: Apop85
 # -----
-# Last Modified: Sunday 24.02.2019, 16:24
+# Last Modified: Sunday 24.02.2019, 16:29
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -31,7 +31,7 @@ def move_tower(pieces_amount=3, start_tower=1, target_tower=2, temp_tower=3):
     global towers
     create_tower(pieces_amount, start_tower)
     if pieces_amount == 1:
-        print('Move from '+str(start_tower)+' to '+str(target_tower))
+        print('Move from position '+str(start_tower)+' to position '+str(target_tower))
         towers[target_tower].insert(0, towers[start_tower][0])
         del towers[start_tower][0]
         print(str(towers[1])+'\t'+str(towers[2])+'\t'+str(towers[3]))

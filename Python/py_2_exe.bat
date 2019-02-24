@@ -14,7 +14,7 @@ REM  * Description:
 REM  */
 
 pip3 install pyinstaller
-pyinstaller myfile.py
+pyinstaller --paths C:\Windows\System32\downlevel --console --onefile 08_suche_nach_abmelde_links_in_mailkonto.py
 
 
 

@@ -6,7 +6,7 @@
 # Created Date: Saturday 23.02.2019, 22:20
 # Author: Apop85
 # -----
-# Last Modified: Saturday 23.02.2019, 22:26
+# Last Modified: Sunday 24.02.2019, 10:56
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -22,7 +22,9 @@ while True:
         user_age=int(user_age)
         break
 
-if user_age < 18:
+if 14 < user_age < 18:
     print('You\'re a youth.')
-else:
+elif 18 <= user_age:
     print('You\'re mature.')
+else:
+    print('You\'re a child.')

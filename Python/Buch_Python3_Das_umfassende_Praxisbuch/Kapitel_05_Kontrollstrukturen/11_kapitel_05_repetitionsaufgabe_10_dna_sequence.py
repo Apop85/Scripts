@@ -6,7 +6,7 @@
 # Created Date: Sunday 24.02.2019, 10:07
 # Author: Apop85
 # -----
-# Last Modified: Sunday 24.02.2019, 10:11
+# Last Modified: Sunday 24.02.2019, 10:12
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -23,3 +23,4 @@ for base1 in base_list:
         for base3 in base_list:
             for base4 in base_list:
                 print(base1,base2,base3,base4)
+                

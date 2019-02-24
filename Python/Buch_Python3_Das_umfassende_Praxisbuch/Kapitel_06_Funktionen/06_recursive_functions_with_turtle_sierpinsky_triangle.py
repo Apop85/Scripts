@@ -6,7 +6,7 @@
 # Created Date: Sunday 24.02.2019, 13:09
 # Author: Apop85
 # -----
-# Last Modified: Sunday 24.02.2019, 13:28
+# Last Modified: Sunday 24.02.2019, 13:31
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -43,4 +43,4 @@ try:
     hideturtle()
     input('Enter to end script.')
 except Exception as error_message:
-    print('Script aborted: '+str(error_message))
+    print('Script aborted! '+str(error_message))

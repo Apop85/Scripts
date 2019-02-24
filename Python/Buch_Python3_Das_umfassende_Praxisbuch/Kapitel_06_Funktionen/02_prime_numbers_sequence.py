@@ -6,7 +6,7 @@
 # Created Date: Sunday 24.02.2019, 11:29
 # Author: Apop85
 # -----
-# Last Modified: Sunday 24.02.2019, 11:47
+# Last Modified: Sunday 24.02.2019, 11:58
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -24,8 +24,7 @@ def user_input():
         if (min_value.isdecimal() and max_value.isdecimal()) and (0 < int(min_value) < int(max_value)):
             return (int(min_value),int(max_value))
 
-def get_prime_numbers(sequence):
-    prime_list=[]
+def get_prime_numbers(sequence, prime_list=[]):
     for i in range(sequence[0],sequence[1]):
         if i < 10:
             target_range=i
@@ -38,12 +37,13 @@ def get_prime_numbers(sequence):
                 prime_list+=[i]
     return prime_list
             
-def output_results(result_list):
-    print('Prime numbers between '+str(min(result_list))+' and '+str(max(result_list)))
+def output_results(result_list,sequence):
+    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    print('Prime numbers between '+str(sequence[0])+' and '+str(sequence[1]))
+    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     for prime_number in result_list:
         print(prime_number, end=' ')
 
 sequence=user_input()
-print(sequence)
 results=get_prime_numbers(sequence)
-output_results(results)
+output_results(results,sequence)

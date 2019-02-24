@@ -6,7 +6,7 @@
 # Created Date: Sunday 24.02.2019, 13:33
 # Author: Apop85
 # -----
-# Last Modified: Sunday 24.02.2019, 13:59
+# Last Modified: Sunday 24.02.2019, 14:15
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -15,8 +15,6 @@
 # Description: Example chapter 6 page 182. This script will calculate the factorial of a
 # user set integer.
 ###
-
-from time import time
 
 def source_value():
     while True:

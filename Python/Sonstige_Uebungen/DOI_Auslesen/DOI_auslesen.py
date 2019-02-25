@@ -6,7 +6,7 @@
 # Created Date: Sunday 24.02.2019, 19:05
 # Author: Apop85
 # -----
-# Last Modified: Monday 25.02.2019, 01:11
+# Last Modified: Monday 25.02.2019, 11:06
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -17,10 +17,14 @@
 
 import os, re
 
-# os.chdir(os.path.dirname(__file__))
+os.chdir(os.path.dirname(__file__))
 
 target_dir=r'.\read_me'
-target_file=r'.\result.txt'
+target_file=r'.\results.txt'
+doi_file=r'.\doi_results.txt'
+nct_file=r'.\nct_results.txt'
+issn_file=r'.\issn_results.txt'
+title_file=r'.\title_results.txt'
 
 file_list=os.listdir(target_dir)
 
@@ -116,8 +120,34 @@ def write_it(id_dictionary, file_list):
         file_writer.write('All files have been searched.\n')
     file_writer.close()
 
+def sort_it(id_dictionary):
+    doi_writer=open(doi_file, 'w', encoding='UTF-8')
+    issn_writer=open(issn_file, 'w', encoding='UTF-8')
+    nct_writer=open(nct_file, 'w', encoding='UTF-8')
+    title_writer=open(title_file, 'w', encoding='UTF-8')
+    counter=0
+    for file_name in id_dictionary:
+        for entry in id_dictionary[file_name]:
+            if '/' in entry:
+                doi_writer.write(entry+'\n')
+            elif isinstance(entry, tuple):
+                title_writer.write('Title: '+entry[0][0]+'\n')
+                title_writer.write('Author: '+' '.join(entry[1][0].split('[Author]'))+'\n\n')
+            elif 'ISSN' in entry:
+                issn_writer.write(entry+'\n')
+            elif 'NCT' in entry:
+                nct_writer.write(entry+'\n')
+            else:
+                print(entry)
+            counter+=1
+    doi_writer.close()
+    issn_writer.close()
+    title_writer.close()
+    nct_writer.close()
+
 total_amount, id_dictionary=search_all(file_list)
 write_it(id_dictionary, file_list)
+sort_it(id_dictionary)
 
 file_writer=open(target_file, 'a', encoding='UTF-8')
 file_writer.write('Found '+str(total_amount)+' entrys in '+str(total_studies)+' studies.')

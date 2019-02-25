@@ -6,7 +6,7 @@
 # Created Date: Sunday 24.02.2019, 19:05
 # Author: Apop85
 # -----
-# Last Modified: Sunday 24.02.2019, 23:40
+# Last Modified: Monday 25.02.2019, 01:11
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -17,17 +17,21 @@
 
 import os, re
 
-os.chdir(os.path.dirname(__file__))
+# os.chdir(os.path.dirname(__file__))
 
-target_dir='.\\read_me'
-target_file='.\\doi_and_nct.txt'
+target_dir=r'.\read_me'
+target_file=r'.\result.txt'
 
 file_list=os.listdir(target_dir)
 
+file_length={}
 def search_all(file_list):
+    global file_length
     id_dictionary={}
     total_amount=0 
     for file_name in file_list:
+        if file_name == 'put_files_here.txt':
+            continue
         id_dictionary.setdefault(file_name, [])
         file_reader=open(target_dir+'\\'+file_name, 'r', encoding='UTF-8')
         try:
@@ -38,6 +42,7 @@ def search_all(file_list):
             file_lines=file_reader.readlines()
         file_reader.close()
         records=find_records(file_lines)
+        file_length.setdefault(file_name, len(records))
         search_pattern_doi=re.compile(r'DO  - (.*)')
         search_pattern_nct=re.compile(r'(NCT\d{8})')
         search_pattern_issn=re.compile(r'SN  - (\d+-\d+)')
@@ -71,7 +76,9 @@ def search_all(file_list):
                         total_amount+=1
     return total_amount, id_dictionary
 
+total_studies=0
 def find_records(file_lines):
+    global total_studies
     record=''
     counter=1
     records=[]
@@ -83,29 +90,11 @@ def find_records(file_lines):
                 records+=[(record,i)]
                 record=i
             counter+=1
+    total_studies+=counter-1
     return records
 
-def print_it(id_dictionary, file_list):
-    for file_name in id_dictionary:
-        counter=1
-        print(''.center(70, '█'))
-        print('Start of file: '+file_name)
-        print(''.center(70, '▼'))
-        for entry in id_dictionary[file_name]:
-            if isinstance(entry, tuple):
-                print(str(counter)+'.  Title: '+entry[0][0])
-                print(str(counter)+'.  Authors: '+' '.join(entry[1][0].split('[Author]')))
-                counter+=1
-            else:
-                print(str(counter)+'.  '+entry)
-                counter+=1
-        print(''.center(70, '▲'))
-        print('End of file: '+file_name+'\tAmount: '+str(counter))
-        print(''.center(70, '█'))
-    if len(file_list) == len(list(id_dictionary.keys())):
-        print('Alle Files durchsucht.')
-
 def write_it(id_dictionary, file_list):
+    global file_length
     file_writer=open(target_file, 'w', encoding='UTF-8')
     for file_name in id_dictionary:
         counter=1
@@ -121,16 +110,23 @@ def write_it(id_dictionary, file_list):
                 file_writer.write(str(counter)+'.\t'+entry+'\n')
                 counter+=1
         file_writer.write(''.center(70, '▲')+'\n')
-        file_writer.write('End of file: '+file_name+'\tAmount: '+str(counter)+'\n')
+        file_writer.write('End of file: '+file_name+'\tAmount: '+str(counter-1)+' of '+str(file_length[file_name])+'\n')
         file_writer.write(''.center(70, '█')+'\n')
     if len(file_list) == len(list(id_dictionary.keys())):
-        file_writer.write('Alle Files durchsucht.\n')
+        file_writer.write('All files have been searched.\n')
     file_writer.close()
 
 total_amount, id_dictionary=search_all(file_list)
-# print_it(id_dictionary, file_list)
 write_it(id_dictionary, file_list)
 
 file_writer=open(target_file, 'a', encoding='UTF-8')
-file_writer.write('Total amount: '+str(total_amount))
+file_writer.write('Found '+str(total_amount)+' entrys in '+str(total_studies)+' studies.')
 file_writer.close()
+
+print('\n\n\n\n\n')
+print('Task done.'.center(70))
+print(('Found '+str(total_amount)+' entrys in '+str(total_studies)+' studies.').center(70))
+print('Results saved under results.txt.'.center(70))
+print('Press enter to quit...'.center(70))
+print('\n\n')
+input()

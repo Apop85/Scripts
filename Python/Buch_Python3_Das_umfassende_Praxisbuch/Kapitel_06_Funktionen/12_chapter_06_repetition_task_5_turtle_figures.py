@@ -6,7 +6,7 @@
 # Created Date: Sunday 24.02.2019, 16:38
 # Author: Apop85
 # -----
-# Last Modified: Sunday 24.02.2019, 17:10
+# Last Modified: Tuesday 26.02.2019, 10:57
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -16,6 +16,7 @@
 ###
 
 from turtle import *
+from time import sleep
 
 def move_to_start():
     up()
@@ -24,29 +25,36 @@ def move_to_start():
     down()
 
 def asym_tree(x):
+    if x < 3:
+        return
     forward(x)
     left(30)
-    if x > 3:
-        asym_tree(x*0.6)
-    right(30)
+    asym_tree(x*0.6)
+    right(90)
+    asym_tree(x*0.4)
+    left(60)
     back(x)
-    right(70)
-    forward(x)
-    if x > 3:
-        asym_tree(x*0.4)
-    back(x)
-    left(70)
-    # back(x)
     return
 
-
+def binary_tree(x):
+    if x < 3:
+        return
+    forward(x)
+    left(90)
+    binary_tree(x/2)
+    right(180)
+    binary_tree(x/2)
+    left(90)
+    back(x)
 
 clear()
 
 move_to_start()
 try:
-    forward(100)
-    left(30)
-    asym_tree(100)
+    asym_tree(200)
+    sleep(5)
+    clear()
+    binary_tree(200)
+    sleep(5)
 except:
     pass

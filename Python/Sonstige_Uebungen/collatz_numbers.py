@@ -6,7 +6,7 @@
 # Created Date: Thursday 28.02.2019, 21:06
 # Author: Apop85
 # -----
-# Last Modified: Thursday 28.02.2019, 21:32
+# Last Modified: Thursday 28.02.2019, 21:54
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -34,11 +34,12 @@ def collatz(n):
             string='Current highscore: '+str(highscore[0])+' with '+str(highscore[1])+' calculations.'
             length=len(string)
             print(string, end='')
+    print('\r'*(length+10), end='')
             
-    print('Highscore: '+str(highscore[0])+' with '+str(highscore[1])+' calculations')
+    print('Highscore: '+str(highscore[0])+' with '+str(highscore[1])+' calculations.'+' '*50)
 
 def input_number():
-    factorial=input('Choose the factor of 10: ')
+    factorial=input('Choose the factor of 10**')
     if factorial.isdecimal():
         return int(factorial)
 

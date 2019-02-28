@@ -6,7 +6,7 @@
 # Created Date: Thursday 28.02.2019, 21:06
 # Author: Apop85
 # -----
-# Last Modified: Thursday 28.02.2019, 21:18
+# Last Modified: Thursday 28.02.2019, 21:32
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -17,7 +17,7 @@
 
 
 def collatz(n):
-    highscore=[0,0]
+    highscore, length=[0,0], 0
     for i in range(10**n,10**(n+1)):
         counter=0
         n=i
@@ -28,9 +28,14 @@ def collatz(n):
                 n=n*3+1
             counter+=1
         if counter > highscore[1]:
+            if length > 0:
+                print('\r'*(length+10), end='')
             highscore=[i,counter]
-        # print(str(i)+': '+str(counter))
-    print('Highscore: '+str(highscore[0])+' mit '+str(highscore[1])+' Berechnungen')
+            string='Current highscore: '+str(highscore[0])+' with '+str(highscore[1])+' calculations.'
+            length=len(string)
+            print(string, end='')
+            
+    print('Highscore: '+str(highscore[0])+' with '+str(highscore[1])+' calculations')
 
 def input_number():
     factorial=input('Choose the factor of 10: ')

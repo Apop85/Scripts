@@ -6,7 +6,7 @@
 # Created Date: Thursday 28.02.2019, 21:06
 # Author: Apop85
 # -----
-# Last Modified: Thursday 28.02.2019, 21:54
+# Last Modified: Thursday 28.02.2019, 21:58
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -39,9 +39,10 @@ def collatz(n):
     print('Highscore: '+str(highscore[0])+' with '+str(highscore[1])+' calculations.'+' '*50)
 
 def input_number():
-    factorial=input('Choose the factor of 10**')
-    if factorial.isdecimal():
-        return int(factorial)
+    while True:
+        factorial=input('Choose the factor of 10**')
+        if factorial.isdecimal():
+            return int(factorial)
 
 while True:
     n=input_number()

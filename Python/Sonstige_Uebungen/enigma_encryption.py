@@ -6,7 +6,7 @@
 # Created Date: Thursday 28.02.2019, 23:33
 # Author: Apop85
 # -----
-# Last Modified: Friday 01.03.2019, 00:57
+# Last Modified: Friday 01.03.2019, 01:03
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -17,7 +17,7 @@
 
 def alphabet_reset():
     global alphabet
-    alphabet='abcdefghijklmnopqrstuvwxyzäöü ?!,.0123456789'
+    alphabet='abcdefghijklmnopqrstuvwxyzäöü ?!,.0123456789"\'/@éàè€%'
 
 def counter(a,b,c):
     global alphabet
@@ -29,7 +29,7 @@ def counter(a,b,c):
                 alphabet=alphabet[k:]+alphabet[:k]
                 return a%len(alphabet),b%len(alphabet),c%len(alphabet),int(str(i)+str(j)+str(k))
 
-def enigma(string,a=1,b=1,c=1):
+def encrypt(string,a=1,b=1,c=1):
     alphabet_reset()
     encrypted=''
     for i in range(len(string)):
@@ -71,7 +71,7 @@ while True:
     string,mode,a,b,c=input_message()
     print(''.center(70,'█'))
     if mode == 0:
-        message=enigma(string,a,b,c)
+        message=encrypt(string,a,b,c)
         print_it(message,[str(a),str(b),str(c)],'Encrypt')
     elif mode == 1:
         message=decrypt(string,a,b,c)

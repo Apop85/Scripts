@@ -6,7 +6,7 @@
 # Created Date: Thursday 28.02.2019, 23:33
 # Author: Apop85
 # -----
-# Last Modified: Friday 01.03.2019, 01:05
+# Last Modified: Friday 01.03.2019, 01:41
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -17,16 +17,16 @@
 
 def alphabet_reset():
     global alphabet
-    alphabet='abcdefghijklmnopqrstuvwxyzäöü ?!,.0123456789"\'/@éàè€%'
+    alphabet='abcdefghijklmnopqrstuvwxyzäöü ?!,.0123456789"\'/\\@éàèç€%_-=¢$|¬§°#´^<>+*)(;:'
 
 def counter(a,b,c):
     global alphabet
     for i in range(a,a+len(alphabet)):
-        alphabet=alphabet[i:]+alphabet[:i]
+        alphabet=alphabet[(i+a)%len(alphabet):]+alphabet[:(i+a)%len(alphabet)]
         for j in range(b,b+len(alphabet)):
-            alphabet=alphabet[j:]+alphabet[:j]
+            alphabet=alphabet[(j+b)%len(alphabet):]+alphabet[:(j+b)%len(alphabet)]
             for k in range(c,c+len(alphabet)):
-                alphabet=alphabet[k:]+alphabet[:k]
+                alphabet=alphabet[(k+c)%len(alphabet):]+alphabet[:(k+c)%len(alphabet)]
                 return a%len(alphabet),b%len(alphabet),c%len(alphabet),int(str(i)+str(j)+str(k))
 
 def encrypt(string,a=1,b=1,c=1):
@@ -65,7 +65,7 @@ def input_message():
     return string,mode,a,b,c
 
 def print_it(string, value, mode):
-    print(mode[0]+'ed message: '+string+'\n'+mode[1]+'ion value: '+','.join(value))
+    print(mode[0]+'ed message: "'+string+'"\n'+mode[1]+'ion value: '+','.join(value))
 
 while True:
     string,mode,a,b,c=input_message()

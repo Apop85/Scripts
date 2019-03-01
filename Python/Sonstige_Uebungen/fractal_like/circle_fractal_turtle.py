@@ -6,7 +6,7 @@
 # Created Date: Thursday 28.02.2019, 13:15
 # Author: Apop85
 # -----
-# Last Modified: Thursday 28.02.2019, 13:38
+# Last Modified: Friday 01.03.2019, 11:09
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -14,12 +14,11 @@
 # -----
 # Description: Try to paint a circle fractal with turtle
 ###
-from time import sleep
 from turtle import *
 
 
 def spiral_fractal(x):
-    if x < 0.2:
+    if x < 0.05:
         return
     for i in range(1,181):
         right(2)
@@ -39,6 +38,6 @@ try:
     speed(500)
     move_2_start()
     spiral_fractal(8)
-    sleep(5)
+    input()
 except:
     print("Script aborted")

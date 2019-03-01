@@ -6,7 +6,7 @@
 # Created Date: Thursday 28.02.2019, 20:29
 # Author: Apop85
 # -----
-# Last Modified: Thursday 28.02.2019, 20:44
+# Last Modified: Friday 01.03.2019, 13:00
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -17,7 +17,7 @@
 import turtle
 
 def pent_fractal(x=25):
-    if x < 2:
+    if x < 1:
         return
     for i in range(5):
         turtle.fd(x)

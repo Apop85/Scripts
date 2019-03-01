@@ -6,7 +6,7 @@
 # Created Date: Thursday 28.02.2019, 13:11
 # Author: Apop85
 # -----
-# Last Modified: Thursday 28.02.2019, 13:14
+# Last Modified: Friday 01.03.2019, 13:09
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -14,7 +14,6 @@
 # -----
 # Description: Try to paint a square fractal with turtle
 ###
-from time import sleep
 from turtle import *
 
 def square_fractal(x):
@@ -36,6 +35,6 @@ try:
     speed(5000)
     move_2_start()
     square_fractal(200)
-    pause(20)
+    input()
 except:
     print("Script aborted")

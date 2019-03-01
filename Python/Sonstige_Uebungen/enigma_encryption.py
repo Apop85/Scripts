@@ -6,7 +6,7 @@
 # Created Date: Thursday 28.02.2019, 23:33
 # Author: Apop85
 # -----
-# Last Modified: Friday 01.03.2019, 01:03
+# Last Modified: Friday 01.03.2019, 01:05
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -65,17 +65,17 @@ def input_message():
     return string,mode,a,b,c
 
 def print_it(string, value, mode):
-    print(mode+'ed message: '+string+'\n'+mode+'ion value: '+','.join(value))
+    print(mode[0]+'ed message: '+string+'\n'+mode[1]+'ion value: '+','.join(value))
 
 while True:
     string,mode,a,b,c=input_message()
     print(''.center(70,'█'))
     if mode == 0:
         message=encrypt(string,a,b,c)
-        print_it(message,[str(a),str(b),str(c)],'Encrypt')
+        print_it(message,[str(a),str(b),str(c)],('Encrypt','Decrypt'))
     elif mode == 1:
         message=decrypt(string,a,b,c)
-        print_it(message,[str(a),str(b),str(c)],'Decrypt')
+        print_it(message,[str(a),str(b),str(c)],('Decrypt',"Encrypt"))
     else:
         break
     print(''.center(70,'█'))

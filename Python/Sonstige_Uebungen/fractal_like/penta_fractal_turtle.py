@@ -6,7 +6,7 @@
 # Created Date: Thursday 28.02.2019, 12:07
 # Author: Apop85
 # -----
-# Last Modified: Thursday 28.02.2019, 12:37
+# Last Modified: Friday 01.03.2019, 12:50
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -16,7 +16,6 @@
 ###
 
 from turtle import *
-from time import sleep
 
 def penta_cycle(x):
     if x < 10:
@@ -37,9 +36,9 @@ def move_to_start():
 
 clear()
 try:
-    speed(2000)
+    speed(0)
     move_to_start()
     penta_cycle(500)
-    sleep(10)
+    input()
 except:
     print('Script aborted')

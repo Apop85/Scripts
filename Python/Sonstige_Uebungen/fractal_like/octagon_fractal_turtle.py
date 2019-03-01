@@ -6,7 +6,7 @@
 # Created Date: Thursday 28.02.2019, 12:40
 # Author: Apop85
 # -----
-# Last Modified: Thursday 28.02.2019, 13:08
+# Last Modified: Friday 01.03.2019, 12:34
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -15,10 +15,9 @@
 # Description: Try to paint a octagon fractal with turtle
 ###
 from turtle import *
-from time import sleep
 
 def octa_fract(x):
-    if x < 1:
+    if x < 0.8:
         return
     for i in range(8):
         forward(x)
@@ -37,6 +36,6 @@ try:
     speed(500)
     move_to_start()
     octa_fract(200)
-    sleep(20)
+    input()
 except:
     print("Script aborted")

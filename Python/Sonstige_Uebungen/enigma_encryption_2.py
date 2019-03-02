@@ -6,7 +6,7 @@
 # Created Date: Saturday 02.03.2019, 06:31
 # Author: Apop85
 # -----
-# Last Modified: Saturday 02.03.2019, 15:46
+# Last Modified: Saturday 02.03.2019, 16:24
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -38,17 +38,23 @@ def shuffle(a=5,b=5,c=5,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@é�
                 if (i,j,k) >= (a%len(alphabet),b%len(alphabet),c%len(alphabet)):
                     yield alphabet
 
-def encrypt_message(a,b,c,string):
-    alphabet=shuffle(a,b,c)
+def encrypt_message(a,b,c,string,alphabet):
+    if alphabet == '':
+        alphabet=shuffle(a,b,c)
+    else:
+        alphabet=shuffle(a,b,c,alphabet)
     encrypted=''
     for i in range(len(string)):
         current_iteration=next(alphabet)
-        letter=current_iteration[current_iteration.index(string[i].lower())-i]
+        letter=current_iteration[(current_iteration.index(string[i].lower())-i)%len(current_iteration)]
         encrypted+=letter.upper()
     return encrypted
 
-def decrypt_message(a,b,c,string):
-    alphabet=shuffle(a,b,c)
+def decrypt_message(a,b,c,string,alphabet):
+    if alphabet == '':
+        alphabet=shuffle(a,b,c)
+    else:
+        alphabet=shuffle(a,b,c,alphabet)
     decrypted=''
     for i in range(len(string)):
         current_iteration=next(alphabet)
@@ -71,18 +77,28 @@ def get_information():
             break
         else:
             print('Example: 1,2,3')
-    return message, int(mode), a, b, c
+    while True:
+        print('Enter custom alphabet or press enter to use default:')
+        custom_alpha=input()
+        if custom_alpha != '':
+            for char in message:
+                if char.lower() not in custom_alpha.lower():
+                    print('Invalid alphabet. Adding missing character: "'+char+'"')
+                    custom_alpha+=char.lower()
+        break
+
+    return message, int(mode), a, b, c, custom_alpha
 
 def print_it(message,values,mode):
     print(mode[0]+'ed message: »»'+message+'««\n'+mode[1]+'ion value: '+','.join(values))
 
 while True:
-    message,mode,a,b,c=get_information()
+    message,mode,a,b,c,custom_alpha=get_information()
     print(''.center(70,'█'))
     if mode == 0:
-        encrypted=encrypt_message(a,b,c,message)
+        encrypted=encrypt_message(a,b,c,message,custom_alpha)
         print_it(encrypted,[str(a),str(b),str(c)],('Encrypt','Decrypt'))
     elif mode == 1:
-        decrypted=decrypt_message(a,b,c,message)
+        decrypted=decrypt_message(a,b,c,message,custom_alpha)
         print_it(decrypted,[str(a),str(b),str(c)],('Decrypt','Encrypt'))
     print(''.center(70,'█'))

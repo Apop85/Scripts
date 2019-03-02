@@ -6,7 +6,7 @@
 # Created Date: Saturday 02.03.2019, 06:31
 # Author: Apop85
 # -----
-# Last Modified: Saturday 02.03.2019, 19:15
+# Last Modified: Saturday 02.03.2019, 19:24
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -110,7 +110,7 @@ def get_information():
     while True:
         invalid=False
         print('Set custom character flips seperated by comma \n(Example: AB,9F,+N) or press enter to use none.')
-        exchanges_list=input('Custom exchanges: ')
+        exchanges_list=input('Custom flips: ')
         if exchanges_list != '':
             exchanges_list=exchanges_list.split(',')
             for item in exchanges_list:

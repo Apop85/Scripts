@@ -6,7 +6,7 @@
 # Created Date: Saturday 02.03.2019, 06:01
 # Author: Apop85
 # -----
-# Last Modified: Sunday 03.03.2019, 00:04
+# Last Modified: Sunday 03.03.2019, 00:23
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -46,13 +46,13 @@ def shuffle(a=5,b=5,c=5,alphabet='abcdefghijklmnopqrstuvwxyz'):
             i=0
         p1=alphabet[i]
         del alphabet[i]
-        alphabet.append(p1)
+        alphabet.insert(-1,p1)
         p2=alphabet[j]
         del alphabet[j]
         alphabet.insert(-2,p2)
         p3=alphabet[k]
         del alphabet[k]
-        alphabet.insert(-1,p3)
+        alphabet.append(p3)
         if len(alphabet) != original_len:
             raise Exception('AlgorythmError: Algorythm changes length of alphabet.')
         if (i,j,k) == (a,b,c):

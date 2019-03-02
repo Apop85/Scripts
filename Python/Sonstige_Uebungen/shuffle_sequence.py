@@ -6,7 +6,7 @@
 # Created Date: Saturday 02.03.2019, 06:01
 # Author: Apop85
 # -----
-# Last Modified: Saturday 02.03.2019, 15:33
+# Last Modified: Saturday 02.03.2019, 15:41
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -18,6 +18,8 @@
 def shuffle(a=5,b=5,c=5,alphabet='abcdefghijklmnopqrstuvwxyz'):
     global n_counter, d_counter
     liste=[]
+    if len(alphabet)%2 != 0:
+        alphabet+='æ'
     d_counter,n_counter=0,0
     for i in range(len(alphabet)):
         p1=alphabet[len(alphabet)//2:]

@@ -6,7 +6,7 @@
 # Created Date: Saturday 02.03.2019, 06:31
 # Author: Apop85
 # -----
-# Last Modified: Saturday 02.03.2019, 20:08
+# Last Modified: Saturday 02.03.2019, 22:16
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -14,40 +14,40 @@
 # -----
 # Description: Second attempt to create an encrypted string by enigma algorithm.
 ###
-
+from math import factorial
 
 def shuffle(a=5,b=5,c=5,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@éàèç€%_-=¢$|¬§°~#´^<>+*)(äöü ?!,.;:'):
-    global length_original
-    if length_original == '':
-        length_original=len(alphabet)
-    for i in range(len(alphabet)):
-        if len(alphabet)%2 != 0:
-            alphabet+='█'
-        p1=alphabet[len(alphabet)//2:].strip('█')
-        p2=alphabet[:len(alphabet)//2]
-        alphabet=p1+p2
-        for j in range(len(alphabet)):
-            if len(alphabet)%5 != 0:
-                alphabet=alphabet+'█'*(5-(len(alphabet)%5))
-            p1=alphabet[:len(alphabet)//5]
-            p2=alphabet[len(alphabet)//5:len(alphabet)//5*2]
-            p3=alphabet[len(alphabet)//5*2:len(alphabet)//5*3]
-            p4=alphabet[len(alphabet)//5*3:len(alphabet)//5*4]
-            p5=alphabet[-len(alphabet)//5:].strip('█')
-            alphabet=p1+p5+p2+p4+p3
-            for k in range(len(alphabet)):
-                p1=alphabet[0]
-                p2=alphabet[1]
-                p3=alphabet[2]
-                p4=alphabet[3:]
-                alphabet=p2+p4+p3+p1
-                if len(alphabet) != length_original:
-                    raise Exception('AlphabetError: Algorythm not matching current alphabet length of '+str(length_original)+'!')
-                if (i,j,k) >= (a%len(alphabet),b%len(alphabet),c%len(alphabet)):
-                    while (i,j,k) == (len(alphabet)-1,)*3:
-                        alphabet=next(shuffle(0,0,0,alphabet))
-                        yield alphabet
-                    yield alphabet
+    alpha_factorial=factorial(len(alphabet))
+    a,b,c=a%(len(alphabet)),b%(len(alphabet)),c%(len(alphabet))
+    global original_len
+    i,j,k=0,0,0
+    alphabet=list(alphabet)
+    if original_len == 0:
+        original_len=len(alphabet)
+    for z in range(alpha_factorial):
+        k+=1
+        if k == len(alphabet)-1:
+            k=0
+            j+=1
+        if j == len(alphabet)-1:
+            j=0
+            i+=1
+        if i == len(alphabet)-1:
+            i=0
+            a,b,c=0,0,0
+        p1=alphabet[i]
+        del alphabet[i]
+        alphabet+=p1
+        p2=alphabet[j]
+        del alphabet[j]
+        alphabet+=p2
+        p3=alphabet[k]
+        del alphabet[k]
+        alphabet+=p3
+        if len(alphabet) != original_len:
+            raise Exception('Länge ändert sich')
+        if (i,j,k) >= (a,b,c):
+            yield alphabet
 
 def encrypt_message(a,b,c,string,alphabet,values):
     try:
@@ -152,7 +152,7 @@ def print_it(message,values,mode,alphabet,flips):
 
 while True:
     try:
-        length_original=''
+        original_len=0
         print(''.center(70,'█'))
         message,mode,a,b,c,custom_alpha,change_list=get_information()
         print(''.center(70,'█'))

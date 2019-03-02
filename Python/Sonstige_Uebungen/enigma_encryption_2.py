@@ -6,7 +6,7 @@
 # Created Date: Saturday 02.03.2019, 06:31
 # Author: Apop85
 # -----
-# Last Modified: Saturday 02.03.2019, 23:08
+# Last Modified: Saturday 02.03.2019, 23:11
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -46,7 +46,7 @@ def shuffle(a=5,b=5,c=5,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@é�
         del alphabet[k]
         alphabet+=p3
         if len(alphabet) != original_len:
-            raise Exception('Länge ändert sich')
+            raise Exception('AlgorythmError: Algorythm changes length of alphabet.')
         if (i,j,k) >= (a,b,c):
             yield alphabet
 

@@ -6,7 +6,7 @@
 # Created Date: Saturday 02.03.2019, 06:31
 # Author: Apop85
 # -----
-# Last Modified: Saturday 02.03.2019, 19:24
+# Last Modified: Saturday 02.03.2019, 20:08
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -20,18 +20,20 @@ def shuffle(a=5,b=5,c=5,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@é�
     global length_original
     if length_original == '':
         length_original=len(alphabet)
-    if len(alphabet)%2 != 0:
-        alphabet+='æ'
     for i in range(len(alphabet)):
-        p1=alphabet[len(alphabet)//2:]
+        if len(alphabet)%2 != 0:
+            alphabet+='█'
+        p1=alphabet[len(alphabet)//2:].strip('█')
         p2=alphabet[:len(alphabet)//2]
         alphabet=p1+p2
         for j in range(len(alphabet)):
+            if len(alphabet)%5 != 0:
+                alphabet=alphabet+'█'*(5-(len(alphabet)%5))
             p1=alphabet[:len(alphabet)//5]
             p2=alphabet[len(alphabet)//5:len(alphabet)//5*2]
             p3=alphabet[len(alphabet)//5*2:len(alphabet)//5*3]
             p4=alphabet[len(alphabet)//5*3:len(alphabet)//5*4]
-            p5=alphabet[-len(alphabet)//5:]
+            p5=alphabet[-len(alphabet)//5:].strip('█')
             alphabet=p1+p5+p2+p4+p3
             for k in range(len(alphabet)):
                 p1=alphabet[0]
@@ -48,7 +50,6 @@ def shuffle(a=5,b=5,c=5,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@é�
                     yield alphabet
 
 def encrypt_message(a,b,c,string,alphabet,values):
-    error_message=''
     try:
         if alphabet == '':
             alphabet=shuffle(a,b,c)
@@ -125,19 +126,27 @@ def get_information():
         print('Enter custom alphabet or press enter to use default:')
         custom_alpha=input()
         if custom_alpha != '':
+            found=False
             for char in message:
                 if char.lower() not in custom_alpha.lower():
-                    print('Invalid alphabet. Adding missing character: "'+char+'"')
+                    if not found:
+                        print('Invalid alphabet. Adding missing character:', end=' ')
+                    found=True
+                    print(char.lower()+',', end=' ')
                     custom_alpha+=char.lower()
+            custom_alpha=list(custom_alpha)
+            custom_alpha.sort()
+            custom_alpha=''.join(custom_alpha)
+            print()
         break
     return message.upper(), int(mode), a, b, c, custom_alpha, exchanges_list
 
 def print_it(message,values,mode,alphabet,flips):
-    print(mode[0]+'ed message: »»'+message+'««\n'+mode[1]+'ion value: '+','.join(values))
+    print(mode[0]+'ed message: »»'+message+'««\n'+mode[1]+'ion value: »»'+','.join(values)+'««')
     if custom_alpha == '':
         print('Used default alphabet.')
     else:
-        print('Used custom alphabet:\n'+custom_alpha)
+        print('Used custom alphabet:\n»»'+custom_alpha+'««')
     if flips != '':
         print('Used character flips: '+','.join(flips))
 

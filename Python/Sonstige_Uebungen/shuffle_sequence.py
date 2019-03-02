@@ -6,7 +6,7 @@
 # Created Date: Saturday 02.03.2019, 06:01
 # Author: Apop85
 # -----
-# Last Modified: Saturday 02.03.2019, 23:05
+# Last Modified: Sunday 03.03.2019, 00:04
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -31,7 +31,7 @@ def shuffle(a=5,b=5,c=5,alphabet='abcdefghijklmnopqrstuvwxyz'):
         check_alph=''.join(alphabet)
         if check_alph in liste:
             d_counter+=1
-            string='Duplicates: '+str(d_counter)+' Iteration: '+str(n_counter)+' Fail-Rate:'+str(round(100/n_counter*d_counter,2))+'% Generation:'+str(i)+'-'+str(j)+'-'+str(k)+'   '
+            string='Duplicates: '+str(d_counter)+' Iteration: '+str(n_counter)+' Fail-Rate:'+str(round(100/n_counter*d_counter,7))+'% Generation:'+str(i)+'-'+str(j)+'-'+str(k)+'   '
             print('\r'*len(string)+string, end=' ')
         else:
             liste+=[check_alph]
@@ -46,7 +46,7 @@ def shuffle(a=5,b=5,c=5,alphabet='abcdefghijklmnopqrstuvwxyz'):
             i=0
         p1=alphabet[i]
         del alphabet[i]
-        alphabet.insert(-3,p1)
+        alphabet.append(p1)
         p2=alphabet[j]
         del alphabet[j]
         alphabet.insert(-2,p2)

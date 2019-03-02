@@ -6,13 +6,14 @@
 # Created Date: Saturday 02.03.2019, 06:31
 # Author: Apop85
 # -----
-# Last Modified: Saturday 02.03.2019, 22:16
+# Last Modified: Saturday 02.03.2019, 23:08
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
 # Check http://www.opensource.org/licenses/MIT for further informations
 # -----
 # Description: Second attempt to create an encrypted string by enigma algorithm.
+# Fail rate: 0.000711~%
 ###
 from math import factorial
 

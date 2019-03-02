@@ -6,7 +6,7 @@
 # Created Date: Saturday 02.03.2019, 06:01
 # Author: Apop85
 # -----
-# Last Modified: Saturday 02.03.2019, 15:41
+# Last Modified: Saturday 02.03.2019, 15:49
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -47,12 +47,12 @@ def shuffle(a=5,b=5,c=5,alphabet='abcdefghijklmnopqrstuvwxyz'):
 
 # print(type(shuffle))
 # print(len('abcdefghijklmnopqrstuvwxyzäöü ?!,.0123456789"\'/\\@éàèç€%_-=¢$|¬§°#´^<>+*)(;:'))
-# alphabet=shuffle(34,34,34,alphabet='abcdefghijklmnopqrstuvwxyz0123456789')
-# alphabet=shuffle(44,44,44,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@éàèç€')
-# alphabet=shuffle(54,54,54,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@éàèç€%_-=¢$|¬§°')
-# alphabet=shuffle(64,64,64,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@éàèç€%_-=¢$|¬§°°#´^<>+*)(')
-alphabet=shuffle(74,74,74,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@éàèç€%_-=¢$|¬§°#´^<>+*)(äöü ?!,.;:~')
-# alphabet=shuffle(74,74,74,alphabet='abcdefghijklmnopqrstuvwxyzäöü ?!,.0123456789"\'/\\@éàèç€%_-=¢$|¬§°#´^<>+*)(;:')
+# alphabet=shuffle(35,35,35,alphabet='abcdefghijklmnopqrstuvwxyz0123456789')
+# alphabet=shuffle(45,45,45,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@éàèç€')
+# alphabet=shuffle(55,55,55,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@éàèç€%_-=¢$|¬§°')
+# alphabet=shuffle(65,65,65,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@éàèç€%_-=¢$|¬§°°#´^<>+*)(')
+# alphabet=shuffle(75,75,75,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@éàèç€%_-=¢$|¬§°#´^<>+*)(äöü ?!,.;:~')
+alphabet=shuffle(74,74,74,alphabet='abcdefghijklmnopqrstuvwxyzäöü ?!,.0123456789"\'/\\@éàèç€%_-=¢$|¬§°#´^<>+*)(;:')
 # alphabet=shuffle(24,24,24)
 print(next(alphabet))
 # print(next(alphabet))

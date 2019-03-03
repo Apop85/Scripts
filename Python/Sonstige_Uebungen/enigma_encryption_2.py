@@ -6,14 +6,15 @@
 # Created Date: Saturday 02.03.2019, 06:31
 # Author: Apop85
 # -----
-# Last Modified: Sunday 03.03.2019, 13:38
+# Last Modified: Sunday 03.03.2019, 14:56
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
 # Check http://www.opensource.org/licenses/MIT for further informations
 # -----
 # Description: Second attempt to create an encrypted string by enigma algorithm.
-# Fail rate: 0.0004741~%
+# The algorithm produces n=(50*len(alphabet)**3) different arrangements of the characters 
+# of the given alphabet
 ###
 from math import factorial
 
@@ -41,7 +42,7 @@ def shuffle(a=5,b=5,c=5,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@Ã©Ã
         alphabet.insert((i-1),p1)
         p2=alphabet[j]
         del alphabet[j]
-        alphabet.insert(-1,p2)
+        alphabet.insert(-1+j,p2)
         p3=alphabet[k]
         del alphabet[k]
         alphabet.insert((k-5),p3)

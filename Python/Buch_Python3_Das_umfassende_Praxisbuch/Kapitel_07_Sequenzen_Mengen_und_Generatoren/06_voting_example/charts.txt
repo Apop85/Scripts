@@ -1,0 +1,7 @@
+0,0,CVP
+1,0,SVP
+2,0,SP
+3,0,FDP
+4,0,Gruene
+5,0,BDP
+6,0,EVP

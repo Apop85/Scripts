@@ -6,7 +6,7 @@
 # Created Date: Tuesday 26.02.2019, 11:02
 # Author: Apop85
 # -----
-# Last Modified: Tuesday 26.02.2019, 13:28
+# Last Modified: Sunday 03.03.2019, 20:42
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -69,8 +69,8 @@ output('','')
 output('','')
 
 output('Definition Generatoren','Wärend in Sequenzen und Mengen Daten explizit gespeichert werden, sind Generatoren virtuelle Kollektionen, deren Inhalt erst bei Bedarf erzeugt werden.')
-output('','')
-output('','')
+output('yield','Mit yield <Rückgabewert> kann man einen Generator unterbrechen und den aktuellen Wert ausgeben.')
+output('next()','Mit der Funktion next(generator_item) lässt sich der nächste Wert mit dem Generator generieren und ausgeben.')
 output('','')
 output('','')
 output('','')

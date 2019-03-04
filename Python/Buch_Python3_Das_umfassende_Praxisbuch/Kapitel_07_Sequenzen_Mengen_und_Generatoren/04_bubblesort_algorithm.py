@@ -6,7 +6,7 @@
 # Created Date: Sunday 03.03.2019, 19:49
 # Author: Apop85
 # -----
-# Last Modified: Sunday 03.03.2019, 20:02
+# Last Modified: Monday 04.03.2019, 12:16
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -19,6 +19,7 @@
 def bubblesort(item_list):
     for j in range(len(item_list)-1):
         for i in range(len(item_list)-1):
+            # Check item i and i+1 and compare them. If item i is greater than item i+1 flip their positions.
             a,b=item_list[i], item_list[i+1]
             if a > b:
                 item_list[i+1], item_list[i] = a,b

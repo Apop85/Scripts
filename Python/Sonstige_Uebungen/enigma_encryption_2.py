@@ -6,7 +6,7 @@
 # Created Date: Saturday 02.03.2019, 06:31
 # Author: Apop85
 # -----
-# Last Modified: Sunday 03.03.2019, 14:56
+# Last Modified: Monday 04.03.2019, 12:33
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -37,6 +37,7 @@ def shuffle(a=5,b=5,c=5,alphabet='abcdefghijklmnopqrstuvwxyz0123456789"\'/\\@Ã©Ã
         if i == len(alphabet)-1:
             i=0
             a,b,c=0,0,0
+        # Shuffle algorithm
         p1=alphabet[i]
         del alphabet[i]
         alphabet.insert((i-1),p1)

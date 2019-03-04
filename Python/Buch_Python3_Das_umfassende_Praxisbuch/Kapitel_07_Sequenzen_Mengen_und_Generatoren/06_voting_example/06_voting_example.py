@@ -6,7 +6,7 @@
 # Created Date: Sunday 03.03.2019, 20:34
 # Author: Apop85
 # -----
-# Last Modified: Sunday 03.03.2019, 21:20
+# Last Modified: Monday 04.03.2019, 12:20
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -57,10 +57,12 @@ def do_vote(chart_list):
 
 def print_winner(chart_list):
     most_votes=[0,0]
+    # Find the partie with the highes vote
     for i in range(len(chart_list)):
         if chart_list[i][1] > most_votes[1]:
             most_votes=[i,chart_list[i][1]]
     winner=(chart_list[most_votes[0]][-1],most_votes[1])
+    # Check if there are other parties with the same amount of votes
     for i in range(len(chart_list)):
         if chart_list[i][1] == most_votes[1] and i != most_votes[0]:
             if type(winner[0]) == str:

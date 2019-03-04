@@ -6,7 +6,7 @@
 # Created Date: Sunday 24.02.2019, 15:09
 # Author: Apop85
 # -----
-# Last Modified: Sunday 24.02.2019, 16:29
+# Last Modified: Monday 04.03.2019, 12:27
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -27,9 +27,10 @@ def create_tower(pieces_amount, start_tower):
         print()
         setup=True
 
-def move_tower(pieces_amount=3, start_tower=1, target_tower=2, temp_tower=3):
+def move_tower(pieces_amount=5, start_tower=1, target_tower=2, temp_tower=3):
     global towers
     create_tower(pieces_amount, start_tower)
+    # Repeat pattern to solve any given variation.
     if pieces_amount == 1:
         print('Move from position '+str(start_tower)+' to position '+str(target_tower))
         towers[target_tower].insert(0, towers[start_tower][0])
@@ -43,4 +44,4 @@ def move_tower(pieces_amount=3, start_tower=1, target_tower=2, temp_tower=3):
      
 
 setup=False
-move_tower(3,1,3,2)
+move_tower()

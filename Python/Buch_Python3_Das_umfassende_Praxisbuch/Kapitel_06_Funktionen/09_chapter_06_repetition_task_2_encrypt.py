@@ -6,7 +6,7 @@
 # Created Date: Sunday 24.02.2019, 14:40
 # Author: Apop85
 # -----
-# Last Modified: Sunday 24.02.2019, 14:45
+# Last Modified: Monday 04.03.2019, 12:24
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -22,6 +22,7 @@ def encrypt_message(message, delta=rng(1,5)):
     for letter in message.upper():
         encrypted+=letter
         for i in range(delta):
+            # Add delta amount of random letters behind each letter
             encrypted+=alphabet[rng(0,len(alphabet)-1)].upper()
     return encrypted
 

@@ -6,7 +6,7 @@
 # Created Date: Tuesday 26.02.2019, 11:51
 # Author: Apop85
 # -----
-# Last Modified: Tuesday 26.02.2019, 11:56
+# Last Modified: Monday 04.03.2019, 12:18
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -19,6 +19,7 @@
 num_list=[15,18,20,12,-5,-10]
 
 def sum_of(num_list):
+    # Splits the list into first value + rest and repeats this until there is only 1 item left
     if len(num_list) == 1:
         return num_list[0]
     return num_list[0]+sum_of(num_list[1:])

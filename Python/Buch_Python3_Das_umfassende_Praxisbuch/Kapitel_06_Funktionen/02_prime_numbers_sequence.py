@@ -6,7 +6,7 @@
 # Created Date: Sunday 24.02.2019, 11:29
 # Author: Apop85
 # -----
-# Last Modified: Sunday 24.02.2019, 11:58
+# Last Modified: Monday 04.03.2019, 12:21
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -25,6 +25,7 @@ def user_input():
             return (int(min_value),int(max_value))
 
 def get_prime_numbers(sequence, prime_list=[]):
+    # Get any prime number between given sequence.
     for i in range(sequence[0],sequence[1]):
         if i < 10:
             target_range=i

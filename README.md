@@ -1,5 +1,6 @@
 # Scripts
 ################################### German ###################################
+
 Scripts und kleine Programme für Windows und Linux
 
 Dieses Repository enthält alle meine Übungen und verwendeten Scripte und wurden ohne professionellen Hintergrund geschrieben.
@@ -8,6 +9,7 @@ Sehr wahrscheinlich gibt es einige Programmierfehler oder Fehlansätze. Sofern d
 darf mich jeder gerne auf die entsprechenden Fehler aufmerksam machen. 
 
 ################################### English ###################################
+
 Scripts and small programs for Windows and Linux
 
 This repository contains all my exercises and used scripts and was written without a professional background.

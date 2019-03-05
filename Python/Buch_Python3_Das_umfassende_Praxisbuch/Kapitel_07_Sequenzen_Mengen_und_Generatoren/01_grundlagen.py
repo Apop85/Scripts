@@ -6,7 +6,7 @@
 # Created Date: Tuesday 26.02.2019, 11:02
 # Author: Apop85
 # -----
-# Last Modified: Sunday 03.03.2019, 20:42
+# Last Modified: Tuesday 05.03.2019, 15:39
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -50,30 +50,28 @@ output('Listen: Items suchen','Um herauszufenden an welcher Stelle der Liste das
 output('Listen: Reihenfolge ändern','Um die Reihenfolge einer Liste zu verändern kann man entweder liste.reverse() um die Liste umzudrehen oder liste.sort() um die Liste aufsteigend zu Sortieren verwenden. Man kann bei sort() auch einen Suchschlüssel wie z.b. liste.sort(key=len) übergeben, in diesem Beispiel um den Inhalt der Liste anhand der Länge der Items zu sortieren. Als zusätzliches Argument kann noch reverse=True übergeben werden um die Reihenfolge der Bedingung umzukehren.')
 output('Listen: Kopieren tief/flach','Man kann Listen auch Kopieren wobei liste2=liste1 keine Kopie darstellt, dieser Ausdruck bedeutet dass der name liste2 auf die liste1 verweist, jedoch keine eigene Liste ist. Möchte man eine Liste kopieren in welcher sich Items noch ändern können erstellt man eine flache Kopie der Liste mittels liste2=liste1[:]. Somit wird eine neue Liste mit dem Namen liste2 erstellt mit den Verweisen auf die Inhalte von liste1. Möchte man eine eigentständige Kopie in welcher die Werte von liste1 enthalten sind verwendet man deepcopy() aus dem Modul copy.')
 output('Listen per Ausdruck generieren','Listen können auch per Ausdruck generiert werden. Beispiel: liste=[i**2 for i in range(5)] oder liste=[i**2 for i in range(100) if i%7==0] um die Potenz aller durch Sieben teilbaren Zahlen bis 100 zu erhalten. Um zwei Listen zu vergleichen und die Gemeinsamen Inhalte auszugeben kann man liste=[i for i in liste1 if i in liste2. Um aus zwei Listen Tupel zu generieren mit kann man folgendes verwenden: liste=[(i,j) for i in liste1 for j in liste2]')
-output('','')
-output('','')
-output('','')
-output('','')
-output('','')
-output('','')
+
+
+output('Definition Generatoren','Wärend in Sequenzen und Mengen Daten explizit gespeichert werden, sind Generatoren virtuelle Kollektionen, deren Inhalt erst bei Bedarf erzeugt werden.')
+output('Generatoren-Formel','Um einen einfachen Generator zu verwenden verwendet man Formeln. Beispielsweise um alle quadratzahlen von 1 bis 10 aufzulisten n_square=(i*i for i in range(10))')
+output('Generatoren Auslesen','Generatoren kann man nicht mittels print direkt ausgeben. Die einzelnen Items darin können jedoch mit einem For-Loop ausgelesen werden.')
+output('Generatorfunktionen','Generatorfunktionen sind Funktionen in welchen das Statement yield vorkommt.')
+output('yield','Mit yield <Rückgabewert> kann man einen Generator unterbrechen und den aktuellen Wert ausgeben.')
+output('next()','Mit der Funktion next(generator_item) lässt sich der nächste Wert mit dem Generator generieren und ausgeben.')
+output('Iteratoren','Iteratoren sind spezielle Generatoren die den Zugriff auf Elemente einer Kollektion kontrollieren.')
+output('iter()','Die Funktion iter() nimmt eine Sequenz entgegen und gibt nach und nach das nächste Element der Sequenz aus.')
+output('min() / max()','Wird die Funktion min() oder max() auf einen Generator angewendet so besitzt dieser im nachhinein keine Objekte mehr da alle abgearbeitet wurden.')
+output('Verwendung Generatoren','Generatoren verwenden deutlich weniger Speicher als statische Listen. Oft werden sie auch verwendet um Mengen zu definieren.')
+
 
 output('Definition Mengen','Mengen sind ungeordnete Datenkolletktionen mit einmalig vorkommenden Elementen.')
 output('Mengentypen','Zur Darstellung von endlichen Mengen gibt es in Python die Typen "set" und "frozenset".')
-output('','')
-output('','')
-output('','')
-output('','')
-output('','')
-output('','')
-output('','')
-output('','')
-
-output('Definition Generatoren','Wärend in Sequenzen und Mengen Daten explizit gespeichert werden, sind Generatoren virtuelle Kollektionen, deren Inhalt erst bei Bedarf erzeugt werden.')
-output('yield','Mit yield <Rückgabewert> kann man einen Generator unterbrechen und den aktuellen Wert ausgeben.')
-output('next()','Mit der Funktion next(generator_item) lässt sich der nächste Wert mit dem Generator generieren und ausgeben.')
-output('','')
-output('','')
-output('','')
-output('','')
-output('','')
-output('','')
+output('set()','Objekte vom Typ set() sind wie Listen, die Inhalte sind also veränderbar. Alternativ zu set() kann man die Liste in geschweiften Klammern schreiben. Beispiel: a={1,2,3,4,5}')
+output('frozenset()','Objekte vom Typ frozenset() sind wie Tupel oder Strings, also unveränderbar.')
+output('Besonderheiten von Mengen','Wird eine Liste mit mehreren identischen Einträgen an set() oder frozenset() übergeben so werden die mehrfach vorkommenden Einträge entfernt. Auch dürfen nur unveränderbare Elemente in einer Menge vorkommen, heisst Tupel, Strings, frozenset-Objekte und Zahlen, keine Variabeln.')
+output('menge_1 | menge_2','Mit dem Operator "|" können zwei Mengen vereinigt werden.')
+output('menge_1 & menge_2','Mit dem Operator "&" wird der Durchschnitt der beiden Mengen ausgegeben.')
+output('menge_1 - menge_2','Mit dem Operator "-" wird die Differenz der beiden Mengen ausgegeben.')
+output('menge_1 <= menge_2','Mit dem Operator "<=" kann geprüft werden ob menge_1 eine Teilmenge von menge_2 ist.')
+output('menge_1 >= menge_2','Mit dem Operator ">=" kann geprüfte werden ob menge_2 eine Teilmenge von menge_1 ist.')
+output('Iterierbarkeit von Mengen','Mengen sind ebenfalls iterierbar weswegen sie ebenfalls mittels einem For-Loop ausgelesen werden können.')

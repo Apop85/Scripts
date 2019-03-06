@@ -7,9 +7,9 @@ readonly VER_DIR="$HOME/RMF/slave/update/update.txt"
 
 #FTP-Zugang:
 readonly USERFTP='apop85_raspberry'
-readonly FTP_HOST='apop85.bplaced.net'
-readonly FTP_PW='vw6/23SFD3'
-readonly merk="5536"
+readonly FTP_HOST=''
+readonly FTP_PW=''
+readonly merk=""
 readonly UPDATEFILE="$HOME/RMF/slave/update/remote_slave.sh.gpg"
 readonly UPDATE_URL='http://apop85.bplaced.net/raspiremote/update.txt' 
 updatedir="$HOME/RMF/slave/remote_slave.sh"

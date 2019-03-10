@@ -6,7 +6,7 @@
 # Created Date: Sunday 10.03.2019, 15:14
 # Author: Apop85
 # -----
-# Last Modified: Sunday 10.03.2019, 16:10
+# Last Modified: Sunday 10.03.2019, 18:25
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -34,13 +34,13 @@ def menu():
         if choosen.isdecimal() and 0 < int(choosen) < len(entrys)+1:
             if choosen == '1':
                 new_entry()
-            if choosen == '2':
+            elif choosen == '2':
                 search_name()
-            if choosen == '3':
+            elif choosen == '3':
                 show_all()
-            if choosen == '4':
+            elif choosen == '4':
                 delete()
-            if choosen == '5':
+            elif choosen == '5':
                 return
 
 def new_entry():

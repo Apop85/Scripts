@@ -6,7 +6,7 @@
 # Created Date: Monday 11.03.2019, 14:25
 # Author: Apop85
 # -----
-# Last Modified: Monday 11.03.2019, 15:04
+# Last Modified: Monday 11.03.2019, 15:39
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -63,6 +63,7 @@ print(banknote.betrag, banknote.waehrung)
 
 hotelrechnung=Geld('USD',123.45)
 mietwagen=Geld('EUR',527.30)
+
 summe=hotelrechnung.add(mietwagen)
 # Da die Hotelrechnung in USD definiert wurde ist auch die Ausgabe in USD
 print(summe.betrag, summe.waehrung)

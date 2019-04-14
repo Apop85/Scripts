@@ -6,7 +6,7 @@
 # Created Date: Monday 25.02.2019, 11:12
 # Author: Apop85
 # -----
-# Last Modified: Monday 25.02.2019, 12:07
+# Last Modified: Sunday 14.04.2019, 17:46
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -62,6 +62,9 @@ def start_download(file_content, start_entry):
                 file_writer.write(file_content[i]+'\n')
                 file_writer.close()
                 break
+    print("\t\t\tDie Liste wurde vollständig abgearbeitet.")
+    input("Enter um das Programm zu schliessen.")
+    exit
         
 
 file_content=get_file_content()

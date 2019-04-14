@@ -6,7 +6,7 @@
 # Created Date: Monday 25.02.2019, 11:12
 # Author: Apop85
 # -----
-# Last Modified: Sunday 14.04.2019, 17:46
+# Last Modified: Sunday 14.04.2019, 17:44
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -21,7 +21,7 @@ import webbrowser, os, msvcrt
 os.chdir(os.path.dirname(__file__))
 
 target_url='https://sci-hub.tw/'
-source_file=r'.\doi_results.txt'
+source_file=r'.\title_results.txt'
 
 def get_file_content():
     file_reader=open(source_file, 'r', encoding='UTF-8')
@@ -59,7 +59,7 @@ def start_download(file_content, start_entry):
                 break
             elif key in [b'n',b'N',b'0']:
                 file_writer=open(r'.\noch_zu_pruefende_doi.txt', 'a', encoding='UTF-8')
-                file_writer.write(file_content[i]+'\n')
+                file_writer.write(" ".join(file_content[i].split("%20")+'\n'))
                 file_writer.close()
                 break
     print("\t\t\tDie Liste wurde vollständig abgearbeitet.")

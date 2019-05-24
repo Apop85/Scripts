@@ -6,7 +6,7 @@
 # Created Date: Thursday 23.05.2019, 19:26
 # Author: Apop85
 # -----
-# Last Modified: Thursday 23.05.2019, 22:38
+# Last Modified: Friday 24.05.2019, 21:16
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -38,6 +38,7 @@ needed_dois=[]
 for doi in raw_dois:
     needed_dois+=[doi.strip('\n')]
 
+
 # Prepare the Excel file to write data
 active_sheet.title='Studieninformationen'
 active_sheet['A1']='DOI/PMID'
@@ -62,7 +63,7 @@ def search_databases(source_dir, source_files):
         file_reader.close()
         database_records=find_records_in_db(file_lines)
 
-        # Regex search pattern
+        # Regex search patterns
         search_pattern_doi=re.compile(r'DO  - (.*)')
         search_pattern_nct=re.compile(r'(NCT\d{8})')
         search_pattern_issn=re.compile(r'SN  - (\d+-\d+)')
@@ -97,7 +98,7 @@ def search_databases(source_dir, source_files):
                 found = 0
 
 def find_records_in_db(file_lines):
-    # Check lines for begin and end of an entry and save the position
+    # Check lines for begin and end of an entry and save the positions
     record=''
     counter=1
     records=[]
@@ -113,30 +114,51 @@ def find_records_in_db(file_lines):
 
 def search_for_filename(studies_path, studies, needed_dois):
     # Check which file contains the searched study
-    active_row=2
     
-    # for file_name in studies:
-    #     try:
-    #         searched_doi=active_sheet['A'+str(active_row)].value
-    #         searched_title=active_sheet['B'+str(active_row)].value
-    #         print('Open: '+file_name)
-    #         print('Search for: '+searched_doi+ ' - ' + searched_title)
-    #         pdf_file_open=open(studies_path+'\\'+file_name, 'rb')
-    #         pdf_content=PyPDF2.PdfFileReader(pdf_file_open)
+    for file_name in studies:
+        try:
+            global pdfs_2_scan, still_left_counter
+            pdfs_2_scan-=1
+            print('\r'*100, end='')
+            print('Noch offene DOIs zuzuweisen: '+str(still_left_counter)+' - Restliche PDFs zu Scannen: '+str(pdfs_2_scan), end='  ')
+
+            pdf_file_open=open(studies_path+'\\'+file_name, 'rb')
+            pdf_content=PyPDF2.PdfFileReader(pdf_file_open)
             
-    #         for i in range(pdf_content.numPages):
-    #             current_page=pdf_content.getPage(i)
-    #             page_content=current_page.extractText()
-    #             if searched_doi in page_content or searched_title in page_content:
-    #                 active_sheet['E'+str(active_row)]=file_name
-    #                 print('Found DOI')
-    #                 break
+            for i in range(pdf_content.numPages):
+                current_page=pdf_content.getPage(i)
+                page_content=current_page.extractText()
+                match=check_page_for_match(page_content, active_sheet, file_name)
+                if match:
+                    match=False
+                    break
+        except:
+            pass
 
-    #     except:
-    #         print('File_Error: '+file_name)
-    #         pdf_file_open.close()
+still_left_counter=len(needed_dois)
+pdfs_2_scan=len(studies)+1
                 
+def check_page_for_match(page_content, active_sheet, file_name):
+    try:
+        for i in range(2,active_sheet.max_row+1):
+            global still_left_counter
+            search_pattern_pdf_doi=re.compile((active_sheet['A'+str(i)].value).strip())
+            search_result_doi=search_pattern_pdf_doi.findall(page_content.lower())
 
+            study_title=((active_sheet['B'+str(i)].value).strip()).lower()
+            study_authors=((active_sheet['C'+str(i)].value).strip()).lower()
+            
+            search_pattern_pdf_title=re.compile(study_title)
+            search_result_title=search_pattern_pdf_title.findall(page_content.lower())
+            search_pattern_pdf_title_no_spaces=re.compile(''.join(study_title.split(' ')))
+            search_result_title_no_spaces=search_pattern_pdf_title_no_spaces.findall(page_content.lower())
+
+            if search_result_doi != [] or search_result_title != [] or search_result_title_no_spaces != [] or (active_sheet['A'+str(i)].value).strip() in file_name or file_name.strip('0123456789') in study_authors:
+                active_sheet['E'+str(i)]=file_name
+                still_left_counter-=1
+                return True
+    except:
+        return False
 
 search_databases(source_dir, source_files)
 search_for_filename(studies_path, studies, needed_dois)

@@ -19,7 +19,6 @@ set /a subnet=input
 echo Set IP range (123.45.6.1-X):
 set /p input=
 set /a ip=input
-echo %ip%
 
 rem ping defined ip range and output if answer = true
 rem --------------------------------------------------------------------

@@ -6,7 +6,7 @@
 # Created Date: Sunday 02.06.2019, 17:30
 # Author: Apop85
 # -----
-# Last Modified: Sunday 02.06.2019, 20:10
+# Last Modified: Sunday 02.06.2019, 22:16
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -75,7 +75,7 @@ def img2text(images):
 def write_txt_file(text):
     # Write resulting file content to txt file
     print('\nWrite file: '+target_dir_txt+'\\'+pdf_file[:-3]+'txt')
-    text_file=open(target_dir_txt+'\\'+pdf_file[:-3]+'txt', 'w')
+    text_file=open(target_dir_txt+'\\'+pdf_file[:-3]+'txt', 'w', encoding='UTF-8')
     text_file.write(text)
     text_file.close()
     clear_tmp_images()

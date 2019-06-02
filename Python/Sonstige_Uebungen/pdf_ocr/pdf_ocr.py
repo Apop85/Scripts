@@ -6,7 +6,7 @@
 # Created Date: Sunday 02.06.2019, 17:30
 # Author: Apop85
 # -----
-# Last Modified: Sunday 02.06.2019, 19:55
+# Last Modified: Sunday 02.06.2019, 20:10
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -25,6 +25,7 @@ from pdf2image.exceptions import (
     PDFPageCountError,
     PDFSyntaxError
 )
+
 
 # Set target directories
 target_dir_img = r'.\images'
@@ -49,7 +50,7 @@ def open_pdf(file_list):
     for pdf_file in file_list:
         file_counter+=1
         if pdf_file.endswith('pdf'):
-            percent_value=100//len(file_list)*file_counter
+            percent_value=round(100/len(file_list)*file_counter, 1)
             print('Open file '+str(file_counter)+' of '+str(len(file_list))+' ('+str(percent_value)+'%)'+' : '+pdf_file)
             pdf2img(pdf_file)
 
@@ -66,7 +67,7 @@ def img2text(images):
     text, image_counter='', 0
     for image in images:
         image_counter+=1
-        percent_value=100//len(images)*image_counter
+        percent_value=round(100/len(images)*image_counter, 1)
         print('\r'*100+'Text recognition @ page: '+str(image_counter)+' of '+str(len(images))+' ('+str(percent_value)+'%)', end='')
         text += pytesseract.image_to_string(image)
     write_txt_file(text)
@@ -85,7 +86,7 @@ def clear_tmp_images():
     image_list=os.listdir(target_dir_img)
     for image in image_list:
         image_counter+=1
-        percent_value=100//len(image_list)*image_counter
+        percent_value=round(100/len(image_list)*image_counter, 1)
         print('\r'*100+'Clear images: '+str(image_counter)+' of '+str(len(image_list))+' ('+str(percent_value)+'%)', end='')
         os.remove(target_dir_img+'\\'+image)
     print('\n\n\n')
@@ -96,3 +97,6 @@ open_pdf(file_list)
 
 print('Converting complete! Press enter to exit')
 input()
+
+
+

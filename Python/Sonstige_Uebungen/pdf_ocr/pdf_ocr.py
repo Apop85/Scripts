@@ -6,7 +6,7 @@
 # Created Date: Sunday 02.06.2019, 17:30
 # Author: Apop85
 # -----
-# Last Modified: Sunday 02.06.2019, 19:23
+# Last Modified: Sunday 02.06.2019, 19:55
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -17,7 +17,6 @@
 
 import pytesseract
 import os
-import tempfile
 from PIL import Image
 from pdf2image import convert_from_path
 
@@ -43,27 +42,38 @@ def get_filenames(dirname):
     file_list=os.listdir(dirname)
     return file_list
 
+file_counter=0
 def open_pdf(file_list):
     # Open all pdf files and read out text
-    global pdf_file
+    global file_counter, pdf_file
     for pdf_file in file_list:
-        pdf2img(pdf_file)
+        file_counter+=1
+        if pdf_file.endswith('pdf'):
+            percent_value=100//len(file_list)*file_counter
+            print('Open file '+str(file_counter)+' of '+str(len(file_list))+' ('+str(percent_value)+'%)'+' : '+pdf_file)
+            pdf2img(pdf_file)
 
 def pdf2img(pdf_file):
     # Convert PDF into Images
     global target_dir_pdf, target_dir_img
+    print('Convert PDF pages to images...', end='')
     images_from_path = convert_from_path(target_dir_pdf+'\\'+pdf_file,  output_folder=target_dir_img, fmt='jpg')
+    print('Done')
     img2text(images_from_path)
 
 def img2text(images):
     # Read out text from images 
-    text=''
+    text, image_counter='', 0
     for image in images:
+        image_counter+=1
+        percent_value=100//len(images)*image_counter
+        print('\r'*100+'Text recognition @ page: '+str(image_counter)+' of '+str(len(images))+' ('+str(percent_value)+'%)', end='')
         text += pytesseract.image_to_string(image)
     write_txt_file(text)
 
 def write_txt_file(text):
     # Write resulting file content to txt file
+    print('\nWrite file: '+target_dir_txt+'\\'+pdf_file[:-3]+'txt')
     text_file=open(target_dir_txt+'\\'+pdf_file[:-3]+'txt', 'w')
     text_file.write(text)
     text_file.close()
@@ -71,14 +81,18 @@ def write_txt_file(text):
 
 def clear_tmp_images():
     # Remove all images
+    image_counter=0
     image_list=os.listdir(target_dir_img)
     for image in image_list:
+        image_counter+=1
+        percent_value=100//len(image_list)*image_counter
+        print('\r'*100+'Clear images: '+str(image_counter)+' of '+str(len(image_list))+' ('+str(percent_value)+'%)', end='')
         os.remove(target_dir_img+'\\'+image)
+    print('\n\n\n')
 
 init_script()
 file_list=get_filenames(target_dir_pdf)
 open_pdf(file_list)
 
-
-
-
+print('Converting complete! Press enter to exit')
+input()

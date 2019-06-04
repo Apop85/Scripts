@@ -6,7 +6,7 @@
 # Created Date: Sunday 02.06.2019, 17:30
 # Author: Apop85
 # -----
-# Last Modified: Tuesday 04.06.2019, 11:24
+# Last Modified: Tuesday 04.06.2019, 11:28
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -28,10 +28,10 @@ from pdf2image.exceptions import (
 
 
 # Set target directories
-target_dir_img = r'.\images'
-target_dir_pdf = r'.\pdf'
-target_dir_txt = r'.\txt'
-tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract'
+target_dir_img = r'.\images'        # Temporary images folder
+target_dir_pdf = r'.\pdf'           # PDF directory
+target_dir_txt = r'.\txt'           # Output folder
+tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract'       # Tesseract exe file
 
 def init_script():
     # Initialize conditions

@@ -6,7 +6,7 @@
 # Created Date: Sunday 02.06.2019, 17:30
 # Author: Apop85
 # -----
-# Last Modified: Sunday 02.06.2019, 22:16
+# Last Modified: Tuesday 04.06.2019, 11:24
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -47,13 +47,16 @@ file_counter=0
 def open_pdf(file_list):
     # Open all pdf files and read out text
     global file_counter, pdf_file
+    file_list_done=os.listdir(target_dir_txt)
     for pdf_file in file_list:
         file_counter+=1
-        if pdf_file.endswith('pdf'):
+        if pdf_file.endswith('pdf') and pdf_file[:-3]+'txt' not in file_list_done:
             percent_value=round(100/len(file_list)*file_counter, 1)
             print('Open file '+str(file_counter)+' of '+str(len(file_list))+' ('+str(percent_value)+'%)'+' : '+pdf_file)
             pdf2img(pdf_file)
-
+        else:
+            print('Skipped file: '+pdf_file)
+            
 def pdf2img(pdf_file):
     # Convert PDF into Images
     global target_dir_pdf, target_dir_img
@@ -97,6 +100,3 @@ open_pdf(file_list)
 
 print('Converting complete! Press enter to exit')
 input()
-
-
-

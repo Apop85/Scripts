@@ -6,13 +6,13 @@
 # Created Date: Sunday 02.06.2019, 17:30
 # Author: Apop85
 # -----
-# Last Modified: Tuesday 04.06.2019, 11:28
+# Last Modified: Tuesday 04.06.2019, 11:31
 # -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
 # Check http://www.opensource.org/licenses/MIT for further informations
 # -----
-# Description: Extract text from PDF
+# Description: Extract text from PDF. Directory of tesseract.exe needs to be defined in line 34.
 ###
 
 import pytesseract

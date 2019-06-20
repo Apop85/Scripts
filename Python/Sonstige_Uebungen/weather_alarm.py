@@ -18,12 +18,12 @@ import os, re, requests
 def init_telegram_vars(message):
     # Readout telegram.inf for bot token and chat id
     os.chdir(os.path.dirname(__file__))
-    telegram_informations = open(r'.\telegram.inf', 'r', encoding='UTF-8').readlines()
-    for line in telegram_informations:
-        if len(line) > 18:
-            bot_id = line[8:-2]
-        elif len(line) > 4:
-            chat_id = line[9:-2]
+    telegram_informations = open(r'./telegram.inf', 'r', encoding='UTF-8').read()
+
+    chat_id_pattern = re.compile(r'CHAT_ID=\'(\d+)\'')
+    bot_id_pattern = re.compile(r'BOT_ID=\'(.*)\'')
+    chat_id = chat_id_pattern.findall(telegram_informations)[0]
+    bot_id = bot_id_pattern.findall(telegram_informations)[0]
 
     send_telegram_message(bot_id, chat_id, message)
 
@@ -34,19 +34,19 @@ def send_telegram_message(bot_id, chat_id, message):
     requests.get(telegram_url)
 
 
-def read_location_inf():
-    locations = {'city': 'id'}
+def start_collecting_data():
+    locations = {'city': 'city_id'}
     keys=locations.keys()
     weather_information={}
     # Check different locations and save in dictionary
     for location in keys:
         id_code = locations[location]
-        weather_information = get_weather(location, id_code, weather_information)
-    analyze_results(weather_information)
+        weather_information = get_weather_by_location(location, id_code, weather_information)
+    analyze_data(weather_information)
 
-def get_weather(location, location_id, weather_information):
+def get_weather_by_location(location, location_id, weather_information):
     # Download weather informations
-    tmp_file = r'.\weather.tmp'
+    tmp_file = r'./weather.tmp'
     url= 'https://ch.wetter.com/schweiz/'+location+'/'+location_id+'.html'
     url_content = requests.get(url)
     tmp_file_write = open(tmp_file, 'wb')
@@ -55,18 +55,15 @@ def get_weather(location, location_id, weather_information):
     tmp_file_write.close()
 
     # Regex tempfile
-    degrees, percent_rain, order, wind = check_tmp_file(tmp_file)
+    degrees, percent_rain, order, wind = read_data(tmp_file)
 
     # Setup dictionary
     weather_information.setdefault(location, {})
     for i in range(len(degrees)):
-        try:
-            weather_information[location].setdefault(order[i], {'temp' : int(degrees[i][:-1]), 'rain' : int(percent_rain[i][0]), 'rain_amount' : float('.'.join(percent_rain[i][1].split(','))), 'wind' : int(wind[i])}) 
-        except:
-            weather_information[location].setdefault(order[i], {'temp' : int(degrees[i][:-1]), 'rain' : int(percent_rain[i]), 'wind' : int(wind[i])}) 
+        weather_information[location].setdefault(order[i], {'temp' : int(degrees[i][:-1]), 'rain' : int(percent_rain[i][0]), 'rain_amount' : float('.'.join(percent_rain[i][1].split(','))), 'wind' : int(wind[i])}) 
     return weather_information
     
-def check_tmp_file(tmp_file):
+def read_data(tmp_file):
     # Read out tmpfile and delete it
     tmp_file_content = open(tmp_file, 'r', encoding='UTF-8').read()
 
@@ -102,10 +99,10 @@ def check_tmp_file(tmp_file):
 
     return degrees, percent_rain, order, wind_result
 
-def analyze_results(weather):
+def analyze_data(weather):
     for location in weather.keys():
         timestamp=[]
-        rain, rain_amount, wind, time = False, False, False, False  
+        rain, rain_amount, wind, time, temp = False, False, False, False, False
         for daytime in weather[location].keys():
             # Check if it's during daytime
             if daytime in ['Morgens','Mittags','Abends']:
@@ -120,24 +117,35 @@ def analyze_results(weather):
                     rain_amount = True
                 if stat == 'wind' and weather[location][daytime][stat] > 50 and time:
                     wind = True
-            if (rain or rain_amount or wind) and time:
+                if stat == 'temp' and weather[location][daytime][stat] >= 30 and time:
+                    temp = True
+            if (rain or rain_amount or wind or temp) and time:
                 timestamp += [daytime]
         
         # Create message and send if one or more flags where true
+        message = None
         if rain and rain_amount and wind:
-            message = location.upper()+' - '+' | '.join(timestamp)+"'%0A'╔════════════════════╗'%0A'║"+'Starkregen und Sturm!'.center(31, '_')+"║'%0A'╚════════════════════╝"
-            init_telegram_vars(message)
+            message = 'Starkregen und Sturm'
+        elif rain and rain_amount and temp:
+            message = 'Heiss und Starkregen'
         elif rain and rain_amount:
-            message = location.upper()+' - '+' | '.join(timestamp)+"'%0A'╔════════════════════╗'%0A'║"+'Starkregen!'.center(31, '_')+"║'%0A'╚════════════════════╝"
-            init_telegram_vars(message)
+            message = 'Starkregen'
         elif rain and wind:
-            message = location.upper()+' - '+' | '.join(timestamp)+"'%0A'╔════════════════════╗'%0A'║"+'Stürmischer Regen'.center(31, '_')+"║'%0A'╚════════════════════╝"
-            init_telegram_vars(message)
+            message = 'Stürmischer Regen'
+        elif wind and temp:
+            message = 'Heiss und Stürmisch'
+        elif rain and temp:
+            message = 'Heiss und Regnerisch'
         elif wind:
-            message = location.upper()+' - '+' | '.join(timestamp)+"'%0A'╔════════════════════╗'%0A'║"+'Stürmisch'.center(31, '_')+"║'%0A'╚════════════════════╝"
-            init_telegram_vars(message)
+            message = 'Stürmisch'
         elif rain:
-            message = location.upper()+' - '+' | '.join(timestamp)+"'%0A'╔════════════════════╗'%0A'║"+'Regnerisch'.center(31, '_')+"║'%0A'╚════════════════════╝"
+            message = 'Regnerisch'
+        elif rain:
+            message = 'Hitzetag'
+
+        if message:
+            message = location.upper()+' - '+' | '.join(timestamp)+"'%0A'╔════════════════════╗'%0A'║"+message.center(31, '_')+"║'%0A'╚════════════════════╝"
             init_telegram_vars(message)
 
-read_location_inf()
+start_collecting_data()
+

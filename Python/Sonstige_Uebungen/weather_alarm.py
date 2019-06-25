@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-#File: c:\Users\Apop85\Desktop\ScriptProjekte\GitHub\Python\Sonstige_Uebungen\weather_alarm.py
-#Project: c:\Users\Apop85\Desktop\ScriptProjekte\GitHub\Python\Sonstige_Uebungen
-#Created Date: Wednesday 19.06.2019, 20:54
-#Author: Apop85
+
+####
+# File: weather_alarm.py
+# Project: Sonstige_Uebungen
 #-----
-#Last Modified: Wednesday 20.06.2019, 12:34
+# Created Date: Wednesday 19.06.2019, 20:54
+# Author: Apop85
 #-----
-#Copyright (c) 2019 Apop85
-#This software is published under the MIT license.
-#Check http://www.opensource.org/licenses/MIT for further informations
+# Last Modified: Tuesday 25.06.2019, 11:28
 #-----
-#Description: Check weather and send report by telegram API
+# Copyright (c) 2019 Apop85
+# This software is published under the MIT license.
+# Check http://www.opensource.org/licenses/MIT for further informations
+#-----
+# Description: Check weather and send report by telegram API
+# Needs telegram.inf file with BOT_ID='your_bot_token' and CHAT_ID='your_chat_id' inside
+####
 
 import os, re, requests
 

@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-#File: c:\Users\Apop85\Desktop\ScriptProjekte\GitHub\Python\Sonstige_Uebungen\detect_encoding.py
-#Project: c:\Users\Apop85\Desktop\ScriptProjekte\GitHub\Python\Sonstige_Uebungen
-#Created Date: Sunday 23.06.2019, 17:19
-#Author: Apop85
+
+####
+# File: detect_encoding.py
+# Project: Sonstige_Uebungen
 #-----
-#Last Modified: Sunday 23.06.2019, 19:27
+# Created Date: Sunday 23.06.2019, 17:19
+# Author: Apop85
 #-----
-#Copyright (c) 2019 Apop85
-#This software is published under the MIT license.
-#Check http://www.opensource.org/licenses/MIT for further informations
+# Last Modified: Tuesday 25.06.2019, 11:26
 #-----
-#Description: Checks a file for useable encodings
+# Copyright (c) 2019 Apop85
+# This software is published under the MIT license.
+# Check http://www.opensource.org/licenses/MIT for further informations
+#-----
+# Description: Checks a file for useable encodings
+####
 
 import os
 from pyperclip import copy, paste
@@ -67,7 +71,7 @@ def print_menu(options):
         choose = input('Choose Option: '.rjust(30, '>'))
 
         # Check if choice is a valid option
-        if choose.isdecimal() and 0 <= int(choose) <= len(options.keys()):
+        if choose.isdecimal() and int(choose) in options.keys():
             choose = int(choose)
             return choose
         else:

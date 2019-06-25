@@ -1,3 +1,63 @@
-{
-    "editor.fontSize": 16
+/*
+ * Filename: c:\Users\Apop85\AppData\Roaming\Code\User\settings.json
+ * Path: c:\Users\Apop85\AppData\Roaming\Code\User
+ * Created Date: Sunday, February 3rd 2019, 1:08:11 pm
+ * Author: Apop85
+ * 
+ * Copyright (c) 2019 Your Company
+ */
+
+ {
+    "explorer.confirmDelete": false,
+    "files.autoSaveDelay": 10000,
+    "git.ignoreMissingGitWarning": true,
+    "window.zoomLevel": 0,
+    "window.openFilesInNewWindow": "on",
+    "editor.fontSize": 14,
+ 
+// PSI-HEADER EINSTELLUNGEN
+    "psi-header.changes-tracking": {
+        "isActive": true,
+        "enforceHeader": true,
+        "modDate": " Last Modified: ",
+        "autoHeader": "manualSave"
+    },
+    "psi-header.lang-config": [
+        {
+            "language": "python",
+            "forceToTop": true,
+            "prefix": "#",
+            "begin": "",
+            "end": "",
+            "beforeHeader": [
+                "#!/usr/bin/env python3",
+                "# -*- coding:utf-8 -*-",
+                ""
+            ],
+            
+        }
+    ],
+    "psi-header.templates": [   
+        {
+            "language": "python",
+            "prefix": "# ",
+            "template": [
+                "###",
+                " File: <<filename>>",
+                " Project: <<projectname>>",
+                "-----",
+                " Created Date: <<filecreated('dddd DD.MM.YYYY, HH:mm')>>",
+                " Author: <<author>>",
+                "-----",
+                " Last Modified: <<dateformat('dddd DD.MM.YYYY, HH:mm')>>",
+                "-----",
+                " Copyright (c) <<year>> <<author>>",
+                " This software is published under the MIT license.",
+                " Check http://www.opensource.org/licenses/MIT for further informations",
+                "-----",
+                " Description:",
+                "###",
+            ]
+        },
+    ]
 }

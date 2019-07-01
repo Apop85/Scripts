@@ -105,4 +105,8 @@ WITH abcde (persnr, name, stufe) AS (
      WHERE stufe <= 3)  -- Limitierung auf max 4. Iteration
 SELECT * FROM abcde;
 
--- DROP TABLE orga PURGE;
+DROP TABLE orga PURGE;
+
+
+/*08 - Hierarchische Abfragen.pdf*/
+

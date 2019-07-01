@@ -23,3 +23,17 @@ INSERT INTO tabelle1 VALUES (10, 9);
 INSERT INTO tabelle1 VALUES (11, 10);
 INSERT INTO tabelle1 VALUES (12, 9);
 COMMIT;
+
+WITH tab1(id, parent_id) AS ( 
+     -- Anker
+     SELECT id, parent_id FROM tabelle1
+     WHERE parent_id IS NULL
+     UNION ALL
+     -- Rekursion
+     SELECT tab2.id, tab2.parent_id
+     FROM tabelle1 tab2, tab1
+     WHERE tab2.parent_id = tab1.id
+)
+SELECT * FROM tab1;
+
+DROP TABLE tabelle1 PURGE;

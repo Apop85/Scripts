@@ -1,0 +1,72 @@
+/*
+ * Filename: c:\nginx\html\styles.css
+ * Path: c:\nginx\html
+ * Created Date: Tuesday, July 30th 2019, 1:41:59 pm
+ * Author: Apop85
+ * 
+ * Copyright (c) 2019 Your Company
+ */
+
+.wrapper {
+    border: 2px solid black;
+    display: flex;
+    justify-content: space-between;
+}
+
+.content_container {
+    justify-content: space-between;
+    border: 2px dashed red;
+}
+
+.main_content {
+    float: left;
+    width: 65%;
+    margin: 10px;
+    border: 2px solid blue;
+    background-color: aquamarine;
+    padding: 45px;
+}
+
+.other_content {
+    float: left;
+    width: 65%;
+    margin: 10px;
+    border: 2px solid darkblue;
+    background-color: rgb(236, 233, 15);
+    padding: 45px;
+}
+
+.sidebar {
+    float: right;
+    width: 30%;
+    text-align: center;
+    margin: 10px;
+    padding: 15px;
+    border: 2px solid darkgreen;
+    background-color: greenyellow;
+}
+
+.button {
+    margin: 10px;
+    border-radius: 15px;
+    background-color: lightgray;
+    text-decoration: none;
+    font-weight: bold;
+    color: black;
+    line-height: 75px;
+    border: 1px solid black;
+    padding: 15px 45px 15px 45px;
+}
+
+.button:hover {
+    background-color: lightsteelblue;
+    box-shadow: 0px 0px 0px 2px black;
+}
+
+.content_title {
+    font-size: 20px;
+    font-weight: bold;
+    background-color: white;
+    padding: 15px 45px 15px 45px;
+    box-shadow: 0px 0px 15px 20px white;
+}

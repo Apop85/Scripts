@@ -1,0 +1,233 @@
+/*
+ * Filename: c:\nginx\html\styles.css
+ * Path: c:\nginx\html
+ * Created Date: Tuesday, July 30th 2019, 1:41:59 pm
+ * Author: Apop85
+ * 
+ * Copyright (c) 2019 Your Company
+ */
+
+/*
+██╗      █████╗ ██╗   ██╗ ██████╗ ██╗   ██╗████████╗
+██║     ██╔══██╗╚██╗ ██╔╝██╔═══██╗██║   ██║╚══██╔══╝
+██║     ███████║ ╚████╔╝ ██║   ██║██║   ██║   ██║   
+██║     ██╔══██║  ╚██╔╝  ██║   ██║██║   ██║   ██║   
+███████╗██║  ██║   ██║   ╚██████╔╝╚██████╔╝   ██║   
+╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝  ╚═════╝    ╚═╝ 
+*/
+
+.masthead {
+    grid-area: header;
+    background-color: lightskyblue;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 0px 75px 0px 0px;
+}
+
+.page_title {
+    grid-area: title;
+    text-transform: uppercase;
+    margin: 0px;
+    padding: 20px;
+    background-color: aquamarine;
+    text-align: center;
+    text-decoration: underline black;
+    background-image: url(https://images.pexels.com/photos/1080722/pexels-photo-1080722.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260);
+    background-attachment: fixed;
+    background-position-y: -238px;
+    text-shadow: 0px 0px 15px white;
+    border-radius: 200px 0px 0px 0px;
+}
+
+.main_content {
+    grid-area: main;
+    background-color: burlywood;
+    margin: 5px 0px 5px 0px;
+}
+
+.sidebar {
+    grid-area: sidebar;
+    /* background-color: lightskyblue; */
+    background: linear-gradient(lightskyblue, lightblue, lightskyblue);
+    text-align: center;
+}
+
+.footer {
+    grid-area: footer;
+    background-color: grey;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    border-radius: 0% 0% 100% 100%;
+}
+
+
+/*
+ ██████╗ ██████╗ ███╗   ██╗████████╗███████╗███╗   ██╗████████╗
+██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔════╝████╗  ██║╚══██╔══╝
+██║     ██║   ██║██╔██╗ ██║   ██║   █████╗  ██╔██╗ ██║   ██║   
+██║     ██║   ██║██║╚██╗██║   ██║   ██╔══╝  ██║╚██╗██║   ██║   
+╚██████╗╚██████╔╝██║ ╚████║   ██║   ███████╗██║ ╚████║   ██║   
+ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝   ╚═╝
+*/
+
+.content_title {
+    background-color: gold;
+    /* box-shadow: 5px 5px 15px 5px gold; */
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.logo {
+    height: 100px !important;
+    width: 100px !important;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    background-color: white;
+}
+
+.article {
+    padding: 10px;
+}
+
+
+/*
+██████╗ ██╗   ██╗████████╗████████╗ ██████╗ ███╗   ██╗███████╗
+██╔══██╗██║   ██║╚══██╔══╝╚══██╔══╝██╔═══██╗████╗  ██║██╔════╝
+██████╔╝██║   ██║   ██║      ██║   ██║   ██║██╔██╗ ██║███████╗
+██╔══██╗██║   ██║   ██║      ██║   ██║   ██║██║╚██╗██║╚════██║
+██████╔╝╚██████╔╝   ██║      ██║   ╚██████╔╝██║ ╚████║███████║
+╚═════╝  ╚═════╝    ╚═╝      ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+*/
+
+.button, .button:visited {
+    padding: 15px 45px 15px 45px;
+    margin: 10px;
+    line-height: 55px;
+    background-color: lightgray;
+    border: 1px solid black;
+    border-radius: 15px;
+    color: black;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.button:hover {
+    background-color: white;
+    box-shadow: 0px 0px 0px 1px black;
+}
+
+.button:active, .button:focus {
+    background-color: black;
+    color: white;
+    box-shadow: 0px 0px 0px 1px black;
+}
+
+/*
+██████╗ ███████╗███████╗██████╗  ██████╗ ███╗   ██╗███████╗██╗██╗   ██╗███████╗
+██╔══██╗██╔════╝██╔════╝██╔══██╗██╔═══██╗████╗  ██║██╔════╝██║██║   ██║██╔════╝
+██████╔╝█████╗  ███████╗██████╔╝██║   ██║██╔██╗ ██║███████╗██║██║   ██║█████╗  
+██╔══██╗██╔══╝  ╚════██║██╔═══╝ ██║   ██║██║╚██╗██║╚════██║██║╚██╗ ██╔╝██╔══╝  
+██║  ██║███████╗███████║██║     ╚██████╔╝██║ ╚████║███████║██║ ╚████╔╝ ███████╗
+╚═╝  ╚═╝╚══════╝╚══════╝╚═╝      ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═══╝  ╚══════╝
+*/
+
+.page {
+    display: grid;
+    grid-template-columns: 180px auto 180px;
+    grid-template-rows: auto auto auto auto auto;
+    grid-template-areas: 
+        "title title header"
+        "main main sidebar"
+        "main main sidebar"
+        "main main sidebar"
+        "footer footer footer";
+    /* border: 2px solid black; */
+    background-color: rgba(0,0,0,0);
+}
+
+@media screen and (max-width: 700px) {
+    .page {
+        grid-template-columns: 96px auto 20%;
+        grid-template-areas: 
+        "header header header"
+        "title title title"
+        "sidebar main main"
+        "sidebar main main "
+        "footer footer footer";
+        background-color: lightskyblue;
+    }
+
+    .masthead {
+        border-radius: 200px 0% 200px 0%;
+    }
+
+    .page_title {
+        background-position-y: -152px;
+        border-radius: 0px 200px 0px 200px;
+    }
+
+    .button {
+        padding: 5px 15px 5px 15px !important;
+        border-radius: 5px !important;
+        font-size: 12px !important;
+        line-height: 38px !important;
+        margin-top: 25px;
+    }
+
+    .sidebar {
+        position: fixed;
+        top: 35%;
+        width: 96px;
+        height: auto;
+    }
+
+    .footer {
+        border-radius: 0% 0% 100% 100%;
+    }
+
+    .main_content {
+        margin: 0px 0px 0px 0px;
+    }
+
+}
+
+@media screen and (max-width: 400px) {
+    .page {
+        grid-template-columns: 20% 60% 20%;
+        grid-template-areas: 
+        "header header header"
+        "title title title"
+        "main main main" 
+        "main main main" 
+        "footer footer footer";
+        position: relative;
+        top: 75px;
+        margin: -10px;
+        background-color: lightskyblue;
+    }
+    
+    .sidebar {
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: auto;
+    }
+
+    .button {
+        font-size: 10px !important;
+        padding: 5px 30px 5px 30px !important;
+        line-height: 25px !important;
+    }
+
+    .page_title {
+        font-size: 20px;
+        background-position-y: -117px;
+        background-position-x: center;
+    }
+}

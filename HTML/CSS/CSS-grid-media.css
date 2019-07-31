@@ -1,0 +1,323 @@
+/*
+ * Filename: c:\nginx\html\styles.css
+ * Path: c:\nginx\html
+ * Created Date: Tuesday, July 30th 2019, 1:41:59 pm
+ * Author: Apop85
+ * 
+ * Copyright (c) 2019 Your Company
+ */
+
+/*
+██╗      █████╗ ██╗   ██╗ ██████╗ ██╗   ██╗████████╗
+██║     ██╔══██╗╚██╗ ██╔╝██╔═══██╗██║   ██║╚══██╔══╝
+██║     ███████║ ╚████╔╝ ██║   ██║██║   ██║   ██║   
+██║     ██╔══██║  ╚██╔╝  ██║   ██║██║   ██║   ██║   
+███████╗██║  ██║   ██║   ╚██████╔╝╚██████╔╝   ██║   
+╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝  ╚═════╝    ╚═╝ 
+*/
+
+.masthead {
+    grid-area: header;
+    background-color: rgb(57, 4, 247);
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 0px 75px 0px 0px;
+}
+
+.page_title {
+    grid-area: title;
+    text-transform: uppercase;
+    margin: 0px;
+    padding: 20px;
+    background-color: aquamarine;
+    text-align: center;
+    text-decoration: underline black;
+    background-image: url(https://images.pexels.com/photos/1080722/pexels-photo-1080722.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260);
+    background-attachment: fixed;
+    background-position-y: -238px;
+    text-shadow: 0px 0px 15px white;
+    border-radius: 200px 0px 0px 0px;
+}
+
+.main_content {
+    grid-area: main;
+    background-color: burlywood;
+    border-top: 5px solid #c1a074;
+    border-bottom: 5px solid #c1a074;
+}
+
+.sidebar {
+    grid-area: sidebar;
+    background-color: lightskyblue;
+    text-align: center;
+    background-image: url(https://cdn.pixabay.com/photo/2016/04/11/21/42/beach-1323166_1280.jpg);
+    background-size: cover;
+}
+
+.footer {
+    grid-area: footer;
+    background-color: grey;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    border-radius: 0% 0% 100% 100%;
+}
+
+
+/*
+ ██████╗ ██████╗ ███╗   ██╗████████╗███████╗███╗   ██╗████████╗
+██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔════╝████╗  ██║╚══██╔══╝
+██║     ██║   ██║██╔██╗ ██║   ██║   █████╗  ██╔██╗ ██║   ██║   
+██║     ██║   ██║██║╚██╗██║   ██║   ██╔══╝  ██║╚██╗██║   ██║   
+╚██████╗╚██████╔╝██║ ╚████║   ██║   ███████╗██║ ╚████║   ██║   
+ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝   ╚═╝
+*/
+
+.content_title {
+    background-color: gold;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    width: 52%;
+    padding: 11px;
+    margin-left: 15px;
+}
+
+.logo {
+    height: 100px;
+    width: 100px;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    background-color: white;
+}
+
+.article {
+    padding: 10px;
+    text-align: justify;
+}
+
+
+/*
+██████╗ ██╗   ██╗████████╗████████╗ ██████╗ ███╗   ██╗███████╗
+██╔══██╗██║   ██║╚══██╔══╝╚══██╔══╝██╔═══██╗████╗  ██║██╔════╝
+██████╔╝██║   ██║   ██║      ██║   ██║   ██║██╔██╗ ██║███████╗
+██╔══██╗██║   ██║   ██║      ██║   ██║   ██║██║╚██╗██║╚════██║
+██████╔╝╚██████╔╝   ██║      ██║   ╚██████╔╝██║ ╚████║███████║
+╚═════╝  ╚═════╝    ╚═╝      ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+*/
+
+.button, .button:visited {
+    width: 100%;
+    height: 17%;
+    border: none;
+    border-left: 2px solid black;
+    text-transform: uppercase;
+}
+
+.button:hover {
+    box-shadow: -10px 0px 10px -9px white;
+    /* border-left: 2px solid rgba(255,255,255,0.8); */
+    border: white;
+    background-color: rgba(255,255,255,0.8);
+    font-weight: 600;
+}
+
+.button:focus {
+    background-color: rgba(255,255,255,0.5);
+    font-weight: bold;
+    /* border-left: 2px solid white; */
+    border: white;
+    box-shadow: -10px 0px 10px -9px white;
+    text-shadow: 0px 0px 7px white;
+
+}
+
+.button:active {
+    background-color: rgba(255,255,255,0.2);
+}
+
+/*
+██████╗ ███████╗███████╗██████╗  ██████╗ ███╗   ██╗███████╗██╗██╗   ██╗███████╗
+██╔══██╗██╔════╝██╔════╝██╔══██╗██╔═══██╗████╗  ██║██╔════╝██║██║   ██║██╔════╝
+██████╔╝█████╗  ███████╗██████╔╝██║   ██║██╔██╗ ██║███████╗██║██║   ██║█████╗  
+██╔══██╗██╔══╝  ╚════██║██╔═══╝ ██║   ██║██║╚██╗██║╚════██║██║╚██╗ ██╔╝██╔══╝  
+██║  ██║███████╗███████║██║     ╚██████╔╝██║ ╚████║███████║██║ ╚████╔╝ ███████╗
+╚═╝  ╚═╝╚══════╝╚══════╝╚═╝      ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═══╝  ╚══════╝
+*/
+
+.page {
+    display: grid;
+    grid-template-columns: 180px auto 180px;
+    grid-template-rows: auto auto auto auto auto;
+    grid-template-areas: 
+        "title title header"
+        "main main sidebar"
+        "main main sidebar"
+        "main main sidebar"
+        "footer footer footer";
+    background-color: rgba(0,0,0,0);
+    margin: -8px
+}
+
+/*
+████████╗ █████╗ ██████╗ ██╗     ███████╗████████╗
+╚══██╔══╝██╔══██╗██╔══██╗██║     ██╔════╝╚══██╔══╝
+   ██║   ███████║██████╔╝██║     █████╗     ██║   
+   ██║   ██╔══██║██╔══██╗██║     ██╔══╝     ██║   
+   ██║   ██║  ██║██████╔╝███████╗███████╗   ██║   
+   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝   ╚═╝  
+*/
+
+@media only screen and (min-width: 42em) and (max-width: 64em) and (orientation: landscape) {
+    .page {
+        grid-template-columns: 15% auto 20%;
+        grid-template-areas: 
+        "header header header"
+        "title title title"
+        "sidebar main main"
+        "sidebar main main "
+        "footer footer footer";
+        background-color: lightskyblue;
+    }
+
+    .masthead {
+        border-radius: 200px 0% 200px 0%;
+        background: linear-gradient(90deg, #b69744,#cca546);
+    }
+
+    .page_title {
+        background-position-y: -152px;
+        border-radius: 0px 200px 0px 200px;
+        font-stretch: expanded;
+    }
+
+    .content_title {
+        font-size: 40px;
+        width: auto;
+        padding: 0px;
+        margin-left: 0px;
+        text-align: center;
+    }
+
+    .article {
+        font-size: 25px;
+    }
+
+    .button, .button:visited {
+        border: none;
+        border-right: 2px solid black;
+        box-shadow: none;
+        height: 16.666%;
+        font-size: large;
+    }
+
+    .button:hover, .button:active, .button:focus {
+        box-shadow: 10px 0px 10px -5px white;
+        position: relative;
+        left: 10px;
+    }
+
+    .sidebar {
+        box-shadow: 10px 0px 10px -10px;
+    }
+
+    .footer {
+        border-radius: 0% 0% 100% 100%;
+    }
+
+    .main_content {
+        margin: 0px 0px 0px 0px;
+        border: none;
+        border-left: solid 10px lightskyblue;
+    }
+
+}
+
+/*
+██████╗ ██╗  ██╗ ██████╗ ███╗   ██╗███████╗
+██╔══██╗██║  ██║██╔═══██╗████╗  ██║██╔════╝
+██████╔╝███████║██║   ██║██╔██╗ ██║█████╗  
+██╔═══╝ ██╔══██║██║   ██║██║╚██╗██║██╔══╝  
+██║     ██║  ██║╚██████╔╝██║ ╚████║███████╗
+╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+*/
+
+@media only screen and (min-width: 0em) and (max-width: 64em) and (orientation: portrait) {
+    .page {
+        grid-template-columns: 20% 60% 20%;
+        grid-template-areas: 
+        "header header header"
+        "title title title"
+        "main main main" 
+        "main main main" 
+        "footer footer footer";
+        position: absolute;
+        top: 16%;
+        margin: -10px;
+        background-color: lightskyblue;
+    }
+
+    .masthead {
+        background: linear-gradient(0deg, #d8b04e,#bbb);
+        border-radius: 0px 0px 0px 30%;
+    }
+    
+    .sidebar {
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 15%;
+        background: none;
+        background-color: #bbb !important;
+        box-shadow: none;
+    }
+
+    .button {
+        width: 49%;
+        height: 33.333%;
+        box-shadow: none;
+        border: none;
+        font-size: 180%;
+        letter-spacing: 9px;
+    }
+    
+    .button:active, .button:focus, .button:hover, .button:visited {
+        position: initial;
+        box-shadow: none;
+    }
+
+    .page_title {
+        font-size: 100px;
+        background-position-y: -117px;
+        background-position-x: center;
+    }
+
+    .content_title {
+        font-size: 60px;
+        width: auto;
+        padding: 0px;
+        margin-left: 0px;
+        text-align: center;
+    }
+
+    .article {
+        font-size: 40px;
+        padding-left: 10%;
+        padding-right: 10%;
+    }
+
+    .footer {
+        font-size: 20px;
+    }
+
+    .logo {
+        width: 250px;
+        height: 250px;
+    }
+}

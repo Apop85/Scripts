@@ -1,0 +1,330 @@
+/*
+ * Filename: c:\nginx\html\styles.css
+ * Path: c:\nginx\html
+ * Created Date: Tuesday, July 30th 2019, 1:41:59 pm
+ * Author: Apop85
+ * 
+ * Copyright (c) 2019 Your Company
+*/
+
+/*
+██████╗  █████╗  ██████╗ ███████╗██████╗ ███████╗███████╗██╗ ██████╗ ███╗   ██╗
+██╔══██╗██╔══██╗██╔════╝ ██╔════╝██╔══██╗██╔════╝██╔════╝██║██╔════╝ ████╗  ██║
+██████╔╝███████║██║  ███╗█████╗  ██║  ██║█████╗  ███████╗██║██║  ███╗██╔██╗ ██║
+██╔═══╝ ██╔══██║██║   ██║██╔══╝  ██║  ██║██╔══╝  ╚════██║██║██║   ██║██║╚██╗██║
+██║     ██║  ██║╚██████╔╝███████╗██████╔╝███████╗███████║██║╚██████╔╝██║ ╚████║
+╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═════╝ ╚══════╝╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+*/
+.page {
+    display: grid;
+    grid-template-columns: 12.5% 12.5% 12.5% 12.5% 12.5% 12.5% 12.5% 12.5%;
+    grid-template-rows: auto auto auto auto auto 15% auto auto;
+    grid-template-areas: "header header header header header header header header"
+                         "logo logo title title title title title title"
+                         "sidebar sidebar n1 slider slider slider slider n2"
+                         "sidebar sidebar n1 slider slider slider slider n2"
+                         "sidebar sidebar main main main main main main"
+                         "n3 n3  main main main main main main"
+                         "n3 n3 main main main main main main"
+                         "footer footer footer footer footer footer footer footer";
+    background-color: #e5fdc3;
+}
+
+li {
+    color: rgba(0,0,0,0)
+}
+
+
+/*
+██╗  ██╗███████╗ █████╗ ██████╗ ███████╗██████╗ 
+██║  ██║██╔════╝██╔══██╗██╔══██╗██╔════╝██╔══██╗
+███████║█████╗  ███████║██║  ██║█████╗  ██████╔╝
+██╔══██║██╔══╝  ██╔══██║██║  ██║██╔══╝  ██╔══██╗
+██║  ██║███████╗██║  ██║██████╔╝███████╗██║  ██║
+╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚═╝  ╚═╝
+*/
+
+.masthead {
+    grid-area: header;
+    background-color: powderblue;
+    height: 30px;
+}
+
+
+/* 
+██╗      ██████╗  ██████╗  ██████╗ 
+██║     ██╔═══██╗██╔════╝ ██╔═══██╗
+██║     ██║   ██║██║  ███╗██║   ██║
+██║     ██║   ██║██║   ██║██║   ██║
+███████╗╚██████╔╝╚██████╔╝╚██████╔╝
+╚══════╝ ╚═════╝  ╚═════╝  ╚═════╝
+*/
+
+.logo {
+    grid-area: logo;
+    width: 100%;
+    height: auto;
+    max-width: 200px;
+    max-height: 200px;
+    box-align: center;
+}    
+
+/*
+████████╗██╗████████╗██╗     ███████╗
+╚══██╔══╝██║╚══██╔══╝██║     ██╔════╝
+   ██║   ██║   ██║   ██║     █████╗  
+   ██║   ██║   ██║   ██║     ██╔══╝  
+   ██║   ██║   ██║   ███████╗███████╗
+   ╚═╝   ╚═╝   ╚═╝   ╚══════╝╚══════╝
+*/
+
+.page_title {
+    grid-area: title;
+    background-color: rgb(193, 241, 189);
+    text-align: center;
+    font-size: 20px;
+    border-radius: 0px 0% 0px 200px;
+    box-shadow: -1px 0px 4px 1px;
+    margin-bottom: 15px;
+}
+
+.page_title_text {
+    background: linear-gradient(
+        to right, rgba(255,255,255,1), 
+        rgba(255,255,255,1), 
+        rgba(255,255,255,1), 
+        rgba(255,255,255,0));
+    padding: 10px;
+    margin-left: 20%;
+    margin-right: 20%;
+    margin-top: 5%;
+    border-radius: 00% 0% 0% 1000px;
+    border-left: 5px double rgba(0,0,0,0.5);
+}
+
+/*
+███╗   ███╗ █████╗ ██╗███╗   ██╗
+████╗ ████║██╔══██╗██║████╗  ██║
+██╔████╔██║███████║██║██╔██╗ ██║
+██║╚██╔╝██║██╔══██║██║██║╚██╗██║
+██║ ╚═╝ ██║██║  ██║██║██║ ╚████║
+╚═╝     ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝
+*/
+
+.main_content {
+    grid-area: main;
+}
+
+.content_title {
+    background: linear-gradient(to right, rgb(150, 150, 150), rgba(255,255,255,0));
+    font-size: 20px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    padding-left: 25px;
+    margin-right: 20%;
+    border-radius: 0px 80% 0px 0px;
+}
+
+.article {
+    text-align: justify;
+    margin-right: 5%;
+    margin-left: 5%;
+}
+
+/*
+███████╗██╗██████╗ ███████╗██████╗  █████╗ ██████╗ 
+██╔════╝██║██╔══██╗██╔════╝██╔══██╗██╔══██╗██╔══██╗
+███████╗██║██║  ██║█████╗  ██████╔╝███████║██████╔╝
+╚════██║██║██║  ██║██╔══╝  ██╔══██╗██╔══██║██╔══██╗
+███████║██║██████╔╝███████╗██████╔╝██║  ██║██║  ██║
+╚══════╝╚═╝╚═════╝ ╚══════╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
+*/
+
+.sidebar {
+    grid-area: sidebar;
+    height: 100%;
+    position: sticky;
+    top: 20px;
+}
+
+/*
+██████╗ ██╗   ██╗████████╗████████╗ ██████╗ ███╗   ██╗
+██╔══██╗██║   ██║╚══██╔══╝╚══██╔══╝██╔═══██╗████╗  ██║
+██████╔╝██║   ██║   ██║      ██║   ██║   ██║██╔██╗ ██║
+██╔══██╗██║   ██║   ██║      ██║   ██║   ██║██║╚██╗██║
+██████╔╝╚██████╔╝   ██║      ██║   ╚██████╔╝██║ ╚████║
+╚═════╝  ╚═════╝    ╚═╝      ╚═╝    ╚═════╝ ╚═╝  ╚═══╝
+*/
+
+.button {
+    width: 80%;
+    /* height: 8.33333%; */
+    height: 16.666666%;
+    border: none;
+    border-right: 2px solid black;
+}
+
+/*
+███████╗ ██████╗  ██████╗ ████████╗███████╗██████╗ 
+██╔════╝██╔═══██╗██╔═══██╗╚══██╔══╝██╔════╝██╔══██╗
+█████╗  ██║   ██║██║   ██║   ██║   █████╗  ██████╔╝
+██╔══╝  ██║   ██║██║   ██║   ██║   ██╔══╝  ██╔══██╗
+██║     ╚██████╔╝╚██████╔╝   ██║   ███████╗██║  ██║
+╚═╝      ╚═════╝  ╚═════╝    ╚═╝   ╚══════╝╚═╝  ╚═╝
+*/
+
+.footer {
+    grid-area: footer;
+    text-align: center;
+    background-color: dimgray;
+    color: white;
+}
+
+
+
+/* 
+ ██████╗ █████╗ ██████╗  ██████╗ ██╗   ██╗███████╗███████╗██╗     
+██╔════╝██╔══██╗██╔══██╗██╔═══██╗██║   ██║██╔════╝██╔════╝██║     
+██║     ███████║██████╔╝██║   ██║██║   ██║███████╗█████╗  ██║     
+██║     ██╔══██║██╔══██╗██║   ██║██║   ██║╚════██║██╔══╝  ██║     
+╚██████╗██║  ██║██║  ██║╚██████╔╝╚██████╔╝███████║███████╗███████╗
+ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝╚══════╝╚══════╝ */
+
+ .slider_wrap {
+     overflow-x: hidden;
+     width: 100%;
+     height: auto;
+     grid-area: slider;
+  }
+ 
+ .slider {
+     overflow: hidden;
+}
+
+#slide02:checked ~ .slider_elements {
+    left: -100%;
+}
+#slide03:checked ~ .slider_elements {
+    left: -200%;
+}
+#slide04:checked ~ .slider_elements {
+    left: -300%;
+}
+
+.slider_image {
+    width: 100%;
+    height: auto;
+}
+
+.slider_elements {
+    width: 400%;
+    position: relative;
+    left: 0px;
+    margin-bottom: .8em;
+    padding: 0;
+    -webkit-transition: left .8s ease-in-out;
+    -moz-transition: left .8s ease-in-out;
+    -o-transition: left .8s ease-in-out;
+    transition: left .8s ease-in-out;
+}
+
+.slider_elements, .slider_elements figure, .slider_controls {
+    margin: 0px;
+}
+
+.slider_wrap input {
+    position: absolute;
+    left: -99999px;
+}
+
+.slider_controls {
+    text-align: center;
+    margin-left: -50px;
+    color: rgba(0,0,0,0);
+}
+
+.slider_controls label {
+    width: 30px;
+    height: 30px;
+    line-height: 20px;
+    text-align: center;
+    border-radius: 50%;
+    display: block;
+    cursor: pointer;
+    background: #68B022;
+/*    color: #68B022;*/
+}
+
+.slider-controls label:hover,
+#slide01:checked ~ .slider_controls label[for="slide01"],
+#slide02:checked ~ .slider_controls label[for="slide02"],
+#slide03:checked ~ .slider_controls label[for="slide03"],
+#slide04:checked ~ .slider_controls label[for="slide04"] {
+    background: #ddd;
+    color: #ddd;
+}
+
+.slider_controls li {
+    display: inline-block;
+}
+
+.slider_elements > li {
+    float: left;
+    width: 25%;
+    position: relative;
+}
+
+.slider_elements figcaption {
+    display: block;
+    color: #fff;
+    position: absolute;
+    left: 0;
+    bottom: 1em;
+    padding: .4em;
+    background: rgba(0,0,0,.5)
+}
+
+.slider_elements:after {
+    content: ".";
+    display: block;
+    height: .1px;
+    clear: both;
+    visibility: hidden;
+    font-size: 0;
+    overflow: hidden;
+}
+
+/*
+████████╗ █████╗ ██████╗ ██╗     ███████╗████████╗
+╚══██╔══╝██╔══██╗██╔══██╗██║     ██╔════╝╚══██╔══╝
+   ██║   ███████║██████╔╝██║     █████╗     ██║   
+   ██║   ██╔══██║██╔══██╗██║     ██╔══╝     ██║   
+   ██║   ██║  ██║██████╔╝███████╗███████╗   ██║   
+   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝   ╚═╝  
+*/
+
+@media only screen and (min-width: 18em) and (max-width: 64em) and (orientation: landscape) {
+    .page {
+        grid-template-columns: 25% 25% auto 25px;
+        grid-template-rows: auto auto auto auto auto;
+        grid-template-areas:"logo header title title"
+                            "sidebar slider slider n1"
+                            "n2 main main main"
+                            "n2 main main main"
+                            "footer footer footer footer";
+    }
+
+    .footer {
+        z-index: 1;
+    }
+
+    .header {
+        height: 0px;
+    }
+    
+    .page_title_text {
+        text-align: right;
+        font-size: 30px;
+    }
+}

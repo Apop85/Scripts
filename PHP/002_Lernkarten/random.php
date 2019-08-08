@@ -1,5 +1,6 @@
 <?php
     function get_random_card() {
+        # Zufällige Karte auswählen
         $emptyarray = [];
         $cards = get_cards('./cards/', $emptyarray);
         $random = mt_rand(0, sizeof($cards)-1);
@@ -8,6 +9,7 @@
     }
     
     function get_cards($main, $cards){
+        # Alle Karten aller Fächer Sammeln
         global $cards;
         $dirHandle = opendir($main);
         while($file = readdir($dirHandle)){
@@ -26,7 +28,8 @@
     }
     get_random_card();
     
-    function check_answer() {
+    function check_answer($card) {
+        # Prüfe Antwort
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $antwort = test_input($_POST["answer"]);
             $test = test_input($_POST["true_answer"]);
@@ -36,7 +39,7 @@
                 return $antwortfeld;
             }
             else {
-                $antwortfeld = '<div class="false_value">Diese Antwort war falsch!! Die korrekte Antwort lautet:</br><div class="correct">'.$test.'</div>Siehe <a href'.$card[2].'>HIER</a></div>';
+                $antwortfeld = '<div class="false_value">Diese Antwort war falsch!! Die korrekte Antwort lautet:</br><div class="correct">'.$test.'</div>Siehe '.$card[2].'</div>';
                 return $antwortfeld;
             }
         }
@@ -54,12 +57,12 @@
     $init_form = '<form method="post" action="'.htmlspecialchars($_SERVER["PHP_SELF"]).'">';
     $titel = 'Zufallsfrage';
     $card = get_random_card();
-    $won = check_answer();
-    $header = '<p class="content_title">Eine beliebige Zufallsfrage</p><p class="content">Eine Zufällige Frage aus der Kartei wird ausgewählt und ausgegeben.</p>';
+    $won = check_answer($card);
+    $header = '<p class="content_title">Eine beliebige Zufallsfrage</p><p class="content_text">Eine Zufällige Frage aus der Kartei wird ausgewählt und ausgegeben.</p>';
     $validation = '<div class="flip-card-front">'.$won.'</div>';
     $button = "<p><input class='antwort' type='text' name='answer' autofocus><button class='submit_button' method='post'>GO</button></p></div>";
     $footer = '</div></div>';
-    $true_answer = '<input type="hidden" name="true_answer" value='.$card[1].'>';
+    $true_answer = '<input type="hidden" name="true_answer" value="'.$card[1].'">';
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $divs = '<div class="flip-card"><div class="flip-card-inner">';
         $frage = '<div class="flip-card-back"><p class="frage">'.$card[0].'</p>';

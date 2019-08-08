@@ -5,12 +5,16 @@ body {
 
 #wrapper {
     display: grid;
-    grid-template-columns: 200px 50% auto auto;
-    grid-template-rows: 200px auto auto auto;
+    grid-template-columns: 100px 50% auto auto;
+    grid-template-rows: 100px auto auto auto;
     grid-template-areas: "logo head head head"
-                         "menubar main main main"
-                         "menubar main main main"
+                         "menubar menubar menubar menubar"
+                         "main main main main"
                          "footer footer footer footer";
+    /* grid-template-areas: "logo head head head"
+                         "menubar main main main"
+                         "menubar main main main"
+                         "footer footer footer footer"; */
 }
 
 #header {
@@ -37,25 +41,26 @@ body {
     width: 100%;
     overflow: hidden;
     border-right: 1px solid black;
+    text-align: center;
 }
 
 .menu_button {
     border: none;
     text-decoration: none;
     text-align: center;
-    border-right: 2px solid black;
+    border-bottom: 2px solid black;
     background: rgb(151, 222, 255);
     color: black;
     font-weight: bold;
     line-height: 50px;
-    width: 100%;
+    width: 19.5%;
     /* padding-left: 5px; */
     margin-top: 5px;
 
 }
 
 .menu_button:hover {
-    border-right: 2px solid white;
+    border-bottom: 2px solid white;
     background: rgb(27, 135, 185);
     text-transform: uppercase;
     color: white;
@@ -79,7 +84,7 @@ body {
 #infoleiste {
     grid-area: grid-r;
     background: rgba(100,100,100,0.5);
-    border-left: 2px solid black;   
+    border-right: 2px solid black;   
     padding-left: 10px;
     padding-right: 10px;
     text-align: center;
@@ -131,9 +136,19 @@ body {
 #main_content {
     grid-area: main;
     display: grid;
-    grid-template-columns: auto auto 200px;
+    grid-template-columns: 200px auto 200px;
     grid-template-rows: auto;
-    grid-template-areas: "grid-l grid-l grid-r"
+    grid-template-areas: "grid-r grid-l grid-l"
+}
+
+.content_text {
+    padding: 25px;
+    background-color: rgb(252, 255, 233);
+    text-align: center;
+    margin-left: 20%;
+    margin-right: 20%;
+    border-radius: 5px;
+    box-shadow: 0px 0px 5px 3px #ccc;
 }
 
 #footer {
@@ -155,6 +170,7 @@ body {
 .content_title {
     font-size: 25px;
     font-weight: 600;
+    text-align: center;
 }
 
 
@@ -265,8 +281,11 @@ ul li {
 
 ul li ul li {
     display: none;
-    z-index: 1;
-    padding: 15;
+    text-align: left;
+    margin-left: 5px;
+    text-transform: capitalize;
+    letter-spacing: auto;
+    padding-left: 3px;
 }
 
 ul > li > ul {

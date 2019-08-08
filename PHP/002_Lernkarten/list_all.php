@@ -6,7 +6,7 @@
     foreach ($cards as $card) {
         $output_list .= $card;
     }
-    $content = '<p class="content_title">Alle verfügbaren Karten</p><p class="content">In dieser Liste findest du alle bisher abgelegten Karten</p><table class="list_table"><tr><th "class=title_column">Fach</th><th "class=title_column">Pfad</th><th "class=title_column">Dateiname</th></tr>'.$output_list."</table>";
+    $content = '<p class="content_title">Alle verfügbaren Karten</p><p class="content_text">In dieser Liste findest du alle bisher abgelegten Karten</p><table class="list_table"><tr><th "class=title_column">Fach</th><th "class=title_column">Pfad</th><th "class=title_column">Dateiname</th></tr>'.$output_list."</table>";
 ?>
 
 <?php include("php/main.php"); ?>

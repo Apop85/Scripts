@@ -98,7 +98,7 @@
         $form_0 = '<form method="post" action="'.htmlspecialchars($_SERVER["PHP_SELF"]).'">';
         $form_1 = '<p class="frage">'.$quest_array[0]."</p>";
         $form_2 = '<input class="antwort" type="text" name="answer" autofocus><button class="submit_button" method="post">GO</button>';
-        $form_3 = '<input type="hidden" name="true_answer" value='.$quest_array[1].'>';
+        $form_3 = '<input type="hidden" name="true_answer" value="'.$quest_array[1].'">';
         $form_4 = '<input type="hidden" name="button" value="'.substr($main, 8).'">';
         $form_5 = '<input type="hidden" name="last_file" value="'.$quest_array[2].'">';
         $form_6 = '</form>';
@@ -160,6 +160,6 @@
 
 <?php
     $titel = "Schulfächer";
-    $content = '<p class="content_title">Schulfächer mit verfügbaren Lernkarten</p><p class="content">Hier kann man sich Fragen zu unterschiedlichen Fächern stellen lassen</p>'.$buttons.$question;
+    $content = '<p class="content_title">Schulfächer mit verfügbaren Lernkarten</p><p class="content_text">Hier kann man sich Fragen zu unterschiedlichen Fächern stellen lassen</p>'.$buttons.$question;
 ?>
 <?php include("php/main.php"); ?>

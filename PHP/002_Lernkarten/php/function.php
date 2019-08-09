@@ -11,7 +11,7 @@
             array("text" => "Fächer", "url" => "faecher.php"),
             array("text" => "Randomfrage", "url" => "random.php"),
             array("text" => "Liste", "url" => "list_all.php"),
-            array("text" => "Prüfung", "url" => "pruefung.php")
+            array("text" => "Hinzufügen", "url" => "add_card.php")
         );
         
         return $dtm -> create_menu($menu_array, $class);

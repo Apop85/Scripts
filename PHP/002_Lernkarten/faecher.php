@@ -87,7 +87,7 @@
         $random = mt_rand(0, sizeof($output)-1);
         $random_card = $main.$output[$random];
         include ($random_card);
-        return array($q,$a,$f);
+        return array($q,$a,$f,$main.$output[$random]);
     }
     
     
@@ -101,12 +101,15 @@
         $form_3 = '<input type="hidden" name="true_answer" value="'.$quest_array[1].'">';
         $form_4 = '<input type="hidden" name="button" value="'.substr($main, 8).'">';
         $form_5 = '<input type="hidden" name="last_file" value="'.$quest_array[2].'">';
-        $form_6 = '</form>';
+        $form_6 = '<input type="hidden" name="q_file" value="'.$quest_array[3].'">';
+        $form_7 = '</form>';
         $form = $form_0.$form_1.$form_2.$form_3.$form_4.$form_5.$form_6;
-        if ($_SERVER["REQUEST_METHOD"] == "POST" && sizeof($quest_array) == 3 && $main != "./cards/") {
+        if ($_SERVER["REQUEST_METHOD"] == "POST" && sizeof($quest_array) == 4 && $main != "./cards/") {
             $answer = test_input($_POST["answer"]);
             $last_answer = test_input($_POST["true_answer"]);
             $last_file = test_input($_POST["last_file"]);
+            $q_file = test_input($_POST["q_file"]);
+            $output = "";
             
             if ($last_answer == $answer && $answer != "") {
                 # Richtige Antwort
@@ -116,6 +119,8 @@
                 $back_1 = '<div class="flip-card-back">';
                 $back_2 = $form;
                 $back_3 = '</div>';
+                $command = escapeshellcmd('python ./py/update_score.py  "update" "1" "'.$q_file.'"');
+                $output = shell_exec($command);
             }
             elseif ($last_answer == "") {
                 # Wenn erste Frage
@@ -135,13 +140,16 @@
                 $back_1 = '<div class="flip-card-back">';
                 $back_2 = $form;
                 $back_3 = '</div>';
+                $antwortfeld = '<div class="false_value">Diese Antwort war falsch!! Die korrekte Antwort lautet:</br><div class="correct">'.$test.'</div>Siehe '.$card[2].'</div>';
+                $command = escapeshellcmd('python ./py/update_score.py  "update" "-1" "'.$q_file.'"');
+                $output = shell_exec($command);
             }
             $div_intro = $div_intro_1.$div_intro_2;
             
             $front = $front_1.$front_2.$front_3;
             $back = $back_1.$back_2.$back_3;
             
-            return $div_intro.$front.$back.$div_outro;
+            return $div_intro.$front.$back.$div_outro.$output;
         }
         
         return "<div class='flip-card'></div>";
@@ -152,7 +160,7 @@
     $post_value = get_post_value();
     $main = check_main($main);
     $cards = get_cards($main);
-
+    
     $classes = get_classes($main, $emptyarray);
     $buttons = create_buttons($classes);
     $question = create_question($cards, $main);

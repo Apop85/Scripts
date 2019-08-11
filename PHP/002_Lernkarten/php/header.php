@@ -9,7 +9,7 @@
     <body>
         <div id="wrapper">
             <div id="logo">
-                <img id="logo_img" src="https://www.christiane-witt-fengshui.com/wp-content/uploads/2017/03/yin-yang-symbol-705x702.png">
+                <img id="logo_img" src="./img/yy.png">
             </div>
             <div id="header">
                 <h1>Lernkarten</h1>

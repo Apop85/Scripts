@@ -31,8 +31,8 @@
     function check_answer($card) {
         # Prüfe Antwort
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $antwort = test_input($_POST["answer"]);
-            $test = test_input($_POST["true_answer"]);
+            $antwort = strtolower(test_input($_POST["answer"]));
+            $test = strtolower(test_input($_POST["true_answer"]));
             $last_file = test_input($_POST["last_file"]);
             
             if ($antwort == $test){

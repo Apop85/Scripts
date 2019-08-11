@@ -1,40 +1,128 @@
 
 <?php
-    function get_all_cards($main, $cards, $counter){
-        global $cards, $counter;
-        $dirHandle = opendir($main);
-        while($file = readdir($dirHandle)){
-            if(is_dir($main . $file) && $file != '.' && $file != '..'){
-                $newdir = $main.$file.'/';
-                $cards = get_all_cards($newdir, $cards, $counter);
-            }
-            else { 
-                if ($file != '.' && $file != '..'){
-                    if ($counter == 1) {
-                        $counter = 0;
-                    }
-                    else {
-                        $counter = 1;
-                    }
-                    $fach = preg_split("/\//", $main);
-                    $question = get_answer($main.$file);
-
-                    $cards[] .= "<tr class='file_list_".$counter."'><th>".$fach[2]."</th>
-                                <td>".$question[0]."</td><td class='score'>".$question[1]."</td><td>".$main.'</td><td>'.$file."</td><td class='icon_container'>
-                                <button type='image' name='del' class='icon delete' title='Frage Löschen' value='".$main.$file."' method='post'></button>
-                                <button type='image' name='edit_file' class='icon edit' title='Frage Editieren' value='".$main.$file."' method='post'></button>
-                                </td></tr>";
-                }
-            
+    function get_all_cards($filename, &$output, &$binary, &$sort_list, $depth=0) {
+        if ($sort_list == NULL && $depth == 0) {
+            $sort_list = array();
+        }
+        $depth++;
+        if (is_dir($filename) && $filename != "." && $filename != "..") {
+            $dir_content = glob("$filename/*");
+            foreach ($dir_content as $f) {
+                get_all_cards($f, $output, $binary, $sort_list, $depth);
             }
         }
-        return $cards;
+        else {
+            if (is_file($filename)){
+                if ($binary == 1) {
+                    $binary = 0;
+                }
+                else {
+                    $binary = 1;
+                }
+                $fach = preg_split("/\//", $filename);
+                $question = get_answer($filename);
+
+                $sort = "";
+                    if ($_SERVER["REQUEST_METHOD"] == "GET") {
+                        $sort = $_GET["sort"];
+
+                        // $sort = preg_split("/\-/", $sort);
+
+                        // $current = $sort[1];
+                        // $sort = $sort[0];
+                        // echo $sort;
+                    }
+                    
+                    $pfad = dirname($filename);
+                    $dateiname = basename($filename);
+                    if ($sort == "") {
+                        $output[] .= create_row($binary, $fach[2], $question[0], $question[1], $pfad, $dateiname);
+                        $key = "";
+                    }
+                    elseif ($sort == "sort_class") {
+                        $key = strtolower($fach[2]);
+                    }
+                    elseif ($sort == "sort_question") {
+                        $key = strtolower($question[0]);
+                    }
+                    elseif ($sort == "sort_points") {
+                        $key = strval($question[1]);
+                    }
+                    elseif ($sort == "sort_path") {
+                        $key = strtolower(dirname($filename));
+                    }
+                    elseif ($sort == "sort_fname") {
+                        $key = strtolower(basename($filename));
+                    }
+
+                    if ($key != ""){
+                        $key = $key." ";
+                        if (!isset($sort_list[$key])){
+                            $sort_list[$key] = [];
+                        }
+                        $sort_list[$key][sizeof($sort_list[$key])] = array($fach[2], $question[0], strval($question[1]), $pfad, $dateiname);
+                    }
+                    
+                }
+            }
+            if ($depth == 1 && sizeof($sort_list) != 0) {
+                $output = create_sorted_table($sort_list);
+            }
+        }
+
+    function create_row($binary, $course, $question, $score, $dir, $file) {
+        $file_path = $dir.$file;
+        $output = "<tr class='file_list_".$binary." table_item'>
+                        <td>".$course."</td>
+                        <td>".$question."</td>
+                        <td class='score'>".intval($score)."</td>
+                        <td>".$dir."</td>
+                        <td>".$file."</td>
+                        <td class='icon_container'>
+                        <button type='image' name='del' class='icon delete' title='Frage Löschen' value='".$file_path."' method='post'></button>
+                        <button type='image' name='edit_file' class='icon edit' title='Frage Editieren' value='".$file_path."' method='post'></button>
+                    </td></tr>";
+
+        return $output;
+    }
+
+    function create_sorted_table($liste){
+        $key_list = array_keys($liste);
+        if (is_numeric($key_list[0])) {
+            ksort($key_list);
+        }
+        else {
+            sort($key_list);
+        }
+        
+        $binary = 1;
+        $table = [];
+
+        foreach ($key_list as $key) {
+            foreach ($liste[$key] as $values) {
+                if ($binary == 1) {
+                    $binary = 0;
+                }
+                else {
+                    $binary = 1;
+                }
+                $fach = $values[0];
+                $frage = $values[1];
+                $punkte = $values[2];
+                $pfad = $values[3];
+                $datei = $values[4];
+
+                $new_row = create_row($binary, $fach, $frage, $punkte, $pfad, $datei);
+                $table[] .= $new_row;
+            }
+        }
+
+        return $table;
     }
 
     function get_answer($file){
         include($file);
-        // echo $s;
-        $output = array(0 => $q, 1=> $s);
+        $output = array($q, $s);
 
         return $output;
     }
@@ -59,7 +147,7 @@
                 $output = '<div class="warning"><p>Achtung! Folgendes File wird gelöscht:</p><div class="dateipfad">'.$file.'</div>';
                 $output .= '<form method="post" action="'.htmlspecialchars($_SERVER["PHP_SELF"]).'">';
                 $output .= '<input type="hidden" name="last_file" value="'.$file.'">';
-                $output .= '<div class="dateipfad">'.$answer.'</div>';
+                $output .= '<div class="dateipfad">'.$answer[0].'</div>';
                 $output .= '<div class="warning_menu"><button name="verify" value="0" method="post">Abbrechen</button><button name="verify" value="1" method="post">OK</button></div></form></div>';
                 return $output;
             }

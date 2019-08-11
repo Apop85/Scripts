@@ -1,6 +1,6 @@
 <?php
-	$q = "Was gibt 1+1?";
-	$a = "2";
+	$q = 'Welche Farbe haben Bananen?';
+	$a = 'gelb';
 	$f = "C:/Users/rbald/OneDrive/Dokumente/testfile.docx";
-	$s = 2;
+	$s = 6;
 ?>

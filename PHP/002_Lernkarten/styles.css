@@ -1,16 +1,18 @@
 body {
     margin: 0;
     padding: 0;
+    background: rgb(179, 224, 246);
 }
 
 #wrapper {
     display: grid;
     grid-template-columns: 100px 50% auto auto;
-    grid-template-rows: 100px auto auto auto;
+    grid-template-rows: 100px 57px auto 50px;
     grid-template-areas: "logo head head head"
                          "menubar menubar menubar menubar"
                          "main main main main"
                          "footer footer footer footer";
+    height: 98vh;
     /* grid-template-areas: "logo head head head"
                          "menubar main main main"
                          "menubar main main main"
@@ -64,6 +66,22 @@ body {
     background: rgb(27, 135, 185);
     text-transform: uppercase;
     color: white;
+}
+
+.sort_button {
+    background-color: black;
+    color: white;
+    font-weight: 600;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    margin: 0;
+}
+
+.sort_button:hover {
+    background-color: white;
+    color: black;
+    /* border: 1px solid black; */
 }
 
 .form_wrapper {
@@ -194,6 +212,7 @@ body {
     margin-right: 25px;
     text-align: justify;
     overflow: hidden;
+
 }
 
 .hidden {
@@ -210,11 +229,12 @@ body {
 
 #main h2 {
     padding-left: 25px;
-    background-color: rgba(245, 221, 178,0.5);
-    box-shadow: 0px 0px 2px 2px rgba(245, 221, 178,0.5);
+    background-color: rgb(104, 204, 254);
+    box-shadow: 0px 0px 2px 2px rgb(56, 151, 199);
     border-radius: 100px 0 100px 0%;
     margin-left: 20px;
     margin-right: 20px;
+    font-size: 34px;
     text-align: center;
 }
 
@@ -234,6 +254,12 @@ body {
     margin-right: 20%;
     border-radius: 5px;
     box-shadow: 0px 0px 5px 3px #ccc;
+    background-image: url(./img/info.png);
+    background-repeat: no-repeat;
+    background-size: auto 80%;
+    background-position-y: 50%;
+    background-position-x: 15px;
+    padding-left: 150px;
 }
 
 #footer {
@@ -254,7 +280,7 @@ body {
 }
 
 .content_title {
-    font-size: 25px;
+    font-size: 22px;
     font-weight: 600;
     text-align: center;
 }
@@ -442,6 +468,9 @@ body {
     text-align: center;
 }
 
+.file_list_0 {
+    background-color: #eff9fc;
+}
 .file_list_1 {
     background-color: #cdf2fc;
 }
@@ -449,10 +478,11 @@ body {
 .title_column {
     background: black;
     color: white;
+    text-align: center;
 }
 
 .list_table {
-    width: 90%;
+    width: 100%;
 }
 
 table, td, th {
@@ -698,6 +728,12 @@ ul li:hover ul li {
     grid-area: top_page;
     margin: 0px auto;
     display: flex;
+    margin-bottom: 25px;
+    background-color: #97deff;
+    padding-left: 25px;
+    padding-right: 25px;
+    border-radius: 39px;
+    box-shadow: 0px 0px 2px 2px;
 }
 
 .bar {
@@ -730,8 +766,8 @@ ul li:hover ul li {
 }
 
 .bar:hover {
-    background-color: rgba(204, 197, 197, 0.5);
-    box-shadow: 0px 0px 15px 0px rgba(204, 197, 197, 0.5);
+    background-color: rgb(113, 202, 244);
+    box-shadow: 0px 0px 5px 0px rgb(69, 186, 240);
 }
 
 input[name="r"] {

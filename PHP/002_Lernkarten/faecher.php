@@ -105,8 +105,8 @@
         $form_7 = '</form>';
         $form = $form_0.$form_1.$form_2.$form_3.$form_4.$form_5.$form_6;
         if ($_SERVER["REQUEST_METHOD"] == "POST" && sizeof($quest_array) == 4 && $main != "./cards/") {
-            $answer = test_input($_POST["answer"]);
-            $last_answer = test_input($_POST["true_answer"]);
+            $answer = strtolower(test_input($_POST["answer"]));
+            $last_answer = strtolower(test_input($_POST["true_answer"]));
             $last_file = test_input($_POST["last_file"]);
             $q_file = test_input($_POST["q_file"]);
             $output = "";

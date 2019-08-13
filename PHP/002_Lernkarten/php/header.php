@@ -9,7 +9,7 @@
     <body>
         <div id="wrapper">
             <div id="logo">
-                <img id="logo_img" src="./img/yy.png">
+                <a href="./"><img id="logo_img" src="./img/yy.png"></a>
             </div>
             <div id="header">
                 <h1>Lernkarten</h1>

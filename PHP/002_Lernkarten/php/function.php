@@ -7,9 +7,9 @@
         $class = "main_nav";
         
         $menu_array = array (
-            array("text" => "Home", "url" => "index.php"),
             array("text" => "Fächer", "url" => "faecher.php"),
             array("text" => "Randomfrage", "url" => "random.php"),
+            array("text" => "Prüfung", "url" => "pruefung.php"),
             array("text" => "Liste", "url" => "list_all.php"),
             array("text" => "Hinzufügen", "url" => "add_card.php")
         );

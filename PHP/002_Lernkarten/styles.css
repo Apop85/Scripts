@@ -22,7 +22,7 @@ body {
 
 #header {
     grid-area: head;
-    background: rgb(55, 180, 240);
+    background: rgb(139, 162, 173);
 }
 
 #header h1 {
@@ -40,7 +40,7 @@ body {
 
 #menubar {
     grid-area: menubar;
-    background: rgb(55, 180, 240);
+    background: rgb(139, 162, 173);
     width: 100%;
     overflow: hidden;
     border-right: 1px solid black;
@@ -52,7 +52,7 @@ body {
     text-decoration: none;
     text-align: center;
     border-bottom: 2px solid black;
-    background: rgb(151, 222, 255);
+    background: rgb(164, 182, 191);
     color: black;
     font-weight: bold;
     line-height: 50px;
@@ -63,7 +63,7 @@ body {
 
 .menu_button:hover {
     border-bottom: 2px solid white;
-    background: rgb(27, 135, 185);
+    background: rgb(139, 148, 152);
     text-transform: uppercase;
     color: white;
 }
@@ -171,7 +171,7 @@ body {
 
 #logo {
     grid-area: logo;
-    background: rgb(55, 180, 240);
+    background: rgb(139, 162, 173);
     height: 100%;
     width: 100%;
     overflow: hidden;
@@ -186,7 +186,7 @@ body {
 
 #infoleiste {
     grid-area: grid-r;
-    background: rgba(100,100,100,0.5);
+    background: rgb(139, 162, 173);
     border-right: 2px solid black;   
     padding-left: 10px;
     padding-right: 10px;
@@ -208,10 +208,9 @@ body {
 
 #main {
     grid-area: grid-l;
-    margin-left: 20px;
-    margin-right: 25px;
     text-align: justify;
     overflow: hidden;
+    background-color: #f2fdff;
 
 }
 
@@ -229,7 +228,7 @@ body {
 
 #main h2 {
     padding-left: 25px;
-    background-color: rgb(104, 204, 254);
+    background-color: rgb(193, 238, 246);
     box-shadow: 0px 0px 2px 2px rgb(56, 151, 199);
     border-radius: 100px 0 100px 0%;
     margin-left: 20px;
@@ -364,7 +363,7 @@ body {
     color: white;
     top: 20%;
     left: 20%;
-    height: 60%;
+    height: auto;
     width: 60%;
     box-align: center;
     overflow: hidden;
@@ -482,7 +481,8 @@ body {
 }
 
 .list_table {
-    width: 100%;
+    width: 80%;
+    margin-left: 10%;
 }
 
 table, td, th {
@@ -535,8 +535,10 @@ ul li:hover ul li {
 .add_titles {
     font-size: 25px;
     font-weight: 600;
-    background: #f2f2f2;
+    background: #c1bdbd;
     border-radius: 80px 80px 5px 5px;
+    width: 80%;
+    margin-left: 10%;
 }
 
 .add_info_text {
@@ -729,7 +731,7 @@ ul li:hover ul li {
     margin: 0px auto;
     display: flex;
     margin-bottom: 25px;
-    background-color: #97deff;
+    background-color: #8ba2ad;
     padding-left: 25px;
     padding-right: 25px;
     border-radius: 39px;
@@ -766,8 +768,8 @@ ul li:hover ul li {
 }
 
 .bar:hover {
-    background-color: rgb(113, 202, 244);
-    box-shadow: 0px 0px 5px 0px rgb(69, 186, 240);
+    background-color: rgb(173, 189, 197);
+    box-shadow: 0px 0px 5px 0px rgb(197, 209, 214);
 }
 
 input[name="r"] {
@@ -806,4 +808,157 @@ input[name="r"] {
 
 #r4:checked ~ .s1{
     margin-left: -75%;
+}
+
+/* PRÜFUNGSSEITEN */
+.exam_title {
+    margin-bottom: 25px;
+    /* text-transform: uppercase; */
+}
+
+.exam {
+    background-image: url(./img/paper.png);
+    background-size: 5px;
+    border-radius: 25px;
+    width: 80%;
+    margin-left: 10%;
+    margin-bottom: 50px;    
+}
+
+.pruefungsformular {
+    font-size: 25px;
+    text-align: center;
+}
+
+.exam_option > p > select {
+    font-size: 17px;
+}
+
+.exam_option > p {
+    font-size: 17px;
+}
+
+.exam_option {
+    overflow: hidden;
+    width: 80%;
+    margin-left: 10%
+}
+
+.exam_option > select {
+    height: 200px;
+    width: 100%;
+    text-align: center; 
+    font-size: 18px;
+    /* overflow-y: hidden; */
+    background: none;
+    border: none;
+}
+
+.exam_option > select > option {
+    padding: 5px;
+    background-color: #8fd3f4;
+    border-radius: 15px;
+    margin: 5px;
+}
+
+.exam_option > select > option:hover {
+    background-color: #59bef0;
+}
+
+.exam_button {
+    width: 60%;
+    font-size: 16px;
+    margin: 0 20% 9px 20%;
+}
+
+.exam > .exam_title {
+    font-weight: 700;
+    text-align: left;
+    margin-left: 50px;
+    padding-top: 22px;
+}
+
+.exam_input {
+    text-align: left;
+    /* margin-left: 30px; */
+    font-size: 19px;
+}
+.exam_question, .exam_answer {
+    text-align: left;
+    margin-left: 30px;
+    font-size: 19px;
+}
+
+.exam_answer {
+    width: 80%;
+    background: none;
+    margin-top: -3px;
+    border: none;
+    border-bottom: dotted;
+    margin-bottom: 21px;
+    background-color: rgba(204, 204, 204, 0.5);
+}
+
+.exam_form {
+    margin-top: 45px;
+}
+
+.pruefung_button, .exam_button {
+    height: 35px;
+    width: 50%;
+    background: #f0f0f0;;
+    margin-bottom: 10px;
+    border-radius: 15px;
+    font-weight: 600;
+}
+
+.pruefung_button:hover, .exam_button:hover {
+    background-color: white;
+    font-size: 22px;
+}
+
+.pruefung_button {
+    margin-bottom: 30px;
+}
+
+.exam_resuts {
+    text-align: center;
+    width: 60%;
+    margin-left: 20%;
+}
+
+.exam_result {
+    background-color: lightyellow;
+    padding: 1px 35px 35px 35px;
+    border-radius: 25px;
+    line-height: 25px;
+}
+
+.exam_result > p {
+    background: #ffffb6;
+}
+
+.end_of_exam {
+    width: 50%;
+    font-size: 25px;
+    margin-top: 15px;
+    border-radius: 15px;
+}
+
+.end_of_exam:hover {
+    background-color: white;
+}
+
+.mid_result {
+    background: gray;
+    color: white;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.end_result {
+    background: black;
+    color: white;
+    font-size: 35px;
+    text-transform: uppercase;
 }

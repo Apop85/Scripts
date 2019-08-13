@@ -8,7 +8,7 @@
 # Created Date: Friday 09.08.2019, 12:48
 # Author: rbald
 #-----
-# Last Modified: Friday 09.08.2019, 13:51
+# Last Modified: Tuesday 13.08.2019, 00:26
 #-----
 # Copyright (c) 2019 rbald
 # This software is published under the MIT license.
@@ -20,7 +20,23 @@
 from sys import argv
 import os, re
 
-root_path = r"C:/Users/rbald/OneDrive/Dokumente/http/lernkarten"
+def get_root():
+    os.chdir(os.path.dirname(__file__))
+    rel_dir = "../conf/cards.ini"
+    file_reader = open(rel_dir)
+    file_content = file_reader.readlines()
+    file_reader.close()
+    for line in file_content:
+        if "ROOT_PATH" in line:
+            ROOT_PATH = line.lstrip('ROOT_PATH="')
+            ROOT_PATH = ROOT_PATH.rstrip('"\n')
+        elif "DOK_PATH" in line:
+            DOK_PATH = line.lstrip('DOK_PATH="')
+            DOK_PATH = DOK_PATH.rstrip('"\n') 
+    return ROOT_PATH, DOK_PATH
+
+ROOT_PATH, DOK_PATH = get_root()
+root_path = ROOT_PATH
 
 if argv[1] == "edit" and argv[2] != "" and argv[3] != "" and argv[4] != "":
     datei, frage, antwort = argv[2], argv[3], argv[4]

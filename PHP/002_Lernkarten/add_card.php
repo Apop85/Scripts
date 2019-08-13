@@ -6,7 +6,7 @@
         foreach ($classes as $class) {
             $dd_menu .= '<option value="'.$class.'">'.$class.'</option>';
         }
-
+        // CSS Slideshow
         $output =   '<div class="add_manual_form"><form method="post" class="manual_form" action="'.htmlspecialchars($_SERVER["PHP_SELF"]).'">
                     <div class="slideshow middle"><div class="slides">
                     <input type="radio" name="r" id="r1" checked><input type="radio" name="r" id="r2"><input type="radio" name="r" id="r3"><input type="radio" name="r" id="r4">
@@ -78,6 +78,7 @@
                     $class_names = get_class_names($main.$file.'/', $class_names, $counter);
                 }
                 else {
+                    // Rekursive Ordnersuche
                     $class_names[] .= trim($main, "./cards/").'/'.$file;
                     $class_names = get_class_names($main.$file.'/', $class_names, $counter);
                 }
@@ -87,6 +88,7 @@
     }
 
     function test_post($data) {
+        // Formatiere POST-Strings
         $data = trim($data);
         $data = stripslashes($data);
         $data = htmlspecialchars($data);
@@ -94,6 +96,7 @@
     }
 
     function check_post() {
+        // Auslesen der Button_Value
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $button_value = test_post($_POST["button"]);
 
@@ -103,6 +106,7 @@
     }
 
     function get_add_entry_values() {
+        // Lese Daten für das manuelle anlegen von Lernkarten aus
         $add_question = $_POST["frage"];
         $add_answer = $_POST["antwort"];
         $add_class = $_POST["class_option"];
@@ -111,6 +115,7 @@
     }
 
     function get_file_values() {
+        // Auslesen des Verzeichnisses und umformatieren des Strings
         $add_file = $_POST['file_name'];
         $add_file = trim($add_file, '"');
         $add_file = escapeshellarg(addslashes($add_file));
@@ -119,6 +124,7 @@
     }
 
     function get_dir_values() {
+        // Auslesen des Ordners zum Scannen
         $add_dir = $_POST["dir_name"];
         $add_dir = trim($add_dir, '"');
         $add_dir = escapeshellarg(addslashes($add_dir));
@@ -157,6 +163,7 @@
             }
         }
         elseif ($button_value == "add_entry") {
+            // Manuell hinzufügen
             $values = get_add_entry_values();
             $frage = $values[0];
             $antwort = $values[1];

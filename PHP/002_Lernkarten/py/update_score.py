@@ -8,7 +8,7 @@
 # Created Date: Friday 09.08.2019, 21:19
 # Author: rbald
 #-----
-# Last Modified: Friday 09.08.2019, 21:59
+# Last Modified: Tuesday 13.08.2019, 00:04
 #-----
 # Copyright (c) 2019 rbald
 # This software is published under the MIT license.
@@ -20,8 +20,6 @@
 import os, re
 from sys import argv
 
-# argv = ["","update", "-1" , "C:/Users/rbald/OneDrive/Dokumente/http/lernkarten/cards/mathe/a65111f3c59eef30843201d52779bfbf.php"]
-
 if argv[1] == "update" and argv[2] != "" and os.path.isfile(argv[3]):
     score_delta = int(argv[2]) 
     file_name = argv[3] 
@@ -30,7 +28,6 @@ if argv[1] == "update" and argv[2] != "" and os.path.isfile(argv[3]):
     file_handler.close()
     score_pattern = re.compile(r'\$s = (.*);')
     score = int(score_pattern.findall(file_content)[0])
-    # print("1")
     new_score = score + score_delta
     new_string = '$s = '+str(new_score)+';'
     file_content = re.sub(r'\$s = (.*);', new_string, file_content)

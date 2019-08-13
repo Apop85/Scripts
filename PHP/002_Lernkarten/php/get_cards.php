@@ -1,6 +1,7 @@
 
 <?php
     function get_all_cards($filename, &$output, &$binary, &$sort_list, $depth=0) {
+        # Rekursive suche nach Frage-Files
         if ($sort_list == NULL && $depth == 0) {
             $sort_list = array();
         }
@@ -25,16 +26,11 @@
                 $sort = "";
                     if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         $sort = $_GET["sort"];
-
-                        // $sort = preg_split("/\-/", $sort);
-
-                        // $current = $sort[1];
-                        // $sort = $sort[0];
-                        // echo $sort;
                     }
                     
                     $pfad = dirname($filename);
                     $dateiname = basename($filename);
+                    # Erstelle Array aus allen Daten
                     if ($sort == "") {
                         $output[] .= create_row($binary, $fach[2], $question[0], $question[1], $pfad, $dateiname);
                         $key = "";
@@ -71,22 +67,25 @@
         }
 
     function create_row($binary, $course, $question, $score, $dir, $file) {
-        $file_path = $dir.$file;
+        // Erstelle Reihe der Tabelle
+        $file_path = $dir.'/'.$file;
         $output = "<tr class='file_list_".$binary." table_item'>
                         <td>".$course."</td>
                         <td>".$question."</td>
                         <td class='score'>".intval($score)."</td>
                         <td>".$dir."</td>
                         <td>".$file."</td>
-                        <td class='icon_container'>
+                        <td class='icon_container'><form class='list_form' method='post' action='".htmlspecialchars($_SERVER['PHP_SELF'])."'>
                         <button type='image' name='del' class='icon delete' title='Frage Löschen' value='".$file_path."' method='post'></button>
                         <button type='image' name='edit_file' class='icon edit' title='Frage Editieren' value='".$file_path."' method='post'></button>
+                        </form>
                     </td></tr>";
 
         return $output;
     }
 
     function create_sorted_table($liste){
+        // Sortiere das Array nach den gegebenen Keys
         $key_list = array_keys($liste);
         if (is_numeric($key_list[0])) {
             ksort($key_list);
@@ -121,6 +120,7 @@
     }
 
     function get_answer($file){
+        // Lese Frage und Punktzahl aus Frage-File aus
         include($file);
         $output = array($q, $s);
 
@@ -128,11 +128,13 @@
     }
 
     function get_content($file) {
+        // Lese Frage und Antwort aus Frage-File aus
         include($file);
         return array($q, $a);
     }
 
     function check_post() {
+        // Prüfe ob Method = Post
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $file = $_POST["del"];
             $edit_file = $_POST["edit_file"];
@@ -144,30 +146,49 @@
             $edited_answer = $_POST["answer"];
             $answer = get_answer($file);
             if ($file != "" && $edit_file == "") {
-                $output = '<div class="warning"><p>Achtung! Folgendes File wird gelöscht:</p><div class="dateipfad">'.$file.'</div>';
-                $output .= '<form method="post" action="'.htmlspecialchars($_SERVER["PHP_SELF"]).'">';
-                $output .= '<input type="hidden" name="last_file" value="'.$file.'">';
-                $output .= '<div class="dateipfad">'.$answer[0].'</div>';
-                $output .= '<div class="warning_menu"><button name="verify" value="0" method="post">Abbrechen</button><button name="verify" value="1" method="post">OK</button></div></form></div>';
+                // Erstelle Popup
+                $output =   '<div class="warning">
+                                <p>Achtung! Folgendes File wird gelöscht:</p>
+                                <div class="dateipfad">'.$file.'</div>
+                                <form method="post" action="'.htmlspecialchars($_SERVER["PHP_SELF"]).'">
+                                    <input type="hidden" name="last_file" value="'.$file.'">
+                                    <div class="dateipfad">'.$answer[0].'</div>
+                                    <div class="warning_menu">
+                                        <button name="verify" value="1" method="post">OK</button>
+                                        <button name="verify" value="0" method="post">Abbrechen</button>
+                                    </div>
+                                </form>
+                            </div>';
                 return $output;
             }
             elseif ($verify == 1 && $last_file != "") {
+                // Lösche File endgültig
                 $command = escapeshellcmd('python ./py/delete.py  "del" "'.$last_file.'"');
                 $output = shell_exec($command);
                 return $output;
             }
             elseif ($edit_file != "" && $file == ""){
+                // Editiere eine Frage
                 $file_content = get_content($edit_file);
-                $output = '<div class="editor"><p class="edit_title">Folgendes File wird bearbeitet:</p><div class="dateipfad">'.$edit_file.'</div>';
-                $output .= '<form method="post" action="'.htmlspecialchars($_SERVER["PHP_SELF"]).'">';
-                $output .= '<input type="hidden" name="edited_file" value="'.$edit_file.'">';
-                $output .= '<div class="edit_form"><p><input type="text" name="question" value="'.$file_content[0].'"></p>';
-                $output .= '<p><input type="text" name="answer" value="'.$file_content[1].'"></p>';
-                $output .= '<div class="warning_menu"><button name="save" value="1" method="post">OK</button><button name="save" value="0" method="post">Abbrechen</button></div></form>';
-                $output .= '</div></div>';
+                $output =   '<div class="editor">
+                                <p class="edit_title">Folgendes File wird bearbeitet:</p>
+                                <div class="dateipfad">'.$edit_file.'</div>
+                                    <div class="edit_form">
+                                    <form method="post" action="'.htmlspecialchars($_SERVER["PHP_SELF"]).'">
+                                        <input type="hidden" name="edited_file" value="'.$edit_file.'">
+                                        <p><input type="text" name="question" value="'.$file_content[0].'"></p>
+                                        <p><input type="text" name="answer" value="'.$file_content[1].'"></p>
+                                        <div class="warning_menu">
+                                            <button name="save" value="1" method="post">OK</button>
+                                            <button name="save" value="0" method="post">Abbrechen</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>';
                 return $output;
             }
             elseif ($save_statement == 1) {
+                // Frage Speichern
                 if ($edited_answer == "" || $edited_question == "") {
                     $output = '<div class="output_message info">Frage- oder Antwortfeld darf nicht leer sein</div>';
                 }

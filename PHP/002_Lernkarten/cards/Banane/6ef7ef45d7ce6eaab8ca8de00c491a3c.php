@@ -2,5 +2,5 @@
 	$q = 'Welche Farbe hat eine Banane?';
 	$a = 'Gelb';
 	$f = "C:/Users/rbald/OneDrive/Dokumente/testfile.docx";
-	$s = 1;
+	$s = 2;
 ?>

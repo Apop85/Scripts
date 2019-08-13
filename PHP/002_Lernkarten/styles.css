@@ -23,6 +23,7 @@ body {
 #header {
     grid-area: head;
     background: rgb(139, 162, 173);
+    padding-left: 39px;
 }
 
 #header h1 {
@@ -184,6 +185,12 @@ body {
     width: auto;
 }
 
+.infobox {
+    margin-top: 290px;
+    background-color: white;
+    position: relative;
+}
+
 #infoleiste {
     grid-area: grid-r;
     background: rgb(139, 162, 173);
@@ -191,6 +198,18 @@ body {
     padding-left: 10px;
     padding-right: 10px;
     text-align: center;
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: 400px auto;
+    grid-template-areas: "s_top" "s_bottom";
+}
+
+.infoleiste_top {
+    grid-area: s_top;
+}
+
+.infoleiste_bottom {
+    grid-area: s_bottom;
 }
 
 #infoleiste h3 {
@@ -297,6 +316,16 @@ body {
 
 .submit_button {
     font-size: 25px;
+}
+
+.help_button {
+    background-color: white;
+    font-size: 15px;
+    padding: 10px 20px;
+    font-weight: bold;
+    border: none;
+    width: 100%;
+    box-shadow: 5px 4px 5px 0px;
 }
 
 .class_button {
@@ -960,5 +989,90 @@ input[name="r"] {
     background: black;
     color: white;
     font-size: 35px;
+    text-transform: uppercase;
+}
+
+/* HELP Seite */
+.template_box {
+    background: url(./img/word.png);
+    background-repeat: repeat;
+    background-size: auto;
+    height: 656px;
+    background-size: 100%;
+    margin-left: 10%;
+    margin-top: 40px;
+    width: 80%;
+    background-repeat: no-repeat;
+}
+
+.templates_rules {
+    width: 69%;
+    margin-left: 15%;
+    margin-top: 5px;
+    padding-top: 30%;
+}
+
+.template_rule_title {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.example_rule {
+    padding-top: 56px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.exit_template {
+    width: 20%;
+    margin-left: 40%;
+    margin-top: 8px;
+    font-size: 16px;
+    font-weight: 550;
+}
+
+.help_box {
+    margin-left: 20%;
+    width: 60%;
+    min-height: 50%;
+}
+
+.help_box > form {
+    min-height: 264px;
+}
+
+.help_content_button {
+    width: 49%;
+    height: 55px;
+    margin-bottom: 25px;
+    margin-top: 25px;
+    font-size: larger;
+    font-weight: 550;
+    border-radius: 12px;
+}
+
+.conf_input_dir {
+    width: 100%;
+    padding: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.edit_box, .edit_box > tr, .edit_box > tr > td, .hidden_border, .hidden_border > td {
+    border: none;
+}
+
+.setup_title {
+    font-size: 22px;
+    /* margin-bottom: 15px; */
+}
+
+.setup_content_button {
+    width: 100%;
+    height: 217px;
+    font-size: 50px;
+    border-radius: 50px;
+    background-color: #ffb4b4;
+    text-shadow: 0px 0px 5px white;
     text-transform: uppercase;
 }

@@ -6,10 +6,13 @@
     $total_sub = get_sub_total($classes_amount[1], $card_amount[1])
 ?>
             <div id="infoleiste">
-                    <h3>Infoleiste</h3>
-                <ul>
-                    <li class="info_text">Total: <?php echo $card_amount[0]; ?><?php echo $total_sub; ?></li>
-                </ul><ul>
-                    <li class="info_text">Fächer: <?php echo $classes_amount[0]; echo $total_cls; ?></li>
-                </ul>
+                <div class="infoleiste_top">
+                        <h3>Infoleiste</h3>
+                    <ul>
+                        <li class="info_text">Total: <?php echo $card_amount[0]; ?><?php echo $total_sub; ?></li>
+                    </ul><ul>
+                        <li class="info_text">Fächer: <?php echo $classes_amount[0]; echo $total_cls; ?></li>
+                    </ul>
+                </div>
+                <div class="infoleiste_bottom"><button class="help_button" onclick="window.location.href='help.php'">Hilfe</button></div>
             </div>

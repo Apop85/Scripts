@@ -1,4 +1,4 @@
-<?php 
+    <?php 
     function get_post_value() {
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             return $_POST["submit_value"];
@@ -189,7 +189,7 @@
                                 <p class="template_rule">1. Eine Frage muss immer auf einer Linie (ohne manuellem Zeilenumbruch) geschrieben werden</p>
                                 <p class="template_rule">2. Eine Frage muss immer mit "'.$QA_INTRO.'" beginnen</p>
                                 <p class="template_rule">3. Die einzelnen Parameter müssen mit "'.$SEPERATOR.'" voneinander getrennt sein</p>
-                                <p class="example_rule">Beispiel: '.$QA_INTRO.$SEPERATOR.'Mathematik'.$SEPERATOR.'Was ergibt 1+1?'.$SEPERATOR.'2'.$SEPERATOR.'</p>
+                                <p class="example_rule">Beispiel: </br>'.$QA_INTRO.$SEPERATOR.'Mathematik/Addition'.$SEPERATOR.'Was ergibt 1+1?'.$SEPERATOR.'2'.$SEPERATOR.'</p>
                             </div>
                             <form method="post" action="'.htmlspecialchars($_SERVER["PHP_SELF"]).'">
                                 <button class="exit_template" method="post" name="submit_value" value="start">Zurück</button>

@@ -134,6 +134,9 @@
 
                 $faecher = $_POST["faecher"];
                 $max_score = $_POST["max_score"];
+                if ($max_score == "ALLE") {
+                    $max_score = 999999;
+                }
 
                 $directories = preg_split("/\?/", $faecher);
                 if (!in_array("ALLE", $directories)) {
@@ -147,7 +150,6 @@
                     $final_files = [];
                     foreach ($exam_files as $qfile) {
                         $score = intval(get_file_score($qfile));
-                        echo $score."<=".$max_score.' | ';
                         if ($score <= $max_score) {
                             $final_files[] .= $qfile;
                         }
@@ -159,7 +161,6 @@
                     collect_files("./cards/", $exam_files);
                     foreach ($exam_files as $qfile) {
                         $score = intval(get_file_score($qfile));
-                        echo $score."<=".$max_score.' | ';
                         if ($score <= $max_score) {
                             $final_files[] .= $qfile;
                         }

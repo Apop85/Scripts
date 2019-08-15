@@ -9,7 +9,10 @@
         // CSS Slideshow
         $output =   '<div class="add_manual_form"><form method="post" class="manual_form" action="'.htmlspecialchars($_SERVER["PHP_SELF"]).'">
                     <div class="slideshow middle"><div class="slides">
-                    <input type="radio" name="r" id="r1" checked><input type="radio" name="r" id="r2"><input type="radio" name="r" id="r3"><input type="radio" name="r" id="r4">
+                    <input type="radio" name="r" class="r1" id="r1" checked>
+                    <input type="radio" name="r" class="r2" id="r2">
+                    <input type="radio" name="r" class="r3" id="r3">
+                    <input type="radio" name="r" class="r4" id="r4">
                     
 
                     <div class="slide s1">
@@ -132,6 +135,7 @@
         return $add_dir;
     }
 
+    $message = "";
     $button_value = check_post();
     if ($button_value != NULL) {
 

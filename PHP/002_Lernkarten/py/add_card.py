@@ -8,7 +8,7 @@
 # Created Date: Thursday 08.08.2019, 23:52
 # Author: rbald
 #-----
-# Last Modified: Tuesday 13.08.2019, 00:44
+# Last Modified: Thursday 15.08.2019, 20:23
 #-----
 # Copyright (c) 2019 rbald
 # This software is published under the MIT license.
@@ -144,6 +144,7 @@ def add_data(root_dir = ROOT_PATH+"/cards"):
     else:
         print("<div class='output_message error'>Fehlerhafte Ordnerangabe</div>")
 
+# search_all(DOK_PATH)
 
 if argv[1] == "all":
     search_all(DOK_PATH)

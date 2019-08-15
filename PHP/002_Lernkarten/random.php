@@ -34,18 +34,21 @@
             $antwort = strtolower(test_input($_POST["answer"]));
             $test = strtolower(test_input($_POST["true_answer"]));
             $last_file = test_input($_POST["last_file"]);
+            // echo $last_file;
             
             if ($antwort == $test){
                 $antwortfeld = '<div class="true_value">Diese Antwort war richtig!!</div>';
                 $command = escapeshellcmd('python ./py/update_score.py  "update" "1" "'.$last_file.'"');
                 $output = shell_exec($command);
-                return $antwortfeld;
+                echo "...".$output."-".$last_file."...";
+                return $antwortfeld.$output;
             }
             else {
                 $antwortfeld = '<div class="false_value">Diese Antwort war falsch!! Die korrekte Antwort lautet:</br><div class="correct">'.$test.'</div>Siehe '.$card[2].'</div>';
                 $command = escapeshellcmd('python ./py/update_score.py  "update" "-1" "'.$last_file.'"');
                 $output = shell_exec($command);
-                return $antwortfeld;
+                echo "...".$output."-".$last_file."...";
+                return $antwortfeld.$output;
             }
         }
     }
@@ -56,7 +59,7 @@
         $data = htmlspecialchars($data);
         return $data;
     }
-    ?>
+?>
 
 <?php
     $init_form = '<form method="post" action="'.htmlspecialchars($_SERVER["PHP_SELF"]).'">';

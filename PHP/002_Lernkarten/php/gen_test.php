@@ -104,18 +104,21 @@
             $submit_value = $_POST["submit_value"];
             if ($submit_value == "1") {
                 // EIngangsseite generieren (Fachauswahl)
-                $fach = $_POST["fach"];
-                $faecher = "";
-                foreach ($fach as $f) {
-                    $sub_dir = preg_split("/\//", $f);
-                    unset($sub_dir[sizeof($sub_dir)-1]);
-                    $sub_dir = join("/", $sub_dir);
-                    if (!in_array($sub_dir, $fach) || $sub_dir == "./cards") {
-                        $faecher .= $f."?";
+                
+                if (!key_exists("faecher_value", $_POST)) {
+                    $fach = $_POST["fach"];
+                    $faecher = "";
+                    foreach ($fach as $f) {
+                        $sub_dir = preg_split("/\//", $f);
+                        unset($sub_dir[sizeof($sub_dir)-1]);
+                        $sub_dir = join("/", $sub_dir);
+                        if (!in_array($sub_dir, $fach) || $sub_dir == "./cards") {
+                            $faecher .= $f."?";
+                        }
                     }
+                } else {
+                    $faecher = $_POST["faecher_value"];
                 }
-
-                $fach = $faecher;
 
                 $dd_max_points = '<select name="max_score">';
                 $dd_max_points .= create_num_dd(10);
@@ -127,13 +130,14 @@
                             '.$dd_max_points.'</p></div>
                             <button name="submit_value" class="exam_button" value="0" method="post">Zurück</button>
                             <button name="submit_value" class="exam_button" value="2" method="post">OK</button>
-                            <input type="hidden" value="'.$fach.'", name="faecher">';
+                            <input type="hidden" value="'.$faecher.'", name="faecher">';
                 
             } elseif ($submit_value == "2") {
                 // Seite zur Wahl der Anzahl Prüfungsfragen generieren
 
                 $faecher = $_POST["faecher"];
                 $max_score = $_POST["max_score"];
+
                 if ($max_score == "ALLE") {
                     $max_score = 999999;
                 }
@@ -169,7 +173,7 @@
                 }
 
 
-                $faecher = join("?", $final_files);
+                $exam_files = join("?", $final_files);
                 
                 $dd_max_amount = create_num_dd(sizeof($final_files));
                 $output .= '<p class="exam_title">Anzahl Prüfungsfragen</p>
@@ -177,7 +181,8 @@
                             .$dd_max_amount.'</select></p></div>
                             <button name="submit_value" class="exam_button" value="1" method="post">Zurück</button>
                             <button name="submit_value" class="exam_button" value="3" method="post">OK</button>
-                            <input type="hidden" name="exam_files" value="'.$faecher.'">
+                            <input type="hidden" name="exam_files" value="'.$exam_files.'">
+                            <input type="hidden" name="faecher_value" value="'.$faecher.'">
                             <input type="hidden" name="max_score" value="'.$max_score.'">';
 
             } elseif ($submit_value == "3") {
@@ -189,7 +194,7 @@
                 $files = preg_split("/\?/", $exam_files);
                 $question_file_array = [];
 
-                while (TRUE) {
+                while (sizeof($question_file_array) < $max_amount || sizeof($question_file_array) == 1) {
                     // Rearrangiere die Fragen nach Zufallsprinzip
                     $random = rand(0, sizeof($files)-1);
                     if (!in_array($files[$random], $question_file_array) && $files[$random] != "") {

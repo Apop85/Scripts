@@ -16,7 +16,11 @@
             
             }
         }
-        return array(sizeof($cards_am), $cards_am);
+        if (is_array($cards_am)) {
+            return array(sizeof($cards_am), $cards_am);
+        } else {
+            return array(0, []);
+        }
     }
 
     function count_classes($main, $class_names){

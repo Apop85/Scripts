@@ -8,7 +8,7 @@
 # Created Date: Thursday 08.08.2019, 23:52
 # Author: rbald
 #-----
-# Last Modified: Thursday 15.08.2019, 20:23
+# Last Modified: Saturday 17.08.2019, 00:42
 #-----
 # Copyright (c) 2019 rbald
 # This software is published under the MIT license.
@@ -102,9 +102,8 @@ def create_files(questions, root_dir = ROOT_PATH):
                 question = '"'+frage[0]+'"'
                 answer = '"'+frage[1]+'"'
                 file_path = '"'+frage[2]+'"'
-                score = "0"
                 
-                output = "<?php\n\t$q = {};\n\t$a = {};\n\t$f = {};\n\t$s = {};\n?>".format(question, answer, file_path, score)
+                output = "<?php\n\t$q = {};\n\t$a = {};\n\t$f = {};\n\t$s = 0;\n\t$ra = 0;\n\t$fa = 0;\n?>".format(question, answer, file_path)
                 file_writer = open(current_dir+"/"+filename, "w", encoding="utf-8")
                 file_writer.write(output)
                 file_writer.close()

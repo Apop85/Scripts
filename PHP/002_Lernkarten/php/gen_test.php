@@ -232,9 +232,14 @@
                     $total_count = $total_count + get_score($answer, $file);
                 }
 
-                $percent_right = 100/sizeof($question_file_array)*$total_count;
+                $percent_right = round((100/sizeof($question_file_array)*$total_count), 2);
                 $total_false = sizeof($question_file_array)-$total_count;
-                $note = 1+(5/(100/$percent_right));
+                if ($percent_right != 0) {
+                    $note = round(1+(5/(100/$percent_right)), 2);
+                } else {
+                    $note = 1;
+                }
+
                 $total_questions = sizeof($question_file_array);
 
                 $output .=  '<div class="exam_title">Prüfungsergebnisse</div>

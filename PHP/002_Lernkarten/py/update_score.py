@@ -8,7 +8,7 @@
 # Created Date: Friday 09.08.2019, 21:19
 # Author: rbald
 #-----
-# Last Modified: Thursday 15.08.2019, 21:30
+# Last Modified: Saturday 17.08.2019, 18:25
 #-----
 # Copyright (c) 2019 rbald
 # This software is published under the MIT license.
@@ -61,8 +61,8 @@ def update_statistics(value):
         file_content = file_handler.read()
         file_handler.close()
         
-        right_pattern = re.compile(r'\t\$r = (.?);\n')
-        false_pattern = re.compile(r'\t\$f = (.?);\n')
+        right_pattern = re.compile(r'\t\$r = (.*);\n')
+        false_pattern = re.compile(r'\t\$f = (.*);\n')
 
         right_score = (right_pattern.findall(file_content))
         right_score = int(right_score[0])
@@ -80,7 +80,7 @@ def update_statistics(value):
         file_handler.close()
 
 
-# argv = ['mmm','update','1','./cards/Netzwerktechnik/dec3dbce6a3f73637820c0b9c5fc1b4d.php']
+# argv = ['mmm','update','-1','./cards/Netzwerktechnik/dec3dbce6a3f73637820c0b9c5fc1b4d.php']
 
 if argv[1] == "update" and argv[2] != "" and os.path.isfile(argv[3]):
     score_delta = int(argv[2]) 
@@ -88,11 +88,26 @@ if argv[1] == "update" and argv[2] != "" and os.path.isfile(argv[3]):
     file_handler = open(file_name, "r", encoding="utf-8")
     file_content = file_handler.read()
     file_handler.close()
+
     score_pattern = re.compile(r'\$s = (.*);')
     score = int(score_pattern.findall(file_content)[0])
     new_score = score + score_delta
     new_string = '$s = '+str(new_score)+';'
     file_content = re.sub(r'\$s = (.*);', new_string, file_content)
+
+    if score_delta > 0:
+        ra_pattern = re.compile(r'\$ra = (.*);')
+        ra = int(ra_pattern.findall(file_content)[0])
+        new_score = ra + score_delta
+        new_string = '$ra = '+str(new_score)+';'
+        file_content = re.sub(r'\$ra = (.*);', new_string, file_content)
+    else:
+        fa_pattern = re.compile(r'\$fa = (.*);')
+        fa = int(fa_pattern.findall(file_content)[0])
+        new_score = fa - score_delta 
+        new_string = '$fa = '+str(new_score)+';'
+        file_content = re.sub(r'\$fa = (.*);', new_string, file_content)
+
 
     update_statistics(score_delta)
 

@@ -8,7 +8,7 @@
 # Created Date: Tuesday 13.08.2019, 14:57
 # Author: rbald
 #-----
-# Last Modified: Friday 16.08.2019, 18:33
+# Last Modified: Saturday 17.08.2019, 19:24
 #-----
 # Copyright (c) 2019 rbald
 # This software is published under the MIT license.
@@ -22,6 +22,8 @@ from sys import argv
 os.chdir(os.path.dirname(__file__))
 
 def create_ini():
+    if os.path.exists("../cards/placeholder.file"):
+        os.remove("../cards/placeholder.file")
     root_dir = argv[2]
     directory_dir = argv[3]
     qa_intro = argv[4]

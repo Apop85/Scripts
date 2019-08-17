@@ -8,7 +8,7 @@
 # Created Date: Tuesday 13.08.2019, 14:57
 # Author: rbald
 #-----
-# Last Modified: Tuesday 13.08.2019, 21:48
+# Last Modified: Friday 16.08.2019, 18:33
 #-----
 # Copyright (c) 2019 rbald
 # This software is published under the MIT license.
@@ -70,7 +70,7 @@ def get_ini_array():
     output_message = "/".join(output_message)
     print(output_message) 
 
-# argv = ["xxx", "get_content"]
+# argv = ["xxx", "setup", "C:\"]
 
 if argv[1] == "setup":
     create_ini()

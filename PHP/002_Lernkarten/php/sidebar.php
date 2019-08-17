@@ -14,5 +14,8 @@
                         <li class="info_text">Fächer: <?php echo $classes_amount[0]; echo $total_cls; ?></li>
                     </ul>
                 </div>
-                <div class="infoleiste_bottom"><button class="help_button" onclick="window.location.href='settings.php'">Einstellungen</button></div>
+                <div class="infoleiste_bottom">
+                    <button class="help_button" onclick="window.location.href='settings.php'">Einstellungen</button>
+                    <button class="stats_button" onclick="window.location.href='statistics.php'">Statistiken</button>
+                </div>
             </div>

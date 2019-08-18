@@ -13,11 +13,6 @@ body {
                          "main main main main"
                          "footer footer footer footer";
     height: 98vh;
-    /* grid-template-areas: "logo head head head"
-                         "menubar main main main"
-                         "menubar main main main"
-                         "footer footer footer footer"; */
-    
 }
 
 #header {
@@ -192,15 +187,14 @@ body {
 
 #infoleiste {
     grid-area: grid-r;
-    /* background: rgb(139, 162, 173); */
     border-right: 2px solid black;   
     padding-left: 10px;
     padding-right: 10px;
     text-align: center;
     display: grid;
     grid-template-columns: auto;
-    grid-template-rows: 400px auto;
-    grid-template-areas: "s_top" "s_bottom";
+    grid-template-rows: 100px auto;
+    grid-template-areas: "s_bottom" "s_top";
     background: linear-gradient(to left, rgb(197, 214, 222), rgb(139,162,173), rgb(139,162,173), rgb(139,162,173));
 }
 
@@ -330,6 +324,7 @@ body {
     background-size: 27px;
     background-repeat: no-repeat;
     background-position: 3px;
+    margin-top: 13px;
 }
 
 .help_button:hover {
@@ -610,7 +605,6 @@ ul li:hover ul li {
 .add_info_text {
     background: rgb(199, 199, 199);
     line-height: 20px;
-    /* border-radius: 15px 15px 50px 50px; */
 }
 
 .add_info_text p {
@@ -692,7 +686,6 @@ ul li:hover ul li {
     width: 100%;
     height: 200px;
     backface-visibility: hidden;
-    /* position: absolute; */
 }
 
 
@@ -890,7 +883,6 @@ input[name="r"] {
 /* PRÜFUNGSSEITEN */
 .exam_title {
     margin-bottom: 25px;
-    /* text-transform: uppercase; */
 }
 
 .exam {
@@ -926,7 +918,6 @@ input[name="r"] {
     width: 100%;
     text-align: center; 
     font-size: 18px;
-    /* overflow-y: hidden; */
     background: none;
     border: none;
 }
@@ -961,7 +952,6 @@ input[name="r"] {
 
 .exam_input {
     text-align: left;
-    /* margin-left: 30px; */
     font-size: 19px;
 }
 .exam_question, .exam_answer {
@@ -1089,7 +1079,6 @@ input[name="r"] {
 .help_box {
     margin-left: 20%;
     width: 50%;
-    /* min-height: 50%; */
     padding: 5%;
     background-color: #c8f0f1;
     border-radius: 5px;
@@ -1116,7 +1105,6 @@ input[name="r"] {
     border: none;
     width: 80%;
     box-shadow: 5px 4px 5px 0px;
-    /* background-image: url("./img/settings.png"); */
     background-size: 27px;
     background-repeat: no-repeat;
     background-position: 35px;
@@ -1144,7 +1132,6 @@ input[name="r"] {
     font-size: 22px;
     background: white;
     box-shadow: 0px 0px 15px 0px white;
-    /* margin-bottom: 15px; */
 }
 
 .setup_content_button {
@@ -1183,12 +1170,13 @@ input[name="r"] {
     content: attr(data);
     padding: 4px 8px;
     color: rgb(255, 255, 255);
+    background-color: black;
     position: absolute;
     left: 20px;
     top: 100%;
-    white-space: nowrap;
     z-index: 20;
-    border-radius: 5px ;
+    border-radius: 5px;
+    width: 450px;
 }
 
 .edit_box {
@@ -1198,7 +1186,6 @@ input[name="r"] {
 /* Statistiken */
 .stats_outer {
     height: auto;
-    /* background-color: white; */
     display: flex;
     margin-left: 10%;
     width: 80%;
@@ -1261,7 +1248,7 @@ input[name="r"] {
     background-color: black;
     position: relative;
     text-align: center;
-    top: -75px;
+    top: -38px;
     font-weight: 600;
     white-space: nowrap;
     z-index: 20;
@@ -1335,7 +1322,7 @@ input[name="r"] {
 }
 
 .score_table {
-    width: 100%;
+    width: 90%;
     height: 100%;
     font-size: 20px;
     font-weight: 600;
@@ -1346,6 +1333,7 @@ input[name="r"] {
     height: 80%;
     border-left: 1px solid black;
     border-right: 1px solid black;
+    overflow: hidden;
 }
 
 .class_stats {
@@ -1372,6 +1360,7 @@ input[name="r"] {
     background-color: gainsboro;
     border-top: 1px solid black;
     text-transform: uppercase;
+    border-bottom: 4px solid black;
 }
 
 .stats_prgbar_percent {
@@ -1380,7 +1369,11 @@ input[name="r"] {
     margin: 30px 5px 0px 5px;    
     box-shadow: 0px 0px 5px 3px #00000079;    
     color: white;
-    animation: show_value 2s forwards
+    animation: show_value 2s forwards;
+    position: relative;
+    top: -51px;
+    width: 39px;
+    left: -3px;
 }
 
 .stat_score_int {

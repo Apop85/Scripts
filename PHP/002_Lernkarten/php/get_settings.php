@@ -50,7 +50,7 @@
                                         </td>
                                     <tr class="hidden_border">
                                         <td>
-                                            <a href="#" class="info_link" data="Pfad zu index.php. Beispiel: C:/Apache/htdocs/Lernkarten">
+                                            <a class="info_link" data="Pfad zu index.php. Beispiel: C:/Apache/htdocs/Lernkarten">
                                                 <img src="./img/info_small.png" class="info_icon">
                                             </a>Installationspfad:
                                         </td>
@@ -60,7 +60,7 @@
                                     </tr>
                                     <tr class="hidden_border">
                                         <td>
-                                            <a href="#" class="info_link" data="Dieser Pfad wird nach Dokumenten durchsucht um Lernkarten zu erstellen. Beispiel: C:/Benutzer/MaxMuster/Dokumente">
+                                            <a class="info_link" data="Dieser Pfad wird nach Dokumenten durchsucht um Lernkarten zu erstellen. Beispiel: C:/Benutzer/MaxMuster/Dokumente">
                                                 <img src="./img/info_small.png" class="info_icon">
                                             </a>Dokumentenpfad:
                                         </td>
@@ -76,7 +76,7 @@
                                     </tr>
                                     <tr class="hidden_border">
                                         <td>
-                                        <a href="#" class="info_link" data="Mit der Einleitung wird in Word-Dateien die Karteikarte hinterlegt. Beispiel: //qa">
+                                        <a class="info_link" data="Mit der Einleitung wird in Word-Dateien die Karteikarte hinterlegt. Beispiel: //qa">
                                             <img src="./img/info_small.png" class="info_icon">
                                         </a>Einleitung:
                                         </td>
@@ -86,7 +86,7 @@
                                     </tr>
                                     <tr class="hidden_border">
                                         <td>
-                                        <a href="#" class="info_link" data="Mit dem Trennzeichen werden die unterschiedlichen Sektionen gekennzeichnet. Beispiel: &#60;">
+                                        <a class="info_link" data="Mit dem Trennzeichen werden die unterschiedlichen Sektionen gekennzeichnet. Beispiel: &#60;">
                                             <img src="./img/info_small.png" class="info_icon">
                                         </a>Trennzeichen:
                                         </td>
@@ -133,7 +133,7 @@
                                         </td>
                                     <tr class="hidden_border">
                                         <td>
-                                            <a href="#" class="info_link" data="Pfad zu index.php. Beispiel: C:/Apache/htdocs/Lernkarten">
+                                            <a class="info_link" data="Pfad zu index.php. Beispiel: C:/Apache/htdocs/Lernkarten">
                                                 <img src="./img/info_small.png" class="info_icon">
                                             </a>Installationspfad:
                                         </td>
@@ -143,7 +143,7 @@
                                     </tr>
                                     <tr class="hidden_border">
                                         <td>
-                                            <a href="#" class="info_link" data="Dieser Pfad wird nach Dokumenten durchsucht um Lernkarten zu erstellen. Beispiel: C:/Benutzer/MaxMuster/Dokumente">
+                                            <a class="info_link" data="Dieser Pfad wird nach Dokumenten durchsucht um Lernkarten zu erstellen. Beispiel: C:/Benutzer/MaxMuster/Dokumente">
                                                 <img src="./img/info_small.png" class="info_icon">
                                             </a>Dokumentenpfad:
                                         </td>
@@ -159,7 +159,7 @@
                                     </tr>
                                     <tr class="hidden_border">
                                         <td>
-                                            <a href="#" class="info_link" data="Mit der Einleitung wird in Word-Dateien die Karteikarte hinterlegt. Beispiel: //qa"> 
+                                            <a class="info_link" data="Mit der Einleitung wird in Word-Dateien die Karteikarte hinterlegt. Beispiel: //qa"> 
                                                 <img src="./img/info_small.png" class="info_icon">
                                             </a>Einleitung: 
                                         </td>
@@ -169,7 +169,7 @@
                                     </tr>
                                     <tr class="hidden_border">
                                         <td>
-                                            <a href="#" class="info_link" data="Mit dem Trennzeichen werden die unterschiedlichen Sektionen gekennzeichnet. Beispiel: &#60;">
+                                            <a class="info_link" data="Mit dem Trennzeichen werden die unterschiedlichen Sektionen gekennzeichnet. Beispiel: &#60;">
                                                 <img src="./img/info_small.png" class="info_icon">
                                             </a>Trennzeichen:
                                         </td>

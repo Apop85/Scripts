@@ -65,7 +65,7 @@
     $won = check_answer($card);
     $header = '<p class="content_title">Eine beliebige Zufallsfrage</p><p class="content_text">Eine Zufällige Frage aus der Kartei wird ausgewählt und ausgegeben.</p>';
     $validation = '<div class="flip-card-front">'.$won.'</div>';
-    $button = "<p><input class='antwort' type='text' name='answer' autofocus><button class='submit_button' method='post'>GO</button></p></div>";
+    $button = "<p><input class='antwort' autocomplete='off' type='text' name='answer' autofocus><button class='submit_button' method='post'>GO</button></p></div>";
     $footer = '</div></div>';
     $true_answer = '<input type="hidden" name="true_answer" value="'.$card[1].'"><input type="hidden" name="last_file" value="'.$card[3].'">';
     if ($_SERVER["REQUEST_METHOD"] == "POST") {

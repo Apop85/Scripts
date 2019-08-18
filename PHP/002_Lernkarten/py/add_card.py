@@ -8,7 +8,7 @@
 # Created Date: Thursday 08.08.2019, 23:52
 # Author: rbald
 #-----
-# Last Modified: Saturday 17.08.2019, 00:42
+# Last Modified: Sunday 18.08.2019, 14:05
 #-----
 # Copyright (c) 2019 rbald
 # This software is published under the MIT license.
@@ -51,12 +51,12 @@ def search_all(doc_directory):
     file_list = os.walk(doc_directory)
     for foldername in file_list:
         for filename in foldername[2]:
-            if filename.endswith("docx"):
+            if filename.endswith("docx") and not filename.endswith("beispiel.docx"):
                 result_list += [foldername[0]+"/"+filename]
     
     process_files(result_list)
 
-def process_files(array):
+def process_files(array, ignore=0):
     # Erstelle Fragen-Array
     found_questions = {}
     for name in array:
@@ -153,5 +153,5 @@ elif argv[1] == "file":
     search_file()
 elif argv[1] == "manadd":
     add_data()
-elif argv[1] == "test":
-    print('<div class="output_message info">test erfolgreich</div>')
+# elif argv[1] == "test":
+#     print('<div class="output_message info">test erfolgreich</div>')

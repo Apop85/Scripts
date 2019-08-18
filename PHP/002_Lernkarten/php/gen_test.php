@@ -264,7 +264,7 @@
         ##### EVT UNNÖTIG
         $file_id = basename($file);
         $file_id = str_replace(".php", "", $file_id);
-        $output = '<div class="exam_form_content"><div class="exam_question">'.$q.'</div><div class="exam_input"><input class="exam_answer" type="text" name="'.$file_id.'"></div></div>';
+        $output = '<div class="exam_form_content"><div class="exam_question">'.$q.'</div><div class="exam_input"><input class="exam_answer" autocomplete="off" type="text" name="'.$file_id.'"></div></div>';
         return $output;
     }
 

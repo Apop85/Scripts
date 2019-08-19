@@ -8,7 +8,7 @@
 # Created Date: Thursday 08.08.2019, 23:52
 # Author: rbald
 #-----
-# Last Modified: Sunday 18.08.2019, 14:05
+# Last Modified: Monday 19.08.2019, 22:35
 #-----
 # Copyright (c) 2019 rbald
 # This software is published under the MIT license.
@@ -52,7 +52,7 @@ def search_all(doc_directory):
     for foldername in file_list:
         for filename in foldername[2]:
             if filename.endswith("docx") and not filename.endswith("beispiel.docx"):
-                result_list += [foldername[0]+"/"+filename]
+                result_list += [foldername[0]+"\\"+filename]
     
     process_files(result_list)
 
@@ -98,10 +98,12 @@ def create_files(questions, root_dir = ROOT_PATH):
             filename = hashlib.md5(bytes(frage[0], "utf-8"))
             filename = filename.hexdigest()+".php"
             
-            if not os.path.exists(current_dir+"/"+filename):
+            if not os.path.exists(current_dir+"\\"+filename):
                 question = '"'+frage[0]+'"'
                 answer = '"'+frage[1]+'"'
                 file_path = '"'+frage[2]+'"'
+                file_path = file_path.split("\\")
+                file_path = "/".join(file_path)
                 
                 output = "<?php\n\t$q = {};\n\t$a = {};\n\t$f = {};\n\t$s = 0;\n\t$ra = 0;\n\t$fa = 0;\n?>".format(question, answer, file_path)
                 file_writer = open(current_dir+"/"+filename, "w", encoding="utf-8")
@@ -130,8 +132,8 @@ def search_file():
     else:
         print("<div class='output_message error'>Dateipfad ung&#252;ltig"+argv[2]+"</div>")
         
-def add_data(root_dir = ROOT_PATH+"/cards"):
-    if os.path.exists(root_dir+'/'+argv[4]):
+def add_data(root_dir = ROOT_PATH+"\\cards"):
+    if os.path.exists(root_dir+'\\'+argv[4]):
         fach = argv[4]
         frage = argv[2]
         antwort = argv[3]

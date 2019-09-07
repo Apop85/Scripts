@@ -1,0 +1,39 @@
+/*
+ * ###
+ *  File: _functions.scss
+ *  Project: styles
+ * -----
+ *  Created Date: Saturday 07.09.2019, 12:34
+ *  Author: Apop85
+ * -----
+ *  Last Modified: Saturday 07.09.2019, 12:53
+ * -----
+ *  Copyright (c) 2019 Apop85
+ *  This software is published under the MIT license.
+ *  Check http://www.opensource.org/licenses/MIT for further informations
+ * -----
+ *  Description:
+ * ###
+ */
+
+@mixin default_button_design($background_color, $text_color) {
+  width: 75px * 2;
+  background-color: $button_style_color;
+  &:hover {
+    text-transform: uppercase;
+  }
+  &::after {
+    content: " here";
+  }
+  &::before {
+    content: "--> ";
+  }
+}
+
+@mixin setup_flex($background_color, $direction) {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  background-color: $background_color;
+  flex-direction: $direction;
+}

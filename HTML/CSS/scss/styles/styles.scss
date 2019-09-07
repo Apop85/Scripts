@@ -1,0 +1,48 @@
+/*
+ * ###
+ *  File: styles.scss
+ *  Project: styles
+ * -----
+ *  Created Date: Saturday 07.09.2019, 12:11
+ *  Author: Apop85
+ * -----
+ *  Last Modified: Saturday 07.09.2019, 12:51
+ * -----
+ *  Copyright (c) 2019 Apop85
+ *  This software is published under the MIT license.
+ *  Check http://www.opensource.org/licenses/MIT for further informations
+ * -----
+ *  Description:
+ * ###
+ */
+
+// Importiert zusätzliche scss files
+@import "./variables";
+@import "./functions";
+@import "./body";
+
+.top_page_content {
+  // Übernimmt die Styles des angegebenen Elements
+  @extend body;
+  // Funktionsaufruf
+  @include setup_flex(lightcyan, column);
+  // Bearbeite h1 dessen Parent .top_page_content ist
+  h1 {
+    color: $default_title_color;
+  }
+  button {
+    @include default_button_design($button_style_color, $default_title_color);
+  }
+  color: $default_text_color;
+}
+
+.bottom_page_content {
+  @include setup_flex(lightgreen, row);
+  h3 {
+    color: $default_title_color;
+  }
+  button {
+    @include default_button_design($button_style_color, $default_title_color);
+  }
+  color: $default_text_color;
+}

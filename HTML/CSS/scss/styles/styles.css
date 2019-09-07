@@ -1,0 +1,161 @@
+/*
+ * ###
+ *  File: styles.scss
+ *  Project: styles
+ * -----
+ *  Created Date: Saturday 07.09.2019, 12:11
+ *  Author: Apop85
+ * -----
+ *  Last Modified: Saturday 07.09.2019, 12:51
+ * -----
+ *  Copyright (c) 2019 Apop85
+ *  This software is published under the MIT license.
+ *  Check http://www.opensource.org/licenses/MIT for further informations
+ * -----
+ *  Description:
+ * ###
+ */
+/*
+ * ###
+ *  File: _variables.scss
+ *  Project: styles
+ * -----
+ *  Created Date: Saturday 07.09.2019, 12:31
+ *  Author: Apop85
+ * -----
+ *  Last Modified: Saturday 07.09.2019, 12:32
+ * -----
+ *  Copyright (c) 2019 Apop85
+ *  This software is published under the MIT license.
+ *  Check http://www.opensource.org/licenses/MIT for further informations
+ * -----
+ *  Description:
+ * ###
+ */
+/*
+ * ###
+ *  File: _functions.scss
+ *  Project: styles
+ * -----
+ *  Created Date: Saturday 07.09.2019, 12:34
+ *  Author: Apop85
+ * -----
+ *  Last Modified: Saturday 07.09.2019, 12:53
+ * -----
+ *  Copyright (c) 2019 Apop85
+ *  This software is published under the MIT license.
+ *  Check http://www.opensource.org/licenses/MIT for further informations
+ * -----
+ *  Description:
+ * ###
+ */
+/*
+ * ###
+ *  File: _body.scss
+ *  Project: styles
+ * -----
+ *  Created Date: Saturday 07.09.2019, 12:29
+ *  Author: Apop85
+ * -----
+ *  Last Modified: Saturday 07.09.2019, 12:46
+ * -----
+ *  Copyright (c) 2019 Apop85
+ *  This software is published under the MIT license.
+ *  Check http://www.opensource.org/licenses/MIT for further informations
+ * -----
+ *  Description:
+ * ###
+ */
+body, .top_page_content {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -ms-flex-line-pack: center;
+      align-content: center;
+  background-color: lightsalmon;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  color: darkblue;
+}
+
+.top_page_content {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -ms-flex-line-pack: center;
+      align-content: center;
+  background-color: lightcyan;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  color: darkblue;
+}
+
+.top_page_content h1 {
+  color: black;
+}
+
+.top_page_content button {
+  width: 150px;
+  background-color: white;
+}
+
+.top_page_content button:hover {
+  text-transform: uppercase;
+}
+
+.top_page_content button::after {
+  content: " here";
+}
+
+.top_page_content button::before {
+  content: "--> ";
+}
+
+.bottom_page_content {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -ms-flex-line-pack: center;
+      align-content: center;
+  background-color: lightgreen;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: row;
+          flex-direction: row;
+  color: darkblue;
+}
+
+.bottom_page_content h3 {
+  color: black;
+}
+
+.bottom_page_content button {
+  width: 150px;
+  background-color: white;
+}
+
+.bottom_page_content button:hover {
+  text-transform: uppercase;
+}
+
+.bottom_page_content button::after {
+  content: " here";
+}
+
+.bottom_page_content button::before {
+  content: "--> ";
+}
+/*# sourceMappingURL=styles.css.map */

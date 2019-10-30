@@ -8,7 +8,7 @@
 # Created Date: Wednesday 30.10.2019, 16:49
 # Author: Apop85
 #-----
-# Last Modified: Wednesday 30.10.2019, 20:26
+# Last Modified: Wednesday 30.10.2019, 22:07
 #-----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -80,11 +80,12 @@ def encode_data(data):
     for key in data.keys():
         for character in data[key]:
             characters.setdefault(character, "")
-    huffman_tree = process_tree(data)
+    huffman_tree, characters = process_tree(data, characters)
     for key in sorted(list(huffman_tree.keys())):
         print(str(key)+str(huffman_tree[key]).center(100))
+    print(characters)
 
-def process_tree(data, rest_data=[], original={}, depth=-1, data_pyramid={}):
+def process_tree(data, characters, rest_data=[], original={}, depth=-1, data_pyramid={}):
     depth += 1
     if depth == 0:
         original = copy(data)
@@ -103,9 +104,12 @@ def process_tree(data, rest_data=[], original={}, depth=-1, data_pyramid={}):
     
     for i in range(0, len(data[current_key]), 2):
         try:
+            for character in characters.keys():
+                if character in data[current_key][i]:
+                    characters[character] += "1"
+                elif character in data[current_key][i+1]:
+                    characters[character] += "0"
             new_data = [data[current_key][i]+data[current_key][i+1]]
-            if current_key*2 == 6:
-                print(False)
             if len(new_data) != 0:
                 data_tree.setdefault(current_key*2, [])
                 data_tree[current_key*2] += new_data
@@ -126,8 +130,8 @@ def process_tree(data, rest_data=[], original={}, depth=-1, data_pyramid={}):
 
     
     if len(data.keys()) != 0:
-        data_pyramid = process_tree(data, rest_data, original, depth, data_pyramid)
-    return data_pyramid
+        data_pyramid, characters = process_tree(data, characters, rest_data, original, depth, data_pyramid)
+    return data_pyramid, characters
     
 
 init()

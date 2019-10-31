@@ -26,7 +26,7 @@ set /a counter+=1
 set calctimer=0
 set /a div0=%operator%/%counter%
 set /a div1=%div0%/100
-set "div2=%div0:~-2%
+set div2=%div0:~-2%
 set /a prozent=%counter%*100
 set /a prozent=%prozent%/%ziel%
 set "ausgabe2=" & set "divb="

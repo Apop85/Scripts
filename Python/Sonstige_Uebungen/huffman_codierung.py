@@ -4,23 +4,24 @@
 ####
 # File: huffman_codierung.py
 # Project: Sonstige_Uebungen
-#-----
+# -----
 # Created Date: Wednesday 30.10.2019, 16:49
 # Author: Apop85
-#-----
-# Last Modified: Wednesday 30.10.2019, 22:07
-#-----
+# -----
+# Last Modified: Thu Oct 31 2019
+# -----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
 # Check http://www.opensource.org/licenses/MIT for further informations
-#-----
+# -----
 # Description: Encode with huffman encoding
 ####
 
 from copy import deepcopy as copy
 
+
 def init():
-    menu_items = {1: "Satz codieren", 0: "Beenden" }
+    menu_items = {1: "Satz codieren", 0: "Beenden"}
     choice = create_menu(menu_items)
     if choice == 0:
         exit()
@@ -29,6 +30,7 @@ def init():
         data = get_data()
         encoded_data = encode_data(data)
 
+
 def create_menu(menu_items):
     while True:
         print("█"*80)
@@ -36,10 +38,12 @@ def create_menu(menu_items):
             item = str(key) + ". "+menu_items[key]
             item_lenght = len(item)
             if key != 0:
-                print ("█ "+" "*int(round((76-item_lenght)/2, 0))+item+" "*int((76-item_lenght)/2)+" █")
+                print("█ "+" "*int(round((76-item_lenght)/2, 0)) +
+                      item+" "*int((76-item_lenght)/2)+" █")
             else:
                 print("█"*80)
-                print ("█ "+" "*int(round((76-item_lenght)/2, 0))+item+" "*int((76-item_lenght)/2)+" █")
+                print("█ "+" "*int(round((76-item_lenght)/2, 0)) +
+                      item+" "*int((76-item_lenght)/2)+" █")
                 print("█"*80)
         choice = input(" "*30+"Auswahl: ")
         if choice.isdecimal() and int(choice) in menu_items.keys():
@@ -49,12 +53,14 @@ def create_menu(menu_items):
             print("Eingabe ungültig")
             print("░0"*40)
 
+
 def get_data():
     print("█"*80)
     print("█"+"Zu codierenden Satz eingeben".center(78, " ")+"█")
     print("█"*80)
     data = input("Eingabe: ")
     return process_data(data)
+
 
 def process_data(data):
     data_tree = {}
@@ -74,7 +80,8 @@ def process_data(data):
     for key in sorted(processed_tree.keys()):
         sorted_data.setdefault(key, processed_tree[key])
     return sorted_data
-    
+
+
 def encode_data(data):
     characters = {}
     for key in data.keys():
@@ -83,7 +90,10 @@ def encode_data(data):
     huffman_tree, characters = process_tree(data, characters)
     for key in sorted(list(huffman_tree.keys())):
         print(str(key)+str(huffman_tree[key]).center(100))
-    print(characters)
+    for char in characters.keys():
+        print(char, characters[char])
+    # print(characters)
+
 
 def process_tree(data, characters, rest_data=[], original={}, depth=-1, data_pyramid={}):
     depth += 1
@@ -98,10 +108,19 @@ def process_tree(data, characters, rest_data=[], original={}, depth=-1, data_pyr
         last_sub_key = data[current_key][len(data[current_key])-1]
         new_data = rest_data[1]+last_sub_key
         data.setdefault(current_key+rest_data[0], [])
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # 0 oder 1 noch anfügen
+        for key in characters.keys():
+            # print(key, rest_data[1])
+            if key in rest_data[1]:
+                characters[key] += "1"
+            elif key in last_sub_key:
+                characters[key] += "0"
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         data[current_key+rest_data[0]] += [new_data]
         del data[current_key][-1]
-        rest_data=[]
-    
+        rest_data = []
+
     for i in range(0, len(data[current_key]), 2):
         try:
             for character in characters.keys():
@@ -114,10 +133,7 @@ def process_tree(data, characters, rest_data=[], original={}, depth=-1, data_pyr
                 data_tree.setdefault(current_key*2, [])
                 data_tree[current_key*2] += new_data
         except:
-            # try:
             rest_data = [current_key, data[current_key][i]]
-            # except:
-            #     pass
 
     try:
         new_data = data_tree[current_key*2]
@@ -128,10 +144,10 @@ def process_tree(data, characters, rest_data=[], original={}, depth=-1, data_pyr
             rest_data = [current_key, data[current_key][0]]
     del data[current_key]
 
-    
     if len(data.keys()) != 0:
-        data_pyramid, characters = process_tree(data, characters, rest_data, original, depth, data_pyramid)
+        data_pyramid, characters = process_tree(
+            data, characters, rest_data, original, depth, data_pyramid)
     return data_pyramid, characters
-    
+
 
 init()

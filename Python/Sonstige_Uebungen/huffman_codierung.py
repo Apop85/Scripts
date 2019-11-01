@@ -8,7 +8,7 @@
 # Created Date: Friday 01.11.2019, 12:25
 # Author: Apop85
 #-----
-# Last Modified: Friday 01.11.2019, 15:26
+# Last Modified: Friday 01.11.2019, 23:24
 #-----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -28,16 +28,14 @@ def main():
     
     data = get_data()
     encoded_data, tree, path = encode_data(data)
+    saved_space = 100-(100/(8*len(data)))*len(encoded_data)
     print("\n"*5)
     if choice == 1 or choice == 4:
-        saved_space = 100-(100/(8*len(data)))*len(encoded_data)
         print(encoded_data, "\nSaved space: "+str(round(saved_space, 1))+"%")
     if choice == 2 or choice == 4:
-        saved_space = 100-(100/(8*len(data)))*len(encoded_data)
         for key in tree.keys():
             print(str(key)+str(tree[key]).center(100))
     if choice == 3 or choice == 4:
-        saved_space = 100-(100/(8*len(data)))*len(encoded_data)
         for key in path.keys():
             print(str(key)+str(path[key]).center(50))
     input("Enter zum fortfahren")

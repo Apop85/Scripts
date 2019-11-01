@@ -8,28 +8,57 @@
 # Created Date: Friday 01.11.2019, 12:25
 # Author: Apop85
 #-----
-# Last Modified: Friday 01.11.2019, 14:50
+# Last Modified: Friday 01.11.2019, 15:09
 #-----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
 # Check http://www.opensource.org/licenses/MIT for further informations
 #-----
-# Description:
+# Description: 
 ####
 
 from copy import deepcopy as copy
 
-def init():
-    menu_items = {1: "Satz codieren", 0: "Beenden" }
+def main():
+    # Hauptmenü erstellen und Auswahl auswerten
+    menu_items = {1: "Satz codieren", 2: "Huffmanbaum ausgeben", 3: "Zeichencodierung ausgeben", 4: "Alle Daten ausgeben", 0: "Beenden" }
     choice = create_menu(menu_items)
     if choice == 0:
         exit()
     elif choice == 1:
         print("\n"*5)
         data = get_data()
-        encoded_data = encode_data(data)
+        encoded_data, tree, path = encode_data(data)
         saved_space = 100-(100/(8*len(data)))*len(encoded_data)
-        print(encoded_data, "\n\tSaved space: "+str(round(saved_space, 1))+"%")
+        print(encoded_data, "\nSaved space: "+str(round(saved_space, 1))+"%")
+        input("Enter zum fortfahren")
+    elif choice == 2:
+        print("\n"*5)
+        data = get_data()
+        encoded_data, tree, path = encode_data(data)
+        saved_space = 100-(100/(8*len(data)))*len(encoded_data)
+        for key in tree.keys():
+            print(str(key)+str(tree[key]).center(100))
+        input("Enter zum fortfahren")
+    elif choice == 3:
+        print("\n"*5)
+        data = get_data()
+        encoded_data, tree, path = encode_data(data)
+        saved_space = 100-(100/(8*len(data)))*len(encoded_data)
+        for key in path.keys():
+            print(str(key)+str(path[key]).center(50))
+        input("Enter zum fortfahren")
+    elif choice == 4:
+        print("\n"*5)
+        data = get_data()
+        encoded_data, tree, path = encode_data(data)
+        saved_space = 100-(100/(8*len(data)))*len(encoded_data)
+        print(encoded_data, "\nSaved space: "+str(round(saved_space, 1))+"%")
+        for key in tree.keys():
+            print(str(key)+str(tree[key]).center(100))
+        for key in path.keys():
+            print(str(key)+str(path[key]).center(50))
+        input("Enter zum fortfahren")
 
 def create_menu(menu_items):
     # Erstelle Menü anhand der übergebenen Menü-Liste
@@ -61,7 +90,9 @@ def get_data():
     print("█"*80)
     print("█"+"Zu codierenden Satz eingeben".center(78, " ")+"█")
     print("█"*80)
-    data = input("Eingabe: ")
+    data = ""
+    while data == "":
+        data = input("Eingabe: ")
     return data
 
 
@@ -71,7 +102,7 @@ def encode_data(data):
     encoded_data = ""
     for character in data:
         encoded_data += path[character]
-    return encoded_data
+    return encoded_data, tree, path
 
 def get_character_list(data):
     # Erstelle Dictionary mit den Buchstaben und deren Anzahl
@@ -155,5 +186,5 @@ def create_huffman_tree(data, char_path, depth=-1, original={}, huf_tree={}, res
     # Bleiben keine Daten mehr übrig ist der Prozess abgeschlossen
     return huf_tree, char_path
     
-
-init()
+while True:
+    main()

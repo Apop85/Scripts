@@ -8,7 +8,7 @@
 # Created Date: Friday 01.11.2019, 12:25
 # Author: Apop85
 #-----
-# Last Modified: Friday 01.11.2019, 15:21
+# Last Modified: Friday 01.11.2019, 15:26
 #-----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -141,7 +141,6 @@ def create_huffman_tree(data, char_path, depth=-1, original={}, huf_tree={}, res
             new_key = current_key*2
             data.setdefault(new_key, [])
             data[new_key].insert(i, key_1+key_2)
-            # last_insert = i
         except:
             # Ist bereits ein Restwert vorhanden, verrechne mit Restwert sonst erstelle Restwert 
             if len(rest_data) != 0:

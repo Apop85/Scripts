@@ -8,7 +8,7 @@
 # Created Date: Friday 01.11.2019, 12:25
 # Author: Apop85
 #-----
-# Last Modified: Friday 01.11.2019, 14:48
+# Last Modified: Friday 01.11.2019, 14:50
 #-----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.

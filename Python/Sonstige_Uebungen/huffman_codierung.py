@@ -8,7 +8,7 @@
 # Created Date: Friday 01.11.2019, 12:25
 # Author: Apop85
 #-----
-# Last Modified: Friday 01.11.2019, 23:24
+# Last Modified: Saturday 02.11.2019, 22:44
 #-----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -111,12 +111,7 @@ def get_character_list(data):
                     break
     return character_values, character_path
     
-def create_huffman_tree(data, char_path, depth=-1, original={}, huf_tree={}, rest_data=[]):
-    depth += 1
-    # Erstelle Kopie der Originaldaten bei erstem durchlauf
-    if not depth:
-        original = copy(data)
-
+def create_huffman_tree(data, char_path, huf_tree={}, rest_data=[]):
     # Lese aktuellen Key von data aus
     key_list = list(data.keys()) 
     current_key = key_list[0]
@@ -161,7 +156,7 @@ def create_huffman_tree(data, char_path, depth=-1, original={}, huf_tree={}, res
     
     if len(list(data.keys())) > 0:
         # Sind noch Daten vorhanden führe Funktion mit neuem Datenset erneut durch.
-        huf_tree, char_path = create_huffman_tree(data, char_path, depth, original, huf_tree, rest_data)
+        huf_tree, char_path = create_huffman_tree(data, char_path, huf_tree, rest_data)
     # Bleiben keine Daten mehr übrig ist der Prozess abgeschlossen
     return huf_tree, char_path
     

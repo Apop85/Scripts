@@ -2,50 +2,63 @@
 # -*- coding:utf-8 -*-
 
 ####
-# File: huffman_codierung.py
+# File: huffman_codierung_v2.py
 # Project: Sonstige_Uebungen
-# -----
-# Created Date: Wednesday 30.10.2019, 16:49
+#-----
+# Created Date: Friday 01.11.2019, 12:25
 # Author: Apop85
-# -----
-# Last Modified: Thu Oct 31 2019
-# -----
+#-----
+# Last Modified: Wed Nov 06 2019
+#-----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
 # Check http://www.opensource.org/licenses/MIT for further informations
-# -----
-# Description: Encode with huffman encoding
+#-----
+# Description: 
 ####
 
 from copy import deepcopy as copy
 
-
-def init():
-    menu_items = {1: "Satz codieren", 0: "Beenden"}
+def main():
+    # Hauptmenü erstellen und Auswahl auswerten
+    menu_items = {1: "Satz codieren", 2: "Huffmanbaum ausgeben", 3: "Zeichencodierung ausgeben", 4: "Alle Daten ausgeben", 0: "Beenden" }
     choice = create_menu(menu_items)
     if choice == 0:
         exit()
-    elif choice == 1:
-        print("\n"*5)
-        data = get_data()
-        encoded_data = encode_data(data)
-
+    
+    data = get_data()
+    encoded_data, tree, path = encode_data(data)
+    saved_space = 100-(100/(8*len(data)))*len(encoded_data)
+    print("\n"*5)
+    if choice == 1 or choice == 4:
+        print(encoded_data, "\nSaved space: "+str(round(saved_space, 1))+"%")
+    if choice == 2 or choice == 4:
+        for key in tree.keys():
+            print(str(key)+str(tree[key]).center(100))
+    if choice == 3 or choice == 4:
+        for key in path.keys():
+            print(str(key)+str(path[key]).center(50))
+    input("Enter zum fortfahren")
 
 def create_menu(menu_items):
+    # Erstelle Menü anhand der übergebenen Menü-Liste
     while True:
         print("█"*80)
         for key in menu_items.keys():
             item = str(key) + ". "+menu_items[key]
             item_lenght = len(item)
             if key != 0:
-                print("█ "+" "*int(round((76-item_lenght)/2, 0)) +
-                      item+" "*int((76-item_lenght)/2)+" █")
+                print ("█ "+" "*int(round((76-item_lenght)/2, 0))+item+" "*int((76-item_lenght)/2)+" █")
             else:
-                print("█"*80)
-                print("█ "+" "*int(round((76-item_lenght)/2, 0)) +
-                      item+" "*int((76-item_lenght)/2)+" █")
-                print("█"*80)
+                # 0 für exit soll immer am Schluss kommen
+                zero_item = (copy(item), item_lenght)
+        # Ausgabe der exit-option am Schluss
+        print("█"*80)
+        print ("█ "+" "*int(round((76-zero_item[1])/2, 0))+zero_item[0]+" "*int((76-zero_item[1])/2)+" █")
+        print("█"*80)
         choice = input(" "*30+"Auswahl: ")
+
+        # Prüfe Eingabe ob Zahl und vorhanden in der Menüliste
         if choice.isdecimal() and int(choice) in menu_items.keys():
             return int(choice)
         else:
@@ -53,101 +66,99 @@ def create_menu(menu_items):
             print("Eingabe ungültig")
             print("░0"*40)
 
-
 def get_data():
     print("█"*80)
     print("█"+"Zu codierenden Satz eingeben".center(78, " ")+"█")
     print("█"*80)
-    data = input("Eingabe: ")
-    return process_data(data)
-
-
-def process_data(data):
-    data_tree = {}
-    for i in range(0, len(data)):
-        data_tree.setdefault(data[i], 0)
-        data_tree[data[i]] += 1
-    processed_tree = {}
-    for key in data_tree.keys():
-        new_tree = copy(data_tree)
-        del new_tree[key]
-        value = data_tree[key]
-        processed_tree.setdefault(value, [key])
-        for new_key in new_tree.keys():
-            if new_tree[new_key] == value and not new_key in processed_tree[value]:
-                processed_tree[value] += [new_key]
-    sorted_data = {}
-    for key in sorted(processed_tree.keys()):
-        sorted_data.setdefault(key, processed_tree[key])
-    return sorted_data
+    data = ""
+    while data == "":
+        data = input("Eingabe: ")
+    return data
 
 
 def encode_data(data):
-    characters = {}
-    for key in data.keys():
-        for character in data[key]:
-            characters.setdefault(character, "")
-    huffman_tree, characters = process_tree(data, characters)
-    for key in sorted(list(huffman_tree.keys())):
-        print(str(key)+str(huffman_tree[key]).center(100))
-    for char in characters.keys():
-        print(char, "-->", characters[char])
-    # print(characters)
+    characters, character_path = get_character_list(data)
+    tree, path = create_huffman_tree(characters, character_path)
+    encoded_data = ""
+    for character in data:
+        encoded_data += path[character]
+    return encoded_data, tree, path
 
+def get_character_list(data):
+    # Erstelle Dictionary mit den Buchstaben und deren Anzahl
+    char_list = {}
+    character_path = {}
+    for character in data:
+        char_list.setdefault(character, 0)
+        character_path.setdefault(character, "")
+        char_list[character] += 1
+    
+    character_values = {}
+    key_list = []
 
-def process_tree(data, characters, rest_data=[], original={}, depth=-1, data_pyramid={}):
-    depth += 1
-    if depth == 0:
-        original = copy(data)
-    data_tree = {}
-    current_key = list(data.keys())[0]
-    if len(data[current_key]) != 0:
-        data_pyramid.setdefault(current_key, copy(data[current_key]))
+    # Lese Zahlen aus 
+    for key in char_list.keys():
+        key_list += [char_list[key]]
+    key_list = sorted(key_list)
 
-    if len(rest_data) > 0:
-        last_sub_key = data[current_key][len(data[current_key])-1]
-        new_data = rest_data[1]+last_sub_key
-        data.setdefault(current_key+rest_data[0], [])
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # 0 oder 1 noch anfügen
-        for key in characters.keys():
-            # print(key, rest_data[1])
-            if key in rest_data[1]:
-                characters[key] += "1"
-            elif key in last_sub_key:
-                characters[key] += "0"
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        data[current_key+rest_data[0]] += [new_data]
-        del data[current_key][-1]
-        rest_data = []
+    # Dictionary umdrehen damit die Zahlen die Keys sind
+    for value in key_list:
+        for key in char_list.keys():
+            if value == char_list[key]:
+                character_values.setdefault(value, [])
+                if key not in character_values[value]:
+                    character_values[value] += [key]
+                    break
+    return character_values, character_path
+    
+def create_huffman_tree(data, char_path, huf_tree={}, rest_data=[]):
+    # Lese aktuellen Key von data aus
+    key_list = list(data.keys()) 
+    current_key = key_list[0]
+    huf_tree.setdefault(current_key, [])
+    huf_tree[current_key] += data[current_key]
 
+    # Verrechne den Wert der Buchstaben in 2er Paaren
+    last_insert = 0
     for i in range(0, len(data[current_key]), 2):
+        key_1 = data[current_key][i]
         try:
-            for character in characters.keys():
-                if character in data[current_key][i]:
-                    characters[character] += "1"
-                elif character in data[current_key][i+1]:
-                    characters[character] += "0"
-            new_data = [data[current_key][i]+data[current_key][i+1]]
-            if len(new_data) != 0:
-                data_tree.setdefault(current_key*2, [])
-                data_tree[current_key*2] += new_data
+            # Wenn noch zwei Werte vorhanden sind verrechne miteinander
+            key_2 = data[current_key][i+1]
+            for key in char_path.keys():
+                # Setze den Pfad des ersten Werts auf 1 und beim zweiten auf 0
+                if key in key_1:
+                    char_path[key] = "1"+char_path[key]
+                elif key in key_2:
+                    char_path[key] = "0"+char_path[key]
+            new_key = current_key*2
+            data.setdefault(new_key, [])
+            data[new_key].insert(i, key_1+key_2)
         except:
-            rest_data = [current_key, data[current_key][i]]
+            # Ist bereits ein Restwert vorhanden, verrechne mit Restwert sonst erstelle Restwert 
+            if len(rest_data) != 0:
+                new_key = current_key + rest_data[0]
+                data.setdefault(new_key, [])
+                data[new_key].insert(last_insert, rest_data[1]+key_1)
+                last_insert += 2
+                for key in char_path.keys():
+                    # Setze den wert aus dem vorherigen rest auf 0 den neuen auf 1
+                    if key in rest_data[1]:
+                        char_path[key] = "1"+char_path[key]
+                    elif key in key_1:
+                        char_path[key] = "0"+char_path[key]
+                rest_data = []
+            else:
+                rest_data = [current_key, key_1]
 
-    try:
-        new_data = data_tree[current_key*2]
-        data.setdefault(current_key*2, [])
-        data[current_key*2] += new_data
-    except:
-        if len(data[current_key]) != 0:
-            rest_data = [current_key, data[current_key][0]]
+    # Lösche die verwendeten Daten 
     del data[current_key]
-
-    if len(data.keys()) != 0:
-        data_pyramid, characters = process_tree(
-            data, characters, rest_data, original, depth, data_pyramid)
-    return data_pyramid, characters
-
-
-init()
+    
+    if len(list(data.keys())) > 0:
+        # Sind noch Daten vorhanden führe Funktion mit neuem Datenset erneut durch.
+        huf_tree, char_path = create_huffman_tree(data, char_path, huf_tree, rest_data)
+    # Bleiben keine Daten mehr übrig ist der Prozess abgeschlossen
+    return huf_tree, char_path
+    
+while True:
+    main()

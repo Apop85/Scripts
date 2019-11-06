@@ -65,7 +65,12 @@ def choose_option(options):
         if options[2]:
             original_data = len(data)*8
             compressed = len(encoded_data.split(","))*8
-            dict_length = len(str(dictionary))*8
+            compressed_dict = str(dictionary.strip("[]"))
+            compressed_dict = "".join(compressed_dict.split(" "))
+            compressed_dict = "".join(compressed_dict.split('"'))
+            compressed_dict = "".join(compressed_dict.split("'"))
+
+            dict_length = len(compressed_dict)*8
             print_stats(original_data, compressed, dict_length)
 
     elif choice == 3:

@@ -47,11 +47,9 @@ def choose_option(options):
         if options[0]:
             print_result(("Encodierte Daten", encoded_data))
         if options[1]:
-            print_result(("Wörterbuch", dictionary))
+            print_result(("Wörterbuch", str(dictionary).strip("[]}{")))
         if options[2]:
-            original_data = len(data)*8
-            compressed = len(encoded_data.split(","))*8
-            dict_length = len(str(dictionary))*8
+            original_data, compressed, dict_length = get_status_data(data, encoded_data, dictionary)            
             print_stats(original_data, compressed, dict_length)
             
     elif choice == 2:
@@ -61,22 +59,42 @@ def choose_option(options):
         if options[0]:
             print_result(("Encodierte Daten", encoded_data))
         if options[1]:
-            print_result(("Wörterbuch", dictionary))
+            print_result(("Wörterbuch", str(dictionary).strip("[]}{")))
         if options[2]:
-            original_data = len(data)*8
-            compressed = len(encoded_data.split(","))*8
-            compressed_dict = str(dictionary.strip("[]"))
-            compressed_dict = "".join(compressed_dict.split(" "))
-            compressed_dict = "".join(compressed_dict.split('"'))
-            compressed_dict = "".join(compressed_dict.split("'"))
-
-            dict_length = len(compressed_dict)*8
+            original_data, compressed, dict_length = get_status_data(data, encoded_data, dictionary)
             print_stats(original_data, compressed, dict_length)
 
     elif choice == 3:
         options = setup_options(options)
     
     return options
+
+def get_status_data(data, encoded_data, dictionary):
+    original_data = len(data)*8
+    compressed = len(encoded_data.split(","))*8
+    key_sum = 0
+    # Rechne Schlüssel in Bytes um
+    for key in dictionary.keys():
+        if key/(2**8) < 1:
+            key_sum += 1
+        elif key/(2**8) < 2:
+            key_sum += 2
+        elif key/(2**8) < 3:
+            key_sum += 3
+        elif key/(2**8) < 4:
+            key_sum += 4
+        elif key/(2**8) < 5:
+            key_sum += 5
+        elif key/(2**8) < 6:
+            key_sum += 6
+
+    compressed_dict = str(list(dictionary.values())).strip("}{[]")
+    compressed_dict = "".join(compressed_dict.split(" "))
+    compressed_dict = "".join(compressed_dict.split('"'))
+    compressed_dict = "".join(compressed_dict.split("'"))
+
+    dict_length = (len(compressed_dict)*8)+key_sum
+    return original_data, compressed, dict_length
 
 
 def print_stats(original_data, compressed, dict_length):
@@ -221,17 +239,14 @@ def encode_data(data, dictionary=[None]):
             
     encoded = encoded.lstrip(",")
     dictionary = cleanup_dictionary(dictionary, encoded)
-    dictionary = str(dictionary).strip("[]")
     return encoded, dictionary
 
 def cleanup_dictionary(dictionary, encoded):
     # Entferne ungenutzte Einträge aus dem Wörterbuch 
     encoded = encoded.split(",")
-    cleaned_dictionary = []
+    cleaned_dictionary = {}
     for key in encoded:
-        current_entry = key+": "+dictionary[int(key)]
-        if not current_entry in cleaned_dictionary:
-            cleaned_dictionary.insert(int(key), current_entry)
+            cleaned_dictionary.setdefault(int(key), dictionary[int(key)])
     return cleaned_dictionary
  
     

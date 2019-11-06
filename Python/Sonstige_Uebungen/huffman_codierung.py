@@ -91,7 +91,7 @@ def encode_data(data):
     for key in sorted(list(huffman_tree.keys())):
         print(str(key)+str(huffman_tree[key]).center(100))
     for char in characters.keys():
-        print(char, characters[char])
+        print(char, "-->", characters[char])
     # print(characters)
 
 

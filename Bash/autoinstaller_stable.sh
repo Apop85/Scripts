@@ -1,12 +1,36 @@
 #!/bin/bash
-#Script zum semiautomatischen Einrichten des Raspberry mit PiHole PiVPN FTP DUC und Fail2Ban
+
+# ###
+#  File: autoinstaller_stable.sh
+#  Project: Bash
+# -----
+#  Created Date: Tuesday 29.01.2019, 14:12
+#  Author: Apop85
+# -----
+#  Last Modified: Sunday 10.11.2019, 12:18/*
+ * Filename: c:\Users\Apop85\Documents\Eigene Dokumente\ScriptProjekte\GitHub\Scripts\Bash\autoinstaller_stable.sh
+ * Path: c:\Users\Apop85\Documents\Eigene Dokumente\ScriptProjekte\GitHub\Scripts\Bash
+ * Created Date: Tuesday, January 29th 2019, 2:12:41 pm
+ * Author: Apop85
+ * 
+ * Copyright (c) 2019 Your Company
+ */
+
+# -----
+#  Copyright (c) 2019 Apop85
+#  This software is published under the MIT license.
+#  Check http://www.opensource.org/licenses/MIT for further informations
+# -----
+#  Description: Script zum semiautomatischen Einrichten des Raspberry mit PiHole PiVPN FTP DUC und Fail2Ban
+# ###
+
+
 iamswiss=no
 path=$(realpath "$0")
 
 #Noch zu prüfen:
 #VPN User erstellen auf VM-Maschine nicht möglich da PiVPN inkompatibel mit Version 
 #PiHole setupVars einfügen der IPv6 adresse erfolgreich?
-
 
 clear
 #Color-Codes und Textsfx-Codes
@@ -195,7 +219,7 @@ function addnewuser {
 	echo -e "${info} Nutzer $uname wird angelegt"
 	passwdc=$(openssl passwd -1 $passwd2)
 	useradd -m "$uname" -p "$passwdc"
-	usermod -s /bin/bash $uname
+	sudo adduser $uname sudo
 	echo -e "${info} Passwort für ROOT wird geändert."
 	echo "root:$rootpw1" | chpasswd
 	unset passwd2 passwd1 rootpw1 rootpw2
@@ -208,14 +232,10 @@ function userisok {
 		uname=$iam
 	else
 		if [ "$usrroot" == "0" ]; then
-			target="/etc/sudoers.d/010_$uname"
-			touch $target
-			if [ -e $target ]; then
-				echo -e "${info} Setze Rootberechtigungen für den neuen User"
-				echo "$uname  ALL=(ALL:ALL) ALL" >> $target
-				chmod 0440 $target
-				chown root:root $target
-			fi
+			echo -e "${info}INFO:${cNOR} Entferne berechtigungen für User pi"
+			sudo rm /etc/sudoers.d/010_pi-nopasswd
+			sudo deluser pi --remove-home
+			sudo delgroup pi
 		fi
 	fi
 	userisroot	

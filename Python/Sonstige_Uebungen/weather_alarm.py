@@ -8,7 +8,7 @@
 # Created Date: Wednesday 19.06.2019, 20:54
 # Author: Apop85
 #-----
-# Last Modified: Tuesday 25.06.2019, 11:28
+# Last Modified: Sunday 24.11.2019, 14:35
 #-----
 # Copyright (c) 2019 Apop85
 # This software is published under the MIT license.
@@ -40,7 +40,7 @@ def send_telegram_message(bot_id, chat_id, message):
 
 
 def start_collecting_data():
-    locations = {'city': 'city_id'}
+    locations = {'luzern': 'CH0CH2389','cham': 'CH0CH0736', 'zuerich': 'CH0CH4503'}
     keys=locations.keys()
     weather_information={}
     # Check different locations and save in dictionary

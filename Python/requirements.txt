@@ -20,7 +20,7 @@ numpy==1.16.4
 openpyxl==2.6.0
 pdf2image==1.5.4
 pefile==2018.8.8
-Pillow==5.4.1
+Pillow==6.2.0
 post==2018.11.20
 public==2018.11.20
 PyAutoGUI==0.9.41

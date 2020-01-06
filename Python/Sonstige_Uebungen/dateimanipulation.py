@@ -8,7 +8,7 @@
 # Created Date: Sunday 29.12.2019, 20:45
 # Author: Raffael Baldinger
 #-----
-# Last Modified: Sunday 05.01.2020, 21:10
+# Last Modified: Mon Jan 06 2020
 #-----
 # Copyright (c) 2020 Raffael Baldinger
 # This software is published under the MIT license.
@@ -38,19 +38,17 @@ def menu():
 
     if choosed != 0:
         root_path = choose_path()
-    if choosed in [1, 2, 4, 5]:
-        regex_pattern = get_regex()
 
     if choosed == 1:
-        pass
+        sort_files_by_season()
     elif choosed == 2:
-        pass
+        correct_filename()
     elif choosed == 3:
-        pass
+        add_prefix()
     elif choosed == 4:
-        pass
+        move_and_rename(root_path)
     elif choosed == 5:
-        pass
+        remove_words()
     elif choosed == 0:
         print("Programm wird beendet")
         sleep(5)
@@ -96,11 +94,14 @@ def check_option(option, items):
     else: 
         return False
 
-def get_regex():
+def get_regex(message):
     checked = False
     abstand = 45
+    print("▀"*100)
+    print(message)
+    print("▀"*100)
     while not checked:
-        print("Regexsuchmuster angeben: (--h für Cheat-Sheet)")
+        print("Regexsuchmuster angeben: (--h <Suchbegriff> für Cheat-Sheet)")
         regex = input()
         if "--h" in regex[:3] or len(regex) == 0:                       # Ausgabe Cheatsheet 
             helplines = [   r"\w = Wort", r"\W = kein Wort", 
@@ -153,65 +154,73 @@ def get_regex():
             checked = True
         except:
             print("Angegebenes Suchmuster fehlerhaft!")
+            sleep(3)
 
     return search_pattern
 
 
+def sort_files_by_season():
+    new_name = input("Name des zu erstellenden Ordners: ")
+    regex = get_regex(r"Muss eine Gruppe aufweisen. Bsp: S(\d\d)E")
+
+    # Dateien mit bestimmtem Muster in neu angelegten Ordner verschieben
+    for i in range(0,99):
+        newpath = ".\\"+new_name+str(i)
+        for filename in os.listdir():
+            if i < 10:
+                    current="0"+str(i)
+            else:
+                    current=str(i)
+            result = regex.findall(filename)
+            if current in result:
+                if not os.path.exists(newpath):
+                    os.mkdir(newpath)
+                shutil.move(filename, newpath)
+
+def add_prefix():
+    # Präfix an Dateinamen hängen
+    musthave = input("Folgende Bezeichnung muss im Dateinamen vorkommen: ")
+    for filename in os.listdir():
+        if not musthave in filename:
+            os.rename(filename, musthave+filename)
+
+def correct_filename():
+    # Fehlerkorrektur in Dateinamen     
+    regex = get_regex(r"Muss genau zwei Gruppen aufweisen. Bsp: (S\d\d)E(\d{1,2})")         # Regex-Muster muss zwei Gruppen aufweisen
+    for filename in os.listdir():
+        result = regex.findall(filename)
+        if len(result) > 0:
+            staffel = result[0][0]
+            episode = result[0][1]
+            new_name = re.sub(pattern, staffel+"E"+episode, filename)
+            # os.rename(filename, new_name)
+            print(new_name)
+
+def move_and_rename(root_path):
+    # Bennene Dateien nach ihrem Ordner und verschiebe sie in den Elternordner
+    folder_list = os.listdir()
+    regex = get_regex(r"Dateityp definieren (Bsp: .avi): ")
+    for item in folder_list:
+        os.chdir(root_path)
+        new_item = " ".join(item.split("."))
+        os.chdir(root_path+"\\"+item)
+        for filename in os.listdir():
+            result = regex.findall(filename)[0]
+            new_filename = new_item+result
+            os.rename(filename, new_filename)
+            shutil.move(new_filename, root_path)
+
+def remove_words():
+    # Bestimmte Zeichenfolgen aus Dateinamen entfernen
+    regex = get_regex(r"Zu entfernende Zeichenfolgen angeben und mit 'Oder-Funktion' voneinander trennen (Bsp: Subbed|Dubbed). ")
+    folder_list = os.listdir()
+    for item in folder_list:
+        new_item = " ".join(item.split("."))
+        new_item = re.sub(regex, "", new_item)
+        new_item = "".join(new_item.split("  "))
+        new_item = "".join(new_item.split("V"))
+        new_item = new_item.rstrip(" ")
+
+
 menu()
 exit()
-
-# Dateien mit bestimmtem Muster in neu angelegten Ordner verschieben
-for i in range(0,22):
-    newpath = ".\\Staffel "+str(i)
-    for filename in os.listdir():
-        pattern = re.compile(r'S(\d\d)E')
-        if i < 10:
-                current="0"+str(i)
-        else:
-                current=str(i)
-        result = pattern.findall(filename)
-        if current in result:
-            if not os.path.exists(newpath):
-                os.mkdir(newpath)
-            shutil.move(filename, newpath)
-
-
-# Präfix an Dateinamen hängen
-os.chdir(root_path)
-musthave = "Fringe "
-
-for filename in os.listdir():
-    if not musthave in filename:
-        os.rename(filename, musthave+filename)
-
-
-# Fehlerkorrektur in Dateinamen     
-os.chdir(root_path)      
-pattern = re.compile(r'S\d\d(S\d\d)E(\d{1,2})')
-for filename in os.listdir():
-    result = pattern.findall(filename)
-    if len(result) > 0:
-        staffel = result[0][0]
-        episode = result[0][1]
-        new_name = re.sub(pattern, staffel+"E"+episode, filename)
-        # os.rename(filename, new_name)
-        print(new_name)
-
-# Bennene Dateien nach ihrem Ordner und verschiebe sie in den Elternordner
-folder_list = os.listdir()
-for item in folder_list:
-    os.chdir(root_path)
-    new_item = " ".join(item.split("."))
-    pattern = re.compile(r'Subbed|HDTVR|HDT|SOF|XviD|HDTVRiP|SOF|iNTENTi|GERMAN|DUBBED|iP|-|Xv|Dubbed|SO|iNTERNAL|M4xd0me|Spon|Dubbed|Custom| WS| V|SSL')
-    new_item = re.sub(pattern, "", new_item)
-    new_item = "".join(new_item.split("  "))
-    new_item = "".join(new_item.split("V"))
-    new_item = new_item.rstrip(" ")
-    os.chdir(root_path+"\\"+item)
-    for filename in os.listdir():
-        file_pattern = re.compile(r'\.avi')
-        result = file_pattern.findall(filename)[0]
-        new_filename = new_item+result
-        os.rename(filename, new_filename)
-        shutil.move(new_filename, root_path)
-

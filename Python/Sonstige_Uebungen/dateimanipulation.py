@@ -8,7 +8,7 @@
 # Created Date: Sunday 29.12.2019, 20:45
 # Author: Raffael Baldinger
 #-----
-# Last Modified: Mon Jan 06 2020
+# Last Modified: Tue Jan 07 2020
 #-----
 # Copyright (c) 2020 Raffael Baldinger
 # This software is published under the MIT license.
@@ -186,13 +186,15 @@ def add_prefix():
 
 def correct_filename():
     # Fehlerkorrektur in Dateinamen     
-    regex = get_regex(r"Muss genau zwei Gruppen aufweisen. Bsp: (S\d\d)E(\d{1,2})")         # Regex-Muster muss zwei Gruppen aufweisen
+    regex = get_regex(r"Muss genau zwei Gruppen aufweisen. Bsp: (S\d\d)e(\d{1,2})")         # Regex-Muster muss zwei Gruppen aufweisen
+    print("Womit soll der Platz zwischen den Gruppen ersetzt werden?")
+    replace_string = input() 
     for filename in os.listdir():
         result = regex.findall(filename)
         if len(result) > 0:
             staffel = result[0][0]
             episode = result[0][1]
-            new_name = re.sub(pattern, staffel+"E"+episode, filename)
+            new_name = re.sub(regex, staffel+replace_string+episode, filename)              # Zusammensetzen des neuen Dateinamens
             # os.rename(filename, new_name)
             print(new_name)
 

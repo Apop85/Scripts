@@ -7,15 +7,7 @@
 #  Created Date: Tuesday 29.01.2019, 14:12
 #  Author: Apop85
 # -----
-#  Last Modified: Sunday 10.11.2019, 12:18/*
- * Filename: c:\Users\Apop85\Documents\Eigene Dokumente\ScriptProjekte\GitHub\Scripts\Bash\autoinstaller_stable.sh
- * Path: c:\Users\Apop85\Documents\Eigene Dokumente\ScriptProjekte\GitHub\Scripts\Bash
- * Created Date: Tuesday, January 29th 2019, 2:12:41 pm
- * Author: Apop85
- * 
- * Copyright (c) 2019 Your Company
- */
-
+#  Last Modified: Sunday 10.11.2019, 12:18
 # -----
 #  Copyright (c) 2019 Apop85
 #  This software is published under the MIT license.

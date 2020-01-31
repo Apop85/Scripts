@@ -62,7 +62,8 @@ function main_menu() {
         "Menüpunkt wählen:" $BOX_HEIGHT $BOX_WIDTH $MENU_HEIGHT \
         1 "Spiel Starten" \
         2 "Highscores anzeigen" \
-        3 "Beenden")
+        3 "Highscores löschen" \
+        4 "Beenden")
 
         # Wenn nicht Abbrechen ausgewählt wurde dann
         if [ $? -eq 0 ]; then
@@ -72,8 +73,18 @@ function main_menu() {
                 play_game
             elif [ $choice -eq 2 ]; then
                 # Zeige Highscore an
-                show_highscore
+                show_highscore | dialog --title "HIGHSCORES" \
+                                --programbox "Top 5 Spiele:" \
+          20 60
             elif [ $choice -eq 3 ]; then
+                # Lösche Highscores
+                rm $SCORE_FILE
+                if [ ! -f $SCORE_FILE ]; then
+                    dialog --backtitle "INFORMATION" --title "Highscores" --msgbox "Die Highscores wurden gelöscht" 15 30
+                fi
+                # Reinitialisiere Spiel
+                init
+            elif [ $choice -eq 4 ]; then
                 # Beende das Spiel
                 exit 0
             else
@@ -92,7 +103,10 @@ function show_message() {
 
 function show_highscore() {
     # Zeige Inhalt des Highscore-Files
-    dialog --title "High Scores" --backtitle "BESTENLISTE" --textbox $SCORE_FILE $BOX_HEIGHT 55
+    while IFS= read -r line; do
+        echo "$line"
+        sleep 0.5
+    done < $SCORE_FILE
 }
 
 function check_highscore() {
@@ -144,6 +158,7 @@ function check_highscore() {
         if (( $aktuelle_zeile == 0 )); then
             echo "$rang      $runden      $zeit      $name" > $SCORE_FILE_TMP
         elif $new_highscore; then
+            highscore
             delta+=1
             while $new_highscore; do
                 player_name=$(dialog --stdout --backtitle "NEUER HIGHSCORE" --title "Benutzername" --inputbox \
@@ -165,6 +180,41 @@ function check_highscore() {
 
     rm $SCORE_FILE
     mv $SCORE_FILE_TMP $SCORE_FILE
+}
+
+function highscore() {
+    for blah in {1..5}; do
+        clear
+        echo
+        echo
+        echo
+        echo
+        echo
+        echo
+        echo -e '\e[30m\e[107m __   __  ___   _______  __   __  _______  _______  _______  ______    _______  __   __ \e[0m'
+        echo -e '\e[30m\e[107m|  | |  ||   | |       ||  | |  ||       ||       ||       ||    _ |  |       ||  | |  |\e[0m'
+        echo -e '\e[30m\e[107m|  |_|  ||   | |    ___||  |_|  ||  _____||       ||   _   ||   | ||  |    ___||  | |  |\e[0m'
+        echo -e '\e[30m\e[107m|       ||   | |   | __ |       || |_____ |       ||  | |  ||   |_||_ |   |___ |  | |  |\e[0m'
+        echo -e '\e[30m\e[107m|       ||   | |   ||  ||       ||_____  ||      _||  |_|  ||    __  ||    ___||__| |__|\e[0m'
+        echo -e '\e[30m\e[107m|   _   ||   | |   |_| ||   _   | _____| ||     |_ |       ||   |  | ||   |___  __   __ \e[0m'
+        echo -e '\e[30m\e[107m|__| |__||___| |_______||__| |__||_______||_______||_______||___|  |_||_______||__| |__|\e[0m'
+        sleep 0.25
+        clear
+        echo
+        echo
+        echo
+        echo
+        echo
+        echo
+        echo -e '\e[44m __   __  ___   _______  __   __  _______  _______  _______  ______    _______  __   __ \e[0m'
+        echo -e '\e[44m|  | |  ||   | |       ||  | |  ||       ||       ||       ||    _ |  |       ||  | |  |\e[0m'
+        echo -e '\e[44m|  |_|  ||   | |    ___||  |_|  ||  _____||       ||   _   ||   | ||  |    ___||  | |  |\e[0m'
+        echo -e '\e[44m|       ||   | |   | __ |       || |_____ |       ||  | |  ||   |_||_ |   |___ |  | |  |\e[0m'
+        echo -e '\e[44m|       ||   | |   ||  ||       ||_____  ||      _||  |_|  ||    __  ||    ___||__| |__|\e[0m'
+        echo -e '\e[44m|   _   ||   | |   |_| ||   _   | _____| ||     |_ |       ||   |  | ||   |___  __   __ \e[0m'
+        echo -e '\e[44m|__| |__||___| |_______||__| |__||_______||_______||_______||___|  |_||_______||__| |__|\e[0m'
+        sleep 0.25
+    done
 }
 
 function play_game() {

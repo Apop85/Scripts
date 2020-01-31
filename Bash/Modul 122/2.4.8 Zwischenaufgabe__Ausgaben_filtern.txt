@@ -1,0 +1,16 @@
+ * ###
+ *  File: 2.4.8 Zwischenaufgabe__Ausgaben_filtern.txt
+ *  Project: scripts
+ * -----
+ *  Created Date: Thursday 16.01.2020, 19:11
+ *  Author: Apop85
+ * -----
+ *  Last Modified: Thursday 16.01.2020, 19:11
+ * -----
+ *  Copyright (c) 2020 Apop85
+ *  This software is published under the MIT license.
+ *  Check http://www.opensource.org/licenses/MIT for further informations
+ * -----
+ *  Description:
+ * ###
+

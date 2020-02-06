@@ -61,7 +61,13 @@ function create_backup() {
         echo "Datei bereits vorhanden!" 
     else
         # Komprimiere Dateien
-        tar -cvzf $backup_path $folders_2_backup 
+        # ~~~~~~~~~~~~~~~~ TAR-Parameter ~~~~~~~~~~~~~~~~
+        # c = Erstelle neues Archiv
+        # v = Zeige komprimierte Dateien in Ausgabe
+        # z = GZIP-Algorithmus verwenden
+        # f = Archivdatei verwenden
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        tar -cpvzf "$backup_path" "$folders_2_backup" 
         echo -e "\n\n-----------BACKUP ABGESCHLOSSEN-----------\n"
     fi
 
@@ -71,7 +77,7 @@ init            # Rufe Initialisierungsfunktion auf
 check_4_root    # Rufe Root-Check-Funktion auf
 
 # Erstelle Backup und gebe Ausgaben der Funktion in Dialogbox aus
-create_backup $abs_backup_path | dialog --title "Fortschritt" \
+create_backup $abs_backup_path | dialog --backtitle "BACKUP ERSTELLEN" --title "Fortschritt" \
           --programbox "Komprimierungsfortschritt:" \
           20 60
 

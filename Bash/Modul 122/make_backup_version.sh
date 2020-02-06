@@ -91,6 +91,12 @@ function create_backup() {
         # Sind keine Backups vorhanden erstelle Stamm-Backup
         if [[ "${done_backups[*]}" == "" ]]; then
             # Komprimiere Dateien
+            # ~~~~~~~~~~~~~~~~ TAR-Parameter ~~~~~~~~~~~~~~~~
+            # c = Erstelle neues Archiv
+            # v = Zeige komprimierte Dateien in Ausgabe
+            # z = GZIP-Algorithmus verwenden
+            # f = Archivdatei verwenden
+            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             tar -cvzf "$backup_path_abs" $folders_to_backup | dialog --title "Fortschritt" \
                     --programbox "Komprimierungsfortschritt:" \
                     20 60
@@ -116,9 +122,19 @@ function create_backup() {
                 if [[ ${!file_table[*]} =~ ${search_string} ]]; then
                     # Entpacke entsprechende Datei in TMP-Verzeichnis
                     if (( $indexed_version == 0 )); then
+                        # ~~~~~~~~~~~~~~~~ TAR-Parameter ~~~~~~~~~~~~~~~~
+                        # x = Entpacke Datei
+                        # f = Archivdatei verwenden
+                        # directory = Datei in angegebenes Verzeichnis entpacken
+                        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                         tar -xf $indexed_backupfile --directory=$tmp $search_string
                     else
                         # Ist die Datei Versioniert, entferne die Versionsnummern vom Dateinamen
+                        # ~~~~~~~~~~~~~~~~ TAR-Parameter ~~~~~~~~~~~~~~~~
+                        # x = Entpacke Datei
+                        # f = Archivdatei verwenden
+                        # directory = Datei in angegebenes Verzeichnis entpacken
+                        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                         tar -xf $indexed_backupfile --directory=$tmp $search_string.$indexed_version
                         local new_tmp_file=$(echo $tmp_file | sed -E "s/\.[0-9]+$//")
                         mv $tmp$tmp_file.$indexed_version $tmp$new_tmp_file

@@ -1,4 +1,5 @@
 ﻿@echo off
+@echo off
 REM ###
 REM  File: folder_structure.bat
 REM  Project: Batch
@@ -6,7 +7,7 @@ REM -----
 REM  Created Date: Thursday 05.03.2020, 20:05
 REM  Author: Apop85
 REM -----
-REM  Last Modified: Thursday 05.03.2020, 20:42
+REM  Last Modified: Thursday 05.03.2020, 21:31
 REM -----
 REM  Copyright (c) 2020 Raffael Baldinger
 REM  This software is published under the MIT license.
@@ -31,6 +32,7 @@ REM Iteriere durch alle Arrays
 for %%n in (1,2,3) do (
     REM Lese alle Items aus den Arrays aus
     for %%f in (!folder_layer%%n!) do (
+        call :random_color
         REM Erstelle Ordner
         md %%f >NUL
         echo Ordner %%f wird erstellt...
@@ -49,3 +51,19 @@ echo Laufwerk U: wurde nicht gefunden
 echo Script wird abgebrochen
 pause
 exit
+
+:random_color
+set color_codes=1 2 3 4 5 6 7 8 9 0 a b c d e f
+set color_code=
+for %%x in (1,2) do ( 
+    set /A random_number=!RANDOM!%%16+1
+    set /A counter=1
+    for %%i in (%color_codes%) do (
+        if !counter! equ !random_number! (
+            set color_code=!color_code!%%i
+        )
+        set /A counter=!counter!+1
+    )
+)
+color %color_code%
+goto :eof

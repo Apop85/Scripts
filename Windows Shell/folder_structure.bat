@@ -12,9 +12,13 @@ REM  Copyright (c) 2020 Raffael Baldinger
 REM  This software is published under the MIT license.
 REM  Check http://www.opensource.org/licenses/MIT for further informations
 REM -----
-REM  Description: Dieses Script legt eine vorgelegte Ordnerstruktur auf einem Laufwerk an
-REM  Eventuelle Fehlermeldungen werden dabei unterdrückt
+REM  Description: Aufgabe 28: Dieses Script legt eine vorgelegte Ordnerstruktur auf einem Laufwerk an
+REM  Eventuelle Fehlermeldungen werden dabei unterdrückt.
 REM ###
+
+if NOT exist u: (
+    goto :endofscript
+)
 
 SETLOCAL ENABLEDELAYEDEXPANSION
 
@@ -28,6 +32,19 @@ for %%n in (1,2,3) do (
     REM Lese alle Items aus den Arrays aus
     for %%f in (!folder_layer%%n!) do (
         REM Erstelle Ordner
-        md %%f
+        md %%f >NUL
     )
 )
+
+:good_ending
+echo.
+echo Ordnerstruktur wurde erstellt
+pause
+exit
+
+:bad_ending
+echo. 
+echo Laufwerk U: wurde nicht gefunden
+echo Script wird abgebrochen
+pause
+exit

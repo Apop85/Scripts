@@ -33,6 +33,7 @@ for %%n in (1,2,3) do (
     for %%f in (!folder_layer%%n!) do (
         REM Erstelle Ordner
         md %%f >NUL
+        echo Ordner %%f wird erstellt...
     )
 )
 

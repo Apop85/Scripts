@@ -17,7 +17,7 @@ REM  Eventuelle Fehlermeldungen werden dabei unterdrückt.
 REM ###
 
 if NOT exist u: (
-    goto :endofscript
+    goto :bad_ending
 )
 
 SETLOCAL ENABLEDELAYEDEXPANSION

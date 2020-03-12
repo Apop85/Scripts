@@ -9,7 +9,7 @@
 # Created Date: Wednesday 11.03.2020, 11:08
 # Author: Apop85
 #-----
-# Last Modified: Thursday 12.03.2020, 16:27
+# Last Modified: Thursday 12.03.2020, 16:28
 #-----
 # Copyright (c) 2020 Apop85
 # This software is published under the MIT license.
@@ -95,7 +95,7 @@ def compare_data(data):
             # Sind die Daten unterschiedlich, per Telegram eine Nachricht senden.
             bot_token = '1111111111:ABCDEfghijklmnopQRSTUVWXYZ'
             chat_id = '1111111'
-            message = "BAG-Richtlinien wurden geändert. https://www.bag.admin.ch/bag/de/home/krankheiten/ausbrueche-epidemien-pandemien/aktuelle-ausbrueche-epidemien/novel-cov/so-schuetzen-wir-uns.html"
+            message = "BAG-Richtlinien wurden geändert. " + source_url
             telegram_api = 'https://api.telegram.org/bot'+bot_token+'/sendMessage?chat_id='+chat_id+'&text='+message
             requests.get(telegram_api)
             abort_script("Webseite aktualisiert! " + str(old_hash) + " ist nicht gleich " + str(new_hash))

@@ -30,7 +30,7 @@ $user_groups = @(   'CEO', 'Marketing', 'Architecture', 'Accounting',
 
 # Default-Daten
 # Default-Passwort für die neuen Benutzer
-$default_password = "Zli.1234&19a"
+$default_password = "P@ssW0rD!"
 # Firmenname
 $company = "creasol"
 # Userstandort
@@ -74,7 +74,7 @@ Write-Host "##########################"
 
 # Erstelle User
 # Passwort in sicheren String konvertieren
-$password=ConvertTo-SecureString $default_password –asplaintext –force
+$password = ConvertTo-SecureString $default_password -AsPlainText -Force
 foreach ($user in $user_keys) {
     # Definiere Departpent
     $department = $usernames.Get_Item($user)[3]

@@ -5,7 +5,7 @@
 # Created Date: Monday 30.03.2020, 09:25
 # Author: Apop85
 #-----
-# Last Modified: Monday 30.03.2020, 12:26
+# Last Modified: Monday 30.03.2020, 12:34
 #-----
 # Copyright (c) 2020 Apop85
 # This software is published under the MIT license.
@@ -29,14 +29,22 @@ $user_groups = @(   'CEO', 'Marketing', 'Architecture', 'Accounting',
                 )
 
 # Default-Daten
-$user_keys = $usernames.Keys
+# Default-Passwort für die neuen Benutzer
 $default_password = "Zli.1234"
+# Firmenname
 $company = "creasol"
+# Userstandort
 $city = "Zürich"
+# Domänenname
 $domain = "zh.ch.creasol.ch"
+# Pfad für die Gruppe (./creasol/Groups)
+$grouppath = "OU=Groups, OU=creasol"
+# GroupScope
+$GroupScope = "Global"
 
 # Erstelle Gruppen
 $counter = 0
+$user_keys = $usernames.Keys
 foreach ($group in $user_groups) {
     if (@(Get-ADGroup -Filter { SamAccountName -eq $group }).Count -eq 0) {
         # Existiert die Gruppe noch nicht?
@@ -50,7 +58,7 @@ foreach ($group in $user_groups) {
             $dc_output += "DC=$sub_dc, "
         }
         # Erstelle Gruppe
-        New-ADGroup -Name $group -Path "CN=Users, OU=Groups, OU=creasol ,$dc_output" -GroupScope "Global"
+        New-ADGroup -Name $group -Path "$grouppath ,$dc_output" -GroupScope $GroupScope
     }
 }
 

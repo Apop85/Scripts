@@ -1,4 +1,4 @@
-####
+﻿####
 # File: create_users.ps1
 # Project: Modul 159
 #-----
@@ -108,7 +108,7 @@ function CutToLength {
         [int]$length
     )
     # Schneide übergebenen Namen auf gewünschte Länge zu
-    if ($length -ge 0) {
+    if ($length -ne 0) {
         return $name.SubString(0, $length)
     } else {
         return $name
@@ -125,31 +125,13 @@ function ReplaceSpecialChars {
     # Ersetze Spezialzeichen
     foreach ($character_set in $special_characters_to_replace) {
         # Prüfe ob Spezialcharakter vorkommt.
-        if ($value -contains $character_set[0]) {
+        if ($value -match $character_set[0]) {
             $value = $value.Replace($character_set[0], $character_set[1])
         }
     }
     return $value
 }
 
-function AddZero {
-    # Fülle Zahl mit vorangehenden Nullen auf
-    param (
-        [int]$number,
-        [int]$amount
-    )
-    
-    # Konvertiere Integer zu String
-    $number = $number.ToString()
-    
-    while ($number.Length() -ne $amount) {
-        # Füge Nullen hinzu, bis Anzahl erreicht
-        $number = "0" + $number
-    }
-
-    # Gebe Zahl zurück
-    return $number
-}
 
 #  ______          _       _ _         _____                                   
 # |  ____|        | |     | | |       / ____|                                  
@@ -196,8 +178,8 @@ Write-Host "##########################"
 # | |____| |  \__ \ ||  __/ | |  __/ | |__| \__ \  __/ |   
 # |______|_|  |___/\__\___|_|_|\___|  \____/|___/\___|_|  
 $counter = 0
-$usercounter = 1
 foreach ($user in $user_keys) {
+    $usercounter = 1
     # Lese Informationen aus Hash-Table aus
     $name_array = $user.Split(" ")
     $name = $name_array[0]
@@ -233,7 +215,8 @@ foreach ($user in $user_keys) {
     if ($username_iterate -ne 0) {
         while ($true) {
             # Fülle Iteration mit Nullen auf
-            $usercount = AddZero -number $usercounter -amount $username_iterate
+            $usercount = $usercounter.ToString()
+            $usercount = $usercount.PadLeft($username_iterate, "0")
             $username_to_check = $username + $usercount
             # Prüfe ob Benutzer bereits existiert
             if (@(Get-ADUser -Filter { SamAccountName -eq $username_to_check }).Count -eq 0) {
@@ -269,16 +252,17 @@ foreach ($user in $user_keys) {
 
     $counter += 1
     # Existiert der User noch nicht?
-    Write-Warning -Message "User $user does not exist."
-    Write-Host "Creating user: $user"
+    Write-Warning -Message "User $username does not exist."
+    Write-Host "Creating user: $username"
+    $SecureString = convertto-securestring $default_password -asplaintext -force
     # Lege neuen Benutzer an
-    New-ADUser -SamAccountName $user -Name "$user" -Surname $surname -GivenName $name -UserPrincipalName $usermail -AccountPassword $default_password -Enabled $false -PasswordNeverExpires $false -Company $company -City $city -Department $department
+    New-ADUser -SamAccountName $username -Name "$username" -Surname $surname -GivenName $name -UserPrincipalName $usermail -AccountPassword $SecureString -Enabled $false -PasswordNeverExpires $false -Company $company -City $city -Department $department
     # Benutzer aktivieren
-    Enable-ADAccount -Identity $user
-    Write-Host "Adding $user to group $department"
+    Enable-ADAccount -Identity $username
     # Benutzer zu Gruppe hinzufügen
     foreach ($group in $groups) {
-        Add-ADGroupMember -Identity $group -Members $user
+        Add-ADGroupMember -Identity $group -Members $username
+        Write-Host "Adding $username to group $group"
     }
 } 
 

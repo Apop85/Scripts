@@ -205,16 +205,20 @@ foreach ($user in $user_keys) {
     $department = $usernames.Get_Item($user)[0]
     $groups = $usernames.Get_Item($user)[1]
 
+    # Falls vorgegeben, ersetze Umlaute
+    if ($username_replace -eq 1) {
+        $username_name = ReplaceSpecialChars -value $name
+        $username_surname = ReplaceSpecialChars -value $surname
+    } else {
+        $username_name = $name
+        $username_surname = $surname
+    }
     # Namen entsprechend Vorgabe zuschneiden
-    $username_name = CutToLength -name $name -length $username_name_length
-    $username_surname = CutToLength -name $surname -length $username_surname_length
+    $username_name = CutToLength -name $username_name -length $username_name_length
+    $username_surname = CutToLength -name $username_surname -length $username_surname_length
     # Benutzername zusammenstellen
     $username = $username_name + $username_surname
 
-    # Falls vorgegeben, ersetze Umlaute
-    if ($username_replace -eq 1) {
-        $username = ReplaceSpecialChars -value $username
-    }
 
     # Manipuliere Benutzername falls erwünscht.
     if ($username_rule -eq 1) {
@@ -241,9 +245,17 @@ foreach ($user in $user_keys) {
         }
     }
 
+    # Entferne Sonderzeichen, falls gewünscht
+    if ($usermail_replace -eq 1) {
+        $usermail_name = ReplaceSpecialChars -value $name
+        $usermail_surname = ReplaceSpecialChars -value $surname
+    } else {
+        $usermail_name = $name
+        $usermail_surname = $surname
+    }
     # Name und Vorname für die Mailadresse zurechtschneiden
-    $usermail_name = CutToLength -name $name -length $usermail_name_length
-    $usermail_surname = CutToLength -name $surname -length $usermail_surname_length
+    $usermail_name = CutToLength -name $usermail_name -length $usermail_name_length
+    $usermail_surname = CutToLength -name $usermail_surname -length $usermail_surname_length
 
     # Prüfe ob Standard- oder Alternativdomain gewählt wurde
     if ($usermail_domain -eq "") {
@@ -252,10 +264,6 @@ foreach ($user in $user_keys) {
 
     # Setze 1. Teil der Mailadresse zusammen
     $usermail = $usermail_name + $usermail_seperator + $usermail_surname
-    # Entferne Sonderzeichen, falls gewünscht
-    if ($usermail_replace -eq 1) {
-        $usermail = ReplaceSpecialChars -value $usermail
-    }
     # Setze Mailadresse zusammen
     $usermail = $usermail + "@" + $usermail_domain
 

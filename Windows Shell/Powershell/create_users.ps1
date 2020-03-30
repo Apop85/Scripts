@@ -30,7 +30,7 @@ $user_groups = @(   'CEO', 'Marketing', 'Architecture', 'Accounting',
 
 # Default-Daten
 # Default-Passwort für die neuen Benutzer
-$default_password = "Zli.1234"
+$default_password = "Zli.1234&19a"
 # Firmenname
 $company = "creasol"
 # Userstandort
@@ -45,6 +45,7 @@ $GroupScope = "Global"
 # Erstelle Gruppen
 $counter = 0
 $user_keys = $usernames.Keys
+
 foreach ($group in $user_groups) {
     if (@(Get-ADGroup -Filter { SamAccountName -eq $group }).Count -eq 0) {
         # Existiert die Gruppe noch nicht?
@@ -60,7 +61,7 @@ foreach ($group in $user_groups) {
         }
         
         # Letztes Komma entfernen.
-        $dc_output.trimend(", ")
+        $dc_output = $dc_output.trimend(", ")
         
         # Erstelle Gruppe
         New-ADGroup -Name $group -Path "$grouppath ,$dc_output" -GroupScope $GroupScope
@@ -72,6 +73,8 @@ Write-Host "$counter Groups have been added."
 Write-Host "##########################"
 
 # Erstelle User
+# Passwort in sicheren String konvertieren
+$password=ConvertTo-SecureString $default_password –asplaintext –force
 foreach ($user in $user_keys) {
     # Definiere Departpent
     $department = $usernames.Get_Item($user)[3]
@@ -86,7 +89,7 @@ foreach ($user in $user_keys) {
         $nachname = $usernames.Get_Item($user)[1]
         $usermail = $usernames.Get_Item($user)[2]
         # Lege neuen Benutzer an
-        New-ADUser -SamAccountName $user -Name "$user" -Surname $nachname -GivenName $vorname -UserPrincipalName $usermail -AccountPassword $default_password -Enabled $false -PasswordNeverExpires $false -Company $company -City $city -Department $department
+        New-ADUser -SamAccountName $user -Name "$user" -Surname $nachname -GivenName $vorname -UserPrincipalName $usermail -AccountPassword $password -Enabled $false -PasswordNeverExpires $false -Company $company -City $city -Department $department
         # Benutzer aktivieren
         Enable-ADAccount -Identity $user
         Write-Host "Adding $user to group $department"

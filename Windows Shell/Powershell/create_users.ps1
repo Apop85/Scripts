@@ -5,7 +5,7 @@
 # Created Date: Monday 30.03.2020, 09:25
 # Author: Apop85
 #-----
-# Last Modified: Monday 30.03.2020, 12:34
+# Last Modified: Monday 30.03.2020, 12:49
 #-----
 # Copyright (c) 2020 Apop85
 # This software is published under the MIT license.
@@ -51,12 +51,17 @@ foreach ($group in $user_groups) {
         Write-Warning "Group $group does not exist."
         Write-Host "Creating group $group"
         $counter += 1
+        
         # DC-Einträge erstellen:
         $dc_output = ""
         $dc_entrys = $domain.Split(".")
         foreach ($sub_dc in $dc_entrys) {
             $dc_output += "DC=$sub_dc, "
         }
+        
+        # Letztes Komma entfernen.
+        $dc_output.trimend(", ")
+        
         # Erstelle Gruppe
         New-ADGroup -Name $group -Path "$grouppath ,$dc_output" -GroupScope $GroupScope
     }

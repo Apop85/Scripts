@@ -77,7 +77,7 @@ $counter = 0
 foreach ($user in $user_keys) {
     # Definiere Departpent
     $department = $usernames.Get_Item($user)[3]
-    $members = Get-ADGroupMember -Identity $department -Recursive | Select -ExpandProperty Name
+    $members = Get-ADGroupMember -Identity $department -Recursive | Select-Object -ExpandProperty Name
     if (@(Get-ADUser -Filter { SamAccountName -eq $user }).Count -eq 0) {
         # Existiert der User noch nicht?
         Write-Warning -Message "User $user does not exist."

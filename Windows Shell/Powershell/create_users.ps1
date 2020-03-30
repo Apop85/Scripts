@@ -73,12 +73,10 @@ Write-Host "$counter Groups have been added."
 Write-Host "##########################"
 
 # Erstelle User
-# Passwort in sicheren String konvertieren
-$password = ConvertTo-SecureString $default_password -AsPlainText -Force
+$counter = 0
 foreach ($user in $user_keys) {
     # Definiere Departpent
     $department = $usernames.Get_Item($user)[3]
-    $counter = 0
     if (@(Get-ADUser -Filter { SamAccountName -eq $user }).Count -eq 0) {
         # Existiert der User noch nicht?
         Write-Warning -Message "User $user does not exist."
@@ -89,7 +87,7 @@ foreach ($user in $user_keys) {
         $nachname = $usernames.Get_Item($user)[1]
         $usermail = $usernames.Get_Item($user)[2]
         # Lege neuen Benutzer an
-        New-ADUser -SamAccountName $user -Name "$user" -Surname $nachname -GivenName $vorname -UserPrincipalName $usermail -AccountPassword $password -Enabled $false -PasswordNeverExpires $false -Company $company -City $city -Department $department
+        New-ADUser -SamAccountName $user -Name "$user" -Surname $nachname -GivenName $vorname -UserPrincipalName $usermail -AccountPassword $default_password -Enabled $false -PasswordNeverExpires $false -Company $company -City $city -Department $department
         # Benutzer aktivieren
         Enable-ADAccount -Identity $user
         Write-Host "Adding $user to group $department"

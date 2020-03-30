@@ -23,6 +23,6 @@ set /a ip=input
 rem ping defined ip range and output if answer = true
 rem --------------------------------------------------------------------
 cls
-for /l %%y in (0,1,%subnet%) do for /l %%x in (1,1,%ip%) do ping -n 1 %address%.%address2%.%%y.%%x | find ": Bytes" && nslookup %address%.%address2%.%%y.%%x && echo %address%.%address2%.%%y.%%x >> %UserProfile%\Desktop\output_new.txt
+for /l %%y in (1,1,%subnet%) do for /l %%x in (1,1,%ip%) do ping -n 1 %address%.%address2%.%%y.%%x | find ": Bytes" && nslookup %address%.%address2%.%%y.%%x && echo %address%.%address2%.%%y.%%x >> %UserProfile%\Desktop\output_new.txt
 cls
 echo. && echo. && echo. && echo Scan done!

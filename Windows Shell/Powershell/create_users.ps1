@@ -15,17 +15,18 @@
 ####
 
 # Benutzerdefinitionen
-$usernames = @{ 'ursmei01' = 'Urs', 'Meier', 'urs.meier@creasol.ch', 'CEO'; 
-                'viokra01' = 'Viola', 'Krätzer', 'viola.kraezer@creasol.ch', 'Marketing'; 
-                'rolber01' = 'Roland', 'Berger', 'roland.berger@creasol.ch', 'Architecture'; 
-                'hanglu01' = 'Hannah', 'Glühwind', 'hannah.gluehwind@creasol.ch', 'Architecture'; 
-                'karmei01' = 'Karl', 'Meister', 'karl.meister@creasol.ch', 'Architecture'; 
-                'thokur01' = 'Thomas', 'Kurzwell', 'thomas.kurzwell@creasol.ch', 'Accounting'
+# Userdefinition: Benutzername = Vorname, Nachname, Mail, Department, (Gruppe/n)
+$usernames = @{ 'ursmei01' = 'Urs', 'Meier', 'urs.meier@creasol.ch', 'CEO', @('CEO'); 
+                'viokra01' = 'Viola', 'Krätzer', 'viola.kraezer@creasol.ch', 'Marketing', @('Marketing', 'Administration'); 
+                'rolber01' = 'Roland', 'Berger', 'roland.berger@creasol.ch', 'Architecture', @('Architecture'); 
+                'hanglu01' = 'Hannah', 'Glühwind', 'hannah.gluehwind@creasol.ch', 'Architecture', @('Architecture'); 
+                'karmei01' = 'Karl', 'Meister', 'karl.meister@creasol.ch', 'Architecture', @('Architecture'); 
+                'thokur01' = 'Thomas', 'Kurzwell', 'thomas.kurzwell@creasol.ch', 'Accounting', @('Accounting', 'Technics')
             }
 
 # Gruppendefinitionen
 $user_groups = @(   'CEO', 'Marketing', 'Architecture', 'Accounting', 
-                    'Administration', 'Projects'
+                    'Administration', 'Projects', 'Technics'
                 )
 
 # Default-Daten
@@ -77,7 +78,8 @@ $counter = 0
 foreach ($user in $user_keys) {
     # Definiere Departpent
     $department = $usernames.Get_Item($user)[3]
-    $members = Get-ADGroupMember -Identity $department -Recursive | Select-Object -ExpandProperty Name
+    $groups = $usernames.Get_Item($user)[4]
+
     if (@(Get-ADUser -Filter { SamAccountName -eq $user }).Count -eq 0) {
         # Existiert der User noch nicht?
         Write-Warning -Message "User $user does not exist."
@@ -93,13 +95,22 @@ foreach ($user in $user_keys) {
         Enable-ADAccount -Identity $user
         Write-Host "Adding $user to group $department"
         # Benutzer zu Gruppe hinzufügen
-        Add-ADGroupMember -Identity $department -Members $user
-    } elseif ($members -notcontains $user) {
-        # Ist der aktuelle User NICHT in der vorgesehenen Gruppe?
-        Write-Warning "User $user already exists but is not in group $group."
-        # Benutzer zu Grupper hinzufügen
-        Add-ADGroupMember -Identity $department -Members $user
-        Write-Host "Adding $user to group $department"
+        foreach ($group in $groups) {
+            Add-ADGroupMember -Identity $group -Members $user
+        }
+    } else {
+        # Lese Gruppenmitglieder aus 
+        foreach ($group in $groups) {
+            # Prüfe jede Gruppe bei welcher der User eingetragen werden soll. 
+            $group_members = Get-ADGroupMember -Identity $group -Recursive | Select-Object -ExpandProperty Name
+            if ($group_members -notcontains $user) {
+                # Ist der aktuelle User NICHT in der vorgesehenen Gruppe?
+                Write-Warning "User $user already exists but is not in group $group."
+                # Benutzer zu Grupper hinzufügen
+                Add-ADGroupMember -Identity $department -Members $user
+                Write-Host "Adding $user to group $department"
+            }
+        }
     }
 }
 

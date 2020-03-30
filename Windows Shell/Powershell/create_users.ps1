@@ -107,8 +107,8 @@ foreach ($user in $user_keys) {
                 # Ist der aktuelle User NICHT in der vorgesehenen Gruppe?
                 Write-Warning "User $user already exists but is not in group $group."
                 # Benutzer zu Grupper hinzufügen
-                Add-ADGroupMember -Identity $department -Members $user
-                Write-Host "Adding $user to group $department"
+                Add-ADGroupMember -Identity $group -Members $user
+                Write-Host "Adding $user to group $group"
             }
         }
     }

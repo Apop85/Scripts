@@ -5,7 +5,7 @@
 # Created Date: Monday 30.03.2020, 09:25
 # Author: Apop85
 #-----
-# Last Modified: Mon Mar 30 2020
+# Last Modified: Monday 30.03.2020, 12:26
 #-----
 # Copyright (c) 2020 Apop85
 # This software is published under the MIT license.
@@ -33,6 +33,7 @@ $user_keys = $usernames.Keys
 $default_password = "Zli.1234"
 $company = "creasol"
 $city = "Zürich"
+$domain = "zh.ch.creasol.ch"
 
 # Erstelle Gruppen
 $counter = 0
@@ -42,8 +43,14 @@ foreach ($group in $user_groups) {
         Write-Warning "Group $group does not exist."
         Write-Host "Creating group $group"
         $counter += 1
+        # DC-Einträge erstellen:
+        $dc_output = ""
+        $dc_entrys = $domain.Split(".")
+        foreach ($sub_dc in $dc_entrys) {
+            $dc_output += "DC=$sub_dc, "
+        }
         # Erstelle Gruppe
-        New-ADGroup -Name $group -Path "CN=Users, OU=Groups, OU=creasol ,DC=zh, DC=ch, DC=creasol, DC=ch" -GroupScope "Global"
+        New-ADGroup -Name $group -Path "CN=Users, OU=Groups, OU=creasol ,$dc_output" -GroupScope "Global"
     }
 }
 

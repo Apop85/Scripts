@@ -9,7 +9,7 @@
 # Created Date: Wednesday 15.04.2020, 12:29
 # Author: Raffael Baldinger
 #-----
-# Last Modified: Wednesday 15.04.2020, 12:29
+# Last Modified: Thursday 16.04.2020, 22:08
 #-----
 # Copyright (c) 2020 Raffael Baldinger
 # This software is published under the MIT license.
@@ -17,7 +17,6 @@
 #-----
 # Description: This script replaces network paths with links inside a excel file
 ####
-
 
 import os, openpyxl, re
 from pyperclip import copy, paste
@@ -83,7 +82,7 @@ def get_by_input():
     # Function to get the path of the excel file by user input
     found = False
     while not found:
-        print("\n Bitte Pfad angeben:")
+        print("\nBitte Pfad angeben:")
         excel_path = input()
         found, excel_path = check_input(excel_path)
        
@@ -104,6 +103,12 @@ def get_by_clipboard():
 
     edit_excelfile(excel_path)
 
+def construct_path(root_path, subfolders):
+    result = root_path
+    for i in range(0, len(subfolders)):
+        result += "\\" + subfolders[i]
+    return result
+
 def edit_excelfile(filepath):
     # Open excel file
     excel_file = openpyxl.load_workbook(filepath)
@@ -117,6 +122,7 @@ def edit_excelfile(filepath):
     max_col = active_sheet.max_column
     # Define patten of the future links
     path_pattern = re.compile(r'\\\\[A-Za-z0-9]+\\.*')
+    file_pattern = re.compile(r'.*\..{2,3}')
     current_path, counter = "", 0
     # Iterate trough all data
     for row in range(2, max_row+1):
@@ -125,27 +131,55 @@ def edit_excelfile(filepath):
             col_letter = openpyxl.utils.get_column_letter(col)
             # Read cell value
             active_cell_value = (active_sheet[col_letter+str(row)].value)
+
+
             if active_cell_value != None:
+                if col == 1:
+                    # If the path is defined in the first column set as root path
+                    root_path = active_cell_value
+                    # Create new array for subfolders inside the new root path
+                    subfolders = []
+                else:
+                    # Remove old subfolders if needed
+                    while len(subfolders)+1 >= col:
+                        del subfolders[-1]
+                    # Add new subfolder to array
+                    subfolders.insert(col-1, active_cell_value)
+                    
+
                 # If value is path
                 if path_pattern.match(active_cell_value):
-                    current_path = active_cell_value
+                    current_path = construct_path(root_path, subfolders)
+                    # Write to excel sheet
+                    active_sheet[col_letter+str(row)].value = active_cell_value
                     active_sheet[col_letter+str(row)].hyperlink = "file:///"+current_path
-                    active_sheet[col_letter+str(row)].value = current_path
                     counter += 1
                 # If value is subfolder
-                elif current_path != "" and not "->" in active_cell_value:
-                    link_path = current_path + "\\" + active_cell_value
-                    active_sheet[col_letter+str(row)].hyperlink = "file:///" + link_path
+                elif file_pattern.match(active_cell_value) and not "div." in active_cell_value:
+                    del subfolders[-1]
+                    current_path = construct_path(root_path, subfolders)
+                    # Write to excel sheet
                     active_sheet[col_letter+str(row)].value = active_cell_value
-                    counter += 1
-                # if value contains "->"
-                elif current_path != "" and "->" in active_cell_value:
-                    link_path = current_path
                     active_sheet[col_letter+str(row)].hyperlink = "file:///"+current_path
                     counter += 1
+                elif not "div." in active_cell_value:
+                    current_path = construct_path(root_path, subfolders)
+                    # Write to excel sheet
+                    active_sheet[col_letter+str(row)].value = active_cell_value
+                    active_sheet[col_letter+str(row)].hyperlink = "file:///" + current_path
+                    counter += 1
+                # if value contains "div."
+                elif "div." in active_cell_value:
+                    del subfolders[-1]
+                    current_path = construct_path(root_path, subfolders)
+                    link_path = current_path
+                    # Write to excel sheet
+                    active_sheet[col_letter+str(row)].hyperlink = "file:///"+current_path
+                    counter += 1
+                print("Erzeuge Link in Zelle " + col_letter + str(row) + ": " + current_path)
 
     excel_file.save(filepath)
-    print("Es wurden "+ str(counter) +" links erzeugt.")
+    print("\nEs wurden "+ str(counter) +" links erzeugt.")
     input("Enter zum fortfahren...")
     
 

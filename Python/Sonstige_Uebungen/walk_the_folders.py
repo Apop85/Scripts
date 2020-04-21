@@ -8,7 +8,7 @@
 # Created Date: Monday 20.04.2020, 12:17
 # Author: Apop85
 #-----
-# Last Modified: Monday 20.04.2020, 21:50
+# Last Modified: Tuesday 21.04.2020, 22:14
 #-----
 # Copyright (c) 2020 Raffael Baldinger
 # This software is published under the MIT license.
@@ -72,8 +72,10 @@ while True:
     del rel_path[-1]
     # Füge absoluter Pfad zusammen
     rel_path = "\\".join(rel_path)
-    if os.path.exists(rel_path):
+    if os.path.exists(rel_path) and not os.path.isdir(target_file):
         break
+    elif os.path.isdir(target_file):
+        print(target_file + " ist keine Datei. Beispiel: C:\\output.txt")
     else:
         print("Pfad " + rel_path + " konnte nicht gefunden werden.")
 
@@ -92,20 +94,8 @@ result_table = {target_dir : {}}
 # Erstelle Walk-Generator
 folder_table = os.walk(target_dir)
 
-# Animationsfunktion
-def animation(key=0):
-    if (key+1 <= len(ani_row)-1):
-        return key+1
-    else:
-        return 0
-
-anim_now = 0
-ani_row = ["\\", "\\", "|","|", "/", "/", "–", "–"]
-
 # Prüfe alle Einträge
 for folder, subfolder, filename in folder_table:
-    anim_now = animation(anim_now)
-    # print("Verarbeite... " + ani_row[anim_now] + " "*30 + "\r"*50, end="")
     loading()
     # Existiert noch kein Eintrag für den aktuellen Ordner dann erstellen
     if not folder in result_table.keys():
@@ -139,10 +129,16 @@ for folder, subfolder, filename in folder_table:
 
 def print_n_save(content):
     print(content)
+    # öffne Datei
+    file_writer = open(target_file, "a", encoding="utf-8")
     file_writer.write(content + "\n")
+    # Speichere Output-Datei
+    file_writer.close()
 
-# Bereite Filewriter vor
+# Erstelle Datei
 file_writer = open(target_file, "w", encoding="utf-8")
+# Speichere Output-Datei
+file_writer.close()
 # Laufe alle Ordner durch
 for key in result_table.keys():
     print_n_save(filler*100)
@@ -171,5 +167,4 @@ for key in result_table.keys():
     if pause == "1":
         input("Enter zum Fortfahren")
 
-# Speichere Output-Datei
-file_writer.close()
+

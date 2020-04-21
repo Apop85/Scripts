@@ -18,6 +18,42 @@
 ####
 import os
 
+def loading():
+    # Setze globale Variablen
+    global current_direction
+    global current_position
+    # Defniere Aussehen des Ladebalkens
+    loading_bar = "[                                ]"
+    # Definiere das zu bewegende Objekt
+    loading_symbol_fw = ">++('>"
+    loading_symbol_bw = "<')++<"
+
+    # Ist die Variabel current_direction noch nicht gesetzt wird ein Error ausgelöst
+    try:
+        test = current_direction*5
+    except:
+        # Der Error wird abgefangen und die Variablen gesetzt
+        current_direction = 0
+        current_position = 1
+
+    # Ist die Bewegung vorwärts erhöhe Position um 1
+    if current_direction == 0:
+        current_position += 1
+        symbol = loading_symbol_fw
+    # Ist die Bewegung rückwärts vermindere Position um 1
+    else:
+        current_position -= 1
+        symbol = loading_symbol_bw
+
+    # Prüfe ob der Rand des Ladebalkens erreicht wurde und wechsle Laufrichtung
+    if current_position >= len(loading_bar)-1:
+        current_direction = 1
+    elif current_position == 1:
+        current_direction = 0
+
+    # Gebe Ladebalken aus
+    print("\r"*(len(loading_bar)+len(symbol)) + loading_bar[0:current_position] + symbol + loading_bar[current_position:], end="")
+
 
 # Fordere Zielpfad an
 while True:
@@ -69,7 +105,8 @@ ani_row = ["\\", "\\", "|","|", "/", "/", "–", "–"]
 # Prüfe alle Einträge
 for folder, subfolder, filename in folder_table:
     anim_now = animation(anim_now)
-    print("Verarbeite... " + ani_row[anim_now] + " "*30 + "\r"*50, end="")
+    # print("Verarbeite... " + ani_row[anim_now] + " "*30 + "\r"*50, end="")
+    loading()
     # Existiert noch kein Eintrag für den aktuellen Ordner dann erstellen
     if not folder in result_table.keys():
         # Lese übergeordneter Ordner aus
@@ -102,7 +139,7 @@ for folder, subfolder, filename in folder_table:
 
 def print_n_save(content):
     print(content)
-    file_writer.write(content)
+    file_writer.write(content + "\n")
 
 # Bereite Filewriter vor
 file_writer = open(target_file, "w", encoding="utf-8")

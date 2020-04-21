@@ -8,7 +8,7 @@
 # Created Date: Monday 20.04.2020, 12:17
 # Author: Apop85
 #-----
-# Last Modified: Tuesday 21.04.2020, 22:41
+# Last Modified: Tuesday 21.04.2020, 22:49
 #-----
 # Copyright (c) 2020 Raffael Baldinger
 # This software is published under the MIT license.
@@ -142,6 +142,12 @@ def print_n_save(content):
     # Speichere Output-Datei
     file_writer.close()
 
+def choose_size_format(byte_amount):
+    format_table = { "b" : 1, "kb" : 1000, "mb" : 1000000, "gb" : 1000000000}
+    for key in format_table.keys():
+        if len(str(int(byte_amount/format_table[key]))) < 4 or key == "gb":
+            return str(int(byte_amount/format_table[key])) + " " + key
+
 # Erstelle Datei
 file_writer = open(target_file, "w", encoding="utf-8")
 # Speichere Output-Datei
@@ -170,7 +176,7 @@ for key in result_table.keys():
             print_n_save(filler2*100)
         else:
             # Ist es weder FILE noch SUB, ist es ein Dateityp 
-            print_n_save("Dateityp: " + subkey + " - Totalgrösse: " + str(int(result_table[key][subkey]/1000)) + " kb")
+            print_n_save("Dateityp: " + subkey + " - Totalgrösse: " + choose_size_format(result_table[key][subkey]))
     if pause == "1":
         input("Enter zum Fortfahren")
 

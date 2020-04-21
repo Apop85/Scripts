@@ -8,7 +8,7 @@
 # Created Date: Monday 20.04.2020, 12:17
 # Author: Apop85
 #-----
-# Last Modified: Tuesday 21.04.2020, 22:49
+# Last Modified: Tuesday 21.04.2020, 23:00
 #-----
 # Copyright (c) 2020 Raffael Baldinger
 # This software is published under the MIT license.
@@ -146,7 +146,12 @@ def choose_size_format(byte_amount):
     format_table = { "b" : 1, "kb" : 1000, "mb" : 1000000, "gb" : 1000000000}
     for key in format_table.keys():
         if len(str(int(byte_amount/format_table[key]))) < 4 or key == "gb":
-            return str(int(byte_amount/format_table[key])) + " " + key
+            if key != "b":
+                value = byte_amount/format_table[key]
+                value = "%.2f" % value
+                return str(value) + " " + key
+            else:
+                return str(int(byte_amount/format_table[key])) + " " + key
 
 # Erstelle Datei
 file_writer = open(target_file, "w", encoding="utf-8")

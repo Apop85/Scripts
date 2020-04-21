@@ -8,7 +8,7 @@
 # Created Date: Monday 20.04.2020, 12:17
 # Author: Apop85
 #-----
-# Last Modified: Tuesday 21.04.2020, 22:14
+# Last Modified: Tuesday 21.04.2020, 22:41
 #-----
 # Copyright (c) 2020 Raffael Baldinger
 # This software is published under the MIT license.
@@ -16,7 +16,7 @@
 #-----
 # Description: This script analyzes every Folder and Subfolder and lists Folder, Subfolder and Files as well as filesize for each extension.
 ####
-import os
+import os, re
 
 def loading():
     # Setze globale Variablen
@@ -94,6 +94,8 @@ result_table = {target_dir : {}}
 # Erstelle Walk-Generator
 folder_table = os.walk(target_dir)
 
+# Muster zur erkennung der Dateiendung
+file_pattern = re.compile(".*\..{2,3}")
 # Prüfe alle Einträge
 for folder, subfolder, filename in folder_table:
     loading()
@@ -103,7 +105,7 @@ for folder, subfolder, filename in folder_table:
         last_folder = folder.split("\\")
         del last_folder[-1]
         last_folder = "\\".join(last_folder)
-        # Erstelle EIntrag in Resultattabelle
+        # Erstelle Eintrag in Resultattabelle
         result_table.setdefault(folder, {})
 
     # Wenn Dateien im Ordner existieren
@@ -112,7 +114,10 @@ for folder, subfolder, filename in folder_table:
         result_table[folder].setdefault("FILE", filename)
         for file in filename:
             # Lese Dateiendung aus
-            file_extension = (file.split("."))[-1]
+            if file_pattern.match(file):
+                file_extension = (file.split("."))[-1]
+            else:
+                file_extension = "None"
             # Erstelle Eintrag für Dateiendung mit Bytecounter
             result_table[folder].setdefault(file_extension, 0)
             try:
@@ -126,11 +131,13 @@ for folder, subfolder, filename in folder_table:
     if subfolder != []:
         # Lege EIntrag mit dem Schlüssel "SUB" an mit den Unterordnern
         result_table[folder].setdefault("SUB", subfolder)
+print()
 
 def print_n_save(content):
     print(content)
     # öffne Datei
     file_writer = open(target_file, "a", encoding="utf-8")
+    # Schreibe in Datei
     file_writer.write(content + "\n")
     # Speichere Output-Datei
     file_writer.close()

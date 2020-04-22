@@ -1,8 +1,0 @@
-Example PDF
-
-Goal is to convert PDF into TXT
-to be able to read out
-
-information with less problems.
-
-Let's hope the best

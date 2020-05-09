@@ -1,0 +1,62 @@
+
+
+body {
+    font-family: 'Oswald', sans-serif;
+    color: #fff;
+    background-color: #000;
+}
+
+.container {
+    text-align: center;
+}
+
+/* ///////// CLIP-TEXT-ELEMENTE \\\\\\\\ */
+.clip-text {
+    /* Textstyle */
+    font-size: 6em;
+    font-weight: bold;
+    line-height: 1;
+    text-align: center;
+    /* Position des Textes */
+    position: relative;
+    display: inline-block;
+    margin: .25em;
+    padding: .5em .75em;
+    /* Hintergrundbild */
+    background-image: url(example.jpg);
+    background-position: center center;
+    /* Color fallback */
+    color: #fff;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Umrandungsbox */
+.clip-text:before,
+.clip-text:after {
+    position: absolute;
+    content: '';
+}
+
+/* Background */
+.clip-text:before {
+    z-index: -2;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-image: inherit;
+    background-position: center center;
+}
+
+/* Text Background (black zone) */
+.clip-text:after {
+    position: absolute;
+    z-index: -1;
+    top: .125em;
+    right: .125em;
+    bottom: .125em;
+    left: .125em;
+    background-color: #000;
+}
+

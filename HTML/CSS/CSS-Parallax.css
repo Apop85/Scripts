@@ -11,11 +11,6 @@ body {
   height: 100vh;
 }
 
-.parallax-hintergrundbild {
-    width: 100vw;
-    height: auto;
-}
-
 p, h1 {
     font-size: 2em;
     color: black;
@@ -37,6 +32,11 @@ section {
 }
 
 /* Parallax Styles */
+.parallax-hintergrundbild {
+    width: 100vw;
+    height: auto;
+}
+
 .parallax-ebene {
   position: relative;
   width: 100vw;

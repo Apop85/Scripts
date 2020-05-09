@@ -1,0 +1,47 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    height: 80vh;
+    background-color: black;
+    padding: 50px;
+}
+
+.container {
+    background-image: url(example.jpg);
+    height: 100%;
+    background-size: cover;
+    mask-size: cover;
+}
+
+.foreground-image {
+    height: 100%;
+    z-index: 1;
+    position: relative;
+    top: -50px;
+    background-image: url(example.jpg);
+    mask-image: url(example_mask.png);
+    background-size: cover;
+    mask-size: cover;
+}
+
+.textcontainer {
+    color: white;
+    text-align: center;
+    position: relative;
+    top: 150px;
+    z-index: 0;
+    animation: textrising 10s ease-out;
+}
+
+@keyframes textrising {
+    from {
+        transform: translateY(400px);
+    }
+    to {
+        transform: translateY(0px);
+    }
+}
+

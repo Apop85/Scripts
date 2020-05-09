@@ -7,19 +7,17 @@ html {
     background-color: white;
     overflow: hidden;
     z-index: 1;
+    height: 100px;
 }
 
-.car img {
+
+img {
     height: 50px;
     width: auto;
     transform: translateX(-200px);
     animation: drive 7s infinite;
     animation-timing-function: ease-in;
-/*
-    animation-timing-function: cubic-bezier(.8,.6,.1,1)
-    cubic-bezier.com
-*/
-    z-index: -1;
+    z-index: 10;
     margin-bottom: -5px;
 }
 
@@ -28,7 +26,7 @@ html {
 }
 
 @keyframes drive{
-    from { transform: translateX(-200px)}
-    to { transform: translateX(1000%)}
+    from { transform: translateX(120vw)}
+    to { transform: translateX(-10vw)}
 }
 

@@ -1,0 +1,111 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+  
+html,
+body {
+    width: 100%;
+    height: 100%;
+    background-color: #330.500;
+    color: #fff;
+    overflow: hidden;
+}
+
+.parallax-wrapper {
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    perspective: 300px;
+}
+
+.parallax-container {
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+    transform-style: preserve-3d;
+}
+
+.parallax-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.skybox {
+    background: url('layer6.png') no-repeat center;
+    background-size: cover;
+    transform: translateZ(-600px) scale(3);
+    z-index: 1;
+    position: fixed;
+    top: 0;
+}
+
+.clouds {
+    background: url('layer5.png') no-repeat center;
+    background-size: cover;
+    transform: translateZ(-525px) translateY(10%) scale(2.75);
+    z-index: 2;
+}
+
+.mountain {
+    background: url('layer4.png') no-repeat center;
+    background-size: cover;
+    transform: translateZ(-400px) translateY(50%) scale(2.33333333);
+    z-index: 3;
+}
+
+.valley {
+    background: url('layer3.png') no-repeat center bottom;
+    background-size: cover;
+    transform: translateZ(-250px) translateY(90%) scale(1.833333333);
+    z-index: 4;
+}
+
+.forest {
+    background: url('layer2.png') no-repeat center bottom;
+    background-size: cover;
+    transform: translateZ(-125px) translateY(112%) scale(1.4167);
+    z-index: 5;
+}
+
+.closeup {
+    background: url('layer1.png') no-repeat center bottom;
+    background-size: cover;
+    transform: translateZ(0) translateY(112%) scale(1);
+    z-index: 6;
+}
+
+.continue {
+    top: 112%;
+    position: relative;
+    transform: translateZ(10px) translateY(0) scale(1.07);
+}
+
+.content {
+    padding: 50px;
+    background-color: #332200;
+}
+
+.initialcontent {
+    background: linear-gradient(#624200, #332200);
+}
+
+.content h1 {
+    text-align: center;
+    margin-top: 25px;
+    margin-bottom: 25px;
+    border: 2px solid white;
+    border-left: none;
+    border-right: none;
+}
+
+.pagetitle {
+    text-align: center;
+    padding-top: 25%;
+    font-variant: small-caps;
+    text-shadow: 0.5px 0.5px 0px black, -0.5px -0.5px 0px black;
+}

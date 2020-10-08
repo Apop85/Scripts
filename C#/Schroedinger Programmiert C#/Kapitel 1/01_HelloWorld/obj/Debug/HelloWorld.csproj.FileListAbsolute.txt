@@ -5,3 +5,7 @@ C:\Users\rbald\OneDrive\Dokumente\__github\Scripts\C#\Schroedinger Programmiert 
 C:\Users\rbald\OneDrive\Dokumente\__github\Scripts\C#\Schroedinger Programmiert C#\Kapitel 1\HelloWorld\obj\Debug\HelloWorld.csproj.CoreCompileInputs.cache
 C:\Users\rbald\OneDrive\Dokumente\__github\Scripts\C#\Schroedinger Programmiert C#\Kapitel 1\HelloWorld\obj\Debug\HelloWorld.exe
 C:\Users\rbald\OneDrive\Dokumente\__github\Scripts\C#\Schroedinger Programmiert C#\Kapitel 1\HelloWorld\obj\Debug\HelloWorld.pdb
+C:\Users\rbald\OneDrive\Dokumente\__github\Scripts\C#\Schroedinger Programmiert C#\Kapitel 1\01_HelloWorld\obj\Debug\HelloWorld.csprojAssemblyReference.cache
+C:\Users\rbald\OneDrive\Dokumente\__github\Scripts\C#\Schroedinger Programmiert C#\Kapitel 1\01_HelloWorld\obj\Debug\HelloWorld.csproj.CoreCompileInputs.cache
+C:\Users\rbald\OneDrive\Dokumente\__github\Scripts\C#\Schroedinger Programmiert C#\Kapitel 1\01_HelloWorld\obj\Debug\HelloWorld.exe
+C:\Users\rbald\OneDrive\Dokumente\__github\Scripts\C#\Schroedinger Programmiert C#\Kapitel 1\01_HelloWorld\obj\Debug\HelloWorld.pdb

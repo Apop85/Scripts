@@ -7,11 +7,11 @@
 # Project: Sonstige_Uebungen
 #-----
 # Created Date: Sunday 09.02.2020, 16:47
-# Author: Raffael Baldinger
+# Author: Apop85
 #-----
 # Last Modified: Sunday 09.02.2020, 16:48
 #-----
-# Copyright (c) 2020 Raffael Baldinger
+# Copyright (c) 2020 Apop85
 # This software is published under the MIT license.
 # Check http://www.opensource.org/licenses/MIT for further informations
 #-----

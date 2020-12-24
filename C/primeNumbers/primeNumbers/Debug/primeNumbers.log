@@ -1,0 +1,5 @@
+﻿  calcPrimes.c
+D:\Schuldokumente\__github\Scripts\C\primeNumbers\primeNumbers\calcPrimes.c(42,37): warning C4244: "Funktion": Konvertierung von "unsigned __int64" in "double", möglicher Datenverlust
+D:\Schuldokumente\__github\Scripts\C\primeNumbers\primeNumbers\calcPrimes.c(42,38): warning C4244: "=": Konvertierung von "double" in "unsigned __int64", möglicher Datenverlust
+D:\Schuldokumente\__github\Scripts\C\primeNumbers\primeNumbers\calcPrimes.c(33,1): warning C4244: "Initialisierung": Konvertierung von "double" in "unsigned __int64", möglicher Datenverlust
+  primeNumbers.vcxproj -> D:\Schuldokumente\__github\Scripts\C\primeNumbers\Debug\primeNumbers.exe

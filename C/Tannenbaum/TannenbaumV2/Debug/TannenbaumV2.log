@@ -1,0 +1,4 @@
+﻿  christmasTreeV2.c
+D:\Schuldokumente\Kursjahr 2\403 - Programmabläufe prozedural implementieren\Projekte\Tannenbaum\TannenbaumV2\TannenbaumV2\christmasTreeV2.c(39,27): warning C4047: "!=": Anzahl der Dereferenzierungen bei "int" und "char [2]" unterschiedlich
+D:\Schuldokumente\Kursjahr 2\403 - Programmabläufe prozedural implementieren\Projekte\Tannenbaum\TannenbaumV2\TannenbaumV2\christmasTreeV2.c(28,7): warning C4101: "gelesen": Unreferenzierte lokale Variable
+  TannenbaumV2.vcxproj -> D:\Schuldokumente\Kursjahr 2\403 - Programmabläufe prozedural implementieren\Projekte\Tannenbaum\TannenbaumV2\Debug\TannenbaumV2.exe

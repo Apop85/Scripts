@@ -1,0 +1,2 @@
+﻿  try_regex.c
+D:\Schuldokumente\__github\Scripts\C\Regex\Regex\try_regex.c(1,10): fatal error C1083: Datei (Include) kann nicht geöffnet werden: "regex.h": No such file or directory

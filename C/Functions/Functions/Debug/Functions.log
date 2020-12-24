@@ -1,0 +1,3 @@
+﻿  functions.c
+D:\Schuldokumente\__github\Scripts\C\Functions\Functions\functions.c(30): warning C4715: "faktorieren": Nicht alle Codepfade geben einen Wert zurück.
+  Functions.vcxproj -> D:\Schuldokumente\__github\Scripts\C\Functions\Debug\Functions.exe

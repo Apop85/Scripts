@@ -1,0 +1,6 @@
+﻿  forLoop.c
+D:\Schuldokumente\Kursjahr 2\403 - Programmabläufe prozedural implementieren\Projekte\ÜbungSchleife\For-Loops\For-Loops\forLoop.c(124,20): warning C4047: "==": Anzahl der Dereferenzierungen bei "int" und "char [2]" unterschiedlich
+D:\Schuldokumente\Kursjahr 2\403 - Programmabläufe prozedural implementieren\Projekte\ÜbungSchleife\For-Loops\For-Loops\forLoop.c(124,35): warning C4047: "==": Anzahl der Dereferenzierungen bei "int" und "char [2]" unterschiedlich
+D:\Schuldokumente\Kursjahr 2\403 - Programmabläufe prozedural implementieren\Projekte\ÜbungSchleife\For-Loops\For-Loops\forLoop.c(127,25): warning C4047: "!=": Anzahl der Dereferenzierungen bei "int" und "char [2]" unterschiedlich
+D:\Schuldokumente\Kursjahr 2\403 - Programmabläufe prozedural implementieren\Projekte\ÜbungSchleife\For-Loops\For-Loops\forLoop.c(127,40): warning C4047: "!=": Anzahl der Dereferenzierungen bei "int" und "char [2]" unterschiedlich
+  For-Loops.vcxproj -> D:\Schuldokumente\Kursjahr 2\403 - Programmabläufe prozedural implementieren\Projekte\ÜbungSchleife\For-Loops\Debug\For-Loops.exe

@@ -20,12 +20,16 @@
 
 class Ding(object):
     '''Takes an Object by Element and its volume to calculate density and mass of the object
+    element: str
+    volume: float
 
     getDensity(): Returns density of the object
     getMass(): Returns mass of the object
     getVolume(): Returns the objects volume
     setVolume(): Changes the volume of the object
-    setElement(): Changes the objets element'''
+    setElement(): Changes the objets element
+    
+    Overwrites: __str__'''
 
 
     __periodic_table={ 'H' : 1.0079, 'He' : 4.0026,
@@ -80,11 +84,18 @@ class Ding(object):
 
     # Überladungen
     def __str__(self):
-        return str(format(float(self), '2f'))
+        return "Stoffname: " + self.__element_name + "\nVolumen: " + str(round(self.__volume, 2)) + \
+            "\nMasse: " + str(round(self.__mass, 2)) + "\nDichte " + str(round(self.__density, 2))
 
 
 class Quader(Ding):
-    '''Calculates the volume of a cube object
+    '''Takes elemment, width, height and length of the object and turns it into a Ding object
+
+    element: str
+    width: float
+    height: float
+    length: float
+    Overwrites: __eq__, __lt__, __gt__, __le__, __ge__, __ne__
     '''
 
     def __init__(self, element, width, height, length):
@@ -112,9 +123,13 @@ class Quader(Ding):
     def __ne__(self, other):
         return self.getVolume() != other.getVolume()
 
-test = Quader("fe", 1, 2, 3)
-test2 = Quader("si", 3, 4, 5)
+quader1 = Quader("fe", 1, 2, 3)
+quader2 = Quader("si", 3, 4, 5)
 
-print(test <= test2)
-print(test >= test2)
-print(str(test.getVolume()))
+print("{} <= {} = {}".format(quader1.getVolume(), quader2.getVolume(), quader1 <= quader2))
+print("{} >= {} = {}".format(quader1.getVolume(), quader2.getVolume(), quader1 >= quader2))
+print("{} > {} = {}".format(quader1.getVolume(), quader2.getVolume(), quader1 > quader2))
+print("{} < {} = {}".format(quader1.getVolume(), quader2.getVolume(), quader1 < quader2))
+print("{} != {} = {}".format(quader1.getVolume(), quader2.getVolume(), quader1 != quader2))
+print(str(quader1))
+print(str(quader2))

@@ -1,11 +1,15 @@
 ﻿  sbop.c
-D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(30,14): warning C4244: "Funktion": Konvertierung von "__int64" in "int", möglicher Datenverlust
-D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(37,24): warning C4244: "Funktion": Konvertierung von "__int64" in "double", möglicher Datenverlust
-D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(37,29): warning C4244: "=": Konvertierung von "double" in "__int64", möglicher Datenverlust
-D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(129,23): warning C4244: "Funktion": Konvertierung von "__int64" in "int", möglicher Datenverlust
-D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(151,17): warning C4244: "Funktion": Konvertierung von "double" in "int", möglicher Datenverlust
-D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(173,15): warning C4244: "Funktion": Konvertierung von "__int64" in "int", möglicher Datenverlust
-D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(206,33): warning C4244: "=": Konvertierung von "__int64" in "int", möglicher Datenverlust
-D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(208,56): warning C4244: "=": Konvertierung von "__int64" in "double", möglicher Datenverlust
-D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(58): warning C4716: "PrintSpaces": Muss einen Wert zurückgeben
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(19,14): warning C4244: "Funktion": Konvertierung von "__int64" in "int", möglicher Datenverlust
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(31,24): warning C4244: "Funktion": Konvertierung von "__int64" in "double", möglicher Datenverlust
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(31,29): warning C4244: "=": Konvertierung von "double" in "__int64", möglicher Datenverlust
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(103,15): warning C4244: "Funktion": Konvertierung von "__int64" in "int", möglicher Datenverlust
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(131,33): warning C4244: "=": Konvertierung von "__int64" in "int", möglicher Datenverlust
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(142,56): warning C4244: "=": Konvertierung von "__int64" in "double", möglicher Datenverlust
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(47,85): warning C4101: "timeEnd": Unreferenzierte lokale Variable
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(50,7): warning C4101: "strAmount": Unreferenzierte lokale Variable
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(49,19): warning C4101: "i": Unreferenzierte lokale Variable
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(50,36): warning C4101: "strMinLeft": Unreferenzierte lokale Variable
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(49,22): warning C4101: "sizeOfArray": Unreferenzierte lokale Variable
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(50,23): warning C4101: "strPPS": Unreferenzierte lokale Variable
+D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\SecondBitOfPrimes\sbop.c(48,18): warning C4101: "done": Unreferenzierte lokale Variable
   SecondBitOfPrimes.vcxproj -> D:\Schuldokumente\__github\Scripts\C\SecondBitOfPrimes\Debug\SecondBitOfPrimes.exe

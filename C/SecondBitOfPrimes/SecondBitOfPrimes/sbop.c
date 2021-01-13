@@ -173,9 +173,11 @@ int main(void) {
 			_itoa(value, strBinary, 2);
 			binaryLength = strlen(strBinary);
 			// Iterate amount of 0 or 1
-			if (strBinary[binaryLength - (targetBit + 1)] == 1) {
+			if (strBinary[binaryLength - targetBit] == 1) {
+				printf("1 %s", strBinary);
 				ones++;
 			} else {
+				printf("0 %s", strBinary);
 				zeroes++;
 			}
 

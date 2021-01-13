@@ -27,6 +27,7 @@ counter, timer_counter, pps, seconds_left = 0, 0, 0, 0
 current_number = 3
 # Set Start timestamp
 timestamp = time()
+starttime = timestamp
 # Set amount of calculated prime numbers
 amount_of_primes = 1000000
 # Define bit counter
@@ -51,15 +52,18 @@ def isPrime(number):
 
 # Print header
 print("AMOUNT OF PRIMES".center(30) + "PRIMES PER SECOND".center(30) + "MINUTES LEFT".center(30) + "DONE".center(30))
+amount_before = 0
 
 # Repeat until found 100 prime numbers
 while counter < amount_of_primes:
+    # If this is the 1000st iteration calculate pps and left time
+    if timer_counter == 1000 and time() - timestamp != 0:
+        amount_delta = counter - amount_before
+        amount_before = counter
+        pps = amount_delta / (time() - timestamp)
+        seconds_left = (amount_of_primes - counter)  / pps / 60
     # Check if current number is a prime
     if isPrime(current_number):
-        # If this is the 1000st iteration calculate pps and left time
-        if timer_counter == 1000 and time() - timestamp != 0:
-            pps = (1 / (time() - timestamp)) * 1000
-            seconds_left = (amount_of_primes - counter)  / pps / 60
 
         # Calculate percentage done
         done = 100 / amount_of_primes * counter
@@ -71,14 +75,16 @@ while counter < amount_of_primes:
         output = str(counter).center(30) + str(int(pps)).center(30) + str(int(seconds_left)).center(30) + (str(round(done, 2)) + "%").center(30)
         print(output, end="\r"*len(output)) 
 
-        # Reset timer_counter after 1000 iterations
-        if timer_counter == 1000:
-            timestamp = time()
-            timer_counter = 0
-        else:
-            timer_counter += 1
+    # Reset timer_counter after 1000 iterations
+    if timer_counter == 1000:
+        timestamp = time()
+        timer_counter = 0
+    else:
+        timer_counter += 1
     # Iterate current number
     current_number += 1
 
 print()
-print(values)
+print("Amount of 0: {}".format(values["0"]))
+print("Amount of 1: {}".format(values["1"]))
+print("Needed time: {}min".format((time() - starttime) / 60))

@@ -7,17 +7,6 @@
 #include <math.h>
 #include <time.h>
 
-
-int JumpBack(int amount) {
-	// Output \r for a specific amount of time
-	int i;
-	for (i = 0; i < amount; i++) {
-		printf("\r");
-	}
-	return 0;
-};
-
-
 bool IsPrime(long long int number) {
 	// Function to determine if a number is a prime or not
 
@@ -28,6 +17,11 @@ bool IsPrime(long long int number) {
 
 	// Convert number to bin value
 	_itoa(number, binary, 2);
+
+	if (number == 2) {
+		return true;
+	}
+
 	// If last bit is a 0, it s not a prime number
 	if (binary[strlen(binary) - 1] == '0') {
 		return false;
@@ -48,29 +42,14 @@ bool IsPrime(long long int number) {
 	return true;
 };
 
-
-int PrintSpaces(int amount) {
-	// Function to print empty spaces
-	int i;
-	for (i = 0; i < amount; i++) {
-		printf(" ");
-	}
-};
-
-
 int main(void) {
 	// Variabel deklaration
-	long long int value, targetAmount, currentAmount, timeStamp, timeDelta, timeStart, timeEnd, valueBefore, valueDelta, ones, zeroes, targetBit;
+	long long int value, targetAmount, currentAmount, timeStamp, timeDelta, timeStart, timeEnd, valueBefore, valueDelta, ones, zeroes;
 	double minLeft, done;
-	int columnWidth, i, sizeOfArray, leftSide, rightSide, pps, counter, counterMax, binaryLength;
+	int columnWidth, i, sizeOfArray, pps, counter, iterationInterval, binaryLength, minPPS, maxPPS, targetBit;
 	char strAmount[255], strPPS[255], strMinLeft[255], strBinary[255];
 
 	// Variabel definitions
-
-	// Outputarray definition
-	char header[4][30] = {"AMOUNT OF PRIMES", "PRIMES PER SECOND", "MINUTES LEFT", "DONE"};
-	sizeOfArray = sizeof(header) / sizeof(header[0]);
-
 	// Get Timestamp of programm start
 	timeStart = time(NULL);
 
@@ -78,13 +57,13 @@ int main(void) {
 	columnWidth = 25;
 
 	// Set measurement interval
-	counterMax = 100;
+	iterationInterval = 100;
 
 	// Set target amount of prime numbers
 	targetAmount = 1000000;
 
 	// Set start value
-	value = 3;
+	value = 2;
 
 	/* Set target bit to track
 		1 = 1001010[1]
@@ -101,23 +80,18 @@ int main(void) {
 	minLeft = 0;
 	ones = 0;
 	zeroes = 0;
+	minPPS = 10000000;
+	maxPPS = 0;
 
-	// Output header
-	for (i = 0; i < sizeOfArray; i++) {
-		// Calculate empty spaces
-		leftSide = (columnWidth - strlen(header[i])) / 2;
-		rightSide = columnWidth - leftSide - strlen(header[i]);
-
-		// Output header item
-		PrintSpaces(leftSide);
-		printf("%s", header[i]);
-		PrintSpaces(rightSide);
-	}
-
-	printf("\n");
 	// Set timestamp for live measurement
 	timeStamp = time(NULL);
 	
+	printf("Task         : Calculate prime numbers\n");
+	printf("Start value  : %lli\n", value);
+	printf("Target amount: %lli\n", targetAmount);
+	printf("Bit to detect: %i\n", targetBit);
+	printf("--------------------------------------------\n");
+
 	// Repeat until target amount of primes is reached
 	do {
 		// Check if current number is a prime
@@ -125,69 +99,20 @@ int main(void) {
 			// Iterate counter
 			currentAmount++;
 			
-			// Integer to string conversion - decimal
-			_itoa(currentAmount, strAmount, 10);
-			// Calculate empty space
-			leftSide = (columnWidth - strlen(strAmount)) / 2;
-			rightSide = columnWidth - leftSide - strlen(strAmount);
-
-			// Output current amount of primes
-			PrintSpaces(leftSide);
-			printf("%s", strAmount);
-			PrintSpaces(rightSide);
-
-			// Integer to string conversion -> decimal
-			_itoa(pps, strPPS, 10);
-			// Calculate empty space
-			leftSide = (columnWidth - strlen(strPPS)) / 2;
-			rightSide = columnWidth - leftSide - strlen(strPPS);
-
-			// Ouput primes per second
-			PrintSpaces(leftSide);
-			printf("%s", strPPS);
-			PrintSpaces(rightSide);
-
-			// Integer to string conversion -> decimal
-			_itoa(minLeft, strMinLeft, 10);
-			// Calculate empty space
-			leftSide = (columnWidth - strlen(strMinLeft)) / 2;
-			rightSide = columnWidth - leftSide - strlen(strMinLeft);
-
-			// Output minutes left
-			PrintSpaces(leftSide);
-			printf("%s", strMinLeft);
-			PrintSpaces(rightSide);
-
-			// Calculate percentage done
-			done = 100 / (double)targetAmount * (double)currentAmount;
-			// Calculate empty space
-			leftSide = (columnWidth - 7) / 2;
-			rightSide = columnWidth - leftSide - 7;
-
-			// Output percentage done
-			PrintSpaces(leftSide);
-			printf("%6.2lf%%", done);
-			PrintSpaces(rightSide);
-			
 			// Integer to string conversion -> dual
 			_itoa(value, strBinary, 2);
 			binaryLength = strlen(strBinary);
 			// Iterate amount of 0 or 1
-			if (strBinary[binaryLength - targetBit] == 1) {
-				printf("1 %s", strBinary);
+			if (strBinary[binaryLength - targetBit] == '1') {
 				ones++;
 			} else {
-				printf("0 %s", strBinary);
 				zeroes++;
 			}
-
-			// Return cursor to start of the line
-			JumpBack(sizeOfArray * columnWidth);
 		}
 		// Iterate value
 		value++;
 
-		if (counter <= counterMax) {
+		if (counter <= iterationInterval) {
 			// Iterate counter if smaller than max counter value
 			counter++;
 		} else {
@@ -204,19 +129,30 @@ int main(void) {
 				timeStamp = time(NULL);
 				// Calculate primes per second
 				pps = valueDelta / timeDelta;
+
+				// Detect min/max pps
+				if (minPPS > pps) {
+					minPPS = pps;
+				}
+
+				if (maxPPS < pps) {
+					maxPPS = pps;
+				}
 				// Calculate minutes left
 				minLeft = (targetAmount - currentAmount) / pps / 60;
 			}
 		}
-	} while (currentAmount <= targetAmount);
+	} while (currentAmount < targetAmount);
 	
-	// Get finished timestamp
-	timeEnd = time(NULL);
-	
+	value--;
+
 	// Output statistics
-	printf("Amount of 0: %lli\n", zeroes);
-	printf("Amount of 1: %lli\n", ones);
-	printf("Needed Time: %lli min\n", (timeStart - timeEnd) / 60);
+	printf("Amount of 0  : %lli\n", zeroes);
+	printf("Amount of 1  : %lli\n", ones);
+	printf("min PPS      : %i\n", minPPS);
+	printf("max PPS      : %i\n", maxPPS);
+	printf("Last prime   : %lli\n", value);
+	printf("Needed Time  : %lli sec\n", (time(NULL) - timeStart));
 	return 0;
 }
 

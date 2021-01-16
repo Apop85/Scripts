@@ -7,11 +7,11 @@
 # Project: Iris
 #-----
 # Created Date: Saturday 16.01.2021, 20:08
-# Author: Raffael Baldinger
+# Author: Apop85
 #-----
 # Last Modified: Saturday 16.01.2021, 20:11
 #-----
-# Copyright (c) 2021 Raffael Baldinger
+# Copyright (c) 2021 Apop85
 # This software is published under the MIT license.
 # Check http://www.opensource.org/licenses/MIT for further informations
 #-----
@@ -30,11 +30,14 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 os.chdir(os.path.dirname(__file__))
+print("Processing CSV...", end="")
 csv_path = r'.\data\iris_data.csv'
 # Iris Daten laden
 df = pd.read_csv(csv_path)
+print("Done")
 print(f"Datashape: {df.shape}")
 
+print("Create Plot...", end="")
 # Klassenzugehörigkeit der Datenpunkte anhand der Farbe
 colors = {'setosa' : 'r', 'versicolor' : 'g', 'virginica' : 'b'}
 # Scatterplot für die Features Sepal length und Sepal width
@@ -47,6 +50,7 @@ ax.set_xlabel('Sepal length')
 ax.set_ylabel('Sepal width')
 # Graph anzeiegen
 fig.show()
+print("Done")
 
 species_to_int = {'setosa': 0, 'versicolor': 1, 'virginica': 2}
 # Mappen der Spezies zu Zahlen
@@ -70,10 +74,13 @@ print('X:', X.shape,' y:', y.shape)
     # y_train: Zielvektor (Labels) der Trainingsdaten
     # X_test: Testdaten (Features)
     # y_test: Zielvektor (Labels) der Testdaten
+print("Training data...", end="")
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+print("Done")
 print('X_train:', X_train.shape, ' y_train:', y_train.shape)
 print('X_test:', X_test.shape, ' y_test:', y_test.shape)
 
+print("Training data (log)...", end="")
 # initiieren und trainieren des Modells mit einer Logistischen Regression
 log_clf = LogisticRegression()
 # trainieren des Modells
@@ -82,16 +89,21 @@ log_clf.fit(X_train, y_train)
 y_pred = log_clf.predict(X_test)
 # Accuracy berechnen
 acc_score = accuracy_score(y_test, y_pred)
+print("Done")
 print('Accuracy:', acc_score)
 
 # Accuracy Decision Tree-Modell
+print("Training Data (tree)...", end="")
 tree_clf = DecisionTreeClassifier()
 tree_clf.fit(X_train, y_train)
+print("Done")
 print('Accuracy Decision Tree:', tree_clf.score(X_test, y_test))
 
 # Test mit einem Decision Tree mit einer maximalen Tiefe von 1
+print("Training Data (badtree)...", end="")
 tree_clf = DecisionTreeClassifier(max_depth=1)
 tree_clf.fit(X_train, y_train)
+print("Done")
 print('Accuracy Bad Decision Tree:', tree_clf.score(X_test, y_test))
 
 input("DONE. Press Enter to exit script")

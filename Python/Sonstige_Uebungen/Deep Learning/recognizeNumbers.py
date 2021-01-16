@@ -7,11 +7,11 @@
 # Project: Deep Learning
 #-----
 # Created Date: Saturday 16.01.2021, 20:59
-# Author: Apop85
+# Author: Apop85s
 #-----
 # Last Modified: Saturday 16.01.2021, 21:45
 #-----
-# Copyright (c) 2021 Apop85
+# Copyright (c) 2021 Apop85s
 # This software is published under the MIT license.
 # Check http://www.opensource.org/licenses/MIT for further informations
 #-----

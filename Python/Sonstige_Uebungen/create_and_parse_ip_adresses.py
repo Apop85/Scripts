@@ -51,7 +51,7 @@ def parseIp(ip, ips=[]):
         # Analyze reduced ip
         returnArray += parseIp(ip[3:], ips + [ip[:3]])
     # Check the first 2 values and check if the value is between 9 and 100
-    if len(ip) > 1 and 9 < int(ip[:2]) < 100:
+    if len(ip) > 1 and int(ip[:2]) > 9:
         # Analyze reduced ip
         returnArray += parseIp(ip[2:], ips + [ip[:2]])
 
@@ -59,11 +59,17 @@ def parseIp(ip, ips=[]):
     returnArray += parseIp(ip[1:], ips + [ip[0]])
     return returnArray
 
-ipAddrGenerator = generateIp()
-for i in range(50):
+
+startValue = 3232235776 # 3232235776 equals to 192.168.1.0
+ipAmount = 5
+
+ipAddrGenerator = generateIp(startValue)
+for i in range(ipAmount):
     ip = next(ipAddrGenerator)
     stringToParse = ip.split(".")
     stringToParse = "".join(ip.split("."))
     parsed = parseIp(stringToParse)
+    print("█" * (len(parsed[0]) + 4))
     for ip in parsed:
-        print(ip)
+        print(f"█ {ip} █")
+print("█" * (len(parsed[0]) + 4))

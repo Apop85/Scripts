@@ -9,7 +9,7 @@
 # Created Date: Saturday 16.01.2021, 13:45
 # Author: Apop85
 #-----
-# Last Modified: Saturday 16.01.2021, 16:07
+# Last Modified: Saturday 16.01.2021, 16:30
 #-----
 # Copyright (c) 2021 Apop85
 # This software is published under the MIT license.
@@ -21,8 +21,16 @@
 #              This object structure is used afterwards to calculate the sum of both input numbers out of this structure
 ####
 
-value1 = 324
-value2 = 9676
+while True:
+    value1 = input("First Value : ")
+    value2 = input("Second Value: ")
+
+    if value1.isdecimal() and value2.isdecimal() and int(value1) >= 0 and int(value2) >= 0:
+        value1 = int(value1)
+        value2 = int(value2)
+        break
+    else:
+        print("Incorrect values. Values need to be integers >= 0\n")
 
 class Node(object):
     # Class to create the initial structure
@@ -49,23 +57,18 @@ class Node(object):
 class Add:
     # Class to add structured values
 
-    def add(self, node1, node2, exponent=0, switch=False):
+    def add(self, node1, node2, exponent=0):
         # Recursive function to calculate the result where the recursive depth indicates the exponent
-        if not switch:
-            # If both nodes still have values calculate both together
-            result = node1.value * 10**exponent + node2.value * 10**exponent
-        else:
-            # Calculate only the first node
-            result = node1.value * 10**exponent
+        result = node1.value * 10**exponent + node2.value * 10**exponent
 
         # Check if more recursion steps are needed
         if node1.next != None and node2.next != None:
             result += self.add(node1.next, node2.next, exponent=exponent+1)
         # If one node has no more values set the calculation switch to true and use the still useable node as node1
         elif node1.next != None:
-            result += self.add(node1.next, node2, exponent=exponent+1, switch=True)
+            result += self.add(node1.next, Node(0), exponent=exponent+1)
         elif node2.next != None:
-            result += self.add(node2.next, node1, exponent=exponent+1, switch=True)
+            result += self.add(node2.next, Node(0), exponent=exponent+1)
 
         return result
 

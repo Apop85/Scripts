@@ -9,7 +9,7 @@
 # Created Date: Saturday 16.01.2021, 11:52
 # Author: Apop85
 #-----
-# Last Modified: Saturday 16.01.2021, 12:46
+# Last Modified: Saturday 16.01.2021, 13:19
 #-----
 # Copyright (c) 2021 Apop85
 # This software is published under the MIT license.
@@ -36,6 +36,28 @@ def createRandomString(amount, chars, string=""):
 
     return string
 
+def solutionPossible(dictionary, string):
+    # Function to check if the string is rearrangeable
+    # Inputs:
+    #   dictionary = dictionary  | Dictionary with the characters and values
+
+    # Set counters
+    zeroCounts = 0
+    nonZeroCounts = 0
+    character = ""
+    for key in dictionary.keys():
+        if dictionary[key] == 0:
+            zeroCounts += 1
+        else:
+            nonZeroCounts += 1
+            character = key
+    
+    if zeroCounts + 1 == len(dictionary) and string[-1] == character:
+        # If the amount of zeroes + 1 equals the length of the dictionary 
+        # and the last character is the same as the one left there is no solution
+        return False
+    else:
+        return True
 
 
 def countChars(string, returnDict={}):
@@ -89,6 +111,10 @@ def rearrangeString(sortedDict, outputString=""):
                     sortedDict[key] -= 1
                     sortedDict = sortDict(sortedDict)
                     break
+
+        if not solutionPossible(sortedDict, outputString):
+            print("Solution not possible!")
+            break
 
     return outputString
 

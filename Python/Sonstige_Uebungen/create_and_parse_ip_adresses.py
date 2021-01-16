@@ -21,9 +21,9 @@
 def generateIp(startValue = 0):
     # Function to generate IPs out of integers
     for i in range(startValue, 255**4):
-        o1 = i // 64 ** 4 % 256
-        o2 = i // 256 ** 2 % 256
-        o3 = i // 256 % 256
+        o1 = i // 2 ** 24 % 256
+        o2 = i // 2 ** 16 % 256
+        o3 = i // 2 ** 8 % 256
         o4 = i % 256 % 256
         yield f"{o1}.{o2}.{o3}.{o4}"
     

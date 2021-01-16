@@ -60,7 +60,7 @@ int main(void) {
 	iterationInterval = 100;
 
 	// Set target amount of prime numbers
-	targetAmount = 1000000;
+	targetAmount = 2000000;
 
 	// Set start value
 	value = 2;
@@ -80,7 +80,7 @@ int main(void) {
 	minLeft = 0;
 	ones = 0;
 	zeroes = 0;
-	minPPS = 10000000;
+	minPPS = 20000000;
 	maxPPS = 0;
 
 	// Set timestamp for live measurement

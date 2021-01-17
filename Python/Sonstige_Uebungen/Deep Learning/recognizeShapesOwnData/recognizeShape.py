@@ -290,8 +290,8 @@ if not os.path.exists(training_model_path) or debug:
     # Outputlayer
     model.add(tf.keras.layers.Dense(3, activation=tf.nn.softmax)) # 3 = Anzahl klassifikationen (0 - 9)
 
-    model.compile(optimizer='adam',                         # adam = Defaultoptimizer
-                loss='sparse_categorical_crossentropy',   # Fehlerhafte Vorhersagen / (sparse_)categorical_entropy = default / binary_categorical_entropy = default für 2 Klassifikationen
+    model.compile(optimizer='adam',                       # adam = Defaultoptimizer
+                loss='sparse_categorical_crossentropy',   # Fehlerhafte Vorhersagen / (sparse_)categorical_entropy = default / binary_crossentropy = default für 2 Klassifikationen
                 metrics=['accuracy'])                     # Welche Eigenschaften sollen getrackt werden? Beispiel accuracy für genauigkeit
 
     # Modeltraining

@@ -20,6 +20,7 @@
 ####
 
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 from random import randint as rng
 from random import shuffle
 from PIL import Image, ImageDraw
@@ -32,12 +33,14 @@ import pickle
 
 example_file_path = os.path.join(".", "trainingData")
 model_data_path = os.path.join(".", "modelData")
+test_data_path = os.path.join(".", "testData")
 training_model_path = os.path.join(model_data_path, "trainingModel")
 pickle_X_path = os.path.join(model_data_path, "X.pickle")
 pickle_y_path = os.path.join(model_data_path, "y.pickle")
 categories = ["square", "triangle", "circle"]
 image_size = (64,64)
 training_data_amount = 3500
+test_images_amount = 3
 target_image_size = 30
 number_of_trainings = 200
 debug = True
@@ -155,18 +158,21 @@ def rotated_about(ax, ay, bx, by, angle):
         round(by + radius * math.sin(angle))
     )
 
-def create_training_data(training_data=[]):
-    for image in os.listdir(example_file_path):
+def createDataStructure(path, training_data=[], train=True):
+    for image in os.listdir(path):
         # Klasse aus Dateiname auslesen
         class_num = categories.index(image.split("_")[0])
         try:
-            filepath = os.path.join(example_file_path, image)
+            filepath = os.path.join(path, image)
             # Bild einlesen
             image_array = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
             # Bildgrösse anpassen
             new_array = cv2.resize(image_array, (target_image_size, target_image_size))
             # Add to image array
+            # if train:
             training_data.append([new_array, class_num])
+            # else:
+            #     training_data.append(new_array)
         except Exception as error_message:
             print(f"Can't open image {image} --> {error_message}")
     return training_data
@@ -182,7 +188,7 @@ if not os.path.exists(model_data_path):
 
 if not os.path.exists(pickle_X_path) or not os.path.exists(pickle_y_path) or debug:
     print("Create Training Data...", end="")
-    training_data = create_training_data()
+    training_data = createDataStructure(example_file_path)
     shuffle(training_data)
 
 
@@ -241,14 +247,45 @@ if not os.path.exists(training_model_path) or debug:
 
     # Modell auf Disk speichern
     print("Saving model...", end="")
-    model.save(model_data_path)
+    model.save(training_model_path)
     print("Done")
 else:
     print("Loading model...", end="")
-    tf.keras.models.load_model(model_data_path)
+    model = tf.keras.models.load_model(training_model_path)
     print("Done")
 
 # Berechne Genauigkeit und Verlust
 val_loss, val_acc = model.evaluate(X_train, y_train)
 print("Verlust    : {}".format(val_loss))
 print("Genauigkeit: {}".format(val_acc))
+
+# Testen der Formerkennung
+if not os.path.exists(test_data_path):
+    os.mkdir(test_data_path)
+    createTrainingData(test_data_path, image_size, test_images_amount)
+
+X_test = createDataStructure(test_data_path, train=False)
+shuffle(X_test)
+X_new = []
+y_test = []
+for image, class_num in X_test:
+    X_new.append(image)
+    y_test.append(class_num)
+X_test = X_new
+X_test = np.array(X_test).reshape(-1, target_image_size, target_image_size, 1)
+X_test = np.asarray(X_test)
+
+predictions = model.predict([X_test])
+
+for i in range(len(X_test)):
+    # Wahrscheinlichster Wert auslesen
+    highest_weight_value = np.argmax(predictions[i])
+    # Ausgabe der wahrscheinlichsten Zahl
+    print(f"{categories[highest_weight_value]} -> ", end="")
+    if highest_weight_value == y_test[i]:
+        print(True)
+    else:
+        print(False)
+    # Zeige Bild an
+    plt.imshow(X_test[i])
+    plt.show()

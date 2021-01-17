@@ -16,6 +16,7 @@
 # Check http://www.opensource.org/licenses/MIT for further informations
 #-----
 # Description: Neurales Netzwerk welches handgeschriebene Nummern erkennen soll. 
+# Quelle: https://www.youtube.com/watch?v=wQ8BIBpya2k
 ####
 
 import matplotlib.pyplot as plt

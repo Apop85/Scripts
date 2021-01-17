@@ -7,11 +7,11 @@
 # Project: recognizeShapesOwnData
 #-----
 # Created Date: Sunday 17.01.2021, 17:32
-# Author: Raffael Baldinger
+# Author: Apop85
 #-----
-# Last Modified: Sunday 17.01.2021, 17:32
+# Last Modified: Sunday 17.01.2021, 22:32
 #-----
-# Copyright (c) 2021 Raffael Baldinger
+# Copyright (c) 2021 Apop85
 # This software is published under the MIT license.
 # Check http://www.opensource.org/licenses/MIT for further informations
 #-----

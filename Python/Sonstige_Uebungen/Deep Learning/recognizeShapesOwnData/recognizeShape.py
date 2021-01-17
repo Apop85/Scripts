@@ -7,59 +7,85 @@
 # Project: recognizeShapesOwnData
 #-----
 # Created Date: Saturday 16.01.2021, 23:03
-# Author: Raffael Baldinger
+# Author: Apop85
 #-----
-# Last Modified: Saturday 16.01.2021, 23:03
+# Last Modified: Sunday 17.01.2021, 03:14
 #-----
-# Copyright (c) 2021 Raffael Baldinger
+# Copyright (c) 2021 Apop85
 # This software is published under the MIT license.
 # Check http://www.opensource.org/licenses/MIT for further informations
 #-----
-# Description: Neurales Netzwerk zum erkennen von einfachen Formen mit eigenem Datensatz
+# Description:  Neurales Netzwerk zum erkennen von einfachen Formen mit eigenem Datensatz
+#               Das Script erstellt selbstständig die zum Training und zum Testen verwendeten Bilder
+#               Möchte man mit einem neuen Datenset arbeiten kann man debug auf True stellen oder die 
+#               entsprechenden Ordner löschen. 
 # Quelle: https://www.youtube.com/watch?v=j-3vuBynnOE
 ####
 
 import os
+# Unterdrücke Debug-Nachrichten
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+# Random-Module
 from random import randint as rng
 from random import shuffle
+# Pillow-Modul zum erstellen der Bilder
 from PIL import Image, ImageDraw
+# Math-Modul zur berechnung der Eckpunkte der Figuren
 import math
+# Tensorflow-Modul zum training und testen des neuronalen Netzwerks
 import tensorflow as tf
+# Numpy-Modul für die statistische Analyse
 import numpy as np
+# Pyplot-Modul zum Anzeigen der Bilder
 import matplotlib.pyplot as plt
+# opencv-Modul zum umwandlen der Bildgrösse
 import cv2
+# pickle-Modul zum speichern der Trainingsdaten
 import pickle
 
+# Pfaddefinitionen
 example_file_path = os.path.join(".", "trainingData")
 model_data_path = os.path.join(".", "modelData")
 test_data_path = os.path.join(".", "testData")
 training_model_path = os.path.join(model_data_path, "trainingModel")
 pickle_X_path = os.path.join(model_data_path, "X.pickle")
 pickle_y_path = os.path.join(model_data_path, "y.pickle")
+
+# Mögliche Kategorien
 categories = ["square", "triangle", "circle"]
+# Ausgangsbildgrösse
 image_size = (64,64)
-training_data_amount = 3500
-test_images_amount = 3
+# Reduzierte Bildgrösse
 target_image_size = 30
+# Anzahl zu erstellenden Trainingsbilder pro Kategorie
+training_data_amount = 3500
+# Anzahl der zu testenden Bilder pro Kategorie
+test_images_amount = 3
+# Anzahl Trainings mit den Trainingbilder
 number_of_trainings = 200
-debug = True
 
+# Alle Bilder, Modelle und Daten neu erstellen
+debug = False
 
+# Wechsle zum Scriptpfad
 os.chdir(os.path.dirname(__file__))
 
-def createTrainingData(path, image_size, amount):
-    print(f"Create {amount*3} Training Images...", end="")
+def createTrainingData(path, image_size, amount, purpose="Training"):
+    print(f"Create {amount*3} {purpose} Images...", end="")
     # Vierecke erstellen
     for i in range(amount):
+        # Zufällige Hintergrundfarbe bestimmen
         random_background_color = (rng(0,255), rng(0,255), rng(0,255))
-        # random_background_color = (255,255,255)
+        # Neue Bilddatei erstellen
         image = Image.new('RGB', image_size, random_background_color)
+        # Erstelle Bild
         draw = ImageDraw.Draw(image)
 
+        # Bestimme Mittelpunkt der Figur
         square_center = (image_size[0] // 2, image_size[1] // 2)
         square_length = rng(10,45)
 
+        # Bestimme Eckpunkte
         square_vertices = (
             (square_center[0] + square_length / 2, square_center[1] + square_length / 2),
             (square_center[0] + square_length / 2, square_center[1] - square_length / 2),
@@ -67,9 +93,11 @@ def createTrainingData(path, image_size, amount):
             (square_center[0] - square_length / 2, square_center[1] + square_length / 2)
         )
 
+        # Rotiere Figur
         square_vertices = [rotated_about(x,y, square_center[0], square_center[1], math.radians(rng(0,90))) for x,y in square_vertices]
-        # square_vertices = [rotated_about(x,y, square_center[0], square_center[1], math.radians(45)) for x,y in square_vertices]
 
+
+        # Zufällige Formfarbe bestimmen
         random_square_color = random_background_color
         color_difference = 0
         while color_difference < 155:
@@ -77,27 +105,36 @@ def createTrainingData(path, image_size, amount):
             color_difference = random_background_color[0] + random_square_color[1] + random_square_color[2] - random_background_color[0] - random_background_color[1] - random_background_color[2]
             if color_difference < 0:
                 color_difference *= -1
+        # Polygon auf Bild zeichnen
         draw.polygon(square_vertices, fill=random_square_color)
+        # Bild speichern
         image.save(path + "\\square_{}.png".format(i))
+
     # Dreiecke erstellen
     for i in range(amount):
+        # Zufällige Hintergrundfarbe bestimmen
         random_background_color = (rng(0,255), rng(0,255), rng(0,255))
-        # random_background_color = (255,255,255)
+
+        # Neue Bilddatei erstellen
         image = Image.new('RGB', image_size, random_background_color)
+        # Erstelle Bild
         draw = ImageDraw.Draw(image)
 
+        # Bestimme Mittelpunkt der Figur
         triangle_center = (image_size[0] // 2, image_size[1] // 2)
         triangle_length = rng(10,45)
 
+        # Bestimme Eckpunkte
         triangle_vertices = (
             (triangle_center[0] + triangle_length / 2, triangle_center[1] + triangle_length / 2),
             (triangle_center[0] + triangle_length / 2, triangle_center[1] - triangle_length / 2),
             (triangle_center[0] - triangle_length / 2, triangle_center[1] - triangle_length / 2)
         )
 
+        # Rotiere Figur
         triangle_vertices = [rotated_about(x,y, triangle_center[0], triangle_center[1], math.radians(rng(0,90))) for x,y in triangle_vertices]
-        # triangle_vertices = [rotated_about(x,y, triangle_center[0], triangle_center[1], math.radians(45)) for x,y in triangle_vertices]
 
+        # Zufällige Formfarbe bestimmen
         random_triangle_color = random_background_color
         color_difference = 0
         while color_difference < 155:
@@ -105,15 +142,21 @@ def createTrainingData(path, image_size, amount):
             color_difference = random_background_color[0] + random_triangle_color[1] + random_triangle_color[2] - random_background_color[0] - random_background_color[1] - random_background_color[2]
             if color_difference < 0:
                 color_difference *= -1
+        # Polygon auf Bild zeichnen
         draw.polygon(triangle_vertices, fill=random_triangle_color)
+        # Bild speichern
         image.save(path + "\\triangle_{}.png".format(i))
+
     # Kreise erstellen
     for i in range(amount):
-        # random_background_color = (255,255,255)
+        # Zufällige Hintergrundfarbe bestimmen
         random_background_color = (rng(0,255), rng(0,255), rng(0,255))
+        # Neue Bilddatei erstellen
         image = Image.new('RGB', image_size, random_background_color)
+        # Erstelle Bild
         draw = ImageDraw.Draw(image)
 
+        # Bestimme die Eckpunkte des Kreises
         circle_top_left = [rng(1,image_size[0]), rng(1, image_size[1])]
         delta = [0, 0]
         while delta[0] < 10 or delta[1] < 10:
@@ -132,6 +175,7 @@ def createTrainingData(path, image_size, amount):
         circle_top_left = (circle_top_left[0], circle_top_left[1])
         circle_bottom_right = (circle_bottom_right[0], circle_bottom_right[1])
         
+        # Zufällige Formfarbe bestimmen
         random_circle_color = random_background_color
         color_difference = 0
         while color_difference < 155:
@@ -139,10 +183,11 @@ def createTrainingData(path, image_size, amount):
             color_difference = random_background_color[0] + random_circle_color[1] + random_circle_color[2] - random_background_color[0] - random_background_color[1] - random_background_color[2]
             if color_difference < 0:
                 color_difference *= -1
+        # Kreis zeichnen
         draw.ellipse((circle_top_left, circle_bottom_right), fill=random_circle_color)
-        # draw.ellipse(((rad*2, rad*2), (rad*2, rad*2)), fill=random_circle_color)
+        # Bild speichern
         image.save(path + "\\circle_{}.png".format(i))
-    print("Done")
+    print("Done\n")
 
 
 #finds the straight-line distance between two points
@@ -158,7 +203,7 @@ def rotated_about(ax, ay, bx, by, angle):
         round(by + radius * math.sin(angle))
     )
 
-def createDataStructure(path, training_data=[], train=True):
+def createDataStructure(path, training_data=[]):
     for image in os.listdir(path):
         # Klasse aus Dateiname auslesen
         class_num = categories.index(image.split("_")[0])
@@ -169,43 +214,49 @@ def createDataStructure(path, training_data=[], train=True):
             # Bildgrösse anpassen
             new_array = cv2.resize(image_array, (target_image_size, target_image_size))
             # Add to image array
-            # if train:
             training_data.append([new_array, class_num])
-            # else:
-            #     training_data.append(new_array)
         except Exception as error_message:
             print(f"Can't open image {image} --> {error_message}")
     return training_data
 
+# Erstelle Trainingspfad
 if not os.path.exists(example_file_path):
     os.mkdir(example_file_path)
     createTrainingData(example_file_path, image_size, training_data_amount)
 elif debug:
     createTrainingData(example_file_path, image_size, training_data_amount)
 
+# Erstelle Modell-Pfad
 if not os.path.exists(model_data_path):
     os.mkdir(model_data_path)
 
+# Prüfe ob Trainingsdaten geladen werden können
 if not os.path.exists(pickle_X_path) or not os.path.exists(pickle_y_path) or debug:
+    # Erstelle Trainingsdaten
     print("Create Training Data...", end="")
     training_data = createDataStructure(example_file_path)
     shuffle(training_data)
 
-
     X_train = []
     y_train = []
 
+    # Trenne Aufgabe und Lösung
     for features,label in training_data:
         X_train.append(features)
         y_train.append(label)
 
+    # Normalisieren der Werte zwischen 0 und 1
     X_train = tf.keras.utils.normalize(X_train, axis=1)
+    # Wandle Array in numpy-Array um
+
     X_train = np.array(X_train).reshape(-1, target_image_size, target_image_size, 1)
     X_train = np.asarray(X_train)
     y_train = np.asarray(y_train)
+
     print("Done")
     print(f"Training data: {len(training_data)}")
 
+    # Speichere Trainingsdaten
     print("Save Training Data...", end="")
     pickle_out = open(pickle_X_path, "wb")
     pickle.dump(X_train, pickle_out)
@@ -215,6 +266,7 @@ if not os.path.exists(pickle_X_path) or not os.path.exists(pickle_y_path) or deb
     pickle_out.close()
     print("Done")
 else:
+    # Lade Trainingsdaten
     print("Load Training Data...", end="")
     pickle_in = open(pickle_X_path, "rb")
     X_train = pickle.load(pickle_in)
@@ -256,27 +308,41 @@ else:
 
 # Berechne Genauigkeit und Verlust
 val_loss, val_acc = model.evaluate(X_train, y_train)
-print("Verlust    : {}".format(val_loss))
-print("Genauigkeit: {}".format(val_acc))
+print("\nVerlust    : {}".format(val_loss))
+print("Genauigkeit: {}\n".format(val_acc))
 
-# Testen der Formerkennung
+# Erstelle Testbildpfad
 if not os.path.exists(test_data_path):
     os.mkdir(test_data_path)
-    createTrainingData(test_data_path, image_size, test_images_amount)
 
-X_test = createDataStructure(test_data_path, train=False)
+# Lösche vorhandene Testfiles
+for file in os.listdir(test_data_path):
+    os.remove(os.path.join(test_data_path, file))
+
+# Testbilder erstellen
+createTrainingData(test_data_path, image_size, test_images_amount, purpose="Testing")
+
+# Testdaten erstellen
+X_test = createDataStructure(test_data_path)
 shuffle(X_test)
+
 X_new = []
 y_test = []
+# Trennen in Bild und Lösung
 for image, class_num in X_test:
     X_new.append(image)
     y_test.append(class_num)
 X_test = X_new
+    # Normalisieren der Werte zwischen 0 und 1
+X_test = tf.keras.utils.normalize(X_test, axis=1)
+# Normalisieren der Werte zwischen 0 und 1
+
+# Umwandlen in numpy-array
 X_test = np.array(X_test).reshape(-1, target_image_size, target_image_size, 1)
 X_test = np.asarray(X_test)
 
+# Testen der Formerkennung
 predictions = model.predict([X_test])
-
 for i in range(len(X_test)):
     # Wahrscheinlichster Wert auslesen
     highest_weight_value = np.argmax(predictions[i])
@@ -285,7 +351,7 @@ for i in range(len(X_test)):
     if highest_weight_value == y_test[i]:
         print(True)
     else:
-        print(False)
+        print(f"False -> {categories[y_test[i]]}")
     # Zeige Bild an
     plt.imshow(X_test[i])
     plt.show()

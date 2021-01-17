@@ -71,6 +71,11 @@ debug = False
 os.chdir(os.path.dirname(__file__))
 
 def createTrainingData(path, image_size, amount, purpose="Training"):
+    # Funkntion zum erstellen von Trainingsbildern
+    # Input:
+    #   - path = string         | Bilderpfad
+    #   - image_size = tuple    | (x, y) -> Bildgrösse
+    #   - purpose = string      | Zur Ausgabe bei der Verarbeitung
     print(f"Create {amount*3} {purpose} Images...", end="")
     # Vierecke erstellen
     for i in range(amount):
@@ -190,12 +195,12 @@ def createTrainingData(path, image_size, amount, purpose="Training"):
     print("Done\n")
 
 
-#finds the straight-line distance between two points
 def distance(ax, ay, bx, by):
+    #finds the straight-line distance between two points
     return math.sqrt((by - ay)**2 + (bx - ax)**2)
 
-#rotates point `A` about point `B` by `angle` radians clockwise.
 def rotated_about(ax, ay, bx, by, angle):
+    #rotates point `A` about point `B` by `angle` radians clockwise.
     radius = distance(ax,ay,bx,by)
     angle += math.atan2(ay-by, ax-bx)
     return (
@@ -204,6 +209,9 @@ def rotated_about(ax, ay, bx, by, angle):
     )
 
 def createDataStructure(path, training_data=[]):
+    # Funktion zum erstellen einer für tensorflow verwendbaren Datenstruktur
+    # Inputs:
+    #   - path = string     | Pfad zu den Bilddateien
     for image in os.listdir(path):
         # Klasse aus Dateiname auslesen
         class_num = categories.index(image.split("_")[0])

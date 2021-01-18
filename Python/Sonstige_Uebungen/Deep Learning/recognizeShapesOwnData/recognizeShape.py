@@ -62,7 +62,7 @@ target_image_size = 30
 # Anzahl zu erstellenden Trainingsbilder pro Kategorie
 training_data_amount = 3500
 # Anzahl der zu testenden Bilder pro Kategorie
-test_images_amount = 100
+test_images_amount = 3500
 # Anzahl Trainings mit den Trainingbilder
 number_of_trainings = 200
 
@@ -333,24 +333,27 @@ for file in os.listdir(test_data_path):
 createTrainingData(test_data_path, image_size, test_images_amount, purpose="Testing")
 
 # Testdaten erstellen
-X_test = createDataStructure(test_data_path)
-shuffle(X_test)
+print("Load Testing Data...", end="")
+testing_data = createDataStructure(test_data_path)
+shuffle(testing_data)
 
-X_new = []
+X_test = []
 y_test = []
 # Trennen in Bild und Lösung
-for image, class_num in X_test:
-    X_new.append(image)
+for image, class_num in testing_data:
+    X_test.append(image)
     y_test.append(class_num)
-X_test = X_new
+
 # Normalisieren der Werte zwischen 0 und 1
 X_test = tf.keras.utils.normalize(X_test, axis=1)
+# Umwandeln in numpy-Array
 X_test_output = np.array(X_test).reshape(-1, target_image_size, target_image_size, 1)
 X_test_output = np.asarray(X_test)
 y_test_output = np.asarray(y_test)
+print("Done")
 
 # Speichern der Testdaten
-print("Save testdataset...", end="")
+print("Save test dataset...", end="")
 pickle_out = open(pickle_X_test_path, "wb")
 pickle.dump(X_test_output, pickle_out)
 pickle_out.close()
@@ -359,11 +362,6 @@ pickle.dump(y_test_output, pickle_out)
 pickle_out.close()
 print("Done")
 
-
-
-# Umwandlen in numpy-array
-X_test = np.array(X_test).reshape(-1, target_image_size, target_image_size, 1)
-X_test = np.asarray(X_test)
 
 # Testen der Formerkennung
 predictions = model.predict([X_test])

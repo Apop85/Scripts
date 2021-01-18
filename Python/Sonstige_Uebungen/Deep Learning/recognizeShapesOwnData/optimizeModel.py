@@ -40,24 +40,30 @@ from tensorflow.keras.callbacks import TensorBoard
 import pickle
 # Time-Module um zeitlich getrennte Logs zu erstellen
 from time import time
+# Laufanalyse-Modul importieren
+import analyzeRuns
 
 # Mögliche Density Layers (Minimum: Anzahl Kategorien)
 dense_layers = [3]
 # Mögliche Layergrössen
-layer_sizes = [8,16,24,32,40,48,56,64,72,80,88,96,104,112,120,128]
+# layer_sizes = [8,16,24,32,40,48,56,64,72,80,88,96,104,112,120,128]
+layer_sizes = [48,56,72,80,88,96,104,112,120,128]
 # Mögliche Convolution layers
 conv_layers = [1,2]
 # Mögliche Loss-Algorithmen
 # https://www.tensorflow.org/api_docs/python/tf/keras/losses
-loss_algorithms = ["sparse_categorical_crossentropy", "categorical_crossentropy", "binary_crossentropy", "categorical_hinge"]
+# loss_algorithms = ["sparse_categorical_crossentropy", "categorical_crossentropy", "binary_crossentropy", "categorical_hinge"]
+loss_algorithms = ["sparse_categorical_crossentropy"]
 # Mögliche Optimizer
 # https://www.tensorflow.org/api_docs/python/tf/keras/optimizers
-optimizers = ["adam", "SGD", "Adadelta", "RMSprop"]
+# optimizers = ["adam", "SGD", "Adadelta", "RMSprop"]
+optimizers = ["adam"]
 # Mögliche Aktivatoren
 # https://www.tensorflow.org/api_docs/python/tf/keras/activations/swish
-activators = ["relu", "selu", "sigmoid", "swish"]
+# activators = ["relu", "selu", "sigmoid", "swish"]
+activators = ["selu", "swish"]
 # Anzahl der durchzuführenden Trainings pro Datensatz
-amount_of_trainings = 15
+amount_of_trainings = 100
 # Bildgrösse des Trainingsdatensets
 training_image_size = (30, 30)
 
@@ -65,8 +71,11 @@ training_image_size = (30, 30)
 # Pfaddefinitionen
 log_dir = os.path.join(".", "logs")
 model_dir = os.path.join(".", "modelData")
+analyzer_exec = os.path.join(".", "analyzeRuns.py")
 x_file_dir = os.path.join(model_dir, "X.pickle")
 y_file_dir = os.path.join(model_dir, "y.pickle")
+x_test_file_dir = os.path.join(model_dir, "X_test.pickle")
+y_test_file_dir = os.path.join(model_dir, "y_test.pickle")
 error_log_path = os.path.join(log_dir, "error.log")
 success_log_path = os.path.join(log_dir, "success.log")
 
@@ -89,7 +98,7 @@ def write_to_log(path, message):
     file_writer = open(path, "a+")
     file_writer.write(f"{message}\n")
     file_writer.close()
-
+    
 def createTrainingModel(X_data, optimizer, loss_algorithm, activator, dense_layer, layer_size, conv_layer):
     print("Create Training Model ", end="")
     # Modeltypdefinition
@@ -139,6 +148,19 @@ print("Done")
 if not os.path.exists(log_dir):
     os.mkdir(log_dir)
 
+if os.path.exists(x_test_file_dir) and os.path.exists(y_test_file_dir):
+    print("Loading testdata...", end="")
+    pickle_in = open(x_test_file_dir, "rb")
+    X_test = pickle.load(pickle_in)
+    pickle_in.close()
+    pickle_in = open(y_test_file_dir, "rb")
+    y_test = pickle.load(pickle_in)
+    pickle_in.close()
+    print("donw")
+    test_data = True
+else:
+    test_data = False
+
 # Iteriere durch mögliche Parametereinstellungen
 for optimizer in optimizers:
     for loss_algorithm in loss_algorithms:
@@ -162,7 +184,11 @@ for optimizer in optimizers:
                             tensorboard = TensorBoard(log_dir=logfile_dir)
                             # Modell trainieren
                             model.fit(X_train, y_train, batch_size=32, epochs=amount_of_trainings, validation_split=0.3, callbacks=[tensorboard])
-                            val_loss, val_acc = model.evaluate(X_train, y_train)
+                            # Use test-data if avaiable
+                            if test_data:
+                                val_loss, val_acc = model.evaluate(X_test, y_test)
+                            else:
+                                val_loss, val_acc = model.evaluate(X_train, y_train)
                             log_message  += f"{val_acc}".center(33) + "|" + f"{val_loss}".center(33)
                             write_to_log(success_log_path, log_message)
                         except Exception as error_message:
@@ -177,3 +203,7 @@ for optimizer in optimizers:
                             write_to_log(error_log_path, log_message)
 
                             print(error_out)
+
+if os.path.exists(success_log_path):
+    # Start log analysis
+    analyzeRuns.analyzeRuns(20)

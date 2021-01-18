@@ -63,7 +63,7 @@ optimizers = ["adam"]
 # activators = ["relu", "selu", "sigmoid", "swish"]
 activators = ["selu", "swish"]
 # Anzahl der durchzuführenden Trainings pro Datensatz
-amount_of_trainings = 100
+amount_of_trainings = 50
 # Bildgrösse des Trainingsdatensets
 training_image_size = (30, 30)
 
@@ -149,14 +149,14 @@ if not os.path.exists(log_dir):
     os.mkdir(log_dir)
 
 if os.path.exists(x_test_file_dir) and os.path.exists(y_test_file_dir):
-    print("Loading testdata...", end="")
+    print("Loading Test Data...", end="")
     pickle_in = open(x_test_file_dir, "rb")
     X_test = pickle.load(pickle_in)
     pickle_in.close()
     pickle_in = open(y_test_file_dir, "rb")
     y_test = pickle.load(pickle_in)
     pickle_in.close()
-    print("donw")
+    print("Done")
     test_data = True
 else:
     test_data = False
@@ -185,10 +185,10 @@ for optimizer in optimizers:
                             # Modell trainieren
                             model.fit(X_train, y_train, batch_size=32, epochs=amount_of_trainings, validation_split=0.3, callbacks=[tensorboard])
                             # Use test-data if avaiable
-                            if test_data:
-                                val_loss, val_acc = model.evaluate(X_test, y_test)
-                            else:
-                                val_loss, val_acc = model.evaluate(X_train, y_train)
+                            # if test_data:
+                                # val_loss, val_acc = model.evaluate(X_test, y_test)
+                            # else:
+                            val_loss, val_acc = model.evaluate(X_train, y_train)
                             log_message  += f"{val_acc}".center(33) + "|" + f"{val_loss}".center(33)
                             write_to_log(success_log_path, log_message)
                         except Exception as error_message:

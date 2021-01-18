@@ -48,8 +48,10 @@ example_file_path = os.path.join(".", "trainingData")
 model_data_path = os.path.join(".", "modelData")
 test_data_path = os.path.join(".", "testData")
 training_model_path = os.path.join(model_data_path, "trainingModel")
-pickle_X_path = os.path.join(model_data_path, "X.pickle")
-pickle_y_path = os.path.join(model_data_path, "y.pickle")
+pickle_X_train_path = os.path.join(model_data_path, "X.pickle")
+pickle_y_train_path = os.path.join(model_data_path, "y.pickle")
+pickle_X_test_path = os.path.join(model_data_path, "X_test.pickle")
+pickle_y_test_path = os.path.join(model_data_path, "y_test.pickle")
 
 # Mögliche Kategorien
 categories = ["square", "triangle", "circle"]
@@ -60,7 +62,7 @@ target_image_size = 30
 # Anzahl zu erstellenden Trainingsbilder pro Kategorie
 training_data_amount = 3500
 # Anzahl der zu testenden Bilder pro Kategorie
-test_images_amount = 3
+test_images_amount = 100
 # Anzahl Trainings mit den Trainingbilder
 number_of_trainings = 200
 
@@ -239,7 +241,7 @@ if not os.path.exists(model_data_path):
     os.mkdir(model_data_path)
 
 # Prüfe ob Trainingsdaten geladen werden können
-if not os.path.exists(pickle_X_path) or not os.path.exists(pickle_y_path) or debug:
+if not os.path.exists(pickle_X_train_path) or not os.path.exists(pickle_y_train_path) or debug:
     # Erstelle Trainingsdaten
     print("Create Training Data...", end="")
     training_data = createDataStructure(example_file_path)
@@ -266,20 +268,20 @@ if not os.path.exists(pickle_X_path) or not os.path.exists(pickle_y_path) or deb
 
     # Speichere Trainingsdaten
     print("Save Training Data...", end="")
-    pickle_out = open(pickle_X_path, "wb")
+    pickle_out = open(pickle_X_train_path, "wb")
     pickle.dump(X_train, pickle_out)
     pickle_out.close()
-    pickle_out = open(pickle_y_path, "wb")
+    pickle_out = open(pickle_y_train_path, "wb")
     pickle.dump(y_train, pickle_out)
     pickle_out.close()
     print("Done")
 else:
     # Lade Trainingsdaten
     print("Load Training Data...", end="")
-    pickle_in = open(pickle_X_path, "rb")
+    pickle_in = open(pickle_X_train_path, "rb")
     X_train = pickle.load(pickle_in)
     pickle_in.close()
-    pickle_in = open(pickle_y_path, "rb")
+    pickle_in = open(pickle_y_train_path, "rb")
     y_train = pickle.load(pickle_in)
     pickle_in.close()
     print("Done")
@@ -341,9 +343,20 @@ for image, class_num in X_test:
     X_new.append(image)
     y_test.append(class_num)
 X_test = X_new
-    # Normalisieren der Werte zwischen 0 und 1
-X_test = tf.keras.utils.normalize(X_test, axis=1)
 # Normalisieren der Werte zwischen 0 und 1
+X_test = tf.keras.utils.normalize(X_test, axis=1)
+
+# Speichern der Testdaten
+print("Save testdataset...", end="")
+pickle_out = open(pickle_X_test_path, "wb")
+pickle.dump(X_test, pickle_out)
+pickle_out.close()
+pickle_out = open(pickle_y_test_path, "wb")
+pickle.dump(y_test, pickle_out)
+pickle_out.close()
+print("Done")
+
+
 
 # Umwandlen in numpy-array
 X_test = np.array(X_test).reshape(-1, target_image_size, target_image_size, 1)

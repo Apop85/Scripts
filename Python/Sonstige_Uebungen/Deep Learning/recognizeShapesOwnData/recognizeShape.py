@@ -345,14 +345,17 @@ for image, class_num in X_test:
 X_test = X_new
 # Normalisieren der Werte zwischen 0 und 1
 X_test = tf.keras.utils.normalize(X_test, axis=1)
+X_test_output = np.array(X_test).reshape(-1, target_image_size, target_image_size, 1)
+X_test_output = np.asarray(X_test)
+y_test_output = np.asarray(y_test)
 
 # Speichern der Testdaten
 print("Save testdataset...", end="")
 pickle_out = open(pickle_X_test_path, "wb")
-pickle.dump(X_test, pickle_out)
+pickle.dump(X_test_output, pickle_out)
 pickle_out.close()
 pickle_out = open(pickle_y_test_path, "wb")
-pickle.dump(y_test, pickle_out)
+pickle.dump(y_test_output, pickle_out)
 pickle_out.close()
 print("Done")
 
@@ -373,6 +376,8 @@ for i in range(len(X_test)):
         print(True)
     else:
         print(f"False -> {categories[y_test[i]]}")
-    # Zeige Bild an
-    plt.imshow(X_test[i])
-    plt.show()
+
+    if debug:
+        # Zeige Bild an
+        plt.imshow(X_test[i])
+        plt.show()

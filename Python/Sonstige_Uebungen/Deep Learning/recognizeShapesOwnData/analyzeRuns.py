@@ -10,12 +10,7 @@ import os
 # \_______)(_______/   )_(      )_(   \_______/|/    )_)(_______)\_______)
 # Pfaddefinitionen
 log_dir = os.path.join(".", "logs")
-model_dir = os.path.join(".", "modelData")
-x_file_dir = os.path.join(model_dir, "X.pickle")
-y_file_dir = os.path.join(model_dir, "y.pickle")
-error_log_path = os.path.join(log_dir, "error.log")
-success_log_path = os.path.join(log_dir, "success.log")
-bestruns_log_path = os.path.join(log_dir, "bestruns.log")
+
 
 #  _______           _        _______ __________________ _______  _        _______ 
 # (  ____ \|\     /|( (    /|(  ____ \\__   __/\__   __/(  ___  )( (    /|(  ____ \
@@ -34,10 +29,16 @@ def write_to_log(path, message):
     file_writer.write(f"{message}\n")
     file_writer.close()
 
-def analyzeRuns(list_size=10):
+def analyzeRuns(model_name="", list_size=10):
+# def analyzeRuns(list_size=10):
     # Funktion zur erstellen einer Top-Liste
     # Inputs:
     #   list_size = integer | Anzahl der Top-Runs in der Liste
+
+    # success_log_path = os.path.join(log_dir, f"success.log")
+    # bestruns_log_path = os.path.join(log_dir, f"bestruns.log")
+    success_log_path = os.path.join(log_dir, f"success-{model_name}.log")
+    bestruns_log_path = os.path.join(log_dir, f"bestruns-{model_name}.log")
     
     # Setze Standardwerte
     best_acc = {}
@@ -95,8 +96,9 @@ def analyzeRuns(list_size=10):
                     for key in best_acc.keys():
                         sorted_keys += [key]
                     sorted_keys.sort()
-                    # Werfe schlechtesten Wert raus
-                    del best_acc[sorted_keys[-1]]
+                    if len(sorted_keys) >= list_size:
+                        # Werfe schlechtesten Wert raus
+                        del best_acc[sorted_keys[-1]]
                 break
 
 
@@ -118,12 +120,15 @@ def analyzeRuns(list_size=10):
                     for key in best_loss.keys():
                         sorted_keys += [key]
                     sorted_keys.sort(reverse=True)
-                    del best_loss[sorted_keys[-1]]
+                    if len(sorted_keys) >= list_size:
+                        # Werfe schlechtesten Wert raus
+                        del best_loss[sorted_keys[-1]]
                     break
 
     best_acc_list = []
     best_loss_list = []
 
+    # Erstelle Bestenlisten
     for value in best_acc.keys():
         best_acc_list += [value]
     best_acc_list.sort(reverse=True)
@@ -132,6 +137,7 @@ def analyzeRuns(list_size=10):
         best_loss_list += [value]
     best_loss_list.sort()
 
+    # Entferne vorheriges logfile
     if os.path.exists(bestruns_log_path):
         os.remove(bestruns_log_path)
 
@@ -143,8 +149,9 @@ def analyzeRuns(list_size=10):
             header = header + "-"*len(header)+"\n"
             log_message = header + log_message
         write_to_log(bestruns_log_path, log_message)
+
+    write_to_log(bestruns_log_path, "'-_-" * (len(log_message) // 4))
     for value in best_loss_list:
         log_message = best_loss[value]["optimizer"].center(33) + "|" + best_loss[value]["kernelSize"].center(33) + "|" + best_loss[value]["decisionActivator"].center(33) + "|" + best_loss[value]["lossAlgorithm"].center(33) + "|" + best_loss[value]["activator"].center(33) + "|" + str(best_loss[value]["denseLayers"]).center(33) + "|" + best_loss[value]["denseActivator"].center(33) + "|" + str(best_loss[value]["layerSize"]).center(33) + "|" + str(best_loss[value]["convolutionLayers"]).center(33) + "|" + str(best_loss[value]["accuracy"]).center(33) + "|" + str(best_loss[value]["loss"]).center(33)
         write_to_log(bestruns_log_path, log_message)
 
-# analyzeRuns(20)

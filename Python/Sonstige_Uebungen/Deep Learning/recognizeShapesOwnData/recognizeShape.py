@@ -348,12 +348,12 @@ for image, class_num in testing_data:
 X_test = tf.keras.utils.normalize(X_test, axis=1)
 # Umwandeln in numpy-Array
 X_test_output = np.array(X_test).reshape(-1, target_image_size, target_image_size, 1)
-X_test_output = np.asarray(X_test)
+# X_test_output = np.asarray(X_test)
 y_test_output = np.asarray(y_test)
 print("Done")
 
 # Speichern der Testdaten
-print("Save test dataset...", end="")
+print("Save Test Dataset...", end="")
 pickle_out = open(pickle_X_test_path, "wb")
 pickle.dump(X_test_output, pickle_out)
 pickle_out.close()

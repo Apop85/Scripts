@@ -47,9 +47,10 @@ import analyzeRuns
 dense_layers = [1,2,3]
 # Mögliche Layergrössen
 # layer_sizes = [8,16,24,32,40,48,56,64,72,80,88,96,104,112,120,128]
-layer_sizes = [48,56,72,80,88,96,104,112,120,128]
+layer_sizes = [56, 80, 112, 120]
 # Mögliche Convolution layers
-conv_layers = [1,2]
+# conv_layers = [1,2]
+conv_layers = [2]
 # Mögliche Loss-Algorithmen
 # https://www.tensorflow.org/api_docs/python/tf/keras/losses
 # loss_algorithms = ["sparse_categorical_crossentropy", "categorical_crossentropy", "binary_crossentropy", "categorical_hinge"]
@@ -59,16 +60,15 @@ loss_algorithms = ["sparse_categorical_crossentropy"]
 # optimizers = ["adam", "SGD", "Adadelta", "RMSprop"]
 optimizers = ["adam"]
 # Mögliche Aktivatoren
-# https://www.tensorflow.org/api_docs/python/tf/keras/activations/swish
+# https://www.tensorflow.org/api_docs/python/tf/keras/activations
 # activators = ["relu", "selu", "sigmoid", "swish"]
-activators = ["relu", "selu", "swish"]
-# decision_activators
+activators = ["relu"]
+# Entscheidungsaktivatoren
+# https://www.tensorflow.org/api_docs/python/tf/keras/activations
 # decision_activators = ["sigmoid", "relu", "selu", , "swish"]
 decision_activators = ["sigmoid"]
-# Mögliche outputs / Kategorien
-categories = ["triangle", "circle", "square"]
 # Anzahl der durchzuführenden Trainings pro Datensatz
-amount_of_trainings = 25
+amount_of_trainings = 50
 # Bildgrösse des Trainingsdatensets
 training_image_size = (30, 30)
 
@@ -145,8 +145,9 @@ def createTrainingModel(X_data, optimizer, loss_algorithm, activator, dense_laye
 # Gespeicherte Trainingsdaten laden
 print("Loading Training Data...", end="")
 X_train = loadPickleData(x_file_dir)
-# X_train = tf.keras.utils.normalize(X_train)
 y_train = loadPickleData(y_file_dir)
+# Anzahl Kategorien auslesen
+amount_of_categories = max(y_train) + 1
 print("Done")
 
 # Erstelle log-pfad
@@ -160,9 +161,11 @@ if os.path.exists(x_test_file_dir) and os.path.exists(y_test_file_dir):
     pickle_in = open(x_test_file_dir, "rb")
     X_test = pickle.load(pickle_in)
     pickle_in.close()
+
     pickle_in = open(y_test_file_dir, "rb")
     y_test = pickle.load(pickle_in)
     pickle_in.close()
+
     print("Done")
     test_data = True
 else:
@@ -188,17 +191,17 @@ for optimizer in optimizers:
                             
                             try:
                                 # Trainingsmodell erstellen
-                                model, desc = createTrainingModel(X_train, optimizer, loss_algorithm, activator, dense_layer, layer_size, conv_layer, len(categories), decision_activator)
+                                model, desc = createTrainingModel(X_train, optimizer, loss_algorithm, activator, dense_layer, layer_size, conv_layer, amount_of_categories, decision_activator)
                                 logfile_dir = os.path.join(log_dir, f"optimizeModel-{desc}-{int(timenow)}")
                                 # Tensorboard initialisieren
                                 tensorboard = TensorBoard(log_dir=logfile_dir)
                                 # Modell trainieren
                                 model.fit(X_train, y_train, batch_size=32, epochs=amount_of_trainings, validation_split=0.3, callbacks=[tensorboard])
                                 # Wenn möglich seperate testdaten verwenden
-                                # if test_data:
-                                    # val_loss, val_acc = model.evaluate(X_test, y_test)
-                                # else:
-                                val_loss, val_acc = model.evaluate(X_train, y_train)
+                                if test_data:
+                                    val_loss, val_acc = model.evaluate(X_test, y_test)
+                                else:
+                                    val_loss, val_acc = model.evaluate(X_train, y_train)
                                 log_message  += f"{val_acc}".center(33) + "|" + f"{val_loss}".center(33)
                                 write_to_log(success_log_path, log_message)
                             except Exception as error_message:

@@ -43,15 +43,14 @@ import cv2
 # pickle-Modul zum speichern der Trainingsdaten
 import pickle
 
-# Pfaddefinitionen
-example_file_path = os.path.join(".", "trainingData")
-model_data_path = os.path.join(".", "modelData")
-test_data_path = os.path.join(".", "testData")
-training_model_path = os.path.join(model_data_path, "trainingModel")
-pickle_X_train_path = os.path.join(model_data_path, "X.pickle")
-pickle_y_train_path = os.path.join(model_data_path, "y.pickle")
-pickle_X_test_path = os.path.join(model_data_path, "X_test.pickle")
-pickle_y_test_path = os.path.join(model_data_path, "y_test.pickle")
+#  _______  _______ ___________________________ _        _______  _______ 
+# (  ____ \(  ____ \\__   __/\__   __/\__   __/( (    /|(  ____ \(  ____ \
+# | (    \/| (    \/   ) (      ) (      ) (   |  \  ( || (    \/| (    \/
+# | (_____ | (__       | |      | |      | |   |   \ | || |      | (_____ 
+# (_____  )|  __)      | |      | |      | |   | (\ \) || | ____ (_____  )
+#       ) || (         | |      | |      | |   | | \   || | \_  )      ) |
+# /\____) || (____/\   | |      | |   ___) (___| )  \  || (___) |/\____) |
+# \_______)(_______/   )_(      )_(   \_______/|/    )_)(_______)\_______)
 
 # Mögliche Kategorien
 categories = ["square", "triangle", "circle"]
@@ -65,13 +64,32 @@ training_data_amount = 3500
 test_images_amount = 3500
 # Anzahl Trainings mit den Trainingbilder
 number_of_trainings = 200
-
 # Alle Bilder, Modelle und Daten neu erstellen
 debug = False
 
-# Wechsle zum Scriptpfad
-os.chdir(os.path.dirname(__file__))
+#  ____   __   ____  _   _  ___ 
+# (  _ \ /__\ (_  _)( )_( )/ __)
+#  )___//(__)\  )(   ) _ ( \__ \
+# (__) (__)(__)(__) (_) (_)(___/
+# Pfaddefinitionen
+example_file_path = os.path.join(".", "trainingData")
+model_data_path = os.path.join(".", "modelData")
+test_data_path = os.path.join(".", "testData")
+training_model_path = os.path.join(model_data_path, "trainingModel")
+pickle_X_train_path = os.path.join(model_data_path, "X.pickle")
+pickle_y_train_path = os.path.join(model_data_path, "y.pickle")
+pickle_X_test_path = os.path.join(model_data_path, "X_test.pickle")
+pickle_y_test_path = os.path.join(model_data_path, "y_test.pickle")
 
+
+#  _______           _        _______ __________________ _______  _        _______ 
+# (  ____ \|\     /|( (    /|(  ____ \\__   __/\__   __/(  ___  )( (    /|(  ____ \
+# | (    \/| )   ( ||  \  ( || (    \/   ) (      ) (   | (   ) ||  \  ( || (    \/
+# | (__    | |   | ||   \ | || |         | |      | |   | |   | ||   \ | || (_____ 
+# |  __)   | |   | || (\ \) || |         | |      | |   | |   | || (\ \) |(_____  )
+# | (      | |   | || | \   || |         | |      | |   | |   | || | \   |      ) |
+# | )      | (___) || )  \  || (____/\   | |   ___) (___| (___) || )  \  |/\____) |
+# |/       (_______)|/    )_)(_______/   )_(   \_______/(_______)|/    )_)\_______)
 def createTrainingData(path, image_size, amount, purpose="Training"):
     # Funkntion zum erstellen von Trainingsbildern
     # Input:
@@ -229,6 +247,17 @@ def createDataStructure(path, training_data=[]):
             print(f"Can't open image {image} --> {error_message}")
     return training_data
 
+# _________ _       ___________________________ _______  _       _________ _______  _______ 
+# \__   __/( (    /|\__   __/\__   __/\__   __/(  ___  )( \      \__   __// ___   )(  ____ \
+#    ) (   |  \  ( |   ) (      ) (      ) (   | (   ) || (         ) (   \/   )  || (    \/
+#    | |   |   \ | |   | |      | |      | |   | (___) || |         | |       /   )| (__    
+#    | |   | (\ \) |   | |      | |      | |   |  ___  || |         | |      /   / |  __)   
+#    | |   | | \   |   | |      | |      | |   | (   ) || |         | |     /   /  | (      
+# ___) (___| )  \  |___) (___   | |   ___) (___| )   ( || (____/\___) (___ /   (_/\| (____/\
+# \_______/|/    )_)\_______/   )_(   \_______/|/     \|(_______/\_______/(_______/(_______/
+# Wechsle zum Scriptpfad
+os.chdir(os.path.dirname(__file__))
+
 # Erstelle Trainingspfad
 if not os.path.exists(example_file_path):
     os.mkdir(example_file_path)
@@ -240,8 +269,21 @@ elif debug:
 if not os.path.exists(model_data_path):
     os.mkdir(model_data_path)
 
+
+# _________ _______  _______ _________ _       _________ _        _______       ______   _______ _________ _______ 
+# \__   __/(  ____ )(  ___  )\__   __/( (    /|\__   __/( (    /|(  ____ \     (  __  \ (  ___  )\__   __/(  ___  )
+#    ) (   | (    )|| (   ) |   ) (   |  \  ( |   ) (   |  \  ( || (    \/     | (  \  )| (   ) |   ) (   | (   ) |
+#    | |   | (____)|| (___) |   | |   |   \ | |   | |   |   \ | || |           | |   ) || (___) |   | |   | (___) |
+#    | |   |     __)|  ___  |   | |   | (\ \) |   | |   | (\ \) || | ____      | |   | ||  ___  |   | |   |  ___  |
+#    | |   | (\ (   | (   ) |   | |   | | \   |   | |   | | \   || | \_  )     | |   ) || (   ) |   | |   | (   ) |
+#    | |   | ) \ \__| )   ( |___) (___| )  \  |___) (___| )  \  || (___) |     | (__/  )| )   ( |   | |   | )   ( |
+#    )_(   |/   \__/|/     \|\_______/|/    )_)\_______/|/    )_)(_______)     (______/ |/     \|   )_(   |/     \|
 # Prüfe ob Trainingsdaten geladen werden können
 if not os.path.exists(pickle_X_train_path) or not os.path.exists(pickle_y_train_path) or debug:
+    #   ___  ____  ____    __   ____  ____    ____    __   ____   __   
+    #  / __)(  _ \( ___)  /__\ (_  _)( ___)  (  _ \  /__\ (_  _) /__\  
+    # ( (__  )   / )__)  /(__)\  )(   )__)    )(_) )/(__)\  )(  /(__)\ 
+    #  \___)(_)\_)(____)(__)(__)(__) (____)  (____/(__)(__)(__)(__)(__)
     # Erstelle Trainingsdaten
     print("Create Training Data...", end="")
     training_data = createDataStructure(example_file_path)
@@ -276,6 +318,10 @@ if not os.path.exists(pickle_X_train_path) or not os.path.exists(pickle_y_train_
     pickle_out.close()
     print("Done")
 else:
+    #  __    _____    __    ____     ____    __   ____   __   
+    # (  )  (  _  )  /__\  (  _ \   (  _ \  /__\ (_  _) /__\  
+    #  )(__  )(_)(  /(__)\  )(_) )   )(_) )/(__)\  )(  /(__)\ 
+    # (____)(_____)(__)(__)(____/   (____/(__)(__)(__)(__)(__)
     # Lade Trainingsdaten
     print("Load Training Data...", end="")
     pickle_in = open(pickle_X_train_path, "rb")
@@ -286,8 +332,19 @@ else:
     pickle_in.close()
     print("Done")
 
-
+# _________ _______  _______ _________ _       _________ _        _______      _______  _______  ______   _______  _       
+# \__   __/(  ____ )(  ___  )\__   __/( (    /|\__   __/( (    /|(  ____ \    (       )(  ___  )(  __  \ (  ____ \( \      
+#    ) (   | (    )|| (   ) |   ) (   |  \  ( |   ) (   |  \  ( || (    \/    | () () || (   ) || (  \  )| (    \/| (      
+#    | |   | (____)|| (___) |   | |   |   \ | |   | |   |   \ | || |          | || || || |   | || |   ) || (__    | |      
+#    | |   |     __)|  ___  |   | |   | (\ \) |   | |   | (\ \) || | ____     | |(_)| || |   | || |   | ||  __)   | |      
+#    | |   | (\ (   | (   ) |   | |   | | \   |   | |   | | \   || | \_  )    | |   | || |   | || |   ) || (      | |      
+#    | |   | ) \ \__| )   ( |___) (___| )  \  |___) (___| )  \  || (___) |    | )   ( || (___) || (__/  )| (____/\| (____/\
+#    )_(   |/   \__/|/     \|\_______/|/    )_)\_______/|/    )_)(_______)    |/     \|(_______)(______/ (_______/(_______/
 if not os.path.exists(training_model_path) or debug:
+    #   ___  ____  ____    __   ____  ____    __  __  _____  ____  ____  __   
+    #  / __)(  _ \( ___)  /__\ (_  _)( ___)  (  \/  )(  _  )(  _ \( ___)(  )  
+    # ( (__  )   / )__)  /(__)\  )(   )__)    )    (  )(_)(  )(_) ))__)  )(__ 
+    #  \___)(_)\_)(____)(__)(__)(__) (____)  (_/\/\_)(_____)(____/(____)(____)
     # Trainingsmodell festlegen
     model = tf.keras.models.Sequential()
     # Definition der Eingabelayer
@@ -312,6 +369,10 @@ if not os.path.exists(training_model_path) or debug:
     model.save(training_model_path)
     print("Done")
 else:
+    #  __    _____    __    ____     __  __  _____  ____  ____  __   
+    # (  )  (  _  )  /__\  (  _ \   (  \/  )(  _  )(  _ \( ___)(  )  
+    #  )(__  )(_)(  /(__)\  )(_) )   )    (  )(_)(  )(_) ))__)  )(__ 
+    # (____)(_____)(__)(__)(____/   (_/\/\_)(_____)(____/(____)(____)
     print("Loading model...", end="")
     model = tf.keras.models.load_model(training_model_path)
     print("Done")
@@ -321,6 +382,14 @@ val_loss, val_acc = model.evaluate(X_train, y_train)
 print("\nVerlust    : {}".format(val_loss))
 print("Genauigkeit: {}\n".format(val_acc))
 
+# _________ _______  _______ __________________ _        _______       ______   _______ _________ _______ 
+# \__   __/(  ____ \(  ____ \\__   __/\__   __/( (    /|(  ____ \     (  __  \ (  ___  )\__   __/(  ___  )
+#    ) (   | (    \/| (    \/   ) (      ) (   |  \  ( || (    \/     | (  \  )| (   ) |   ) (   | (   ) |
+#    | |   | (__    | (_____    | |      | |   |   \ | || |           | |   ) || (___) |   | |   | (___) |
+#    | |   |  __)   (_____  )   | |      | |   | (\ \) || | ____      | |   | ||  ___  |   | |   |  ___  |
+#    | |   | (            ) |   | |      | |   | | \   || | \_  )     | |   ) || (   ) |   | |   | (   ) |
+#    | |   | (____/\/\____) |   | |   ___) (___| )  \  || (___) |     | (__/  )| )   ( |   | |   | )   ( |
+#    )_(   (_______/\_______)   )_(   \_______/|/    )_)(_______)     (______/ |/     \|   )_(   |/     \|
 # Erstelle Testbildpfad
 if not os.path.exists(test_data_path):
     os.mkdir(test_data_path)
@@ -363,6 +432,14 @@ pickle_out.close()
 print("Done")
 
 
+# _________ _______  _______ _________      ______   _______ _________ _______ 
+# \__   __/(  ____ \(  ____ \\__   __/     (  __  \ (  ___  )\__   __/(  ___  )
+#    ) (   | (    \/| (    \/   ) (        | (  \  )| (   ) |   ) (   | (   ) |
+#    | |   | (__    | (_____    | |        | |   ) || (___) |   | |   | (___) |
+#    | |   |  __)   (_____  )   | |        | |   | ||  ___  |   | |   |  ___  |
+#    | |   | (            ) |   | |        | |   ) || (   ) |   | |   | (   ) |
+#    | |   | (____/\/\____) |   | |        | (__/  )| )   ( |   | |   | )   ( |
+#    )_(   (_______/\_______)   )_(        (______/ |/     \|   )_(   |/     \|
 # Testen der Formerkennung
 predictions = model.predict([X_test])
 for i in range(len(X_test)):

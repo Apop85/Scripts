@@ -51,16 +51,34 @@ import analyzeRuns
 #       ) || (         | |      | |      | |   | | \   || | \_  )      ) |
 # /\____) || (____/\   | |      | |   ___) (___| )  \  || (___) |/\____) |
 # \_______)(_______/   )_(      )_(   \_______/|/    )_)(_______)\_______)
-# Bildgrösse des Trainingsdatensets
+# Modelname - Beeinflusst Name der Tensorflow- und Script-Logs
+model_name = "optimizeModel"
+# Anzahl der Top-Läufe bei der Auswertung
+top_list_size = 50
+# Anzahl der durchzuführenden Trainings pro Datensatz
+amount_of_trainings = 30
+# Anzahl der zur Validierung zu verwendenden Daten in %
+validation_percent = 30
+# Stapelgrösse der zu trainierenden Daten pro Durchgang
+batch_size = 64
+# Bildgrösse des Trainingsdatensets (nicht der eigentlichen Bilder) -> recognizeShape erstellt ein 30x30  Bild
 training_image_size = (30, 30)
-# Mögliche Density Layers (Minimum: Anzahl Kategorien)
-dense_layers = [0,1,2,3]
+# Max error-score -> Sobald ein Attribut diese Anzahl an errors auslöst wird es ignoriert
+ignore_error_score = 5
+
+#  __  __  _____  ____  ____  __      ___  ____  ____  ____  ____  _  _  ___  ___ 
+# (  \/  )(  _  )(  _ \( ___)(  )    / __)( ___)(_  _)(_  _)(_  _)( \( )/ __)/ __)
+#  )    (  )(_)(  )(_) ))__)  )(__   \__ \ )__)   )(    )(   _)(_  )  (( (_-.\__ \
+# (_/\/\_)(_____)(____/(____)(____)  (___/(____) (__)  (__) (____)(_)\_)\___/(___/
+# Mögliche Density Layers
+# dense_layers = [0,1,2,3]
+dense_layers = [1,2,3]
 # Mögliche Layergrössen
 # layer_sizes = [8,16,24,32,40,48,56,64,72,80,88,96,104,112,120,128]
 layer_sizes = [32,64,128]
 # Mögliche Convolution layers
 # conv_layers = [0,1,2]
-conv_layers = [0,1,2]
+conv_layers = [1,2,3]
 # Mögliche Loss-Algorithmen
 # https://www.tensorflow.org/api_docs/python/tf/keras/losses
 # loss_algorithms = ["sparse_categorical_crossentropy", "categorical_crossentropy", "binary_crossentropy", "categorical_hinge"]
@@ -80,20 +98,17 @@ decision_activators = ["sigmoid"]
 # Dense Aktivatoren
 # https://www.tensorflow.org/api_docs/python/tf/keras/activations
 # decision_activators = ["sigmoid", "relu", "selu", , "swish", "softmax", "softplus", "softsign"]
-dense_activators = ["softmax", "softplus"]
+dense_activators = ["softmax", "softplus", "softsign"]
 # Matrixgrösse
 kernel_sizes = [2,3,4]
-# Anzahl der durchzuführenden Trainings pro Datensatz
-amount_of_trainings = 50
-# Anzahl der zur Validierung zu verwendenden Daten in %
-validation_percent = 20
-# Stapelgrösse der zu trainierenden Daten
-batch_size = 64
 
 #  ____   __   ____  _   _  ___ 
 # (  _ \ /__\ (_  _)( )_( )/ __)
 #  )___//(__)\  )(   ) _ ( \__ \
 # (__) (__)(__)(__) (_) (_)(___/
+# Change working directory into script directory
+os.chdir(os.path.dirname(__file__))
+
 # Pfaddefinitionen
 log_dir = os.path.join(".", "logs")
 model_dir = os.path.join(".", "modelData")
@@ -102,8 +117,8 @@ x_file_dir = os.path.join(model_dir, "X.pickle")
 y_file_dir = os.path.join(model_dir, "y.pickle")
 x_test_file_dir = os.path.join(model_dir, "X_test.pickle")
 y_test_file_dir = os.path.join(model_dir, "y_test.pickle")
-error_log_path = os.path.join(log_dir, "error.log")
-success_log_path = os.path.join(log_dir, "success.log")
+error_log_path = os.path.join(log_dir, f"error-{model_name}.log")
+success_log_path = os.path.join(log_dir, f"success-{model_name}.log")
 
 
 
@@ -149,7 +164,7 @@ def createTrainingModel(X_data, optimizer, loss_algorithm, activator, dense_laye
     #   dense_layer = integer       | Anzahl Denselayer
     #   layer_size = integer        | Grösse des Layers
     #   conv_layer = integer        | Anzahl Convolutionlayer
-    #   categories                  | Anzahl möglicher Antworten/Kategorien
+    #   categories = integer        | Anzahl möglicher Antworten/Kategorien
     #   decision_activator = string | Entscheidungsaktivator
     #   dense_activator = string    | Aktivator für die Dense layer
     #   kernel_size = integer       | Kernelgrösse
@@ -162,8 +177,8 @@ def createTrainingModel(X_data, optimizer, loss_algorithm, activator, dense_laye
     loss_initials = ""
     for item in loss_algorithm.split("_"):
         loss_initials += item[0]
-    print(f"{optimizer}-{kernel_size}-{decision_activator}-{loss_initials}-{activator}-{conv_layer}-{layer_size}-{dense_layer}-{dense_activator}...", end="")
-    desc = f"{optimizer}-{kernel_size}-{decision_activator}-{loss_initials}-{activator}-{conv_layer}-conv-{layer_size}-size-{dense_layer}-dense-{dense_activator}"
+    print(f"OP={optimizer}-K={kernel_size}-DA={decision_activator}-LI={loss_initials}-A={activator}-CL={conv_layer}-LS={layer_size}-DL={dense_layer}-DA={dense_activator}...", end="")
+    desc = f"OP={optimizer}-K={kernel_size}-DA={decision_activator}-LI={loss_initials}-A={activator}-CL={conv_layer}-LS={layer_size}-DL={dense_layer}-DA={dense_activator}"
 
     # Initiallayer hinzufügen
     model.add(Conv2D(layer_size, (kernel_size,kernel_size), input_shape=X_data.shape[1:]))
@@ -197,6 +212,55 @@ def createTrainingModel(X_data, optimizer, loss_algorithm, activator, dense_laye
     return model, desc
 
 
+def setupErrorTable():
+    # Standardwerte für Error-Tabelle
+    error_score = {
+        "optimizer": {},
+        "kernelSize": {},
+        "decisionActivator": {},
+        "lossAlgorithm":{},
+        "activator":{},
+        "denseLayer": {},
+        "denseActivator": {},
+        "layerSize": {},
+        "convLayer": {}
+    }
+
+    for optimizer in optimizers:
+        error_score["optimizer"].setdefault(optimizer, 0)
+    for kernel_size in kernel_sizes:
+        error_score["kernelSize"].setdefault(kernel_size, 0)
+    for decision_activator in decision_activators:
+        error_score["decisionActivator"].setdefault(decision_activator, 0)
+    for loss_algorithm in loss_algorithms:
+        error_score["lossAlgorithm"].setdefault(loss_algorithm, 0)
+    for activator in activators:
+        error_score["activator"].setdefault(activator, 0)
+    for dense_layer in dense_layers:
+        error_score["denseLayer"].setdefault(dense_layer, 0)
+    for dense_activator in dense_activators:
+        error_score["denseActivator"].setdefault(dense_activator, 0)
+    for layer_size in layer_sizes:
+        error_score["layerSize"].setdefault(layer_size, 0)
+    for conv_layer in conv_layers:
+        error_score["convLayer"].setdefault(conv_layer, 0)
+
+    return error_score
+    
+def updateErrorTable(error_table, optimizer, kernel_size, decision_activator, loss_algorithm, activator, dense_layer, dense_activator, layer_size, conv_layer, score):
+    error_table["optimizer"][optimizer] += score
+    error_table["kernelSize"][kernel_size] += score
+    error_table["decisionActivator"][decision_activator] += score
+    error_table["lossAlgorithm"][loss_algorithm] += score
+    error_table["activator"][activator] += score
+    error_table["denseLayer"][dense_layer] += score
+    error_table["denseActivator"][dense_activator] += score
+    error_table["layerSize"][layer_size] += score
+    error_table["convLayer"][conv_layer] += score
+
+    return error_table
+
+
 # _________ _       ___________________________ _______  _       _________ _______  _______ 
 # \__   __/( (    /|\__   __/\__   __/\__   __/(  ___  )( \      \__   __// ___   )(  ____ \
 #    ) (   |  \  ( |   ) (      ) (      ) (   | (   ) || (         ) (   \/   )  || (    \/
@@ -205,14 +269,21 @@ def createTrainingModel(X_data, optimizer, loss_algorithm, activator, dense_laye
 #    | |   | | \   |   | |      | |      | |   | (   ) || |         | |     /   /  | (      
 # ___) (___| )  \  |___) (___   | |   ___) (___| )   ( || (____/\___) (___ /   (_/\| (____/\
 # \_______/|/    )_)\_______/   )_(   \_______/|/     \|(_______/\_______/(_______/(_______/
-# Change working directory into script directory
-os.chdir(os.path.dirname(__file__))
 
 # Erstelle log-pfad
 if not os.path.exists(log_dir):
     os.mkdir(log_dir)
 
+# Anzahl iterationen berechnen
+amount_of_iterations = len(dense_layers) * len(layer_sizes) * len(conv_layers) * len(loss_algorithms) * len(optimizers) * len(activators) * len(decision_activators) *  len(dense_activators) * len(kernel_sizes)
+# validation_split berechnen
 validation_percent /= 100
+# Iterationscounter setzen
+iteration_counter = 0
+
+
+# Score-Tabelle erstellen
+error_score_table = setupErrorTable()
 
 #   _                     _       _       _        
 #  | |                   | |     | |     | |       
@@ -257,54 +328,73 @@ else:
 #  |_|  |_|\___/ \__,_|\___|_|   |_|\__\___|_|  \__,_|\__|_|\___/|_| |_|
 # Iteriere durch mögliche Parametereinstellungen
 for optimizer in optimizers:
-    for kernel_size in kernel_sizes:
-        for decision_activator in decision_activators:
-            for loss_algorithm in loss_algorithms:
-                for activator in activators:
-                    for dense_layer in dense_layers:
-                        for layer_size in layer_sizes:
-                            for conv_layer in conv_layers:
-                                for dense_activator in dense_activators:
-                                    timenow = time()
+    if not error_score_table["optimizer"][optimizer] >= ignore_error_score:
+        for kernel_size in kernel_sizes:
+            if not error_score_table["kernelSize"][kernel_size] >= ignore_error_score:
+                for decision_activator in decision_activators:
+                    if not error_score_table["decisionActivator"][decision_activator] >= ignore_error_score:
+                        for loss_algorithm in loss_algorithms:
+                            if not error_score_table["lossAlgorithm"][loss_algorithm] >= ignore_error_score:
+                                for activator in activators:
+                                    if not error_score_table["activator"][activator] >= ignore_error_score:
+                                        for dense_layer in dense_layers:
+                                            if not error_score_table["denseLayer"][dense_layer] >= ignore_error_score:
+                                                for dense_activator in dense_activators:
+                                                    if not error_score_table["denseActivator"][dense_activator] >= ignore_error_score:
+                                                        for layer_size in layer_sizes:
+                                                            if not error_score_table["layerSize"][layer_size] >= ignore_error_score:
+                                                                for conv_layer in conv_layers:
+                                                                    if not error_score_table["convLayer"][conv_layer] >= ignore_error_score:
+                                                                        timenow = time()
+                                                                        iteration_counter += 1
+                                                                        print("\n" + "█" * 80)
+                                                                        print("█" + f"Starting iteration {iteration_counter} of {amount_of_iterations}".center(80-2) + "█")
+                                                                        print("█" + f"{round((100 / amount_of_iterations) * iteration_counter, 2)}%".center(80-2) + "█")
+                                                                        print("█" * 80 + "\n")
+                                                                        # Log-Nachricht erstellen
+                                                                        log_message = optimizer.center(33) + "|" + (str(kernel_size)+"x"+str(kernel_size)).center(33) + "|" + decision_activator.center(33) + "|" + loss_algorithm.center(33) + "|" + activator.center(33) + "|" + str(dense_layer).center(33) + "|" + dense_activator.center(33) + "|" + str(layer_size).center(33) + "|" + str(conv_layer).center(33) + "|" 
+                                                                        if not os.path.exists(success_log_path):
+                                                                            # Wenn Logfile noch nicht existiert header hinzufügen
+                                                                            header = "OPTIMIZER".center(33) + "|" + "KERNEL SIZE".center(33) + "|" + "DECISION ACTIVATOR".center(33) + "|" + "LOSS_ALG".center(33) + "|" + "ACTIVATOR".center(33) + "|" + "DENSE LAYERS".center(33) + "|" + "DENSE ACTIVATOR".center(33) + "|" + "LAYER SIZE".center(33) + "|" + "CONVOLUTION LAYERS".center(33) + "|" + "ACCURRACY".center(33) + "|" + "LOSS".center(33) + "\n"
+                                                                            header = header + "-"*len(header)+"\n"
+                                                                            log_message = header + log_message
+                                                                        
+                                                                        try:
+                                                                            # Trainingsmodell erstellen
+                                                                            model, desc = createTrainingModel(X_train, optimizer, loss_algorithm, activator, dense_layer, layer_size, conv_layer, amount_of_categories, decision_activator, dense_activator, kernel_size)
+                                                                            logfile_dir = os.path.join(log_dir, f"{model_name}-{desc}-{int(timenow)}")
+                                                                            # Tensorboard initialisieren
+                                                                            tensorboard = TensorBoard(log_dir=logfile_dir)
+                                                                            # Modell trainieren
+                                                                            model.fit(X_train, y_train, batch_size=batch_size, epochs=amount_of_trainings, validation_split=validation_percent, callbacks=[tensorboard])
+                                                                            # Wenn möglich seperate testdaten verwenden
+                                                                            if test_data:
+                                                                                val_loss, val_acc = model.evaluate(X_test, y_test)
+                                                                            else:
+                                                                                val_loss, val_acc = model.evaluate(X_train, y_train)
+                                                                            log_message  += f"{val_acc}".center(33) + "|" + f"{val_loss}".center(33)
+                                                                            write_to_log(success_log_path, log_message)
 
-                                    # Log-Nachricht erstellen
-                                    log_message = optimizer.center(33) + "|" + (str(kernel_size)+"x"+str(kernel_size)).center(33) + "|" + decision_activator.center(33) + "|" + loss_algorithm.center(33) + "|" + activator.center(33) + "|" + str(dense_layer).center(33) + "|" + dense_activator.center(33) + "|" + str(layer_size).center(33) + "|" + str(conv_layer).center(33) + "|" 
-                                    if not os.path.exists(success_log_path):
-                                        # Wenn Logfile noch nicht existiert header hinzufügen
-                                        header = "OPTIMIZER".center(33) + "|" + "KERNEL SIZE".center(33) + "|" + "DECISION ACTIVATOR".center(33) + "|" + "LOSS_ALG".center(33) + "|" + "ACTIVATOR".center(33) + "|" + "DENSE LAYERS".center(33) + "|" + "DENSE ACTIVATOR".center(33) + "|" + "LAYER SIZE".center(33) + "|" + "CONVOLUTION LAYERS".center(33) + "|" + "ACCURRACY".center(33) + "|" + "LOSS".center(33) + "\n"
-                                        header = header + "-"*len(header)+"\n"
-                                        log_message = header + log_message
-                                    
-                                    try:
-                                        # Trainingsmodell erstellen
-                                        model, desc = createTrainingModel(X_train, optimizer, loss_algorithm, activator, dense_layer, layer_size, conv_layer, amount_of_categories, decision_activator, dense_activator, kernel_size)
-                                        logfile_dir = os.path.join(log_dir, f"optimizeModel-{desc}-{int(timenow)}")
-                                        # Tensorboard initialisieren
-                                        tensorboard = TensorBoard(log_dir=logfile_dir)
-                                        # Modell trainieren
-                                        model.fit(X_train, y_train, batch_size=batch_size, epochs=amount_of_trainings, validation_split=validation_percent, callbacks=[tensorboard])
-                                        # Wenn möglich seperate testdaten verwenden
-                                        if test_data:
-                                            val_loss, val_acc = model.evaluate(X_test, y_test)
-                                        else:
-                                            val_loss, val_acc = model.evaluate(X_train, y_train)
-                                        log_message  += f"{val_acc}".center(33) + "|" + f"{val_loss}".center(33)
-                                        write_to_log(success_log_path, log_message)
-                                    except Exception as error_message:
-                                        # Errorzusammenfassung generieren
-                                        log_message = optimizer.center(33) + "|" + (str(kernel_size)+"x"+str(kernel_size)).center(33) + "|" + decision_activator.center(33) + "|" + loss_algorithm.center(33) + "|" + activator.center(33) + "|" + str(dense_layer).center(33) + "|" + dense_activator.center(33) + "|" + str(layer_size).center(33) + "|" + str(conv_layer).center(33) + "|" 
-                                        if not os.path.exists(error_log_path):
-                                            # Wenn Logfile noch nicht existiert header hinzufügen
-                                            header = "OPTIMIZER".center(33) + "|" + "KERNEL SIZE".center(33) + "|" + "DECISION ACTIVATOR".center(33) + "|" + "LOSS_ALG".center(33) + "|" + "ACTIVATOR".center(33) + "|" + "DENSE LAYERS".center(33) + "|" + "DENSE ACTIVATOR".center(33) + "|" + "LAYER SIZE".center(33) + "|" + "CONVOLUTION LAYERS".center(33) + "|" + "ERROR".center(33) + "\n"
-                                            header = header + "-"*len(header)+"\n"
-                                            log_message = header + log_message
-                                        print(f"Cancelled")
-                                        error_out = f"Aborted with arguments: {optimizer}-{decision_activator}-{loss_algorithm}-{activator}-{dense_layer}-{layer_size}-{conv_layer}-{int(timenow)} due to error."
-                                        log_message += "--".join(str(error_message).split("\n"))
-                                        write_to_log(error_log_path, log_message)
+                                                                            # Error Score updaten
+                                                                            error_score_table = updateErrorTable(error_score_table, optimizer, kernel_size, decision_activator, loss_algorithm, activator, dense_layer, dense_activator, layer_size, conv_layer, -1)
+                                                                            
+                                                                        except Exception as error_message:
+                                                                            # Errorzusammenfassung generieren
+                                                                            log_message = optimizer.center(33) + "|" + (str(kernel_size)+"x"+str(kernel_size)).center(33) + "|" + decision_activator.center(33) + "|" + loss_algorithm.center(33) + "|" + activator.center(33) + "|" + str(dense_layer).center(33) + "|" + dense_activator.center(33) + "|" + str(layer_size).center(33) + "|" + str(conv_layer).center(33) + "|" 
+                                                                            if not os.path.exists(error_log_path):
+                                                                                # Wenn Logfile noch nicht existiert header hinzufügen
+                                                                                header = "OPTIMIZER".center(33) + "|" + "KERNEL SIZE".center(33) + "|" + "DECISION ACTIVATOR".center(33) + "|" + "LOSS_ALG".center(33) + "|" + "ACTIVATOR".center(33) + "|" + "DENSE LAYERS".center(33) + "|" + "DENSE ACTIVATOR".center(33) + "|" + "LAYER SIZE".center(33) + "|" + "CONVOLUTION LAYERS".center(33) + "|" + "ERROR".center(33) + "\n"
+                                                                                header = header + "-"*len(header)+"\n"
+                                                                                log_message = header + log_message
+                                                                            print(f"Cancelled")
+                                                                            error_out = f"Aborted with arguments: {optimizer}-{decision_activator}-{loss_algorithm}-{activator}-{dense_layer}-{layer_size}-{conv_layer}-{int(timenow)} due to error."
+                                                                            log_message += "--".join(str(error_message).split("\n"))
+                                                                            write_to_log(error_log_path, log_message)
+                                                                            
+                                                                            # Update error scores
+                                                                            error_score_table = updateErrorTable(error_score_table, optimizer, kernel_size, decision_activator, loss_algorithm, activator, dense_layer, dense_activator, layer_size, conv_layer, 1)
 
-                                        print(error_out)
-
+                                                                            print(error_out)
 
 #  __    _____  ___      __    _  _    __    __   _  _  ___  ____  ___ 
 # (  )  (  _  )/ __)    /__\  ( \( )  /__\  (  ) ( \/ )/ __)(_  _)/ __)
@@ -312,4 +402,4 @@ for optimizer in optimizers:
 # (____)(_____)\___/  (__)(__)(_)\_)(__)(__)(____)(__) (___/(____)(___/         
 if os.path.exists(success_log_path):
     # Start log analysis
-    analyzeRuns.analyzeRuns(20)
+    analyzeRuns.analyzeRuns(model_name, top_list_size)

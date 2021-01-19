@@ -71,6 +71,9 @@ debug = False
 # (  _ \ /__\ (_  _)( )_( )/ __)
 #  )___//(__)\  )(   ) _ ( \__ \
 # (__) (__)(__)(__) (_) (_)(___/
+# Wechsle zum Scriptpfad
+os.chdir(os.path.dirname(__file__))
+
 # Pfaddefinitionen
 example_file_path = os.path.join(".", "trainingData")
 model_data_path = os.path.join(".", "modelData")
@@ -255,9 +258,6 @@ def createDataStructure(path, training_data=[]):
 #    | |   | | \   |   | |      | |      | |   | (   ) || |         | |     /   /  | (      
 # ___) (___| )  \  |___) (___   | |   ___) (___| )   ( || (____/\___) (___ /   (_/\| (____/\
 # \_______/|/    )_)\_______/   )_(   \_______/|/     \|(_______/\_______/(_______/(_______/
-# Wechsle zum Scriptpfad
-os.chdir(os.path.dirname(__file__))
-
 # Erstelle Trainingspfad
 if not os.path.exists(example_file_path):
     os.mkdir(example_file_path)

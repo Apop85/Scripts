@@ -42,7 +42,7 @@ import pickle
 from time import time
 
 # Anzahl der durchzuführenden Trainings pro Datensatz
-amount_of_trainings = 100
+amount_of_trainings = 50
 # Bildgrösse des Trainingsdatensets
 training_image_size = (30, 30)
 # Anzahl verfügbarer Trainingsmodelle:

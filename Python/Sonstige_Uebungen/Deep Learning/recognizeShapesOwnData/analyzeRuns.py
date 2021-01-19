@@ -16,7 +16,7 @@ def write_to_log(path, message):
     file_writer.write(f"{message}\n")
     file_writer.close()
 
-def analyzeRuns(list_size):
+def analyzeRuns(list_size=10):
     best_acc = {}
     best_loss = {}
 
@@ -33,7 +33,7 @@ def analyzeRuns(list_size):
         successfull_runs[i] = line
 
     for run in successfull_runs:
-        if not len(run) == 8:
+        if not len(run) == 9:
             raise Exception(f"Run {successfull_runs.index(run)} contains not enough arguments")
 
         optimizer = run[0]
@@ -93,7 +93,7 @@ def analyzeRuns(list_size):
 
     for value in best_acc_list:
         # log_message = optimizer.center(33) + "|" + loss_algorithm.center(33) + "|" + activator.center(33) + "|" + str(dense_layer).center(33) + "|" + str(layer_size).center(33) + "|" + str(conv_layer).center(33) + "|" 
-        log_message = best_acc[value]["optimizer"].center(33) + "|" + best_acc[value]["lossAlgorithm"].center(33) + "|" + best_acc[value]["activator"].center(33) + "|" + str(best_acc[value]["denseLayers"]).center(33) + "|" + str(best_acc[value]["layerSize"]).center(33) + "|" + str(best_acc[value]["convolutionLayers"]).center(33) + "|" + str(best_acc[value]["accuracy"]).center(33) + "|" + str(best_acc[value]["loss"]).center(33)
+        log_message = best_acc[value]["optimizer"].center(33) + "|" + best_acc[value]["decisionActivator"].center(33) + "|" + best_acc[value]["lossAlgorithm"].center(33) + "|" + best_acc[value]["activator"].center(33) + "|" + str(best_acc[value]["denseLayers"]).center(33) + "|" + str(best_acc[value]["layerSize"]).center(33) + "|" + str(best_acc[value]["convolutionLayers"]).center(33) + "|" + str(best_acc[value]["accuracy"]).center(33) + "|" + str(best_acc[value]["loss"]).center(33)
         if not os.path.exists(bestruns_log_path):
             header = "OPTIMIZER".center(33) + "|" + "DECISION ACTIVATOR".center(33) + "|" + "LOSS_ALG".center(33) + "|" + "ACTIVATOR".center(33) + "|" + "DENSE LAYERS".center(33) + "|" + "LAYER SIZE".center(33) + "|" + "CONVOLUTION LAYERS".center(33) + "|" + "ACCURRACY".center(33) + "|" + "LOSS".center(33) + "\n"
             header = header + "-"*len(header)+"\n"
@@ -102,3 +102,5 @@ def analyzeRuns(list_size):
     for value in best_loss_list:
         log_message = best_loss[value]["optimizer"].center(33) + "|" + best_loss[value]["decisionActivator"].center(33) + "|" + best_loss[value]["lossAlgorithm"].center(33) + "|" + best_loss[value]["activator"].center(33) + "|" + str(best_loss[value]["denseLayers"]).center(33) + "|" + str(best_loss[value]["layerSize"]).center(33) + "|" + str(best_loss[value]["convolutionLayers"]).center(33) + "|" + str(best_loss[value]["accuracy"]).center(33) + "|" + str(best_loss[value]["loss"]).center(33)
         write_to_log(bestruns_log_path, log_message)
+
+# analyzeRuns(20)

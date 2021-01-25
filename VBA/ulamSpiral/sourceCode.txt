@@ -1,0 +1,270 @@
+Option Explicit
+
+'Programm: Zahlenmatrix ausgeben und Primzahlen markieren
+'Autor: Apop85
+'Datum: 18.01..2021
+'Version: 1
+'Modul: mdlPrimeMatrix
+'Beschreibung: Erstellen einer Zahlenmatrix und markieren der Primzahlen sowie Zurücksetzen der Inhalte
+
+
+Sub genMatrix_Klicken()
+    Dim matrixSize As Long
+    Dim startCol As Integer
+    Dim startRow As Integer
+    Dim i As Integer
+    Dim j As Integer
+    Dim value As Integer
+    Dim targetAmount As Long
+    Dim currentAmount As Long
+    
+    Dim currentRow As Integer
+    Dim currentColumn As Integer
+    
+    Cells(13, 1) = "Erstellen..."
+    Cells(13, 1).Interior.Color = RGB(200, 125, 125)
+    
+    Cells(3, 4) = ""
+    
+    matrixSize = 200
+    targetAmount = matrixSize * matrixSize
+    currentAmount = 0
+    startCol = 3
+    startRow = 14
+        
+    Range(Cells(startRow, startCol), Cells(startRow + matrixSize, startCol + matrixSize)) = ""
+        
+    formatCells
+        
+    currentRow = startRow + matrixSize / 2
+    currentColumn = startCol + matrixSize / 2
+    
+    Do
+        Cells(currentRow, currentColumn) = currentAmount + 1
+        colorIfPrime currentRow, currentColumn, currentAmount + 1
+        If currentAmount = 0 Then
+            currentColumn = currentColumn + 1
+        'Rechts leer, oben befüllt, unten leer --> nach rechts
+        ElseIf Cells(currentRow, currentColumn + 1) = "" And Cells(currentRow + 1, currentColumn) = "" And Cells(currentRow - 1, currentColumn) <> "" Then
+            currentColumn = currentColumn + 1
+        'Links befüllt, rechts leer, oben leer --> nach oben
+        ElseIf Cells(currentRow, currentColumn - 1) <> "" And Cells(currentRow, currentColumn + 1) = "" And Cells(currentRow - 1, currentColumn) = "" Then
+            currentRow = currentRow - 1
+        'Links leer, oben leer, unten befüllt --> nach links
+        ElseIf Cells(currentRow, currentColumn - 1) = "" And Cells(currentRow - 1, currentColumn) = "" And Cells(currentRow + 1, currentColumn) <> "" Then
+            currentColumn = currentColumn - 1
+        'links leer, rechts befüllt, unten leer --> nach unten
+        ElseIf Cells(currentRow, currentColumn - 1) = "" And Cells(currentRow, currentColumn + 1) <> "" And Cells(currentRow + 1, currentColumn) = "" Then
+            currentRow = currentRow + 1
+        End If
+        
+        currentAmount = currentAmount + 1
+        
+    Loop While currentAmount < targetAmount
+    Cells(13, 1) = "Fertig"
+    Cells(13, 1).Interior.Color = RGB(0, 150, 0)
+End Sub
+
+
+Sub linearMatrix_Klicken()
+    'Variabeldeklaration
+    Dim matrixSize As Integer
+    Dim startRow As Integer
+    Dim startCol As Integer
+    Dim i As Integer
+    Dim j As Integer
+    Dim value As Long
+    
+    Dim currentRow As Integer
+    Dim currentColumn As Integer
+    
+    Cells(3, 4) = ""
+    Cells(13, 1) = "Erstellen..."
+    Cells(13, 1).Interior.Color = RGB(200, 125, 125)
+    
+    
+    'Standardwerte setzen
+    matrixSize = 200
+    startCol = 3
+    startRow = 14
+    value = 1
+    
+    Range(Cells(startRow, startCol), Cells(startRow + matrixSize, startCol + matrixSize)) = ""
+    
+    formatCells
+    
+    'Iteriere durch die Zellen und schreibe value rein
+    For i = startRow To matrixSize + startRow
+        For j = startCol To matrixSize + startCol
+            colorIfPrime i, j, value
+            Cells(i, j) = value
+            value = value + 1
+        Next
+    Next
+    Cells(13, 2) = "Fertig"
+    Cells(13, 1).Interior.Color = RGB(0, 150, 0)
+End Sub
+
+
+Sub spirale_Klicken()
+    'Variabeldeklaration
+    Dim matrixSize As Integer
+    Dim startRow As Integer
+    Dim startCol As Integer
+    
+    'Standardwerte setzen
+    matrixSize = 200
+    startCol = 3
+    startRow = 14
+    
+    Cells(13, 1) = "Erstellen..."
+    Cells(13, 1).Interior.Color = RGB(200, 125, 125)
+    Cells(3, 4) = ""
+    
+    Cells(13, 2) = "leeren"
+    Range(Cells(startRow, startCol), Cells(startRow + matrixSize, startCol + matrixSize)) = ""
+    Range(Cells(startRow, startCol), Cells(startRow + matrixSize, startCol + matrixSize)).Interior.ColorIndex = xlNone
+        
+    formatCells
+    
+    Cells(13, 2) = "Zeichnen"
+    drawSpiral matrixSize, 0, startRow, startCol
+    Cells(13, 2) = ""
+    Cells(13, 1) = "Fertig"
+    Cells(13, 1).Interior.Color = RGB(0, 150, 0)
+End Sub
+
+
+Sub resetTable_Klicken()
+    'Variabeldeklaration
+    Dim matrixSize As Integer
+    Dim startRow As Integer
+    Dim startCol As Integer
+
+    Dim i As Integer
+    Dim j As Integer
+
+    
+    'Standardwerte setzen
+    matrixSize = 200
+    startCol = 3
+    startRow = 14
+    
+    Cells(13, 1) = "Tabelle wird zurückgesetzt..."
+    Cells(13, 1).Interior.Color = RGB(200, 125, 125)
+    
+    Cells(3, 4) = "Button klicken um eine Ulam-Spirale oder die Lineare Darstellung davon zu erzeugen"
+    
+    Cells(13, 2) = "Inhalt..."
+    Range(Cells(startRow, startCol), Cells(startRow + matrixSize, startCol + matrixSize)) = ""
+    Cells(13, 2) = "Färbung..."
+    Range(Cells(startRow, startCol), Cells(startRow + matrixSize, startCol + matrixSize)).Interior.ColorIndex = xlNone
+    Cells(13, 2) = "Breite..."
+    Range(Columns(startCol), Columns(startCol + matrixSize)).ColumnWidth = 10.67
+    Cells(13, 2) = "Höhe..."
+    Range(Rows(startRow), Rows(startRow + matrixSize)).RowHeight = 14.4
+
+    'Iteriere durch Spalten und setze sie zurück
+    'For i = startCol + 1 To startCol + matrixSize
+        'Columns(i).ColumnWidth = 10.37
+        'Rows(i).RowHeight = 14.4
+    'Next
+    
+    Cells(13, 1) = ""
+    Cells(13, 2) = ""
+    Cells(13, 1).Interior.ColorIndex = xlNone
+    
+End Sub
+
+
+Sub formatCells()
+    'Variabeldeklaration
+    Dim matrixSize As Integer
+    Dim startRow As Integer
+    Dim startCol As Integer
+    Dim i As Integer
+    Dim j As Integer
+    
+    Cells(13, 2) = "Formatierung..."
+
+    'Defaultwerte setzen
+    matrixSize = 200
+    startCol = 3
+    startRow = 14
+    
+    Range(Cells(startRow, startCol), Cells(startRow + matrixSize, startCol + matrixSize)).ColumnWidth = 0.22
+    Range(Cells(startRow, startCol), Cells(startRow + matrixSize, startCol + matrixSize)).RowHeight = 1.8
+    
+    Cells(13, 2) = ""
+End Sub
+
+
+Sub colorIfPrime(row As Integer, column As Integer, value As Long)
+    If isPrime(value) Then
+        'Färbe Primzahl ein
+        Cells(row, column).Interior.Color = RGB(0, 0, 0)
+    Else
+        'Entferne Farbe falls vorhanden
+        Cells(row, column).Interior.ColorIndex = xlNone
+    End If
+End Sub
+
+Function isPrime(number As Long)
+    'Funktion zur Bestimmung ob eine eingegebene Zahl eine Primzahl ist oder nicht
+    'Variabeldeklaration
+    Dim maxDivider As Integer
+    Dim divider As Integer
+    
+    'Prüfe ob die entgegengenommene Zahl 0 ist um Modulo-Fehler zu vermeiden
+    If number = 0 Then
+        isPrime = False
+        Exit Function
+    End If
+    
+    'Berechne den maximalen Divisor durch die Quadratwurzel der entgegengenommenen Zahl
+    maxDivider = Sqr(number) + 1
+    'Iteriere durch die divisoren
+    For divider = 2 To maxDivider
+        'Ergibt der Modulo der Zahl und des divisors 0, ist es keine Primzahl
+        If number Mod divider = 0 Then
+            isPrime = False
+            Exit Function
+        End If
+    Next
+    'Ergab der Modulo der Zahl und der divisoren nie 0 muss es eine Primzahl sein
+    isPrime = True
+End Function
+
+Sub drawSpiral(length As Integer, direction As Integer, row As Integer, col As Integer)
+    Dim i As Integer
+
+    Cells(13, 1) = "Erstellen..."
+    Cells(13, 1).Interior.Color = RGB(200, 125, 125)
+    Cells(13, 2) = "Zeichne..."
+    
+
+    
+    If length > 0 Then
+        If direction = 0 Then
+            For i = 0 To length - 1
+                Cells(row, col + i).Interior.Color = RGB(0, 0, 0)
+            Next
+            drawSpiral length - 1, 1, row, col + length
+        ElseIf direction = 1 Then
+            For i = 0 To length
+                Cells(row + i, col).Interior.Color = RGB(0, 0, 0)
+            Next
+            drawSpiral length - 1, 2, row + length, col
+        ElseIf direction = 2 Then
+            For i = 0 To length
+                Cells(row, col - i).Interior.Color = RGB(0, 0, 0)
+            Next
+            drawSpiral length - 1, 3, row, col - length
+        Else
+            For i = 0 To length
+                Cells(row - i, col).Interior.Color = RGB(0, 0, 0)
+            Next
+            drawSpiral length - 1, 0, row - length, col
+        End If
+    End If
+End Sub

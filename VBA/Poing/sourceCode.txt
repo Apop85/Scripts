@@ -1,0 +1,55 @@
+Option Explicit
+
+Public Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr)
+
+Public Sub startGame()
+    Dim vectorX As Integer
+    Dim vectorY As Integer
+    Dim currentX As Integer
+    Dim currentY As Integer
+    Dim lastX As Integer
+    Dim lastY As Integer
+    Dim i As Integer
+    Dim maxY As Integer
+    Dim maxX As Integer
+    Dim minY As Integer
+    Dim minX As Integer
+    
+    maxX = 18
+    minX = 3
+    maxY = 28
+    minY = 1
+    
+    vectorX = 1
+    vectorY = 1
+    
+    currentX = minX
+    currentY = minY
+    lastX = minX
+    lastY = minY
+    
+    Sleep 1000
+    
+    For i = 0 To 300
+        Cells(lastY, lastX) = ""
+        
+        Cells(currentY, currentX) = "O"
+        lastX = currentX
+        lastY = currentY
+        
+       
+        If Cells(currentY, currentX + vectorX).Interior.Color <> 16777215 Then
+            vectorX = vectorX * -1
+        End If
+        
+        If currentY + vectorY < minY Then
+            vectorY = vectorY * -1
+        ElseIf Cells(currentY + vectorY, currentX).Interior.Color <> 16777215 Then
+            vectorY = vectorY * -1
+        End If
+        
+        currentX = currentX + vectorX
+        currentY = currentY + vectorY
+        Sleep 100
+    Next
+End Sub

@@ -1,0 +1,222 @@
+Option Explicit
+'Programm: Snake
+'Autor: Apop85
+'Version: 1
+'Datum: 25.01.2021
+'Modul: mdlSnake
+'Beschreibung: Der spieleklassiker Snake
+
+'Sleepfunktion
+Public Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr)
+'Funktion zum Auslesen der gedrückten Tasten
+Public Declare Function GetAsyncKeyState Lib "user32.dll" (ByVal nVirtKey As Long) As Integer
+Public Const KeyPressed As Integer = -32767
+
+
+Public Sub playGame()
+    Dim currentX As Integer
+    Dim currentY As Integer
+    Dim vectorX As Integer
+    Dim vectorY As Integer
+    
+    Dim i As Integer
+    Dim cnt As Integer
+    Dim snakeBodyX As String
+    Dim snakeBodyY As String
+    Dim snakeArrayX() As String
+    Dim snakeArrayY() As String
+    Dim fieldSize  As Integer
+    Dim tlX As Integer
+    Dim tlY As Integer
+    Dim gameOver As Boolean
+    Dim score As Integer
+    Dim speed As Integer
+    Dim snakeLength As Integer
+    
+    'Feldgrösse definieren
+    fieldSize = 20
+    
+    'Standardwerte festsetzen
+    currentX = 5
+    currentY = 5
+    'Startpunkte des Spielfelds
+    tlX = 2
+    tlY = 2
+    'Startvektor
+    vectorX = 1
+    vectorY = 0
+    'Startlänge der Schlange
+    snakeLength = 3
+    'Game-Over-Flag setzen
+    gameOver = False
+    'Startscore festsetzen
+    score = 0
+    'Max speed: 999
+    speed = 850
+    
+    'Spielbrett leeren und neu erstellen
+    setupPlayground fieldSize, tlX, tlY
+    
+    'Platziere 3 Äpfel an zufälligen Punkten
+    For i = 0 To 2
+        plantApple tlX, tlY, fieldSize
+    Next i
+    
+    'Setze Scoreausgabe auf Tabelle
+    Cells((tlY + fieldSize), ((tlX + fieldSize) / 2) - 3) = "Score"
+    Cells((tlY + fieldSize), ((tlX + fieldSize) / 2) - 3).Font.ColorIndex = 2
+    Cells((tlY + fieldSize), ((tlX + fieldSize) / 2)) = score
+    Cells((tlY + fieldSize), ((tlX + fieldSize) / 2)).Font.ColorIndex = 2
+
+    'Spile so lange die Game-Over-Flag auf False ist
+    Do While gameOver <> True
+        'Setze Auswahl zu Startpunkt zurück
+        Cells(1, 1).Select
+        DoEvents
+        'Warte ab (Spielgeschwindigkeit)
+        Sleep 1000 - speed
+        'Setze Auswahl zu Startpunkt zurück
+        Cells(1, 1).Select
+        
+       
+        'Prüfe ob aktuelle Zelle bereits gefärbt ist
+        If Cells(currentY, currentX).Interior.ColorIndex = 10 Then
+            'Erhöhe länge der Schlange
+            snakeLength = snakeLength + 1
+            score = score + 1
+            'Update Scoreausgabe
+            Cells((tlY + fieldSize), ((tlX + fieldSize) / 2)) = score
+            'Färbe neue Zelle in Schlangenfarbe ein
+            Cells(currentY, currentX).Interior.ColorIndex = 5
+            'Pflanze einen neuen Apfel
+            plantApple tlX, tlY, fieldSize
+        ElseIf Cells(currentY, currentX).Interior.ColorIndex = 5 Then
+            'Ist die Farbe der Zelle dieselbe wie die der Schlange, ist das Spiel vorbei
+            gameOver = True
+            'Setze Game-Over-Ausgabe
+            Cells((tlY + fieldSize) / 2, (tlX + fieldSize) / 2) = "GAME OVER"
+            Cells((tlY + fieldSize) / 2, (tlX + fieldSize) / 2).Font.ColorIndex = 3
+            Cells((tlY + fieldSize) / 2, (tlX + fieldSize) / 2).Font.Bold = True
+            Cells(1, (tlX + fieldSize) / 2 - 3) = "CTRL + SHIFT + P to Play! Arrow keys to move"
+        Else
+            'Bewege Schlange vorwärts
+            Cells(currentY, currentX).Interior.ColorIndex = 5
+        End If
+        
+        
+        
+        
+        'Füge Koordinaten zu Bodystring hinzu
+        If Len(snakeBodyX) = 0 Then
+            snakeBodyX = currentX
+            snakeBodyY = currentY
+        Else
+            snakeBodyX = snakeBodyX & ";" & currentX
+            snakeBodyY = snakeBodyY & ";" & currentY
+        End If
+        
+        'Splitte String zu Array
+        snakeArrayX = Split(snakeBodyX, ";")
+        snakeArrayY = Split(snakeBodyY, ";")
+        'Prüfe ob Schlange länger ist als vorgegeben
+        If UBound(snakeArrayX) > (snakeLength) Then
+            'Formatiere Zelle anhand erstem Eintrag
+            Cells(CInt(snakeArrayY(0)), CInt(snakeArrayX(0))).Interior.ColorIndex = 0
+            
+            'Überschreibe ersten Eintrag
+            For cnt = 1 To UBound(snakeArrayX)
+                snakeArrayX(cnt - 1) = snakeArrayX(cnt)
+            Next
+            For cnt = 1 To UBound(snakeArrayY)
+                snakeArrayY(cnt - 1) = snakeArrayY(cnt)
+            Next
+            
+            'Arraylänge anpassen
+            ReDim Preserve snakeArrayX(UBound(snakeArrayX) - 1)
+            ReDim Preserve snakeArrayY(UBound(snakeArrayY) - 1)
+            'Array zu String umwandeln
+            snakeBodyX = Join(snakeArrayX, ";")
+            snakeBodyY = Join(snakeArrayY, ";")
+        End If
+
+        'Gedrückte Taste feststellen
+        If GetAsyncKeyState(vbKeyUp) = KeyPressed Then
+            'Pfeiltaste hoch
+            If vectorY <> 1 Then
+                vectorY = -1
+                vectorX = 0
+            End If
+        ElseIf GetAsyncKeyState(vbKeyDown) = KeyPressed Then
+            'Pfeiltaste runter
+            If vectorY <> -1 Then
+                vectorY = 1
+                vectorX = 0
+            End If
+        End If
+            
+            
+        If GetAsyncKeyState(vbKeyRight) = KeyPressed Then
+            'Pfeiltaste rechts
+            If vectorX <> -1 Then
+                vectorX = 1
+                vectorY = 0
+            End If
+        ElseIf GetAsyncKeyState(vbKeyLeft) = KeyPressed Then
+            'Pfeiltaste links
+            If vectorX <> 1 Then
+                vectorX = -1
+                vectorY = 0
+            End If
+        End If
+        
+        'Teleportiere Schlange ans andere Ende des Spielfelds
+        If currentX + vectorX = tlX + fieldSize Then
+            'Von rechts nach links
+            currentX = tlX
+        ElseIf currentX + vectorX = tlX Then
+            'Von links nach rechts
+            currentX = tlX + fieldSize
+        ElseIf currentY + vectorY = tlY + fieldSize Then
+            'Von unten nach oben
+            currentY = tlY
+        ElseIf currentY + vectorY = tlY Then
+            'Von oben nach unten
+            currentY = tlY + fieldSize
+        End If
+        
+        'Bewege schlange anhand des Vektors
+        currentX = currentX + vectorX
+        currentY = currentY + vectorY
+        
+    Loop
+End Sub
+
+Sub setupPlayground(size As Integer, startPointX As Integer, startPointY As Integer)
+    'Farbe und Inhalt zurücksetzen
+    Cells().Interior.ColorIndex = 0
+    Cells() = ""
+    Columns().ColumnWidth = 2.5
+    Rows().RowHeight = 14.4
+    'Färbe Spielrand ein
+    Range(Cells(startPointX, startPointY), Cells(startPointX + size, startPointY)).Interior.Color = vbBlack
+    Range(Cells(startPointX + size, startPointY), Cells(startPointX + size, startPointY + size)).Interior.Color = vbBlack
+    Range(Cells(startPointX, startPointY), Cells(startPointX, startPointY + size)).Interior.Color = vbBlack
+    Range(Cells(startPointX, startPointY + size), Cells(startPointX + size, startPointY + size)).Interior.Color = vbBlack
+End Sub
+
+Sub plantApple(xPos As Integer, yPos As Integer, fieldSize As Integer)
+    Dim rndX, rndY As Integer
+    
+    'Setze Startposition auf Spielrand
+    rndY = xPos
+    rndX = yPos
+    
+    'Würfle so lange Koordinaten aus, bis diese nicht besetzt sind
+    Do While Cells(rndY, rndX).Interior.ColorIndex = 5 Or Cells(rndY, rndX).Interior.ColorIndex = 1 Or Cells(rndY, rndX).Interior.ColorIndex = 10
+        rndX = Int(((xPos + fieldSize - 2) * Rnd) + xPos + 1)
+        rndY = Int(((yPos + fieldSize - 2) * Rnd) + yPos + 1)
+    Loop
+    
+    'Färbe Zelle in Apfelfarbe
+    Cells(rndY, rndX).Interior.ColorIndex = 10
+End Sub

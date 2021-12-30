@@ -97,7 +97,7 @@ Public Sub playGame()
             Cells((tlY + fieldSize) / 2, (tlX + fieldSize) / 2) = "GAME OVER"
             Cells((tlY + fieldSize) / 2, (tlX + fieldSize) / 2).Font.ColorIndex = 3
             Cells((tlY + fieldSize) / 2, (tlX + fieldSize) / 2).Font.Bold = True
-            Cells(1, (tlX + fieldSize) / 2 - 3) = "CTRL + SHIFT + P to Play! Arrow keys to move"
+            Cells(1, (tlX + fieldSize) / 2 - 3) = "CTRL + SHIFT + G to Play! Arrow keys to move"
         Else
             'Bewege Schlange vorwärts
             Cells(currentY, currentX).Interior.ColorIndex = 5
@@ -152,10 +152,10 @@ Public Sub playGame()
                 vectorY = 1
                 vectorX = 0
             End If
-        End If
+        'End If
             
             
-        If GetAsyncKeyState(vbKeyRight) = KeyPressed Then
+        ElseIf GetAsyncKeyState(vbKeyRight) = KeyPressed Then
             'Pfeiltaste rechts
             If vectorX <> -1 Then
                 vectorX = 1

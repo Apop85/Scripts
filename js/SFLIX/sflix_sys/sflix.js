@@ -307,7 +307,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     // Lade aktuelle Playliste
     var localPlaylist = localStorage.getItem("data").split(",");
     // Lese Speicherort aus
-    var medialocation = decodedUriData.split("MEDIA:")[1].split(",")[0].replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä");
+    var medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0]);
     // Lese Playlistenindex aus
     localPlaylist = localPlaylist.sort()
     var currentIndex = localPlaylist.indexOf(medialocation);

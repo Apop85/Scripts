@@ -144,12 +144,8 @@ h2 {
     padding: 5px;
 }
 
-#submenu li:hover {
-    background-color: red;
-}
-
 #subsubmenu {
-    background-color: rgb(0, 0, 88);
+    background-color: rgb(0, 0, 140);
     display: flex;
     flex-wrap: wrap;
 }
@@ -158,10 +154,6 @@ h2 {
     list-style: none;
     width: 33.333333%;
     text-align: center;
-}
-
-#subsubmenu li:hover {
-    background-color: rgb(23, 23, 131);
 }
 
 #subsubmenu a {
@@ -177,7 +169,7 @@ h2 {
 }
 
 #subsubsubmenu {
-    background-color: rgb(0, 0, 119);
+    background-color: rgb(0, 0, 180);
     display: flex;
     flex-wrap: wrap;
 }
@@ -186,10 +178,6 @@ h2 {
     list-style: none;
     width: calc(33.333333%);
     text-align: center;
-}
-
-#subsubsubmenu li:hover {
-    background-color: rgb(23, 23, 160);;
 }
 
 #subsubsubmenu a {
@@ -214,10 +202,6 @@ h2 {
     list-style: none;
     width: calc(33.333333%);
     text-align: center;
-}
-
-#subsubsubsubmenu li:hover {
-    background-color: white;
 }
 
 #subsubsubsubmenu a {
@@ -264,6 +248,35 @@ h2 {
 #placeholderImage img {
     width: 100vw;
     height: 100vh;
+}
+
+#submenu li:nth-child(2n) {
+    background-color: rgb(0, 0, 35);
+}
+
+#subsubmenu li:nth-child(2n) {
+    background-color: rgb(0, 0, 120);
+}
+
+.subsubsubmenu li:nth-child(2n) {
+    background-color: rgb(0, 0, 160);
+}
+
+#subsubsubsubmenu li:nth-child(2n) {
+    background-color: #b8b8b8;;
+}
+
+#submenu li:hover, .submenu li:nth-child(2n):hover {
+    background-color: red;
+}
+#subsubmenu li:hover, .subsubmenu li:nth-child(2n):hover {
+    background-color: rgb(50, 50, 168);
+}
+#subsubsubmenu li:hover, .subsubsubmenu li:nth-child(2n):hover {
+    background-color: rgb(84, 84, 190);;
+}
+#subsubsubsubmenu li:hover, .subsubsubsubmenu li:nth-child(2n):hover {
+    background-color: white;
 }
 
 @keyframes splash-out {

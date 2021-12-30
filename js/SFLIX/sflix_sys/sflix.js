@@ -1,37 +1,89 @@
+// Variabeldeklaration
+var decodedUriData = null;
+var element = null;
+var currentFavorites = null;
+var favorites = null;
+var allowedMediaExtensions = [".mp4", ".ogg", ".mp3", ".jpg", ".jpeg", ".png", ".gif"];
+
+// Sortiere UL-Objekt alphabetisch
 function sortList(ul){
+    // Variabeldeklaration
     var list = []
     var table = {}
     var text = ""
     var counter = 0
     var playlist = []
+    var new_ul = ul.cloneNode(false);
+
+    // Prüfe alle Kindelemente
     for (var key in ul.childNodes) {
+        // Prüfe, ob ausgewähltes Element ein Listenelement ist
         if (ul.childNodes[key].localName == "li"){
             playlist.push(ul.childNodes[key].firstChild.href)
+            // Extrahiere Text
             text = ul.childNodes[key].textContent;
-            list.push(text);
-            table[text] = ul.childNodes[counter];
+            // Füge Schlüsselwert zu Liste hinzu und entferne Emotes
+            list.push(text.replace("⭐ ", "").replace(" 🎬", "").replace(" 🎵", "").replace(" 📷", ""));
+            table[text.replace("⭐ ", "").replace(" 🎬", "").replace(" 🎵", "").replace(" 📷", "")] = ul.childNodes[counter];
             counter += 1
         }
     }
+
+    // Sortiere Liste
     list = list.sort()
-    var new_ul = ul.cloneNode(false);
     
-    
+    // Erstelle Sortierte UL-Liste
     for (var i = 0; i < list.length; i++) {
         new_ul.appendChild(table[list[i]]);
     }
 
+    // Ersetze unsortiertes UL-Element mit sortiertem
     ul.parentNode.replaceChild(new_ul, ul);
     return playlist
 }
 
+// Funktion zum hinzufügen von Emotes zu Dateinamen
+function addEmoteByFileExtension(filename) {
+    var newFilename = filename;
+    // Füge Emote anhand Dateiendung hinzu
+    if (filename.includes(".mp4") || filename.includes(".ogg")) {
+        newFilename = newFilename + " 🎬";
+    } else if (filename.includes(".mp3")) {
+        newFilename = newFilename + " 🎵";
+    } else if (filename.includes("jpeg") || filename.includes("jpg") || filename.includes("png") || filename.includes("gif")){
+        newFilename = newFilename + " 📷";
+    }
 
+    return newFilename;
+}
 
-// Variabeldeklaration
-var decodedUriData = null;
-var element = null;
-var currentFavorites = null;
-var favorites = localStorage.getItem("favorites");
+// Funktion zur prüfung, ob eine Datei im Browser abspielbar ist
+function isMediaFile(whitelist, filename) {
+    for (var item in whitelist) {
+        if (filename.includes(whitelist[item])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Funktion zum Entfernen der Dateierweiterungen
+function removeFileExtension(extensionList, filename) {
+    var newFilename = filename;
+    for (extension in extensionList) {
+        newFilename = newFilename.replaceAll(extensionList[extension], "")
+    }
+
+    return newFilename
+}
+
+// HTML Spezialcharakter in String ersetzen
+function replaceSpecialChars(string) {
+    return string.replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä")
+}
+
+// Lade Favoriten
+favorites = localStorage.getItem("favorites");
 if (favorites != null) {
     favorites = favorites.split(",");
 }
@@ -55,13 +107,13 @@ for (var key in data) {
         
     }
 }
-// playlist = sortList(document.getElementsByClassName('menu')[0]);
+    // Sortiere Liste
 sortList(document.getElementsByClassName('menu')[0]);
 
 // Prüfe, ob aus dem Hauptmenü eine Auswahl getroffen wurde
 if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     // Zerlege URL in "MAIN"-Bestandteil
-    var mainContent = decodedUriData.split("MAIN:")[1].split(",")[0].replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä");
+    var mainContent = replaceSpecialChars(decodedUriData.split("MAIN:")[1].split(",")[0]);
     // Lege leere Playliste an
     playlist = []
 
@@ -73,42 +125,25 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             node = document.createElement("LI");
             link = document.createElement("a")
             // Entferne HTML-Code aus Schlüsselname
-            cleanedKey = key.replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä");
+            cleanedKey = replaceSpecialChars(key);
 
-            // Prüfe, ob die Auswahl in der Favoriten-Liste vorkommt
-            
             // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
-            if (key.includes("mp4") || key.includes("jpeg") || key.includes("jpg") || key.includes(".mp3")) {
+            if (isMediaFile(allowedMediaExtensions, key)) {
                 text = key.split("/");
-                if ((favorites != null && favorites.includes(cleanedKey)) && (key.includes("mp4") || key.includes("jpeg") || key.includes("jpg") || key.includes(".mp3"))) {
+                // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
+                if ((favorites != null && favorites.includes(cleanedKey))) {
                     text = "⭐ " + text[text.length - 1];
                 } else {
                     text = text[text.length - 1];
                 }
-                if (key.includes(".mp4")) {
-                    text = text + " 🎬"
-                } else if (key.includes(".mp3")) {
-                    text = text + " 🎵"
-                } else if (key.includes("jpeg") || key.includes("jpg")){
-                    text = text + " 📷"
-                }
+                
+                // Füge Emote anhand Dateiendung hinzu
+                text = addEmoteByFileExtension(text);
                 link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key) + "#mediaNav";
-                textnode = document.createTextNode(text.replaceAll(".mp4", "").replaceAll(".mp3", "").replaceAll(".jpg", ""));
+                textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
             } else {
                 link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + key);
-                if ((favorites != null && favorites.includes(cleanedKey)) && (key.includes("mp4") || key.includes("jpeg") || key.includes("jpg") || key.includes(".mp3"))) {
-                    text = "⭐ " + cleanedKey;
-                } else {
-                    text = cleanedKey;
-                }
-                if (key.includes(".mp4")) {
-                    text = text + " 🎬"
-                } else if (key.includes(".mp3")) {
-                    text = text + " 🎵"
-                } else if (key.includes("jpeg") || key.includes("jpg")){
-                    text = text + " 📷"
-                }
-                textnode = document.createTextNode(text.replaceAll(".mp4", "").replaceAll(".mp3", "").replaceAll(".jpg", ""));
+                textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, key));
             }
             link.appendChild(textnode);
             node.appendChild(link);
@@ -116,13 +151,13 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             
         }
     }
-    // playlist = sortList(document.getElementsByClassName('submenu')[0]);
+    // Sortiere Liste
     sortList(document.getElementsByClassName('submenu')[0]);
 
     // Prüfe, ob eine "LEVEL1"-Auswahl getroffen wurde
     if (decodedUriData.includes("LEVEL1")) {
         // Zerlege URL in "LEVEL1"-Bestandteil
-        var level1 = decodedUriData.split(",LEVEL1:")[1].split(",")[0].replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä");
+        var level1 = replaceSpecialChars(decodedUriData.split(",LEVEL1:")[1].split(",")[0]);
         // Erstelle Leere Playliste
         playlist = []
 
@@ -134,43 +169,40 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 node = document.createElement("LI");
                 link = document.createElement("a");
                 // Entferne HTML-Code aus Schlüsselname
-                cleanedKey = key.replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä");
+                cleanedKey = replaceSpecialChars(key);
                 text = key.split("/");
 
-                // Prüfe, ob die Auswahl in der Favoriten-Liste vorkommt
-                if ((favorites != null && favorites.includes(cleanedKey)) && (key.includes("mp4") || key.includes("jpeg") || key.includes("jpg") || key.includes(".mp3"))){
+                // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
+                if ((favorites != null && favorites.includes(cleanedKey))){
                     text = "⭐ " + text[text.length - 1].replace(level1, "");
                 } else {
                     text = text[text.length - 1].replace(level1, "");
                 }
-                if (key.includes(".mp4")) {
-                    text = text + " 🎬"
-                } else if (key.includes(".mp3")) {
-                    text = text + " 🎵"
-                } else if (key.includes("jpeg") || key.includes("jpg")){
-                    text = text + " 📷"
-                }
-                textnode = document.createTextNode(text.replaceAll(".mp4", "").replaceAll(".mp3", "").replaceAll(".jpg", ""));
+                
+                // Füge Emote anhand Dateiendung hinzu
+                text = addEmoteByFileExtension(text);
+
+                textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
                 link.appendChild(textnode);
                 
                 // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
-                if (key.includes("mp4") || key.includes("jpeg") || key.includes("jpg") || key.includes(".mp3")) {
-                        link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key) + "#mediaNav";
+                if (isMediaFile(allowedMediaExtensions, key)) {
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key) + "#mediaNav";
                 } else {
-                        link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + key);
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + key);
                 }
                 node.appendChild(link);
                 document.getElementById("subsubmenu").appendChild(node);
             }
         }
-        // playlist = sortList(document.getElementsByClassName('subsubmenu')[0]);
+        // Sortiere Liste
         sortList(document.getElementsByClassName('subsubmenu')[0]);
     }
 
     // Prüfe, ob eine "LEVEL2"-Auswahl gefällt wurde
     if (decodedUriData.includes("LEVEL2")) {
         // Zerlege URL in "LEVEL2"-Bestandteil
-        var level2 = decodedUriData.split(",LEVEL2:")[1].split(",")[0].replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä");
+        var level2 = replaceSpecialChars(decodedUriData.split(",LEVEL2:")[1].split(",")[0]);
         // Erstelle Leere Playliste
         playlist = []
 
@@ -182,26 +214,23 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 link = document.createElement("a")
                 text = key.split("/")
                 // Entferne HTML-Code aus Schlüsselname
-                cleanedKey = key.replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä");
+                cleanedKey = replaceSpecialChars(key);
 
-                // Prüfe, ob die Auswahl in der Favoriten-Liste vorkommt
-                if ((favorites != null && favorites.includes(cleanedKey)) && (key.includes("mp4") || key.includes("jpeg") || key.includes("jpg") || key.includes(".mp3"))){
+                // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
+                if (favorites != null && favorites.includes(cleanedKey) && isMediaFile(allowedMediaExtensions, key)){
                     text = "⭐ " + text[text.length - 1].replace(level1, "").replace(level2, "");
                 } else {
                     text = text[text.length - 1].replace(level1, "").replace(level2, "");
                 }
-                if (key.includes(".mp4")) {
-                    text = text + " 🎬"
-                } else if (key.includes(".mp3")) {
-                    text = text + " 🎵"
-                } else if (key.includes("jpeg") || key.includes("jpg")){
-                    text = text + " 📷"
-                }
-                textnode = document.createTextNode(text.replaceAll(".mp4", "").replaceAll(".mp3", "").replaceAll(".jpg", ""));
+                
+                // Füge Emote anhand Dateiendung hinzu
+                text = addEmoteByFileExtension(text);
+
+                textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
                 link.appendChild(textnode);
                 
                 // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
-                if (key.includes("mp4") || key.includes("jpeg") || key.includes("jpg") || key.includes(".mp3")) {
+                if (isMediaFile(allowedMediaExtensions, key)) {
                         link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key) + "#mediaNav";
                 } else {
                         link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + key);
@@ -210,14 +239,14 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 document.getElementById("subsubsubmenu").appendChild(node);
             }
         }
-        // playlist = sortList(document.getElementsByClassName('subsubsubmenu')[0]);
+        // Sortiere Liste
         sortList(document.getElementsByClassName('subsubsubmenu')[0]);
     }
 
     // Prüfe, ob eine "LEVEL3"-Auswahl getroffen wurde
     if (decodedUriData.includes("LEVEL3")) {
         // Zerlege URL in "LEVEL3"-Bestandteil
-        var level3 = decodedUriData.split(",LEVEL3:")[1].split(",")[0].replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä");
+        var level3 = replaceSpecialChars(decodedUriData.split(",LEVEL3:")[1].split(",")[0]);
         // Erstelle Leere Playliste
         playlist = []
 
@@ -229,35 +258,32 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 link = document.createElement("a")
                 text = key.split("/")
                 // Entferne HTML-Code aus Schlüsselname
-                cleanedKey = key.replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä");
+                cleanedKey = replaceSpecialChars(key);
 
-                // Prüfe, ob die Auswahl in der Favoriten-Liste vorkommt
-                if ((favorites != null && favorites.includes(cleanedKey)) && (key.includes("mp4") || key.includes("jpeg") || key.includes("jpg") || key.includes(".mp3"))){
+                // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
+                if ((favorites != null && favorites.includes(cleanedKey) && isMediaFile(allowedMediaExtensions, key))){
                     text = "⭐ " + text[text.length - 1].replace(level1, "").replace(level2, "").replace(level3, "");
                 } else {
                     text = text[text.length - 1].replace(level1, "").replace(level2, "").replace(level3, "");
                 }
-                if (key.includes(".mp4")) {
-                    text = text + " 🎬"
-                } else if (key.includes(".mp3")) {
-                    text = text + " 🎵"
-                } else if (key.includes("jpeg") || key.includes("jpg")){
-                    text = text + " 📷"
-                }
-                textnode = document.createTextNode(text.replaceAll(".mp4", "").replaceAll(".mp3", "").replaceAll(".jpg", ""));
+                
+                // Füge Emote anhand Dateiendung hinzu
+                text = addEmoteByFileExtension(text);
+
+                textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
                 link.appendChild(textnode);
                 
                 // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
-                if (key.includes("mp4") || key.includes("jpeg") || key.includes("jpg") || key.includes(".mp3")) {
-                        link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key) + "#mediaNav";
+                if (isMediaFile(allowedMediaExtensions, key)) {
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key) + "#mediaNav";
                 } else {
-                        link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + level3 + ",LEVEL4:" + key);
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + level3 + ",LEVEL4:" + key);
                 }
                 node.appendChild(link);
                 document.getElementById("subsubsubsubmenu").appendChild(node);
             }
         }
-        // playlist = sortList(document.getElementsByClassName('subsubsubsubmenu')[0]);
+        // Sortiere Liste
         sortList(document.getElementsByClassName('subsubsubsubmenu')[0]);
     }
 
@@ -292,8 +318,8 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     mediaName = mediaName[mediaName.length -1].split("#")[0];
 
     // Schreibe Medientitel
-    textnode = document.createTextNode(mediaName.replaceAll(".mp4", "").replaceAll(".mp3", "").replaceAll(".jpg", ""));
-    document.title = "STEFFLIX - " + mediaName.replaceAll(".mp4", "").replaceAll(".mp3", "").replaceAll(".jpg", ""); 
+    textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, mediaName));
+    document.title = "STEFFLIX - " + removeFileExtension(allowedMediaExtensions, mediaName); 
     document.getElementById("mediaTitle").appendChild(textnode)
     
     // Prüfe, ob die Datei eine Video- oder Musik-Datei ist
@@ -375,13 +401,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     node = document.getElementById("mediaNav");
     node.style.display = "flex";
 
-    // var newList = []
-    // for (key in localPlaylist) {
-    //     newList.push(localPlaylist[key].replace("⭐ ", "").replace(" 🎬", ".mp4").replace(" 🎵", ".mp3").replace(" 📷", ".jpg"));
-    // }
-    // localPlaylist = newList;
-
-
+    
     // Prüfe, ob der letzte Index grösser oder gleich 0 ist
     if (currentIndex - 1 >= 0) {
         // Erstelle Zurück-Button

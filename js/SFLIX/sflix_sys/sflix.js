@@ -4,6 +4,7 @@ var element = null;
 var currentFavorites = null;
 var favorites = null;
 var allowedMediaExtensions = [".mp4", ".ogg", ".mp3", ".jpg", ".jpeg", ".png", ".gif"];
+var playListPrefix = "";
 
 // Sortiere UL-Objekt alphabetisch
 function sortList(ul){
@@ -158,6 +159,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     if (decodedUriData.includes("LEVEL1")) {
         // Zerlege URL in "LEVEL1"-Bestandteil
         var level1 = replaceSpecialChars(decodedUriData.split(",LEVEL1:")[1].split(",")[0]);
+        playListPrefix += level1;
         // Erstelle Leere Playliste
         playlist = []
 
@@ -203,6 +205,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     if (decodedUriData.includes("LEVEL2")) {
         // Zerlege URL in "LEVEL2"-Bestandteil
         var level2 = replaceSpecialChars(decodedUriData.split(",LEVEL2:")[1].split(",")[0]);
+        playListPrefix += level2;
         // Erstelle Leere Playliste
         playlist = []
 
@@ -247,6 +250,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     if (decodedUriData.includes("LEVEL3")) {
         // Zerlege URL in "LEVEL3"-Bestandteil
         var level3 = replaceSpecialChars(decodedUriData.split(",LEVEL3:")[1].split(",")[0]);
+        playListPrefix += level3;
         // Erstelle Leere Playliste
         playlist = []
 
@@ -289,7 +293,8 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
     // So lange kein Medientyp ausgewählt wurde, Playliste überschreiben
     if (!decodedUriData.includes("MEDIA")) {
-        localStorage.setItem("data", playlist);
+        localStorage.setItem("currentPrefix", playListPrefix);
+        localStorage.setItem(playListPrefix + "Playlist", playlist);
     }
 } else {
     // Wenn keine Auswahl getroffen wurde, Splashscreen anzeigen
@@ -304,8 +309,10 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
 // Prüfe, ob ein Medientyp ausgewählt wurde
 if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
+    playListPrefix = localStorage.getItem("currentPrefix")
+    console.log(playListPrefix);
     // Lade aktuelle Playliste
-    var localPlaylist = localStorage.getItem("data").split(",");
+    var localPlaylist = localStorage.getItem(playListPrefix + "Playlist").split(",");
     // Lese Speicherort aus
     var medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0]);
     // Lese Playlistenindex aus
@@ -318,7 +325,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     mediaName = mediaName[mediaName.length -1].split("#")[0];
 
     // Schreibe Medientitel
-    textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, mediaName));
+    textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, addEmoteByFileExtension(mediaName)));
     document.title = "STEFFLIX - " + removeFileExtension(allowedMediaExtensions, mediaName); 
     document.getElementById("mediaTitle").appendChild(textnode)
     
@@ -407,7 +414,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         // Erstelle Zurück-Button
         node = document.getElementById("prev")
         subnode = document.createElement("a");
-        textnode = document.createTextNode("Zurück");
+        textnode = document.createTextNode("👈 Zurück");
         subnode.appendChild(textnode);
         // Link zu vorherigem Listenelement
         subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex - 1]) + "#mediaNav";
@@ -432,7 +439,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     if (currentIndex + 1 <= localPlaylist.length - 1) {
         node = document.getElementById("next");
         subnode = document.createElement("a");
-        textnode = document.createTextNode("Vorwärts");
+        textnode = document.createTextNode("Vorwärts 👉");
         subnode.appendChild(textnode);
         subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex + 1]) + "#mediaNav";
         // subnode.href = localPlaylist[currentIndex + 1];

@@ -31,6 +31,7 @@ body {
     justify-content: center;
     width: 100%;
 }
+
 h2 {
     color: white;
 }
@@ -141,6 +142,7 @@ h2 {
 #submenu li a {
     display: inline-flex;
     justify-content: center;
+    align-items: center;
     padding: 5px;
 }
 
@@ -250,7 +252,7 @@ h2 {
     height: 100vh;
 }
 
-#submenu li:nth-child(2n) {
+/* #submenu li:nth-child(2n) {
     background-color: rgb(0, 0, 35);
 }
 
@@ -264,18 +266,33 @@ h2 {
 
 #subsubsubsubmenu li:nth-child(2n) {
     background-color: #b8b8b8;;
+} */
+
+
+#submenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3))  {
+    background-color: rgb(0, 0, 35);
+}
+#subsubmenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3))  {
+    background-color:rgb(0, 0, 120);
+}
+#subsubsubmenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3))  {
+    background-color:rgb(0, 0, 160);
+}
+#subsubsubsubmenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3))  {
+    background-color:#b8b8b8;
 }
 
-#submenu li:hover, .submenu li:nth-child(2n):hover {
+
+#navigation > #submenu li:hover, .submenu li:nth-child(2n):hover {
     background-color: red;
 }
-#subsubmenu li:hover, .subsubmenu li:nth-child(2n):hover {
+#navigation > #subsubmenu li:hover, .subsubmenu li:nth-child(2n):hover {
     background-color: rgb(50, 50, 168);
 }
-#subsubsubmenu li:hover, .subsubsubmenu li:nth-child(2n):hover {
+#navigation > #subsubsubmenu li:hover, .subsubsubmenu li:nth-child(2n):hover {
     background-color: rgb(84, 84, 190);;
 }
-#subsubsubsubmenu li:hover, .subsubsubsubmenu li:nth-child(2n):hover {
+#navigation > #subsubsubsubmenu li:hover, .subsubsubsubmenu li:nth-child(2n):hover {
     background-color: white;
 }
 

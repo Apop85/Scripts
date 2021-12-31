@@ -4,7 +4,38 @@ var element = null;
 var currentFavorites = null;
 var favorites = null;
 var allowedMediaExtensions = [".mp4", ".ogg", ".mp3", ".jpg", ".jpeg", ".png", ".gif"];
+var mediaTypes = [".mp4", ".ogg"];
+var musicTypes = [".mp3"];
+var imageTypes = [".jpg", ".jpeg", ".png", ".gif"];
 var playListPrefix = "";
+
+function isVideo(filename) {
+    for (index in mediaTypes) {
+        if (filename.includes(mediaTypes[index])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function isImage(filename) {
+    for (index in imageTypes) {
+        if (filename.includes(imageTypes[index])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function isMusic(filename) {
+    for (index in musicTypes) {
+        if (filename.includes(musicTypes[index])) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 // Sortiere UL-Objekt alphabetisch
 function sortList(ul){
@@ -47,11 +78,11 @@ function sortList(ul){
 function addEmoteByFileExtension(filename) {
     var newFilename = filename;
     // Füge Emote anhand Dateiendung hinzu
-    if (filename.includes(".mp4") || filename.includes(".ogg")) {
+    if (isVideo(filename)) {
         newFilename = newFilename + " 🎬";
-    } else if (filename.includes(".mp3")) {
+    } else if (isMusic(filename)) {
         newFilename = newFilename + " 🎵";
-    } else if (filename.includes("jpeg") || filename.includes("jpg") || filename.includes("png") || filename.includes("gif")){
+    } else if (isImage(filename)){
         newFilename = newFilename + " 📷";
     }
 
@@ -115,6 +146,7 @@ sortList(document.getElementsByClassName('menu')[0]);
 if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     // Zerlege URL in "MAIN"-Bestandteil
     var mainContent = replaceSpecialChars(decodedUriData.split("MAIN:")[1].split(",")[0]);
+    playListPrefix += mainContent;
     // Lege leere Playliste an
     playlist = []
 
@@ -140,7 +172,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 
                 // Füge Emote anhand Dateiendung hinzu
                 text = addEmoteByFileExtension(text);
-                link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key) + "#mediaNav";
+                link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
             } else {
                 link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + key);
@@ -154,6 +186,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     }
     // Sortiere Liste
     sortList(document.getElementsByClassName('submenu')[0]);
+    document.getElementById("submenu").style.borderTop = "2px solid #666";
 
     // Prüfe, ob eine "LEVEL1"-Auswahl getroffen wurde
     if (decodedUriData.includes("LEVEL1")) {
@@ -189,7 +222,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 
                 // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
                 if (isMediaFile(allowedMediaExtensions, key)) {
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key) + "#mediaNav";
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 } else {
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + key);
                 }
@@ -199,6 +232,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         }
         // Sortiere Liste
         sortList(document.getElementsByClassName('subsubmenu')[0]);
+        document.getElementById("subsubmenu").style.borderTop = "2px solid #666";
     }
 
     // Prüfe, ob eine "LEVEL2"-Auswahl gefällt wurde
@@ -234,7 +268,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 
                 // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
                 if (isMediaFile(allowedMediaExtensions, key)) {
-                        link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key) + "#mediaNav";
+                        link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 } else {
                         link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + key);
                 }
@@ -244,6 +278,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         }
         // Sortiere Liste
         sortList(document.getElementsByClassName('subsubsubmenu')[0]);
+        document.getElementById("subsubsubmenu").style.borderTop = "2px solid #666";
     }
 
     // Prüfe, ob eine "LEVEL3"-Auswahl getroffen wurde
@@ -279,7 +314,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 
                 // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
                 if (isMediaFile(allowedMediaExtensions, key)) {
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key) + "#mediaNav";
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 } else {
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + level3 + ",LEVEL4:" + key);
                 }
@@ -289,12 +324,13 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         }
         // Sortiere Liste
         sortList(document.getElementsByClassName('subsubsubsubmenu')[0]);
+        document.getElementById("subsubsubsubmenu").style.borderTop = "2px solid #666";
     }
 
     // So lange kein Medientyp ausgewählt wurde, Playliste überschreiben
     if (!decodedUriData.includes("MEDIA")) {
         localStorage.setItem("currentPrefix", playListPrefix);
-        localStorage.setItem(playListPrefix + "Playlist", playlist);
+        localStorage.setItem(playListPrefix, playlist);
     }
 } else {
     // Wenn keine Auswahl getroffen wurde, Splashscreen anzeigen
@@ -309,10 +345,12 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
 // Prüfe, ob ein Medientyp ausgewählt wurde
 if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
-    playListPrefix = localStorage.getItem("currentPrefix")
-    console.log(playListPrefix);
+    var playlistName = null;
+    if (decodedUriData.includes(",PL:")) {
+        playlistName = decodedUriData.split(",PL:")[1].split(",")[0].split("#")[0]
+    }
     // Lade aktuelle Playliste
-    var localPlaylist = localStorage.getItem(playListPrefix + "Playlist").split(",");
+    var localPlaylist = localStorage.getItem(playlistName).split(",");
     // Lese Speicherort aus
     var medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0]);
     // Lese Playlistenindex aus
@@ -330,7 +368,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     document.getElementById("mediaTitle").appendChild(textnode)
     
     // Prüfe, ob die Datei eine Video- oder Musik-Datei ist
-    if (medialocation.includes("mp4") || medialocation.includes(".mp3")) {
+    if (isVideo(medialocation) || isMusic(medialocation)) {
         // Erstelle Videoelement
         node = document.createElement("video");
         node.src = medialocation;
@@ -362,7 +400,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             }
         });
 
-    } else if (medialocation.includes("jpg") || medialocation.includes("png")) {
+    } else if (isImage(medialocation)) {
         // Erstelle Bildelement
         element = document.getElementById("media");
         node = document.createElement("img");
@@ -417,7 +455,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         textnode = document.createTextNode("👈 Zurück");
         subnode.appendChild(textnode);
         // Link zu vorherigem Listenelement
-        subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex - 1]) + "#mediaNav";
+        subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex - 1] + ",PL:" + playlistName) + "#mediaNav";
         node.appendChild(subnode);
     }
 
@@ -430,7 +468,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         textnode = document.createTextNode("Merken ⭐");
     }
     subnode.appendChild(textnode);
-    subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex] + ",FAV:True") + "#mediaNav";
+    subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex] + ",FAV:True" + ",PL:" + playlistName) + "#mediaNav";
     // subnode.href = localPlaylist[currentIndex];
     node.appendChild(subnode);
 
@@ -441,7 +479,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         subnode = document.createElement("a");
         textnode = document.createTextNode("Vorwärts 👉");
         subnode.appendChild(textnode);
-        subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex + 1]) + "#mediaNav";
+        subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex + 1] + ",PL:" + playlistName) + "#mediaNav";
         // subnode.href = localPlaylist[currentIndex + 1];
         node.appendChild(subnode);
     }

@@ -441,13 +441,16 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             node.style.marginRight = "auto";
         }
     } else {
+        // Zeige Hilfe an
         node = document.getElementById("help");
         node.style.display = "block";
 
+        // Füge aktuelle Version ein
         node = document.getElementById("versionNow");
         textnode = document.createTextNode(version)
         node.appendChild(textnode);
-
+        
+        // Füge neuste Version ein
         node = document.getElementById("versionNew");
         textnode = document.createTextNode(newestVersion)
         node.appendChild(textnode);

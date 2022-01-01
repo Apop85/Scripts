@@ -9,6 +9,30 @@ var musicTypes = [".mp3", ".m4a", ".ogg"];
 var imageTypes = [".jpg", ".jpeg", ".png", ".gif"];
 var playListPrefix = "";
 
+
+function httpGet(theUrl) {
+    let xmlhttp;
+    
+    if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp=new XMLHttpRequest();
+    } else { // code for IE6, IE5
+        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    
+    xmlhttp.onreadystatechange=function() {
+        if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+            return xmlhttp.responseText;
+        }
+    }
+    xmlhttp.open("GET", theUrl, false);
+    xmlhttp.send();
+    
+    return xmlhttp.response;
+}
+
+var newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.txt").split("var version = ")[1];
+console.log(version);
+
 function isVideo(filename) {
     for (index in mediaTypes) {
         if (filename.includes(mediaTypes[index])) {

@@ -3,9 +3,9 @@ var decodedUriData = null;
 var element = null;
 var currentFavorites = null;
 var favorites = null;
-var allowedMediaExtensions = [".mp4", ".ogg", ".mp3", ".jpg", ".jpeg", ".png", ".gif"];
+var allowedMediaExtensions = [".mp4", ".ogg", ".mp3", ".jpg", ".jpeg", ".png", ".gif", ".m4a"];
 var mediaTypes = [".mp4", ".ogg"];
-var musicTypes = [".mp3"];
+var musicTypes = [".mp3", ".m4a"];
 var imageTypes = [".jpg", ".jpeg", ".png", ".gif"];
 var playListPrefix = "";
 
@@ -115,7 +115,7 @@ function replaceSpecialChars(string) {
 }
 
 // Hinzufügen eines Vorschaubildes, falls vorhanden
-function addPreviewImage(data, link) {
+function addPreviewImage(data, link, cleanedKey) {
     // Prüfe, ob Preview-Ordner vorhanden ist
     if (data.hasOwnProperty("Preview")){
         // Iteriere über alle Vorschaubilder
@@ -183,7 +183,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             link = document.createElement("a")
             // Entferne HTML-Code aus Schlüsselname
             cleanedKey = replaceSpecialChars(key);
-            addPreviewImage(data[mainContent], link);
+            addPreviewImage(data[mainContent], link, cleanedKey);
 
             // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
             if (isMediaFile(allowedMediaExtensions, key)) {
@@ -234,7 +234,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 cleanedKey = replaceSpecialChars(key);
 
                 // Füge Vorschaubild hinzu
-                addPreviewImage(data[mainContent][level1], link);
+                addPreviewImage(data[mainContent][level1], link, cleanedKey);
 
                 text = key.split("/");
 
@@ -287,7 +287,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 cleanedKey = replaceSpecialChars(key);
 
                 // Füge Vorschaubild hinzu
-                addPreviewImage(data[mainContent][level1][level2], link);
+                addPreviewImage(data[mainContent][level1][level2], link, cleanedKey);
 
                 // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
                 if (favorites != null && favorites.includes(cleanedKey) && isMediaFile(allowedMediaExtensions, key)){
@@ -338,7 +338,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 cleanedKey = replaceSpecialChars(key);
 
                 // Füge Vorschaubild hinzu
-                addPreviewImage(data[mainContent][level1][level2][level3], link);
+                addPreviewImage(data[mainContent][level1][level2][level3], link, cleanedKey);
 
                 // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
                 if ((favorites != null && favorites.includes(cleanedKey) && isMediaFile(allowedMediaExtensions, key))){

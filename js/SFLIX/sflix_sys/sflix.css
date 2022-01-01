@@ -36,6 +36,14 @@ h2 {
     color: white;
 }
 
+#mediaTitle {
+    margin-left: auto;
+    margin-right: auto;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    max-width: 60vw !important;
+}
+
 #mediaNav {
     display: none;
     flex-wrap: nowrap;
@@ -117,106 +125,42 @@ h2 {
     height: auto;
 }
 
-#submenu {
+#submenu,
+#subsubmenu,
+#subsubsubmenu,
+#subsubsubsubmenu {
     background-color: rgb(0, 0, 65);
     display: flex;
     flex-wrap: wrap;
 }
 
-#submenu a {
+#submenu a,
+#subsubmenu a,
+#subsubsubmenu a,
+#subsubsubsubmenu a {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 5px;
     color: white;
     text-decoration: none;
-    display: inline-block;
+    display: flex;
     height: calc(100% - 10px);
     width: calc(100% - 10px);
     font-size: 1.2em;
 }
 
-#submenu li {
+#submenu li,
+#subsubmenu li,
+#subsubsubmenu li,
+#subsubsubsubmenu li {
     list-style: none;
     width: calc(33.3333333%);
     text-align: center;
     /* margin: 5px; */
 }
 
-#submenu li a {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    padding: 5px;
-}
-
-#subsubmenu {
-    background-color: rgb(0, 0, 140);
-    display: flex;
-    flex-wrap: wrap;
-}
-
-#subsubmenu li {
-    list-style: none;
-    width: 33.333333%;
-    text-align: center;
-}
-
-#subsubmenu a {
-    color: white;
-    width: calc(100% - 10px);
-    height: calc(100% - 10px); 
-    font-size: 1.1em;
-    text-decoration: none;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    padding: 5px;
-}
-
-#subsubsubmenu {
-    background-color: rgb(0, 0, 180);
-    display: flex;
-    flex-wrap: wrap;
-}
-
-#subsubsubmenu li {
-    list-style: none;
-    width: calc(33.333333%);
-    text-align: center;
-}
-
-#subsubsubmenu a {
-    color:white;
-    width: calc(100% - 10px);
-    height: calc(100% - 10px); 
-    font-size: 1.1em;
-    text-decoration: none;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    padding: 5px;
-}
-
-#subsubsubsubmenu {
-    background-color: #d3d3d3;
-    display: flex;
-    flex-wrap: wrap;
-}
-
-#subsubsubsubmenu li {
-    list-style: none;
-    width: calc(33.333333%);
-    text-align: center;
-}
-
-#subsubsubsubmenu a {
-    color:rgb(39, 39, 39);
-    width: calc(100% - 10px);
-    height: calc(100% - 10px); 
-    font-size: 1.1em;
-    text-decoration: none;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    padding: 5px;
-}
 
 #splashscreen {
     position: absolute;
@@ -252,48 +196,18 @@ h2 {
     height: 100vh;
 }
 
-/* #submenu li:nth-child(2n) {
-    background-color: rgb(0, 0, 35);
-}
-
-#subsubmenu li:nth-child(2n) {
-    background-color: rgb(0, 0, 120);
-}
-
-.subsubsubmenu li:nth-child(2n) {
-    background-color: rgb(0, 0, 160);
-}
-
-#subsubsubsubmenu li:nth-child(2n) {
-    background-color: #b8b8b8;;
-} */
-
-
-#submenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3))  {
-    background-color: rgb(0, 0, 35);
-}
-#subsubmenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3))  {
-    background-color:rgb(0, 0, 120);
-}
-#subsubsubmenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3))  {
-    background-color:rgb(0, 0, 160);
-}
+#submenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3)),
+#subsubmenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3)),
+#subsubsubmenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3)),
 #subsubsubsubmenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3))  {
-    background-color:#b8b8b8;
+    background-color: rgb(0, 0, 35);
 }
 
-
-#navigation > #submenu li:hover, .submenu li:nth-child(2n):hover {
-    background-color: red;
-}
-#navigation > #subsubmenu li:hover, .subsubmenu li:nth-child(2n):hover {
-    background-color: rgb(50, 50, 168);
-}
-#navigation > #subsubsubmenu li:hover, .subsubsubmenu li:nth-child(2n):hover {
-    background-color: rgb(84, 84, 190);;
-}
+#navigation > #submenu li:hover, .submenu li:nth-child(2n):hover,
+#navigation > #subsubmenu li:hover, .subsubmenu li:nth-child(2n):hover,
+#navigation > #subsubsubmenu li:hover, .subsubsubmenu li:nth-child(2n):hover,
 #navigation > #subsubsubsubmenu li:hover, .subsubsubsubmenu li:nth-child(2n):hover {
-    background-color: white;
+    background-color: red;
 }
 
 @keyframes splash-out {

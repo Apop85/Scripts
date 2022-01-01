@@ -114,6 +114,30 @@ function replaceSpecialChars(string) {
     return string.replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä")
 }
 
+// Hinzufügen eines Vorschaubildes, falls vorhanden
+function addPreviewImage(data, link) {
+    // Prüfe, ob Preview-Ordner vorhanden ist
+    if (data.hasOwnProperty("Preview")){
+        // Iteriere über alle Vorschaubilder
+        for (previewImageSrc in data["Preview"]) {
+            // Prüfe ob ein Bild mit identischem Namen wie das Medienfile vorhanden ist
+            if (previewImageSrc.includes(removeFileExtension(allowedMediaExtensions, cleanedKey.split("/")[cleanedKey.split("/").length-1]) + ".jpg")) {
+                // Erstelle Bild-Node
+                var imgNode = document.createElement("img");
+                imgNode.src = previewImageSrc;
+                imgNode.style.height = "auto";
+                imgNode.style.width = "30%";
+                link.style.flexDirection = "column";
+                link.style.justifyContent = "center";
+                // Füge Bild zu Link-Node hinzu
+                link.appendChild(imgNode);
+                // Breche Loop ab
+                break;
+            }
+        }
+    }
+}
+
 // Lade Favoriten
 favorites = localStorage.getItem("favorites");
 if (favorites != null) {
@@ -125,7 +149,7 @@ if (window.location.href.includes("?=")) {
     decodedUriData = atob(window.location.href.split("?=")[1].split("#")[0]);
 }
 
-// Iteriere über alle Schlüsselelemente des data-Arrays
+// Iteriere über alle Schlüsselelemente des data-Array
 for (var key in data) {
     if (data.hasOwnProperty(key)) {
         // Erstelle Listenelement für jeden Schlüssel
@@ -145,20 +169,21 @@ sortList(document.getElementsByClassName('menu')[0]);
 // Prüfe, ob aus dem Hauptmenü eine Auswahl getroffen wurde
 if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     // Zerlege URL in "MAIN"-Bestandteil
-    var mainContent = replaceSpecialChars(decodedUriData.split("MAIN:")[1].split(",")[0]);
+    var mainContent = replaceSpecialChars(decodedUriData.split("MAIN:")[1].split(",")[0].split("#")[0]);
     playListPrefix += mainContent;
     // Lege leere Playliste an
     playlist = []
 
     // Iteriere durch alle Elemente des gewählten Schlüssels
     for (var key in data[mainContent]) {
-        if (data[mainContent].hasOwnProperty(key)) {
+        if (data[mainContent].hasOwnProperty(key) && key != "Preview") {
             // Füge alle Elemente eines Schlüssel der Playlist zu
             playlist.push(key);
             node = document.createElement("LI");
             link = document.createElement("a")
             // Entferne HTML-Code aus Schlüsselname
             cleanedKey = replaceSpecialChars(key);
+            addPreviewImage(data[mainContent], link);
 
             // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
             if (isMediaFile(allowedMediaExtensions, key)) {
@@ -190,21 +215,27 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
     // Prüfe, ob eine "LEVEL1"-Auswahl getroffen wurde
     if (decodedUriData.includes("LEVEL1")) {
+        document.getElementById("submenu").style.display = "none";
         // Zerlege URL in "LEVEL1"-Bestandteil
-        var level1 = replaceSpecialChars(decodedUriData.split(",LEVEL1:")[1].split(",")[0]);
+        var level1 = replaceSpecialChars(decodedUriData.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
         playListPrefix += level1;
         // Erstelle Leere Playliste
         playlist = []
 
         // Iteriere über jeden Schlüsselwert
         for (var key in data[mainContent][level1]) {
-            if (data[mainContent][level1].hasOwnProperty(key)) {
+            if (data[mainContent][level1].hasOwnProperty(key) && key != "Preview") {
+                
                 // Füge alle Elemente eines Schlüssel der Playlist zu
                 playlist.push(key);
                 node = document.createElement("LI");
                 link = document.createElement("a");
                 // Entferne HTML-Code aus Schlüsselname
                 cleanedKey = replaceSpecialChars(key);
+
+                // Füge Vorschaubild hinzu
+                addPreviewImage(data[mainContent][level1], link);
+
                 text = key.split("/");
 
                 // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
@@ -237,14 +268,16 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
     // Prüfe, ob eine "LEVEL2"-Auswahl gefällt wurde
     if (decodedUriData.includes("LEVEL2")) {
+        document.getElementById("subsubmenu").style.display = "none";
+
         // Zerlege URL in "LEVEL2"-Bestandteil
-        var level2 = replaceSpecialChars(decodedUriData.split(",LEVEL2:")[1].split(",")[0]);
+        var level2 = replaceSpecialChars(decodedUriData.split(",LEVEL2:")[1].split(",")[0].split("#")[0]);
         playListPrefix += level2;
         // Erstelle Leere Playliste
         playlist = []
 
         for (var key in data[mainContent][level1][level2]) {
-            if (data[mainContent][level1][level2].hasOwnProperty(key)) {
+            if (data[mainContent][level1][level2].hasOwnProperty(key) && key != "Preview") {
                 // Füge alle Elemente eines Schlüssel der Playlist zu
                 playlist.push(key);
                 node = document.createElement("LI");
@@ -252,6 +285,9 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 text = key.split("/")
                 // Entferne HTML-Code aus Schlüsselname
                 cleanedKey = replaceSpecialChars(key);
+
+                // Füge Vorschaubild hinzu
+                addPreviewImage(data[mainContent][level1][level2], link);
 
                 // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
                 if (favorites != null && favorites.includes(cleanedKey) && isMediaFile(allowedMediaExtensions, key)){
@@ -283,14 +319,16 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
     // Prüfe, ob eine "LEVEL3"-Auswahl getroffen wurde
     if (decodedUriData.includes("LEVEL3")) {
+        document.getElementById("subsubsubmenu").style.display = "none";
+
         // Zerlege URL in "LEVEL3"-Bestandteil
-        var level3 = replaceSpecialChars(decodedUriData.split(",LEVEL3:")[1].split(",")[0]);
+        var level3 = replaceSpecialChars(decodedUriData.split(",LEVEL3:")[1].split(",")[0].split("#")[0]);
         playListPrefix += level3;
         // Erstelle Leere Playliste
         playlist = []
 
         for (var key in data[mainContent][level1][level2][level3]) {
-            if (data[mainContent][level1][level2][level3].hasOwnProperty(key)) {
+            if (data[mainContent][level1][level2][level3].hasOwnProperty(key) && key != "Preview") {
                 // Füge alle Elemente eines Schlüssel der Playlist zu
                 playlist.push(key);
                 node = document.createElement("LI");
@@ -298,6 +336,9 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 text = key.split("/")
                 // Entferne HTML-Code aus Schlüsselname
                 cleanedKey = replaceSpecialChars(key);
+
+                // Füge Vorschaubild hinzu
+                addPreviewImage(data[mainContent][level1][level2][level3], link);
 
                 // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
                 if ((favorites != null && favorites.includes(cleanedKey) && isMediaFile(allowedMediaExtensions, key))){
@@ -347,12 +388,12 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     var playlistName = null;
     if (decodedUriData.includes(",PL:")) {
-        playlistName = decodedUriData.split(",PL:")[1].split(",")[0].split("#")[0]
+        playlistName = decodedUriData.split(",PL:")[1].split(",")[0].split("#")[0];
     }
     // Lade aktuelle Playliste
     var localPlaylist = localStorage.getItem(playlistName).split(",");
     // Lese Speicherort aus
-    var medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0]);
+    var medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0].split("#")[0]);
     // Lese Playlistenindex aus
     localPlaylist = localPlaylist.sort()
     var currentIndex = localPlaylist.indexOf(medialocation);
@@ -365,7 +406,8 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     // Schreibe Medientitel
     textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, addEmoteByFileExtension(mediaName)));
     document.title = "STEFFLIX - " + removeFileExtension(allowedMediaExtensions, mediaName); 
-    document.getElementById("mediaTitle").appendChild(textnode)
+    document.getElementById("mediaTitle").appendChild(textnode);
+    document.getElementById("mediaTitle").style.borderBottom = "1px solid rgb(221, 221, 221)";
     
     // Prüfe, ob die Datei eine Video- oder Musik-Datei ist
     if (isVideo(medialocation) || isMusic(medialocation)) {
@@ -382,11 +424,19 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             // Lese Zeitstempel des ausgewählten Videos aus
             var pastTimestamp = localStorage.getItem("timestamp-" + mediaName)
             if (pastTimestamp != null) {
-                // Setze Player auf gespeicherten Zeitstempel
-                if (100 / this.duration * pastTimestamp < 95) {
-                    document.getElementById("video").currentTime = pastTimestamp;
+                // Prüfe Zeitstempel für Medien die länger als 10 Minuten sind
+                if (this.duration >= 600) {
+                    // Setze Player auf gespeicherten Zeitstempel
+                    if (100 / this.duration * pastTimestamp < 95) {
+                        // Setze Abspeilzeitpunkt auf Zeitstempel
+                        document.getElementById("video").currentTime = pastTimestamp;
+                    } else {
+                        // Lösche Zeitstempel
+                        localStorage.removeItem("timestamp-" + mediaName);
+                    }
                 } else {
-                    localStorage.removeItem("timestamp-" + mediaName)
+                    // Lösche Zeitstempel
+                    localStorage.removeItem("timestamp-" + mediaName);
                 }
             }
         };
@@ -394,9 +444,13 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         // Lese aktuellen Zeitstempel im Video aus
         document.getElementById("video").addEventListener('timeupdate', function() {
             currentTime = parseInt(this.currentTime, 10);
+            var currentTimestamp = localStorage.getItem("timestamp-" + mediaName);
+            if (currentTimestamp == null) {
+                currentTimestamp = 0;
+            }
             // Speichere Videoposition alle 10 Sek
-            if (currentTime % 10 == 0) {
-                localStorage.setItem("timestamp-" + mediaName, currentTime)
+            if (currentTimestamp != currentTime && currentTime % 10 == 0) {
+                localStorage.setItem("timestamp-" + mediaName, currentTime);
             }
         });
 

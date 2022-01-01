@@ -380,6 +380,17 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     var image = document.createElement("img");
     image.src = "sflix_sys/sflix.png";
     node.appendChild(image);
+
+    var lastPlayed = localStorage.getItem("playlast");
+    if (lastPlayed != null) {
+        node = document.getElementById("media");
+        buttonNode = document.createElement("a");
+        buttonNode.className = "button";
+        buttonNode.href = lastPlayed;
+        textNode = document.createTextNode("Letzten Titel fortsetzen");
+        buttonNode.appendChild(textNode);
+        node.appendChild(buttonNode);
+    }
 }
 
 
@@ -467,6 +478,8 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         linkNode.appendChild(node);
         document.getElementById("media").appendChild(linkNode);
     }
+
+    localStorage.setItem("playlast", window.location.href);
 
     // Prüfe, ob der Merken-Button gedrückt wurde
     if (decodedUriData.includes(",FAV:True")) {

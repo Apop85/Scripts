@@ -424,7 +424,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             node.style.marginRight = "auto";
         }
     
-        if (newestVersion != null && newestVersion != version) {
+        if (newestVersion != null && newestVersion > version) {
             node = document.getElementById("media");
             buttonNode = document.createElement("a");
             buttonNode.className = "button";

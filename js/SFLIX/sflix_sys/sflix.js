@@ -4,8 +4,8 @@ var element = null;
 var currentFavorites = null;
 var favorites = null;
 var allowedMediaExtensions = [".mp4", ".ogg", ".mp3", ".jpg", ".jpeg", ".png", ".gif", ".m4a"];
-var mediaTypes = [".mp4", ".ogg"];
-var musicTypes = [".mp3", ".m4a"];
+var mediaTypes = [".mp4"];
+var musicTypes = [".mp3", ".m4a", ".ogg"];
 var imageTypes = [".jpg", ".jpeg", ".png", ".gif"];
 var playListPrefix = "";
 

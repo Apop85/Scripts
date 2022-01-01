@@ -63,10 +63,34 @@ h2 {
     border-radius: 2px;
     box-shadow: 2px 2px 5px red;
     font-weight: 600;
+    margin-bottom: 50px;
 }
 
 .button:hover {
     background-color: darkgrey;
+}
+
+#help {
+    background-color: #ddd;
+    margin: 50px;
+    padding: 20px;
+}
+
+#help h3 {
+    border-bottom: 1px solid gray;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+}
+
+#help ol {
+    margin-bottom: 50px;
+    text-align: left;
+    margin-left: 20px;
+    margin-top: 10px;
+}
+
+#help p {
+    text-align: left !important;
 }
 
 #mediaNav > div:hover {

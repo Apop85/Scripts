@@ -30,9 +30,6 @@ function httpGet(theUrl) {
     return xmlhttp.response;
 }
 
-var newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.txt").split("var version = ")[1];
-console.log(version);
-
 function isVideo(filename) {
     for (index in mediaTypes) {
         if (filename.includes(mediaTypes[index])) {
@@ -398,22 +395,62 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         localStorage.setItem(playListPrefix, playlist);
     }
 } else {
-    // Wenn keine Auswahl getroffen wurde, Splashscreen anzeigen
-    node = document.getElementById("splashscreen");
-    node.style.display = "block";
-    var image = document.createElement("img");
-    image.src = "sflix_sys/sflix.png";
-    node.appendChild(image);
+    var newestVersion = parseFloat(httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js").split("var version = ")[1]);
 
-    var lastPlayed = localStorage.getItem("playlast");
-    if (lastPlayed != null) {
-        node = document.getElementById("media");
-        buttonNode = document.createElement("a");
-        buttonNode.className = "button";
-        buttonNode.href = lastPlayed;
-        textNode = document.createTextNode("Letzten Titel fortsetzen");
-        buttonNode.appendChild(textNode);
-        node.appendChild(buttonNode);
+    if (!window.location.href.includes(btoa("HELP"))) {
+        // Wenn keine Auswahl getroffen wurde, Splashscreen anzeigen
+        node = document.getElementById("splashscreen");
+        node.style.display = "block";
+        var image = document.createElement("img");
+        var buttonNode = null;
+        image.src = "sflix_sys/sflix.png";
+        node.appendChild(image);
+
+        var lastPlayed = localStorage.getItem("playlast");
+        if (lastPlayed != null) {
+            node = document.getElementById("media");
+            buttonNode = document.createElement("a");
+            buttonNode.className = "button";
+            buttonNode.href = lastPlayed;
+            textNode = document.createTextNode("Letzten Titel fortsetzen");
+            buttonNode.appendChild(textNode);
+            node.appendChild(buttonNode);
+    
+            // Füge Button-Styles hinzu
+            node.style.display = "flex";
+            node.style.flexDirection = "column";
+            node.style.width = "50vw";
+            node.style.marginLeft = "auto";
+            node.style.marginRight = "auto";
+        }
+    
+        if (newestVersion != null && newestVersion != version) {
+            node = document.getElementById("media");
+            buttonNode = document.createElement("a");
+            buttonNode.className = "button";
+            buttonNode.href = "start.html?=" + btoa("HELP");
+            textNode = document.createTextNode("STEFFLIX UPDATE VERFÜGBAR");
+            buttonNode.appendChild(textNode);
+            node.appendChild(buttonNode);
+    
+            // Füge Button-Styles hinzu
+            node.style.display = "flex";
+            node.style.flexDirection = "column";
+            node.style.width = "50vw";
+            node.style.marginLeft = "auto";
+            node.style.marginRight = "auto";
+        }
+    } else {
+        node = document.getElementById("help");
+        node.style.display = "block";
+
+        node = document.getElementById("versionNow");
+        textnode = document.createTextNode(version)
+        node.appendChild(textnode);
+
+        node = document.getElementById("versionNew");
+        textnode = document.createTextNode(newestVersion)
+        node.appendChild(textnode);
     }
 }
 

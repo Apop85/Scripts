@@ -9,7 +9,7 @@ print("".center(50, "="))
 
 homeDir = os.getcwd()
 
-allowedFileTypes = ["jpg", "jpeg", "mp4", "mp3", "png"]
+allowedFileTypes = ["jpg", "jpeg", "mp4", "mp3", "png", "ogg", "gif"]
 diallowedItems = ["System Volume Information", "$RECYCLE.BIN", ".vscode", "sflix_sys"]
 
 def recursiveCrawler(path, project="", serie="", staffel="", folge="", filelist={}, depth=0):

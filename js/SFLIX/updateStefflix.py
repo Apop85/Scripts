@@ -21,7 +21,7 @@ def writeToFile(data, fileLocation, writeMode="w"):
     try:
         if writeMode == "w":
             fileWriter = open(os.path.join(".", fileLocation), "w", encoding="utf-8")
-        elif writeMode == "b":
+        elif writeMode == "wb":
             fileWriter = open(os.path.join(".", fileLocation), "wb")
 
         fileWriter.write(data)
@@ -32,10 +32,15 @@ def writeToFile(data, fileLocation, writeMode="w"):
 
 
 def restoreFile(filePath):
-    if os.path.exists(filePath + ".old"):
-        if os.path.exists(filePath):
-            os.remove(filePath)
-        moveFile(filePath + ".old", filePath)
+    print(f"Widerherstellung {filePath}...".ljust(50), end="")
+    try:
+        if os.path.exists(filePath + ".old"):
+            if os.path.exists(filePath):
+                os.remove(filePath)
+            moveFile(filePath + ".old", filePath)
+        print("OK")
+    except:
+        print("FEHLER")
 
 
 for fileLocation in stefflixFiles.keys():
@@ -64,7 +69,11 @@ for fileLocation in stefflixFiles.keys():
         print("Update STEFFLIX-Daten...".ljust(50), end="")
         try:
             success = writeToFile(fileContent, filePath)
-            print("OK")
+            if success:
+                print("OK")
+            else:
+                print("FEHLER")
+                restoreFile(filePath)
         except:
             print("FEHLER")
 
@@ -83,11 +92,17 @@ for fileLocation in stefflixFiles.keys():
 
         print("Update STEFFLIX-Daten...".ljust(50), end="")
         try:
-            success = writeToFile(answer, filePath, "wb")
-            print("OK")
+            success = writeToFile(answer.content, filePath, "wb")
+            if success:
+                print("OK")
+            else:
+                print("FEHLER")
+                restoreFile(filePath)
         except:
             print("FEHLER")
 
 print("".center(60, "="))
 print("UPDATE BEENDET")
 print("".center(60, "="))
+print()
+input("Enter zum Beenden")

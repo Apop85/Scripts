@@ -27,7 +27,11 @@ function httpGet(theUrl) {
     xmlhttp.open("GET", theUrl, false);
     xmlhttp.send();
     
-    return xmlhttp.response;
+    if (xmlhttp.status == 200) {
+        return xmlhttp.response;
+    } else {
+        return null
+    }
 }
 
 function isVideo(filename) {
@@ -395,7 +399,10 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         localStorage.setItem(playListPrefix, playlist);
     }
 } else {
-    var newestVersion = parseFloat(httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js").split("var version = ")[1]);
+    var newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
+    if (newestVersion != null) {
+        newestVersion = parseFloat(newestVersion.split("var version = ")[1]);
+    }
 
     if (!window.location.href.includes(btoa("HELP"))) {
         // Wenn keine Auswahl getroffen wurde, Splashscreen anzeigen

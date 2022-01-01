@@ -25,6 +25,14 @@ rmdir /S /Q dist
 rmdir /S /Q __pycache__
 rmdir /S /Q build
 
+pyinstaller --paths C:\Windows\System32\downlevel --console --onefile updateStefflix.py
+del updateStefflix.exe
+del *.spec
+copy .\dist\updateStefflix.exe .\updateStefflix.exe
+rmdir /S /Q dist
+rmdir /S /Q __pycache__
+rmdir /S /Q build
+
 
 
 

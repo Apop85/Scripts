@@ -458,6 +458,8 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     }
 } else {
     var newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
+    // var versionDescription = httpGet("https://github.com/Apop85/Scripts/commits/master/js/SFLIX");
+    // console.log(versionDescription);
     if (newestVersion != null) {
         newestVersion = parseFloat(newestVersion.split("var version = ")[1]);
     }
@@ -472,8 +474,9 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         node.appendChild(image);
 
         var lastPlayed = localStorage.getItem("playlast").split(",");
+        var wrapperNode = null;
         if (lastPlayed != null && !lastPlayed.includes("")) {
-            var wrapperNode = document.createElement("div");
+            wrapperNode = document.createElement("div");
             for (var lastUrlIndex in lastPlayed) {
                 var lastTitle = lastPlayed[lastUrlIndex].split("|")[0];
                 var lastUrl = lastPlayed[lastUrlIndex].split("|")[1];
@@ -500,19 +503,25 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     
         if (newestVersion != null && newestVersion > version) {
             node = document.getElementById("media");
+            wrapperNode = document.createElement("div"); 
             buttonNode = document.createElement("a");
             buttonNode.className = "button";
             buttonNode.href = "start.html?=" + btoa("HELP");
             textNode = document.createTextNode("STEFFLIX UPDATE VERFÜGBAR");
             buttonNode.appendChild(textNode);
-            node.appendChild(buttonNode);
+            wrapperNode.appendChild(buttonNode);
     
             // Füge Button-Styles hinzu
-            node.style.display = "flex";
-            node.style.flexDirection = "column";
-            node.style.width = "50vw";
-            node.style.marginLeft = "auto";
-            node.style.marginRight = "auto";
+            wrapperNode.style.display = "flex";
+            wrapperNode.style.flexDirection = "column";
+            wrapperNode.style.width = "50vw";
+            wrapperNode.style.marginLeft = "auto";
+            wrapperNode.style.marginRight = "auto";
+            wrapperNode.style.padding = "20px";
+            wrapperNode.style.backgroundColor = "yellowgreen";
+            wrapperNode.style.id = "helpBox";
+
+            node.appendChild(wrapperNode);
         }
     } else {
         // Zeige Hilfe an
@@ -528,6 +537,10 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         node = document.getElementById("versionNew");
         textnode = document.createTextNode(newestVersion)
         node.appendChild(textnode);
+
+        // node = document.createElement("iframe");
+        // node.src = "https://github.com/Apop85/Scripts/commits/master/js/SFLIX";
+        // document.getElementById("help").appendChild(node);
     }
 }
 

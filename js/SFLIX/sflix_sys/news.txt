@@ -1,0 +1,8 @@
+Version 1.04:
+- [FEATURE] Anzeige des Change-Logs
+- [FEATURE] Fortsetzen von bis zu 5 Titeln
+- [BUG] Korrektur Schönheitsfehler
+Version 1.03:
+- [BUG] Korrektur Inhaltsimplementierungen
+Version 1.02:
+- [INTERFACE] Hover-Effekt auf Schwarz geändert

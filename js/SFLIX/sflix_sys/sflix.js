@@ -472,7 +472,12 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         image.src = "sflix_sys/sflix.png";
         node.appendChild(image);
 
-        var lastPlayed = localStorage.getItem("playlast").split(",");
+        var lastPlayed = localStorage.getItem("playlast");
+        if (lastPlayed != null) {
+            lastPlayed = lastPlayed.split(",");
+        } else {
+            lastPlayed = [];
+        }
         var wrapperNode = null;
         if (lastPlayed != null && !lastPlayed.includes("")) {
             wrapperNode = document.createElement("div");
@@ -541,9 +546,10 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
         node = document.createElement("div");
         node.id = "changelog";
-        textnode = document.createTextNode(news);
-        node.appendChild(textnode);
+        // textnode = document.createTextNode(news);
+        // node.appendChild(textnode);
         document.getElementById("help").appendChild(node);
+        document.getElementById("changelog").innerHTML = news;
     }
 }
 

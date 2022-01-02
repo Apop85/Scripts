@@ -149,6 +149,7 @@ h2 {
     margin-top: 50px;
     margin-bottom: 50px;
     text-align: center;
+    height: 80vh;
 }
 
 #media img, #media video {
@@ -245,7 +246,7 @@ h2 {
 #navigation > #subsubmenu li:hover, .subsubmenu li:nth-child(2n):hover,
 #navigation > #subsubsubmenu li:hover, .subsubsubmenu li:nth-child(2n):hover,
 #navigation > #subsubsubsubmenu li:hover, .subsubsubsubmenu li:nth-child(2n):hover {
-    background-color: red;
+    background-color: black;
 }
 
 @keyframes splash-out {

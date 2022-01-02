@@ -458,7 +458,6 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     }
 } else {
     var newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
-    // var versionDescription = httpGet("https://github.com/Apop85/Scripts/commits/master/js/SFLIX");
     // console.log(versionDescription);
     if (newestVersion != null) {
         newestVersion = parseFloat(newestVersion.split("var version = ")[1]);
@@ -524,6 +523,8 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             node.appendChild(wrapperNode);
         }
     } else {
+        var news = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");
+
         // Zeige Hilfe an
         node = document.getElementById("help");
         node.style.display = "block";
@@ -538,9 +539,11 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         textnode = document.createTextNode(newestVersion)
         node.appendChild(textnode);
 
-        // node = document.createElement("iframe");
-        // node.src = "https://github.com/Apop85/Scripts/commits/master/js/SFLIX";
-        // document.getElementById("help").appendChild(node);
+        node = document.createElement("div");
+        node.id = "changelog";
+        textnode = document.createTextNode(news);
+        node.appendChild(textnode);
+        document.getElementById("help").appendChild(node);
     }
 }
 

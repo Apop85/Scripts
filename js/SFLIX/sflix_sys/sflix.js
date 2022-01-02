@@ -170,7 +170,10 @@ function addPreviewImage(data, link, cleanedKey) {
 }
 
 function setLastPlayed(title, url) {
-    var currentPlaylist = localStorage.getItem("playlast").split(",");
+    var currentPlaylist = localStorage.getItem("playlast");
+    if (currentPlaylist != null) {
+        currentPlaylist = currentPlaylist.split(",");
+    }
     if (currentPlaylist == null || currentPlaylist.includes("")) {
         currentPlaylist = [];
     }

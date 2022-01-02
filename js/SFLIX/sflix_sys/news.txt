@@ -1,10 +1,12 @@
+<b>Version 1.06</b>:<br>
+- [BUGFIX] Leere Playliste führte zu fehlerhaftem Laden<br><br>
 <b>Version 1.05</b>:<br>
-- [BUG] Korrektur Schönheitsfehler bei Changelog<br><br>
+- [BUGFIX] Korrektur Schönheitsfehler bei Changelog<br><br>
 <b>Version 1.04</b>:<br>
 - [FEATURE] Anzeige des Change-Logs<br>
 - [FEATURE] Fortsetzen von bis zu 5 Titeln<br>
-- [BUG] Korrektur Schönheitsfehler<br><br>
+- [BUGFIX] Korrektur Schönheitsfehler<br><br>
 <b>Version 1.03</b>:<br>
-- [BUG] Korrektur Inhaltsimplementierungen<br><br>
+- [BUGFIX] Korrektur Inhaltsimplementierungen<br><br>
 <b>Version 1.02</b>:<br>
 - [INTERFACE] Hover-Effekt auf Schwarz geändert<br><br>

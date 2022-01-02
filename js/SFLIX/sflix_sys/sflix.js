@@ -147,11 +147,17 @@ function addPreviewImage(data, link, cleanedKey) {
         for (previewImageSrc in data["Preview"]) {
             // Prüfe ob ein Bild mit identischem Namen wie das Medienfile vorhanden ist
             if (previewImageSrc.includes(removeFileExtension(allowedMediaExtensions, cleanedKey.split("/")[cleanedKey.split("/").length-1]) + ".jpg")) {
+                if (!previewImageSrc.startsWith(".")) {
+                    previewImageSrc = "." + previewImageSrc
+                }
+                
                 // Erstelle Bild-Node
                 var imgNode = document.createElement("img");
                 imgNode.src = previewImageSrc;
                 imgNode.style.height = "auto";
                 imgNode.style.width = "30%";
+                imgNode.style.boxShadow = "0px 0px 5px 2px white";
+                imgNode.style.marginBottom = "10px";
                 link.style.flexDirection = "column";
                 link.style.justifyContent = "center";
                 // Füge Bild zu Link-Node hinzu
@@ -193,7 +199,7 @@ sortList(document.getElementsByClassName('menu')[0]);
 
 // Prüfe, ob aus dem Hauptmenü eine Auswahl getroffen wurde
 if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
-    // Zerlege URL in "MAIN"-Bestandteil
+        // Zerlege URL in "MAIN"-Bestandteil
     var mainContent = replaceSpecialChars(decodedUriData.split("MAIN:")[1].split(",")[0].split("#")[0]);
     playListPrefix += mainContent;
     // Lege leere Playliste an
@@ -202,8 +208,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     // Iteriere durch alle Elemente des gewählten Schlüssels
     for (var key in data[mainContent]) {
         if (data[mainContent].hasOwnProperty(key) && key != "Preview") {
-            // Füge alle Elemente eines Schlüssel der Playlist zu
-            playlist.push(key);
+            
             node = document.createElement("LI");
             link = document.createElement("a")
             // Entferne HTML-Code aus Schlüsselname
@@ -222,6 +227,13 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 
                 // Füge Emote anhand Dateiendung hinzu
                 text = addEmoteByFileExtension(text);
+                if (!key.startsWith(".")) {
+                    key = "." + key
+                }
+                // Füge alle Elemente eines Schlüssel der Playlist zu
+                playlist.push(key);
+
+                // Erstelle Link
                 link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
             } else {
@@ -246,13 +258,10 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         playListPrefix += level1;
         // Erstelle Leere Playliste
         playlist = []
-
+	
         // Iteriere über jeden Schlüsselwert
         for (var key in data[mainContent][level1]) {
             if (data[mainContent][level1].hasOwnProperty(key) && key != "Preview") {
-                
-                // Füge alle Elemente eines Schlüssel der Playlist zu
-                playlist.push(key);
                 node = document.createElement("LI");
                 link = document.createElement("a");
                 // Entferne HTML-Code aus Schlüsselname
@@ -275,9 +284,16 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
                 textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
                 link.appendChild(textnode);
+                text = addEmoteByFileExtension(text);
                 
                 // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
                 if (isMediaFile(allowedMediaExtensions, key)) {
+                    if (!key.startsWith(".")) {
+                        key = "." + key
+                    }
+                    // Füge alle Medienelemente eines Schlüssel der Playlist zu
+                    playlist.push(key);
+
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 } else {
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + key);
@@ -303,8 +319,6 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
         for (var key in data[mainContent][level1][level2]) {
             if (data[mainContent][level1][level2].hasOwnProperty(key) && key != "Preview") {
-                // Füge alle Elemente eines Schlüssel der Playlist zu
-                playlist.push(key);
                 node = document.createElement("LI");
                 link = document.createElement("a")
                 text = key.split("/")
@@ -329,9 +343,17 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 
                 // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
                 if (isMediaFile(allowedMediaExtensions, key)) {
-                        link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
+                    if (!key.startsWith(".")) {
+                        key = "." + key
+                    }
+
+                    // Füge alle Elemente eines Schlüssel der Playlist zu
+                    playlist.push(key);
+
+                    // Erstelle Link
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 } else {
-                        link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + key);
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + key);
                 }
                 node.appendChild(link);
                 document.getElementById("subsubsubmenu").appendChild(node);
@@ -354,8 +376,6 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
         for (var key in data[mainContent][level1][level2][level3]) {
             if (data[mainContent][level1][level2][level3].hasOwnProperty(key) && key != "Preview") {
-                // Füge alle Elemente eines Schlüssel der Playlist zu
-                playlist.push(key);
                 node = document.createElement("LI");
                 link = document.createElement("a")
                 text = key.split("/")
@@ -380,6 +400,13 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 
                 // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
                 if (isMediaFile(allowedMediaExtensions, key)) {
+                    if (!key.startsWith(".")) {
+                        key = "." + key
+                    }
+                    // Füge alle Elemente eines Schlüssel der Playlist zu
+                    playlist.push(key);
+
+                    // Erstelle Medienlink
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 } else {
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + level3 + ",LEVEL4:" + key);
@@ -478,6 +505,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     var medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0].split("#")[0]);
     // Lese Playlistenindex aus
     localPlaylist = localPlaylist.sort()
+
     var currentIndex = localPlaylist.indexOf(medialocation);
     // Aktuelle Auswahl auslesen
     var currentUrl = decodedUriData.split(",MEDIA:")[0];

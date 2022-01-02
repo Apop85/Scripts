@@ -169,6 +169,37 @@ function addPreviewImage(data, link, cleanedKey) {
     }
 }
 
+function setLastPlayed(title, url) {
+    var currentPlaylist = localStorage.getItem("playlast").split(",");
+    if (currentPlaylist == null || currentPlaylist.includes("")) {
+        currentPlaylist = [];
+    }
+
+    var mediaPath = atob(url.split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0].split("/");
+    var filename = mediaPath[mediaPath.length - 1];
+    if (!isImage(filename)) {
+        mediaPath.splice(mediaPath.length - 1, 1);
+        mediaPath.splice(mediaPath.length - 1, 1);
+        mediaPath = mediaPath.join("/");
+        
+        for (var loggedUrl in currentPlaylist) {
+            var loggedMediaPath = atob(currentPlaylist[loggedUrl].split("|")[1].split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0];
+    
+            if (loggedMediaPath.includes(mediaPath)) {
+                currentPlaylist.splice(loggedUrl, 1)
+            }
+        }
+    
+        if (currentPlaylist.length < 5) {
+            currentPlaylist.splice(0, 0, title + "|" + url);
+        } else {
+            currentPlaylist.splice(currentPlaylist.length - 1, 1);
+            currentPlaylist.splice(0, 0, title + "|" + url);
+        }
+        localStorage.setItem("playlast", currentPlaylist);
+    }
+}
+
 // Lade Favoriten
 favorites = localStorage.getItem("favorites");
 if (favorites != null) {
@@ -440,22 +471,31 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         image.src = "sflix_sys/sflix.png";
         node.appendChild(image);
 
-        var lastPlayed = localStorage.getItem("playlast");
-        if (lastPlayed != null) {
-            node = document.getElementById("media");
-            buttonNode = document.createElement("a");
-            buttonNode.className = "button";
-            buttonNode.href = lastPlayed;
-            textNode = document.createTextNode("Letzten Titel fortsetzen");
-            buttonNode.appendChild(textNode);
-            node.appendChild(buttonNode);
-    
+        var lastPlayed = localStorage.getItem("playlast").split(",");
+        if (lastPlayed != null && !lastPlayed.includes("")) {
+            var wrapperNode = document.createElement("div");
+            for (var lastUrlIndex in lastPlayed) {
+                var lastTitle = lastPlayed[lastUrlIndex].split("|")[0];
+                var lastUrl = lastPlayed[lastUrlIndex].split("|")[1];
+                node = document.getElementById("media");
+                buttonNode = document.createElement("a");
+                buttonNode.className = "button";
+                buttonNode.href = lastUrl;
+                textNode = document.createTextNode(removeFileExtension(allowedMediaExtensions, lastTitle) + " fortsetzen");
+                buttonNode.appendChild(textNode);
+                wrapperNode.appendChild(buttonNode);
+                
+            }
             // Füge Button-Styles hinzu
-            node.style.display = "flex";
-            node.style.flexDirection = "column";
-            node.style.width = "50vw";
-            node.style.marginLeft = "auto";
-            node.style.marginRight = "auto";
+            wrapperNode.style.display = "flex";
+            wrapperNode.style.flexDirection = "column";
+            wrapperNode.style.width = "50vw";
+            wrapperNode.style.padding = "20px";
+            wrapperNode.style.backgroundColor = "black";
+            wrapperNode.style.marginLeft = "auto";
+            wrapperNode.style.marginRight = "auto";
+            wrapperNode.id = "lastPlayedWrapper";
+            node.appendChild(wrapperNode);
         }
     
         if (newestVersion != null && newestVersion > version) {
@@ -578,7 +618,8 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         document.getElementById("media").appendChild(linkNode);
     }
 
-    localStorage.setItem("playlast", window.location.href);
+    setLastPlayed(mediaName, window.location.href)
+    // localStorage.setItem("playlast", window.location.href);
 
     // Prüfe, ob der Merken-Button gedrückt wurde
     if (decodedUriData.includes(",FAV:True")) {

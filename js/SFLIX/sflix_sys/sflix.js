@@ -141,11 +141,15 @@ function replaceSpecialChars(string) {
 
 // Hinzufügen eines Vorschaubildes, falls vorhanden
 function addPreviewImage(data, link, cleanedKey) {
+    if (cleanedKey.startsWith(".")) {
+        cleanedKey = cleanedKey.replace(".", "")
+    }
     // Prüfe, ob Preview-Ordner vorhanden ist
     if (data.hasOwnProperty("Preview")){
         // Iteriere über alle Vorschaubilder
         for (previewImageSrc in data["Preview"]) {
             // Prüfe ob ein Bild mit identischem Namen wie das Medienfile vorhanden ist
+            console.log(removeFileExtension(allowedMediaExtensions, cleanedKey.split("/")[cleanedKey.split("/").length-1]) + ".jpg");
             if (previewImageSrc.includes(removeFileExtension(allowedMediaExtensions, cleanedKey.split("/")[cleanedKey.split("/").length-1]) + ".jpg")) {
                 if (!previewImageSrc.startsWith(".")) {
                     previewImageSrc = "." + previewImageSrc

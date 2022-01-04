@@ -177,6 +177,8 @@ function setLastPlayed(title, url) {
     if (currentPlaylist == null || currentPlaylist.includes("")) {
         currentPlaylist = [];
     }
+    
+    // console.log(currentPlaylist);
 
     var mediaPath = atob(url.split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0].split("/");
     var filename = mediaPath[mediaPath.length - 1];
@@ -186,8 +188,13 @@ function setLastPlayed(title, url) {
         mediaPath = mediaPath.join("/");
         
         for (var loggedUrl in currentPlaylist) {
-            var loggedMediaPath = atob(currentPlaylist[loggedUrl].split("|")[1].split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0];
-    
+            if (currentPlaylist[loggedUrl].includes("|")) {
+                var loggedMediaPath = atob(currentPlaylist[loggedUrl].split("|")[1].split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0];
+            } else {
+                currentPlaylist.splice(loggedUrl, 1)
+            }
+            
+            // Entferne Eintrag aus "Zuletzt gesehen"
             if (loggedMediaPath.includes(mediaPath)) {
                 currentPlaylist.splice(loggedUrl, 1)
             }

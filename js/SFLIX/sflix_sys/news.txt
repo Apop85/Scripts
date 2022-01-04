@@ -1,3 +1,5 @@
+<b>Version 1.07</b>:<br>
+- [BUGFIX] Fehlerkorrektur bei Dateinamen<br><br>
 <b>Version 1.06</b>:<br>
 - [BUGFIX] Leere Playliste führte zu fehlerhaftem Laden<br><br>
 <b>Version 1.05</b>:<br>

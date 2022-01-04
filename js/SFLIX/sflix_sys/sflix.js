@@ -254,6 +254,9 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             link = document.createElement("a")
             // Entferne HTML-Code aus Schlüsselname
             cleanedKey = replaceSpecialChars(key);
+            if (!cleanedKey.startsWith(".")) {
+                cleanedKey = "." + cleanedKey;
+            }
             addPreviewImage(data[mainContent], link, cleanedKey);
 
             // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
@@ -307,12 +310,15 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 link = document.createElement("a");
                 // Entferne HTML-Code aus Schlüsselname
                 cleanedKey = replaceSpecialChars(key);
+                if (!cleanedKey.startsWith(".")) {
+                    cleanedKey = "." + cleanedKey;
+                }
 
                 // Füge Vorschaubild hinzu
                 addPreviewImage(data[mainContent][level1], link, cleanedKey);
 
                 text = key.split("/");
-
+                
                 // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
                 if ((favorites != null && favorites.includes(cleanedKey))){
                     text = "⭐ " + text[text.length - 1].replace(level1, "");
@@ -365,6 +371,9 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 text = key.split("/")
                 // Entferne HTML-Code aus Schlüsselname
                 cleanedKey = replaceSpecialChars(key);
+                if (!cleanedKey.startsWith(".")) {
+                    cleanedKey = "." + cleanedKey;
+                }
 
                 // Füge Vorschaubild hinzu
                 addPreviewImage(data[mainContent][level1][level2], link, cleanedKey);
@@ -422,6 +431,9 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 text = key.split("/")
                 // Entferne HTML-Code aus Schlüsselname
                 cleanedKey = replaceSpecialChars(key);
+                if (!cleanedKey.startsWith(".")) {
+                    cleanedKey = "." + cleanedKey;
+                }
 
                 // Füge Vorschaubild hinzu
                 addPreviewImage(data[mainContent][level1][level2][level3], link, cleanedKey);

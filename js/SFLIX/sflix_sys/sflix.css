@@ -251,6 +251,10 @@ h2 {
     height: 100vh;
 }
 
+#lastPlayedWrapper {
+    margin-bottom: 100px;
+}
+
 #submenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3)),
 #subsubmenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3)),
 #subsubsubmenu > li:not(:nth-child(6n+1)):not(:nth-child(6n+2)):not(:nth-child(6n+3)),

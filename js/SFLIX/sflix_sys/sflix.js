@@ -163,7 +163,6 @@ function replaceSpecialChars(string) {
 
 // Hinzufügen eines Vorschaubildes, falls vorhanden
 function addPreviewImage(data, link, cleanedKey) {
-    console.log(link, cleanedKey);
     if (cleanedKey.startsWith(".")) {
         cleanedKey = cleanedKey.replace(".", "")
     }
@@ -236,6 +235,10 @@ function setLastPlayed(title, url) {
     }
 }
 
+function setHeight() {
+    document.getElementById("mainBody").style.minHeight = document.documentElement.scrollHeight + "px";
+}
+
 // Lade Favoriten
 favorites = localStorage.getItem("favorites");
 if (favorites != null) {
@@ -284,7 +287,6 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 cleanedKey = "." + cleanedKey;
             }
             var mainContentPreviewImage = addPreviewImage(data[mainContent], link, cleanedKey);
-            // console.log(mainContentPreviewImage);
 
             // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
             if (isMediaFile(allowedMediaExtensions, key)) {
@@ -784,9 +786,5 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     }
 } else {
     // Platzhalterbild für Leere Seiten erstellen
-    image = document.createElement("img");
-    image.src = "sflix_sys/sflix_bg.jpg";
-    image.id = "mainBackground";
-    node = document.getElementById("placeholderImage");
-    node.appendChild(image);
+    document.getElementById("mainBody").style.backgroundImage = "url(sflix_sys/sflix_bg.jpg)";
 }

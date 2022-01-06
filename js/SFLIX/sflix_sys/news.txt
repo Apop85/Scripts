@@ -1,5 +1,7 @@
+<b>Version 1.10</b>:<br>
+- [INTERFACE] Vorschaubild bei fortsetzbaren Medieninhalten<br><br>
 <b>Version 1.09</b>:<br>
-- [INTERFACE] Visuelle Anzeige, wenn ein Videozeitstempel zurückgesetzt wird (95%).<br><
+- [INTERFACE] Visuelle Anzeige, wenn ein Videozeitstempel zurückgesetzt wird (95%).<br>
 - [INTERFACE] Bei Mediananzeige wird nun das Übergeordnete Menü angezeigt<br><br>
 <b>Version 1.08</b>:<br>
 - [BUGFIX] Fehlender Stern bei Favoriten<br><br>

@@ -163,6 +163,7 @@ function replaceSpecialChars(string) {
 
 // Hinzufügen eines Vorschaubildes, falls vorhanden
 function addPreviewImage(data, link, cleanedKey) {
+    console.log(link, cleanedKey);
     if (cleanedKey.startsWith(".")) {
         cleanedKey = cleanedKey.replace(".", "")
     }
@@ -183,12 +184,13 @@ function addPreviewImage(data, link, cleanedKey) {
                 imgNode.style.width = "30%";
                 imgNode.style.boxShadow = "0px 0px 5px 2px white";
                 imgNode.style.marginBottom = "10px";
+                imgNode.id = removeFileExtension(allowedMediaExtensions, cleanedKey.split("/")[cleanedKey.split("/").length-1]);
                 link.style.flexDirection = "column";
                 link.style.justifyContent = "center";
                 // Füge Bild zu Link-Node hinzu
                 link.appendChild(imgNode);
                 // Breche Loop ab
-                break;
+                return previewImageSrc;
             }
         }
     }
@@ -281,7 +283,8 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             if (!cleanedKey.startsWith(".")) {
                 cleanedKey = "." + cleanedKey;
             }
-            addPreviewImage(data[mainContent], link, cleanedKey);
+            var mainContentPreviewImage = addPreviewImage(data[mainContent], link, cleanedKey);
+            // console.log(mainContentPreviewImage);
 
             // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
             if (isMediaFile(allowedMediaExtensions, key)) {
@@ -533,6 +536,17 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 buttonNode = document.createElement("a");
                 buttonNode.className = "button";
                 buttonNode.href = lastUrl;
+
+                var decodedUrl = atob(lastUrl.split("?=")[1].split("#")[0]);
+                mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(",")[0].split("#")[0]);
+                if (decodedUrl.includes("LEVEL1")){
+                    level1 = replaceSpecialChars(decodedUrl.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
+                    addPreviewImage(data[mainContent], buttonNode, level1);
+                    buttonNode.style.display = "flex";
+                    buttonNode.style.flexDirection = "row";
+                    buttonNode.style.alignItems = "center";
+                }
+
                 textNode = document.createTextNode(removeFileExtension(allowedMediaExtensions, lastTitle) + " fortsetzen");
                 buttonNode.appendChild(textNode);
                 wrapperNode.appendChild(buttonNode);

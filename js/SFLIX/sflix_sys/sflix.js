@@ -32,6 +32,7 @@ var linkNode = null;
 var node = null;
 var subnode = null;
 
+// Funktion zum auslesen von Inhalten von anderen URLs
 function httpGet(theUrl) {
     let xmlhttp;
     
@@ -56,6 +57,7 @@ function httpGet(theUrl) {
     }
 }
 
+// Funktion zum Prüfen, ob ein Dateiname einer Videodatei entspricht
 function isVideo(filename) {
     for (index in mediaTypes) {
         if (filename.includes(mediaTypes[index])) {
@@ -65,6 +67,7 @@ function isVideo(filename) {
     return false;
 }
 
+// Funktion zum Prüfen, ob ein Dateiname einer Bilddatei entspricht
 function isImage(filename) {
     for (index in imageTypes) {
         if (filename.includes(imageTypes[index])) {
@@ -74,6 +77,7 @@ function isImage(filename) {
     return false;
 }
 
+// Funktion zum Prüfen, ob ein Dateiname einer Musikdatei entspricht
 function isMusic(filename) {
     for (index in musicTypes) {
         if (filename.includes(musicTypes[index])) {
@@ -82,7 +86,6 @@ function isMusic(filename) {
     }
     return false;
 }
-
 
 // Sortiere UL-Objekt alphabetisch
 function sortList(ul){
@@ -195,6 +198,7 @@ function addPreviewImage(data, link, cleanedKey) {
     }
 }
 
+// Funktion zum Updaten der Liste der zuletzt gesehenen Medienelementen
 function setLastPlayed(title, url) {
     var currentPlaylist = localStorage.getItem("playlast");
     if (currentPlaylist != null) {
@@ -235,6 +239,7 @@ function setLastPlayed(title, url) {
     }
 }
 
+// Funktion zum setzen der Höhe des body-Elements
 function setHeight() {
     document.getElementById("mainBody").style.minHeight = document.documentElement.scrollHeight + "px";
 }
@@ -370,7 +375,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     // Füge alle Medienelemente eines Schlüssel der Playlist zu
                     playlist.push(key);
 
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 } else {
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + key);
                 }
@@ -430,7 +435,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     playlist.push(key);
 
                     // Erstelle Link
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 } else {
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + key);
                 }
@@ -508,6 +513,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         localStorage.setItem(playListPrefix, playlist);
     }
 } else {
+    // Lese neuste Version von GIT-Repository aus
     newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
     if (newestVersion != null) {
         newestVersion = parseFloat(newestVersion.split("var version = ")[1]);
@@ -529,21 +535,32 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             lastPlayed = [];
         }
 
+        // Erstelle Liste von kürzlich gespielten Inhalten
         if (lastPlayed != null && !lastPlayed.includes("")) {
             wrapperNode = document.createElement("div");
+
             for (var lastUrlIndex in lastPlayed) {
+                // Lese Titel und URL aus
                 lastTitle = lastPlayed[lastUrlIndex].split("|")[0];
                 lastUrl = lastPlayed[lastUrlIndex].split("|")[1];
+                
                 node = document.getElementById("media");
+                
+                // Erstelle Button
                 buttonNode = document.createElement("a");
                 buttonNode.className = "button";
                 buttonNode.href = lastUrl;
 
+                // Decodiere übergebene URL
                 var decodedUrl = atob(lastUrl.split("?=")[1].split("#")[0]);
+                // Lese die Hauptkategorie aus
                 mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(",")[0].split("#")[0]);
                 if (decodedUrl.includes("LEVEL1")){
+                    // Lese die level1-Eintrag aus
                     level1 = replaceSpecialChars(decodedUrl.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
+                    // Füge Vorschaubild in Button ein
                     addPreviewImage(data[mainContent], buttonNode, level1);
+                    // Styles für Button ändern
                     buttonNode.style.display = "flex";
                     buttonNode.style.flexDirection = "row";
                     buttonNode.style.alignItems = "center";
@@ -551,8 +568,9 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     buttonNode.style.maxHeight = "150px";
                     buttonNode.style.textAlign = "left";
                 }
-
+                // Erstelle Buttontext
                 textNode = document.createTextNode(removeFileExtension(allowedMediaExtensions, lastTitle) + " fortsetzen");
+                // Füge Button hinzu
                 buttonNode.appendChild(textNode);
                 wrapperNode.appendChild(buttonNode);
             }
@@ -568,9 +586,12 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             node.appendChild(wrapperNode);
         }
     
+        // Prüfe, ob Version aktuell ist
         if (newestVersion != null && newestVersion > version) {
+            // Erstelle Hilfe-Link
             node = document.getElementById("media");
             wrapperNode = document.createElement("div"); 
+            // Erstelle Update-Button
             buttonNode = document.createElement("a");
             buttonNode.className = "button";
             buttonNode.href = "start.html?=" + btoa("HELP");

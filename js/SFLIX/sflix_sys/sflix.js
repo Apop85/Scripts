@@ -8,7 +8,29 @@ var mediaTypes = [".mp4"];
 var musicTypes = [".mp3", ".m4a", ".ogg"];
 var imageTypes = [".jpg", ".jpeg", ".png", ".gif"];
 var playListPrefix = "";
-
+var mainContent = null;
+var level1 = null;
+var level2 = null;
+var level3 = null;
+var newestVersion = null;
+var image = null;
+var buttonNode = null;
+var lastPlayed = null;
+var wrapperNode = null;
+var lastTitle = null;
+var lastUrl = null;
+var news = null;
+var playlistName = null;
+var localPlaylist = null;
+var medialocation = null;
+var currentIndex = null;
+var currentUrl = null;
+var mediaName = null;
+var pastTimestamp = null;
+var currentTimestamp = null;
+var linkNode = null;
+var node = null;
+var subnode = null;
 
 function httpGet(theUrl) {
     let xmlhttp;
@@ -149,7 +171,6 @@ function addPreviewImage(data, link, cleanedKey) {
         // Iteriere über alle Vorschaubilder
         for (previewImageSrc in data["Preview"]) {
             // Prüfe ob ein Bild mit identischem Namen wie das Medienfile vorhanden ist
-            console.log(removeFileExtension(allowedMediaExtensions, cleanedKey.split("/")[cleanedKey.split("/").length-1]) + ".jpg");
             if (previewImageSrc.includes(removeFileExtension(allowedMediaExtensions, cleanedKey.split("/")[cleanedKey.split("/").length-1]) + ".jpg")) {
                 if (!previewImageSrc.startsWith(".")) {
                     previewImageSrc = "." + previewImageSrc
@@ -182,7 +203,6 @@ function setLastPlayed(title, url) {
         currentPlaylist = [];
     }
     
-    // console.log(currentPlaylist);
 
     var mediaPath = atob(url.split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0].split("/");
     var filename = mediaPath[mediaPath.length - 1];
@@ -245,7 +265,7 @@ sortList(document.getElementsByClassName('menu')[0]);
 // Prüfe, ob aus dem Hauptmenü eine Auswahl getroffen wurde
 if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         // Zerlege URL in "MAIN"-Bestandteil
-    var mainContent = replaceSpecialChars(decodedUriData.split("MAIN:")[1].split(",")[0].split("#")[0]);
+    mainContent = replaceSpecialChars(decodedUriData.split("MAIN:")[1].split(",")[0].split("#")[0]);
     playListPrefix += mainContent;
     // Lege leere Playliste an
     playlist = []
@@ -302,7 +322,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     if (decodedUriData.includes("LEVEL1")) {
         document.getElementById("submenu").style.display = "none";
         // Zerlege URL in "LEVEL1"-Bestandteil
-        var level1 = replaceSpecialChars(decodedUriData.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
+        level1 = replaceSpecialChars(decodedUriData.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
         playListPrefix += level1;
         // Erstelle Leere Playliste
         playlist = []
@@ -363,7 +383,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         document.getElementById("subsubmenu").style.display = "none";
 
         // Zerlege URL in "LEVEL2"-Bestandteil
-        var level2 = replaceSpecialChars(decodedUriData.split(",LEVEL2:")[1].split(",")[0].split("#")[0]);
+        level2 = replaceSpecialChars(decodedUriData.split(",LEVEL2:")[1].split(",")[0].split("#")[0]);
         playListPrefix += level2;
         // Erstelle Leere Playliste
         playlist = []
@@ -405,7 +425,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     playlist.push(key);
 
                     // Erstelle Link
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 } else {
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + key);
                 }
@@ -423,7 +443,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         document.getElementById("subsubsubmenu").style.display = "none";
 
         // Zerlege URL in "LEVEL3"-Bestandteil
-        var level3 = replaceSpecialChars(decodedUriData.split(",LEVEL3:")[1].split(",")[0].split("#")[0]);
+        level3 = replaceSpecialChars(decodedUriData.split(",LEVEL3:")[1].split(",")[0].split("#")[0]);
         playListPrefix += level3;
         // Erstelle Leere Playliste
         playlist = []
@@ -464,7 +484,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     playlist.push(key);
 
                     // Erstelle Medienlink
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 } else {
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + level3 + ",LEVEL4:" + key);
                 }
@@ -483,8 +503,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         localStorage.setItem(playListPrefix, playlist);
     }
 } else {
-    var newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
-    // console.log(versionDescription);
+    newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
     if (newestVersion != null) {
         newestVersion = parseFloat(newestVersion.split("var version = ")[1]);
     }
@@ -493,23 +512,23 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         // Wenn keine Auswahl getroffen wurde, Splashscreen anzeigen
         node = document.getElementById("splashscreen");
         node.style.display = "block";
-        var image = document.createElement("img");
-        var buttonNode = null;
+        image = document.createElement("img");
+
         image.src = "sflix_sys/sflix.png";
         node.appendChild(image);
 
-        var lastPlayed = localStorage.getItem("playlast");
+        lastPlayed = localStorage.getItem("playlast");
         if (lastPlayed != null) {
             lastPlayed = lastPlayed.split(",");
         } else {
             lastPlayed = [];
         }
-        var wrapperNode = null;
+
         if (lastPlayed != null && !lastPlayed.includes("")) {
             wrapperNode = document.createElement("div");
             for (var lastUrlIndex in lastPlayed) {
-                var lastTitle = lastPlayed[lastUrlIndex].split("|")[0];
-                var lastUrl = lastPlayed[lastUrlIndex].split("|")[1];
+                lastTitle = lastPlayed[lastUrlIndex].split("|")[0];
+                lastUrl = lastPlayed[lastUrlIndex].split("|")[1];
                 node = document.getElementById("media");
                 buttonNode = document.createElement("a");
                 buttonNode.className = "button";
@@ -554,7 +573,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             node.appendChild(wrapperNode);
         }
     } else {
-        var news = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");
+        news = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");
 
         // Zeige Hilfe an
         node = document.getElementById("help");
@@ -583,22 +602,21 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
 // Prüfe, ob ein Medientyp ausgewählt wurde
 if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
-    var playlistName = null;
     if (decodedUriData.includes(",PL:")) {
         playlistName = decodedUriData.split(",PL:")[1].split(",")[0].split("#")[0];
     }
     // Lade aktuelle Playliste
-    var localPlaylist = localStorage.getItem(playlistName).split(",");
+    localPlaylist = localStorage.getItem(playlistName).split(",");
     // Lese Speicherort aus
-    var medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0].split("#")[0]);
+    medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0].split("#")[0]);
     // Lese Playlistenindex aus
     localPlaylist = localPlaylist.sort()
 
-    var currentIndex = localPlaylist.indexOf(medialocation);
+    currentIndex = localPlaylist.indexOf(medialocation);
     // Aktuelle Auswahl auslesen
-    var currentUrl = decodedUriData.split(",MEDIA:")[0];
+    currentUrl = decodedUriData.split(",MEDIA:")[0];
     // Lese Dateinamen aus
-    var mediaName = medialocation.split("/");
+    mediaName = medialocation.split("/");
     mediaName = mediaName[mediaName.length -1].split("#")[0];
 
     // Schreibe Medientitel
@@ -614,13 +632,15 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         node.src = medialocation;
         node.id = "video";
         node.controls = true;
-        
+        // node.muted =true;
+        // node.focus;
 
         document.getElementById("media").appendChild(node);
 
         node.onloadedmetadata = function() {
+            node.autoplay = true;
             // Lese Zeitstempel des ausgewählten Videos aus
-            var pastTimestamp = localStorage.getItem("timestamp-" + mediaName)
+            pastTimestamp = localStorage.getItem("timestamp-" + mediaName)
             if (pastTimestamp != null) {
                 // Prüfe Zeitstempel für Medien die länger als 10 Minuten sind
                 if (this.duration >= 600) {
@@ -641,8 +661,9 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
 
         // Lese aktuellen Zeitstempel im Video aus
         document.getElementById("video").addEventListener('timeupdate', function() {
+            pastTimestamp = localStorage.getItem("timestamp-" + mediaName)
             currentTime = parseInt(this.currentTime, 10);
-            var currentTimestamp = localStorage.getItem("timestamp-" + mediaName);
+            currentTimestamp = localStorage.getItem("timestamp-" + mediaName);
             if (currentTimestamp == null) {
                 currentTimestamp = 0;
             }
@@ -650,8 +671,15 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             if (currentTimestamp != currentTime && currentTime % 10 == 0) {
                 localStorage.setItem("timestamp-" + mediaName, currentTime);
             }
-        });
 
+            if (this.duration > 600) {
+                if (100 / this.duration * pastTimestamp > 95) {
+                    this.style.border = "1px solid red";
+                } else {
+                    this.style.border = "0px solid #222";
+                }
+            }
+        });
     } else if (isImage(medialocation)) {
         // Erstelle Bildelement
         element = document.getElementById("media");
@@ -660,7 +688,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         node.id = "imagenode" + Date.now();
         
         // Füge Link zu Bild hinzu
-        var linkNode = document.createElement("a");
+        linkNode = document.createElement("a");
         linkNode.href = medialocation.split("#")[0];
         linkNode.appendChild(node);
         document.getElementById("media").appendChild(linkNode);

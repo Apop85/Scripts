@@ -545,12 +545,14 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     buttonNode.style.display = "flex";
                     buttonNode.style.flexDirection = "row";
                     buttonNode.style.alignItems = "center";
+                    buttonNode.style.justifyContent = "start";
+                    buttonNode.style.maxHeight = "150px";
+                    buttonNode.style.textAlign = "left";
                 }
 
                 textNode = document.createTextNode(removeFileExtension(allowedMediaExtensions, lastTitle) + " fortsetzen");
                 buttonNode.appendChild(textNode);
                 wrapperNode.appendChild(buttonNode);
-                
             }
             // Füge Button-Styles hinzu
             wrapperNode.style.display = "flex";

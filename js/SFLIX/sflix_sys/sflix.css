@@ -66,6 +66,13 @@ h2 {
     font-weight: 600;
 }
 
+.button img {
+    margin: unset !important;
+    max-height: 140px !important;
+    width: auto !important;
+    margin-right: 20px !important;
+}
+
 .button:not(.button:last-child) {
     margin-bottom: 50px;
 }

@@ -113,6 +113,13 @@ function sortList(ul){
 
     // Sortiere Liste
     list = list.sort()
+    if (list.includes("Aufklappen")) {
+        var hochElement = list.indexOf("Aufklappen");
+        if (hochElement != 0) {
+            list.splice(hochElement, 1)
+            list.unshift("Aufklappen")
+        }
+    }
     
     // Erstelle Sortierte UL-Liste
     for (var i = 0; i < list.length; i++) {
@@ -244,6 +251,44 @@ function setHeight() {
     document.getElementById("mainBody").style.minHeight = document.documentElement.scrollHeight + "px";
 }
 
+function toggleSubmenu(id, currentNodeId) {
+    // Ein/Ausblenden des Menüs
+    if (document.getElementById(id).style.display == "none") {
+        document.getElementById(id).style.display = "flex";
+    } else {
+        document.getElementById(id).style.display = "none";
+    }
+
+    document.getElementById(currentNodeId).scrollIntoView();
+
+    // Ein/Ausblenden des Buttons
+    console.log(document.getElementById(currentNodeId).childNodes[0].innerHTML)
+    if (document.getElementById(currentNodeId).childNodes[0].innerHTML == "Aufklappen") {
+        document.getElementById(currentNodeId).childNodes[0].innerHTML = "Zuklappen";
+    } else {
+        document.getElementById(currentNodeId).childNodes[0].innerHTML = "Aufklappen";
+    }
+    // if (document.getElementById(currentNodeId).style.display == "none") {
+    //     document.getElementById(currentNodeId).style.display = "block";
+    // } else {
+    //     document.getElementById(currentNodeId).style.display = "none";
+    // }
+}
+
+function createHochButton(upperId, currentId) {
+    node = document.createElement("LI");
+    link = document.createElement("a");
+    textnode = document.createTextNode("Aufklappen");
+    link.appendChild(textnode);
+    node.appendChild(link);
+    node.id = upperId+currentId;
+    link.setAttribute("onclick", "toggleSubmenu('" + upperId + "', '" + node.id + "')");
+    node.style.width = "100%";
+    node.style.display = "block";
+    node.className = "UP";
+    document.getElementById(currentId).appendChild(node);
+}
+
 // Lade Favoriten
 favorites = localStorage.getItem("favorites");
 if (favorites != null) {
@@ -260,11 +305,12 @@ for (var key in data) {
     if (data.hasOwnProperty(key)) {
         // Erstelle Listenelement für jeden Schlüssel
         node = document.createElement("LI");
-        link = document.createElement("a")
+        link = document.createElement("a");
         textnode = document.createTextNode(key);
         link.appendChild(textnode);
         link.href = "start.html?=" + btoa("MAIN:" + key);
         node.appendChild(link);
+        node.id = key;
         document.getElementById("menu").appendChild(node);
         
     }
@@ -274,7 +320,7 @@ sortList(document.getElementsByClassName('menu')[0]);
 
 // Prüfe, ob aus dem Hauptmenü eine Auswahl getroffen wurde
 if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
-        // Zerlege URL in "MAIN"-Bestandteil
+    // Zerlege URL in "MAIN"-Bestandteil
     mainContent = replaceSpecialChars(decodedUriData.split("MAIN:")[1].split(",")[0].split("#")[0]);
     playListPrefix += mainContent;
     // Lege leere Playliste an
@@ -283,7 +329,6 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     // Iteriere durch alle Elemente des gewählten Schlüssels
     for (var key in data[mainContent]) {
         if (data[mainContent].hasOwnProperty(key) && key != "Preview") {
-            
             node = document.createElement("LI");
             link = document.createElement("a")
             // Entferne HTML-Code aus Schlüsselname
@@ -320,10 +365,11 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             }
             link.appendChild(textnode);
             node.appendChild(link);
+            node.id = cleanedKey.replace(".", "");
             document.getElementById("submenu").appendChild(node);
-            
         }
     }
+    document.getElementById(mainContent).className += " activeMenu";
     // Sortiere Liste
     sortList(document.getElementsByClassName('submenu')[0]);
     document.getElementById("submenu").style.borderTop = "2px solid #666";
@@ -336,6 +382,18 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         playListPrefix += level1;
         // Erstelle Leere Playliste
         playlist = []
+
+        createHochButton("submenu", "subsubmenu");
+        // node = document.createElement("LI");
+        // link = document.createElement("a");
+        // textnode = document.createTextNode("Aufklappen");
+        // link.appendChild(textnode);
+        // node.appendChild(link);
+        // link.setAttribute("onclick", "toggleSubmenu('submenu')");
+        // node.style.width = "100%";
+        // document.getElementById("subsubmenu").appendChild(node);
+
+
 	
         // Iteriere über jeden Schlüsselwert
         for (var key in data[mainContent][level1]) {
@@ -380,9 +438,12 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + key);
                 }
                 node.appendChild(link);
+                node.id = cleanedKey.replace(".", "");
                 document.getElementById("subsubmenu").appendChild(node);
             }
         }
+        document.getElementById(level1).className += " activeMenu";
+
         // Sortiere Liste
         sortList(document.getElementsByClassName('subsubmenu')[0]);
         document.getElementById("subsubmenu").style.borderTop = "2px solid #666";
@@ -397,6 +458,8 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         playListPrefix += level2;
         // Erstelle Leere Playliste
         playlist = []
+
+        createHochButton("subsubmenu", "subsubsubmenu");
 
         for (var key in data[mainContent][level1][level2]) {
             if (data[mainContent][level1][level2].hasOwnProperty(key) && key != "Preview") {
@@ -440,9 +503,12 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + key);
                 }
                 node.appendChild(link);
+                node.id = cleanedKey.replace(".", "");
                 document.getElementById("subsubsubmenu").appendChild(node);
             }
         }
+        document.getElementById(level2).className += " activeMenu";
+
         // Sortiere Liste
         sortList(document.getElementsByClassName('subsubsubmenu')[0]);
         document.getElementById("subsubsubmenu").style.borderTop = "2px solid #666";
@@ -457,6 +523,8 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         playListPrefix += level3;
         // Erstelle Leere Playliste
         playlist = []
+
+        createHochButton("subsubsubmenu", "subsubsubsubmenu");
 
         for (var key in data[mainContent][level1][level2][level3]) {
             if (data[mainContent][level1][level2][level3].hasOwnProperty(key) && key != "Preview") {
@@ -499,9 +567,12 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + level3 + ",LEVEL4:" + key);
                 }
                 node.appendChild(link);
+                node.id = cleanedKey.replace(".", "");
                 document.getElementById("subsubsubsubmenu").appendChild(node);
             }
         }
+        document.getElementById(level3).className += " activeMenu";
+
         // Sortiere Liste
         sortList(document.getElementsByClassName('subsubsubsubmenu')[0]);
         document.getElementById("subsubsubsubmenu").style.borderTop = "2px solid #666";
@@ -650,6 +721,8 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0].split("#")[0]);
     // Lese Playlistenindex aus
     localPlaylist = localPlaylist.sort()
+    
+    document.getElementById(medialocation.replace(".","")).className += " activeMenu";
 
     currentIndex = localPlaylist.indexOf(medialocation);
     // Aktuelle Auswahl auslesen

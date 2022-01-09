@@ -1,9 +1,11 @@
+<b>Version 1.12</b>:<br>
+- [FEATURE] Suchfunktion (Bekannter Bug: Inhalte im selben Ordner wie das Suchresultat ergeben einen Fehler, wenn der Ordner zuvor noch nie geöffnet wurde.)<br><br>
 <b>Version 1.11</b>:<br>
 - [INTERFACE] Dunklere Farbpalette.<br>
 - [INTERFACE] Aktuell geöffneter Inhalt wird farblich im Menü hervorgehoben.<br>
 - [INTERFACE] Höherliegende Menüs können während dem Abspielen von Inhalten auf- und zugeklappt werden<br><br>
 <b>Version 1.101</b>:<br>
-- [HOTFIX] Fehler bei Buttondarstellung bei fortesetzbaren Medieninhalten<br><br>
+- [HOTFIX] Fehler bei Buttondarstellung bei fortsetzbaren Medieninhalten<br><br>
 <b>Version 1.10</b>:<br>
 - [INTERFACE] Vorschaubild bei fortsetzbaren Medieninhalten<br><br>
 <b>Version 1.09</b>:<br>

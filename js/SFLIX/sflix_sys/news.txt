@@ -1,3 +1,5 @@
+<b>Version 1.13</b>:<br>
+- [BUGFIX] Inhalte im selben Ordner wie das Suchresultat ergaben einen Fehler, wenn der Ordner zuvor noch nie geöffnet wurde<br><br>
 <b>Version 1.12</b>:<br>
 - [FEATURE] Suchfunktion (Bekannter Bug: Inhalte im selben Ordner wie das Suchresultat ergeben einen Fehler, wenn der Ordner zuvor noch nie geöffnet wurde.)<br><br>
 <b>Version 1.11</b>:<br>

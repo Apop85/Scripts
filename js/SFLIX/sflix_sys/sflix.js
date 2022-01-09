@@ -324,7 +324,7 @@ function createLink(key, coreUrl, depth) {
     return result;
 }
 
-// Funktioni zum rekursiven Durchsuchen des Daten-Arrays
+// Funktion zum rekursiven Durchsuchen des Daten-Arrays
 function recursiveSearch(data, searchTerm, currentLink="MAIN:", searchResults=[], depth=0) {
     for (var key in data) {
         if (depth != 0) {

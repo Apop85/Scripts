@@ -6,6 +6,10 @@
     animation: ease-in-out;
 }
 
+#mainBody {
+    transition-duration: 0s;
+}
+
 #logo {
     height: 40px;
     width: auto;

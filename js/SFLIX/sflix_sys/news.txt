@@ -1,4 +1,5 @@
 <b>Version 1.15</b>:<br>
+- [INTERFACE] Vor- und Zurückbutton angepasst, dass der Titel des nächsten Parts angezeigt wird.<br>
 - [INTERFACE] Anzeige Anzahl Suchresultate<br>
 - [OPTIMIERUNG] Optimierung der Suchfunktion<br><br>
 <b>Version 1.14</b>:<br>

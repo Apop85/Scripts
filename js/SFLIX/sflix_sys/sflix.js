@@ -253,6 +253,7 @@ function setHeight() {
     document.getElementById("mainBody").style.minHeight = document.documentElement.scrollHeight + "px";
 }
 
+// Funktion zum öffnen und schliessen der Untermenüs
 function toggleSubmenu(id, currentNodeId) {
     // Ein/Ausblenden des Menüs
     if (document.getElementById(id).style.display == "none") {
@@ -271,6 +272,7 @@ function toggleSubmenu(id, currentNodeId) {
     }
 }
 
+// Einfügen des Buttons zum öffnen und schliessen der Untermenüs
 function createHochButton(upperId, currentId) {
     node = document.createElement("LI");
     link = document.createElement("a");
@@ -285,6 +287,7 @@ function createHochButton(upperId, currentId) {
     document.getElementById(currentId).appendChild(node);
 }
 
+// Funktion zur Anzeige des Suchfelds
 function toggleSearchField(){
     var node = document.getElementById("searchFieldContainer");
     if (node.style.display == "none") {
@@ -295,11 +298,13 @@ function toggleSearchField(){
     }
 }
 
+// Funktion zum Aufruf der Suchfunktion
 function callSearch() {
     var searchTerm = document.getElementById("searchField").value;
     window.location.href = "start.html?=" + btoa("SEARCH:" + searchTerm);
 }
 
+// Funktion zum erstellen des Links für die Suchresultate
 function createLink(key, coreUrl, depth) {
     var result = null;
     if (!key.startsWith(".")) {
@@ -319,60 +324,27 @@ function createLink(key, coreUrl, depth) {
     return result;
 }
 
-function searchForTerm() {
-    var searchResults = [];
-
-    // Durchsuche Datensatz
+// Funktioni zum rekursiven Durchsuchen des Daten-Arrays
+function recursiveSearch(data, searchTerm, currentLink="MAIN:", searchResults=[], depth=0) {
     for (var key in data) {
-        if (data.hasOwnProperty(key)) {
-            for (var subkey in data[key]) {
-                currentLink = "MAIN:" + key
-                // Prüfe, ob Suchbegriff in aktuellem Schlüssel vorkommt
-                if (subkey.toLowerCase().includes(searchTerm.toLowerCase())) {
-                    // Erstelle Eintrag in Resultatliste
-                    searchResults.push(createLink(subkey, currentLink, 1));
-                }
-
-                if (data[key].hasOwnProperty(subkey)) {
-                    for (var subsubkey in data[key][subkey]) {
-                        currentLink = "MAIN:" + key + ",LEVEL1:"+ subkey;
-                        // currentLink = "MAIN:" + key;
-                        // Prüfe, ob Suchbegriff in aktuellem Schlüssel vorkommt
-                        if (subsubkey.toLowerCase().includes(searchTerm.toLowerCase())) {
-                            // Erstelle Eintrag in Resultatliste
-                            searchResults.push(createLink(subsubkey, currentLink, 2));
-                        }
-
-                        if (data[key][subkey].hasOwnProperty(subsubkey)) {
-                            for (var subsubsubkey in data[key][subkey][subsubkey]) {
-                                currentLink = "MAIN:" + key + ",LEVEL1:"+ subkey + ",LEVEL2:" + subsubkey;
-                                // Prüfe, ob Suchbegriff in aktuellem Schlüssel vorkommt
-                                if (subsubsubkey.toLowerCase().includes(searchTerm.toLowerCase())) {
-                                    // Erstelle Eintrag in Resultatliste
-                                    searchResults.push(createLink(subsubsubkey, currentLink, 3));
-                                }
-
-                                if (data[key][subkey][subsubkey].hasOwnProperty(subsubsubkey)) {
-                                    for (var subsubsubsubkey in data[key][subkey][subsubkey][subsubsubkey]) {
-                                        currentLink = "MAIN:" + key + ",LEVEL1:"+ subkey + ",LEVEL2:" + subsubkey + ",LEVEL3:" + subsubsubkey;
-                                        // Prüfe, ob Suchbegriff in aktuellem Schlüssel vorkommt
-                                        if (subsubsubsubkey.toLowerCase().includes(searchTerm.toLowerCase())) {
-                                            // Erstelle Eintrag in Resultatliste
-                                            searchResults.push(createLink(subsubsubsubkey, currentLink, 4));
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+        if (depth != 0) {
+            var link = currentLink + ",LEVEL" + depth + ":" + key;
+            // Prüfe, ob Suchbegriff in aktuellem Schlüssel vorkommt
+            if (key.toLowerCase().includes(searchTerm.toLowerCase()) && key != "Preview") {
+                // Erstelle Eintrag in Resultatliste
+                searchResults.push(createLink(key, link, depth));
             }
-
+            // Prüfe, ob weitere, tiefer liegende Daten vorhanden sind
+            if (data.hasOwnProperty(key) && key != "Preview") {
+                searchResults = recursiveSearch(data[key], searchTerm, link, searchResults, depth+1);
+            }
+        } else {
+            searchResults = recursiveSearch(data[key], searchTerm, currentLink + key, searchResults, depth+1);
         }
     }
-
     return searchResults;
 }
+
 
 // Lade Favoriten
 favorites = localStorage.getItem("favorites");
@@ -661,7 +633,8 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 } else if (window.location.href.includes("?=") && decodedUriData.includes("SEARCH:")) {
     // Lese Suchtext aus
     searchTerm = decodedUriData.split("SEARCH:")[1];
-    searchResults = searchForTerm();
+    // searchResults = searchForTerm();
+    searchResults = recursiveSearch(data, searchTerm)
     localStorage.setItem("searchResults", searchResults)
     wrapperNode = document.createElement("div");
 

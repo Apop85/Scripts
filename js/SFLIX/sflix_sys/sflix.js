@@ -654,10 +654,10 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     }
 
     // So lange kein Medientyp ausgewählt wurde, Playliste überschreiben
-    if (!decodedUriData.includes("MEDIA")) {
-        localStorage.setItem("currentPrefix", playListPrefix);
-        localStorage.setItem(playListPrefix, playlist);
-    }
+    // if (!decodedUriData.includes("MEDIA")) {
+    localStorage.setItem("currentPrefix", playListPrefix);
+    localStorage.setItem(playListPrefix, playlist);
+    // }
 } else if (window.location.href.includes("?=") && decodedUriData.includes("SEARCH:")) {
     // Lese Suchtext aus
     searchTerm = decodedUriData.split("SEARCH:")[1];

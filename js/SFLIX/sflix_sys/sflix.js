@@ -719,6 +719,34 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     }
 
     if (!window.location.href.includes(btoa("HELP"))) {
+        // Prüfe, ob Version aktuell ist
+        if (newestVersion != null && newestVersion > version) {
+            // Erstelle Hilfe-Link
+            node = document.getElementById("media");
+            wrapperNode = document.createElement("div"); 
+            // Erstelle Update-Button
+            buttonNode = document.createElement("a");
+            buttonNode.className = "button";
+            buttonNode.href = "start.html?=" + btoa("HELP");
+            textNode = document.createTextNode("STEFFLIX UPDATE VERFÜGBAR");
+            buttonNode.appendChild(textNode);
+            wrapperNode.appendChild(buttonNode);
+
+            // Füge Button-Styles hinzu
+            wrapperNode.style.display = "flex";
+            wrapperNode.style.flexDirection = "column";
+            wrapperNode.style.width = "50vw";
+            wrapperNode.style.marginLeft = "auto";
+            wrapperNode.style.marginRight = "auto";
+            wrapperNode.style.padding = "20px";
+            wrapperNode.style.marginBottom = "20px";
+            wrapperNode.style.backgroundColor = "yellowgreen";
+            wrapperNode.style.id = "helpBox";
+
+            node.appendChild(wrapperNode);
+        }
+
+
         // Wenn keine Auswahl getroffen wurde, Splashscreen anzeigen
         node = document.getElementById("splashscreen");
         node.style.display = "block";
@@ -742,7 +770,6 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 // Lese Titel und URL aus
                 lastTitle = lastPlayed[lastUrlIndex].split("|")[0];
                 lastUrl = lastPlayed[lastUrlIndex].split("|")[1];
-                
                 node = document.getElementById("media");
                 
                 // Erstelle Button
@@ -785,31 +812,6 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             node.appendChild(wrapperNode);
         }
     
-        // Prüfe, ob Version aktuell ist
-        if (newestVersion != null && newestVersion > version) {
-            // Erstelle Hilfe-Link
-            node = document.getElementById("media");
-            wrapperNode = document.createElement("div"); 
-            // Erstelle Update-Button
-            buttonNode = document.createElement("a");
-            buttonNode.className = "button";
-            buttonNode.href = "start.html?=" + btoa("HELP");
-            textNode = document.createTextNode("STEFFLIX UPDATE VERFÜGBAR");
-            buttonNode.appendChild(textNode);
-            wrapperNode.appendChild(buttonNode);
-    
-            // Füge Button-Styles hinzu
-            wrapperNode.style.display = "flex";
-            wrapperNode.style.flexDirection = "column";
-            wrapperNode.style.width = "50vw";
-            wrapperNode.style.marginLeft = "auto";
-            wrapperNode.style.marginRight = "auto";
-            wrapperNode.style.padding = "20px";
-            wrapperNode.style.backgroundColor = "yellowgreen";
-            wrapperNode.style.id = "helpBox";
-
-            node.appendChild(wrapperNode);
-        }
     } else {
         news = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");
 

@@ -1,3 +1,5 @@
+<b>Version 1.14</b>:<br>
+- [INTERFACE] Platzhalterhintergrund bewegt sich nun mit der Scrollposition<br><br>
 <b>Version 1.13</b>:<br>
 - [BUGFIX] Inhalte im selben Ordner wie das Suchresultat ergaben einen Fehler, wenn der Ordner zuvor noch nie geöffnet wurde<br><br>
 <b>Version 1.12</b>:<br>

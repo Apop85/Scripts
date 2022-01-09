@@ -10,7 +10,7 @@
     <script src="sflix_sys/data.js"></script>
     <script src="sflix_sys/version.js"></script>
 </head>
-<body onload="setHeight()" id="mainBody">
+<body onload="setHeight()" onscroll="document.getElementById('mainBody').style.backgroundPositionY = Math.max(100, window.scrollY) - 200 + 'px'" id="mainBody">
     <div id="navigation">
         <div class="firstLevelWrap">
             <a img id="logoLink" href="start.html"><img id="logo" src="sflix_sys/sflixLogo.png" alt="STEFFLIX Logo"></a>

@@ -31,6 +31,8 @@ var currentTimestamp = null;
 var linkNode = null;
 var node = null;
 var subnode = null;
+var searchTerm = null;
+var searchResults = null;
 
 // Funktion zum auslesen von Inhalten von anderen URLs
 function httpGet(theUrl) {
@@ -262,17 +264,11 @@ function toggleSubmenu(id, currentNodeId) {
     document.getElementById(currentNodeId).scrollIntoView();
 
     // Ein/Ausblenden des Buttons
-    console.log(document.getElementById(currentNodeId).childNodes[0].innerHTML)
     if (document.getElementById(currentNodeId).childNodes[0].innerHTML == "Aufklappen") {
         document.getElementById(currentNodeId).childNodes[0].innerHTML = "Zuklappen";
     } else {
         document.getElementById(currentNodeId).childNodes[0].innerHTML = "Aufklappen";
     }
-    // if (document.getElementById(currentNodeId).style.display == "none") {
-    //     document.getElementById(currentNodeId).style.display = "block";
-    // } else {
-    //     document.getElementById(currentNodeId).style.display = "none";
-    // }
 }
 
 function createHochButton(upperId, currentId) {
@@ -287,6 +283,95 @@ function createHochButton(upperId, currentId) {
     node.style.display = "block";
     node.className = "UP";
     document.getElementById(currentId).appendChild(node);
+}
+
+function toggleSearchField(){
+    var node = document.getElementById("searchFieldContainer");
+    if (node.style.display == "none") {
+        node.style.display = "flex";
+        document.getElementById("searchField").focus();
+    } else {
+        node.style.display = "none";
+    }
+}
+
+function callSearch() {
+    var searchTerm = document.getElementById("searchField").value;
+    window.location.href = "start.html?=" + btoa("SEARCH:" + searchTerm);
+}
+
+function createLink(key, coreUrl, depth) {
+    var result = null;
+    if (!key.startsWith(".")) {
+        key = "." + key
+    }
+    if (!isMediaFile(allowedMediaExtensions, key)) {
+        result = key + "|" + "start.html?=" + btoa(coreUrl + ",LEVEL" + depth + ":" + key);
+    } else {
+        if (isVideo(key) || isMusic(key)) {
+            result = key + "|" + "start.html?=" + btoa(coreUrl + ",MEDIA:" + key + ",PL:searchResults") + "#mediaNav";
+            // VORSCHAUBILD
+        } else if (isImage(key)) {
+            result = key + "|" + "start.html?=" + btoa(coreUrl + ",MEDIA:" + key + ",PL:searchResults") + "#mediaNav";
+        }
+    }
+
+    return result;
+}
+
+function searchForTerm() {
+    var searchResults = [];
+
+    // Durchsuche Datensatz
+    for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+            for (var subkey in data[key]) {
+                currentLink = "MAIN:" + key
+                // Prüfe, ob Suchbegriff in aktuellem Schlüssel vorkommt
+                if (subkey.toLowerCase().includes(searchTerm.toLowerCase())) {
+                    // Erstelle Eintrag in Resultatliste
+                    searchResults.push(createLink(subkey, currentLink, 1));
+                }
+
+                if (data[key].hasOwnProperty(subkey)) {
+                    for (var subsubkey in data[key][subkey]) {
+                        currentLink = "MAIN:" + key + ",LEVEL1:"+ subkey;
+                        // currentLink = "MAIN:" + key;
+                        // Prüfe, ob Suchbegriff in aktuellem Schlüssel vorkommt
+                        if (subsubkey.toLowerCase().includes(searchTerm.toLowerCase())) {
+                            // Erstelle Eintrag in Resultatliste
+                            searchResults.push(createLink(subsubkey, currentLink, 2));
+                        }
+
+                        if (data[key][subkey].hasOwnProperty(subsubkey)) {
+                            for (var subsubsubkey in data[key][subkey][subsubkey]) {
+                                currentLink = "MAIN:" + key + ",LEVEL1:"+ subkey + ",LEVEL2:" + subsubkey;
+                                // Prüfe, ob Suchbegriff in aktuellem Schlüssel vorkommt
+                                if (subsubsubkey.toLowerCase().includes(searchTerm.toLowerCase())) {
+                                    // Erstelle Eintrag in Resultatliste
+                                    searchResults.push(createLink(subsubsubkey, currentLink, 3));
+                                }
+
+                                if (data[key][subkey][subsubkey].hasOwnProperty(subsubsubkey)) {
+                                    for (var subsubsubsubkey in data[key][subkey][subsubkey][subsubsubkey]) {
+                                        currentLink = "MAIN:" + key + ",LEVEL1:"+ subkey + ",LEVEL2:" + subsubkey + ",LEVEL3:" + subsubsubkey;
+                                        // Prüfe, ob Suchbegriff in aktuellem Schlüssel vorkommt
+                                        if (subsubsubsubkey.toLowerCase().includes(searchTerm.toLowerCase())) {
+                                            // Erstelle Eintrag in Resultatliste
+                                            searchResults.push(createLink(subsubsubsubkey, currentLink, 4));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+
+    return searchResults;
 }
 
 // Lade Favoriten
@@ -384,16 +469,6 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         playlist = []
 
         createHochButton("submenu", "subsubmenu");
-        // node = document.createElement("LI");
-        // link = document.createElement("a");
-        // textnode = document.createTextNode("Aufklappen");
-        // link.appendChild(textnode);
-        // node.appendChild(link);
-        // link.setAttribute("onclick", "toggleSubmenu('submenu')");
-        // node.style.width = "100%";
-        // document.getElementById("subsubmenu").appendChild(node);
-
-
 	
         // Iteriere über jeden Schlüsselwert
         for (var key in data[mainContent][level1]) {
@@ -583,6 +658,59 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         localStorage.setItem("currentPrefix", playListPrefix);
         localStorage.setItem(playListPrefix, playlist);
     }
+} else if (window.location.href.includes("?=") && decodedUriData.includes("SEARCH:")) {
+    // Lese Suchtext aus
+    searchTerm = decodedUriData.split("SEARCH:")[1];
+    searchResults = searchForTerm();
+    localStorage.setItem("searchResults", searchResults)
+    wrapperNode = document.createElement("div");
+
+    for (var lastUrlIndex in searchResults) {
+        // Lese Titel und URL aus
+        lastTitle = searchResults[lastUrlIndex].split("|")[0].split("/");
+        lastTitle = lastTitle[lastTitle.length - 1];
+        lastUrl = searchResults[lastUrlIndex].split("|")[1];
+
+        node = document.getElementById("media");
+        
+        // Erstelle Button
+        buttonNode = document.createElement("a");
+        buttonNode.className = "button";
+        buttonNode.href = lastUrl;
+
+        // Decodiere übergebene URL
+        var decodedUrl = atob(lastUrl.split("?=")[1].split("#")[0]);
+        // Lese die Hauptkategorie aus
+        mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(",")[0].split("#")[0]);
+        if (decodedUrl.includes("LEVEL1")){
+            // Lese die level1-Eintrag aus
+            level1 = replaceSpecialChars(decodedUrl.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
+            // Füge Vorschaubild in Button ein
+            addPreviewImage(data[mainContent], buttonNode, level1);
+            // Styles für Button ändern
+            buttonNode.style.display = "flex";
+            buttonNode.style.flexDirection = "row";
+            buttonNode.style.alignItems = "center";
+            buttonNode.style.justifyContent = "start";
+            buttonNode.style.maxHeight = "150px";
+            buttonNode.style.textAlign = "left";
+        }
+        // Erstelle Buttontext
+        textNode = document.createTextNode(removeFileExtension(allowedMediaExtensions, lastTitle));
+        // Füge Button hinzu
+        buttonNode.appendChild(textNode);
+        wrapperNode.appendChild(buttonNode);
+    }
+    // Füge Button-Styles hinzu
+    wrapperNode.style.display = "flex";
+    wrapperNode.style.flexDirection = "column";
+    wrapperNode.style.width = "50vw";
+    wrapperNode.style.padding = "20px";
+    wrapperNode.style.backgroundColor = "black";
+    wrapperNode.style.marginLeft = "auto";
+    wrapperNode.style.marginRight = "auto";
+    wrapperNode.id = "lastPlayedWrapper";
+    node.appendChild(wrapperNode);
 } else {
     // Lese neuste Version von GIT-Repository aus
     newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
@@ -721,10 +849,13 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0].split("#")[0]);
     // Lese Playlistenindex aus
     localPlaylist = localPlaylist.sort()
-    
     document.getElementById(medialocation.replace(".","")).className += " activeMenu";
 
-    currentIndex = localPlaylist.indexOf(medialocation);
+    var cleanedPlaylist = []
+    for (var key in localPlaylist){
+        cleanedPlaylist.push(localPlaylist[key].split("|")[0])
+    }
+    currentIndex = cleanedPlaylist.indexOf(medialocation);
     // Aktuelle Auswahl auslesen
     currentUrl = decodedUriData.split(",MEDIA:")[0];
     // Lese Dateinamen aus
@@ -807,7 +938,6 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     }
 
     setLastPlayed(mediaName, window.location.href)
-    // localStorage.setItem("playlast", window.location.href);
 
     // Prüfe, ob der Merken-Button gedrückt wurde
     if (decodedUriData.includes(",FAV:True")) {
@@ -850,7 +980,11 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         textnode = document.createTextNode("👈 Zurück");
         subnode.appendChild(textnode);
         // Link zu vorherigem Listenelement
-        subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex - 1] + ",PL:" + playlistName) + "#mediaNav";
+        if (!localPlaylist[currentIndex - 1].includes("start.html?=")){
+            subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex - 1] + ",PL:" + playlistName) + "#mediaNav";
+        } else {
+            subnode.href = localPlaylist[currentIndex - 1].split("|")[1];
+        }
         node.appendChild(subnode);
     }
 
@@ -859,14 +993,14 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     subnode = document.createElement("a");
     if (favorites == null || !favorites.includes(medialocation)) {
         textnode = document.createTextNode("Merken");
+        node.className = "";
     } else {
         textnode = document.createTextNode("Merken ⭐");
+        node.className = "isFavorite";
     }
     subnode.appendChild(textnode);
     subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex] + ",FAV:True" + ",PL:" + playlistName) + "#mediaNav";
-    // subnode.href = localPlaylist[currentIndex];
     node.appendChild(subnode);
-
 
     // Prüfe ob nächster Index noch innerhalb der Range ist
     if (currentIndex + 1 <= localPlaylist.length - 1) {
@@ -874,8 +1008,11 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         subnode = document.createElement("a");
         textnode = document.createTextNode("Vorwärts 👉");
         subnode.appendChild(textnode);
-        subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex + 1] + ",PL:" + playlistName) + "#mediaNav";
-        // subnode.href = localPlaylist[currentIndex + 1];
+        if (!localPlaylist[currentIndex + 1].includes("start.html?=")) {
+            subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex + 1] + ",PL:" + playlistName) + "#mediaNav";
+        } else {
+            subnode.href = localPlaylist[currentIndex + 1].split("|")[1]
+        }
         node.appendChild(subnode);
     }
 } else {

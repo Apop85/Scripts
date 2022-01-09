@@ -15,6 +15,13 @@
         <div class="firstLevelWrap">
             <a img id="logoLink" href="start.html"><img id="logo" src="sflix_sys/sflixLogo.png" alt="STEFFLIX Logo"></a>
             <ul id="menu" class="menu"></ul>
+            <form action="javascript:callSearch()">
+                <a id="searchTextField" style="display: block;" onclick="toggleSearchField()"></a>
+                <div id="searchFieldContainer" style="display: none; position: absolute; z-index: 999;">
+                    <input id="searchField" type="text" name="searchTerm" placeholder="Suche">
+                    <a onclick="toggleSearchField()" id="closeSearchIcon" style="display: block; margin-left: auto;">❌</a>
+                </div>
+            </form>
         </div>
         <ul id="submenu" class="submenu"></ul>
         <ul id="subsubmenu" class="subsubmenu"></ul>

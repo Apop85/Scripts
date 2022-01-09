@@ -956,9 +956,17 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     // Prüfe, ob der letzte Index grösser oder gleich 0 ist
     if (currentIndex - 1 >= 0) {
         // Erstelle Zurück-Button
-        node = document.getElementById("prev")
+        node = document.getElementById("prev");
         subnode = document.createElement("a");
-        textnode = document.createTextNode("👈 Zurück");
+        if (!localPlaylist[currentIndex - 1].includes("start.html")) {
+            mediaName = localPlaylist[currentIndex - 1].split("/");
+            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
+        } else {
+            mediaName = localPlaylist[currentIndex - 1].split("|")[0];
+            mediaName = mediaName.split("/");
+            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
+        }
+        textnode = document.createTextNode("👈 " + mediaName);
         subnode.appendChild(textnode);
         // Link zu vorherigem Listenelement
         if (!localPlaylist[currentIndex - 1].includes("start.html?=")){
@@ -987,7 +995,15 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     if (currentIndex + 1 <= localPlaylist.length - 1) {
         node = document.getElementById("next");
         subnode = document.createElement("a");
-        textnode = document.createTextNode("Vorwärts 👉");
+        if (!localPlaylist[currentIndex + 1].includes("start.html")) {
+            mediaName = localPlaylist[currentIndex + 1].split("/");
+            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
+        } else {
+            mediaName = localPlaylist[currentIndex + 1].split("|")[0];
+            mediaName = mediaName.split("/");
+            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
+        }
+        textnode = document.createTextNode(mediaName + " 👉");
         subnode.appendChild(textnode);
         if (!localPlaylist[currentIndex + 1].includes("start.html?=")) {
             subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex + 1] + ",PL:" + playlistName) + "#mediaNav";

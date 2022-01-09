@@ -637,6 +637,12 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     searchResults = recursiveSearch(data, searchTerm)
     localStorage.setItem("searchResults", searchResults)
     wrapperNode = document.createElement("div");
+    subnode = document.createElement("p");
+    textnode = document.createTextNode("Total Suchresultate: " + searchResults.length);
+    subnode.style.padding = "20px";
+    subnode.style.color = "white";
+    subnode.appendChild(textnode);
+    wrapperNode.appendChild(subnode);
 
     for (var lastUrlIndex in searchResults) {
         // Lese Titel und URL aus

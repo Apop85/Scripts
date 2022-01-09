@@ -1,3 +1,5 @@
+<b>Version 1.15</b>:<br>
+- [OPTIMIERUNG] Optimierung der Suchfunktion<br><br>
 <b>Version 1.14</b>:<br>
 - [INTERFACE] Platzhalterhintergrund bewegt sich nun mit der Scrollposition<br><br>
 <b>Version 1.13</b>:<br>

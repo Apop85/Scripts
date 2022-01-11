@@ -1,4 +1,4 @@
-<b>Version 1.16</b>:<br>
+<b>Version 1.17</b>:<br>
 - [INTERFACE] Hilfe-Button hinzugefügt<br><br>
 <b>Version 1.16</b>:<br>
 - [INTERFACE] Abstand zu Mediennavigation verringert<br>

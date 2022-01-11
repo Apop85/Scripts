@@ -1,4 +1,5 @@
 <b>Version 1.17</b>:<br>
+- [BUG] Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden.<br>
 - [INTERFACE] Hilfe-Button hinzugefügt<br><br>
 <b>Version 1.16</b>:<br>
 - [INTERFACE] Abstand zu Mediennavigation verringert<br>

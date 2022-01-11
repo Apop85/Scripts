@@ -33,6 +33,7 @@ var node = null;
 var subnode = null;
 var searchTerm = null;
 var searchResults = null;
+var seasonList = null;
 
 // Funktion zum auslesen von Inhalten von anderen URLs
 function httpGet(theUrl) {
@@ -975,6 +976,100 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             subnode.href = localPlaylist[currentIndex - 1].split("|")[1];
         }
         node.appendChild(subnode);
+    } else {
+        // Letzte Staffel
+        node = document.getElementById("prev");
+        subnode = document.createElement("a");
+        medialocation = null;
+        currentUrl = null;
+
+
+        // Lese den Medienpfad aus
+        if (!localPlaylist[currentIndex].includes("start.html")) {
+            mediaName = localPlaylist[currentIndex].split("/");
+            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
+        } else {
+            mediaName = localPlaylist[currentIndex].split("|")[0];
+            mediaName = mediaName.split("/");
+            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
+        }
+        
+        seasonList = [];
+        mediaList = [];
+        if (mainContent != null && level1 != null && level2 != null && level3 != null) {
+            // Erstelle Schlüsselliste
+            for (var key in data[mainContent][level1][level2]) {
+                seasonList.push(key);
+                seasonList.sort();
+            }
+            // Lese akteuellen Index aus
+            keyIndex = seasonList.indexOf(level3);
+            // Prüfe, ob eine weitere Staffel vorhanden ist
+            if (keyIndex != -1 && keyIndex - 1 > 0) {
+                // Erstelle Liste aller Episoden
+                for (var key in data[mainContent][level1][level2][seasonList[keyIndex - 1]]) {
+                    mediaList.push(key);
+                };
+                // Lese erste Folge der nächsten Staffel aus
+                medialocation = mediaList.sort()[0];
+                // Definiere Playlistname
+                playlistName = mainContent + level1 + level2 + seasonList[keyIndex - 1];
+                // Setze aktuelle URL zusammen
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation; + ",PL:" + playlistName 
+            }
+        } else if (mainContent != null && level1 != null && level2 != null) {
+            // Erstelle Schlüsselliste
+            for (var key in data[mainContent][level1]) {
+                seasonList.push(key);
+                seasonList.sort();
+            }
+            // Lese akteuellen Index aus
+            keyIndex = seasonList.indexOf(level2);
+
+            // Prüfe, ob eine weitere Staffel vorhanden ist
+            if (keyIndex != -1 && keyIndex - 1 > 0) {
+                // Erstelle Liste aller Episoden
+                for (var key in data[mainContent][level1][seasonList[keyIndex - 1]]) {
+                    mediaList.push(key);
+                };
+                // Lese erste Folge der nächsten Staffel aus
+                medialocation = mediaList.sort()[mediaList.length - 1];
+                // Definiere Playlistname
+                playlistName = mainContent + level1 + seasonList[keyIndex - 1];
+                // Setze aktuelle URL zusammen
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + seasonList[keyIndex - 1] + ",MEDIA:." + medialocation + ",PL:" + playlistName;
+            }
+        } else if (mainContent != null && level1 != null) {
+            // Erstelle Schlüsselliste
+            for (var key in data[mainContent]) {
+                seasonList.push(key);
+                seasonList.sort();
+            }
+            // Lese akteuellen Index aus
+            keyIndex = seasonList.indexOf(level1);
+            // Prüfe, ob eine weitere Staffel vorhanden ist
+            if (keyIndex != -1 && keyIndex - 1 > 0) {
+                // Erstelle Liste aller Episoden
+                for (var key in data[mainContent][seasonList[keyIndex - 1]]) {
+                    mediaList.push(key);
+                };
+                // Lese erste Folge der nächsten Staffel aus
+                medialocation = mediaList.sort()[0];
+                // Definiere Playlistname
+                playlistName = mainContent + seasonList[keyIndex - 1];
+                // Setze aktuelle URL zusammen
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + seasonList[keyIndex - 1] + ",MEDIA:." + medialocation + ",PL:" + playlistName;
+            }
+        }
+
+        if (medialocation != null) {
+            console.log(medialocation)
+            // Entferne Pfad und Dateierweiterung und setze als Titel
+            textnode = document.createTextNode("👈 " + removeFileExtension(allowedMediaExtensions, medialocation.split("/")[medialocation.split("/").length - 1]))
+            subnode.appendChild(textnode);
+            subnode.href = "start.html?=" + btoa(currentUrl) + "#mediaNav";
+            node.appendChild(subnode);
+        }
     }
 
     // Erstelle Merken-Button
@@ -1011,6 +1106,97 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             subnode.href = localPlaylist[currentIndex + 1].split("|")[1]
         }
         node.appendChild(subnode);
+    } else {
+        // Nächste Staffel
+        node = document.getElementById("next");
+        subnode = document.createElement("a");
+        medialocation = null;
+        currentUrl = null;
+
+        // Lese den Medienpfad aus
+        if (!localPlaylist[currentIndex].includes("start.html")) {
+            mediaName = localPlaylist[currentIndex].split("/");
+            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
+        } else {
+            mediaName = localPlaylist[currentIndex].split("|")[0];
+            mediaName = mediaName.split("/");
+            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
+        }
+
+        seasonList = [];
+        mediaList = [];
+        if (mainContent != null && level1 != null && level2 != null && level3 != null) {
+            // Erstelle Schlüsselliste
+            for (var key in data[mainContent][level1][level2]) {
+                seasonList.push(key);
+                seasonList.sort();
+            }
+            // Lese akteuellen Index aus
+            keyIndex = seasonList.indexOf(level3);
+            // Prüfe, ob eine weitere Staffel vorhanden ist
+            if (keyIndex != -1 && keyIndex + 1 < seasonList.length) {
+                // Erstelle Liste aller Episoden
+                for (var key in data[mainContent][level1][level2][seasonList[keyIndex + 1]]) {
+                    mediaList.push(key);
+                };
+                // Lese erste Folge der nächsten Staffel aus
+                medialocation = mediaList.sort()[0];
+                // Definiere Playlistname
+                playlistName = mainContent + level1 + level2 + seasonList[keyIndex + 1];
+                // Setze aktuelle URL zusammen
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation; + ",PL:" + playlistName 
+            }
+        } else if (mainContent != null && level1 != null && level2 != null) {
+            // Erstelle Schlüsselliste
+            for (var key in data[mainContent][level1]) {
+                seasonList.push(key);
+                seasonList.sort();
+            }
+            // Lese akteuellen Index aus
+            keyIndex = seasonList.indexOf(level2);
+            // Prüfe, ob eine weitere Staffel vorhanden ist
+            if (keyIndex != -1 && keyIndex + 1 < seasonList.length) {
+                // Erstelle Liste aller Episoden
+                for (var key in data[mainContent][level1][seasonList[keyIndex + 1]]) {
+                    mediaList.push(key);
+                };
+                // Lese erste Folge der nächsten Staffel aus
+                medialocation = mediaList.sort()[0];
+                // Definiere Playlistname
+                playlistName = mainContent + level1 + seasonList[keyIndex + 1];
+                // Setze aktuelle URL zusammen
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation + ",PL:" + playlistName;
+            }
+        } else if (mainContent != null && level1 != null) {
+            // Erstelle Schlüsselliste
+            for (var key in data[mainContent]) {
+                seasonList.push(key);
+                seasonList.sort();
+            }
+            // Lese akteuellen Index aus
+            keyIndex = seasonList.indexOf(level1);
+            // Prüfe, ob eine weitere Staffel vorhanden ist
+            if (keyIndex != -1 && keyIndex + 1 < seasonList.length) {
+                // Erstelle Liste aller Episoden
+                for (var key in data[mainContent][seasonList[keyIndex + 1]]) {
+                    mediaList.push(key);
+                };
+                // Lese erste Folge der nächsten Staffel aus
+                medialocation = mediaList.sort()[0];
+                // Definiere Playlistname
+                playlistName = mainContent + seasonList[keyIndex + 1];
+                // Setze aktuelle URL zusammen
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation + ",PL:" + playlistName;
+            }
+        }
+
+        if (medialocation != null) {
+            // Entferne Pfad und Dateierweiterung und setze als Titel
+            textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, medialocation.split("/")[medialocation.split("/").length - 1])  + " 👉")
+            subnode.appendChild(textnode);
+            subnode.href = "start.html?=" + btoa(currentUrl) + "#mediaNav";
+            node.appendChild(subnode);
+        }
     }
 } else {
     // Platzhalterbild für Leere Seiten erstellen

@@ -177,7 +177,8 @@ h2 {
     width: 100%;
     margin-top: 50px;
     text-align: center;
-    height: 80vh;
+    min-height: 70vh;
+    /* height: 80vh; */
 }
 
 #media img, #media video {
@@ -190,6 +191,10 @@ h2 {
 #media * {
     max-width: 100%;
     height: auto;
+}
+
+#media video {
+    margin-bottom: 50px;
 }
 
 #submenu,

@@ -1,3 +1,6 @@
+<b>Version 1.16</b>:<br>
+- [INTERFACE] Abstand zu Mediennavigation verringert<br>
+- [FEATURE] Zurück- und Vorwärts-Knopf können nun auch zwischen Unterordner/Staffeln wechseln<br><br>
 <b>Version 1.15</b>:<br>
 - [INTERFACE] Vor- und Zurückbutton angepasst, dass der Titel des nächsten Parts angezeigt wird.<br>
 - [INTERFACE] Anzeige Anzahl Suchresultate<br>

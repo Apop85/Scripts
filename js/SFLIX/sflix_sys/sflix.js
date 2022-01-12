@@ -346,6 +346,9 @@ function recursiveSearch(data, searchTerm, currentLink="MAIN:", searchResults=[]
     return searchResults;
 }
 
+function openHelp() {
+    window.location.href = "start.html?=" + btoa("HELP");
+}
 
 // Lade Favoriten
 favorites = localStorage.getItem("favorites");
@@ -1012,10 +1015,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[0];
-                // Definiere Playlistname
-                playlistName = mainContent + level1 + level2 + seasonList[keyIndex - 1];
+                // Definiere newPlaylistname
+                newPlaylistName = mainContent + level1 + level2 + seasonList[keyIndex - 1];
                 // Setze aktuelle URL zusammen
-                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation; + ",PL:" + playlistName 
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation; + ",PL:" + newPlaylistName 
             }
         } else if (mainContent != null && level1 != null && level2 != null) {
             // Erstelle Schlüsselliste
@@ -1034,10 +1037,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[mediaList.length - 1];
-                // Definiere Playlistname
-                playlistName = mainContent + level1 + seasonList[keyIndex - 1];
+                // Definiere newPlaylistname
+                newPlaylistName = mainContent + level1 + seasonList[keyIndex - 1];
                 // Setze aktuelle URL zusammen
-                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + seasonList[keyIndex - 1] + ",MEDIA:." + medialocation + ",PL:" + playlistName;
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + seasonList[keyIndex - 1] + ",MEDIA:." + medialocation + ",PL:" + newPlaylistName;
             }
         } else if (mainContent != null && level1 != null) {
             // Erstelle Schlüsselliste
@@ -1055,15 +1058,14 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[0];
-                // Definiere Playlistname
-                playlistName = mainContent + seasonList[keyIndex - 1];
+                // Definiere newPlaylistname
+                newPlaylistName = mainContent + seasonList[keyIndex - 1];
                 // Setze aktuelle URL zusammen
-                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + seasonList[keyIndex - 1] + ",MEDIA:." + medialocation + ",PL:" + playlistName;
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + seasonList[keyIndex - 1] + ",MEDIA:." + medialocation + ",PL:" + newPlaylistName;
             }
         }
 
         if (medialocation != null) {
-            console.log(medialocation)
             // Entferne Pfad und Dateierweiterung und setze als Titel
             textnode = document.createTextNode("👈 " + removeFileExtension(allowedMediaExtensions, medialocation.split("/")[medialocation.split("/").length - 1]))
             subnode.appendChild(textnode);
@@ -1098,6 +1100,9 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             mediaName = mediaName.split("/");
             mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
         }
+        currentUrl = atob(window.location.href.split("?=")[1].split("#")[0]).split(",MEDIA:")[0]
+        localPlaylist = localStorage.getItem(playlistName).split(",")
+
         textnode = document.createTextNode(mediaName + " 👉");
         subnode.appendChild(textnode);
         if (!localPlaylist[currentIndex + 1].includes("start.html?=")) {
@@ -1141,10 +1146,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[0];
-                // Definiere Playlistname
-                playlistName = mainContent + level1 + level2 + seasonList[keyIndex + 1];
+                // Definiere newPlaylistname
+                newPlaylistName = mainContent + level1 + level2 + seasonList[keyIndex + 1];
                 // Setze aktuelle URL zusammen
-                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation; + ",PL:" + playlistName 
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation; + ",PL:" + newPlaylistName 
             }
         } else if (mainContent != null && level1 != null && level2 != null) {
             // Erstelle Schlüsselliste
@@ -1162,10 +1167,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[0];
-                // Definiere Playlistname
-                playlistName = mainContent + level1 + seasonList[keyIndex + 1];
+                // Definiere newPlaylistname
+                newPlaylistName = mainContent + level1 + seasonList[keyIndex + 1];
                 // Setze aktuelle URL zusammen
-                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation + ",PL:" + playlistName;
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation + ",PL:" + newPlaylistName;
             }
         } else if (mainContent != null && level1 != null) {
             // Erstelle Schlüsselliste
@@ -1183,10 +1188,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[0];
-                // Definiere Playlistname
-                playlistName = mainContent + seasonList[keyIndex + 1];
+                // Definiere newPlaylistname
+                newPlaylistName = mainContent + seasonList[keyIndex + 1];
                 // Setze aktuelle URL zusammen
-                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation + ",PL:" + playlistName;
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation + ",PL:" + newPlaylistName;
             }
         }
 

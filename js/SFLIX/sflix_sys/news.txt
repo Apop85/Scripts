@@ -1,3 +1,5 @@
+<b>Version 1.18</b>:<br>
+- [BUGFIX] Next-Link bei Episode 1 jeder Staffel gefixt.<br><br>
 <b>Version 1.17</b>:<br>
 - [BUG] Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden.<br>
 - [INTERFACE] Hilfe-Button hinzugefügt<br><br>

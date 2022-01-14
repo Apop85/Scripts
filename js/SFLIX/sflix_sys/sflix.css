@@ -6,6 +6,15 @@
     animation: ease-in-out;
 }
 
+a:not(.button) {
+    text-decoration: none;
+    color: darkblue;
+}
+
+a:not(.button):hover {
+    color: darkred;
+}
+
 #mainBody {
     transition-duration: 0s;
 }

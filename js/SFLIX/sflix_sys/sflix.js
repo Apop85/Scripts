@@ -637,9 +637,10 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 } else if (window.location.href.includes("?=") && decodedUriData.includes("SEARCH:")) {
     // Lese Suchtext aus
     searchTerm = decodedUriData.split("SEARCH:")[1];
-    // searchResults = searchForTerm();
-    searchResults = recursiveSearch(data, searchTerm)
-    localStorage.setItem("searchResults", searchResults)
+    // Starte rekursive Suche
+    searchResults = recursiveSearch(data, searchTerm);
+    // Speichere Playliste
+    localStorage.setItem("searchResults", searchResults);
     wrapperNode = document.createElement("div");
     subnode = document.createElement("p");
     textnode = document.createTextNode("Total Suchresultate: " + searchResults.length);
@@ -648,41 +649,43 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     subnode.appendChild(textnode);
     wrapperNode.appendChild(subnode);
 
-    for (var lastUrlIndex in searchResults) {
-        // Lese Titel und URL aus
-        lastTitle = searchResults[lastUrlIndex].split("|")[0].split("/");
-        lastTitle = lastTitle[lastTitle.length - 1];
-        lastUrl = searchResults[lastUrlIndex].split("|")[1];
-
-        node = document.getElementById("media");
-        
-        // Erstelle Button
-        buttonNode = document.createElement("a");
-        buttonNode.className = "button";
-        buttonNode.href = lastUrl;
-
-        // Decodiere übergebene URL
-        var decodedUrl = atob(lastUrl.split("?=")[1].split("#")[0]);
-        // Lese die Hauptkategorie aus
-        mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(",")[0].split("#")[0]);
-        if (decodedUrl.includes("LEVEL1")){
-            // Lese die level1-Eintrag aus
-            level1 = replaceSpecialChars(decodedUrl.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
-            // Füge Vorschaubild in Button ein
-            addPreviewImage(data[mainContent], buttonNode, level1);
-            // Styles für Button ändern
-            buttonNode.style.display = "flex";
-            buttonNode.style.flexDirection = "row";
-            buttonNode.style.alignItems = "center";
-            buttonNode.style.justifyContent = "start";
-            buttonNode.style.maxHeight = "150px";
-            buttonNode.style.textAlign = "left";
+    if (!searchResults.length == 0) {
+        for (var lastUrlIndex in searchResults) {
+            // Lese Titel und URL aus
+            lastTitle = searchResults[lastUrlIndex].split("|")[0].split("/");
+            lastTitle = lastTitle[lastTitle.length - 1];
+            lastUrl = searchResults[lastUrlIndex].split("|")[1];
+    
+            node = document.getElementById("media");
+            
+            // Erstelle Button
+            buttonNode = document.createElement("a");
+            buttonNode.className = "button";
+            buttonNode.href = lastUrl;
+    
+            // Decodiere übergebene URL
+            var decodedUrl = atob(lastUrl.split("?=")[1].split("#")[0]);
+            // Lese die Hauptkategorie aus
+            mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(",")[0].split("#")[0]);
+            if (decodedUrl.includes("LEVEL1")){
+                // Lese die level1-Eintrag aus
+                level1 = replaceSpecialChars(decodedUrl.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
+                // Füge Vorschaubild in Button ein
+                addPreviewImage(data[mainContent], buttonNode, level1);
+                // Styles für Button ändern
+                buttonNode.style.display = "flex";
+                buttonNode.style.flexDirection = "row";
+                buttonNode.style.alignItems = "center";
+                buttonNode.style.justifyContent = "start";
+                buttonNode.style.maxHeight = "150px";
+                buttonNode.style.textAlign = "left";
+            }
+            // Erstelle Buttontext
+            textNode = document.createTextNode(removeFileExtension(allowedMediaExtensions, lastTitle));
+            // Füge Button hinzu
+            buttonNode.appendChild(textNode);
+            wrapperNode.appendChild(buttonNode);
         }
-        // Erstelle Buttontext
-        textNode = document.createTextNode(removeFileExtension(allowedMediaExtensions, lastTitle));
-        // Füge Button hinzu
-        buttonNode.appendChild(textNode);
-        wrapperNode.appendChild(buttonNode);
     }
     // Füge Button-Styles hinzu
     wrapperNode.style.display = "flex";
@@ -693,7 +696,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     wrapperNode.style.marginLeft = "auto";
     wrapperNode.style.marginRight = "auto";
     wrapperNode.id = "lastPlayedWrapper";
-    node.appendChild(wrapperNode);
+    document.getElementById("media").appendChild(wrapperNode);
 } else {
     // Lese neuste Version von GIT-Repository aus
     newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
@@ -860,6 +863,14 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         node.src = medialocation;
         node.id = "video";
         node.controls = true;
+        // Lade gespeicherte Lautstärke
+        savedVolume = localStorage.getItem("mediaVolume");
+        if (savedVolume == null){
+            savedVolume = 1;
+        } else if (savedVolume == 0) {
+            savedVolume = 0.2;
+        }
+        node.volume = savedVolume;
         // node.muted =true;
         // node.focus;
 
@@ -898,6 +909,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             // Speichere Videoposition alle 10 Sek
             if (currentTimestamp != currentTime && currentTime % 10 == 0) {
                 localStorage.setItem("timestamp-" + mediaName, currentTime);
+                localStorage.setItem("mediaVolume", document.getElementById("video").volume)
             }
 
             if (this.duration > 600) {

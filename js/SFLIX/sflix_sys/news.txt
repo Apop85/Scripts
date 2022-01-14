@@ -1,3 +1,5 @@
+<b>Version 1.19</b>:<br>
+- [BUGFIX] Bilder/Video-Links ab Tiefe 3 korrigiert.<br><br>
 <b>Version 1.18</b>:<br>
 - [BUGFIX] Next-Link bei Episode 1 jeder Staffel gefixt.<br><br>
 <b>Version 1.17</b>:<br>

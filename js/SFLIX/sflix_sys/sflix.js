@@ -613,7 +613,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     playlist.push(key);
 
                     // Erstelle Medienlink
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + level3 + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
                 } else {
                     link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + level3 + ",LEVEL4:" + key);
                 }

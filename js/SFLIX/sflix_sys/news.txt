@@ -1,7 +1,7 @@
 <b>Version 1.20</b>:<br>
 - [FEATURE] Speichern der Lautstärkeeinstellung zwischen den Videos/Musikdateien (Mindestlautstärke: 20%)<br>
 - [BUGFIX] Anzeigefehler bei 0 Suchresultaten<br>
-- [FEATURE] Anpassung Standardlinkfarbe<br>
+- [INTERFACE] Anpassung Standardlinkfarbe<br>
 - [INTERFACE] Hilfe um unterstützte Dateiformate ergänzt<br><br>
 <b>Version 1.19</b>:<br>
 - [BUGFIX] Bilder/Video-Links ab Tiefe 3 korrigiert.<br><br>

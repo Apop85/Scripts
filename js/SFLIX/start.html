@@ -29,7 +29,8 @@
                 <a id="searchTextField" style="display: block;" onclick="toggleSearchField()"></a>
                 <div id="searchFieldContainer" style="display: none; position: absolute; z-index: 999;">
                     <input id="searchField" type="text" name="searchTerm" placeholder="Suche">
-                    <a onclick="toggleSearchField()" id="closeSearchIcon" style="display: block; margin-left: auto;">❌</a>
+                    <a onclick="callSearch()" id="doSearchIcon">✔</a>
+                    <a onclick="toggleSearchField()" id="closeSearchIcon">❌</a>
                 </div>
             </form>
             <a id="helpLink" onclick="openHelp()">

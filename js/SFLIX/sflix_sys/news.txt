@@ -1,4 +1,6 @@
 <b>Version 1.21</b>:<br>
+- [INTERFACE] Hovereffekt bei Suchen-Button hinzugefügt<br>
+- [INTERFACE] Suchen-Button im Suchfeld hinzugefügt<br>
 - [INTERFACE] Ladebalken hinzugefügt<br><br>
 <b>Version 1.20</b>:<br>
 - [FEATURE] Speichern der Lautstärkeeinstellung zwischen den Videos/Musikdateien (Mindestlautstärke: 20%)<br>

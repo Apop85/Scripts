@@ -5,10 +5,79 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STEFFLIX</title>
-    <link rel="stylesheet" href="sflix_sys/sflix.css" type="text/css">
     <link rel="shortcut icon" type="image/x-icon" href="sflix_sys/sflixLogo.png">
     <script src="sflix_sys/data.js"></script>
     <script src="sflix_sys/version.js"></script>
+    <style>
+        body {
+            overflow-x: hidden;
+            background-color: #222;
+        }
+        
+        #loadingScreen {
+            width: 100vw;
+            height: 100vh;
+            background-color: #222;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            left: 0;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #loadingScreen h1 {
+            color: gray;
+            margin: 20px;
+        }
+
+        #loadingBar {
+            display: flex;
+            justify-content: space-evenly;
+            width: 50vw;
+        }
+
+        .loadingSquare {
+            width: 20px;
+            height: 20px;
+            background-color: black;
+            animation: loading 1.25s ease-in-out;
+            animation-iteration-count: infinite;
+        }
+
+        .loadingSquare:nth-child(2) {
+            animation-delay: 0.25s;
+        }
+
+        .loadingSquare:nth-child(3) {
+            animation-delay: 0.5s;
+        }
+
+        .loadingSquare:nth-child(4) {
+            animation-delay: 0.75s;
+        }
+
+        .loadingSquare:nth-child(5) {
+            animation-delay: 1s;
+        }
+
+        @keyframes loading {
+            0% {
+                background-color: red;
+            }
+            20% {
+                background-color: black;
+            }
+            80% {
+                background-color: black;
+            }
+            100% {
+                background-color: red;
+            }
+        }
+    </style>
 </head>
 <body onload="setHeight()" onscroll="document.getElementById('mainBody').style.backgroundPositionY = Math.max(100, window.scrollY) - 200 + 'px'" id="mainBody">
     <!-- Ladescreen -->
@@ -22,6 +91,7 @@
             <div class="loadingSquare"></div>
         </div>
     </div>
+    <link rel="stylesheet" href="sflix_sys/sflix.css" type="text/css">
     <!-- Navigationsmenü -->
     <div id="navigation">
         <div class="firstLevelWrap">
@@ -58,7 +128,7 @@
                     <li>Bilder: jpg, png, gif</li>
                     <p><br>Anleitung zur <a href="https://praxistipps.chip.de/mit-vlc-dateien-umwandeln-so-gehts_35221">Konvertierung von Videos mit VLC</a></p>
                 </ul></li>
-                <li>Preview-Bild in Preview-Ordner hinterlegen (optional)</li>
+                <li>Optional: Preview-Bild in Preview-Ordner hinterlegen. Muss jpg-Format aufweisen und der Dateiname muss identisch sein wie das Zielmedium.<br>Z.B: Buddy = "Buddy.jpg", Jahr 0 = "Jahr 0.jpg" usw.<br><br></li>
                 <li>updateData.exe ausführen</li>
             </ol>
 

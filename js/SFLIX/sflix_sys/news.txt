@@ -1,59 +1,109 @@
+<b>Version 1.23</b>:<br>
+<ul>
+    <li>[INTERFACE] Ladereihenfolge für Ladebalken angepasst um Weisses Bild zu verhindern</li>
+    <li>[INTERFACE] Hilfe zum hinzufügen von Medien ergänzt</li>
+    <li>[INTERFACE] Merken-Button verkleinert</li>
+</ul>
 <b>Version 1.22</b>:<br>
-- [BUGFIX] Audiokontrollen werden nun konstant angezeigt<br>
-- [FEATURE] Favoriten können nun ohne Unterbruch des Mediums hinzugefügt werden.<br><br>
+<ul>
+    <li>[BUGFIX] Audiokontrollen werden nun konstant angezeigt</li>
+    <li>[FEATURE] Favoriten können nun ohne Unterbruch des Mediums hinzugefügt werden</li>
+</ul>
 <b>Version 1.21</b>:<br>
-- [INTERFACE] Hovereffekt bei Suchen-Button hinzugefügt<br>
-- [INTERFACE] Suchen-Button im Suchfeld hinzugefügt<br>
-- [INTERFACE] Ladebalken hinzugefügt<br><br>
+<ul>
+    <li>[INTERFACE] Hovereffekt bei Suchen-Button hinzugefügt</li>
+    <li>[INTERFACE] Suchen-Button im Suchfeld hinzugefügt</li>
+    <li>[INTERFACE] Ladebalken hinzugefügt</li>
+</ul>
 <b>Version 1.20</b>:<br>
-- [FEATURE] Speichern der Lautstärkeeinstellung zwischen den Videos/Musikdateien (Mindestlautstärke: 20%)<br>
-- [BUGFIX] Anzeigefehler bei 0 Suchresultaten<br>
-- [INTERFACE] Anpassung Standardlinkfarbe<br>
-- [INTERFACE] Hilfe um unterstützte Dateiformate ergänzt<br><br>
+<ul>
+    <li>[FEATURE] Speichern der Lautstärkeeinstellung zwischen den Videos/Musikdateien (Mindestlautstärke: 20%)</li>
+    <li>[BUGFIX] Anzeigefehler bei 0 Suchresultaten</li>
+    <li>[INTERFACE] Anpassung Standardlinkfarbe</li>
+    <li>[INTERFACE] Hilfe um unterstützte Dateiformate ergänzt</li>
+</ul>
 <b>Version 1.19</b>:<br>
-- [BUGFIX] Bilder/Video-Links ab Tiefe 3 korrigiert.<br><br>
+<ul>
+    <li>[BUGFIX] Bilder/Video-Links ab Tiefe 3 korrigiert</li>
+</ul>
 <b>Version 1.18</b>:<br>
-- [BUGFIX] Next-Link bei Episode 1 jeder Staffel gefixt.<br><br>
+<ul>
+    <li>[BUGFIX] Next-Link bei Episode 1 jeder Staffel gefixt</li>
+</ul>
 <b>Version 1.17</b>:<br>
-- [BUG] Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden.<br>
-- [INTERFACE] Hilfe-Button hinzugefügt<br><br>
+<ul>
+    <li>[BUG] Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden</li>
+    <li>[INTERFACE] Hilfe-Button hinzugefügt</li>
+</ul>
 <b>Version 1.16</b>:<br>
-- [INTERFACE] Abstand zu Mediennavigation verringert<br>
-- [FEATURE] Zurück- und Vorwärts-Knopf können nun auch zwischen Unterordner/Staffeln wechseln<br><br>
+<ul>
+    <li>[INTERFACE] Abstand zu Mediennavigation verringert</li>
+    <li>[FEATURE] Zurück- und Vorwärts-Knopf können nun auch zwischen Unterordner/Staffeln wechseln</li>
+</ul>
 <b>Version 1.15</b>:<br>
-- [INTERFACE] Vor- und Zurückbutton angepasst, dass der Titel des nächsten Parts angezeigt wird.<br>
-- [INTERFACE] Anzeige Anzahl Suchresultate<br>
-- [OPTIMIERUNG] Optimierung der Suchfunktion<br><br>
+<ul>
+    <li>[INTERFACE] Vor- und Zurückbutton angepasst, dass der Titel des nächsten Parts angezeigt wird</li>
+    <li>[INTERFACE] Anzeige Anzahl Suchresultate</li>
+    <li>[OPTIMIERUNG] Optimierung der Suchfunktion</li>
+</ul>
 <b>Version 1.14</b>:<br>
-- [INTERFACE] Platzhalterhintergrund bewegt sich nun mit der Scrollposition<br><br>
+<ul>
+    <li>[INTERFACE] Platzhalterhintergrund bewegt sich nun mit der Scrollposition</li>
+</ul>
 <b>Version 1.13</b>:<br>
-- [BUGFIX] Inhalte im selben Ordner wie das Suchresultat ergaben einen Fehler, wenn der Ordner zuvor noch nie geöffnet wurde<br><br>
+<ul>
+    <li>[BUGFIX] Inhalte im selben Ordner wie das Suchresultat ergaben einen Fehler, wenn der Ordner zuvor noch nie geöffnet wurde</li>
+</ul>
 <b>Version 1.12</b>:<br>
-- [FEATURE] Suchfunktion (Bekannter Bug: Inhalte im selben Ordner wie das Suchresultat ergeben einen Fehler, wenn der Ordner zuvor noch nie geöffnet wurde.)<br><br>
+<ul>
+    <li>[FEATURE] Suchfunktion (Bekannter Bug: Inhalte im selben Ordner wie das Suchresultat ergeben einen Fehler, wenn der Ordner zuvor noch nie geöffnet wurde.)br></li>
+</ul>
 <b>Version 1.11</b>:<br>
-- [INTERFACE] Dunklere Farbpalette.<br>
-- [INTERFACE] Aktuell geöffneter Inhalt wird farblich im Menü hervorgehoben.<br>
-- [INTERFACE] Höherliegende Menüs können während dem Abspielen von Inhalten auf- und zugeklappt werden<br><br>
+<ul>
+    <li>[INTERFACE] Dunklere Farbpalette</li>
+    <li>[INTERFACE] Aktuell geöffneter Inhalt wird farblich im Menü hervorgehoben</li>
+    <li>[INTERFACE] Höherliegende Menüs können während dem Abspielen von Inhalten auf- und zugeklappt werden</li>
+</ul>
 <b>Version 1.101</b>:<br>
-- [HOTFIX] Fehler bei Buttondarstellung bei fortsetzbaren Medieninhalten<br><br>
+<ul>
+    <li>[HOTFIX] Fehler bei Buttondarstellung bei fortsetzbaren Medieninhalten</li>
+</ul>
 <b>Version 1.10</b>:<br>
-- [INTERFACE] Vorschaubild bei fortsetzbaren Medieninhalten<br><br>
+<ul>
+    <li>[INTERFACE] Vorschaubild bei fortsetzbaren Medieninhalten</li>
+</ul>
 <b>Version 1.09</b>:<br>
-- [INTERFACE] Visuelle Anzeige, wenn ein Videozeitstempel zurückgesetzt wird (95%).<br>
-- [INTERFACE] Bei Mediananzeige wird nun das Übergeordnete Menü angezeigt<br><br>
+<ul>
+    <li>[INTERFACE] Visuelle Anzeige, wenn ein Videozeitstempel zurückgesetzt wird (95%)</li>
+    <li>[INTERFACE] Bei Mediananzeige wird nun das Übergeordnete Menü angezeigt</li>
+</ul>
 <b>Version 1.08</b>:<br>
-- [BUGFIX] Fehlender Stern bei Favoriten<br><br>
+<ul>
+    <li>[BUGFIX] Fehlender Stern bei Favoriten</li>
+</ul>
 <b>Version 1.07</b>:<br>
-- [BUGFIX] Fehlerkorrektur bei Dateinamen<br><br>
+<ul>
+    <li>[BUGFIX] Fehlerkorrektur bei Dateinamen</li>
+</ul>
 <b>Version 1.06</b>:<br>
-- [BUGFIX] Leere Playliste führte zu fehlerhaftem Laden<br><br>
+<ul>
+    <li>[BUGFIX] Leere Playliste führte zu fehlerhaftem Laden</li>
+</ul>
 <b>Version 1.05</b>:<br>
-- [BUGFIX] Korrektur Schönheitsfehler bei Changelog<br><br>
+<ul>
+    <li>[BUGFIX] Korrektur Schönheitsfehler bei Changelog</li>
+</ul>
 <b>Version 1.04</b>:<br>
-- [FEATURE] Anzeige des Change-Logs<br>
-- [FEATURE] Fortsetzen von bis zu 5 Titeln<br>
-- [BUGFIX] Korrektur Schönheitsfehler<br><br>
+<ul>
+    <li>[FEATURE] Anzeige des Change-Logs</li>
+    <li>[FEATURE] Fortsetzen von bis zu 5 Titeln</li>
+    <li>[BUGFIX] Korrektur Schönheitsfehler</li>
+</ul>
 <b>Version 1.03</b>:<br>
-- [BUGFIX] Korrektur Inhaltsimplementierungen<br><br>
+<ul>
+    <li>[BUGFIX] Korrektur Inhaltsimplementierungen</li>
+</ul>
 <b>Version 1.02</b>:<br>
-- [INTERFACE] Hover-Effekt auf Schwarz geändert<br><br>
+<ul>
+    <li>[INTERFACE] Hover-Effekt auf Schwarz geändert</li>
+</ul>

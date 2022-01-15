@@ -1,5 +1,6 @@
 <b>Version 1.24</b>:<br>
 <ul>
+    <li>[BUGFIX] Fehler beim Erstellen der Favoritenliste</li>
     <li>[BUGFIX] Verlinkungen des Next-Buttons gefixt</li>
 </ul>
 <b>Version 1.23</b>:<br>

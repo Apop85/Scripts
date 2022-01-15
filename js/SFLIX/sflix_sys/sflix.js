@@ -35,6 +35,14 @@ var searchTerm = null;
 var searchResults = null;
 var seasonList = null;
 
+
+//  _______  __   __  __    _  ___   _  _______  ___   _______  __    _  _______  __    _ 
+// |       ||  | |  ||  |  | ||   | | ||       ||   | |       ||  |  | ||       ||  |  | |
+// |    ___||  | |  ||   |_| ||   |_| ||_     _||   | |   _   ||   |_| ||    ___||   |_| |
+// |   |___ |  |_|  ||       ||      _|  |   |  |   | |  | |  ||       ||   |___ |       |
+// |    ___||       ||  _    ||     |_   |   |  |   | |  |_|  ||  _    ||    ___||  _    |
+// |   |    |       || | |   ||    _  |  |   |  |   | |       || | |   ||   |___ | | |   |
+// |___|    |_______||_|  |__||___| |_|  |___|  |___| |_______||_|  |__||_______||_|  |__|                                                    
 // Funktion zum auslesen von Inhalten von anderen URLs
 function httpGet(theUrl) {
     let xmlhttp;
@@ -351,6 +359,13 @@ function openHelp() {
     window.location.href = "start.html?=" + btoa("HELP");
 }
 
+//  __   __  _______  ______    _______  _______  ______    _______  ___   _______  __   __  __    _  _______ 
+// |  | |  ||       ||    _ |  |  _    ||       ||    _ |  |       ||   | |       ||  | |  ||  |  | ||       |
+// |  |_|  ||   _   ||   | ||  | |_|   ||    ___||   | ||  |    ___||   | |_     _||  | |  ||   |_| ||    ___|
+// |       ||  | |  ||   |_||_ |       ||   |___ |   |_||_ |   |___ |   |   |   |  |  |_|  ||       ||   | __ 
+// |       ||  |_|  ||    __  ||  _   | |    ___||    __  ||    ___||   |   |   |  |       ||  _    ||   ||  |
+//  |     | |       ||   |  | || |_|   ||   |___ |   |  | ||   |___ |   |   |   |  |       || | |   ||   |_| |
+//   |___|  |_______||___|  |_||_______||_______||___|  |_||_______||___|   |___|  |_______||_|  |__||_______|
 // Lade Favoriten
 favorites = localStorage.getItem("favorites");
 if (favorites != null) {
@@ -362,6 +377,13 @@ if (window.location.href.includes("?=")) {
     decodedUriData = atob(window.location.href.split("?=")[1].split("#")[0]);
 }
 
+//  __   __  _______  __    _  __   __ 
+// |  |_|  ||       ||  |  | ||  | |  |
+// |       ||    ___||   |_| ||  | |  |
+// |       ||   |___ |       ||  |_|  |
+// |       ||    ___||  _    ||       |
+// | ||_|| ||   |___ | | |   ||       |
+// |_|   |_||_______||_|  |__||_______|
 // Iteriere über alle Schlüsselelemente des data-Array
 for (var key in data) {
     if (data.hasOwnProperty(key)) {
@@ -377,9 +399,14 @@ for (var key in data) {
         
     }
 }
-    // Sortiere Liste
+// Sortiere Liste
 sortList(document.getElementsByClassName('menu')[0]);
 
+                 
+//  _____     _     
+// |     |___|_|___ 
+// | | | | .'| |   |
+// |_|_|_|__,|_|_|_|
 // Prüfe, ob aus dem Hauptmenü eine Auswahl getroffen wurde
 if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     // Zerlege URL in "MAIN"-Bestandteil
@@ -436,6 +463,11 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     sortList(document.getElementsByClassName('submenu')[0]);
     document.getElementById("submenu").style.borderTop = "2px solid #666";
 
+                                  
+    //  __                _    ___   
+    // |  |   ___ _ _ ___| |  |_  |  
+    // |  |__| -_| | | -_| |   _| |_ 
+    // |_____|___|\_/|___|_|  |_____|
     // Prüfe, ob eine "LEVEL1"-Auswahl getroffen wurde
     if (decodedUriData.includes("LEVEL1")) {
         document.getElementById("submenu").style.display = "none";
@@ -501,6 +533,11 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         document.getElementById("subsubmenu").style.borderTop = "2px solid #666";
     }
 
+                                
+    //  __                _    ___ 
+    // |  |   ___ _ _ ___| |  |_  |
+    // |  |__| -_| | | -_| |  |  _|
+    // |_____|___|\_/|___|_|  |___|
     // Prüfe, ob eine "LEVEL2"-Auswahl gefällt wurde
     if (decodedUriData.includes("LEVEL2")) {
         document.getElementById("subsubmenu").style.display = "none";
@@ -566,6 +603,11 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         document.getElementById("subsubsubmenu").style.borderTop = "2px solid #666";
     }
 
+                                
+    //  __                _    ___ 
+    // |  |   ___ _ _ ___| |  |_  |
+    // |  |__| -_| | | -_| |  |_  |
+    // |_____|___|\_/|___|_|  |___|
     // Prüfe, ob eine "LEVEL3"-Auswahl getroffen wurde
     if (decodedUriData.includes("LEVEL3")) {
         document.getElementById("subsubsubmenu").style.display = "none";
@@ -631,11 +673,16 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     }
 
     // So lange kein Medientyp ausgewählt wurde, Playliste überschreiben
-    // if (!decodedUriData.includes("MEDIA")) {
     localStorage.setItem("currentPrefix", playListPrefix);
     localStorage.setItem(playListPrefix, playlist);
-    // }
 } else if (window.location.href.includes("?=") && decodedUriData.includes("SEARCH:")) {
+    //  _______  __   __  _______  __   __  _______ 
+    // |       ||  | |  ||       ||  | |  ||       |
+    // |  _____||  | |  ||       ||  |_|  ||    ___|
+    // | |_____ |  |_|  ||       ||       ||   |___ 
+    // |_____  ||       ||      _||       ||    ___|
+    //  _____| ||       ||     |_ |   _   ||   |___ 
+    // |_______||_______||_______||__| |__||_______|
     // Lese Suchtext aus
     searchTerm = decodedUriData.split("SEARCH:")[1];
     // Starte rekursive Suche
@@ -699,12 +746,27 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     wrapperNode.id = "lastPlayedWrapper";
     document.getElementById("media").appendChild(wrapperNode);
 } else {
+    //  ___      _______  __    _  ______   ___   __    _  _______  _______  _______  _______  _______ 
+    // |   |    |   _   ||  |  | ||      | |   | |  |  | ||       ||       ||   _   ||       ||       |
+    // |   |    |  |_|  ||   |_| ||  _    ||   | |   |_| ||    ___||    _  ||  |_|  ||    ___||    ___|
+    // |   |    |       ||       || | |   ||   | |       ||   | __ |   |_| ||       ||   | __ |   |___ 
+    // |   |___ |       ||  _    || |_|   ||   | |  _    ||   ||  ||    ___||       ||   ||  ||    ___|
+    // |       ||   _   || | |   ||       ||   | | | |   ||   |_| ||   |    |   _   ||   |_| ||   |___ 
+    // |_______||__| |__||_|  |__||______| |___| |_|  |__||_______||___|    |__| |__||_______||_______|
+                                   
+                                                                   
+                                                            
+    //  _____     _     _       _                      _     _ _   
+    // |__   |_ _| |___| |_ ___| |_    ___ ___ ___ ___|_|___| | |_ 
+    // |   __| | | | -_|  _|- _|  _|  | . | -_|_ -| . | | -_| |  _|
+    // |_____|___|_|___|_| |___|_|    |_  |___|___|  _|_|___|_|_|  
+    //                                |___|       |_|                  
     // Lese neuste Version von GIT-Repository aus
     newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
     if (newestVersion != null) {
         newestVersion = parseFloat(newestVersion.split("var version = ")[1]);
     }
-
+                       
     if (!window.location.href.includes(btoa("HELP"))) {
         // Prüfe, ob Version aktuell ist
         if (newestVersion != null && newestVersion > version) {
@@ -733,7 +795,12 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             node.appendChild(wrapperNode);
         }
 
-
+                                                         
+        //  _____     _         _                           
+        // |   __|___| |___ ___| |_ ___ ___ ___ ___ ___ ___ 
+        // |__   | . | | .'|_ -|   |_ -|  _|  _| -_| -_|   |
+        // |_____|  _|_|__,|___|_|_|___|___|_| |___|___|_|_|
+        //       |_|                                        
         // Wenn keine Auswahl getroffen wurde, Splashscreen anzeigen
         node = document.getElementById("splashscreen");
         node.style.display = "block";
@@ -749,6 +816,12 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             lastPlayed = [];
         }
 
+                                                                                           
+        //  _____     _     _       _                      _     _ _      __    _     _       
+        // |__   |_ _| |___| |_ ___| |_    ___ ___ ___ ___|_|___| | |_   |  |  |_|___| |_ ___ 
+        // |   __| | | | -_|  _|- _|  _|  | . | -_|_ -| . | | -_| |  _|  |  |__| |_ -|  _| -_|
+        // |_____|___|_|___|_| |___|_|    |_  |___|___|  _|_|___|_|_|    |_____|_|___|_| |___|
+        //                                |___|       |_|                                                                                           
         // Erstelle Liste von kürzlich gespielten Inhalten
         if (lastPlayed != null && !lastPlayed.includes("")) {
             wrapperNode = document.createElement("div");
@@ -800,6 +873,11 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         }
     
     } else {
+        //  _____ _ _ ___         _____     _ _       
+        // |  |  |_| |  _|___ ___|   __|___|_| |_ ___ 
+        // |     | | |  _| -_|___|__   | -_| |  _| -_|
+        // |__|__|_|_|_| |___|   |_____|___|_|_| |___|
+        // Lade changelog
         news = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");
 
         // Zeige Hilfe an
@@ -818,15 +896,19 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
         node = document.createElement("div");
         node.id = "changelog";
-        // textnode = document.createTextNode(news);
-        // node.appendChild(textnode);
         document.getElementById("help").appendChild(node);
         document.getElementById("changelog").innerHTML = news;
     }
 }
 
 
-
+//  __   __  _______  ______   ___   _______  __    _ 
+// |  |_|  ||       ||      | |   | |       ||  |  | |
+// |       ||    ___||  _    ||   | |    ___||   |_| |
+// |       ||   |___ | | |   ||   | |   |___ |       |
+// |       ||    ___|| |_|   ||   | |    ___||  _    |
+// | ||_|| ||   |___ |       ||   | |   |___ | | |   |
+// |_|   |_||_______||______| |___| |_______||_|  |__|
 // Prüfe, ob ein Medientyp ausgewählt wurde
 if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     if (decodedUriData.includes(",PL:")) {
@@ -857,8 +939,13 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     document.getElementById("mediaTitle").appendChild(textnode);
     document.getElementById("mediaTitle").style.borderBottom = "1px solid rgb(221, 221, 221)";
     
+                                                 
     // Prüfe, ob die Datei eine Video- oder Musik-Datei ist
     if (isVideo(medialocation) || isMusic(medialocation)) {
+        //  _____ _   _           _ _____         _ _   
+        // |  |  |_|_| |___ ___  / |     |_ _ ___|_| |_ 
+        // |  |  | | . | -_| . |/ /| | | | | |_ -| | '_|
+        //  \___/|_|___|___|___|_/ |_|_|_|___|___|_|_,_|
         // Erstelle Videoelement
         node = document.createElement("video");
         node.src = medialocation;
@@ -872,8 +959,6 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             savedVolume = 0.2;
         }
         node.volume = savedVolume;
-        // node.muted =true;
-        // node.focus;
 
         document.getElementById("media").appendChild(node);
 
@@ -922,6 +1007,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             }
         });
     } else if (isImage(medialocation)) {
+        //  _____ _ _   _         
+        // | __  |_| |_| |___ ___ 
+        // | __ -| | | . | -_|  _|
+        // |_____|_|_|___|___|_|  
         // Erstelle Bildelement
         element = document.getElementById("media");
         node = document.createElement("img");
@@ -937,6 +1026,11 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
 
     setLastPlayed(mediaName, window.location.href)
 
+                                         
+    //  _____                 _ _           
+    // |   __|___ _ _ ___ ___|_| |_ ___ ___ 
+    // |   __| .'| | | . |  _| |  _| -_|   |
+    // |__|  |__,|\_/|___|_| |_|_| |___|_|_|
     // Prüfe, ob der Merken-Button gedrückt wurde
     if (decodedUriData.includes(",FAV:True")) {
         // Prüfe, ob bereits favoriten vorhanden sind
@@ -965,11 +1059,24 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         favorites = currentFavorites;
     }
     
+
+
     // Sichtbarkeit der Navigationsleiste umstellen
     node = document.getElementById("mediaNav");
     node.style.display = "flex";
 
-    
+    //  __   __  _______  ______   ___   _______  __    _  _______  __   __ 
+    // |  |_|  ||       ||      | |   | |   _   ||  |  | ||   _   ||  | |  |
+    // |       ||    ___||  _    ||   | |  |_|  ||   |_| ||  |_|  ||  |_|  |
+    // |       ||   |___ | | |   ||   | |       ||       ||       ||       |
+    // |       ||    ___|| |_|   ||   | |       ||  _    ||       ||       |
+    // | ||_|| ||   |___ |       ||   | |   _   || | |   ||   _   | |     | 
+    // |_|   |_||_______||______| |___| |__| |__||_|  |__||__| |__|  |___|  
+    //                _ _         
+    //  _____        |_|_|    _   
+    // |__   |_ _ ___ _ _ ___| |_ 
+    // |   __| | |  _| | |  _| '_|
+    // |_____|___|_| |___|___|_,_|
     // Prüfe, ob der letzte Index grösser oder gleich 0 ist
     if (currentIndex - 1 >= 0) {
         // Erstelle Zurück-Button
@@ -1087,6 +1194,11 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         }
     }
 
+                               
+    //  _____         _           
+    // |     |___ ___| |_ ___ ___ 
+    // | | | | -_|  _| '_| -_|   |
+    // |_|_|_|___|_| |_,_|___|_|_|
     // Erstelle Merken-Button
     node = document.getElementById("favorite")
     subnode = document.createElement("a");
@@ -1101,6 +1213,11 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex] + ",FAV:True" + ",PL:" + playlistName) + "#mediaNav";
     node.appendChild(subnode);
 
+    //        _ _                     
+    //  _____|_|_|    _       _       
+    // |   | |___ ___| |_ ___| |_ ___ 
+    // | | | | .'|  _|   |_ -|  _| -_|
+    // |_|___|__,|___|_|_|___|_| |___|
     // Prüfe ob nächster Index noch innerhalb der Range ist
     if (currentIndex + 1 <= localPlaylist.length - 1) {
         node = document.getElementById("next");

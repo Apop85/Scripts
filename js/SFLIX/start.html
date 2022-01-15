@@ -11,6 +11,7 @@
     <script src="sflix_sys/version.js"></script>
 </head>
 <body onload="setHeight()" onscroll="document.getElementById('mainBody').style.backgroundPositionY = Math.max(100, window.scrollY) - 200 + 'px'" id="mainBody">
+    <!-- Ladescreen -->
     <div id="loadingScreen">
         <h1>Inhalte werden geladen</h1>
         <div id="loadingBar">
@@ -21,6 +22,7 @@
             <div class="loadingSquare"></div>
         </div>
     </div>
+    <!-- Navigationsmenü -->
     <div id="navigation">
         <div class="firstLevelWrap">
             <a img id="logoLink" href="start.html"><img id="logo" src="sflix_sys/sflixLogo.png" alt="STEFFLIX Logo"></a>
@@ -42,6 +44,7 @@
         <ul id="subsubsubmenu" class="subsubsubmenu"></ul>
         <ul id="subsubsubsubmenu" class="subsubsubsubmenu"></ul>
     </div>
+    <!-- Mediencontainer -->
     <div id="media">
         <div id="help" style="display: none;">
             <h3>Neue Medieninhalte hinzufügen</h3>
@@ -64,11 +67,13 @@
         </div>
         <h2 id="mediaTitle"></h2>
     </div>
+    <!-- Mediennavigation -->
     <div id="mediaNav">
         <div id="prev"></div>
         <div id="favorite"></div>
         <div id="next"></div>
     </div>
+    <!-- Splashscreen -->
     <div id="splashscreen"></div>
 </body>
 <footer>

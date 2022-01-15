@@ -760,6 +760,8 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     // |_____  ||       ||      _||       ||    ___|
     //  _____| ||       ||     |_ |   _   ||   |___ 
     // |_______||_______||_______||__| |__||_______|
+
+    document.getElementById("media").style.display = "block";
     // Lese Suchtext aus
     searchTerm = decodedUriData.split("SEARCH:")[1];
     // Starte rekursive Suche
@@ -830,8 +832,8 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     // |   |___ |       ||  _    || |_|   ||   | |  _    ||   ||  ||    ___||       ||   ||  ||    ___|
     // |       ||   _   || | |   ||       ||   | | | |   ||   |_| ||   |    |   _   ||   |_| ||   |___ 
     // |_______||__| |__||_|  |__||______| |___| |_|  |__||_______||___|    |__| |__||_______||_______|
-                                   
-                                                                   
+    
+    document.getElementById("media").style.display = "block";
                                                             
     //  _____     _     _       _                      _     _ _   
     // |__   |_ _| |___| |_ ___| |_    ___ ___ ___ ___|_|___| | |_ 
@@ -954,6 +956,8 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         // |  |  |_| |  _|___ ___|   __|___|_| |_ ___ 
         // |     | | |  _| -_|___|__   | -_| |  _| -_|
         // |__|__|_|_|_| |___|   |_____|___|_|_| |___|
+        document.getElementById("media").style.display = "block";
+
         // Lade changelog
         news = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");
 
@@ -988,6 +992,8 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 // |_|   |_||_______||______| |___| |_______||_|  |__|
 // Prüfe, ob ein Medientyp ausgewählt wurde
 if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
+    document.getElementById("media").style.display = "block";
+
     if (decodedUriData.includes(",PL:")) {
         playlistName = decodedUriData.split(",PL:")[1].split(",")[0].split("#")[0];
     }

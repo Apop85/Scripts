@@ -139,7 +139,7 @@ function sortList(ul){
 
     // Ersetze unsortiertes UL-Element mit sortiertem
     ul.parentNode.replaceChild(new_ul, ul);
-    return playlist
+    return playlist.sort();
 }
 
 // Funktion zum hinzufügen von Emotes zu Dateinamen
@@ -1099,7 +1099,6 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     }
 
     setLastPlayed(mediaName, window.location.href)
-
     // Sichtbarkeit der Navigationsleiste umstellen
     node = document.getElementById("mediaNav");
     node.style.display = "flex";
@@ -1270,8 +1269,12 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             mediaName = mediaName.split("/");
             mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
         }
-        currentUrl = atob(window.location.href.split("?=")[1].split("#")[0]).split(",MEDIA:")[0]
-        localPlaylist = localStorage.getItem(playlistName).split(",")
+
+        // Lese aktuelle Daten aus
+        currentUrl = atob(window.location.href.split("?=")[1].split("#")[0]).split(",MEDIA:")[0];
+        playlistName = atob(window.location.href.split("?=")[1].split("#")[0]).split(",PL:")[1].split(",")[0];
+        // Lade Playliste
+        localPlaylist = localStorage.getItem(playlistName).split(",").sort();
 
         textnode = document.createTextNode(mediaName + " 👉");
         subnode.appendChild(textnode);

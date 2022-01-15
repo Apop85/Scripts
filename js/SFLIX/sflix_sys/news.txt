@@ -1,4 +1,5 @@
 <b>Version 1.22</b>:<br>
+- [BUGFIX] Audiokontrollen werden nun konstant angezeigt<br>
 - [FEATURE] Favoriten können nun ohne Unterbruch des Mediums hinzugefügt werden.<br><br>
 <b>Version 1.21</b>:<br>
 - [INTERFACE] Hovereffekt bei Suchen-Button hinzugefügt<br>

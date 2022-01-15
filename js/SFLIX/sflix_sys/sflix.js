@@ -251,6 +251,7 @@ function setLastPlayed(title, url) {
 
 // Funktion zum setzen der Höhe des body-Elements
 function setHeight() {
+    document.getElementById("loadingScreen").style.display = "none";
     document.getElementById("mainBody").style.minHeight = document.documentElement.scrollHeight + "px";
 }
 

@@ -11,6 +11,16 @@
     <script src="sflix_sys/version.js"></script>
 </head>
 <body onload="setHeight()" onscroll="document.getElementById('mainBody').style.backgroundPositionY = Math.max(100, window.scrollY) - 200 + 'px'" id="mainBody">
+    <div id="loadingScreen">
+        <h1>Inhalte werden geladen</h1>
+        <div id="loadingBar">
+            <div class="loadingSquare"></div>
+            <div class="loadingSquare"></div>
+            <div class="loadingSquare"></div>
+            <div class="loadingSquare"></div>
+            <div class="loadingSquare"></div>
+        </div>
+    </div>
     <div id="navigation">
         <div class="firstLevelWrap">
             <a img id="logoLink" href="start.html"><img id="logo" src="sflix_sys/sflixLogo.png" alt="STEFFLIX Logo"></a>
@@ -36,16 +46,14 @@
             <h3>Neue Medieninhalte hinzufügen</h3>
             <p>Um neue Medieninhalte hinzuzufügen, müssen diese einfach in den entsprechenden STEFFLIX-Ordner kopiert werden und anschliessend das Programm "updateData.exe" ausgeführt werden.</p>
             <ol>
-                <li>
-                    Gewünschte Medien in passenden Unterordner von STEFFLIX kopieren
-                    <h4 style="text-align: left;">Unterstützte Dateiformate:</h4>
-                    <ul style="text-align: left; margin-left: 30px; margin-bottom: 20px;">
-                        <li>Video: mp4</li>
-                        <li>Musik: mp3, ogg, m4a</li>
-                        <li>Bilder: jpg, png, gif</li>
-                        <p>Anleitung zur Konvertierung von Videos mit VLC</p>
-                    </ul>
-                </li>
+                <li>Gewünschte Medien in passenden Unterordner von STEFFLIX kopieren
+                <h4 style="text-align: left;">Unterstützte Dateiformate:</h4>
+                <ul style="text-align: left; margin-left: 30px; margin-bottom: 20px;">
+                    <li>Video: mp4</li>
+                    <li>Musik: mp3, ogg, m4a</li>
+                    <li>Bilder: jpg, png, gif</li>
+                    <p><br>Anleitung zur <a href="https://praxistipps.chip.de/mit-vlc-dateien-umwandeln-so-gehts_35221">Konvertierung von Videos mit VLC</a></p>
+                </ul></li>
                 <li>Preview-Bild in Preview-Ordner hinterlegen (optional)</li>
                 <li>updateData.exe ausführen</li>
             </ol>

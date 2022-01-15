@@ -1,115 +1,115 @@
 <b>Version 1.24</b>:<br>
 <ul>
-    <li>[INTERFACE] Media-Element ausgeblendet, solange keine Inhalte angezeigt werden</li>
-    <li>[BUGFIX] Fehler beim Erstellen der Favoritenliste</li>
-    <li>[BUGFIX] Verlinkungen des Next-Buttons gefixt</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Media-Element ausgeblendet, solange keine Inhalte angezeigt werden</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Fehler beim Erstellen der Favoritenliste</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Verlinkungen des Next-Buttons gefixt</li>
 </ul>
 <b>Version 1.23</b>:<br>
 <ul>
-    <li>[INTERFACE] Ladereihenfolge für Ladebalken angepasst um Weisses Bild zu verhindern</li>
-    <li>[INTERFACE] Hilfe zum hinzufügen von Medien ergänzt</li>
-    <li>[INTERFACE] Merken-Button verkleinert</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Ladereihenfolge für Ladebalken angepasst um Weisses Bild zu verhindern</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hilfe zum hinzufügen von Medien ergänzt</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Merken-Button verkleinert</li>
 </ul>
 <b>Version 1.22</b>:<br>
 <ul>
-    <li>[BUGFIX] Audiokontrollen werden nun konstant angezeigt</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Audiokontrollen werden nun konstant angezeigt</li>
     <li>[OPTIMIERUNG] Favoriten können nun ohne Unterbruch des Mediums hinzugefügt werden</li>
 </ul>
 <b>Version 1.21</b>:<br>
 <ul>
-    <li>[INTERFACE] Hovereffekt bei Suchen-Button hinzugefügt</li>
-    <li>[INTERFACE] Suchen-Button im Suchfeld hinzugefügt</li>
-    <li>[INTERFACE] Ladebalken hinzugefügt</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hovereffekt bei Suchen-Button hinzugefügt</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Suchen-Button im Suchfeld hinzugefügt</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Ladebalken hinzugefügt</li>
 </ul>
 <b>Version 1.20</b>:<br>
 <ul>
-    <li>[FEATURE] Speichern der Lautstärkeeinstellung zwischen den Videos/Musikdateien (Mindestlautstärke: 20%)</li>
-    <li>[BUGFIX] Anzeigefehler bei 0 Suchresultaten</li>
-    <li>[INTERFACE] Anpassung Standardlinkfarbe</li>
-    <li>[INTERFACE] Hilfe um unterstützte Dateiformate ergänzt</li>
+    <li>[<span style="color: red">FEATURE</span>] Speichern der Lautstärkeeinstellung zwischen den Videos/Musikdateien (Mindestlautstärke: 20%)</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Anzeigefehler bei 0 Suchresultaten</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Anpassung Standardlinkfarbe</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hilfe um unterstützte Dateiformate ergänzt</li>
 </ul>
 <b>Version 1.19</b>:<br>
 <ul>
-    <li>[BUGFIX] Bilder/Video-Links ab Tiefe 3 korrigiert</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Bilder/Video-Links ab Tiefe 3 korrigiert</li>
 </ul>
 <b>Version 1.18</b>:<br>
 <ul>
-    <li>[BUGFIX] Next-Link bei Episode 1 jeder Staffel gefixt</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Next-Link bei Episode 1 jeder Staffel gefixt</li>
 </ul>
 <b>Version 1.17</b>:<br>
 <ul>
-    <li>[BUG] Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden</li>
-    <li>[INTERFACE] Hilfe-Button hinzugefügt</li>
+    <li>[<span style="color: red">BUG</bug>] Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hilfe-Button hinzugefügt</li>
 </ul>
 <b>Version 1.16</b>:<br>
 <ul>
-    <li>[INTERFACE] Abstand zu Mediennavigation verringert</li>
-    <li>[FEATURE] Zurück- und Vorwärts-Knopf können nun auch zwischen Unterordner/Staffeln wechseln</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Abstand zu Mediennavigation verringert</li>
+    <li>[<span style="color: red">FEATURE</span>] Zurück- und Vorwärts-Knopf können nun auch zwischen Unterordner/Staffeln wechseln</li>
 </ul>
 <b>Version 1.15</b>:<br>
 <ul>
-    <li>[INTERFACE] Vor- und Zurückbutton angepasst, dass der Titel des nächsten Parts angezeigt wird</li>
-    <li>[INTERFACE] Anzeige Anzahl Suchresultate</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Vor- und Zurückbutton angepasst, dass der Titel des nächsten Parts angezeigt wird</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Anzeige Anzahl Suchresultate</li>
     <li>[OPTIMIERUNG] Optimierung der Suchfunktion</li>
 </ul>
 <b>Version 1.14</b>:<br>
 <ul>
-    <li>[INTERFACE] Platzhalterhintergrund bewegt sich nun mit der Scrollposition</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Platzhalterhintergrund bewegt sich nun mit der Scrollposition</li>
 </ul>
 <b>Version 1.13</b>:<br>
 <ul>
-    <li>[BUGFIX] Inhalte im selben Ordner wie das Suchresultat ergaben einen Fehler, wenn der Ordner zuvor noch nie geöffnet wurde</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Inhalte im selben Ordner wie das Suchresultat ergaben einen Fehler, wenn der Ordner zuvor noch nie geöffnet wurde</li>
 </ul>
 <b>Version 1.12</b>:<br>
 <ul>
-    <li>[FEATURE] Suchfunktion (Bekannter Bug: Inhalte im selben Ordner wie das Suchresultat ergeben einen Fehler, wenn der Ordner zuvor noch nie geöffnet wurde.)br></li>
+    <li>[<span style="color: red">FEATURE</span>] Suchfunktion (Bekannter Bug: Inhalte im selben Ordner wie das Suchresultat ergeben einen Fehler, wenn der Ordner zuvor noch nie geöffnet wurde.)br></li>
 </ul>
 <b>Version 1.11</b>:<br>
 <ul>
-    <li>[INTERFACE] Dunklere Farbpalette</li>
-    <li>[INTERFACE] Aktuell geöffneter Inhalt wird farblich im Menü hervorgehoben</li>
-    <li>[INTERFACE] Höherliegende Menüs können während dem Abspielen von Inhalten auf- und zugeklappt werden</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Dunklere Farbpalette</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Aktuell geöffneter Inhalt wird farblich im Menü hervorgehoben</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Höherliegende Menüs können während dem Abspielen von Inhalten auf- und zugeklappt werden</li>
 </ul>
 <b>Version 1.101</b>:<br>
 <ul>
-    <li>[HOTFIX] Fehler bei Buttondarstellung bei fortsetzbaren Medieninhalten</li>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Fehler bei Buttondarstellung bei fortsetzbaren Medieninhalten</li>
 </ul>
 <b>Version 1.10</b>:<br>
 <ul>
-    <li>[INTERFACE] Vorschaubild bei fortsetzbaren Medieninhalten</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Vorschaubild bei fortsetzbaren Medieninhalten</li>
 </ul>
 <b>Version 1.09</b>:<br>
 <ul>
-    <li>[INTERFACE] Visuelle Anzeige, wenn ein Videozeitstempel zurückgesetzt wird (95%)</li>
-    <li>[INTERFACE] Bei Mediananzeige wird nun das Übergeordnete Menü angezeigt</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Visuelle Anzeige, wenn ein Videozeitstempel zurückgesetzt wird (95%)</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Bei Mediananzeige wird nun das Übergeordnete Menü angezeigt</li>
 </ul>
 <b>Version 1.08</b>:<br>
 <ul>
-    <li>[BUGFIX] Fehlender Stern bei Favoriten</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Fehlender Stern bei Favoriten</li>
 </ul>
 <b>Version 1.07</b>:<br>
 <ul>
-    <li>[BUGFIX] Fehlerkorrektur bei Dateinamen</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Fehlerkorrektur bei Dateinamen</li>
 </ul>
 <b>Version 1.06</b>:<br>
 <ul>
-    <li>[BUGFIX] Leere Playliste führte zu fehlerhaftem Laden</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Leere Playliste führte zu fehlerhaftem Laden</li>
 </ul>
 <b>Version 1.05</b>:<br>
 <ul>
-    <li>[BUGFIX] Korrektur Schönheitsfehler bei Changelog</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Korrektur Schönheitsfehler bei Changelog</li>
 </ul>
 <b>Version 1.04</b>:<br>
 <ul>
-    <li>[FEATURE] Anzeige des Change-Logs</li>
-    <li>[FEATURE] Fortsetzen von bis zu 5 Titeln</li>
-    <li>[BUGFIX] Korrektur Schönheitsfehler</li>
+    <li>[<span style="color: red">FEATURE</span>] Anzeige des Change-Logs</li>
+    <li>[<span style="color: red">FEATURE</span>] Fortsetzen von bis zu 5 Titeln</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Korrektur Schönheitsfehler</li>
 </ul>
 <b>Version 1.03</b>:<br>
 <ul>
-    <li>[BUGFIX] Korrektur Inhaltsimplementierungen</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Korrektur Inhaltsimplementierungen</li>
 </ul>
 <b>Version 1.02</b>:<br>
 <ul>
-    <li>[INTERFACE] Hover-Effekt auf Schwarz geändert</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hover-Effekt auf Schwarz geändert</li>
 </ul>

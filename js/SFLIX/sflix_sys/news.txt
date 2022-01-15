@@ -7,7 +7,7 @@
 <b>Version 1.22</b>:<br>
 <ul>
     <li>[BUGFIX] Audiokontrollen werden nun konstant angezeigt</li>
-    <li>[FEATURE] Favoriten können nun ohne Unterbruch des Mediums hinzugefügt werden</li>
+    <li>[OPTIMIERUNG] Favoriten können nun ohne Unterbruch des Mediums hinzugefügt werden</li>
 </ul>
 <b>Version 1.21</b>:<br>
 <ul>

@@ -367,7 +367,16 @@ function updateFavorites() {
     mediaName = atob(window.location.href.split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0];
     
     // Favoriten auslesen
-    favorites = localStorage.getItem("favorites").split(",");
+    favorites = localStorage.getItem("favorites");
+    if (favorites == null) {
+        favorites = [];
+    } else {
+        favorites.split(",");
+        if (!Array.isArray(favorites)) {
+            favorites = [favorites];
+        }
+    }
+
     // Leerer String aus Favoriten entfernen
     if (favorites.includes('')){
         currentIndex = favorites.indexOf("");

@@ -205,6 +205,7 @@ function addPreviewImage(data, link, cleanedKey) {
                 imgNode.style.boxShadow = "0px 0px 5px 2px white";
                 imgNode.style.marginBottom = "10px";
                 imgNode.id = removeFileExtension(allowedMediaExtensions, cleanedKey.split("/")[cleanedKey.split("/").length-1]);
+                imgNode.loading = "lazy";
                 link.style.flexDirection = "column";
                 link.style.justifyContent = "center";
                 // Füge Bild zu Link-Node hinzu
@@ -355,8 +356,75 @@ function recursiveSearch(data, searchTerm, currentLink="MAIN:", searchResults=[]
     return searchResults;
 }
 
+// Öffne Hilfeseite
 function openHelp() {
     window.location.href = "start.html?=" + btoa("HELP");
+}
+
+// Hinzufügen/Entfernen von Favoriten
+function updateFavorites() {
+    // Aktuelles Medium auslesen
+    mediaName = atob(window.location.href.split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0];
+    
+    // Favoriten auslesen
+    favorites = localStorage.getItem("favorites").split(",");
+    // Leerer String aus Favoriten entfernen
+    if (favorites.includes('')){
+        currentIndex = favorites.indexOf("");
+        favorites.splice(currentIndex, 1);
+    }
+    
+    // Stern bei Button hinzufügen/entfernen
+    node = document.getElementById("favorite").childNodes[0];
+    text = node.innerHTML;
+    if (text.includes("⭐")) {
+        text = text.replaceAll(" ⭐","");
+        node.innerHTML = text;
+        document.getElementById("favorite").className = "";
+    } else {
+        document.getElementById("favorite").className = "isFavorite";
+        node.innerHTML += (" ⭐");
+    }
+
+    // Punkt vor Verzeichnis entfernen
+    if (!mediaName.startsWith(".")) {
+        mediaName = "." + mediaName;
+    }
+
+    // Stern von Menü hinzufügen/Entfernen
+    node = document.getElementById(mediaName.replace(".", "")).childNodes[0];
+    text = node.innerHTML;
+
+    // Prüfe, ob ein Vorschaubild enthalten ist
+    if (node.innerHTML.includes("lazy")) {
+        image = text.split(">")[0] + ">";
+        text = text.split(">")[1];
+    }
+    
+    // Stern hinzufügen/entfernen
+    if (text.includes("⭐")) {
+        text = text.replace("⭐ ", "");
+    } else {
+        text = "⭐ " + text;
+    }
+
+    // Element updaten
+    if (node.innerHTML.includes("lazy")) {
+        node.innerHTML = image + text;
+    } else {
+        node.innerHTML = text;
+    }
+
+    // Favoriten aktualisieren
+    if (favorites.includes(mediaName)) {
+        currentIndex = favorites.indexOf(mediaName);
+        favorites.splice(currentIndex, 1);
+    } else {
+        favorites.push(mediaName);
+    }
+    
+    // Speichere aktualisierte Favoritenliste
+    localStorage.setItem("favorites", favorites);
 }
 
 //  __   __  _______  ______    _______  _______  ______    _______  ___   _______  __   __  __    _  _______ 
@@ -947,10 +1015,16 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         // |  |  | | . | -_| . |/ /| | | | | |_ -| | '_|
         //  \___/|_|___|___|___|_/ |_|_|_|___|___|_|_,_|
         // Erstelle Videoelement
-        node = document.createElement("video");
+        if (isMusic(medialocation)) {
+            node = document.createElement("audio");
+            node.style.backgroundColor = "gray";
+        }else {
+            node = document.createElement("video");
+        }
         node.src = medialocation;
         node.id = "video";
         node.controls = true;
+        
         // Lade gespeicherte Lautstärke
         savedVolume = localStorage.getItem("mediaVolume");
         if (savedVolume == null){
@@ -959,7 +1033,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             savedVolume = 0.2;
         }
         node.volume = savedVolume;
-
+        
         document.getElementById("media").appendChild(node);
 
         node.onloadedmetadata = function() {
@@ -1025,41 +1099,6 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     }
 
     setLastPlayed(mediaName, window.location.href)
-
-                                         
-    //  _____                 _ _           
-    // |   __|___ _ _ ___ ___|_| |_ ___ ___ 
-    // |   __| .'| | | . |  _| |  _| -_|   |
-    // |__|  |__,|\_/|___|_| |_|_| |___|_|_|
-    // Prüfe, ob der Merken-Button gedrückt wurde
-    if (decodedUriData.includes(",FAV:True")) {
-        // Prüfe, ob bereits favoriten vorhanden sind
-        if (favorites != null) {
-            // Lese Favoriten aus
-            currentFavorites = localStorage.getItem("favorites").split(",");
-            if (!currentFavorites.includes(medialocation)) {
-                // Füge Favorit hinzu, falls noch nicht vorhanden
-                currentFavorites.push(medialocation);
-            } else {
-                // Lösche Favorit, wenn bereits vorhanden.
-                currentFavorites.splice(currentFavorites.indexOf(medialocation), 1);
-            }
-        } else {
-            // Wenn noch keine Favoriten vorhanden sind, erstelle Array
-            currentFavorites = [medialocation];
-        }
-        if (currentFavorites == []){
-            // Entferne gespeicherte Favoriten bei leerem Array
-            localStorage.removeItem("favorites")
-        } else {
-            // Speichere Favoriten lokal
-            localStorage.setItem("favorites", currentFavorites);
-        }
-        // Überschreibe bisherige Favoritenliste
-        favorites = currentFavorites;
-    }
-    
-
 
     // Sichtbarkeit der Navigationsleiste umstellen
     node = document.getElementById("mediaNav");
@@ -1210,7 +1249,8 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         node.className = "isFavorite";
     }
     subnode.appendChild(textnode);
-    subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex] + ",FAV:True" + ",PL:" + playlistName) + "#mediaNav";
+    subnode.setAttribute("onclick", "updateFavorites()");
+    // subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex] + ",FAV:True" + ",PL:" + playlistName) + "#mediaNav";
     node.appendChild(subnode);
 
     //        _ _                     

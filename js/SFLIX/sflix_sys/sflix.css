@@ -373,7 +373,7 @@ h2 {
 }
 
 #searchFieldContainer {
-    width: 200px;
+    width: 250px;
     background-color: rgb(34, 33, 33);
     padding: 10px;
     right: 0;
@@ -382,13 +382,29 @@ h2 {
 }
 
 #searchFieldContainer input {
-    width: 80%;
+    width: 75%;
     padding: 3px;
     background-color: #a8a8a8;
 }
 
+#searchFieldContainer a:not(#closeSearchIcon) {
+    color: green;
+}
+
 #searchFieldContainer a {
-    width: min-content;
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 12.5px;
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; 
+}
+
+#searchFieldContainer a:hover {
+    background-color: #aaa;
 }
 
 @keyframes splash-out {

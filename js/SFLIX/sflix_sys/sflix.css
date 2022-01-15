@@ -337,9 +337,14 @@ body {
  | | | (_| |\ V / (_) | |  | | ||  __/ | | |
  |_|  \__,_| \_/ \___/|_|  |_|\__\___|_| |_|
 */
+#favorite {
+    cursor: pointer;
+}
+
 #favorite:not(.isFavorite) {
     background-color: #82827b;
 }
+
 #favorite:not(.isFavorite) a {
     color: #3e3e3e;
 }
@@ -371,7 +376,7 @@ body {
     min-height: 70vh;
 }
 
-#media img, #media video {
+#media img, #media video, #media audio {
     width: auto;
     max-height: 70vh;
     margin-left: auto;

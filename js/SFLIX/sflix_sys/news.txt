@@ -1,5 +1,6 @@
 <b>Version 1.24</b>:<br>
 <ul>
+    <li>[INTERFACE] Media-Element ausgeblendet, solange keine Inhalte angezeigt werden</li>
     <li>[BUGFIX] Fehler beim Erstellen der Favoritenliste</li>
     <li>[BUGFIX] Verlinkungen des Next-Buttons gefixt</li>
 </ul>

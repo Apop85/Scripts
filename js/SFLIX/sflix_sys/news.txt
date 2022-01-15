@@ -38,7 +38,7 @@
 </ul>
 <b>Version 1.17</b>:<br>
 <ul>
-    <li>[<span style="color: red">BUG</bug>] Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden</li>
+    <li>[<span style="color: red">BUG</span>] Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden</li>
     <li>[<span style="color: blue">INTERFACE</span>] Hilfe-Button hinzugefügt</li>
 </ul>
 <b>Version 1.16</b>:<br>

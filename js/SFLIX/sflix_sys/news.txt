@@ -1,5 +1,6 @@
 <b>Version 1.24</b>:<br>
 <ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Hilfestellung für Preview-Ordner eingefügt</li>
     <li>[<span style="color: blue">INTERFACE</span>] Media-Element ausgeblendet, solange keine Inhalte angezeigt werden</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Fehler beim Erstellen der Favoritenliste</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Verlinkungen des Next-Buttons gefixt</li>

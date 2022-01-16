@@ -1,3 +1,9 @@
+<b>Version 1.25</b>:<br>
+<ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Unterstützte Dateiformate können in der Hilfe nun ein- und ausgeblendet werden</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Ladeanimation angepasst. Geringerer Kontrast, langsamere Animation</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Fehlerhaftes Vehalten beim Hinzufügen eines Favoriten, wenn bereits ein oder mehrere Favoriten vorhanden waren</li>
+</ul>
 <b>Version 1.242</b>:<br>
 <ul>
     <li>[<span style="color: red"><b>HOTFIX</b></span>] Vor-/Zurück-Button nur noch zu Medieninhalten möglich</li>

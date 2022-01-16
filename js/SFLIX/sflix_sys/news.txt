@@ -1,10 +1,11 @@
 <b>Version 1.26</b>:<br>
 <ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Abstand unterhalb der Untermenüs eingefügt</li>
     <li>[<span style="color: blue">INTERFACE</span>] Hauptmenü am oberen Rand fixiert</li>
 </ul>
 <b>Version 1.251</b>:<br>
 <ul>
-    <li>[<span style="color: red"><b>HOTFIX</b></span>] Ordnerübergreiffender Zurück-Link auf Tiefe 1 hat falsch negative Ergebnisse produziert</li>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Ordnerübergreifender Zurück-Link auf Tiefe 1 hat falsch negative Ergebnisse produziert</li>
 </ul>
 <b>Version 1.25</b>:<br>
 <ul>

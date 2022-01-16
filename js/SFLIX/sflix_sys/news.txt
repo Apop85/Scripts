@@ -1,3 +1,7 @@
+<b>Version 1.241</b>:<br>
+<ul>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Erstellung der Vorwärts/Rückwärts-Buttonlinks auf Tiefe 3 mit fehlender Playlistangabe</li>
+</ul>
 <b>Version 1.24</b>:<br>
 <ul>
     <li>[<span style="color: blue">INTERFACE</span>] Hilfestellung für Preview-Ordner eingefügt</li>

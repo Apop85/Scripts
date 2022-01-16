@@ -1008,6 +1008,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     if (decodedUriData.includes(",PL:")) {
         playlistName = decodedUriData.split(",PL:")[1].split(",")[0].split("#")[0];
     }
+    
     // Lade aktuelle Playliste
     localPlaylist = localStorage.getItem(playlistName).split(",");
     // Lese Speicherort aus
@@ -1197,12 +1198,17 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 for (var key in data[mainContent][level1][level2][seasonList[keyIndex - 1]]) {
                     mediaList.push(key);
                 };
+                
                 // Lese erste Folge der nächsten Staffel aus
-                medialocation = mediaList.sort()[0];
+                medialocation = mediaList.sort()[mediaList.length - 1];
+                if (medialocation.startsWith(".")) {
+                    medialocation = medialocation.replace(".", "")
+                }
+
                 // Definiere newPlaylistname
                 newPlaylistName = mainContent + level1 + level2 + seasonList[keyIndex - 1];
                 // Setze aktuelle URL zusammen
-                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation; + ",PL:" + newPlaylistName 
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + seasonList[keyIndex - 1] + ",MEDIA:." + medialocation + ",PL:" + newPlaylistName; 
             }
         } else if (mainContent != null && level1 != null && level2 != null) {
             // Erstelle Schlüsselliste
@@ -1221,6 +1227,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[mediaList.length - 1];
+                if (medialocation.startsWith(".")) {
+                    medialocation = medialocation.replace(".", "")
+                }
+
                 // Definiere newPlaylistname
                 newPlaylistName = mainContent + level1 + seasonList[keyIndex - 1];
                 // Setze aktuelle URL zusammen
@@ -1242,6 +1252,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[0];
+                if (medialocation.startsWith(".")) {
+                    medialocation = medialocation.replace(".", "")
+                }
+                
                 // Definiere newPlaylistname
                 newPlaylistName = mainContent + seasonList[keyIndex - 1];
                 // Setze aktuelle URL zusammen
@@ -1345,10 +1359,14 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[0];
+                if (medialocation.startsWith(".")) {
+                    medialocation = medialocation.replace(".", "")
+                }
+
                 // Definiere newPlaylistname
                 newPlaylistName = mainContent + level1 + level2 + seasonList[keyIndex + 1];
                 // Setze aktuelle URL zusammen
-                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation; + ",PL:" + newPlaylistName 
+                currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation + ",PL:" + newPlaylistName;
             }
         } else if (mainContent != null && level1 != null && level2 != null) {
             // Erstelle Schlüsselliste
@@ -1366,6 +1384,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[0];
+                if (medialocation.startsWith(".")) {
+                    medialocation = medialocation.replace(".", "")
+                }
+
                 // Definiere newPlaylistname
                 newPlaylistName = mainContent + level1 + seasonList[keyIndex + 1];
                 // Setze aktuelle URL zusammen
@@ -1387,6 +1409,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[0];
+                if (medialocation.startsWith(".")) {
+                    medialocation = medialocation.replace(".", "")
+                }
+
                 // Definiere newPlaylistname
                 newPlaylistName = mainContent + seasonList[keyIndex + 1];
                 // Setze aktuelle URL zusammen

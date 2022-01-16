@@ -565,6 +565,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     // Sortiere Liste
     sortList(document.getElementsByClassName('submenu')[0]);
     document.getElementById("submenu").style.borderTop = "2px solid #666";
+    document.getElementById("submenu").style.display = "flex";
 
                                   
     //  __                _    ___   
@@ -634,6 +635,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         // Sortiere Liste
         sortList(document.getElementsByClassName('subsubmenu')[0]);
         document.getElementById("subsubmenu").style.borderTop = "2px solid #666";
+        document.getElementById("subsubmenu").style.display = "flex";
     }
 
                                 
@@ -704,6 +706,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         // Sortiere Liste
         sortList(document.getElementsByClassName('subsubsubmenu')[0]);
         document.getElementById("subsubsubmenu").style.borderTop = "2px solid #666";
+        document.getElementById("subsubsubmenu").style.display = "flex";
     }
 
                                 
@@ -773,6 +776,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         // Sortiere Liste
         sortList(document.getElementsByClassName('subsubsubsubmenu')[0]);
         document.getElementById("subsubsubsubmenu").style.borderTop = "2px solid #666";
+        document.getElementById("subsubsubsubmenu").style.display = "flex";
     }
 
     // So lange kein Medientyp ausgewählt wurde, Playliste überschreiben

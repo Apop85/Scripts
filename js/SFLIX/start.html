@@ -125,22 +125,22 @@
     </div>
     <link rel="stylesheet" href="sflix_sys/sflix.css" type="text/css">
     <!-- Navigationsmenü -->
+    <div class="firstLevelWrap">
+        <a img id="logoLink" href="start.html"><img id="logo" src="sflix_sys/sflixLogo.png" alt="STEFFLIX Logo"></a>
+        <ul id="menu" class="menu"></ul>
+        <form action="javascript:callSearch()">
+            <a id="searchTextField" style="display: block;" onclick="toggleSearchField()"></a>
+            <div id="searchFieldContainer" style="display: none; position: absolute; z-index: 999;">
+                <input id="searchField" type="text" name="searchTerm" placeholder="Suche">
+                <a onclick="callSearch()" id="doSearchIcon">✔</a>
+                <a onclick="toggleSearchField()" id="closeSearchIcon">❌</a>
+            </div>
+        </form>
+        <a id="helpLink" onclick="openHelp()">
+            <div id="helpField"></div>
+        </a>
+    </div>
     <div id="navigation">
-        <div class="firstLevelWrap">
-            <a img id="logoLink" href="start.html"><img id="logo" src="sflix_sys/sflixLogo.png" alt="STEFFLIX Logo"></a>
-            <ul id="menu" class="menu"></ul>
-            <form action="javascript:callSearch()">
-                <a id="searchTextField" style="display: block;" onclick="toggleSearchField()"></a>
-                <div id="searchFieldContainer" style="display: none; position: absolute; z-index: 999;">
-                    <input id="searchField" type="text" name="searchTerm" placeholder="Suche">
-                    <a onclick="callSearch()" id="doSearchIcon">✔</a>
-                    <a onclick="toggleSearchField()" id="closeSearchIcon">❌</a>
-                </div>
-            </form>
-            <a id="helpLink" onclick="openHelp()">
-                <div id="helpField"></div>
-            </a>
-        </div>
         <ul id="submenu" class="submenu"></ul>
         <ul id="subsubmenu" class="subsubmenu"></ul>
         <ul id="subsubsubmenu" class="subsubsubmenu"></ul>

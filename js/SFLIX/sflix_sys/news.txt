@@ -1,3 +1,8 @@
+<b>Version 1.242</b>:<br>
+<ul>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Vor-/Zurück-Button nur noch zu Medieninhalten möglich</li>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Preview-Bilder werden bei Vor-/Zurück-Button ignoriert</li>
+</ul>
 <b>Version 1.241</b>:<br>
 <ul>
     <li>[<span style="color: red"><b>HOTFIX</b></span>] Erstellung der Vorwärts/Rückwärts-Buttonlinks auf Tiefe 3 mit fehlender Playlistangabe</li>

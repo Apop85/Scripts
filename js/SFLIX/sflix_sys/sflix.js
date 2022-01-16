@@ -436,6 +436,17 @@ function updateFavorites() {
     localStorage.setItem("favorites", favorites);
 }
 
+// Erlärung der Preview-Ordner einblenden.
+function showFolderExplanation() {
+    node = document.getElementById("folderExplain");
+    if (node.innerHTML == "") {
+        node.innerHTML = "(Der Preview-Ordner muss sich im selben Verzeichnis befinden wie das Medium):<br><br> D:\\STEFFLIX\\BILDER<br>├───Buddy<br>├───Pilze<br>├───Natur<br>└───<span style='color: red'>Preview</span><br><span style='margin-left: 45px;'>└───Buddy.jpg</span><br><span style='margin-left: 45px;'>└───Natur.jpg</span><br><span style='margin-left: 45px;'>└───Pilze.jpg</span><br>";
+    } else {
+        node.innerHTML = "";
+    }
+    node.style.fontWeight = "600";
+}
+
 //  __   __  _______  ______    _______  _______  ______    _______  ___   _______  __   __  __    _  _______ 
 // |  | |  ||       ||    _ |  |  _    ||       ||    _ |  |       ||   | |       ||  | |  ||  |  | ||       |
 // |  |_|  ||   _   ||   | ||  | |_|   ||    ___||   | ||  |    ___||   | |_     _||  | |  ||   |_| ||    ___|

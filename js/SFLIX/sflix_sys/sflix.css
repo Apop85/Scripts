@@ -325,7 +325,7 @@ a:not(.button):hover {
     width: 100%;
     margin-top: 50px;
     text-align: center;
-    min-height: 70vh;
+    min-height: 75vh;
 }
 
 #media img, #media video, #media audio {
@@ -341,7 +341,7 @@ a:not(.button):hover {
     height: auto;
 }
 
-#media video {
+#media video, #media img {
     margin-bottom: 50px;
 }
 

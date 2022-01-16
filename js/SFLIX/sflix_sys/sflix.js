@@ -1203,17 +1203,21 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             // Erstelle Schlüsselliste
             for (var key in data[mainContent][level1][level2]) {
                 if (key != "Preview") {
-                    seasonList.push(key);
-                    seasonList.sort();
+                    if (!isMediaFile(allowedMediaExtensions, key)) {
+                        seasonList.push(key);
+                    }
                 }
             }
+            seasonList = seasonList.sort();
             // Lese akteuellen Index aus
             keyIndex = seasonList.indexOf(level3);
             // Prüfe, ob eine weitere Staffel vorhanden ist
-            if (keyIndex != -1 && keyIndex - 1 > 0) {
+            if (keyIndex != -1 && keyIndex - 1 >= 0) {
                 // Erstelle Liste aller Episoden
                 for (var key in data[mainContent][level1][level2][seasonList[keyIndex - 1]]) {
-                    mediaList.push(key);
+                    if (key != "Preview") {
+                        mediaList.push(key);
+                    }
                 };
                 
                 // Lese erste Folge der nächsten Staffel aus
@@ -1234,18 +1238,22 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             // Erstelle Schlüsselliste
             for (var key in data[mainContent][level1]) {
                 if (key != "Preview") {
-                    seasonList.push(key);
-                    seasonList.sort();
+                    if (!isMediaFile(allowedMediaExtensions, key)) {
+                        seasonList.push(key);
+                    }
                 }
             }
+            seasonList = seasonList.sort();
             // Lese akteuellen Index aus
             keyIndex = seasonList.indexOf(level2);
 
             // Prüfe, ob eine weitere Staffel vorhanden ist
-            if (keyIndex != -1 && keyIndex - 1 > 0) {
+            if (keyIndex != -1 && keyIndex - 1 >= 0) {
                 // Erstelle Liste aller Episoden
                 for (var key in data[mainContent][level1][seasonList[keyIndex - 1]]) {
-                    mediaList.push(key);
+                    if (key != "Preview") {
+                        mediaList.push(key);
+                    }
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[mediaList.length - 1];
@@ -1265,20 +1273,24 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             // Erstelle Schlüsselliste
             for (var key in data[mainContent]) {
                 if (key != "Preview") {
-                    seasonList.push(key);
-                    seasonList.sort();
+                    if (!isMediaFile(allowedMediaExtensions, key)) {
+                        seasonList.push(key);
+                    }
                 }
             }
+            seasonList = seasonList.sort();
             // Lese akteuellen Index aus
             keyIndex = seasonList.indexOf(level1);
             // Prüfe, ob eine weitere Staffel vorhanden ist
-            if (keyIndex != -1 && keyIndex - 1 > 0) {
+            if (keyIndex != -1 && keyIndex - 1 >= 0) {
                 // Erstelle Liste aller Episoden
                 for (var key in data[mainContent][seasonList[keyIndex - 1]]) {
-                    mediaList.push(key);
+                    if (key != "Preview") {
+                        mediaList.push(key);
+                    }
                 };
                 // Lese erste Folge der nächsten Staffel aus
-                medialocation = mediaList.sort()[0];
+                medialocation = mediaList.sort()[mediaList.length - 1];
                 if (isMediaFile(allowedMediaExtensions, medialocation)) {
                     if (medialocation.startsWith(".")) {
                         medialocation = medialocation.replace(".", "")
@@ -1377,17 +1389,21 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             // Erstelle Schlüsselliste
             for (var key in data[mainContent][level1][level2]) {
                 if (key != "Preview") {
-                    seasonList.push(key);
-                    seasonList.sort();
+                    if (!isMediaFile(allowedMediaExtensions, key)) {
+                        seasonList.push(key);
+                    }
                 }
             }
+            seasonList = seasonList.sort();
             // Lese akteuellen Index aus
             keyIndex = seasonList.indexOf(level3);
             // Prüfe, ob eine weitere Staffel vorhanden ist
             if (keyIndex != -1 && keyIndex + 1 < seasonList.length) {
                 // Erstelle Liste aller Episoden
                 for (var key in data[mainContent][level1][level2][seasonList[keyIndex + 1]]) {
-                    mediaList.push(key);
+                    if (key != "Preview") {
+                        mediaList.push(key);
+                    }
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[0];
@@ -1407,17 +1423,21 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             // Erstelle Schlüsselliste
             for (var key in data[mainContent][level1]) {
                 if (key != "Preview") {
-                    seasonList.push(key);
-                    seasonList.sort();
+                    if (!isMediaFile(allowedMediaExtensions, key)) {
+                        seasonList.push(key);
+                    }
                 }
             }
+            seasonList = seasonList.sort();
             // Lese akteuellen Index aus
             keyIndex = seasonList.indexOf(level2);
             // Prüfe, ob eine weitere Staffel vorhanden ist
             if (keyIndex != -1 && keyIndex + 1 < seasonList.length) {
                 // Erstelle Liste aller Episoden
                 for (var key in data[mainContent][level1][seasonList[keyIndex + 1]]) {
-                    mediaList.push(key);
+                    if (key != "Preview") {
+                        mediaList.push(key);
+                    }
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[0];
@@ -1437,17 +1457,21 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             // Erstelle Schlüsselliste
             for (var key in data[mainContent]) {
                 if (key != "Preview") {
-                    seasonList.push(key);
-                    seasonList.sort();
+                    if (!isMediaFile(allowedMediaExtensions, key)) {
+                        seasonList.push(key);
+                    }
                 }
             }
+            seasonList = seasonList.sort();
             // Lese akteuellen Index aus
             keyIndex = seasonList.indexOf(level1);
             // Prüfe, ob eine weitere Staffel vorhanden ist
             if (keyIndex != -1 && keyIndex + 1 < seasonList.length) {
                 // Erstelle Liste aller Episoden
                 for (var key in data[mainContent][seasonList[keyIndex + 1]]) {
-                    mediaList.push(key);
+                    if (key != "Preview") {
+                        mediaList.push(key);
+                    }
                 };
                 // Lese erste Folge der nächsten Staffel aus
                 medialocation = mediaList.sort()[0];

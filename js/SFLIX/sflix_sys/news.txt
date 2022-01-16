@@ -1,3 +1,7 @@
+<b>Version 1.251</b>:<br>
+<ul>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Ordnerübergreiffender Zurück-Link auf Tiefe 1 hat falsch negative Ergebnisse produziert</li>
+</ul>
 <b>Version 1.25</b>:<br>
 <ul>
     <li>[<span style="color: blue">INTERFACE</span>] Unterstützte Dateiformate können in der Hilfe nun ein- und ausgeblendet werden</li>

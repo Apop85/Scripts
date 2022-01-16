@@ -371,7 +371,7 @@ function updateFavorites() {
     if (favorites == null) {
         favorites = [];
     } else {
-        favorites.split(",");
+        favorites = favorites.split(",");
         if (!Array.isArray(favorites)) {
             favorites = [favorites];
         }
@@ -382,6 +382,8 @@ function updateFavorites() {
         currentIndex = favorites.indexOf("");
         favorites.splice(currentIndex, 1);
     }
+    
+    
     
     // Stern bei Button hinzufügen/entfernen
     node = document.getElementById("favorite").childNodes[0];
@@ -445,6 +447,19 @@ function showFolderExplanation() {
         node.innerHTML = "";
     }
     node.style.fontWeight = "600";
+}
+
+// Funktion zum anzeigen unterstützter Dateiformate
+function showAddNewMediaInfo() {
+    node = document.getElementById("addNewMediaInfoTitle")
+
+    if (node.style.display == "none") {
+        node.style.display = "block";
+        document.getElementById("addNewMediaInfo").style.display = "block";
+    } else {
+        node.style.display = "none";
+        document.getElementById("addNewMediaInfo").style.display = "none";
+    }
 }
 
 //  __   __  _______  ______    _______  _______  ______    _______  ___   _______  __   __  __    _  _______ 
@@ -1247,7 +1262,6 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 }
             }
         } else if (mainContent != null && level1 != null) {
-            console.log("Level1")
             // Erstelle Schlüsselliste
             for (var key in data[mainContent]) {
                 if (key != "Preview") {
@@ -1264,7 +1278,6 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                     mediaList.push(key);
                 };
                 // Lese erste Folge der nächsten Staffel aus
-                console.log(mediaList)
                 medialocation = mediaList.sort()[0];
                 if (isMediaFile(allowedMediaExtensions, medialocation)) {
                     if (medialocation.startsWith(".")) {

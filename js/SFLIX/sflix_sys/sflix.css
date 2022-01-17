@@ -343,12 +343,8 @@ a:not(.button):hover {
     height: auto;
 }
 
-#media video, #media img {
+#media video, #media img, #media audio {
     margin-bottom: 50px;
-}
-
-#media audio {
-    margin-top: 200px;
 }
 
 /*

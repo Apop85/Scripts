@@ -183,38 +183,185 @@ function replaceSpecialChars(string) {
 }
 
 // Hinzufügen eines Vorschaubildes, falls vorhanden
-function addPreviewImage(data, link, cleanedKey) {
-    if (cleanedKey.startsWith(".")) {
-        cleanedKey = cleanedKey.replace(".", "")
+function addPreviewImage(decodedUrl, link, reason="normal") {
+    // Zerlegen in Dateiname
+    if (decodedUrl.includes("MEDIA")) {
+        // Lese Medieneigenschaften aus
+        mediaPath = replaceSpecialChars(decodedUrl.split(",MEDIA:")[1].split(",")[0].split("#")[0]);
+        mediaName = mediaPath.split("/");
+        mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
+        if (mediaName.startsWith(".")) {
+            mediaName = mediaName.replace(".","");
+        }
+        filename = mediaPath.split("/");
+        filename = filename[filename.length - 1];
+    } else {
+        mediaPath = null;
+        mediaName = null;
+        filename = null;
     }
-    // Prüfe, ob Preview-Ordner vorhanden ist
-    if (data.hasOwnProperty("Preview")){
-        // Iteriere über alle Vorschaubilder
-        for (previewImageSrc in data["Preview"]) {
-            // Prüfe ob ein Bild mit identischem Namen wie das Medienfile vorhanden ist
-            if (previewImageSrc.includes(removeFileExtension(allowedMediaExtensions, cleanedKey.split("/")[cleanedKey.split("/").length-1]) + ".jpg")) {
-                if (!previewImageSrc.startsWith(".")) {
-                    previewImageSrc = "." + previewImageSrc
+    // Zerlegen in Stufe 1
+    if (decodedUrl.includes("LEVEL4")) {
+        level4 = replaceSpecialChars(decodedUrl.split(",LEVEL4:")[1].split(",")[0].split("#")[0]);
+        if (level4.startsWith(".")) {
+            level4 = level4.replace(".","");
+        }
+    } else {
+        level4 = null;
+    }
+    // Zerlegen in Stufe 2
+    if (decodedUrl.includes("LEVEL3")) {
+        level3 = replaceSpecialChars(decodedUrl.split(",LEVEL3:")[1].split(",")[0].split("#")[0]);
+        if (level3.startsWith(".")) {
+            level3 = level3.replace(".","");
+        }
+    } else {
+        level3 = null;
+    }
+    // Zerlegen in Stufe 3
+    if (decodedUrl.includes("LEVEL2")) {
+        level2 = replaceSpecialChars(decodedUrl.split(",LEVEL2:")[1].split(",")[0].split("#")[0]);
+        if (level2.startsWith(".")) {
+            level2 = level2.replace(".","");
+        }
+    } else {
+        level2 = null;
+    }
+    // Zerlegen in Stufe 4
+    if (decodedUrl.includes("LEVEL1")) {
+        level1 = replaceSpecialChars(decodedUrl.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
+        if (level1.startsWith(".")) {
+            level1 = level1.replace(".","");
+        }
+    } else {
+        level1 = null;
+    }
+    // Zerlegen in Hauptteil
+    if (decodedUrl.includes("MAIN")) {
+        mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(",")[0].split("#")[0]);
+        if (mainContent.startsWith(".")) {
+            mainContent = mainContent.replace(".","");
+        }
+    } else {
+        mainContent = null;
+    }
+
+    var previewIsSet = false;
+    var previewImageSrc = null;
+
+    // Füge Vorschaubild für die Tiefe 4 ein - Suche nach Datei in Unterordner
+    if (!previewIsSet && mainContent != null && level1 != null && level2 != null && level3 != null && level4 != null && data[mainContent][level1][level2][level3][level4].hasOwnProperty("Preview")) {
+        previewImageSrc = searchPreviewImage(data[mainContent][level1][level2][level3][level4]["Preview"], [mediaName], filename, reason);
+        if (previewImageSrc != null) {
+            previewIsSet = true;
+        }
+    }
+    // Füge Vorschaubild für die Tiefe 4 ein - Suche nach Ordner/Datei in Elternordner
+    if (!previewIsSet && mainContent != null && level1 != null && level2 != null && level3 != null && level4 != null && data[mainContent][level1][level2][level3].hasOwnProperty("Preview")) {
+        previewImageSrc = searchPreviewImage(data[mainContent][level1][level2][level3]["Preview"], [mediaName, level4], filename, reason);
+        if (previewImageSrc != null) {
+            previewIsSet = true;
+        }
+    }
+    // Füge Vorschaubild für die Tiefe 3 ein - Suche nach Datei in Unterordner
+    if (!previewIsSet && mainContent != null && level1 != null && level2 != null && level3 != null && data[mainContent][level1][level2][level3].hasOwnProperty("Preview")) {
+        previewImageSrc = searchPreviewImage(data[mainContent][level1][level2][level3]["Preview"], [mediaName], filename, reason);
+        if (previewImageSrc != null) {
+            previewIsSet = true;
+        }
+    }
+    // Füge Vorschaubild für die Tiefe 3 ein - Suche nach Ordner/Datei in Elternordner
+    if (!previewIsSet && mainContent != null && level1 != null && level2 != null && level3 != null && data[mainContent][level1][level2].hasOwnProperty("Preview")) {
+        previewImageSrc = searchPreviewImage(data[mainContent][level1][level2]["Preview"], [mediaName, level3], filename, reason);
+        if (previewImageSrc != null) {
+            previewIsSet = true;
+        }
+    }
+    // Füge Vorschaubild für die Tiefe 2 ein - Suche nach Datei in Unterordner
+    if (!previewIsSet && mainContent != null && level1 != null && level2 != null && data[mainContent][level1][level2].hasOwnProperty("Preview")) {
+        previewImageSrc = searchPreviewImage(data[mainContent][level1][level2]["Preview"], [mediaName], filename, reason);
+        if (previewImageSrc != null) {
+            previewIsSet = true;
+        }
+    }
+    // Füge Vorschaubild für die Tiefe 2 ein - Suche nach Ordner/Datei in Elternordner
+    if (!previewIsSet && mainContent != null && level1 != null && level2 != null && data[mainContent][level1].hasOwnProperty("Preview")) {
+        previewImageSrc = searchPreviewImage(data[mainContent][level1]["Preview"], [mediaName, level2], filename, reason);
+        if (previewImageSrc != null) {
+            previewIsSet = true;
+        }
+    }
+    // Füge Vorschaubild für die Tiefe 1 ein - Suche nach Datei in Unterordner
+    if (!previewIsSet && mainContent != null && level1 != null && data[mainContent][level1].hasOwnProperty("Preview")) {
+        previewImageSrc = searchPreviewImage(data[mainContent][level1]["Preview"], [mediaName], filename, reason);
+        if (previewImageSrc != null) {
+            previewIsSet = true;
+        }
+    }
+    // Füge Vorschaubild für die Tiefe 1 ein - Suche nach Ordner/Datei in Elternordner
+    if (!previewIsSet && mainContent != null && level1 != null && data[mainContent].hasOwnProperty("Preview")) {
+        previewImageSrc = searchPreviewImage(data[mainContent]["Preview"], [mediaName, level1], filename, reason);
+        if (previewImageSrc != null) {
+            previewIsSet = true;
+        }
+    }
+    // Füge Vorschaubild für die Tiefe 0 ein - Suche nach Datei in Unterordner
+    if (!previewIsSet && mainContent != null && data[mainContent].hasOwnProperty("Preview")) {
+        previewImageSrc = searchPreviewImage(data[mainContent]["Preview"], [mediaName], filename, reason);
+        if (previewImageSrc != null) {
+            previewIsSet = true;
+        }
+    }
+    // Füge Vorschaubild für die Tiefe 0 ein - Suche nach Ordner/Datei in Elternordner
+    if (!previewIsSet && mainContent != null && data.hasOwnProperty("Preview")) {
+        previewImageSrc = searchPreviewImage(data["Preview"], [mediaName, mainContent], filename, reason);
+        if (previewImageSrc != null) {
+            previewIsSet = true;
+        }
+    }
+    
+    if (previewIsSet) {
+        if (!previewImageSrc.startsWith(".")) {
+            previewImageSrc = "." + previewImageSrc;
+        }
+        // Erstelle Bild-Node
+        var imgNode = document.createElement("img");
+        imgNode.src = previewImageSrc;
+        imgNode.style.height = "auto";
+        imgNode.style.width = "30%";
+        imgNode.style.boxShadow = "0px 0px 5px 2px white";
+        imgNode.style.marginBottom = "10px";
+        imgNode.id = mediaName;
+        imgNode.loading = "lazy";
+        link.style.flexDirection = "column";
+        link.style.justifyContent = "center";
+        // Füge Bild zu Link-Node hinzu
+        link.appendChild(imgNode);
+        // Breche Loop ab
+        return previewImageSrc;
+    }
+
+    return null
+}
+
+// Durchsuche Array nach möglichem Vorschaubild
+function searchPreviewImage(data, searchKey, filename, type) {
+    for (var key in searchKey) {
+        if (searchKey[key] != null) {
+            for (var datakey in data) {
+                if (datakey.includes(searchKey[key])) {
+                    if (filename == null || type != "normal") {
+                        // Sofern die Vorschau für ein Ordner gesucht wird, jedes Resultat zurückgeben
+                        return datakey;
+                    } else if (filename.includes(searchKey)) {
+                        // Bei Mediendateien nur zurückgeben, wenn der Dateiname übereinstimmt
+                        return datakey;
+                    }
                 }
-                
-                // Erstelle Bild-Node
-                var imgNode = document.createElement("img");
-                imgNode.src = previewImageSrc;
-                imgNode.style.height = "auto";
-                imgNode.style.width = "30%";
-                imgNode.style.boxShadow = "0px 0px 5px 2px white";
-                imgNode.style.marginBottom = "10px";
-                imgNode.id = removeFileExtension(allowedMediaExtensions, cleanedKey.split("/")[cleanedKey.split("/").length-1]);
-                imgNode.loading = "lazy";
-                link.style.flexDirection = "column";
-                link.style.justifyContent = "center";
-                // Füge Bild zu Link-Node hinzu
-                link.appendChild(imgNode);
-                // Breche Loop ab
-                return previewImageSrc;
             }
         }
     }
+    return null;
 }
 
 // Funktion zum Updaten der Liste der zuletzt gesehenen Medienelementen
@@ -316,38 +463,34 @@ function callSearch() {
 }
 
 // Funktion zum erstellen des Links für die Suchresultate
-function createLink(key, coreUrl, depth) {
+function createLink(key, coreUrl) {
     var result = null;
     if (!key.startsWith(".")) {
         key = "." + key
     }
-    if (!isMediaFile(allowedMediaExtensions, key)) {
-        result = key + "|" + "start.html?=" + btoa(coreUrl + ",LEVEL" + depth + ":" + key);
-    } else {
-        if (isVideo(key) || isMusic(key)) {
-            result = key + "|" + "start.html?=" + btoa(coreUrl + ",MEDIA:" + key + ",PL:searchResults") + "#mediaNav";
-            // VORSCHAUBILD
-        } else if (isImage(key)) {
-            result = key + "|" + "start.html?=" + btoa(coreUrl + ",MEDIA:" + key + ",PL:searchResults") + "#mediaNav";
-        }
-    }
-
+    result = key + "|start.html?=" + btoa(coreUrl + ",PL:searchResults") + "#mediaNav";
     return result;
 }
 
 // Funktion zum rekursiven Durchsuchen des Daten-Arrays
-function recursiveSearch(data, searchTerm, currentLink="MAIN:", searchResults=[], depth=0) {
+function recursiveSearch(data, searchTerm, currentLink="MAIN:", searchResults=[], depth=0, link=null) {
     for (var key in data) {
         if (depth != 0) {
-            var link = currentLink + ",LEVEL" + depth + ":" + key;
-            // Prüfe, ob Suchbegriff in aktuellem Schlüssel vorkommt
-            if (key.toLowerCase().includes(searchTerm.toLowerCase()) && key != "Preview") {
-                // Erstelle Eintrag in Resultatliste
-                searchResults.push(createLink(key, link, depth));
-            }
-            // Prüfe, ob weitere, tiefer liegende Daten vorhanden sind
-            if (data.hasOwnProperty(key) && key != "Preview") {
-                searchResults = recursiveSearch(data[key], searchTerm, link, searchResults, depth+1);
+            if (key != "Preview") {
+                if (!isMediaFile(allowedMediaExtensions, key)) {
+                    link = currentLink + ",LEVEL" + depth +":";
+                } else {
+                    if (!key.startsWith(".")){
+                        key = "." + key;
+                    }
+                    link = currentLink + ",MEDIA:" + key;
+                    if (key.toLowerCase().includes(searchTerm.toLowerCase())) {
+                        searchResults.push(createLink(key, link));
+                    }
+                }
+                if (data.hasOwnProperty(key) && data[key] != null) {
+                    searchResults = recursiveSearch(data[key], searchTerm, link + key, searchResults, depth+1);
+                }
             }
         } else {
             searchResults = recursiveSearch(data[key], searchTerm, currentLink + key, searchResults, depth+1);
@@ -528,7 +671,17 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             if (!cleanedKey.startsWith(".")) {
                 cleanedKey = "." + cleanedKey;
             }
-            var mainContentPreviewImage = addPreviewImage(data[mainContent], link, cleanedKey);
+            // var mainContentPreviewImage = addPreviewImage(data[mainContent], link, cleanedKey);
+            if (decodedUriData.includes("LEVEL1")) {
+                previewPath = decodedUriData.split(",LEVEL1:")[0];
+            } else {
+                previewPath = decodedUriData;
+            }
+            if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
+                mainContentPreviewImage = addPreviewImage(previewPath + ",LEVEL1:" + cleanedKey, link);
+            } else {
+                mainContentPreviewImage = addPreviewImage(previewPath + ",MEDIA:" + cleanedKey, link);
+            }
 
             // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
             if (isMediaFile(allowedMediaExtensions, key)) {
@@ -595,7 +748,17 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 }
 
                 // Füge Vorschaubild hinzu
-                addPreviewImage(data[mainContent][level1], link, cleanedKey);
+                // addPreviewImage(data[mainContent][level1], link, cleanedKey);
+                if (decodedUriData.includes("LEVEL2")) {
+                    previewPath = decodedUriData.split(",LEVEL2:")[0];
+                } else {
+                    previewPath = decodedUriData;
+                }
+                if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
+                    addPreviewImage(previewPath + ",LEVEL2:" + cleanedKey, link);
+                } else {
+                    addPreviewImage(previewPath + ",MEDIA:" + cleanedKey, link);
+                }
 
                 text = key.split("/");
                 
@@ -667,7 +830,17 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 }
 
                 // Füge Vorschaubild hinzu
-                addPreviewImage(data[mainContent][level1][level2], link, cleanedKey);
+                // addPreviewImage(data[mainContent][level1][level2], link, cleanedKey);
+                if (decodedUriData.includes("LEVEL3")) {
+                    previewPath = decodedUriData.split(",LEVEL3:")[0];
+                } else {
+                    previewPath = decodedUriData;
+                }
+                if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
+                    addPreviewImage(previewPath + ",LEVEL3:" + cleanedKey, link);
+                } else {
+                    addPreviewImage(previewPath + ",MEDIA:" + cleanedKey, link);
+                }
 
                 // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
                 if (favorites != null && favorites.includes(cleanedKey) && isMediaFile(allowedMediaExtensions, key)){
@@ -738,7 +911,17 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 }
 
                 // Füge Vorschaubild hinzu
-                addPreviewImage(data[mainContent][level1][level2][level3], link, cleanedKey);
+                // addPreviewImage(data[mainContent][level1][level2][level3], link, cleanedKey);
+                if (decodedUriData.includes("LEVEL4")) {
+                    previewPath = decodedUriData.split(",LEVEL4:")[0];
+                } else {
+                    previewPath = decodedUriData;
+                }
+                if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
+                    addPreviewImage(previewPath + ",LEVEL4:" + cleanedKey, link);
+                } else {
+                    addPreviewImage(previewPath + ",MEDIA:" + cleanedKey, link);
+                }
 
                 // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
                 if ((favorites != null && favorites.includes(cleanedKey) && isMediaFile(allowedMediaExtensions, key))){
@@ -824,16 +1007,12 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             var decodedUrl = atob(lastUrl.split("?=")[1].split("#")[0]);
             // Lese die Hauptkategorie aus
             mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(",")[0].split("#")[0]);
-            if (decodedUrl.includes("LEVEL1")){
-                // Lese die level1-Eintrag aus
-                level1 = replaceSpecialChars(decodedUrl.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
-                // Füge Vorschaubild in Button ein
-                addPreviewImage(data[mainContent], buttonNode, level1);
+            if (addPreviewImage(decodedUrl, buttonNode, "suche") != null){
                 // Styles für Button ändern
                 buttonNode.style.display = "flex";
                 buttonNode.style.flexDirection = "row";
                 buttonNode.style.alignItems = "center";
-                buttonNode.style.justifyContent = "start";
+                buttonNode.style.justifyContent = "flex-start";
                 buttonNode.style.maxHeight = "150px";
                 buttonNode.style.textAlign = "left";
             }
@@ -946,16 +1125,14 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 buttonNode.className = "button";
                 buttonNode.href = lastUrl;
 
-                // Decodiere übergebene URL
                 var decodedUrl = atob(lastUrl.split("?=")[1].split("#")[0]);
-                // Lese die Hauptkategorie aus
-                mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(",")[0].split("#")[0]);
-                if (decodedUrl.includes("LEVEL1")){
-                    // Lese die level1-Eintrag aus
-                    level1 = replaceSpecialChars(decodedUrl.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
-                    // Füge Vorschaubild in Button ein
-                    addPreviewImage(data[mainContent], buttonNode, level1);
-                    // Styles für Button ändern
+                var imageIsSet = false;
+                image = addPreviewImage(decodedUrl, buttonNode, "vorschau");
+                if (image != null) {
+                    imageIsSet = true;
+                }
+
+                if (imageIsSet) {
                     buttonNode.style.display = "flex";
                     buttonNode.style.flexDirection = "row";
                     buttonNode.style.alignItems = "center";
@@ -963,6 +1140,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     buttonNode.style.maxHeight = "150px";
                     buttonNode.style.textAlign = "left";
                 }
+
                 // Erstelle Buttontext
                 textNode = document.createTextNode(removeFileExtension(allowedMediaExtensions, lastTitle) + " fortsetzen");
                 // Füge Button hinzu
@@ -1034,7 +1212,13 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0].split("#")[0]);
     // Lese Playlistenindex aus
     localPlaylist = localPlaylist.sort()
-    document.getElementById(medialocation.replace(".","")).className += " activeMenu";
+    if (medialocation.startsWith(".")) {
+        link = medialocation.replace(".","");
+    } else {
+        link = medialocation;
+        medialocation = "." + medialocation;
+    }
+    document.getElementById(link).className += " activeMenu";
 
     var cleanedPlaylist = []
     for (var key in localPlaylist){
@@ -1046,7 +1230,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     // Lese Dateinamen aus
     mediaName = medialocation.split("/");
     mediaName = mediaName[mediaName.length -1].split("#")[0];
-
+    
     // Schreibe Medientitel
     textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, addEmoteByFileExtension(mediaName)));
     document.title = "STEFFLIX - " + removeFileExtension(allowedMediaExtensions, mediaName); 
@@ -1063,7 +1247,9 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         // Erstelle Videoelement
         if (isMusic(medialocation)) {
             node = document.createElement("audio");
-            node.style.backgroundColor = "gray";
+            node.style.backgroundColor = "#131313";
+            node.style.width = "60vw";
+            node.style.height = "40vh";
         }else {
             node = document.createElement("video");
         }
@@ -1084,6 +1270,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
 
         node.onloadedmetadata = function() {
             node.autoplay = true;
+            // Lese Dateinamen aus
+            medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0].split("#")[0]);
+            mediaName = medialocation.split("/");
+            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);
             // Lese Zeitstempel des ausgewählten Videos aus
             pastTimestamp = localStorage.getItem("timestamp-" + mediaName)
             if (pastTimestamp != null) {

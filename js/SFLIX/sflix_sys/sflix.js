@@ -378,21 +378,26 @@ function setLastPlayed(title, url) {
     var mediaPath = atob(url.split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0].split("/");
     var filename = mediaPath[mediaPath.length - 1];
     if (!isImage(filename)) {
-        mediaPath.splice(mediaPath.length - 1, 1);
-        mediaPath.splice(mediaPath.length - 1, 1);
+        console.log(mediaPath)
+        if (mediaPath.length > 3) {
+            mediaPath.splice(mediaPath.length - 1, 1);
+        }
         mediaPath = mediaPath.join("/");
         
         for (var loggedUrl in currentPlaylist) {
             if (currentPlaylist[loggedUrl].includes("|")) {
                 var loggedMediaPath = atob(currentPlaylist[loggedUrl].split("|")[1].split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0];
+                // Entferne Eintrag aus "Zuletzt gesehen"
+                console.log("LMP: " + loggedMediaPath)
+                console.log("MP: " + mediaPath)
+                console.log("CHECK: " + loggedMediaPath.includes(mediaPath))
+                if (loggedMediaPath.includes(mediaPath)) {
+                    currentPlaylist.splice(loggedUrl, 1)
+                }
             } else {
                 currentPlaylist.splice(loggedUrl, 1)
             }
             
-            // Entferne Eintrag aus "Zuletzt gesehen"
-            if (loggedMediaPath.includes(mediaPath)) {
-                currentPlaylist.splice(loggedUrl, 1)
-            }
         }
     
         if (currentPlaylist.length < 5) {

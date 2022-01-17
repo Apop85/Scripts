@@ -1,3 +1,7 @@
+<b>Version 1.271</b>:<br>
+<ul>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Zuletzt gespielt Einträge wurden bei Updates der Tiefe 1 oder kleiner fehlerhaft ersetzt</li>
+</ul>
 <b>Version 1.27</b>:<br>
 <ul>
     <li>[<span style="color: blue">INTERFACE</span>] Überarbeitung Anzeige Suchresultate</li>

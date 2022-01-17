@@ -1,3 +1,14 @@
+<b>Version 1.27</b>:<br>
+<ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Überarbeitung Anzeige Suchresultate</li>
+    <li>[OPTIMIERUNG] Überarbeitung Vorschaubild-Einbettung</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Vorschaubilder auf Startbildschirm und Suche aus allen Tiefen möglich</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Falsche Namensgebung bei Zeitstempel-Suche korrigiert. Es kann sein, dass Zuvor gespeicherte Zeitstempel jeweils im nächsten Eintrag gespeichert ist.</li>
+</ul>
+<b>Version 1.261</b>:<br>
+<ul>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Anpassung der Grösse des Audio-Players</li>
+</ul>
 <b>Version 1.26</b>:<br>
 <ul>
     <li>[<span style="color: blue">INTERFACE</span>] Abstand unterhalb der Untermenüs eingefügt</li>

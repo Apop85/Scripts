@@ -1,5 +1,6 @@
 <b>Version 1.28 IN ARBEIT</b>:<br>
 <ul>
+    <li>[<span style="color: #e21af3">BUG</span>] Kein Autoplayindikator bei Bildern</li>
     <li>[<span style="color: #e21af3">BUG</span>] Autoplayfunktion kann das Ende einer Playlist noch nicht feststellen</li>
     <li>[<span style="color: #e21af3">BUG</span>] Ordnerübergreifendes Autoplay funktioniert noch nicht</li>
     <li>[<span style="color: blue">INTERFACE</span>] Überarbeitung Anzeige Suchresultate</li>

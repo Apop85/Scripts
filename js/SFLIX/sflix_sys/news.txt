@@ -1,3 +1,12 @@
+<b>Version 1.28 IN ARBEIT</b>:<br>
+<ul>
+    <li>[<span style="color: #e21af3">BUG</span>] Autoplayfunktion kann das Ende einer Playlist noch nicht feststellen</li>
+    <li>[<span style="color: #e21af3">BUG</span>] Ordnerübergreifendes Autoplay funktioniert noch nicht</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Überarbeitung Anzeige Suchresultate</li>
+    <li>[<span style="color: red">FEATURE</span>] Autoplayfunktion eingefügt zum automatischen Abspielen von Medieninhalten (z.B. Diashow)</li>
+    <li>[<span style="color: red">FEATURE</span>] Vor- und Zurück-Buttons benötigen kein neues Laden sofern die Medien im selben Ordner sind</li>
+    <li>[OPTIMIERUNG] Überarbeitung Ordnerübergreifender links</li>
+</ul>
 <b>Version 1.271</b>:<br>
 <ul>
     <li>[<span style="color: red"><b>HOTFIX</b></span>] Zuletzt gespielt Einträge wurden bei Updates der Tiefe 1 oder kleiner fehlerhaft ersetzt</li>

@@ -1,11 +1,11 @@
 <b>Version 1.28 IN ARBEIT</b>:<br>
 <ul>
-    <li>[<span style="color: #e21af3">BUG</span>] Kein Autoplayindikator bei Bildern</li>
-    <li>[<span style="color: #e21af3">BUG</span>] Autoplayfunktion kann das Ende einer Playlist noch nicht feststellen</li>
-    <li>[<span style="color: #e21af3">BUG</span>] Ordnerübergreifendes Autoplay funktioniert noch nicht</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Überarbeitung Anzeige Suchresultate</li>
+    <li>[<span style="color: #e21af3">BUG</span>] Autoplay bei Musik wechselt das Musikstück 20sek zu früh. </li>
+    <li>[<span style="color: #e21af3">BUG</span>] Ordnerübergreifendes Autoplay funktioniert noch nicht, sofern Ordner und Bild im selben Elternordner sind</li>
+    <li>[<span style="color: red">FEATURE</span>] Einstellungsmenü hinzugefügt zum manipulieren der Autoplay-Werte und zur Fehlerbehebung.</li>
     <li>[<span style="color: red">FEATURE</span>] Autoplayfunktion eingefügt zum automatischen Abspielen von Medieninhalten (z.B. Diashow)</li>
     <li>[<span style="color: red">FEATURE</span>] Vor- und Zurück-Buttons benötigen kein neues Laden sofern die Medien im selben Ordner sind</li>
+    <li>[OPTIMIERUNG] Überarbeitung Ein- und Ausblenden von Containern</li>
     <li>[OPTIMIERUNG] Überarbeitung Ordnerübergreifender links</li>
 </ul>
 <b>Version 1.271</b>:<br>

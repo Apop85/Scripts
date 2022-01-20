@@ -1802,6 +1802,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         // |     | | |  _| -_|___|__   | -_| |  _| -_|
         // |__|__|_|_|_| |___|   |_____|___|_|_| |___|
         document.getElementById("media").style.display = "block";
+        document.getElementById("sflixPreview").src = "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/sflix_sys/sflix.gif";
 
         // Lade changelog
         news = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");

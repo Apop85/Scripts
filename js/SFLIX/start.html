@@ -6,8 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STEFFLIX</title>
     <link rel="shortcut icon" type="image/x-icon" href="sflix_sys/sflixLogo.png">
-    <script src="sflix_sys/data.js"></script>
-    <script src="sflix_sys/version.js"></script>
     <style>
         body {
             overflow-x: hidden;
@@ -123,19 +121,56 @@
             <div class="loadingSquare">X</div>
         </div>
     </div>
+    <script src="sflix_sys/data.js"></script>
+    <script src="sflix_sys/version.js"></script>
     <link rel="stylesheet" href="sflix_sys/sflix.css" type="text/css">
     <!-- Navigationsmenü -->
     <div class="firstLevelWrap">
-        <a img id="logoLink" href="start.html"><img id="logo" src="sflix_sys/sflixLogo.png" alt="STEFFLIX Logo"></a>
+        <a id="logoLink" href="start.html"><img id="logo" src="sflix_sys/sflixLogo.png" alt="STEFFLIX Logo"></a>
         <ul id="menu" class="menu"></ul>
         <form action="javascript:callSearch()">
-            <a id="searchTextField" style="display: block;" onclick="toggleSearchField()"></a>
+            <a href="javascript:void(0);" id="searchTextField" style="display: block;" onclick="toggleContainer(['searchFieldContainer'], 'flex')"></a>
             <div id="searchFieldContainer" style="display: none; position: absolute; z-index: 999;">
                 <input id="searchField" type="text" name="searchTerm" placeholder="Suche">
-                <a onclick="callSearch()" id="doSearchIcon">✔</a>
-                <a onclick="toggleSearchField()" id="closeSearchIcon">❌</a>
+                <a href="javascript:void(0);" onclick="callSearch()" id="doSearchIcon">✔</a>
+                <a href="javascript:void(0);" onclick="toggleContainer(['searchFieldContainer'], 'none')" id="closeSearchIcon">❌</a>
             </div>
         </form>
+        <a id="settings" onclick="toggleContainer(['settingsBox'], 'flex')"></a>
+        <div id="settingsBox" style="display: none;">
+            <div><a style="position: absolute; top: 5px; right: 5px; background-color: rgb(231, 231, 231); border: 1px solid black; box-shadow: 1px 1px 1px black; font-size: 12px;" href="javascript:void(0);" onclick="toggleContainer(['settingsBox'], 'none')">❌</a></div>
+            <p><b>Autoplay</b>: <input type="checkbox" onclick="checkAutoplayAmout()" id="autoplayCheckBox"></p>
+            <p><b>Anzahl autoplay</b>: <input type="number" id="amountOfAutoplay" value="0"></p>
+            <p><b>Dauer bis Übergang</b>: <input type="number" id="autoplayDuration" value="30"></p>
+            <p><a href="javascript:void(0);" onclick="toggleContainer(['fehlerbehebung'], 'block')">Fehlerbehebung</a></p>
+            <div id="fehlerbehebung" style="display:none">
+                <div style="display: flex; flex-direction: row;">
+                    <div><p style="border: none;"><b>Achtung!</b> Hier ausgeführte Aktionen können nicht rückgängig gemacht werden!</p></div>
+                    <div><a style="position: absolute; top: 5px; right: 5px; background-color: rgb(231, 231, 231); border: 1px solid black; box-shadow: 1px 1px 1px black;" href="javascript:void(0);" onclick="toggleContainer(['fehlerbehebung'], 'none')">❌</a></div>
+                </div>
+                <h5>Favoriten löschen</h5>
+                <p>Sollte das Menü nicht richtig geladen und Medieninhalte nicht angezeigt werden, kann es helfen, die gesetzten Favoriten zu löschen.<br><br>
+                <a href="javascript:void(0);" onclick="modifyLocalData('favorites')" class="button">Favoriten löschen</a></p>
+                <h5>Playlisten löschen</h5>
+                <p>Sollten die verlinkungen der Vor- und Zurückbuttons fehlerhaft sein, kann dies durch das Löschen der Playlisten behoben werden.<br><br>
+                <a href="javascript:void(0);" onclick="modifyLocalData('playlist')" class="button">Playlisten löschen</a></p>
+                <h5>Zeitstempel löschen</h5>
+                <p>Sollten die Zeitstempel fehlerhaft sein oder das Laden der Videos nicht funktionieren, kann es helfen, die Zeitstempel zu löschen.<br><br>
+                <a href="javascript:void(0);" onclick="modifyLocalData('timestamp')" class="button">Zeitstempel löschen</a></p>
+                <h5>Zuletzt gesehen Liste löschen</h5>
+                <p>Sollte die Startseite von STEFFLIX nicht richtig geladen werden, oder die Liste fehlerhaft sein, kann es helfen, die Liste zu löschen.<br><br>
+                <a href="javascript:void(0);" onclick="modifyLocalData('playlast')" class="button">Zuletzt gespielt löschen</a></p>
+                <h5>Alle Daten löschen</h5>
+                <p>Nur ausführen, wenn keine andere Massnahme geholfen hat.<br><br>
+                <a href="javascript:void(0);" onclick="modifyLocalData('all')" class="button">Alles löschen</a></p>
+                <div id="debugOutput" style="display: none;">
+                    <h5>Fortschritt</h5>
+                    <textarea style="width: 100%;" id="debugField" rows="10" disabled></textarea>
+                    <a href="javascript:void(0);" id="debugOkButton" style="display: none;" onclick="toggleContainer(['debugOutput'], 'none')" class="button">OK</a>
+                </div>
+            </div>
+            <a class="button" onclick="applySettings()">Speichern</a>
+        </div>
         <a id="helpLink" onclick="openHelp()">
             <div id="helpField"></div>
         </a>
@@ -152,7 +187,7 @@
             <h3>Neue Medieninhalte hinzufügen</h3>
             <p>Um neue Medieninhalte hinzuzufügen, müssen diese einfach in den entsprechenden STEFFLIX-Ordner kopiert werden und anschliessend das Programm "updateData.exe" ausgeführt werden.</p>
             <ol>
-                <li>Gewünschte <a style="cursor: pointer;" onclick="showAddNewMediaInfo()">Medien</a> in passenden Unterordner von STEFFLIX kopieren<br><br>
+                <li>Gewünschte <a href="javascript:void(0);" onclick="toggleContainer(['addNewMediaInfoTitle', 'addNewMediaInfo'], 'block')">Medien</a> in passenden Unterordner von STEFFLIX kopieren<br><br>
                 <h4 id="addNewMediaInfoTitle" style="text-align: left;display: none;">Unterstützte Dateiformate:</h4>
                 <ul id="addNewMediaInfo" style="display: none; text-align: left; margin-left: 30px; margin-bottom: 20px;">
                     <li>Video: mp4</li>
@@ -160,9 +195,21 @@
                     <li>Bilder: jpg, png, gif</li>
                     <p><br>Anleitung zur <a href="https://praxistipps.chip.de/mit-vlc-dateien-umwandeln-so-gehts_35221">Konvertierung von Videos mit VLC</a></p>
                 </ul></li>
-                <li>Optional: Preview-Bild in <a style="cursor: pointer;" onclick="showFolderExplanation()">Preview-Ordner</a> hinterlegen. Muss jpg-Format aufweisen und der Dateiname muss identisch sein wie das Zielmedium. <span id="folderExplain"></span><br><br></li>
+                <li>Optional: Preview-Bild in <a href="javascript:void(0);" style="cursor: pointer;" onclick="toggleContainer(['folderExplain'], 'block')">Preview-Ordner</a> hinterlegen. Muss jpg-Format aufweisen und der Dateiname muss identisch sein wie das Zielmedium. <span id="folderExplain" style="display: none;"><b>(Der Preview-Ordner muss sich im selben Verzeichnis befinden wie das Medium)</b>:<br><br> D:\\STEFFLIX\\BILDER<br>├───Buddy<br>├───Pilze<br>├───Natur<br>└───<span style='color: red'>Preview</span><br><span style='margin-left: 45px;'>└───Buddy.jpg</span><br><span style='margin-left: 45px;'>└───Natur.jpg</span><br><span style='margin-left: 45px;'>└───Pilze.jpg</span><br></span><br><br></li>
                 <li>updateData.exe ausführen</li>
             </ol>
+
+            <h3>Autoplayfunktion</h3>
+            <p>Damit die Autoplayfunktion genutzt werden kann, muss in den <a href="javascript:void(0);" onclick="toggleContainer(['settingsBox'], 'flex')">Optionen</a> sowohl der Haken bei Autoplay gesetzt werden als auch eine Anzahl der zu spielenden Medien angeben. <a href="javascript:void(0);" onclick="toggleContainer(['optionHelp'], 'block')">Informationen</a><br><br><br></p>
+                <div id="optionHelp" style="display: none;">
+                    <ul>
+                        <li><b>Autoplay</b>: Automatische Abspielfunktion aktivieren. Möchte man diese Nutzen, muss man "Anzahl autoplay" mindestens auf 1 setzen</li>
+                        <li><b>Anzahl autoplay</b>: Wie viele Medien sollen nacheinander abgespielt werden?</li>
+                        <li><b>Dauer bis Übergang</b>: Anzahl Sekunden vor Ende eines Videos/Musikstücks, bevor der nächste Titel aufgerufen werden soll. Bei Bildern, wird damit bestimmt, wie lange ein Bild sichtbar bleiben soll.</li>
+                    </ul>
+                    <br><br><br>
+                </div>
+            
 
             <h3>STEFFLIX updaten</h3>
             <p>Um Stefflix auf den neusten Stand zu bringen, muss das Programm "updateStefflix.exe" im STEFFLIX-Verzeichnis ausgeführt werden.<br><br><b>Aktuelle Version</b>: <span id="versionNow"></span><br><b>Neuste Version</b>: <span id="versionNew"></span></p>

@@ -1,12 +1,13 @@
 // Variabeldeklaration
-var decodedUriData = null;
-var element = null;
-var currentFavorites = null;
-var favorites = null;
 var allowedMediaExtensions = [".mp4", ".ogg", ".mp3", ".jpg", ".jpeg", ".png", ".gif", ".m4a"];
 var mediaTypes = [".mp4"];
 var musicTypes = [".mp3", ".m4a", ".ogg"];
 var imageTypes = [".jpg", ".jpeg", ".png", ".gif"];
+var listSeperator = "$=$"
+var decodedUriData = null;
+var element = null;
+var currentFavorites = null;
+var favorites = null;
 var playListPrefix = "";
 var mainContent = null;
 var level1 = null;
@@ -34,6 +35,25 @@ var subnode = null;
 var searchTerm = null;
 var searchResults = null;
 var seasonList = null;
+
+settings = localStorage.getItem("settings");
+if (settings == null) {
+    autoplay = false;
+    autoplayAmount = 0;
+    autoplayDuration = 30;
+    localStorage.setItem("settings", [autoplay, autoplayAmount, autoplayDuration].join(listSeperator));
+} else {
+    settings = settings.split(listSeperator);
+    autoplay = settings[0];
+    if (autoplay == "false") {
+        autoplay = false;
+    } else {
+        autoplay = true;
+    }
+    autoplayAmount = parseInt(settings[1]);
+    autoplayDuration = parseInt(settings[2]);
+    updateOptionFields(autoplay, autoplayAmount, autoplayDuration);
+}
 
 
 //  _______  __   __  __    _  ___   _  _______  ___   _______  __    _  _______  __    _ 
@@ -182,12 +202,11 @@ function replaceSpecialChars(string) {
     return string.replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä")
 }
 
-// Hinzufügen eines Vorschaubildes, falls vorhanden
-function addPreviewImage(decodedUrl, link, reason="normal") {
+function extractData(decodedUrl) {
     // Zerlegen in Dateiname
     if (decodedUrl.includes("MEDIA")) {
         // Lese Medieneigenschaften aus
-        mediaPath = replaceSpecialChars(decodedUrl.split(",MEDIA:")[1].split(",")[0].split("#")[0]);
+        mediaPath = replaceSpecialChars(decodedUrl.split(listSeperator + "MEDIA:")[1].split(listSeperator)[0].split("#")[0]);
         mediaName = mediaPath.split("/");
         mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
         if (mediaName.startsWith(".")) {
@@ -202,7 +221,7 @@ function addPreviewImage(decodedUrl, link, reason="normal") {
     }
     // Zerlegen in Stufe 1
     if (decodedUrl.includes("LEVEL4")) {
-        level4 = replaceSpecialChars(decodedUrl.split(",LEVEL4:")[1].split(",")[0].split("#")[0]);
+        level4 = replaceSpecialChars(decodedUrl.split(listSeperator + "LEVEL4:")[1].split(listSeperator)[0].split("#")[0]);
         if (level4.startsWith(".")) {
             level4 = level4.replace(".","");
         }
@@ -211,7 +230,7 @@ function addPreviewImage(decodedUrl, link, reason="normal") {
     }
     // Zerlegen in Stufe 2
     if (decodedUrl.includes("LEVEL3")) {
-        level3 = replaceSpecialChars(decodedUrl.split(",LEVEL3:")[1].split(",")[0].split("#")[0]);
+        level3 = replaceSpecialChars(decodedUrl.split(listSeperator + "LEVEL3:")[1].split(listSeperator)[0].split("#")[0]);
         if (level3.startsWith(".")) {
             level3 = level3.replace(".","");
         }
@@ -220,7 +239,7 @@ function addPreviewImage(decodedUrl, link, reason="normal") {
     }
     // Zerlegen in Stufe 3
     if (decodedUrl.includes("LEVEL2")) {
-        level2 = replaceSpecialChars(decodedUrl.split(",LEVEL2:")[1].split(",")[0].split("#")[0]);
+        level2 = replaceSpecialChars(decodedUrl.split(listSeperator + "LEVEL2:")[1].split(listSeperator)[0].split("#")[0]);
         if (level2.startsWith(".")) {
             level2 = level2.replace(".","");
         }
@@ -229,7 +248,7 @@ function addPreviewImage(decodedUrl, link, reason="normal") {
     }
     // Zerlegen in Stufe 4
     if (decodedUrl.includes("LEVEL1")) {
-        level1 = replaceSpecialChars(decodedUrl.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
+        level1 = replaceSpecialChars(decodedUrl.split(listSeperator + "LEVEL1:")[1].split(listSeperator)[0].split("#")[0]);
         if (level1.startsWith(".")) {
             level1 = level1.replace(".","");
         }
@@ -238,13 +257,26 @@ function addPreviewImage(decodedUrl, link, reason="normal") {
     }
     // Zerlegen in Hauptteil
     if (decodedUrl.includes("MAIN")) {
-        mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(",")[0].split("#")[0]);
+        mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(listSeperator)[0].split("#")[0]);
         if (mainContent.startsWith(".")) {
             mainContent = mainContent.replace(".","");
         }
     } else {
         mainContent = null;
     }
+
+    return [mainContent, level1, level2, level3, level4, mediaPath]
+}
+
+// Hinzufügen eines Vorschaubildes, falls vorhanden
+function addPreviewImage(decodedUrl, link, reason="normal") {
+    extractedData = extractData(decodedUrl);
+    mainContent = extractedData[0];
+    level1 = extractedData[1];
+    level2 = extractedData[2];
+    level3 = extractedData[3];
+    level4 = extractedData[4];
+    mediaPath = extractedData[5];
 
     var previewIsSet = false;
     var previewImageSrc = null;
@@ -264,6 +296,7 @@ function addPreviewImage(decodedUrl, link, reason="normal") {
         }
     }
     // Füge Vorschaubild für die Tiefe 3 ein - Suche nach Datei in Unterordner
+
     if (!previewIsSet && mainContent != null && level1 != null && level2 != null && level3 != null && data[mainContent][level1][level2][level3].hasOwnProperty("Preview")) {
         previewImageSrc = searchPreviewImage(data[mainContent][level1][level2][level3]["Preview"], [mediaName], filename, reason);
         if (previewImageSrc != null) {
@@ -368,36 +401,31 @@ function searchPreviewImage(data, searchKey, filename, type) {
 function setLastPlayed(title, url) {
     var currentPlaylist = localStorage.getItem("playlast");
     if (currentPlaylist != null) {
-        currentPlaylist = currentPlaylist.split(",");
+        currentPlaylist = currentPlaylist.split(listSeperator);
     }
     if (currentPlaylist == null || currentPlaylist.includes("")) {
         currentPlaylist = [];
     }
     
-
-    var mediaPath = atob(url.split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0].split("/");
+    var mediaPath = atob(url.split("?=")[1].split("#")[0]).split(listSeperator + "MEDIA:")[1].split(listSeperator)[0].split("/");
     var filename = mediaPath[mediaPath.length - 1];
     if (!isImage(filename)) {
-        console.log(mediaPath)
-        if (mediaPath.length > 3) {
+        while (mediaPath.length > 3) {
             mediaPath.splice(mediaPath.length - 1, 1);
         }
         mediaPath = mediaPath.join("/");
         
         for (var loggedUrl in currentPlaylist) {
             if (currentPlaylist[loggedUrl].includes("|")) {
-                var loggedMediaPath = atob(currentPlaylist[loggedUrl].split("|")[1].split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0];
+                // console.log(atob(currentPlaylist[loggedUrl].split("|")[1].split("?=")[1].split("#")[0]))
+                var loggedMediaPath = atob(currentPlaylist[loggedUrl].split("|")[1].split("?=")[1].split("#")[0]).split(listSeperator + "MEDIA:")[1].split(listSeperator)[0];
                 // Entferne Eintrag aus "Zuletzt gesehen"
-                console.log("LMP: " + loggedMediaPath)
-                console.log("MP: " + mediaPath)
-                console.log("CHECK: " + loggedMediaPath.includes(mediaPath))
                 if (loggedMediaPath.includes(mediaPath)) {
                     currentPlaylist.splice(loggedUrl, 1)
                 }
             } else {
                 currentPlaylist.splice(loggedUrl, 1)
             }
-            
         }
     
         if (currentPlaylist.length < 5) {
@@ -406,14 +434,15 @@ function setLastPlayed(title, url) {
             currentPlaylist.splice(currentPlaylist.length - 1, 1);
             currentPlaylist.splice(0, 0, title + "|" + url);
         }
-        localStorage.setItem("playlast", currentPlaylist);
+        localStorage.setItem("playlast", currentPlaylist.join(listSeperator));
     }
 }
 
 // Funktion zum setzen der Höhe des body-Elements
 function setHeight() {
     document.getElementById("loadingScreen").style.display = "none";
-    document.getElementById("mainBody").style.minHeight = document.documentElement.scrollHeight + "px";
+    // document.getElementById("mainBody").style.minHeight = document.documentElement.scrollHeight + "px";
+    // document.getElementById("mainBody").style.minHeight = "min-co";
 }
 
 // Funktion zum öffnen und schliessen der Untermenüs
@@ -450,17 +479,6 @@ function createHochButton(upperId, currentId) {
     document.getElementById(currentId).appendChild(node);
 }
 
-// Funktion zur Anzeige des Suchfelds
-function toggleSearchField(){
-    var node = document.getElementById("searchFieldContainer");
-    if (node.style.display == "none") {
-        node.style.display = "flex";
-        document.getElementById("searchField").focus();
-    } else {
-        node.style.display = "none";
-    }
-}
-
 // Funktion zum Aufruf der Suchfunktion
 function callSearch() {
     var searchTerm = document.getElementById("searchField").value;
@@ -473,7 +491,7 @@ function createLink(key, coreUrl) {
     if (!key.startsWith(".")) {
         key = "." + key
     }
-    result = key + "|start.html?=" + btoa(coreUrl + ",PL:searchResults") + "#mediaNav";
+    result = key + "|start.html?=" + btoa(coreUrl + listSeperator + "PL:searchResults") + "#mediaNav";
     return result;
 }
 
@@ -483,12 +501,12 @@ function recursiveSearch(data, searchTerm, currentLink="MAIN:", searchResults=[]
         if (depth != 0) {
             if (key != "Preview") {
                 if (!isMediaFile(allowedMediaExtensions, key)) {
-                    link = currentLink + ",LEVEL" + depth +":";
+                    link = currentLink + listSeperator + "LEVEL" + depth +":";
                 } else {
                     if (!key.startsWith(".")){
                         key = "." + key;
                     }
-                    link = currentLink + ",MEDIA:" + key;
+                    link = currentLink + listSeperator + "MEDIA:" + key;
                     if (key.toLowerCase().includes(searchTerm.toLowerCase())) {
                         searchResults.push(createLink(key, link));
                     }
@@ -512,14 +530,14 @@ function openHelp() {
 // Hinzufügen/Entfernen von Favoriten
 function updateFavorites() {
     // Aktuelles Medium auslesen
-    mediaName = atob(window.location.href.split("?=")[1].split("#")[0]).split(",MEDIA:")[1].split(",")[0];
+    mediaName = atob(window.location.href.split("?=")[1].split("#")[0]).split(listSeperator + "MEDIA:")[1].split(listSeperator)[0];
     
     // Favoriten auslesen
     favorites = localStorage.getItem("favorites");
     if (favorites == null) {
         favorites = [];
     } else {
-        favorites = favorites.split(",");
+        favorites = favorites.split(listSeperator);
         if (!Array.isArray(favorites)) {
             favorites = [favorites];
         }
@@ -583,30 +601,639 @@ function updateFavorites() {
     }
     
     // Speichere aktualisierte Favoritenliste
-    localStorage.setItem("favorites", favorites);
+    localStorage.setItem("favorites", favorites.join(listSeperator));
 }
 
-// Erlärung der Preview-Ordner einblenden.
-function showFolderExplanation() {
-    node = document.getElementById("folderExplain");
-    if (node.innerHTML == "") {
-        node.innerHTML = "(Der Preview-Ordner muss sich im selben Verzeichnis befinden wie das Medium):<br><br> D:\\STEFFLIX\\BILDER<br>├───Buddy<br>├───Pilze<br>├───Natur<br>└───<span style='color: red'>Preview</span><br><span style='margin-left: 45px;'>└───Buddy.jpg</span><br><span style='margin-left: 45px;'>└───Natur.jpg</span><br><span style='margin-left: 45px;'>└───Pilze.jpg</span><br>";
-    } else {
-        node.innerHTML = "";
+// Funktion, um Container ein- und auszublenden
+function toggleContainer(idArray, displayMode) {
+    var nodeId = null;
+    for (var key in idArray) {
+        nodeId = idArray[key];
+        node = document.getElementById(nodeId);
+        if (node.style.display == "none") {
+            node.style.display = displayMode;
+            if (idArray[key] == "searchFieldContainer") {
+                document.getElementById("searchField").focus();
+            }
+        } else {
+            node.style.display = "none";
+        }
     }
-    node.style.fontWeight = "600";
 }
 
-// Funktion zum anzeigen unterstützter Dateiformate
-function showAddNewMediaInfo() {
-    node = document.getElementById("addNewMediaInfoTitle")
+// Funnktion, um das nächste Medium aufzurufen
+function playlistForwards(currentIndex, localPlaylist) {
+    if (document.getElementById("next").childNodes[0].href != null) {
+        document.getElementById("next").removeChild(document.getElementById("next").childNodes[0]);
+        node = document.createElement("a");
+        document.getElementById("next").appendChild(node);
+    }
+    if (document.getElementById("prev").childNodes[0].href != null) {
+        document.getElementById("prev").removeChild(document.getElementById("prev").childNodes[0]);
+        node = document.createElement("a");
+        document.getElementById("prev").appendChild(node);
+    }
 
-    if (node.style.display == "none") {
-        node.style.display = "block";
-        document.getElementById("addNewMediaInfo").style.display = "block";
+    localPlaylist = localPlaylist.split(listSeperator);
+    if (currentIndex + 1 < localPlaylist.length) {
+        mediaUrl = localPlaylist[currentIndex + 1];
+        if (!mediaUrl.startsWith(".")) {
+            mediaUrl = "." + mediaUrl;
+        }
+        // Ändere Item zuvor als Aktiv
+        document.getElementById(mediaUrl.replace(".","")).className = "activeMenu";
+        mediaName = localPlaylist[currentIndex + 1].split("/");
+        mediaName = mediaName[mediaName.length - 1];
+
+        document.title = "STEFFLIX - " + removeFileExtension(allowedMediaExtensions, mediaName); 
+        
+        playlistName = "";
+        path = extractFromPath(mediaUrl);
+        if (!isImage(mediaUrl)) {
+            setLastPlayed(mediaName, "start.html?=" + btoa(path) + "#mediaNav");
+        }
+        history.pushState({}, null, "start.html?=" + btoa(path) + "#mediaNav");
+
+        realLink = false;
+        if (currentIndex + 2 < localPlaylist.length) {
+            // Diese Staffel
+            nextName = localPlaylist[currentIndex + 2].split("/")
+            nextName = nextName[nextName.length - 1]
+        } else {
+            // Nächste Staffel
+            nextName = null;
+            url = swapSeason(1);
+            if (url != null) {
+                nextName = url.split("MEDIA:")[1].split(listSeperator)[0].split("/");
+                nextName = nextName[nextName.length - 1]
+                realLink = true;
+            }
+        }
+
+        lastName = localPlaylist[currentIndex];
+        if (!lastName.startsWith(".")) {
+            lastName = "." + lastName;
+        }
+
+        // Deaktiviere aktuelles Menüelement
+        document.getElementById(lastName.replace(".", "")).className = "";
+        lastName = lastName.split("/");
+        lastName = removeFileExtension(allowedMediaExtensions, lastName[lastName.length - 1]);
+
+
+        node = document.getElementById("video");
+        // Ändere Titel
+        title = document.getElementById("mediaTitle");
+        title.innerHTML = removeFileExtension(allowedMediaExtensions, addEmoteByFileExtension(mediaName))
+        
+        lastIndex = currentIndex + 1;
+        // Ändere Zurück-Button
+        subnode = document.getElementById("prev").childNodes[0]
+        subnode.setAttribute("onclick", "playlistBackwards(" + lastIndex + ",'" + localPlaylist.join(listSeperator) + "');")
+        subnode.innerHTML = "👈 " + removeFileExtension(allowedMediaExtensions, lastName);
+        
+        if (nextName != null) {
+            // Ändere Vorwärts-Button
+            subnode = document.getElementById("next").childNodes[0]
+            if (!realLink) {
+                subnode.setAttribute("onclick", "playlistForwards(" + lastIndex + ",'" + localPlaylist.join(listSeperator) + "')")
+            } else {
+                // subnode.setAttribute("onclick", "");
+                subnode.setAttribute("onclick", "loadUrl('start.html?=" + btoa(url) + "')");
+            }
+            subnode.innerHTML = removeFileExtension(allowedMediaExtensions, nextName) + " 👉";
+        }
+
+        node.src = mediaUrl;
+
+        // Setze Timer für Autoplayfunktion, falls Autoplay aktiviert
+        if (document.getElementById("autoplayCheckBox").checked && document.getElementById("video").tagName == "IMG") {
+            updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
+            // Prüfe, ob ein Link vorhanden ist
+            if (document.getElementById('next').childNodes.length > 0 && document.getElementById("next").childNodes[0].innerHTML != "") {
+                // Animationsreset
+                document.getElementById('next').style.animation = "none";
+                setTimeout('document.getElementById("next").style.animation = "autoplayLoading ' + (autoplayDuration-1) + 's"', 1000);
+                // Triggere klick von Next-Link
+                setTimeout("document.getElementById('next').childNodes[0].click()", autoplayDuration * 1000);
+            } else {
+                // Reset der Einstellungen
+                updateOptions(false, 0, document.getElementById("autoplayDuration").value);
+            }
+        }
+    }
+}
+
+// Funktion, um das letzte Medium aufzurufen
+function playlistBackwards(currentIndex, localPlaylist) {
+    // Entferne Link-Node und ersetze mit leerem Link
+    if (document.getElementById("next").childNodes[0].href != null) {
+        document.getElementById("next").removeChild(document.getElementById("next").childNodes[0]);
+        node = document.createElement("a");
+        document.getElementById("next").appendChild(node);
+    }
+    if (document.getElementById("prev").childNodes[0].href != null) {
+        document.getElementById("prev").removeChild(document.getElementById("prev").childNodes[0]);
+        node = document.createElement("a");
+        document.getElementById("prev").appendChild(node);
+    }
+
+    localPlaylist = localPlaylist.split(listSeperator);
+    if (currentIndex - 1 >= 0) {
+        mediaUrl = localPlaylist[currentIndex - 1];
+        if (!mediaUrl.startsWith(".")) {
+            mediaUrl = "." + mediaUrl;
+        }
+        // Ändere Item zuvor als Aktiv
+        document.getElementById(mediaUrl.replace(".","")).className = "activeMenu";
+        mediaName = localPlaylist[currentIndex - 1].split("/");
+        mediaName = mediaName[mediaName.length - 1];
+        
+        document.title = "STEFFLIX - " + removeFileExtension(allowedMediaExtensions, mediaName); 
+
+        playlistName = "";
+        // Lese URL aus Pfad aus
+        path = extractFromPath(mediaUrl);
+        // Speichere in zuletzt gesehen-Liste, sofern kein Bild
+        if (!isImage(mediaUrl)) {
+            setLastPlayed(mediaName, "start.html?=" + btoa(path) + "#mediaNav");
+        }
+        history.pushState({}, null, "start.html?=" + btoa(path) + "#mediaNav");
+
+        realLink = false;
+        if (currentIndex - 2 >= 0) {
+            // Diese Staffel
+            lastName = localPlaylist[currentIndex - 2].split("/")
+            lastName = removeFileExtension(allowedMediaExtensions, lastName[lastName.length - 1]);
+        } else {
+            // Letzte Staffel
+            lastName = null;
+            url = swapSeason(-1);
+            if (url != null) {
+                lastName = url.split("MEDIA:")[1].split(listSeperator)[0].split("/");
+                lastName = lastName[lastName.length - 1];
+                realLink = true;
+            }
+        }
+
+        nextName = localPlaylist[currentIndex];
+        if (!nextName.startsWith(".")) {
+            nextName = "." + nextName;
+        }
+        // Deaktiviere aktuelles Menüelement
+        document.getElementById(nextName.replace(".", "")).className = "";
+        nextName = nextName.split("/");
+        nextName = nextName[nextName.length - 1];
+
+
+        node = document.getElementById("video");
+        // Ändere Titel
+        title = document.getElementById("mediaTitle");
+        title.innerHTML = removeFileExtension(allowedMediaExtensions, addEmoteByFileExtension(mediaName))
+        
+        lastIndex = currentIndex - 1;
+        // Ändere Zurück-Button
+        if (lastName != null) {
+            subnode = document.getElementById("prev").childNodes[0]
+            if (!realLink) {
+                subnode.setAttribute("onclick", "playlistBackwards(" + lastIndex + ",'" + localPlaylist.join(listSeperator) + "');")
+            } else {
+                // subnode.setAttribute("onclick", "");
+                subnode.setAttribute("onclick", "loadUrl('start.html?=" + btoa(url) + "')");
+            }
+            subnode.innerHTML = "👈 " + removeFileExtension(allowedMediaExtensions, lastName);
+        }
+        
+        // Ändere Vorwärts-Button
+        subnode = document.getElementById("next").childNodes[0]
+        subnode.setAttribute("onclick", "playlistForwards(" + lastIndex + ",'" + localPlaylist.join(listSeperator) + "');")
+        subnode.innerHTML = removeFileExtension(allowedMediaExtensions, nextName) + " 👉";
+        
+
+        node.src = mediaUrl;
+    }
+}
+
+// Funktion, um den letzten/nächsten Unterordner zu suchen
+function swapSeason(direction) {
+    currentUrl = window.location.href;
+    decodedData = atob(currentUrl.split("?=")[1].split("#")[0])
+    extractedData = extractData(decodedData);
+    mainContent = extractedData[0];
+    level1 = extractedData[1];
+    level2 = extractedData[2];
+    level3 = extractedData[3];
+    level4 = extractedData[4];
+    currentMediaLocation = extractedData[5];
+    
+    seasonList = [];
+    mediaList = [];
+    if (mainContent != null && level1 != null && level2 != null && level3 != null) {
+        // Erstelle Schlüsselliste
+        for (var key in data[mainContent][level1][level2]) {
+            if (key != "Preview") {
+                if (!isMediaFile(allowedMediaExtensions, key)) {
+                    seasonList.push(key);
+                }
+            }
+        }
+        seasonList = seasonList.sort();
+        // Lese akteuellen Index aus
+        keyIndex = seasonList.indexOf(level3);
+        // Prüfe, ob eine weitere Staffel vorhanden ist
+        if (keyIndex != -1 && keyIndex + direction >= 0 && keyIndex + direction < seasonList.length) {
+            // Erstelle Liste aller Episoden
+            for (var key in data[mainContent][level1][level2][seasonList[keyIndex + direction]]) {
+                if (key != "Preview") {
+                    mediaList.push(key);
+                }
+            };
+            
+            // Lese erste Folge der nächsten Staffel aus
+            if (direction < 0) {
+                medialocation = mediaList.sort()[mediaList.length - 1];
+            } else {
+                medialocation = mediaList.sort()[0];
+            }
+            if (isMediaFile(allowedMediaExtensions, medialocation)) {
+                if (medialocation.startsWith(".")) {
+                    medialocation = medialocation.replace(".", "")
+                }
+                // Definiere newPlaylistname
+                newPlaylistName = mainContent + level1 + level2 + seasonList[keyIndex + direction];
+                // Setze aktuelle URL zusammen
+                newUrl = "MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + level2 + listSeperator + "LEVEL3:" + seasonList[keyIndex + direction] + listSeperator + "MEDIA:." + medialocation + listSeperator + "PL:" + newPlaylistName; 
+            } else {
+                medialocation = null;
+            }
+        }
+    } else if (mainContent != null && level1 != null && level2 != null) {
+        // Erstelle Schlüsselliste
+        for (var key in data[mainContent][level1]) {
+            if (key != "Preview") {
+                if (!isMediaFile(allowedMediaExtensions, key)) {
+                    seasonList.push(key);
+                }
+            }
+        }
+        seasonList = seasonList.sort();
+        // Lese akteuellen Index aus
+        keyIndex = seasonList.indexOf(level2);
+
+        // Prüfe, ob eine weitere Staffel vorhanden ist
+        if (keyIndex != -1 && keyIndex + direction >= 0 && keyIndex + direction < seasonList.length) {
+            // Erstelle Liste aller Episoden
+            for (var key in data[mainContent][level1][seasonList[keyIndex + direction]]) {
+                if (key != "Preview") {
+                    mediaList.push(key);
+                }
+            };
+            // Lese erste Folge der nächsten Staffel aus
+            if (direction < 0) {
+                medialocation = mediaList.sort()[mediaList.length - 1];
+            } else {
+                medialocation = mediaList.sort()[0];
+            }
+            if (isMediaFile(allowedMediaExtensions, medialocation)) {
+                if (medialocation.startsWith(".")) {
+                    medialocation = medialocation.replace(".", "")
+                }
+                // Definiere newPlaylistname
+                newPlaylistName = mainContent + level1 + seasonList[keyIndex + direction];
+                // Setze aktuelle URL zusammen
+                newUrl = "MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + seasonList[keyIndex + direction] + listSeperator + "MEDIA:." + medialocation + listSeperator + "PL:" + newPlaylistName;
+            } else {
+                medialocation = null;
+            }
+        }
+    } else if (mainContent != null && level1 != null) {
+        // Erstelle Schlüsselliste
+        for (var key in data[mainContent]) {
+            if (key != "Preview") {
+                if (!isMediaFile(allowedMediaExtensions, key)) {
+                    seasonList.push(key);
+                }
+            }
+        }
+        seasonList = seasonList.sort();
+        // Lese akteuellen Index aus
+        keyIndex = seasonList.indexOf(level1);
+        // Prüfe, ob eine weitere Staffel vorhanden ist
+        if (keyIndex != -1 && keyIndex + direction >= 0 && keyIndex + direction < seasonList.length) {
+            // Erstelle Liste aller Episoden
+            for (var key in data[mainContent][seasonList[keyIndex + direction]]) {
+                if (key != "Preview") {
+                    mediaList.push(key);
+                }
+            };
+            // Lese erste Folge der nächsten Staffel aus
+            if (direction < 0) {
+                medialocation = mediaList.sort()[mediaList.length - 1];
+            } else {
+                medialocation = mediaList.sort()[0];
+            }
+            if (isMediaFile(allowedMediaExtensions, medialocation)) {
+                if (medialocation.startsWith(".")) {
+                    medialocation = medialocation.replace(".", "")
+                }
+                // Definiere newPlaylistname
+                newPlaylistName = mainContent + seasonList[keyIndex + direction];
+                // Setze aktuelle URL zusammen
+                newUrl = "MAIN:" + mainContent + listSeperator + "LEVEL1:" + seasonList[keyIndex + direction] + listSeperator + "MEDIA:." + medialocation + listSeperator + "PL:" + newPlaylistName;
+            } else {
+                medialocation = null;
+            }
+        }
+    }
+    if (medialocation != null) {
+        return newUrl;
     } else {
-        node.style.display = "none";
-        document.getElementById("addNewMediaInfo").style.display = "none";
+        return null;
+    }
+}
+
+// Funktion zum extrahieren der Tiefen- und Medieninformationen aus dem Medienlink
+function extractFromPath(path) {
+    pathArray = path.split("/")
+    // Entferne relative Pfadangebe aus Array
+    if (pathArray[0] == ".") {
+        pathArray.splice(0, 1);
+    }
+
+    // Lese Main-Auswahl aus
+    if (pathArray.length >= 1) {
+        if (!isMediaFile(allowedMediaExtensions, pathArray[0])) {
+            mainContent = pathArray[0];
+        } else {
+            // Speichere Medienpfad
+            media = pathArray[0];
+            mainContent = "";
+        }
+    } else {
+        mainContent = "";
+    }
+
+    // Lese Level1-Auswahl aus
+    if (pathArray.length >= 2) {
+        if (!isMediaFile(allowedMediaExtensions, pathArray[1])) {
+            level1 = pathArray[1];
+        } else {
+            // Speichere Medienpfad
+            media = pathArray[1];
+            level1 = "";
+        }
+    } else {
+        level1 = "";
+    }
+
+    // Lese Level2-Auswahl aus
+    if (pathArray.length >= 3) {
+        if (!isMediaFile(allowedMediaExtensions, pathArray[2])) {
+            level2 = pathArray[2];
+        } else {
+            // Speichere Medienpfad
+            media = pathArray[2];
+            level2 = "";
+        }
+    } else {
+        level2 = "";
+    }
+
+    // Lese Level3-Auswahl aus
+    if (pathArray.length >= 4) {
+        if (!isMediaFile(allowedMediaExtensions, pathArray[3])) {
+            level3 = pathArray[3];
+        } else {
+            // Speichere Medienpfad
+            media = pathArray[3];
+            level3 = "";
+        }
+    } else {
+        level3 = "";
+    }
+
+    // Lese Level4-Auswahl aus
+    if (pathArray.length >= 5) {
+        if (!isMediaFile(allowedMediaExtensions, pathArray[4])) {
+            level4 = pathArray[4];
+        } else {
+            // Speichere Medienpfad
+            media = pathArray[4];
+            level4 = "";
+        }
+    } else {
+        level4 = "";
+    }
+
+    // Bereite URL und Playlistenname vor
+    playlistName = "";
+    if (mainContent != "") {
+        if (!isMediaFile(allowedMediaExtensions, mainContent)) {
+            playlistName += mainContent
+        }
+        mainContent = "MAIN:" + mainContent;
+    }
+
+    if (level1 != "") {
+        if (!isMediaFile(allowedMediaExtensions, level1)) {
+            playlistName += level1;
+        }
+        level1 = listSeperator + "LEVEL1:" + level1;
+    }
+    
+    if (level2 != "") {
+        if (!isMediaFile(allowedMediaExtensions, level2)) {
+            playlistName += level2;
+        }
+        level2 = listSeperator + "LEVEL2:" + level2;
+    }
+    
+    if (level3 != "") {
+        if (!isMediaFile(allowedMediaExtensions, level3)) {
+            playlistName += level3;
+        }
+        level3 = listSeperator + "LEVEL3:" + level3;
+    }
+    
+    if (level4 != "") {
+        if (!isMediaFile(allowedMediaExtensions, level4)) {
+            playlistName += level4;
+        }
+        level4 = listSeperator + "LEVEL4:" + level4;
+    }
+    
+    if (media != "") {
+        mediaLocation = listSeperator + "MEDIA:" + path;
+    }
+
+    // Setze URL zusammen
+    path = mainContent + level1 + level2 + level3 + level4 + mediaLocation + listSeperator + "PL:" + playlistName;
+    return path
+}
+
+// Lade übergebene URL
+function loadUrl(url){
+    window.location.href = url + "#mediaNav";
+}
+
+// Speichern der aktuellen einstellunen
+function applySettings() {
+    autoplay = document.getElementById("autoplayCheckBox").checked;
+    autoplayAmount = document.getElementById("amountOfAutoplay").value;
+    autoplayDuration = document.getElementById("autoplayDuration").value;
+    if (!autoplay) {
+        autoplayAmount = 0;
+    } else if (autoplayAmount == 0) {
+        autoplay = false;
+    }
+    localStorage.setItem("settings", [autoplay, autoplayAmount, autoplayDuration].join(listSeperator));
+    updateOptionFields(autoplay, autoplayAmount, autoplayDuration)
+    toggleContainer(['settingsBox'], "none");
+}
+
+// Funktion, um zu prüfen, dass beim aktievieren der Autoplayfunktion, die Anzahl mindestens auf 1 gesetzt wird.
+function checkAutoplayAmout() {
+    if (document.getElementById("autoplayCheckBox").checked) {
+        if (document.getElementById("amountOfAutoplay").value <= 0) {
+            document.getElementById("amountOfAutoplay").value = 1;
+        }
+    } else {
+        document.getElementById("amountOfAutoplay").value = 0;
+    }
+}
+
+// Funktion, um die Einstellungen anhand abgespielter Medien zu aktualisieren
+function updateOptions(autoplay, autoplayAmount, autoplayDuration) {
+    if (autoplay == "true") {
+        autoplay = true;
+    } else if (autoplay == "false") {
+        autoplay = false;
+    }
+    autoplayAmount = parseInt(autoplayAmount);
+    autoplayDuration = parseInt(autoplayDuration);
+
+    if (autoplayAmount > 0) {
+        autoplayAmount -= 1;
+    } else {
+        autoplayAmount = 0
+    }
+    if (autoplay && autoplayAmount == 0) {
+        autoplay = false;
+    }
+
+    if (autoplayDuration < 11) {
+        autoplayDuration = 11;
+    }
+    updateOptionFields(autoplay, autoplayAmount, autoplayDuration);
+    localStorage.setItem("settings", [autoplay, autoplayAmount, autoplayDuration].join(listSeperator));
+}
+
+// Funktion, um die gespeicherten Einstellungen auf das Einstellungsmenü zu übertragen
+function updateOptionFields(autoplay, autoplayAmount, autoplayDuration) {
+    document.getElementById("autoplayCheckBox").checked = autoplay;
+    document.getElementById("amountOfAutoplay").value = autoplayAmount;
+    document.getElementById("autoplayDuration").value = autoplayDuration;
+}
+
+// Funktion, um lokale Daten zu löschen
+// favorites, playlist, timestamp, playlast, all
+function modifyLocalData(dataType) {
+    document.getElementById("debugOutput").style.display = "block";
+    var node = document.getElementById("debugField");
+    var counter = 0;
+
+    node.value = "==========================\nStarte Vorgang\n==========================\n";
+    if (dataType == "playlist") {
+        playlistPrefix = localStorage.getItem("currentPrefix");
+        node.value += "Lösche: currentPrefix\n";
+        localStorage.removeItem("currentPrefix");
+        counter += 1;
+    }
+
+    for (var key in localStorage) {
+        if (dataType == "all") {
+            node.value += "Lösche: " + key + "\n";
+            localStorage.removeItem(key);
+            counter += 1;
+        } else if (key.includes(dataType)) {
+            node.value += "Lösche: " + key + "\n";
+            localStorage.removeItem(key);
+            counter += 1;
+        }
+    }
+
+    node.value += "==========================\nVorgang beendet\nEs wurden " + counter + " Einträge gelöscht\n==========================\n";
+
+    document.getElementById("debugOkButton").style.display = "block";
+}
+
+// Funktion, um gespeicherte Daten mit der aktuellen Version kompatibel zu machen
+function updateData() {
+    // Update 1.28
+    if (localStorage.getItem("v1.28") == null) {
+        ignoreList = ["mediaVolume", "timestamp", "favorites", "currentPrefix", "playlast"];
+        // Prüfe alle lokal gespeicherten Daten
+        for (var key in localStorage) {
+            if (localStorage.getItem(key) != null) {
+                // Ersetze Listenseperator
+                if (localStorage.getItem(key).split("Nav,").length > 1) {
+                    korrektur = localStorage.getItem(key).split("Nav,").join("Nav" + listSeperator);
+                } else {
+                    korrektur = localStorage.getItem(key);
+                }
+
+                // Prüfe, ob der Name des Items angepasst werden muss
+                doOverwrite = true;
+                for (var index in ignoreList) {
+                    if (key.includes(ignoreList[index])) {
+                        doOverwrite = false;
+                    }
+                }
+                
+                // Passe Itemname an
+                if (doOverwrite) {
+                    newKey = "playlist-" + key;
+                    korrektur = korrektur.split(",.").join(listSeperator + ".");
+                } else {
+                    newKey = key;
+                }
+                
+                // Passe Favoritenliste an
+                if (key == "favorites") {
+                    korrektur = korrektur.split(",.").join(listSeperator + ".");
+                }
+
+                korrektur = korrektur.split(listSeperator)
+
+                // Passe URL-Aufbau der gespeicherten Daten an
+                for (var index in korrektur) {
+                    if (korrektur[index].includes("start.html?=")) {
+                        dataPrefix = korrektur[index].split("?=")[0] + "?=";
+                        if (korrektur[index].split("#").length > 1) {
+                            dataPostfix = "#" + korrektur[index].split("#")[1];
+                        } else {
+                            dataPostfix = "";
+                        }
+
+                        decodedData = atob(korrektur[index].split("?=")[1].split("#")[0]);
+                        if (decodedData.includes(",LEVEL") || decodedData.includes(",MEDIA") || decodedData.includes(",PL")) {
+                            decodedData = decodedData.replaceAll(",LEVEL", listSeperator + "LEVEL");
+                            decodedData = decodedData.replaceAll(",MEDIA", listSeperator + "MEDIA");
+                            decodedData = decodedData.replaceAll(",PL", listSeperator + "PL");
+                        }
+
+                        newUrl = dataPrefix + btoa(decodedData) + dataPostfix;
+                        korrektur[index] = newUrl;
+                    }
+                }
+
+                korrektur = korrektur.join(listSeperator);
+                localStorage.removeItem(key);
+                localStorage.setItem(newKey, korrektur);
+            }
+        }
+
+        localStorage.setItem("v1.28", true)
     }
 }
 
@@ -617,16 +1244,22 @@ function showAddNewMediaInfo() {
 // |       ||  |_|  ||    __  ||  _   | |    ___||    __  ||    ___||   |   |   |  |       ||  _    ||   ||  |
 //  |     | |       ||   |  | || |_|   ||   |___ |   |  | ||   |___ |   |   |   |  |       || | |   ||   |_| |
 //   |___|  |_______||___|  |_||_______||_______||___|  |_||_______||___|   |___|  |_______||_|  |__||_______|
+// Lokale daten updaten
+updateData()
+
 // Lade Favoriten
 favorites = localStorage.getItem("favorites");
 if (favorites != null) {
-    favorites = favorites.split(",");
+    favorites = favorites.split(listSeperator);
 }
 
 // Falls vorhanden, decodiere Datenstring
 if (window.location.href.includes("?=")) {
     decodedUriData = atob(window.location.href.split("?=")[1].split("#")[0]);
 }
+
+// Playlist Präfix 
+// playlistPrefix = "playlist-";
 
 //  __   __  _______  __    _  __   __ 
 // |  |_|  ||       ||  |  | ||  | |  |
@@ -647,7 +1280,6 @@ for (var key in data) {
         node.appendChild(link);
         node.id = key;
         document.getElementById("menu").appendChild(node);
-        
     }
 }
 // Sortiere Liste
@@ -661,7 +1293,7 @@ sortList(document.getElementsByClassName('menu')[0]);
 // Prüfe, ob aus dem Hauptmenü eine Auswahl getroffen wurde
 if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     // Zerlege URL in "MAIN"-Bestandteil
-    mainContent = replaceSpecialChars(decodedUriData.split("MAIN:")[1].split(",")[0].split("#")[0]);
+    mainContent = replaceSpecialChars(decodedUriData.split("MAIN:")[1].split(listSeperator)[0].split("#")[0]);
     playListPrefix += mainContent;
     // Lege leere Playliste an
     playlist = []
@@ -678,14 +1310,14 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             }
             // var mainContentPreviewImage = addPreviewImage(data[mainContent], link, cleanedKey);
             if (decodedUriData.includes("LEVEL1")) {
-                previewPath = decodedUriData.split(",LEVEL1:")[0];
+                previewPath = decodedUriData.split(listSeperator + "LEVEL1:")[0];
             } else {
                 previewPath = decodedUriData;
             }
             if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
-                mainContentPreviewImage = addPreviewImage(previewPath + ",LEVEL1:" + cleanedKey, link);
+                mainContentPreviewImage = addPreviewImage(previewPath + listSeperator + "LEVEL1:" + cleanedKey, link);
             } else {
-                mainContentPreviewImage = addPreviewImage(previewPath + ",MEDIA:" + cleanedKey, link);
+                mainContentPreviewImage = addPreviewImage(previewPath + listSeperator + "MEDIA:" + cleanedKey, link);
             }
 
             // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
@@ -707,10 +1339,10 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 playlist.push(key);
 
                 // Erstelle Link
-                link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
+                link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "MEDIA:" + key + listSeperator + "PL:" + playListPrefix) + "#mediaNav";
                 textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
             } else {
-                link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + key);
+                link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + key);
                 textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, key));
             }
             link.appendChild(textnode);
@@ -734,7 +1366,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     if (decodedUriData.includes("LEVEL1")) {
         document.getElementById("submenu").style.display = "none";
         // Zerlege URL in "LEVEL1"-Bestandteil
-        level1 = replaceSpecialChars(decodedUriData.split(",LEVEL1:")[1].split(",")[0].split("#")[0]);
+        level1 = replaceSpecialChars(decodedUriData.split(listSeperator + "LEVEL1:")[1].split(listSeperator)[0].split("#")[0]);
         playListPrefix += level1;
         // Erstelle Leere Playliste
         playlist = []
@@ -755,14 +1387,14 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 // Füge Vorschaubild hinzu
                 // addPreviewImage(data[mainContent][level1], link, cleanedKey);
                 if (decodedUriData.includes("LEVEL2")) {
-                    previewPath = decodedUriData.split(",LEVEL2:")[0];
+                    previewPath = decodedUriData.split(listSeperator + "LEVEL2:")[0];
                 } else {
                     previewPath = decodedUriData;
                 }
                 if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
-                    addPreviewImage(previewPath + ",LEVEL2:" + cleanedKey, link);
+                    addPreviewImage(previewPath + listSeperator + "LEVEL2:" + cleanedKey, link);
                 } else {
-                    addPreviewImage(previewPath + ",MEDIA:" + cleanedKey, link);
+                    addPreviewImage(previewPath + listSeperator + "MEDIA:" + cleanedKey, link);
                 }
 
                 text = key.split("/");
@@ -789,9 +1421,9 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     // Füge alle Medienelemente eines Schlüssel der Playlist zu
                     playlist.push(key);
 
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "MEDIA:" + key + listSeperator + "PL:" + playListPrefix) + "#mediaNav";
                 } else {
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + key);
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + key);
                 }
                 node.appendChild(link);
                 node.id = cleanedKey.replace(".", "");
@@ -816,7 +1448,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         document.getElementById("subsubmenu").style.display = "none";
 
         // Zerlege URL in "LEVEL2"-Bestandteil
-        level2 = replaceSpecialChars(decodedUriData.split(",LEVEL2:")[1].split(",")[0].split("#")[0]);
+        level2 = replaceSpecialChars(decodedUriData.split(listSeperator + "LEVEL2:")[1].split(listSeperator)[0].split("#")[0]);
         playListPrefix += level2;
         // Erstelle Leere Playliste
         playlist = []
@@ -837,14 +1469,14 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 // Füge Vorschaubild hinzu
                 // addPreviewImage(data[mainContent][level1][level2], link, cleanedKey);
                 if (decodedUriData.includes("LEVEL3")) {
-                    previewPath = decodedUriData.split(",LEVEL3:")[0];
+                    previewPath = decodedUriData.split(listSeperator + "LEVEL3:")[0];
                 } else {
                     previewPath = decodedUriData;
                 }
                 if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
-                    addPreviewImage(previewPath + ",LEVEL3:" + cleanedKey, link);
+                    addPreviewImage(previewPath + listSeperator + "LEVEL3:" + cleanedKey, link);
                 } else {
-                    addPreviewImage(previewPath + ",MEDIA:" + cleanedKey, link);
+                    addPreviewImage(previewPath + listSeperator + "MEDIA:" + cleanedKey, link);
                 }
 
                 // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
@@ -870,9 +1502,9 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     playlist.push(key);
 
                     // Erstelle Link
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + level2 + listSeperator + "MEDIA:" + key + listSeperator + "PL:" + playListPrefix) + "#mediaNav";
                 } else {
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + key);
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + level2 + listSeperator + "LEVEL3:" + key);
                 }
                 node.appendChild(link);
                 node.id = cleanedKey.replace(".", "");
@@ -897,7 +1529,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         document.getElementById("subsubsubmenu").style.display = "none";
 
         // Zerlege URL in "LEVEL3"-Bestandteil
-        level3 = replaceSpecialChars(decodedUriData.split(",LEVEL3:")[1].split(",")[0].split("#")[0]);
+        level3 = replaceSpecialChars(decodedUriData.split(listSeperator + "LEVEL3:")[1].split(listSeperator)[0].split("#")[0]);
         playListPrefix += level3;
         // Erstelle Leere Playliste
         playlist = []
@@ -918,14 +1550,14 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                 // Füge Vorschaubild hinzu
                 // addPreviewImage(data[mainContent][level1][level2][level3], link, cleanedKey);
                 if (decodedUriData.includes("LEVEL4")) {
-                    previewPath = decodedUriData.split(",LEVEL4:")[0];
+                    previewPath = decodedUriData.split(listSeperator + "LEVEL4:")[0];
                 } else {
                     previewPath = decodedUriData;
                 }
                 if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
-                    addPreviewImage(previewPath + ",LEVEL4:" + cleanedKey, link);
+                    addPreviewImage(previewPath + listSeperator + "LEVEL4:" + cleanedKey, link);
                 } else {
-                    addPreviewImage(previewPath + ",MEDIA:" + cleanedKey, link);
+                    addPreviewImage(previewPath + listSeperator + "MEDIA:" + cleanedKey, link);
                 }
 
                 // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
@@ -950,9 +1582,9 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
                     playlist.push(key);
 
                     // Erstelle Medienlink
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + level3 + ",MEDIA:" + key + ",PL:" + playListPrefix) + "#mediaNav";
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + level2 + listSeperator + "LEVEL3:" + level3 + listSeperator + "MEDIA:" + key + listSeperator + "PL:" + playListPrefix) + "#mediaNav";
                 } else {
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + level3 + ",LEVEL4:" + key);
+                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + level2 + listSeperator + "LEVEL3:" + level3 + listSeperator + "LEVEL4:" + key);
                 }
                 node.appendChild(link);
                 node.id = cleanedKey.replace(".", "");
@@ -969,7 +1601,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
     // So lange kein Medientyp ausgewählt wurde, Playliste überschreiben
     localStorage.setItem("currentPrefix", playListPrefix);
-    localStorage.setItem(playListPrefix, playlist);
+    localStorage.setItem("playlist-" + playListPrefix, playlist.join(listSeperator));
 } else if (window.location.href.includes("?=") && decodedUriData.includes("SEARCH:")) {
     //  _______  __   __  _______  __   __  _______ 
     // |       ||  | |  ||       ||  | |  ||       |
@@ -985,7 +1617,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     // Starte rekursive Suche
     searchResults = recursiveSearch(data, searchTerm);
     // Speichere Playliste
-    localStorage.setItem("searchResults", searchResults);
+    localStorage.setItem("playlist-searchResults", searchResults.join(listSeperator));
     wrapperNode = document.createElement("div");
     subnode = document.createElement("p");
     textnode = document.createTextNode("Total Suchresultate: " + searchResults.length);
@@ -1011,7 +1643,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             // Decodiere übergebene URL
             var decodedUrl = atob(lastUrl.split("?=")[1].split("#")[0]);
             // Lese die Hauptkategorie aus
-            mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(",")[0].split("#")[0]);
+            mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(listSeperator)[0].split("#")[0]);
             if (addPreviewImage(decodedUrl, buttonNode, "suche") != null){
                 // Styles für Button ändern
                 buttonNode.style.display = "flex";
@@ -1104,7 +1736,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
         lastPlayed = localStorage.getItem("playlast");
         if (lastPlayed != null) {
-            lastPlayed = lastPlayed.split(",");
+            lastPlayed = lastPlayed.split(listSeperator);
         } else {
             lastPlayed = [];
         }
@@ -1207,14 +1839,14 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     document.getElementById("media").style.display = "block";
 
-    if (decodedUriData.includes(",PL:")) {
-        playlistName = decodedUriData.split(",PL:")[1].split(",")[0].split("#")[0];
+    if (decodedUriData.includes(listSeperator + "PL:")) {
+        playlistName = decodedUriData.split(listSeperator + "PL:")[1].split(listSeperator)[0].split("#")[0];
     }
     
     // Lade aktuelle Playliste
-    localPlaylist = localStorage.getItem(playlistName).split(",");
+    localPlaylist = localStorage.getItem("playlist-" + playlistName).split(listSeperator);
     // Lese Speicherort aus
-    medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0].split("#")[0]);
+    medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(listSeperator)[0].split("#")[0]);
     // Lese Playlistenindex aus
     localPlaylist = localPlaylist.sort()
     if (medialocation.startsWith(".")) {
@@ -1231,7 +1863,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     }
     currentIndex = cleanedPlaylist.indexOf(medialocation);
     // Aktuelle Auswahl auslesen
-    currentUrl = decodedUriData.split(",MEDIA:")[0];
+    currentUrl = decodedUriData.split(listSeperator + "MEDIA:")[0];
     // Lese Dateinamen aus
     mediaName = medialocation.split("/");
     mediaName = mediaName[mediaName.length -1].split("#")[0];
@@ -1276,7 +1908,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         node.onloadedmetadata = function() {
             node.autoplay = true;
             // Lese Dateinamen aus
-            medialocation = replaceSpecialChars(decodedUriData.split("MEDIA:")[1].split(",")[0].split("#")[0]);
+            medialocation = replaceSpecialChars(document.getElementById("video").src)
             mediaName = medialocation.split("/");
             mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);
             // Lese Zeitstempel des ausgewählten Videos aus
@@ -1298,23 +1930,49 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 }
             }
         };
-
+        
+        // setTimeout("document.getElementById('video').autoplay = true", 1000);
+        
         // Lese aktuellen Zeitstempel im Video aus
         document.getElementById("video").addEventListener('timeupdate', function() {
-            pastTimestamp = localStorage.getItem("timestamp-" + mediaName)
+            medialocation = replaceSpecialChars(document.getElementById("video").src)
+            mediaName = medialocation.split("/");
+            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);
+
             currentTime = parseInt(this.currentTime, 10);
             currentTimestamp = localStorage.getItem("timestamp-" + mediaName);
             if (currentTimestamp == null) {
                 currentTimestamp = 0;
             }
             // Speichere Videoposition alle 10 Sek
-            if (currentTimestamp != currentTime && currentTime % 10 == 0) {
+            if (currentTime != 0 && currentTimestamp != currentTime && currentTime % 10 == 0) {
                 localStorage.setItem("timestamp-" + mediaName, currentTime);
                 localStorage.setItem("mediaVolume", document.getElementById("video").volume)
             }
 
+            // Unterscheide zwischen Audio- und Video-Elementen
+            videoCheck = document.getElementById("video").tagName == "VIDEO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= autoplayDuration;
+            audioCheck = document.getElementById("video").tagName == "AUDIO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= 11;
+            if (videoCheck || audioCheck) {
+                if (audioCheck) {
+                    autoplayDuration = 11;
+                }
+                prozent = 100 - parseInt(100/10*(this.duration - currentTime - autoplayDuration + 10));
+                document.getElementById("next").style.background = "linear-gradient(to right, red " + (prozent+10) + "%, #424141 0%)";
+                
+                if (this.duration - currentTime <= autoplayDuration - 10) {
+                    document.getElementById("next").style.background = "";
+                    updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
+                    if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].innerHTML != "") {
+                        document.getElementById("next").childNodes[0].click();
+                    } else {
+                        updateOptions(false, 0, document.getElementById("autoplayDuration").value);
+                    }
+                }
+            }
+
             if (this.duration > 600) {
-                if (100 / this.duration * pastTimestamp > 95) {
+                if (100 / this.duration * currentTimestamp > 95) {
                     this.style.border = "1px solid red";
                 } else {
                     this.style.border = "0px solid #222";
@@ -1330,13 +1988,21 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         element = document.getElementById("media");
         node = document.createElement("img");
         node.src = medialocation;
-        node.id = "imagenode" + Date.now();
+        node.id = "video";
         
         // Füge Link zu Bild hinzu
         linkNode = document.createElement("a");
         linkNode.href = medialocation.split("#")[0];
         linkNode.appendChild(node);
         document.getElementById("media").appendChild(linkNode);
+
+        if (document.getElementById("autoplayCheckBox").checked) {
+            updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
+            document.getElementById('next').style.animation = "autoplayLoading " + autoplayDuration + "s";
+            setTimeout("document.getElementById('next').childNodes[0].click()", autoplayDuration * 1000);
+            // setTimeout("playlistForwards(" + currentIndex + ", '" + localPlaylist.join(listSeperator) + "')", autoplayDuration * 1000);
+        }
+
     }
 
     setLastPlayed(mediaName, window.location.href)
@@ -1371,144 +2037,21 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         }
         textnode = document.createTextNode("👈 " + mediaName);
         subnode.appendChild(textnode);
-        // Link zu vorherigem Listenelement
-        if (!localPlaylist[currentIndex - 1].includes("start.html?=")){
-            subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex - 1] + ",PL:" + playlistName) + "#mediaNav";
-        } else {
-            subnode.href = localPlaylist[currentIndex - 1].split("|")[1];
-        }
+
+        subnode.setAttribute("onclick", "playlistBackwards(" + currentIndex + ",'" + localPlaylist.join(listSeperator) + "')")
         node.appendChild(subnode);
     } else {
         // Letzte Staffel
         node = document.getElementById("prev");
         subnode = document.createElement("a");
-        medialocation = null;
-        currentUrl = null;
+        urlData = swapSeason(-1);
 
-
-        // Lese den Medienpfad aus
-        if (!localPlaylist[currentIndex].includes("start.html")) {
-            mediaName = localPlaylist[currentIndex].split("/");
-            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
-        } else {
-            mediaName = localPlaylist[currentIndex].split("|")[0];
-            mediaName = mediaName.split("/");
-            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
-        }
-        
-        seasonList = [];
-        mediaList = [];
-        if (mainContent != null && level1 != null && level2 != null && level3 != null) {
-            // Erstelle Schlüsselliste
-            for (var key in data[mainContent][level1][level2]) {
-                if (key != "Preview") {
-                    if (!isMediaFile(allowedMediaExtensions, key)) {
-                        seasonList.push(key);
-                    }
-                }
-            }
-            seasonList = seasonList.sort();
-            // Lese akteuellen Index aus
-            keyIndex = seasonList.indexOf(level3);
-            // Prüfe, ob eine weitere Staffel vorhanden ist
-            if (keyIndex != -1 && keyIndex - 1 >= 0) {
-                // Erstelle Liste aller Episoden
-                for (var key in data[mainContent][level1][level2][seasonList[keyIndex - 1]]) {
-                    if (key != "Preview") {
-                        mediaList.push(key);
-                    }
-                };
-                
-                // Lese erste Folge der nächsten Staffel aus
-                medialocation = mediaList.sort()[mediaList.length - 1];
-                if (isMediaFile(allowedMediaExtensions, medialocation)) {
-                    if (medialocation.startsWith(".")) {
-                        medialocation = medialocation.replace(".", "")
-                    }
-                    // Definiere newPlaylistname
-                    newPlaylistName = mainContent + level1 + level2 + seasonList[keyIndex - 1];
-                    // Setze aktuelle URL zusammen
-                    currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + seasonList[keyIndex - 1] + ",MEDIA:." + medialocation + ",PL:" + newPlaylistName; 
-                } else {
-                    medialocation = null;
-                }
-            }
-        } else if (mainContent != null && level1 != null && level2 != null) {
-            // Erstelle Schlüsselliste
-            for (var key in data[mainContent][level1]) {
-                if (key != "Preview") {
-                    if (!isMediaFile(allowedMediaExtensions, key)) {
-                        seasonList.push(key);
-                    }
-                }
-            }
-            seasonList = seasonList.sort();
-            // Lese akteuellen Index aus
-            keyIndex = seasonList.indexOf(level2);
-
-            // Prüfe, ob eine weitere Staffel vorhanden ist
-            if (keyIndex != -1 && keyIndex - 1 >= 0) {
-                // Erstelle Liste aller Episoden
-                for (var key in data[mainContent][level1][seasonList[keyIndex - 1]]) {
-                    if (key != "Preview") {
-                        mediaList.push(key);
-                    }
-                };
-                // Lese erste Folge der nächsten Staffel aus
-                medialocation = mediaList.sort()[mediaList.length - 1];
-                if (isMediaFile(allowedMediaExtensions, medialocation)) {
-                    if (medialocation.startsWith(".")) {
-                        medialocation = medialocation.replace(".", "")
-                    }
-                    // Definiere newPlaylistname
-                    newPlaylistName = mainContent + level1 + seasonList[keyIndex - 1];
-                    // Setze aktuelle URL zusammen
-                    currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + seasonList[keyIndex - 1] + ",MEDIA:." + medialocation + ",PL:" + newPlaylistName;
-                } else {
-                    medialocation = null;
-                }
-            }
-        } else if (mainContent != null && level1 != null) {
-            // Erstelle Schlüsselliste
-            for (var key in data[mainContent]) {
-                if (key != "Preview") {
-                    if (!isMediaFile(allowedMediaExtensions, key)) {
-                        seasonList.push(key);
-                    }
-                }
-            }
-            seasonList = seasonList.sort();
-            // Lese akteuellen Index aus
-            keyIndex = seasonList.indexOf(level1);
-            // Prüfe, ob eine weitere Staffel vorhanden ist
-            if (keyIndex != -1 && keyIndex - 1 >= 0) {
-                // Erstelle Liste aller Episoden
-                for (var key in data[mainContent][seasonList[keyIndex - 1]]) {
-                    if (key != "Preview") {
-                        mediaList.push(key);
-                    }
-                };
-                // Lese erste Folge der nächsten Staffel aus
-                medialocation = mediaList.sort()[mediaList.length - 1];
-                if (isMediaFile(allowedMediaExtensions, medialocation)) {
-                    if (medialocation.startsWith(".")) {
-                        medialocation = medialocation.replace(".", "")
-                    }
-                    // Definiere newPlaylistname
-                    newPlaylistName = mainContent + seasonList[keyIndex - 1];
-                    // Setze aktuelle URL zusammen
-                    currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + seasonList[keyIndex - 1] + ",MEDIA:." + medialocation + ",PL:" + newPlaylistName;
-                } else {
-                    medialocation = null;
-                }
-            }
-        }
-
-        if (medialocation != null) {
+        if (urlData != null) {
+            medialocation = urlData.split("MEDIA:")[1].split(listSeperator)[0];
             // Entferne Pfad und Dateierweiterung und setze als Titel
             textnode = document.createTextNode("👈 " + removeFileExtension(allowedMediaExtensions, medialocation.split("/")[medialocation.split("/").length - 1]))
             subnode.appendChild(textnode);
-            subnode.href = "start.html?=" + btoa(currentUrl) + "#mediaNav";
+            subnode.href = "start.html?=" + btoa(urlData) + "#mediaNav";
             node.appendChild(subnode);
         }
     }
@@ -1530,7 +2073,6 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     }
     subnode.appendChild(textnode);
     subnode.setAttribute("onclick", "updateFavorites()");
-    // subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex] + ",FAV:True" + ",PL:" + playlistName) + "#mediaNav";
     node.appendChild(subnode);
 
     //        _ _                     
@@ -1552,147 +2094,29 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         }
 
         // Lese aktuelle Daten aus
-        currentUrl = atob(window.location.href.split("?=")[1].split("#")[0]).split(",MEDIA:")[0];
-        playlistName = atob(window.location.href.split("?=")[1].split("#")[0]).split(",PL:")[1].split(",")[0];
+        currentUrl = atob(window.location.href.split("?=")[1].split("#")[0]).split(listSeperator + "MEDIA:")[0];
+        playlistName = atob(window.location.href.split("?=")[1].split("#")[0]).split(listSeperator + "PL:")[1].split(listSeperator)[0];
         // Lade Playliste
-        localPlaylist = localStorage.getItem(playlistName).split(",").sort();
+        localPlaylist = localStorage.getItem("playlist-" + playlistName).split(listSeperator).sort();
 
         textnode = document.createTextNode(mediaName + " 👉");
         subnode.appendChild(textnode);
-        if (!localPlaylist[currentIndex + 1].includes("start.html?=")) {
-            subnode.href = "start.html?=" + btoa(currentUrl + ",MEDIA:" + localPlaylist[currentIndex + 1] + ",PL:" + playlistName) + "#mediaNav";
-        } else {
-            subnode.href = localPlaylist[currentIndex + 1].split("|")[1]
-        }
+
+        subnode.setAttribute("onclick", "playlistForwards(" + currentIndex + ",'" + localPlaylist.join(listSeperator) + "')")
         node.appendChild(subnode);
     } else {
         // Nächste Staffel
+        urlData = swapSeason(1);
+
         node = document.getElementById("next");
         subnode = document.createElement("a");
-        medialocation = null;
-        currentUrl = null;
-
-        // Lese den Medienpfad aus
-        if (!localPlaylist[currentIndex].includes("start.html")) {
-            mediaName = localPlaylist[currentIndex].split("/");
-            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
-        } else {
-            mediaName = localPlaylist[currentIndex].split("|")[0];
-            mediaName = mediaName.split("/");
-            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
-        }
-
-        seasonList = [];
-        mediaList = [];
-        if (mainContent != null && level1 != null && level2 != null && level3 != null) {
-            // Erstelle Schlüsselliste
-            for (var key in data[mainContent][level1][level2]) {
-                if (key != "Preview") {
-                    if (!isMediaFile(allowedMediaExtensions, key)) {
-                        seasonList.push(key);
-                    }
-                }
-            }
-            seasonList = seasonList.sort();
-            // Lese akteuellen Index aus
-            keyIndex = seasonList.indexOf(level3);
-            // Prüfe, ob eine weitere Staffel vorhanden ist
-            if (keyIndex != -1 && keyIndex + 1 < seasonList.length) {
-                // Erstelle Liste aller Episoden
-                for (var key in data[mainContent][level1][level2][seasonList[keyIndex + 1]]) {
-                    if (key != "Preview") {
-                        mediaList.push(key);
-                    }
-                };
-                // Lese erste Folge der nächsten Staffel aus
-                medialocation = mediaList.sort()[0];
-                if (isMediaFile(allowedMediaExtensions, medialocation)) {
-                    if (medialocation.startsWith(".")) {
-                        medialocation = medialocation.replace(".", "")
-                    }
-                    // Definiere newPlaylistname
-                    newPlaylistName = mainContent + level1 + level2 + seasonList[keyIndex + 1];
-                    // Setze aktuelle URL zusammen
-                    currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + level2 + ",LEVEL3:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation + ",PL:" + newPlaylistName;
-                } else {
-                    medialocation = null;
-                }
-            }
-        } else if (mainContent != null && level1 != null && level2 != null) {
-            // Erstelle Schlüsselliste
-            for (var key in data[mainContent][level1]) {
-                if (key != "Preview") {
-                    if (!isMediaFile(allowedMediaExtensions, key)) {
-                        seasonList.push(key);
-                    }
-                }
-            }
-            seasonList = seasonList.sort();
-            // Lese akteuellen Index aus
-            keyIndex = seasonList.indexOf(level2);
-            // Prüfe, ob eine weitere Staffel vorhanden ist
-            if (keyIndex != -1 && keyIndex + 1 < seasonList.length) {
-                // Erstelle Liste aller Episoden
-                for (var key in data[mainContent][level1][seasonList[keyIndex + 1]]) {
-                    if (key != "Preview") {
-                        mediaList.push(key);
-                    }
-                };
-                // Lese erste Folge der nächsten Staffel aus
-                medialocation = mediaList.sort()[0];
-                if (isMediaFile(allowedMediaExtensions, medialocation)) {
-                    if (medialocation.startsWith(".")) {
-                        medialocation = medialocation.replace(".", "")
-                    }
-                    // Definiere newPlaylistname
-                    newPlaylistName = mainContent + level1 + seasonList[keyIndex + 1];
-                    // Setze aktuelle URL zusammen
-                    currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + level1 + ",LEVEL2:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation + ",PL:" + newPlaylistName;
-                } else {
-                    medialocation = null;
-                }
-            }
-        } else if (mainContent != null && level1 != null) {
-            // Erstelle Schlüsselliste
-            for (var key in data[mainContent]) {
-                if (key != "Preview") {
-                    if (!isMediaFile(allowedMediaExtensions, key)) {
-                        seasonList.push(key);
-                    }
-                }
-            }
-            seasonList = seasonList.sort();
-            // Lese akteuellen Index aus
-            keyIndex = seasonList.indexOf(level1);
-            // Prüfe, ob eine weitere Staffel vorhanden ist
-            if (keyIndex != -1 && keyIndex + 1 < seasonList.length) {
-                // Erstelle Liste aller Episoden
-                for (var key in data[mainContent][seasonList[keyIndex + 1]]) {
-                    if (key != "Preview") {
-                        mediaList.push(key);
-                    }
-                };
-                // Lese erste Folge der nächsten Staffel aus
-                medialocation = mediaList.sort()[0];
-                if (isMediaFile(allowedMediaExtensions, medialocation)) {
-                    if (medialocation.startsWith(".")) {
-                        medialocation = medialocation.replace(".", "")
-                    }
-                    // Definiere newPlaylistname
-                    newPlaylistName = mainContent + seasonList[keyIndex + 1];
-                    // Setze aktuelle URL zusammen
-                    currentUrl = "MAIN:" + mainContent + ",LEVEL1:" + seasonList[keyIndex + 1] + ",MEDIA:." + medialocation + ",PL:" + newPlaylistName;
-                } else {
-                    medialocation = null;
-                }
-            }
-        }
-
-        if (medialocation != null) {
+        
+        if (urlData != null) {
+            medialocation = urlData.split("MEDIA:")[1].split(listSeperator)[0]
             // Entferne Pfad und Dateierweiterung und setze als Titel
             textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, medialocation.split("/")[medialocation.split("/").length - 1])  + " 👉")
             subnode.appendChild(textnode);
-            subnode.href = "start.html?=" + btoa(currentUrl) + "#mediaNav";
+            subnode.href = "start.html?=" + btoa(urlData) + "#mediaNav";
             node.appendChild(subnode);
         }
     }

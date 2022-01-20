@@ -1,4 +1,4 @@
-<b>Version 1.28 IN ARBEIT</b>:<br>
+<b>Version 1.28</b>:<br>
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Erstes Element eines Ordners kann nicht mittels Autoplay gestartet werden.</li>
     <li>[<span style="color: #e21af3">BUG</span>] Ordnerübergreifendes Autoplay funktioniert noch nicht, sofern Ordner und Medieninhalt im selben Elternordner sind</li>

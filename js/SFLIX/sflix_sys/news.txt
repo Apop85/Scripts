@@ -1,3 +1,8 @@
+<b>Version 1.281</b>:<br>
+<ul>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Vor- und Zurückbutton bei Suchresultaten haben nicht funktioniert.</li>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Gemischte Playlisten (Audio/Video/Bild) konnten nicht korrekt wiedergegeben werden</li>
+</ul>
 <b>Version 1.28</b>:<br>
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Erstes Element eines Ordners kann nicht mittels Autoplay gestartet werden.</li>

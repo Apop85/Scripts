@@ -417,7 +417,6 @@ function setLastPlayed(title, url) {
         
         for (var loggedUrl in currentPlaylist) {
             if (currentPlaylist[loggedUrl].includes("|")) {
-                // console.log(atob(currentPlaylist[loggedUrl].split("|")[1].split("?=")[1].split("#")[0]))
                 var loggedMediaPath = atob(currentPlaylist[loggedUrl].split("|")[1].split("?=")[1].split("#")[0]).split(listSeperator + "MEDIA:")[1].split(listSeperator)[0];
                 // Entferne Eintrag aus "Zuletzt gesehen"
                 if (loggedMediaPath.includes(mediaPath)) {
@@ -633,22 +632,29 @@ function playlistForwards(currentIndex, localPlaylist) {
         node = document.createElement("a");
         document.getElementById("prev").appendChild(node);
     }
-
     localPlaylist = localPlaylist.split(listSeperator);
     if (currentIndex + 1 < localPlaylist.length) {
         mediaUrl = localPlaylist[currentIndex + 1];
+        currentPlaylistName = atob(window.location.href.split("?=")[1].split("#")[0]).split(listSeperator + "PL:")[1].split(listSeperator)[0];
+        if (currentPlaylistName == "searchResults") {
+            mediaUrl = mediaUrl.split("|")[1];
+            window.location.href = mediaUrl;
+            return null;
+        }
+
         if (!mediaUrl.startsWith(".")) {
             mediaUrl = "." + mediaUrl;
         }
+        path = extractFromPath(mediaUrl);
+        
+        
         // Ändere Item zuvor als Aktiv
         document.getElementById(mediaUrl.replace(".","")).className = "activeMenu";
         mediaName = localPlaylist[currentIndex + 1].split("/");
         mediaName = mediaName[mediaName.length - 1];
 
         document.title = "STEFFLIX - " + removeFileExtension(allowedMediaExtensions, mediaName); 
-        
-        playlistName = "";
-        path = extractFromPath(mediaUrl);
+
         if (!isImage(mediaUrl)) {
             setLastPlayed(mediaName, "start.html?=" + btoa(path) + "#mediaNav");
         }
@@ -704,7 +710,10 @@ function playlistForwards(currentIndex, localPlaylist) {
             subnode.innerHTML = removeFileExtension(allowedMediaExtensions, nextName) + " 👉";
         }
 
+        node = adjustMediaType(mediaUrl, node);
         node.src = mediaUrl;
+        setTimeout('location.href = "#";location.href = "#mediaNav";', 100)
+
 
         // Setze Timer für Autoplayfunktion, falls Autoplay aktiviert
         if (document.getElementById("autoplayCheckBox").checked && document.getElementById("video").tagName == "IMG") {
@@ -741,6 +750,12 @@ function playlistBackwards(currentIndex, localPlaylist) {
     localPlaylist = localPlaylist.split(listSeperator);
     if (currentIndex - 1 >= 0) {
         mediaUrl = localPlaylist[currentIndex - 1];
+        currentPlaylistName = atob(window.location.href.split("?=")[1].split("#")[0]).split(listSeperator + "PL:")[1].split(listSeperator)[0];
+        if (currentPlaylistName == "searchResults") {
+            mediaUrl = mediaUrl.split("|")[1];
+            window.location.href = mediaUrl;
+            return null;
+        }
         if (!mediaUrl.startsWith(".")) {
             mediaUrl = "." + mediaUrl;
         }
@@ -751,7 +766,7 @@ function playlistBackwards(currentIndex, localPlaylist) {
         
         document.title = "STEFFLIX - " + removeFileExtension(allowedMediaExtensions, mediaName); 
 
-        playlistName = "";
+        // playlistName = "";
         // Lese URL aus Pfad aus
         path = extractFromPath(mediaUrl);
         // Speichere in zuletzt gesehen-Liste, sofern kein Bild
@@ -810,8 +825,36 @@ function playlistBackwards(currentIndex, localPlaylist) {
         subnode.innerHTML = removeFileExtension(allowedMediaExtensions, nextName) + " 👉";
         
 
+        node = adjustMediaType(mediaUrl, node);
         node.src = mediaUrl;
+        setTimeout('location.href = "#";location.href = "#mediaNav";', 100)
+
     }
+}
+
+// Funktion um das Media-Tag entsprechend dem Medientyp anzupassen
+function adjustMediaType(mediaUrl, node) {
+    if (isImage(mediaUrl) && node.tagName != "IMG") {
+        node = document.createElement("img");
+        document.getElementById("media").replaceChild(node, document.getElementById("media").childNodes[5]);
+        node.id = "video";
+    } else if (isVideo(mediaUrl) && node.tagName != "VIDEO") {
+        node = document.createElement("video");
+        node.autoplay = true;
+        node.controls = true;
+        appendMediafunctions(node);
+        document.getElementById("media").replaceChild(node, document.getElementById("media").childNodes[5]);
+        node.id = "video";
+    } else if (isMusic(mediaUrl) && node.tagName != "AUDIO") {
+        node = document.createElement("audio");
+        node.autoplay = true;
+        node.controls = true;
+        appendMediafunctions(node);
+        document.getElementById("media").replaceChild(node, document.getElementById("media").childNodes[5]);
+        node.id = "video";
+    }
+
+    return node;
 }
 
 // Funktion, um den letzten/nächsten Unterordner zu suchen
@@ -1235,6 +1278,84 @@ function updateData() {
 
         localStorage.setItem("v1.28", true)
     }
+}
+
+function appendMediafunctions(node) {
+    console.log("append functions")
+    node.onloadedmetadata = function() {
+        console.log("metadata loaded")
+        node.autoplay = true;
+        // Lese Dateinamen aus
+        medialocation = replaceSpecialChars(document.getElementById("video").src)
+        mediaName = medialocation.split("/");
+        mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);
+        // Lese Zeitstempel des ausgewählten Videos aus
+        pastTimestamp = localStorage.getItem("timestamp-" + mediaName)
+        if (pastTimestamp != null) {
+            // Prüfe Zeitstempel für Medien die länger als 10 Minuten sind
+            if (this.duration >= 600) {
+                // Setze Player auf gespeicherten Zeitstempel
+                if (100 / this.duration * pastTimestamp < 95) {
+                    // Setze Abspeilzeitpunkt auf Zeitstempel
+                    document.getElementById("video").currentTime = pastTimestamp;
+                } else {
+                    // Lösche Zeitstempel
+                    localStorage.removeItem("timestamp-" + mediaName);
+                }
+            } else {
+                // Lösche Zeitstempel
+                localStorage.removeItem("timestamp-" + mediaName);
+            }
+        }
+    };
+    
+    // Lese aktuellen Zeitstempel im Video aus
+    node.addEventListener('timeupdate', function() {
+        console.log("timeupdate")
+        medialocation = replaceSpecialChars(document.getElementById("video").src)
+        mediaName = medialocation.split("/");
+        mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);
+
+        currentTime = parseInt(this.currentTime, 10);
+        currentTimestamp = localStorage.getItem("timestamp-" + mediaName);
+        if (currentTimestamp == null) {
+            currentTimestamp = 0;
+        }
+        // Speichere Videoposition alle 10 Sek
+        if (currentTime != 0 && currentTimestamp != currentTime && currentTime % 10 == 0) {
+            localStorage.setItem("timestamp-" + mediaName, currentTime);
+            localStorage.setItem("mediaVolume", document.getElementById("video").volume)
+        }
+
+        // Unterscheide zwischen Audio- und Video-Elementen
+        videoCheck = document.getElementById("video").tagName == "VIDEO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= autoplayDuration;
+        audioCheck = document.getElementById("video").tagName == "AUDIO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= 11;
+        if (videoCheck || audioCheck) {
+            if (audioCheck) {
+                autoplayDuration = 11;
+            }
+            prozent = 100 - parseInt(100/10*(this.duration - currentTime - autoplayDuration + 10));
+            document.getElementById("next").style.background = "linear-gradient(to right, red " + (prozent+10) + "%, #424141 0%)";
+            
+            if (this.duration - currentTime <= autoplayDuration - 10) {
+                document.getElementById("next").style.background = "";
+                updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
+                if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].innerHTML != "") {
+                    document.getElementById("next").childNodes[0].click();
+                } else {
+                    updateOptions(false, 0, document.getElementById("autoplayDuration").value);
+                }
+            }
+        }
+
+        if (this.duration > 600) {
+            if (100 / this.duration * currentTimestamp > 95) {
+                this.style.border = "1px solid red";
+            } else {
+                this.style.border = "0px solid #222";
+            }
+        }
+    });
 }
 
 //  __   __  _______  ______    _______  _______  ______    _______  ___   _______  __   __  __    _  _______ 
@@ -1905,81 +2026,82 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         node.volume = savedVolume;
         
         document.getElementById("media").appendChild(node);
+        appendMediafunctions(node);
 
-        node.onloadedmetadata = function() {
-            node.autoplay = true;
-            // Lese Dateinamen aus
-            medialocation = replaceSpecialChars(document.getElementById("video").src)
-            mediaName = medialocation.split("/");
-            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);
-            // Lese Zeitstempel des ausgewählten Videos aus
-            pastTimestamp = localStorage.getItem("timestamp-" + mediaName)
-            if (pastTimestamp != null) {
-                // Prüfe Zeitstempel für Medien die länger als 10 Minuten sind
-                if (this.duration >= 600) {
-                    // Setze Player auf gespeicherten Zeitstempel
-                    if (100 / this.duration * pastTimestamp < 95) {
-                        // Setze Abspeilzeitpunkt auf Zeitstempel
-                        document.getElementById("video").currentTime = pastTimestamp;
-                    } else {
-                        // Lösche Zeitstempel
-                        localStorage.removeItem("timestamp-" + mediaName);
-                    }
-                } else {
-                    // Lösche Zeitstempel
-                    localStorage.removeItem("timestamp-" + mediaName);
-                }
-            }
-        };
+        // node.onloadedmetadata = function() {
+        //     node.autoplay = true;
+        //     // Lese Dateinamen aus
+        //     medialocation = replaceSpecialChars(document.getElementById("video").src)
+        //     mediaName = medialocation.split("/");
+        //     mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);
+        //     // Lese Zeitstempel des ausgewählten Videos aus
+        //     pastTimestamp = localStorage.getItem("timestamp-" + mediaName)
+        //     if (pastTimestamp != null) {
+        //         // Prüfe Zeitstempel für Medien die länger als 10 Minuten sind
+        //         if (this.duration >= 600) {
+        //             // Setze Player auf gespeicherten Zeitstempel
+        //             if (100 / this.duration * pastTimestamp < 95) {
+        //                 // Setze Abspeilzeitpunkt auf Zeitstempel
+        //                 document.getElementById("video").currentTime = pastTimestamp;
+        //             } else {
+        //                 // Lösche Zeitstempel
+        //                 localStorage.removeItem("timestamp-" + mediaName);
+        //             }
+        //         } else {
+        //             // Lösche Zeitstempel
+        //             localStorage.removeItem("timestamp-" + mediaName);
+        //         }
+        //     }
+        // };
         
-        // setTimeout("document.getElementById('video').autoplay = true", 1000);
+        // // setTimeout("document.getElementById('video').autoplay = true", 1000);
         
-        // Lese aktuellen Zeitstempel im Video aus
-        document.getElementById("video").addEventListener('timeupdate', function() {
-            medialocation = replaceSpecialChars(document.getElementById("video").src)
-            mediaName = medialocation.split("/");
-            mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);
+        // // Lese aktuellen Zeitstempel im Video aus
+        // document.getElementById("video").addEventListener('timeupdate', function() {
+        //     medialocation = replaceSpecialChars(document.getElementById("video").src)
+        //     mediaName = medialocation.split("/");
+        //     mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);
 
-            currentTime = parseInt(this.currentTime, 10);
-            currentTimestamp = localStorage.getItem("timestamp-" + mediaName);
-            if (currentTimestamp == null) {
-                currentTimestamp = 0;
-            }
-            // Speichere Videoposition alle 10 Sek
-            if (currentTime != 0 && currentTimestamp != currentTime && currentTime % 10 == 0) {
-                localStorage.setItem("timestamp-" + mediaName, currentTime);
-                localStorage.setItem("mediaVolume", document.getElementById("video").volume)
-            }
+        //     currentTime = parseInt(this.currentTime, 10);
+        //     currentTimestamp = localStorage.getItem("timestamp-" + mediaName);
+        //     if (currentTimestamp == null) {
+        //         currentTimestamp = 0;
+        //     }
+        //     // Speichere Videoposition alle 10 Sek
+        //     if (currentTime != 0 && currentTimestamp != currentTime && currentTime % 10 == 0) {
+        //         localStorage.setItem("timestamp-" + mediaName, currentTime);
+        //         localStorage.setItem("mediaVolume", document.getElementById("video").volume)
+        //     }
 
-            // Unterscheide zwischen Audio- und Video-Elementen
-            videoCheck = document.getElementById("video").tagName == "VIDEO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= autoplayDuration;
-            audioCheck = document.getElementById("video").tagName == "AUDIO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= 11;
-            if (videoCheck || audioCheck) {
-                if (audioCheck) {
-                    autoplayDuration = 11;
-                }
-                prozent = 100 - parseInt(100/10*(this.duration - currentTime - autoplayDuration + 10));
-                document.getElementById("next").style.background = "linear-gradient(to right, red " + (prozent+10) + "%, #424141 0%)";
+        //     // Unterscheide zwischen Audio- und Video-Elementen
+        //     videoCheck = document.getElementById("video").tagName == "VIDEO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= autoplayDuration;
+        //     audioCheck = document.getElementById("video").tagName == "AUDIO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= 11;
+        //     if (videoCheck || audioCheck) {
+        //         if (audioCheck) {
+        //             autoplayDuration = 11;
+        //         }
+        //         prozent = 100 - parseInt(100/10*(this.duration - currentTime - autoplayDuration + 10));
+        //         document.getElementById("next").style.background = "linear-gradient(to right, red " + (prozent+10) + "%, #424141 0%)";
                 
-                if (this.duration - currentTime <= autoplayDuration - 10) {
-                    document.getElementById("next").style.background = "";
-                    updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
-                    if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].innerHTML != "") {
-                        document.getElementById("next").childNodes[0].click();
-                    } else {
-                        updateOptions(false, 0, document.getElementById("autoplayDuration").value);
-                    }
-                }
-            }
+        //         if (this.duration - currentTime <= autoplayDuration - 10) {
+        //             document.getElementById("next").style.background = "";
+        //             updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
+        //             if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].innerHTML != "") {
+        //                 document.getElementById("next").childNodes[0].click();
+        //             } else {
+        //                 updateOptions(false, 0, document.getElementById("autoplayDuration").value);
+        //             }
+        //         }
+        //     }
 
-            if (this.duration > 600) {
-                if (100 / this.duration * currentTimestamp > 95) {
-                    this.style.border = "1px solid red";
-                } else {
-                    this.style.border = "0px solid #222";
-                }
-            }
-        });
+        //     if (this.duration > 600) {
+        //         if (100 / this.duration * currentTimestamp > 95) {
+        //             this.style.border = "1px solid red";
+        //         } else {
+        //             this.style.border = "0px solid #222";
+        //         }
+        //     }
+        // });
     } else if (isImage(medialocation)) {
         //  _____ _ _   _         
         // | __  |_| |_| |___ ___ 
@@ -2125,3 +2247,4 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     // Platzhalterbild für Leere Seiten erstellen
     document.getElementById("mainBody").style.backgroundImage = "url(sflix_sys/sflix_bg.jpg)";
 }
+

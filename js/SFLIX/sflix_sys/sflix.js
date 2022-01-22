@@ -1379,6 +1379,15 @@ if (window.location.href.includes("?=")) {
     decodedUriData = atob(window.location.href.split("?=")[1].split("#")[0]);
 }
 
+// Füge Event-Listener zu Einstellungen hinzu
+document.getElementById("amountOfAutoplay").addEventListener("change", function () {
+    if (document.getElementById("amountOfAutoplay").value <= 0) {
+        document.getElementById("autoplayCheckBox").checked = false;
+    } else {
+        document.getElementById("autoplayCheckBox").checked = true;
+    }
+})
+
 // Playlist Präfix 
 // playlistPrefix = "playlist-";
 

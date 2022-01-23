@@ -988,7 +988,7 @@ function swapSeason(direction) {
             }
         }
     }
-    if (medialocation != null) {
+    if (newUrl != null) {
         return newUrl;
     } else {
         return null;

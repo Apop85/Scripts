@@ -1,3 +1,8 @@
+<b>Version 1.285</b>:<br>
+<ul>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Leerer Vor-/Zurück-Button führte zu Fehler beim Wechseln des Mediums mittels der beiden Buttons.</li>
+    <li>[OPTIMIERUNG] "Dauer bis Übergang" in Autoplayeinstellungen springt nun auf 11 zurück, wenn der Wert unter 11 fällt.</li>
+</ul>
 <b>Version 1.284</b>:<br>
 <ul>
     <li>[<span style="color: red"><b>HOTFIX</b></span>] Erstes Element einer Playliste löste Fehler beim erstellen des Vor- und Zurückbuttons aus.</li>

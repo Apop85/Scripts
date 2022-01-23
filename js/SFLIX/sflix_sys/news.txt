@@ -1,3 +1,7 @@
+<b>Version 1.283</b>:<br>
+<ul>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Letztes Element eriner Playliste rufte Fehler beim erstellen des Vor- und Zurückbuttons aus.</li>
+</ul>
 <b>Version 1.282</b>:<br>
 <ul>
     <li>[<span style="color: red"><b>HOTFIX</b></span>] Wenn Anzahl Autoplay grösser 0, wird Autoplay automatisch aktiviert und bei kleiner oder gleich 0 deaktiviert.</li>

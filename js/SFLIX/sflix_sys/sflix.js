@@ -868,6 +868,7 @@ function swapSeason(direction) {
     level3 = extractedData[3];
     level4 = extractedData[4];
     currentMediaLocation = extractedData[5];
+    newUrl = null;
     
     seasonList = [];
     mediaList = [];

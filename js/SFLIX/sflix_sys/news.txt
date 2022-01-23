@@ -1,3 +1,7 @@
+<b>Version 1.284</b>:<br>
+<ul>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Erstes Element einer Playliste rufte Fehler beim erstellen des Vor- und Zurückbuttons aus.</li>
+</ul>
 <b>Version 1.283</b>:<br>
 <ul>
     <li>[<span style="color: red"><b>HOTFIX</b></span>] Letztes Element einer Playliste rufte Fehler beim erstellen des Vor- und Zurückbuttons aus.</li>

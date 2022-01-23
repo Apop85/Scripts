@@ -622,16 +622,17 @@ function toggleContainer(idArray, displayMode) {
 
 // Funnktion, um das nächste Medium aufzurufen
 function playlistForwards(currentIndex, localPlaylist) {
-    if (document.getElementById("next").childNodes[0].href != null) {
+    if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].href != null) {
         document.getElementById("next").removeChild(document.getElementById("next").childNodes[0]);
-        node = document.createElement("a");
-        document.getElementById("next").appendChild(node);
     }
-    if (document.getElementById("prev").childNodes[0].href != null) {
+    document.getElementById("next").appendChild(document.createElement("a"));
+
+    if (document.getElementById("prev").childNodes.length > 0 && document.getElementById("prev").childNodes[0].href != null) {
         document.getElementById("prev").removeChild(document.getElementById("prev").childNodes[0]);
-        node = document.createElement("a");
-        document.getElementById("prev").appendChild(node);
     }
+    document.getElementById("prev").appendChild(document.createElement("a"));
+
+    
     localPlaylist = localPlaylist.split(listSeperator);
     if (currentIndex + 1 < localPlaylist.length) {
         mediaUrl = localPlaylist[currentIndex + 1];
@@ -736,17 +737,16 @@ function playlistForwards(currentIndex, localPlaylist) {
 // Funktion, um das letzte Medium aufzurufen
 function playlistBackwards(currentIndex, localPlaylist) {
     // Entferne Link-Node und ersetze mit leerem Link
-    if (document.getElementById("next").childNodes[0].href != null) {
+    if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].href != null) {
         document.getElementById("next").removeChild(document.getElementById("next").childNodes[0]);
-        node = document.createElement("a");
-        document.getElementById("next").appendChild(node);
     }
-    if (document.getElementById("prev").childNodes[0].href != null) {
-        document.getElementById("prev").removeChild(document.getElementById("prev").childNodes[0]);
-        node = document.createElement("a");
-        document.getElementById("prev").appendChild(node);
-    }
+    document.getElementById("next").appendChild(document.createElement("a"));
 
+    if (document.getElementById("prev").childNodes.length > 0 && document.getElementById("prev").childNodes[0].href != null) {
+        document.getElementById("prev").removeChild(document.getElementById("prev").childNodes[0]);
+    }
+    document.getElementById("prev").appendChild(document.createElement("a"));
+    
     localPlaylist = localPlaylist.split(listSeperator);
     if (currentIndex - 1 >= 0) {
         mediaUrl = localPlaylist[currentIndex - 1];
@@ -1384,6 +1384,14 @@ document.getElementById("amountOfAutoplay").addEventListener("change", function 
     } else {
         document.getElementById("autoplayCheckBox").checked = true;
     }
+})
+
+
+// Füge Event-Listener zu "Dauer bis Übergang" in Autoplayeinstellungen hinzu
+document.getElementById("autoplayDuration").addEventListener("change", function () {
+    if (document.getElementById("autoplayDuration").value < 11) {
+        document.getElementById("autoplayDuration").value = 11;
+    } 
 })
 
 // Playlist Präfix 

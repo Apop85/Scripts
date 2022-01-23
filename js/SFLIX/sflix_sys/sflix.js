@@ -1281,9 +1281,7 @@ function updateData() {
 }
 
 function appendMediafunctions(node) {
-    console.log("append functions")
     node.onloadedmetadata = function() {
-        console.log("metadata loaded")
         node.autoplay = true;
         // Lese Dateinamen aus
         medialocation = replaceSpecialChars(document.getElementById("video").src)
@@ -1311,7 +1309,6 @@ function appendMediafunctions(node) {
     
     // Lese aktuellen Zeitstempel im Video aus
     node.addEventListener('timeupdate', function() {
-        console.log("timeupdate")
         medialocation = replaceSpecialChars(document.getElementById("video").src)
         mediaName = medialocation.split("/");
         mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);

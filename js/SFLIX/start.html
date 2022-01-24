@@ -138,11 +138,11 @@
         </form>
         <div id="settings">
             <div id="settingsDD">
-                <a href="javascript:void(0);" id="settingsBoxToggler" onclick="toggleContainer(['settingsBox'], 'flex')">Autoplay</a>
-                <a href="javascript:void(0);" id="feedbackBoxToggler" onclick="toggleContainer(['feedbackWrapper'], 'flex')">Feedback</a>
-                <a href="javascript:void(0);" id="FehlerbehebungToggler" onclick="toggleContainer(['fehlerbehebung'], 'block')">Fehlerbehebung</a>
-                <a href="javascript:void(0);" id="serialToggler" onclick="toggleContainer(['serialKeyWrapper'], 'flex')">Lizenz</a>
-                <a href="javascript:void(0);" id="serialToggler" onclick="openHelp()">Hilfe</a>
+                <a href="javascript:void(0);" id="settingsBoxToggler" onclick="toggleContainer(['settingsBox'], 'flex')"><table><tr><td style="width: 30px;">➿</td><td>Autoplay</td></tr></table></a>
+                <a href="javascript:void(0);" id="feedbackBoxToggler" onclick="toggleContainer(['feedbackWrapper'], 'flex')"><table><tr><td style="width: 30px;">❓❗</td><td>Feedback</td></tr></table></a>
+                <a href="javascript:void(0);" id="FehlerbehebungToggler" onclick="toggleContainer(['fehlerbehebung'], 'block')"><table><tr><td style="width: 30px;">🛠</td><td>Fehlerbehebung</td></tr></table></a>
+                <a href="javascript:void(0);" id="serialToggler" onclick="toggleContainer(['serialKeyWrapper'], 'flex')"><table><tr><td style="width: 30px;">🔑</td><td>Lizenz</td></tr></table></a>
+                <a href="javascript:void(0);" id="serialToggler" onclick="openHelp()"><table><tr><td style="width: 30px;">🆘</td><td>Hilfe</td></tr></table></a>
             </div>
         </div>
         <div id="settingsBox" style="display: none;">
@@ -196,13 +196,13 @@
             <p>Der Lizenzschlüssel wird benötigt, damit das Feedbackformular verwendet werden kann.</p>
             <form id="licenseInputs">
                 <input type="text" id="lic1" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
-                <input type="text" id="lic2" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
-                <input type="text" id="lic3" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
-                <input type="text" id="lic4" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
-                <input type="text" id="lic5" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
-                <input type="text" id="lic6" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
-                <input type="text" id="lic7" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
-                <input type="text" id="lic8" maxlength="4" placeholder="ABCD" required>
+                <input type="text" id="lic2" maxlength="4" placeholder="EFGH" required><span style="color: black;"> -</span>
+                <input type="text" id="lic3" maxlength="4" placeholder="IJKL" required><span style="color: black;"> -</span>
+                <input type="text" id="lic4" maxlength="4" placeholder="MNOP" required><span style="color: black;"> -</span>
+                <input type="text" id="lic5" maxlength="4" placeholder="QRST" required><span style="color: black;"> -</span>
+                <input type="text" id="lic6" maxlength="4" placeholder="UVWX" required><span style="color: black;"> -</span>
+                <input type="text" id="lic7" maxlength="4" placeholder="YZ12" required><span style="color: black;"> -</span>
+                <input type="text" id="lic8" maxlength="4" placeholder="3456" required>
             </form>
             <a class="button" id="saveSerialButton" onclick="saveLicenseKey()">Speichern</a>
         </div>

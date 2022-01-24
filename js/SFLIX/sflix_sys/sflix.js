@@ -613,6 +613,15 @@ function toggleContainer(idArray, displayMode) {
             node.style.display = displayMode;
             if (idArray[key] == "searchFieldContainer") {
                 document.getElementById("searchField").focus();
+            } else if (idArray[key] == "serialKeyWrapper") {
+                license = localStorage.getItem("serial");
+                if (license != null) {
+                    serialIndex = 0
+                    for (let index = 0; index < licenseFields.length; index++) {
+                        document.getElementById(licenseFields[index]).value = license.slice(serialIndex,serialIndex+4);
+                        serialIndex += 4;
+                    }
+                }
             }
         } else {
             node.style.display = "none";
@@ -632,7 +641,7 @@ function playlistForwards(currentIndex, localPlaylist) {
     }
     document.getElementById("prev").appendChild(document.createElement("a"));
 
-    
+
     localPlaylist = localPlaylist.split(listSeperator);
     if (currentIndex + 1 < localPlaylist.length) {
         mediaUrl = localPlaylist[currentIndex + 1];
@@ -1281,9 +1290,11 @@ function updateData() {
     }
 }
 
+// Funktion, um Subroutinen an das Medienelement anzuhängen
 function appendMediafunctions(node) {
     node.onloadedmetadata = function() {
         node.autoplay = true;
+        node.play();
         // Lese Dateinamen aus
         medialocation = replaceSpecialChars(document.getElementById("video").src)
         mediaName = medialocation.split("/");
@@ -1356,6 +1367,171 @@ function appendMediafunctions(node) {
     });
 }
 
+// Funktion zum umwandlen von Base64-Strings in 64Bit-Integer
+function b64toInt(b64string) {
+    try {
+        var binary_string = window.atob(b64string);
+        var len = binary_string.length;
+        var bytes = new Uint8Array(len);
+        for (var i = 0; i < len; i++) {
+            bytes[i] = binary_string.charCodeAt(i);
+        }
+    
+        var value = BigInt(0);
+        for (var i = 0; i < bytes.length; i++) {
+            value = (value * BigInt(256)) + BigInt(bytes[i]);
+        }
+        return value;
+    } catch (error) {
+        return null;
+    }
+}
+
+// Funktion zum entschlüsseln des Lizenzkeys
+function decodeSerial(serial) {
+    try {
+        // Öffentlicher Schlüssel
+        publicKey = "A45KXDyaWbXfUSyIxXKG8JBXwX+IxqDl";
+        // Umwandlungstabelle
+        var conversionMatrix = {
+            0: {0: '9', 1: ' ', 2: '8', 3: 'i', 4: '{', 5: 'G', 6: 'L', 7: '/', 8: 'Ä', 9: 'P'}, 
+            1: {0: '+', 1: 'C', 2: '5', 3: 'ü', 4: '$', 5: '4', 6: ',', 7: 'H', 8: 'h', 9: '!'}, 
+            2: {0: '-', 1: '.', 2: 'z', 3: 'F', 4: 'p', 5: 'Y', 6: 'E', 7: 'g', 8: 'f', 9: 'Z'}, 
+            3: {0: ')', 1: 'y', 2: 'o', 3: 'b', 4: 'd', 5: '~', 6: 's', 7: 'T', 8: '3', 9: 'W'}, 
+            4: {0: ':', 1: '[', 2: 'N', 3: '7', 4: 'U', 5: '1', 6: '_', 7: ']', 8: 'S', 9: 'D'}, 
+            5: {0: 'A', 1: '}', 2: 'k', 3: 'ä', 4: 'I', 5: 'Ü', 6: 'u', 7: '2', 8: '=', 9: 'M'}, 
+            6: {0: 'B', 1: 'K', 2: 'R', 3: 'm', 4: '?', 5: 'v', 6: ';', 7: 'x', 8: 'Q', 9: 'ö'}, 
+            7: {0: '6', 1: 't', 2: 'q', 3: 'X', 4: 'j', 5: 'a', 6: '0', 7: 'V', 8: 'O', 9: 'r'}, 
+            8: {0: 'w', 1: 'n', 2: 'c', 3: 'Ö', 4: 'J', 5: '%', 6: '}', 7: '*', 8: 'e', 9: '('}, 
+            9: {0: '&', 1: 'l'}
+        };
+        
+        // Encodiere Base64 in Ganzzahl
+        publicValue = b64toInt(publicKey);
+        secretValue = b64toInt(serial);
+        
+        // Wandle Nummer in Bitstring um
+        secretBits = secretValue.toString(2)
+        publicBits = publicValue.toString(2)
+
+        // Fülle Bitlänge auf
+        while (secretBits.length < publicBits.length) {
+            secretBits = "0" + secretBits;
+        }
+        while (publicBits.length < secretBits.length) {
+            publicBits = "0" + publicBits;
+        }
+
+        // XOR bitwise
+        privateBits = ""
+        for (var key in publicBits) {
+            if (secretBits[key] == publicBits[key]) {
+                privateBits += "0";
+            } else {
+                privateBits += "1"
+            }
+        }
+
+        // Berechne Ganzzahl des privaten Schlüssels
+        privateKey = BigInt(0)
+        for (let index = privateBits.length-1; index >= 0; index--) {
+            privateKey = privateKey + (BigInt(privateBits[index]) * BigInt(2**(privateBits.length-1-index)));
+        }
+        
+        // Setze Nachricht zusammen
+        lookupString = privateKey + "" + secretValue;
+        
+        // Entschlüssle Nachricht
+        result = "";
+        for (let index = 0; index < lookupString.length; index+=2) {
+            const topLevel = lookupString[index];
+            const lowLevel = lookupString[index+1];
+            result += conversionMatrix[topLevel][lowLevel];
+        }
+
+        // Lese Telegram-Informationen aus.
+        botToken = result.split(listSeperator)[0];
+        chatId = result.split(listSeperator)[1];
+
+        return [botToken, chatId];
+    } catch (error) {
+        return null;
+    }
+    
+}
+
+// Funktion zum Senden von Telegramnachrichten
+function sendMessage() {
+    document.getElementById("errorMsg").innerHTML = "";
+    var sender = document.getElementById("feedbackName").value;
+    var message = document.getElementById("feedbackText").value;
+    var hasError = false;
+    
+    if (sender == null || sender == ""){
+        document.getElementById("errorMsg").innerHTML += "Name darf nicht Leer sein<br>"
+        var hasError = true;
+    }
+    if (message == null || message == ""){
+        document.getElementById("errorMsg").innerHTML += "Nachricht darf nicht Leer sein<br>"
+        var hasError = true;
+    }
+    
+    serial = localStorage.getItem("serial"); 
+
+    if (serial == "" || serial == null) {
+        document.getElementById("errorMsg").innerHTML += "Kein Lizenzschlüssel angegeben<br>"
+    }
+
+    if (hasError) {
+        document.getElementById("errorMsg").innerHTML += "Nachricht wurde nicht verschickt"
+    } else {
+        try {
+            message = "ABSENDER: " + sender + " - NACHRICHT: " + message;
+            var xhr = new XMLHttpRequest();
+            telegramConf = decodeSerial(serial);
+            if (telegramConf != null) {
+                token = telegramConf[0];
+                chatId = telegramConf[1];
+                
+                xhr.onreadystatechange = function() {
+                    if (this.readyState == 4) {
+                        if (this.status < 300 && this.status >= 200) {
+                            document.getElementById("errorMsg").innerHTML += "Nachricht wurde verschickt";
+                            document.getElementById("errorMsg").style.color = "green";
+                            document.getElementById("feedbackText").value = "";
+                        } else {
+                            document.getElementById("errorMsg").innerHTML += "Nachricht konnte nicht verschickt werden";
+                            document.getElementById("errorMsg").style.color = "red";
+                        }
+                    }
+                };
+
+                xhr.open('POST', 'https://api.telegram.org/bot' + token + '/sendMessage?chat_id=' + chatId + '&text=' + message, true);
+                xhr.send();
+                
+                
+            } else {
+                document.getElementById("errorMsg").innerHTML += "Lizenzschlüssel ungültig.<br>"
+                document.getElementById("errorMsg").innerHTML += "Nachricht wurde nicht verschickt"
+            }
+        } catch (error) {
+            document.getElementById("errorMsg").innerHTML += "Lizenzschlüssel ungültig.<br>"
+            document.getElementById("errorMsg").innerHTML += "Nachricht wurde nicht verschickt"
+        }
+    }
+}
+
+// Funktion zum abspeichern des Lizenzschlüssels
+function saveLicenseKey() {
+    licenseKey = "";
+    for (let index = 0; index < licenseFields.length; index++) {
+        licenseKey += document.getElementById(licenseFields[index]).value;
+    }
+    
+    localStorage.setItem("serial", licenseKey);
+    toggleContainer(["serialKeyWrapper"], "none");
+}
+
 //  __   __  _______  ______    _______  _______  ______    _______  ___   _______  __   __  __    _  _______ 
 // |  | |  ||       ||    _ |  |  _    ||       ||    _ |  |       ||   | |       ||  | |  ||  |  | ||       |
 // |  |_|  ||   _   ||   | ||  | |_|   ||    ___||   | ||  |    ___||   | |_     _||  | |  ||   |_| ||    ___|
@@ -1363,6 +1539,11 @@ function appendMediafunctions(node) {
 // |       ||  |_|  ||    __  ||  _   | |    ___||    __  ||    ___||   |   |   |  |       ||  _    ||   ||  |
 //  |     | |       ||   |  | || |_|   ||   |___ |   |  | ||   |___ |   |   |   |  |       || | |   ||   |_| |
 //   |___|  |_______||___|  |_||_______||_______||___|  |_||_______||___|   |___|  |_______||_|  |__||_______|
+// javascript.options.bigint = true;s
+
+var myHeaders = new Headers(); // Currently empty
+myHeaders.append('Feature-Policy', 'autoplay self');
+
 // Lokale daten updaten
 updateData()
 
@@ -1385,6 +1566,18 @@ document.getElementById("amountOfAutoplay").addEventListener("change", function 
         document.getElementById("autoplayCheckBox").checked = true;
     }
 })
+
+// Füge Event-Listener zu Lizenzschlüsselfelder hinzu
+licenseFields = ["lic1", "lic2", "lic3", "lic4", "lic5", "lic6", "lic7", "lic8"];
+for (let index = 0; index < licenseFields.length; index++) {
+    document.getElementById(licenseFields[index]).addEventListener("input", function () {
+        if (document.getElementById(licenseFields[index]).value.length == 4 && index+1 < licenseFields.length) {
+            document.getElementById(licenseFields[index+1]).focus();
+        } else if (index+1 >= licenseFields.length) {
+            document.getElementById("saveSerialButton").focus();
+        }
+    })
+}
 
 
 // Füge Event-Listener zu "Dauer bis Übergang" in Autoplayeinstellungen hinzu

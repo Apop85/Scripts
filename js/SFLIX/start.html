@@ -136,44 +136,80 @@
                 <a href="javascript:void(0);" onclick="toggleContainer(['searchFieldContainer'], 'none')" id="closeSearchIcon">❌</a>
             </div>
         </form>
-        <a id="settings" onclick="toggleContainer(['settingsBox'], 'flex')"></a>
+        <div id="settings">
+            <div id="settingsDD">
+                <a href="javascript:void(0);" id="settingsBoxToggler" onclick="toggleContainer(['settingsBox'], 'flex')">Autoplay</a>
+                <a href="javascript:void(0);" id="feedbackBoxToggler" onclick="toggleContainer(['feedbackWrapper'], 'flex')">Feedback</a>
+                <a href="javascript:void(0);" id="FehlerbehebungToggler" onclick="toggleContainer(['fehlerbehebung'], 'block')">Fehlerbehebung</a>
+                <a href="javascript:void(0);" id="serialToggler" onclick="toggleContainer(['serialKeyWrapper'], 'flex')">Lizenz</a>
+                <a href="javascript:void(0);" id="serialToggler" onclick="openHelp()">Hilfe</a>
+            </div>
+        </div>
         <div id="settingsBox" style="display: none;">
             <div><a style="position: absolute; top: 5px; right: 5px; background-color: rgb(231, 231, 231); border: 1px solid black; box-shadow: 1px 1px 1px black; font-size: 12px;" href="javascript:void(0);" onclick="toggleContainer(['settingsBox'], 'none')">❌</a></div>
             <p><b>Autoplay</b>: <input type="checkbox" onclick="checkAutoplayAmout()" id="autoplayCheckBox"></p>
             <p><b>Anzahl autoplay</b>: <input type="number" id="amountOfAutoplay" value="0"></p>
             <p><b>Dauer bis Übergang</b>: <input type="number" id="autoplayDuration" value="30"></p>
-            <p><a href="javascript:void(0);" onclick="toggleContainer(['fehlerbehebung'], 'block')">Fehlerbehebung</a></p>
-            <div id="fehlerbehebung" style="display:none">
-                <div style="display: flex; flex-direction: row;">
-                    <div><p style="border: none;"><b>Achtung!</b> Hier ausgeführte Aktionen können nicht rückgängig gemacht werden!</p></div>
-                    <div><a style="position: absolute; top: 5px; right: 5px; background-color: rgb(231, 231, 231); border: 1px solid black; box-shadow: 1px 1px 1px black;" href="javascript:void(0);" onclick="toggleContainer(['fehlerbehebung'], 'none')">❌</a></div>
-                </div>
-                <h5>Favoriten löschen</h5>
-                <p>Sollte das Menü nicht richtig geladen und Medieninhalte nicht angezeigt werden, kann es helfen, die gesetzten Favoriten zu löschen.<br><br>
-                <a href="javascript:void(0);" onclick="modifyLocalData('favorites')" class="button">Favoriten löschen</a></p>
-                <h5>Playlisten löschen</h5>
-                <p>Sollten die verlinkungen der Vor- und Zurückbuttons fehlerhaft sein, kann dies durch das Löschen der Playlisten behoben werden.<br><br>
-                <a href="javascript:void(0);" onclick="modifyLocalData('playlist')" class="button">Playlisten löschen</a></p>
-                <h5>Zeitstempel löschen</h5>
-                <p>Sollten die Zeitstempel fehlerhaft sein oder das Laden der Videos nicht funktionieren, kann es helfen, die Zeitstempel zu löschen.<br><br>
-                <a href="javascript:void(0);" onclick="modifyLocalData('timestamp')" class="button">Zeitstempel löschen</a></p>
-                <h5>Zuletzt gesehen Liste löschen</h5>
-                <p>Sollte die Startseite von STEFFLIX nicht richtig geladen werden, oder die Liste fehlerhaft sein, kann es helfen, die Liste zu löschen.<br><br>
-                <a href="javascript:void(0);" onclick="modifyLocalData('playlast')" class="button">Zuletzt gespielt löschen</a></p>
-                <h5>Alle Daten löschen</h5>
-                <p>Nur ausführen, wenn keine andere Massnahme geholfen hat.<br><br>
-                <a href="javascript:void(0);" onclick="modifyLocalData('all')" class="button">Alles löschen</a></p>
-                <div id="debugOutput" style="display: none;">
-                    <h5>Fortschritt</h5>
-                    <textarea style="width: 100%;" id="debugField" rows="10" disabled></textarea>
-                    <a href="javascript:void(0);" id="debugOkButton" style="display: none;" onclick="toggleContainer(['debugOutput'], 'none')" class="button">OK</a>
-                </div>
-            </div>
             <a class="button" onclick="applySettings()">Speichern</a>
         </div>
+        <div id="fehlerbehebung" style="display:none">
+            <div style="display: flex; flex-direction: row;">
+                <div><p style="border: none;"><b>Achtung!</b> Hier ausgeführte Aktionen können nicht rückgängig gemacht werden!</p></div>
+                <div><a style="position: absolute; top: 5px; right: 5px; background-color: rgb(231, 231, 231); border: 1px solid black; box-shadow: 1px 1px 1px black;" href="javascript:void(0);" onclick="toggleContainer(['fehlerbehebung'], 'none')">❌</a></div>
+            </div>
+            <h5>Favoriten löschen</h5>
+            <p>Sollte das Menü nicht richtig geladen und Medieninhalte nicht angezeigt werden, kann es helfen, die gesetzten Favoriten zu löschen.<br><br>
+            <a href="javascript:void(0);" onclick="modifyLocalData('favorites')" class="button">Favoriten löschen</a></p>
+            <h5>Playlisten löschen</h5>
+            <p>Sollten die verlinkungen der Vor- und Zurückbuttons fehlerhaft sein, kann dies durch das Löschen der Playlisten behoben werden.<br><br>
+            <a href="javascript:void(0);" onclick="modifyLocalData('playlist')" class="button">Playlisten löschen</a></p>
+            <h5>Zeitstempel löschen</h5>
+            <p>Sollten die Zeitstempel fehlerhaft sein oder das Laden der Videos nicht funktionieren, kann es helfen, die Zeitstempel zu löschen.<br><br>
+            <a href="javascript:void(0);" onclick="modifyLocalData('timestamp')" class="button">Zeitstempel löschen</a></p>
+            <h5>Zuletzt gesehen Liste löschen</h5>
+            <p>Sollte die Startseite von STEFFLIX nicht richtig geladen werden, oder die Liste fehlerhaft sein, kann es helfen, die Liste zu löschen.<br><br>
+            <a href="javascript:void(0);" onclick="modifyLocalData('playlast')" class="button">Zuletzt gespielt löschen</a></p>
+            <h5>Alle Daten löschen</h5>
+            <p>Nur ausführen, wenn keine andere Massnahme geholfen hat.<br><br>
+            <a href="javascript:void(0);" onclick="modifyLocalData('all')" class="button">Alles löschen</a></p>
+            <div id="debugOutput" style="display: none;">
+                <h5>Fortschritt</h5>
+                <textarea style="width: 100%;" id="debugField" rows="10" disabled></textarea>
+                <a href="javascript:void(0);" id="debugOkButton" style="display: none;" onclick="toggleContainer(['debugOutput'], 'none')" class="button">OK</a>
+            </div>
+        </div>
+        <div id="feedbackWrapper" style="display: none;">
+            <form>
+                <div>
+                    <a style="font-size: 13px; position: absolute; top: 5px; right: 5px; background-color: rgb(231, 231, 231); border: 1px solid black; box-shadow: 1px 1px 1px black;" href="javascript:void(0);" onclick="toggleContainer(['feedbackWrapper'], 'none')">❌</a>
+                    <h2>Feedback und Bugreport</h2>
+                    <input type="text" id="feedbackName" placeholder="Name" required>
+                    <textarea id="feedbackText" placeholder="Nachricht" value="" autocomplete="off" required></textarea>
+                </div>
+                <span id="errorMsg"></span>
+                <a class="button" href="javascript:void(0)" onclick="sendMessage()">Senden</a>
+            </form>
+        </div>
+        <div id="serialKeyWrapper" style="display: none;">
+            <a style="font-size: 13px; position: absolute; top: 5px; right: 5px; background-color: rgb(231, 231, 231); border: 1px solid black; box-shadow: 1px 1px 1px black;" href="javascript:void(0);" onclick="toggleContainer(['serialKeyWrapper'], 'none')">❌</a>
+            <h2>Lizenzschlüssel</h2>
+            <p>Der Lizenzschlüssel wird benötigt, damit das Feedbackformular verwendet werden kann.</p>
+            <form id="licenseInputs">
+                <input type="text" id="lic1" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
+                <input type="text" id="lic2" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
+                <input type="text" id="lic3" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
+                <input type="text" id="lic4" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
+                <input type="text" id="lic5" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
+                <input type="text" id="lic6" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
+                <input type="text" id="lic7" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
+                <input type="text" id="lic8" maxlength="4" placeholder="ABCD" required>
+            </form>
+            <a class="button" id="saveSerialButton" onclick="saveLicenseKey()">Speichern</a>
+        </div>
+<!-- 
         <a id="helpLink" onclick="openHelp()">
             <div id="helpField"></div>
-        </a>
+        </a> -->
     </div>
     <div id="navigation">
         <ul id="submenu" class="submenu"></ul>

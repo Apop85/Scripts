@@ -1,3 +1,9 @@
+<b>Version 1.29</b>:<br>
+<ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Untermenü bei Einstellungsbutton hinzugefügt mit Autoplayeinstellungen, Feedbackformular, Fehlerbehebung, Lizenzschlüssel und Hilfe</li>
+    <li>[<span style="color: red">FEATURE</span>] Lizenzschlüssel zur Verwendung des Feedbackformulars hinzugefügt.</li>
+    <li>[<span style="color: red">FEATURE</span>] Feedbackformular hinzugefügt.</li>
+</ul>
 <b>Version 1.285</b>:<br>
 <ul>
     <li>[<span style="color: red"><b>HOTFIX</b></span>] Leerer Vor-/Zurück-Button führte zu Fehler beim Wechseln des Mediums mittels der beiden Buttons.</li>

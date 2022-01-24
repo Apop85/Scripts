@@ -1,4 +1,5 @@
 from base64 import b64encode
+from base64 import b64decode
 import random
 
 # Define random seed 
@@ -37,89 +38,88 @@ print(newList)
 conversionMatrix = newList
 
 # Function to encode the secret message with the conversion matrix
-def encodeData(secret):
+def encryptData(secretMessage):
     encrypted = ""
-    for letter in secret:
+    for letter in secretMessage:
         for primary in conversionMatrix.keys():
             for secondary in conversionMatrix[primary].keys():
                 if conversionMatrix[primary][secondary] == letter:
                     encrypted += f"{primary}{secondary}"
 
     # Split string to create private and public Key
-    publicKey = encrypted[:len(encrypted)//2]
+    secretKey = encrypted[:len(encrypted)//2]
     privateKey = encrypted[len(encrypted)//2:]
 
     # Check if decryption is possible
     decryptDataToText(encrypted)
 
     # Convert private and public key to bits
-    publicKey = str(bin(int(publicKey))).replace("0b", "")
+    secretKey = str(bin(int(secretKey))).replace("0b", "")
     privateKey = str(bin(int(privateKey))).replace("0b", "")
 
     # Fill missing bits to equalize length
-    if len(publicKey) != len(privateKey):
-        while len(publicKey) > len(privateKey):
+    if len(secretKey) != len(privateKey):
+        while len(secretKey) > len(privateKey):
             privateKey = "0" + privateKey
-        while len(privateKey) > len(publicKey):
-            publicKey = "0" + publicKey
+        while len(privateKey) > len(secretKey):
+            secretKey = "0" + secretKey
 
     # XOR bitwise
-    secret = ""
+    publicKey = ""
     for i in range(0, len(privateKey)):
-        if privateKey[i] == publicKey[i]:
-            secret += "0"
+        if privateKey[i] == secretKey[i]:
+            publicKey += "0"
         else:
-            secret += "1"
+            publicKey += "1"
 
     # Reverse bits to integer
-    publicKey = int(publicKey, 2)
+    secretKey = int(secretKey, 2)
     privateKey = int(privateKey, 2)
-    secret = int(bin(int(secret, 2)), 2)
+    publicKey = int(bin(int(publicKey, 2)), 2)
 
     # Encode keys with base64
-    number_bytes = secret.to_bytes((secret.bit_length() + 7) // 8, byteorder="big")
-    secretEncoded = b64encode(number_bytes)
     number_bytes = publicKey.to_bytes((publicKey.bit_length() + 7) // 8, byteorder="big")
     publicEncoded = b64encode(number_bytes)
+    number_bytes = secretKey.to_bytes((secretKey.bit_length() + 7) // 8, byteorder="big")
+    secretEncoded = b64encode(number_bytes)
     number_bytes = privateKey.to_bytes((privateKey.bit_length() + 7) // 8, byteorder="big")
     privateEncoded = b64encode(number_bytes)
     
     # Print needed Informations
-    # print(f"publicKey:  {publicKey}")
-    print(f"publicKey:  {publicEncoded}")
+    # print(f"secretKey:  {secretKey}")
+    print(f"secretKey:  {str(secretEncoded)[2:-1]}")
     # print(f"privateKey: {privateKey}")
-    print(f"privateKey: {privateEncoded}")
-    # print(f"secret:     {secret}")
-    print(f"secret:     {secretEncoded}")
+    print(f"privateKey: {str(privateEncoded)[2:-1]}")
+    # print(f"publicKey:     {publicKey}")
+    print(f"publicKey:  {str(publicEncoded)[2:-1]}")
 
     # Print human readable Serial key
     print("Serial:     ", end="")
     for i in range(0, len(str(privateEncoded)[2:-1]), 4):
-        if i == 0:
-            print(str(privateEncoded)[2:-1][i:i+4], end="")
-        else:
-            print("-" + str(privateEncoded)[2:-1][i:i+4], end="")
+        print(str(privateEncoded)[2:-1][i:i+4], end=" ")
     print()
 
-    return publicKey, secret, privateKey
+    return publicEncoded, privateEncoded, secretEncoded
 
 # Function to check if decryption is possible
-def decryptData(key, secret):
-    # Translate keys to bits
-    secret = str(bin(secret)).replace("0b", "")
-    key = str(bin(key)).replace("0b", "")
+def decryptData(publicEncoded, privateEncoded):
+    publicEncoded = int.from_bytes(b64decode(publicEncoded), "big")
+    privateEncoded = int.from_bytes(b64decode(privateEncoded), "big")
+    # Translate key to bits
+    privateEncoded = str(bin(privateEncoded)).replace("0b", "")
+    publicEncoded = str(bin(publicEncoded)).replace("0b", "")
 
-    # Fill missing bits to equalize key length
-    if len(key) != len(secret):
-        while len(key) > len(secret):
-            secret = "0" + secret
-        while len(secret) > len(key):
-            key = "0" + key
+    # Fill missing bits to equalize publicEncoded length
+    if len(publicEncoded) != len(privateEncoded):
+        while len(publicEncoded) > len(privateEncoded):
+            privateEncoded = "0" + privateEncoded
+        while len(privateEncoded) > len(publicEncoded):
+            publicEncoded = "0" + publicEncoded
 
     # XOR bitwise
     privateKey = ""
-    for i in range(0, len(secret)):
-        if secret[i] == key[i]:
+    for i in range(0, len(privateEncoded)):
+        if privateEncoded[i] == publicEncoded[i]:
             privateKey += "0"
         else:
             privateKey += "1"
@@ -127,47 +127,50 @@ def decryptData(key, secret):
     # Convert bits to integer
     privateKey = int(privateKey, 2)
 
-    # Print decrypted key
-    print(f"decrypted:  {privateKey}")
+    number_bytes = privateKey.to_bytes((privateKey.bit_length() + 7) // 8, byteorder="big")
+    privateKeyEncoded = b64encode(number_bytes)
 
-    return privateKey
+    # Print decrypted key
+    print(f"decrypted:  {str(privateKeyEncoded)[2:-1]}", end="   ")
+
+    return privateKeyEncoded
 
 # Function to caluclate factors // NOT USED
-def createSerial(secret):
+def createSerial(secretNumber):
     maximum = 999999999
     minimum = 100000
     print("Serial:     ",end="")
-    secret = int(secret)
+    secretNumber = int(secretNumber)
     swap = False
     abort = False
     serial = []
     # for i in range(2, 100):
-    #     print(secret**(1/i))
-    while len(str(secret)) > 9 and not abort:
+    #     print(secretNumber**(1/i))
+    while len(str(secretNumber)) > 9 and not abort:
         if swap:
             swap = False
             for i in range(minimum, maximum):
-                if secret % i == 0:
+                if secretNumber % i == 0:
                     key = i
                     print(key, end="-")
                     serial += [str(key)]
-                    secret = secret / key
+                    secretNumber = secretNumber / key
                     break
                 if i == maximum-1:
                     abort = True
         else:
             swap = True
             for i in range(maximum,minimum,-1):
-                if secret % i == 0:
+                if secretNumber % i == 0:
                     key = i
                     print(key, end="-")
                     serial += [str(key)]
-                    secret = secret / key
+                    secretNumber = secretNumber / key
                     break
                 if i == minimum+1:
                     abort = True
-    serial += [str(int(secret))]
-    print(secret)
+    serial += [str(int(secretNumber))]
+    print(secretNumber)
     return serial
 
 # Function to decrypt a given coordinate-array to text
@@ -177,9 +180,17 @@ def decryptDataToText(data):
         firstLevel = data[i]
         secondLevel = data[i+1]
         decrypted += conversionMatrix[int(firstLevel)][int(secondLevel)]
-    print(decrypted)
+    print(decrypted, end="   ")
+    if decrypted == rawSecret:
+        print("Successfull reconstructed")
+    else:
+        print("Reconstruction failed. DO NOT USE FOLLOWING KEYS!")
 
 
 if __name__ == "__main__":
-    publicKey, secret, privateKey = encodeData(rawSecret)
-    decryptData(publicKey, secret)
+    publicEncoded, privateEncoded, secretEncoded = encryptData(rawSecret)
+    if secretEncoded == decryptData(publicEncoded, privateEncoded):
+        print("Decryption successfull")
+    else:
+        print("Decryption failed")
+

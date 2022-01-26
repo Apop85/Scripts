@@ -1,3 +1,9 @@
+<b>Version 1.291</b>:<br>
+<ul>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Timeoutfunktionen bei Bildern werden nun unterbrochen, wenn das Medium manuell gewechselt wird.</li>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Browser springt nun nach Laden des Mediums zurück zur Medien-Navigation-Sprungmarke.</li>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Bildverlinkung bei Autoplay weist nun auf das aktuell angezeigte Bild</li>
+</ul>
 <b>Version 1.29</b>:<br>
 <ul>
     <li>[<span style="color: blue">INTERFACE</span>] Untermenü bei Einstellungsbutton hinzugefügt mit Autoplayeinstellungen, Feedbackformular, Fehlerbehebung, Lizenzschlüssel und Hilfe</li>

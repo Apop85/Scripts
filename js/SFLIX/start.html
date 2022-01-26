@@ -146,7 +146,7 @@
             </div>
         </div>
         <div id="settingsBox" style="display: none;">
-            <div><a style="position: absolute; top: 5px; right: 5px; background-color: rgb(231, 231, 231); border: 1px solid black; box-shadow: 1px 1px 1px black; font-size: 12px;" href="javascript:void(0);" onclick="toggleContainer(['settingsBox'], 'none')">❌</a></div>
+            <div><a class="closeButton" href="javascript:void(0);" onclick="toggleContainer(['settingsBox'], 'none')">❌</a></div>
             <p><b>Autoplay</b>: <input type="checkbox" onclick="checkAutoplayAmout()" id="autoplayCheckBox"></p>
             <p><b>Anzahl autoplay</b>: <input type="number" id="amountOfAutoplay" value="0"></p>
             <p><b>Dauer bis Übergang</b>: <input type="number" id="autoplayDuration" value="30"></p>
@@ -155,7 +155,7 @@
         <div id="fehlerbehebung" style="display:none">
             <div style="display: flex; flex-direction: row;">
                 <div><p style="border: none;"><b>Achtung!</b> Hier ausgeführte Aktionen können nicht rückgängig gemacht werden!</p></div>
-                <div><a style="position: absolute; top: 5px; right: 5px; background-color: rgb(231, 231, 231); border: 1px solid black; box-shadow: 1px 1px 1px black;" href="javascript:void(0);" onclick="toggleContainer(['fehlerbehebung'], 'none')">❌</a></div>
+                <div><a class="closeButton" href="javascript:void(0);" onclick="toggleContainer(['fehlerbehebung'], 'none')">❌</a></div>
             </div>
             <h5>Favoriten löschen</h5>
             <p>Sollte das Menü nicht richtig geladen und Medieninhalte nicht angezeigt werden, kann es helfen, die gesetzten Favoriten zu löschen.<br><br>
@@ -181,7 +181,7 @@
         <div id="feedbackWrapper" style="display: none;">
             <form>
                 <div>
-                    <a style="font-size: 13px; position: absolute; top: 5px; right: 5px; background-color: rgb(231, 231, 231); border: 1px solid black; box-shadow: 1px 1px 1px black;" href="javascript:void(0);" onclick="toggleContainer(['feedbackWrapper'], 'none')">❌</a>
+                    <a class="closeButton" href="javascript:void(0);" onclick="toggleContainer(['feedbackWrapper'], 'none')">❌</a>
                     <h2>Feedback und Bugreport</h2>
                     <input type="text" id="feedbackName" placeholder="Name" required>
                     <textarea id="feedbackText" placeholder="Nachricht" value="" autocomplete="off" required></textarea>
@@ -191,7 +191,7 @@
             </form>
         </div>
         <div id="serialKeyWrapper" style="display: none;">
-            <a style="font-size: 13px; position: absolute; top: 5px; right: 5px; background-color: rgb(231, 231, 231); border: 1px solid black; box-shadow: 1px 1px 1px black;" href="javascript:void(0);" onclick="toggleContainer(['serialKeyWrapper'], 'none')">❌</a>
+            <a class="closeButton" href="javascript:void(0);" onclick="toggleContainer(['serialKeyWrapper'], 'none')">❌</a>
             <h2>Lizenzschlüssel</h2>
             <p>Der Lizenzschlüssel wird benötigt, damit das Feedbackformular verwendet werden kann.</p>
             <form id="licenseInputs">
@@ -219,6 +219,7 @@
     </div>
     <!-- Mediencontainer -->
     <div id="media" style="display: none;">
+        <a class="closeButton" id="toggleFullscreenButton" href="javascript:void(0);" style="display: none;" onclick="toggleFullscreenMode()">❌</a>
         <div id="help" style="display: none;">
             <h3>Neue Medieninhalte hinzufügen</h3>
             <p>Um neue Medieninhalte hinzuzufügen, müssen diese einfach in den entsprechenden STEFFLIX-Ordner kopiert werden und anschliessend das Programm "updateData.exe" ausgeführt werden.</p>

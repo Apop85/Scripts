@@ -138,11 +138,11 @@
         </form>
         <div id="settings">
             <div id="settingsDD">
-                <a href="javascript:void(0);" id="settingsBoxToggler" onclick="toggleContainer(['settingsBox'], 'flex')"><table><tr><td style="width: 30px;">➿</td><td>Autoplay</td></tr></table></a>
-                <a href="javascript:void(0);" id="feedbackBoxToggler" onclick="toggleContainer(['feedbackWrapper'], 'flex')"><table><tr><td style="width: 30px;">❓❗</td><td>Feedback</td></tr></table></a>
-                <a href="javascript:void(0);" id="FehlerbehebungToggler" onclick="toggleContainer(['fehlerbehebung'], 'block')"><table><tr><td style="width: 30px;">🛠</td><td>Fehlerbehebung</td></tr></table></a>
-                <a href="javascript:void(0);" id="serialToggler" onclick="toggleContainer(['serialKeyWrapper'], 'flex')"><table><tr><td style="width: 30px;">🔑</td><td>Lizenz</td></tr></table></a>
-                <a href="javascript:void(0);" id="serialToggler" onclick="openHelp()"><table><tr><td style="width: 30px;">🆘</td><td>Hilfe</td></tr></table></a>
+                <a href="javascript:void(0);" id="settingsBoxToggler" onclick="toggleContainer(['settingsBox'], 'flex')"><table><tr><td id="autoplayIcon" style="width: 40px;"></td><td>Autoplay</td></tr></table></a>
+                <a href="javascript:void(0);" id="feedbackBoxToggler" onclick="toggleContainer(['feedbackWrapper'], 'flex')"><table><tr><td id="supportIcon" style="width: 40px;"></td><td>Feedback</td></tr></table></a>
+                <a href="javascript:void(0);" id="FehlerbehebungToggler" onclick="toggleContainer(['fehlerbehebung'], 'block')"><table><tr><td id="fehlerIcon" style="width: 40px;"></td><td>Fehlerbehebung</td></tr></table></a>
+                <a href="javascript:void(0);" id="serialToggler" onclick="toggleContainer(['serialKeyWrapper'], 'flex')"><table><tr><td id="lizenzIcon" style="width: 40px;"></td><td>Lizenz</td></tr></table></a>
+                <a href="javascript:void(0);" id="serialToggler" onclick="openHelp()"><table><tr><td id="helpIcon" style="width: 40px;"></td><td>Hilfe</td></tr></table></a>
             </div>
         </div>
         <div id="settingsBox" style="display: none;">

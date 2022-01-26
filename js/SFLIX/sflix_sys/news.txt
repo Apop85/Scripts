@@ -17,11 +17,11 @@
 </ul>
 <b>Version 1.284</b>:<br>
 <ul>
-    <li>[<span style="color: red"><b>HOTFIX</b></span>] Erstes Element einer Playliste löste Fehler beim erstellen des Vor- und Zurückbuttons aus.</li>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Erstes Element einer Playliste löste Fehler beim Erstellen des Vor- und Zurückbuttons aus.</li>
 </ul>
 <b>Version 1.283</b>:<br>
 <ul>
-    <li>[<span style="color: red"><b>HOTFIX</b></span>] Letztes Element einer Playliste löste Fehler beim erstellen des Vor- und Zurückbuttons aus.</li>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Letztes Element einer Playliste löste Fehler beim Erstellen des Vor- und Zurückbuttons aus.</li>
 </ul>
 <b>Version 1.282</b>:<br>
 <ul>
@@ -36,7 +36,7 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Erstes Element eines Ordners kann nicht mittels Autoplay gestartet werden.</li>
     <li>[<span style="color: #e21af3">BUG</span>] Ordnerübergreifendes Autoplay funktioniert noch nicht, sofern Ordner und Medieninhalt im selben Elternordner sind</li>
-    <li>[<span style="color: red">FEATURE</span>] Einstellungsmenü hinzugefügt zum manipulieren der Autoplay-Werte und zur Fehlerbehebung.</li>
+    <li>[<span style="color: red">FEATURE</span>] Einstellungsmenü hinzugefügt zum Manipulieren der Autoplay-Werte und zur Fehlerbehebung.</li>
     <li>[<span style="color: red">FEATURE</span>] Autoplayfunktion eingefügt zum automatischen Abspielen von Medieninhalten (z.B. Diashow)</li>
     <li>[<span style="color: red">FEATURE</span>] Vor- und Zurück-Buttons benötigen kein neues Laden sofern die Medien im selben Ordner sind</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Kommas in Ordner oder Dateinamen konnten zu fehlerhaftem Laden führen.</li>
@@ -72,7 +72,7 @@
 <ul>
     <li>[<span style="color: blue">INTERFACE</span>] Unterstützte Dateiformate können in der Hilfe nun ein- und ausgeblendet werden</li>
     <li>[<span style="color: blue">INTERFACE</span>] Ladeanimation angepasst. Geringerer Kontrast, langsamere Animation</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Fehlerhaftes Vehalten beim Hinzufügen eines Favoriten, wenn bereits ein oder mehrere Favoriten vorhanden waren</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Fehlerhaftes Verhalten beim Hinzufügen eines Favoriten, wenn bereits ein oder mehrere Favoriten vorhanden waren</li>
 </ul>
 <b>Version 1.242</b>:<br>
 <ul>
@@ -92,8 +92,8 @@
 </ul>
 <b>Version 1.23</b>:<br>
 <ul>
-    <li>[<span style="color: blue">INTERFACE</span>] Ladereihenfolge für Ladebalken angepasst um Weisses Bild zu verhindern</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Hilfe zum hinzufügen von Medien ergänzt</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Ladereihenfolge für Ladebalken angepasst um weisses Bild zu verhindern</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hilfe zum Hinzufügen von Medien ergänzt</li>
     <li>[<span style="color: blue">INTERFACE</span>] Merken-Button verkleinert</li>
 </ul>
 <b>Version 1.22</b>:<br>
@@ -197,5 +197,5 @@
 </ul>
 <b>Version 1.02</b>:<br>
 <ul>
-    <li>[<span style="color: blue">INTERFACE</span>] Hover-Effekt auf Schwarz geändert</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hovereffekt in den Submenüs auf Schwarz geändert</li>
 </ul>

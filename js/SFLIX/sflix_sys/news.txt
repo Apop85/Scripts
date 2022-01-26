@@ -1,3 +1,7 @@
+<b>Version 1.30</b>:<br>
+<ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Selbst erstellte Icons in Einstellungsmenü hinzugefügt</li>
+</ul>
 <b>Version 1.291</b>:<br>
 <ul>
     <li>[<span style="color: red"><b>HOTFIX</b></span>] Timeoutfunktionen bei Bildern werden nun unterbrochen, wenn das Medium manuell gewechselt wird.</li>

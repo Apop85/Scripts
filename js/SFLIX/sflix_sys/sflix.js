@@ -557,9 +557,11 @@ function updateFavorites() {
     if (text.includes("⭐")) {
         text = text.replaceAll(" ⭐","");
         node.innerHTML = text;
-        document.getElementById("favorite").className = "";
+        document.getElementById("favorite").className = document.getElementById("favorite").className.split("isFavorite").join("");
     } else {
-        document.getElementById("favorite").className = "isFavorite";
+        if (!document.getElementById("favorite").className.includes("isFavorite")) {
+            document.getElementById("favorite").className += "isFavorite";
+        }
         node.innerHTML += (" ⭐");
     }
 
@@ -663,7 +665,9 @@ function playlistForwards(currentIndex, localPlaylist) {
         
         
         // Ändere Item zuvor als Aktiv
-        document.getElementById(mediaUrl.replace(".","")).className = "activeMenu";
+        if (!document.getElementById(mediaUrl.replace(".","")).className.includes("activeMenu")) {
+            document.getElementById(mediaUrl.replace(".","")).className += "activeMenu";
+        }
         mediaName = localPlaylist[currentIndex + 1].split("/");
         mediaName = mediaName[mediaName.length - 1];
 
@@ -696,7 +700,7 @@ function playlistForwards(currentIndex, localPlaylist) {
         }
 
         // Deaktiviere aktuelles Menüelement
-        document.getElementById(lastName.replace(".", "")).className = "";
+        document.getElementById(lastName.replace(".", "")).className = document.getElementById(lastName.replace(".", "")).className.split("activeMenu").join("");
         lastName = lastName.split("/");
         lastName = removeFileExtension(allowedMediaExtensions, lastName[lastName.length - 1]);
 
@@ -710,7 +714,7 @@ function playlistForwards(currentIndex, localPlaylist) {
         // Ändere Zurück-Button
         subnode = document.getElementById("prev").childNodes[0]
         subnode.setAttribute("onclick", "playlistBackwards(" + lastIndex + ",'" + localPlaylist.join(listSeperator) + "');")
-        subnode.innerHTML = "👈 " + removeFileExtension(allowedMediaExtensions, lastName);
+        subnode.innerHTML = "👈<span class='buttonText'> " + removeFileExtension(allowedMediaExtensions, lastName) + "</span>";
         
         if (nextName != null) {
             // Ändere Vorwärts-Button
@@ -721,14 +725,16 @@ function playlistForwards(currentIndex, localPlaylist) {
                 // subnode.setAttribute("onclick", "");
                 subnode.setAttribute("onclick", "loadUrl('start.html?=" + btoa(url) + "')");
             }
-            subnode.innerHTML = removeFileExtension(allowedMediaExtensions, nextName) + " 👉";
+            subnode.innerHTML = "<span class='buttonText'>" + removeFileExtension(allowedMediaExtensions, nextName) + " </span>👉";
         }
 
         node = adjustMediaType(mediaUrl, node);
         if (node.tagName == "IMG") {
-            node.parentNode.href = mediaUrl;
+            // node.parentNode.href = mediaUrl;
+            node.parentNode.setAttribute("onclick", "toggleFullscreenMode()");
         } else {
-            node.parentNode.href = null;
+            // node.parentNode.href = null;
+            node.parentNode.setAttribute("onclick", "");
         }
         node.src = mediaUrl;
         // timeoutArray.push(setTimeout('location.href = "#";location.href = "#mediaNav";', 100))
@@ -780,7 +786,9 @@ function playlistBackwards(currentIndex, localPlaylist) {
             mediaUrl = "." + mediaUrl;
         }
         // Ändere Item zuvor als Aktiv
-        document.getElementById(mediaUrl.replace(".","")).className = "activeMenu";
+        if (!document.getElementById(mediaUrl.replace(".","")).className.includes("activeMenu")) {
+            document.getElementById(mediaUrl.replace(".","")).className += "activeMenu";
+        }
         mediaName = localPlaylist[currentIndex - 1].split("/");
         mediaName = mediaName[mediaName.length - 1];
         
@@ -816,7 +824,7 @@ function playlistBackwards(currentIndex, localPlaylist) {
             nextName = "." + nextName;
         }
         // Deaktiviere aktuelles Menüelement
-        document.getElementById(nextName.replace(".", "")).className = "";
+        document.getElementById(nextName.replace(".", "")).className = document.getElementById(nextName.replace(".", "")).className.split("activeMenu").join("");
         nextName = nextName.split("/");
         nextName = nextName[nextName.length - 1];
 
@@ -836,20 +844,21 @@ function playlistBackwards(currentIndex, localPlaylist) {
                 // subnode.setAttribute("onclick", "");
                 subnode.setAttribute("onclick", "loadUrl('start.html?=" + btoa(url) + "')");
             }
-            subnode.innerHTML = "👈 " + removeFileExtension(allowedMediaExtensions, lastName);
+            subnode.innerHTML = "👈<span class='buttonText'> " + removeFileExtension(allowedMediaExtensions, lastName) + "</span>";
         }
         
         // Ändere Vorwärts-Button
         subnode = document.getElementById("next").childNodes[0]
         subnode.setAttribute("onclick", "playlistForwards(" + lastIndex + ",'" + localPlaylist.join(listSeperator) + "');")
-        subnode.innerHTML = removeFileExtension(allowedMediaExtensions, nextName) + " 👉";
+        subnode.innerHTML = "<span class='buttonText'>" + removeFileExtension(allowedMediaExtensions, nextName) + " </span>👉";
         
-
         node = adjustMediaType(mediaUrl, node);
         if (node.tagName == "IMG") {
-            node.parentNode.href = mediaUrl;
+            // node.parentNode.href = mediaUrl;
+            node.parentNode.setAttribute("onclick", "toggleFullscreenMode()");
         } else {
-            node.parentNode.href = null;
+            // node.parentNode.href = null;
+            node.parentNode.setAttribute("onclick", "");
         }
         node.src = mediaUrl;
         // timeoutArray.push(setTimeout('location.href = "#";location.href = "#mediaNav";', 100))
@@ -860,23 +869,26 @@ function playlistBackwards(currentIndex, localPlaylist) {
 // Funktion um das Media-Tag entsprechend dem Medientyp anzupassen
 function adjustMediaType(mediaUrl, node) {
     if (isImage(mediaUrl) && node.tagName != "IMG") {
+        topNode = document.createElement("a");
+        topNode.id = "imageLink";
         node = document.createElement("img");
-        document.getElementById("media").replaceChild(node, document.getElementById("media").childNodes[5]);
         node.id = "video";
+        topNode.appendChild(node)
+        document.getElementById("media").replaceChild(topNode, document.getElementById("media").childNodes[7]);
     } else if (isVideo(mediaUrl) && node.tagName != "VIDEO") {
         node = document.createElement("video");
         node.autoplay = true;
         node.controls = true;
         appendMediafunctions(node);
-        document.getElementById("media").replaceChild(node, document.getElementById("media").childNodes[5]);
         node.id = "video";
+        document.getElementById("media").replaceChild(node, document.getElementById("media").childNodes[7]);
     } else if (isMusic(mediaUrl) && node.tagName != "AUDIO") {
         node = document.createElement("audio");
         node.autoplay = true;
         node.controls = true;
         appendMediafunctions(node);
-        document.getElementById("media").replaceChild(node, document.getElementById("media").childNodes[5]);
         node.id = "video";
+        document.getElementById("media").replaceChild(node, document.getElementById("media").childNodes[7]);
     }
 
     return node;
@@ -1155,9 +1167,28 @@ function applySettings() {
     } else if (autoplayAmount == 0) {
         autoplay = false;
     }
+
+    if (!autoplay) {
+        document.getElementById("media").className = document.getElementById("media").className.split("autoplaying").join("");
+        if (document.getElementById("next").style.animation != null) {
+            document.getElementById("next").style.animation = null;
+        }
+        cancelTimeouts()
+    } else {
+        if (!document.getElementById("media").className.includes("autoplaying")) {
+            document.getElementById("media").className += "autoplaying";
+        }
+    }
+
     localStorage.setItem("settings", [autoplay, autoplayAmount, autoplayDuration].join(listSeperator));
     updateOptionFields(autoplay, autoplayAmount, autoplayDuration)
     toggleContainer(['settingsBox'], "none");
+
+    if (autoplay && document.getElementById("video").tagName == "IMG") {
+        cancelTimeouts()
+        document.getElementById('next').style.animation = "autoplayLoading " + autoplayDuration + "s";
+        timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", autoplayDuration * 1000));
+    }
 }
 
 // Funktion, um zu prüfen, dass beim aktivieren der Autoplayfunktion, die Anzahl mindestens auf 1 gesetzt wird.
@@ -1165,8 +1196,12 @@ function checkAutoplayAmout() {
     if (document.getElementById("autoplayCheckBox").checked) {
         if (document.getElementById("amountOfAutoplay").value <= 0) {
             document.getElementById("amountOfAutoplay").value = 1;
+            if (!document.getElementById("media").className.includes("autoplaying")) {
+                document.getElementById("media").className += "autoplaying";
+            }
         }
     } else {
+        document.getElementById("media").className = document.getElementById("media").className.split("autoplaying").join("");
         document.getElementById("amountOfAutoplay").value = 0;
     }
 }
@@ -1557,6 +1592,19 @@ function cancelTimeouts() {
     });
 
     return []
+}
+
+function toggleFullscreenMode() {
+    console.log("toggle")
+    node = document.getElementById("media");
+    if (!node.className.includes("fullscreened")) {
+        node.className += " fullscreened";
+        document.getElementById("mediaTitle").style.display = "none";
+    } else {
+        node.className = node.className.split(" fullscreened").join("");
+        document.getElementById("mediaTitle").style.display = null;
+        setTimeout('location.href = "#";location.href = "#mediaNav";', 400)
+    }
 }
 
 //  __   __  _______  ______    _______  _______  ______    _______  ___   _______  __   __  __    _  _______ 
@@ -2275,7 +2323,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         
         // Füge Link zu Bild hinzu
         linkNode = document.createElement("a");
-        linkNode.href = medialocation.split("#")[0];
+        linkNode.id = "imageLink";
+        // linkNode.href = medialocation.split("#")[0];
+        linkNode.setAttribute("onclick", "toggleFullscreenMode()");
+
         linkNode.appendChild(node);
         document.getElementById("media").appendChild(linkNode);
 
@@ -2316,8 +2367,9 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             mediaName = mediaName.split("/");
             mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
         }
-        textnode = document.createTextNode("👈 " + mediaName);
+        textnode = document.createTextNode(mediaName);
         subnode.appendChild(textnode);
+        subnode.innerHTML = "👈 <span class='buttonText'>" + subnode.innerHTML + "</span>"
 
         subnode.setAttribute("onclick", "playlistBackwards(" + currentIndex + ",'" + localPlaylist.join(listSeperator) + "')")
         node.appendChild(subnode);
@@ -2330,8 +2382,9 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         if (urlData != null) {
             medialocation = urlData.split("MEDIA:")[1].split(listSeperator)[0];
             // Entferne Pfad und Dateierweiterung und setze als Titel
-            textnode = document.createTextNode("👈 " + removeFileExtension(allowedMediaExtensions, medialocation.split("/")[medialocation.split("/").length - 1]))
+            textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, medialocation.split("/")[medialocation.split("/").length - 1]))
             subnode.appendChild(textnode);
+            subnode.innerHTML = "👈 <span class='buttonText'>" + subnode.innerHTML + "</span>"
             subnode.href = "start.html?=" + btoa(urlData) + "#mediaNav";
             node.appendChild(subnode);
         }
@@ -2347,10 +2400,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     subnode = document.createElement("a");
     if (favorites == null || !favorites.includes(medialocation)) {
         textnode = document.createTextNode("Merken");
-        node.className = "";
+        node.className = node.className.split("isFavorite").join("");
     } else {
         textnode = document.createTextNode("Merken ⭐");
-        node.className = "isFavorite";
+        node.className += "isFavorite";
     }
     subnode.appendChild(textnode);
     subnode.setAttribute("onclick", "updateFavorites()");
@@ -2380,8 +2433,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         // Lade Playliste
         localPlaylist = localStorage.getItem("playlist-" + playlistName).split(listSeperator).sort();
 
-        textnode = document.createTextNode(mediaName + " 👉");
+        textnode = document.createTextNode(mediaName);
         subnode.appendChild(textnode);
+        subnode.innerHTML = "<span class='buttonText'>" + subnode.innerHTML + " </span>👉"
+
 
         subnode.setAttribute("onclick", "playlistForwards(" + currentIndex + ",'" + localPlaylist.join(listSeperator) + "')")
         node.appendChild(subnode);
@@ -2395,11 +2450,21 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         if (urlData != null) {
             medialocation = urlData.split("MEDIA:")[1].split(listSeperator)[0]
             // Entferne Pfad und Dateierweiterung und setze als Titel
-            textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, medialocation.split("/")[medialocation.split("/").length - 1])  + " 👉")
+            textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, medialocation.split("/")[medialocation.split("/").length - 1]))
             subnode.appendChild(textnode);
+            subnode.innerHTML = "<span class='buttonText'>" + subnode.innerHTML + " </span>👉"
+
             subnode.href = "start.html?=" + btoa(urlData) + "#mediaNav";
             node.appendChild(subnode);
         }
+    }
+
+    if (document.getElementById("autoplayCheckBox").checked) {
+        if (!document.getElementById("media").className.includes("autoplaying")) {
+            document.getElementById("media").className += "autoplaying";
+        }
+    } else {
+        document.getElementById("media").className = document.getElementById("media").className.split("autoplaying").join("");
     }
 } else {
     // Platzhalterbild für Leere Seiten erstellen

@@ -1,6 +1,7 @@
 <b>Version 1.31 In Arbeit</b>:<br>
 <ul>
     <li>[<span style="color: darkgreen">BUGFIX</span>] TBD: Wenn bei betrachtung eines Bildes Autoplay aktiviert wurde, musste man erst das Bild wechseln, bevor die Autoplayfunktion gegriffen hat.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Höhe des Mediencontainers angepasst, damit das Untermenü überdeckt wird.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Ob Autoplay aktiviert ist, wird nun unterhalb des Mediums mittels des Autoplay-Icons angezeigt.</li>
 </ul>
 <b>Version 1.30</b>:<br>

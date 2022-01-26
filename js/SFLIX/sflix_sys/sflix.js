@@ -35,6 +35,7 @@ var subnode = null;
 var searchTerm = null;
 var searchResults = null;
 var seasonList = null;
+var timeoutArray = [];
 
 settings = localStorage.getItem("settings");
 if (settings == null) {
@@ -631,6 +632,9 @@ function toggleContainer(idArray, displayMode) {
 
 // Funnktion, um das nächste Medium aufzurufen
 function playlistForwards(currentIndex, localPlaylist) {
+    timeoutArray = cancelTimeouts()
+
+    // Entferne Link-Node und ersetze mit leerem Link
     if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].href != null) {
         document.getElementById("next").removeChild(document.getElementById("next").childNodes[0]);
     }
@@ -721,8 +725,13 @@ function playlistForwards(currentIndex, localPlaylist) {
         }
 
         node = adjustMediaType(mediaUrl, node);
+        if (node.tagName == "IMG") {
+            node.parentNode.href = mediaUrl;
+        } else {
+            node.parentNode.href = null;
+        }
         node.src = mediaUrl;
-        setTimeout('location.href = "#";location.href = "#mediaNav";', 100)
+        // timeoutArray.push(setTimeout('location.href = "#";location.href = "#mediaNav";', 100))
 
 
         // Setze Timer für Autoplayfunktion, falls Autoplay aktiviert
@@ -732,9 +741,9 @@ function playlistForwards(currentIndex, localPlaylist) {
             if (document.getElementById('next').childNodes.length > 0 && document.getElementById("next").childNodes[0].innerHTML != "") {
                 // Animationsreset
                 document.getElementById('next').style.animation = "none";
-                setTimeout('document.getElementById("next").style.animation = "autoplayLoading ' + (autoplayDuration-1) + 's"', 1000);
+                timeoutArray.push(setTimeout('document.getElementById("next").style.animation = "autoplayLoading ' + (autoplayDuration-1) + 's"', 1000));
                 // Triggere klick von Next-Link
-                setTimeout("document.getElementById('next').childNodes[0].click()", autoplayDuration * 1000);
+                timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", autoplayDuration * 1000));
             } else {
                 // Reset der Einstellungen
                 updateOptions(false, 0, document.getElementById("autoplayDuration").value);
@@ -745,6 +754,8 @@ function playlistForwards(currentIndex, localPlaylist) {
 
 // Funktion, um das letzte Medium aufzurufen
 function playlistBackwards(currentIndex, localPlaylist) {
+    timeoutArray = cancelTimeouts()
+
     // Entferne Link-Node und ersetze mit leerem Link
     if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].href != null) {
         document.getElementById("next").removeChild(document.getElementById("next").childNodes[0]);
@@ -835,8 +846,13 @@ function playlistBackwards(currentIndex, localPlaylist) {
         
 
         node = adjustMediaType(mediaUrl, node);
+        if (node.tagName == "IMG") {
+            node.parentNode.href = mediaUrl;
+        } else {
+            node.parentNode.href = null;
+        }
         node.src = mediaUrl;
-        setTimeout('location.href = "#";location.href = "#mediaNav";', 100)
+        // timeoutArray.push(setTimeout('location.href = "#";location.href = "#mediaNav";', 100))
 
     }
 }
@@ -1144,7 +1160,7 @@ function applySettings() {
     toggleContainer(['settingsBox'], "none");
 }
 
-// Funktion, um zu prüfen, dass beim aktievieren der Autoplayfunktion, die Anzahl mindestens auf 1 gesetzt wird.
+// Funktion, um zu prüfen, dass beim aktivieren der Autoplayfunktion, die Anzahl mindestens auf 1 gesetzt wird.
 function checkAutoplayAmout() {
     if (document.getElementById("autoplayCheckBox").checked) {
         if (document.getElementById("amountOfAutoplay").value <= 0) {
@@ -1295,6 +1311,8 @@ function appendMediafunctions(node) {
     node.onloadedmetadata = function() {
         node.autoplay = true;
         node.play();
+        location.href = "#";
+        location.href = "#mediaNav";
         // Lese Dateinamen aus
         medialocation = replaceSpecialChars(document.getElementById("video").src)
         mediaName = medialocation.split("/");
@@ -1530,6 +1548,15 @@ function saveLicenseKey() {
     
     localStorage.setItem("serial", licenseKey);
     toggleContainer(["serialKeyWrapper"], "none");
+}
+
+// Funktion, um die gesetzten Timeouts abzubrechen
+function cancelTimeouts() {
+    timeoutArray.forEach(element => {
+        clearTimeout(element);
+    });
+
+    return []
 }
 
 //  __   __  _______  ______    _______  _______  ______    _______  ___   _______  __   __  __    _  _______ 
@@ -2235,81 +2262,6 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         
         document.getElementById("media").appendChild(node);
         appendMediafunctions(node);
-
-        // node.onloadedmetadata = function() {
-        //     node.autoplay = true;
-        //     // Lese Dateinamen aus
-        //     medialocation = replaceSpecialChars(document.getElementById("video").src)
-        //     mediaName = medialocation.split("/");
-        //     mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);
-        //     // Lese Zeitstempel des ausgewählten Videos aus
-        //     pastTimestamp = localStorage.getItem("timestamp-" + mediaName)
-        //     if (pastTimestamp != null) {
-        //         // Prüfe Zeitstempel für Medien die länger als 10 Minuten sind
-        //         if (this.duration >= 600) {
-        //             // Setze Player auf gespeicherten Zeitstempel
-        //             if (100 / this.duration * pastTimestamp < 95) {
-        //                 // Setze Abspeilzeitpunkt auf Zeitstempel
-        //                 document.getElementById("video").currentTime = pastTimestamp;
-        //             } else {
-        //                 // Lösche Zeitstempel
-        //                 localStorage.removeItem("timestamp-" + mediaName);
-        //             }
-        //         } else {
-        //             // Lösche Zeitstempel
-        //             localStorage.removeItem("timestamp-" + mediaName);
-        //         }
-        //     }
-        // };
-        
-        // // setTimeout("document.getElementById('video').autoplay = true", 1000);
-        
-        // // Lese aktuellen Zeitstempel im Video aus
-        // document.getElementById("video").addEventListener('timeupdate', function() {
-        //     medialocation = replaceSpecialChars(document.getElementById("video").src)
-        //     mediaName = medialocation.split("/");
-        //     mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);
-
-        //     currentTime = parseInt(this.currentTime, 10);
-        //     currentTimestamp = localStorage.getItem("timestamp-" + mediaName);
-        //     if (currentTimestamp == null) {
-        //         currentTimestamp = 0;
-        //     }
-        //     // Speichere Videoposition alle 10 Sek
-        //     if (currentTime != 0 && currentTimestamp != currentTime && currentTime % 10 == 0) {
-        //         localStorage.setItem("timestamp-" + mediaName, currentTime);
-        //         localStorage.setItem("mediaVolume", document.getElementById("video").volume)
-        //     }
-
-        //     // Unterscheide zwischen Audio- und Video-Elementen
-        //     videoCheck = document.getElementById("video").tagName == "VIDEO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= autoplayDuration;
-        //     audioCheck = document.getElementById("video").tagName == "AUDIO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= 11;
-        //     if (videoCheck || audioCheck) {
-        //         if (audioCheck) {
-        //             autoplayDuration = 11;
-        //         }
-        //         prozent = 100 - parseInt(100/10*(this.duration - currentTime - autoplayDuration + 10));
-        //         document.getElementById("next").style.background = "linear-gradient(to right, red " + (prozent+10) + "%, #424141 0%)";
-                
-        //         if (this.duration - currentTime <= autoplayDuration - 10) {
-        //             document.getElementById("next").style.background = "";
-        //             updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
-        //             if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].innerHTML != "") {
-        //                 document.getElementById("next").childNodes[0].click();
-        //             } else {
-        //                 updateOptions(false, 0, document.getElementById("autoplayDuration").value);
-        //             }
-        //         }
-        //     }
-
-        //     if (this.duration > 600) {
-        //         if (100 / this.duration * currentTimestamp > 95) {
-        //             this.style.border = "1px solid red";
-        //         } else {
-        //             this.style.border = "0px solid #222";
-        //         }
-        //     }
-        // });
     } else if (isImage(medialocation)) {
         //  _____ _ _   _         
         // | __  |_| |_| |___ ___ 
@@ -2330,10 +2282,8 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         if (document.getElementById("autoplayCheckBox").checked) {
             updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
             document.getElementById('next').style.animation = "autoplayLoading " + autoplayDuration + "s";
-            setTimeout("document.getElementById('next').childNodes[0].click()", autoplayDuration * 1000);
-            // setTimeout("playlistForwards(" + currentIndex + ", '" + localPlaylist.join(listSeperator) + "')", autoplayDuration * 1000);
+            timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", autoplayDuration * 1000));
         }
-
     }
 
     setLastPlayed(mediaName, window.location.href)

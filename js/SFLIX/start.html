@@ -222,7 +222,7 @@
         <a class="closeButton" id="toggleFullscreenButton" href="javascript:void(0);" style="display: none;" onclick="toggleFullscreenMode()">❌</a>
         <div id="help" style="display: none;">
             <h3>Neue Medieninhalte hinzufügen</h3>
-            <p>Um neue Medieninhalte hinzuzufügen, müssen diese einfach in den entsprechenden STEFFLIX-Ordner kopiert werden und anschliessend das Programm "updateData.exe" ausgeführt werden.</p>
+            <p>Um neue Medieninhalte hinzuzufügen, müssen diese einfach in den entsprechenden STEFFLIX-Ordner kopiert werden und anschliessend das Programm <span class="highlighted">updateData.exe</span> ausgeführt werden.</p>
             <ol>
                 <li>Gewünschte <a href="javascript:void(0);" onclick="toggleContainer(['addNewMediaInfoTitle', 'addNewMediaInfo'], 'block')">Medien</a> in passenden Unterordner von STEFFLIX kopieren<br><br>
                 <h4 id="addNewMediaInfoTitle" style="text-align: left;display: none;">Unterstützte Dateiformate:</h4>
@@ -232,24 +232,56 @@
                     <li>Bilder: jpg, png, gif</li>
                     <p><br>Anleitung zur <a href="https://praxistipps.chip.de/mit-vlc-dateien-umwandeln-so-gehts_35221">Konvertierung von Videos mit VLC</a></p>
                 </ul></li>
-                <li>Optional: Preview-Bild in <a href="javascript:void(0);" style="cursor: pointer;" onclick="toggleContainer(['folderExplain'], 'block')">Preview-Ordner</a> hinterlegen. Muss jpg-Format aufweisen und der Dateiname muss identisch sein wie das Zielmedium. <span id="folderExplain" style="display: none;"><b>(Der Preview-Ordner muss sich im selben Verzeichnis befinden wie das Medium)</b>:<br><br> D:\\STEFFLIX\\BILDER<br>├───Buddy<br>├───Pilze<br>├───Natur<br>└───<span style='color: red'>Preview</span><br><span style='margin-left: 45px;'>└───Buddy.jpg</span><br><span style='margin-left: 45px;'>└───Natur.jpg</span><br><span style='margin-left: 45px;'>└───Pilze.jpg</span><br></span><br><br></li>
+                <li>Optional: Preview-Bild in <a href="javascript:void(0);" style="cursor: pointer;" onclick="toggleContainer(['folderExplain'], 'block')">Preview-Ordner</a> hinterlegen. Muss jpg-Format aufweisen und der Dateiname muss identisch sein wie das Zielmedium. <span id="folderExplain" style="display: none;"><b>(Der Preview-Ordner muss sich im selben Verzeichnis befinden wie das Medium)</b>:<br><br> D:\sflix\BILDER<br>├───Buddy<br>├───Pilze<br>├───Natur<br>└───<span style='color: red'>Preview</span><br><span style='margin-left: 45px;'>└───Buddy.jpg</span><br><span style='margin-left: 45px;'>└───Natur.jpg</span><br><span style='margin-left: 45px;'>└───Pilze.jpg</span><br></span><br><br></li>
                 <li>updateData.exe ausführen</li>
             </ol>
 
             <h3>Autoplayfunktion</h3>
-            <p>Damit die Autoplayfunktion genutzt werden kann, muss in den <a href="javascript:void(0);" onclick="toggleContainer(['settingsBox'], 'flex')">Optionen</a> sowohl der Haken bei Autoplay gesetzt werden als auch eine Anzahl der zu spielenden Medien angeben. <a href="javascript:void(0);" onclick="toggleContainer(['optionHelp'], 'block')">Informationen</a><br><br><br></p>
-                <div id="optionHelp" style="display: none;">
-                    <ul>
-                        <li><b>Autoplay</b>: Automatische Abspielfunktion aktivieren. Möchte man diese Nutzen, muss man "Anzahl autoplay" mindestens auf 1 setzen</li>
-                        <li><b>Anzahl autoplay</b>: Wie viele Medien sollen nacheinander abgespielt werden?</li>
-                        <li><b>Dauer bis Übergang</b>: Anzahl Sekunden vor Ende eines Videos/Musikstücks, bevor der nächste Titel aufgerufen werden soll. Bei Bildern, wird damit bestimmt, wie lange ein Bild sichtbar bleiben soll.</li>
-                    </ul>
-                    <br><br><br>
-                </div>
+            <p>Damit die Autoplayfunktion genutzt werden kann, muss in den <a href="javascript:void(0);" onclick="toggleContainer(['settingsBox'], 'flex')">Optionen</a> sowohl der Haken bei Autoplay gesetzt werden als auch eine Anzahl der zu spielenden Medien angeben. <a href="javascript:void(0);" onclick="toggleContainer(['optionHelp'], 'block')">Informationen</a><br></p>
+            <div id="optionHelp" style="display: none;">
+                <br>
+                <ul>
+                    <li><b>Autoplay</b>: Automatische Abspielfunktion aktivieren. Möchte man diese Nutzen, muss man "Anzahl autoplay" mindestens auf 1 setzen</li>
+                    <li><b>Anzahl autoplay</b>: Wie viele Medien sollen nacheinander abgespielt werden?</li>
+                    <li><b>Dauer bis Übergang</b>: Anzahl Sekunden vor Ende eines Videos/Musikstücks, bevor der nächste Titel aufgerufen werden soll. Bei Bildern, wird damit bestimmt, wie lange ein Bild sichtbar bleiben soll.</li>
+                </ul>
+            </div>
+            <br><br><br>
+
+            <h3>Browsereinstellungen</h3>
+            <p> Damit Medieninhalte automatisch wiedergegeben werden könne, müssen im Browser bestimmte Einstellungen vorgenommen werden.<br></p>
+            <div id="firefoxBrowserHelp" style="display: none;">
+                <ol>
+                    <li>Mittels <span class="highlighted">CTRL + I</span> die Webseiteneinstellungen öffnen.</li>
+                    <li>Berechtingungen-Tab öffnen.</li>
+                    <li>Unter "Automatische Wiedergabe" "Audio und Video erlauben" auswählen.</li>
+                </ol>
+            </div>
+            <div id="chromeBrowserHelp" style="display: none;">
+                <ol>
+                    <li>Toneinstellungen unter <span class="highlighted">chrome://settings/content/sound</span> öffnen.</li>
+                    <li>Bei "Benutzerdefinierte Einstellungen" unter "Dürfen Ton abspielen" auf "Hinzufügen" klicken.</li>
+                    <li>Folgenden Eintrag hinzufügen: <span class="highlighted">file:///*</span></li>
+                </ol>
+            </div>
+            <div id="edgeBrowserHelp" style="display: none;">
+                <ol>
+                    <li>Toneinstellungen unter <span class="highlighted">edge://settings/content/mediaAutoplay</span> öffnen.</li>
+                    <li>Neben "Zulassen" auf "Hinzufügen" klicken.</li>
+                    <li>Folgenden Eintrag hinzufügen: <span class="highlighted">file:///*</span></li>
+                </ol>
+            </div>
+            <div id="otherBrowserHelp" style="display: none;">
+                <ol>
+                    <li>Für den verwendeten Browser stehen keine Hilfestellungen zur Verfügung.</li>
+                    <li>STEFFLIX wurde für die Nutzung unter Google Chrome oder Mozilla Firefox optimiert.</li>
+                </ol>
+            </div>
+            <br>
             
 
-            <h3>STEFFLIX updaten</h3>
-            <p>Um Stefflix auf den neusten Stand zu bringen, muss das Programm "updateStefflix.exe" im STEFFLIX-Verzeichnis ausgeführt werden.<br><br><b>Aktuelle Version</b>: <span id="versionNow"></span><br><b>Neuste Version</b>: <span id="versionNew"></span></p><br><br><br>
+            <h3 id="stefflixUpdate">STEFFLIX updaten</h3>
+            <p>Um Stefflix auf den neusten Stand zu bringen, muss das Programm <span class="highlighted">updateStefflix.exe</span> im STEFFLIX-Verzeichnis ausgeführt werden.<br><br><b>Aktuelle Version</b>: <span id="versionNow"></span><br><b>Neuste Version</b>: <span id="versionNew"></span></p><br><br><br>
             <h3>Versionsvorschau</h3>
             <img id="sflixPreview"><br><br><br>
             <h3>CHANGELOG</h3>

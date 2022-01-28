@@ -1,5 +1,6 @@
-<b>Version 1.32 In Arbeit</b>:<br>
+<b>Version 1.32</b>:<br>
 <ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Hervorhebungen in Hilfeseite hinzugefügt.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Anpassung der Eingabefelder des Lizenzschlüssels.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Hilfe für die Browsereinstellungen für Chome / Firefox hinzugefügt.</li>
 </ul>

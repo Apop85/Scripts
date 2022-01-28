@@ -43,6 +43,14 @@ a:not(.button):hover {
     transition-duration: 0s;
 }
 
+.highlighted {
+    background-color: #ccc;
+    font-family: Courier New, serif;
+    padding: 1px 3px;
+    font-weight: 600;
+    color: black;
+}
+
 
 /*
   _   _             _             _   _             
@@ -795,6 +803,8 @@ a:not(.button):hover {
     width: 45px;
     padding: 2px 5px;
     text-align: center;
+    font-family: Courier New, serif;
+    font-weight: 600;
 }
 
 #serialKeyWrapper p, #serialKeyWrapper h2 {
@@ -802,8 +812,11 @@ a:not(.button):hover {
 }
 
 #licenseInputs {
-    display: flex;
-    justify-content: space-evenly;
+    /* display: flex;
+    justify-content: space-evenly; */
+    max-width: 570px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /*

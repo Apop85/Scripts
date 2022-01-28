@@ -1631,6 +1631,21 @@ function toggleFullscreenMode() {
     }
 }
 
+function detectBrowser() {
+    var test = function(regexp) {return regexp.test(window.navigator.userAgent)}
+    switch (true) {
+        case test(/edg/i): return "edge";
+        case test(/trident/i): return "ie";
+        case test(/firefox|fxios/i): return "firefox";
+        case test(/opr\//i): return "opera";
+        case test(/ucbrowser/i): return "uc browser";
+        case test(/samsungbrowser/i): return "samsung browser";
+        case test(/chrome|chromium|crios/i): return "chrome";
+        case test(/safari/i): return "safari";
+        default: return "Other";
+    }
+}
+
 //  __   __  _______  ______    _______  _______  ______    _______  ___   _______  __   __  __    _  _______ 
 // |  | |  ||       ||    _ |  |  _    ||       ||    _ |  |       ||   | |       ||  | |  ||  |  | ||       |
 // |  |_|  ||   _   ||   | ||  | |_|   ||    ___||   | ||  |    ___||   | |_     _||  | |  ||   |_| ||    ___|
@@ -2129,7 +2144,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             // Erstelle Update-Button
             buttonNode = document.createElement("a");
             buttonNode.className = "button";
-            buttonNode.href = "start.html?=" + btoa("HELP");
+            buttonNode.href = "start.html?=" + btoa("HELP") + "#stefflixUpdate";
             textNode = document.createTextNode("STEFFLIX UPDATE VERFÜGBAR");
             buttonNode.appendChild(textNode);
             wrapperNode.appendChild(buttonNode);
@@ -2238,6 +2253,18 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         // Zeige Hilfe an
         node = document.getElementById("help");
         node.style.display = "block";
+
+        browserName = detectBrowser()
+        console.log(browserName)
+        if (browserName == "firefox") {
+            document.getElementById("firefoxBrowserHelp").style.display = "block";
+        } else if (browserName == "chrome") {
+            document.getElementById("chromeBrowserHelp").style.display = "block";
+        } else if (browserName == "edge") {
+            document.getElementById("edgeBrowserHelp").style.display = "block";
+        } else {
+            document.getElementById("otherBrowserHelp").style.display = "block";
+        }
 
         // Füge aktuelle Version ein
         node = document.getElementById("versionNow");

@@ -1162,32 +1162,39 @@ function applySettings() {
     autoplay = document.getElementById("autoplayCheckBox").checked;
     autoplayAmount = document.getElementById("amountOfAutoplay").value;
     autoplayDuration = document.getElementById("autoplayDuration").value;
+
     if (!autoplay) {
         autoplayAmount = 0;
     } else if (autoplayAmount == 0) {
         autoplay = false;
     }
 
+    // Entferne Klasse und Animation 
     if (!autoplay) {
         document.getElementById("media").className = document.getElementById("media").className.split("autoplaying").join("");
         if (document.getElementById("next").style.animation != null) {
             document.getElementById("next").style.animation = null;
         }
+        // Lösche alle gesetztem Timeouts
         cancelTimeouts()
     } else {
+        // Füge Autoplay-Klasse hinzu
         if (!document.getElementById("media").className.includes("autoplaying")) {
             document.getElementById("media").className += "autoplaying";
         }
     }
-
+    
     localStorage.setItem("settings", [autoplay, autoplayAmount, autoplayDuration].join(listSeperator));
-    updateOptionFields(autoplay, autoplayAmount, autoplayDuration)
+    updateOptionFields(autoplay, autoplayAmount, autoplayDuration);
     toggleContainer(['settingsBox'], "none");
 
     if (autoplay && document.getElementById("video").tagName == "IMG") {
-        cancelTimeouts()
-        document.getElementById('next').style.animation = "autoplayLoading " + autoplayDuration + "s";
-        timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", autoplayDuration * 1000));
+        cancelTimeouts();
+        if (document.getElementById("autoplayCheckBox").checked) {
+            document.getElementById('next').style.animation = "autoplayLoading " + autoplayDuration + "s";
+            timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", autoplayDuration * 1000));
+        }
+        updateOptions(autoplay, autoplayAmount, autoplayDuration);
     }
 }
 
@@ -1208,26 +1215,43 @@ function checkAutoplayAmout() {
 
 // Funktion, um die Einstellungen anhand abgespielter Medien zu aktualisieren
 function updateOptions(autoplay, autoplayAmount, autoplayDuration) {
+    // Ändere Datentyp in Boolean
     if (autoplay == "true") {
         autoplay = true;
     } else if (autoplay == "false") {
         autoplay = false;
     }
+
+    // Ändere Datentyp in Integer
     autoplayAmount = parseInt(autoplayAmount);
     autoplayDuration = parseInt(autoplayDuration);
-
+    
+    // Verringere Anzahl Autoplay um 1
     if (autoplayAmount > 0) {
         autoplayAmount -= 1;
     } else {
         autoplayAmount = 0
     }
+    
+    // Deaktiviere Autoplay wenn Anzahl Autoplay = 0
     if (autoplay && autoplayAmount == 0) {
         autoplay = false;
     }
-
+    
+    // Setze Wert auf 11 zurück, wenn kleiner 11
     if (autoplayDuration < 11) {
         autoplayDuration = 11;
     }
+    
+    // Entferne Autoplay-Klasse
+    if (!autoplay) {
+        if (document.getElementById("media").className.includes("autoplaying")) {
+            document.getElementById("media").className = document.getElementById("media").className.split("autoplaying").join("");
+            document.getElementById("next").style.animation = null;
+        }
+    }
+
+    // Aktualisiere Daten
     updateOptionFields(autoplay, autoplayAmount, autoplayDuration);
     localStorage.setItem("settings", [autoplay, autoplayAmount, autoplayDuration].join(listSeperator));
 }
@@ -1594,8 +1618,8 @@ function cancelTimeouts() {
     return []
 }
 
+// Funktion, um in den Vollbildmodus zu wechseln
 function toggleFullscreenMode() {
-    console.log("toggle")
     node = document.getElementById("media");
     if (!node.className.includes("fullscreened")) {
         node.className += " fullscreened";

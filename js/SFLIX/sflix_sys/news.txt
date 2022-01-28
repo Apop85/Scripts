@@ -1,3 +1,7 @@
+<b>Version 1.311</b>:<br>
+<ul>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Autoplaysymbol wurde nach Ablaufen der Anzahl Autoplay nicht entfernt.</li>
+</ul>
 <b>Version 1.31</b>:<br>
 <ul>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Wenn bei betrachtung eines Bildes Autoplay aktiviert wurde, musste man erst das Bild wechseln, bevor die Autoplayfunktion gegriffen hat.</li>

@@ -1546,24 +1546,26 @@ function sendMessage() {
     
     if (sender == null || sender == ""){
         document.getElementById("errorMsg").innerHTML += "Name darf nicht Leer sein<br>"
-        var hasError = true;
+        hasError = true;
     }
     if (message == null || message == ""){
         document.getElementById("errorMsg").innerHTML += "Nachricht darf nicht Leer sein<br>"
-        var hasError = true;
+        hasError = true;
     }
     
     serial = localStorage.getItem("serial"); 
-
+    
     if (serial == "" || serial == null) {
         document.getElementById("errorMsg").innerHTML += "Kein Lizenzschlüssel angegeben<br>"
+        hasError = true;
     }
 
     if (hasError) {
         document.getElementById("errorMsg").innerHTML += "Nachricht wurde nicht verschickt"
     } else {
         try {
-            message = "ABSENDER: " + sender + " - NACHRICHT: " + message;
+            message = "ABSENDER: " + sender + "%0A" + "NACHRICHT: %0A" + message.split("\n").join("%0A");
+
             var xhr = new XMLHttpRequest();
             telegramConf = decodeSerial(serial);
             if (telegramConf != null) {
@@ -1631,6 +1633,7 @@ function toggleFullscreenMode() {
     }
 }
 
+// Funktion, um den verwendeten Browser auszulesen
 function detectBrowser() {
     var test = function(regexp) {return regexp.test(window.navigator.userAgent)}
     switch (true) {
@@ -1645,6 +1648,7 @@ function detectBrowser() {
         default: return "Other";
     }
 }
+
 
 //  __   __  _______  ______    _______  _______  ______    _______  ___   _______  __   __  __    _  _______ 
 // |  | |  ||       ||    _ |  |  _    ||       ||    _ |  |       ||   | |       ||  | |  ||  |  | ||       |

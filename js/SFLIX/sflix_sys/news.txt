@@ -1,3 +1,7 @@
+<b>Version 1.321</b>:<br>
+<ul>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Zeilenumbrüche in Feedbacknachrichten werden nun korrekt übermittelt.</li>
+</ul>
 <b>Version 1.32</b>:<br>
 <ul>
     <li>[<span style="color: blue">INTERFACE</span>] Hervorhebungen in Hilfeseite hinzugefügt.</li>

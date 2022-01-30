@@ -13,6 +13,8 @@ homeDir = os.getcwd()
 allowedFileTypes = ["jpg", "jpeg", "mp4", "mp3", "png", "ogg", "gif", "m4a"]
 diallowedItems = ["System Volume Information", "$RECYCLE.BIN", ".vscode", "sflix_sys"]
 forbiddenSymbols = ["$=$"]
+animationArray = ["\\", "|", "/", "-"]
+
 
 def containsForbiddenSymbol(text):
     for symbol in forbiddenSymbols:
@@ -20,7 +22,11 @@ def containsForbiddenSymbol(text):
             return True
     return False
 
-def recursiveCrawler(path, project="", serie="", staffel="", folge="", filelist={}, depth=0, errorList=[]):
+def loadingAnimation(animationArray, counter):
+    index = (counter // 10) % (len(animationArray))
+    print("\rDurchsuche Ordner...".ljust(40) + animationArray[index], end="")
+
+def recursiveCrawler(path, project="", serie="", staffel="", folge="", filelist={}, depth=0, errorList=[], counter=0):
     if depth == 0:
         pass
     elif depth == 1:
@@ -49,39 +55,48 @@ def recursiveCrawler(path, project="", serie="", staffel="", folge="", filelist=
                     if not relPath.startswith("\\"):
                         relPath = "\\" + relPath
                     relPath = "." + relPath
+
                     if depth == 1:
                         if not containsForbiddenSymbol(relPath):
                             filelist[project].setdefault(relPath)
+                            counter += 1
                         else:
                             errorList += [relPath]
                     elif depth == 2:
                         if not containsForbiddenSymbol(relPath):
                             filelist[project][serie].setdefault(relPath)
+                            counter += 1
                         else:
                             errorList += [relPath]
                     elif depth == 3:
                         if not containsForbiddenSymbol(relPath):
                             filelist[project][serie][staffel].setdefault(relPath, None)
+                            counter += 1
                         else:
                             errorList += [relPath]
                     elif depth > 3:
                         if not containsForbiddenSymbol(relPath):
                             filelist[project][serie][staffel][folge].setdefault(relPath, None)
+                            counter += 1
                         else:
                             errorList += [relPath]
+                    if counter % 10 == 0:
+                        loadingAnimation(animationArray, counter)
 
             elif os.path.isdir(os.path.join(path, item)):
-                filelist, errorList = recursiveCrawler(os.path.join(path, item), project, serie, staffel, folge, filelist, depth+1, errorList)
-    return filelist, errorList
+                filelist, errorList, counter = recursiveCrawler(os.path.join(path, item), project, serie, staffel, folge, filelist, depth+1, errorList, counter)
+    return filelist, errorList, counter
 
 print("Durchsuche Ordner...".ljust(40), end="")
 try:  
-    filelist, errorList = recursiveCrawler(homeDir)
-    print("OK")
+    filelist, errorList, counter = recursiveCrawler(homeDir)
+    print("\rDurchsuche Ordner...".ljust(40) + "OK")
+
 except:
     errorList = []
     filelist = []
-    print("Fehler")
+    counter = 0
+    print("\rDurchsuche Ordner...".ljust(40) + "Fehler")
 
 
 if len(filelist) > 0:
@@ -119,6 +134,7 @@ if len(errorList) > 0:
     print()
 print("".center(50, "="))
 print("Update abgeschlossen".center(50))
+print(f"{counter} Medien gefunden".center(50))
 print("".center(50, "="))
 print()
 input("Enter zum Beenden")

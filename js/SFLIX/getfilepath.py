@@ -45,26 +45,26 @@ def recursiveCrawler(path, project="", serie="", staffel="", folge="", filelist=
             if os.path.isfile(os.path.join(path, item)):
                 extension = item.split(".")[-1]
                 if extension in allowedFileTypes:
+                    relPath = os.path.join(path, item)[len(homeDir):]
+                    if not relPath.startswith("\\"):
+                        relPath = "\\" + relPath
+                    relPath = "." + relPath
                     if depth == 1:
-                        relPath = "." + os.path.join(path, item)[len(homeDir):]
                         if not containsForbiddenSymbol(relPath):
                             filelist[project].setdefault(relPath)
                         else:
                             errorList += [relPath]
                     elif depth == 2:
-                        relPath = "." + os.path.join(path, item)[len(homeDir):]
                         if not containsForbiddenSymbol(relPath):
                             filelist[project][serie].setdefault(relPath)
                         else:
                             errorList += [relPath]
                     elif depth == 3:
-                        relPath = "." + os.path.join(path, item)[len(homeDir):]
                         if not containsForbiddenSymbol(relPath):
                             filelist[project][serie][staffel].setdefault(relPath, None)
                         else:
                             errorList += [relPath]
                     elif depth > 3:
-                        relPath = "." + os.path.join(path, item)[len(homeDir):]
                         if not containsForbiddenSymbol(relPath):
                             filelist[project][serie][staffel][folge].setdefault(relPath, None)
                         else:

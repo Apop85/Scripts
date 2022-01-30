@@ -30,6 +30,10 @@ h2 {
     color: #d5d5d5;
 }
 
+a {
+    cursor: pointer;
+}
+
 a:not(.button) {
     text-decoration: none;
     color: darkblue;

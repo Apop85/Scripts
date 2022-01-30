@@ -1,5 +1,6 @@
 <b>Version 1.322</b>:<br>
 <ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Cursor-Style bei Links angepasst.</li>
     <li>[<span style="color: red"><b>HOTFIX</b></span>] Das erstellen der relativen Pfade mittels updateData.exe, konnte unter gewissen Umständen fehlerhaft sein.</li>
 </ul>
 <b>Version 1.321</b>:<br>

@@ -70,8 +70,8 @@
 </ul>
 <b>Version 1.28</b>:<br>
 <ul>
-    <li>[<span style="color: #e21af3">BUG</span>] Erstes Element eines Ordners kann nicht mittels Autoplay gestartet werden.</li>
-    <li>[<span style="color: #e21af3">BUG</span>] Ordnerübergreifendes Autoplay funktioniert noch nicht, sofern Ordner und Medieninhalt im selben Elternordner sind</li>
+    <li>[<span style="color: #e21af3">BUG</span>] <s>Erstes Element eines Ordners kann nicht mittels Autoplay gestartet werden.</s></li>
+    <li>[<span style="color: #e21af3">BUG</span>] <s>Ordnerübergreifendes Autoplay funktioniert noch nicht, sofern Ordner und Medieninhalt im selben Elternordner sind</s></li>
     <li>[<span style="color: red">FEATURE</span>] Einstellungsmenü hinzugefügt zum Manipulieren der Autoplay-Werte und zur Fehlerbehebung.</li>
     <li>[<span style="color: red">FEATURE</span>] Autoplayfunktion eingefügt zum automatischen Abspielen von Medieninhalten (z.B. Diashow)</li>
     <li>[<span style="color: red">FEATURE</span>] Vor- und Zurück-Buttons benötigen kein neues Laden sofern die Medien im selben Ordner sind</li>
@@ -160,7 +160,7 @@
 </ul>
 <b>Version 1.17</b>:<br>
 <ul>
-    <li>[<span style="color: #e21af3">BUG</span>] Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden</li>
+    <li>[<span style="color: #e21af3">BUG</span>] <s>Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden</s></li>
     <li>[<span style="color: blue">INTERFACE</span>] Hilfe-Button hinzugefügt</li>
 </ul>
 <b>Version 1.16</b>:<br>

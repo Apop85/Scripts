@@ -626,8 +626,16 @@ function toggleContainer(idArray, displayMode) {
                     }
                 }
             }
+            // Video-Interaktion einschränken (Chrome Bug Workaround)
+            if (detectBrowser() == "chrome" || detectBrowser() == "edge") {
+                document.getElementById("video").style.pointerEvents = "none";
+            }
         } else {
             node.style.display = "none";
+            // Video-Interaktion freigeben (Chrome Bug Workaround)
+            if (detectBrowser() == "chrome" || detectBrowser() == "edge") {
+                document.getElementById("video").style.pointerEvents = null;
+            }
         }
     }
 }

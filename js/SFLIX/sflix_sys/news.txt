@@ -1,3 +1,8 @@
+<b>Bekannte Fehler:</b>
+<ul>
+    <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
+    <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Eingabefelder über einem Video-Element können nicht bedient werden.</li>
+</ul>
 <b>Version 1.322</b>:<br>
 <ul>
     <li>[<span style="color: blue">INTERFACE</span>] Cursor-Style bei Links angepasst.</li>

@@ -36,6 +36,8 @@ var searchTerm = null;
 var searchResults = null;
 var seasonList = null;
 var timeoutArray = [];
+var gravity = 1;
+var maxY = 0;
 
 settings = localStorage.getItem("settings");
 if (settings == null) {
@@ -64,6 +66,109 @@ if (settings == null) {
 // |    ___||       ||  _    ||     |_   |   |  |   | |  |_|  ||  _    ||    ___||  _    |
 // |   |    |       || | |   ||    _  |  |   |  |   | |       || | |   ||   |___ | | |   |
 // |___|    |_______||_|  |__||___| |_|  |___|  |___| |_______||_|  |__||_______||_|  |__|                                                    
+
+// Funktion, um die Untermenüs zu erstellen
+function createSubmenus(decodedUriData, contentData, currentLink, depth=0, name="submenu", playListPrefix="") {
+    if (decodedUriData.includes("LEVEL" + depth)) {
+        node = document.createElement("ul");
+        node.id = name;
+        node.class = name;
+        node.style.display = "none";
+        document.getElementById("navigation").appendChild(node);
+
+        // Zerlege URL in "LEVEL"-Bestandteil
+        const level = replaceSpecialChars(decodedUriData.split("LEVEL" + depth + ":")[1].split(listSeperator)[0].split("#")[0]);
+        try {
+            nextLevel = replaceSpecialChars(decodedUriData.split("LEVEL" + (depth + 1) + ":")[1].split(listSeperator)[0].split("#")[0]);
+        } catch (error) {
+            nextLevel = null;
+        }
+
+        playListPrefix += level;
+        // Erstelle Leere Playliste
+        playlist = []
+
+        if (depth > 0) {
+            createHochButton(name.replace("sub", ""), name);
+        }
+	
+        // Iteriere über jeden Schlüsselwert
+        for (var key in contentData) {
+            if (contentData.hasOwnProperty(key) && key != "Preview") {
+                node = document.createElement("LI");
+                link = document.createElement("a");
+                // Entferne HTML-Code aus Schlüsselname
+                cleanedKey = replaceSpecialChars(key);
+                if (!cleanedKey.startsWith(".")) {
+                    cleanedKey = "." + cleanedKey;
+                }
+                previewPath = decodedUriData;
+
+                previewPath = previewPath.split("LEVEL").slice(1,depth+2).join("LEVEL");
+                if (previewPath.slice(previewPath.length-3, previewPath.length) == listSeperator) {
+                    previewPath = previewPath.slice(0, previewPath.length-3);
+                }
+
+                if (!previewPath.startsWith("LEVEL")) {
+                    previewPath = "LEVEL" + previewPath;
+                }
+
+                if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
+                    addPreviewImage(previewPath + listSeperator + "LEVEL" + (depth + 1) + ":" + cleanedKey, link);
+                } else {
+                    addPreviewImage(previewPath + listSeperator + "MEDIA:" + cleanedKey, link);
+                }
+
+                text = key.split("/");
+                
+                // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
+                if ((favorites != null && favorites.includes(cleanedKey))){
+                    text = "⭐ " + text[text.length - 1].replace(level1, "");
+                } else {
+                    text = text[text.length - 1].replace(level1, "");
+                }
+                
+                // Füge Emote anhand Dateiendung hinzu
+                text = addEmoteByFileExtension(text);
+
+                textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
+                link.appendChild(textnode);
+                text = addEmoteByFileExtension(text);
+                
+                // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
+                if (isMediaFile(allowedMediaExtensions, key)) {
+                    if (!key.startsWith(".")) {
+                        key = "." + key
+                    }
+                    // Füge alle Medienelemente eines Schlüssel der Playlist zu
+                    playlist.push(key);
+                    link.href = "start.html?=" + btoa(currentLink + listSeperator + "MEDIA:" + key + listSeperator + "PL:" + playListPrefix) + "#mediaNav";
+                } else {
+                    link.href = "start.html?=" + btoa(currentLink + listSeperator + "LEVEL" + (depth + 1) + ":" + key);
+                }
+                node.appendChild(link);
+                node.id = cleanedKey.replace(".", "");
+                document.getElementById(name).appendChild(node);
+            }
+        }
+        document.getElementById(level).className += " activeMenu";
+
+        // Sortiere Liste
+        sortList(document.getElementById(name));
+        document.getElementById(name).style.borderTop = "2px solid #666";
+        document.getElementById(name).style.display = "flex";
+
+        if (nextLevel != null) {
+            document.getElementById(name).style.display = "none";
+            newCurrentLink = currentLink + listSeperator + "LEVEL" + (depth + 1) + ":" + nextLevel;
+            createSubmenus(decodedUriData, contentData[nextLevel], newCurrentLink, depth+1, "sub" + name, playListPrefix)
+        }
+        
+        localStorage.setItem("currentPrefix", playListPrefix);
+        localStorage.setItem("playlist-" + playListPrefix, playlist.join(listSeperator));
+    }
+}
+
 // Funktion zum auslesen von Inhalten von anderen URLs
 function httpGet(theUrl) {
     let xmlhttp;
@@ -203,157 +308,88 @@ function replaceSpecialChars(string) {
     return string.replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä")
 }
 
+// Funktion um die Level aus der URL auszuelesen
 function extractData(decodedUrl) {
+    returnData = {"media": null, "levels": {}}
     // Zerlegen in Dateiname
+    if (decodedUrl.includes("LEVEL")) {
+        let counter = 0;
+        while (decodedUrl.includes("LEVEL" + counter)) {
+            level = counter;
+            levelContent = decodedUrl.split("LEVEL" + counter + ":")[1].split(listSeperator)[0];
+            returnData["levels"][level] = levelContent;
+            counter += 1;
+        }
+    }
     if (decodedUrl.includes("MEDIA")) {
-        // Lese Medieneigenschaften aus
-        mediaPath = replaceSpecialChars(decodedUrl.split(listSeperator + "MEDIA:")[1].split(listSeperator)[0].split("#")[0]);
-        mediaName = mediaPath.split("/");
-        mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length - 1]);
-        if (mediaName.startsWith(".")) {
-            mediaName = mediaName.replace(".","");
-        }
-        filename = mediaPath.split("/");
-        filename = filename[filename.length - 1];
-    } else {
-        mediaPath = null;
-        mediaName = null;
-        filename = null;
-    }
-    // Zerlegen in Stufe 1
-    if (decodedUrl.includes("LEVEL4")) {
-        level4 = replaceSpecialChars(decodedUrl.split(listSeperator + "LEVEL4:")[1].split(listSeperator)[0].split("#")[0]);
-        if (level4.startsWith(".")) {
-            level4 = level4.replace(".","");
-        }
-    } else {
-        level4 = null;
-    }
-    // Zerlegen in Stufe 2
-    if (decodedUrl.includes("LEVEL3")) {
-        level3 = replaceSpecialChars(decodedUrl.split(listSeperator + "LEVEL3:")[1].split(listSeperator)[0].split("#")[0]);
-        if (level3.startsWith(".")) {
-            level3 = level3.replace(".","");
-        }
-    } else {
-        level3 = null;
-    }
-    // Zerlegen in Stufe 3
-    if (decodedUrl.includes("LEVEL2")) {
-        level2 = replaceSpecialChars(decodedUrl.split(listSeperator + "LEVEL2:")[1].split(listSeperator)[0].split("#")[0]);
-        if (level2.startsWith(".")) {
-            level2 = level2.replace(".","");
-        }
-    } else {
-        level2 = null;
-    }
-    // Zerlegen in Stufe 4
-    if (decodedUrl.includes("LEVEL1")) {
-        level1 = replaceSpecialChars(decodedUrl.split(listSeperator + "LEVEL1:")[1].split(listSeperator)[0].split("#")[0]);
-        if (level1.startsWith(".")) {
-            level1 = level1.replace(".","");
-        }
-    } else {
-        level1 = null;
-    }
-    // Zerlegen in Hauptteil
-    if (decodedUrl.includes("MAIN")) {
-        mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(listSeperator)[0].split("#")[0]);
-        if (mainContent.startsWith(".")) {
-            mainContent = mainContent.replace(".","");
-        }
-    } else {
-        mainContent = null;
+        media = decodedUrl.split("MEDIA:")[1].split("#")[0].split(listSeperator)[0];
+        returnData["media"] = media;
     }
 
-    return [mainContent, level1, level2, level3, level4, mediaPath]
+    return returnData;
+}
+
+// Funktion, um dasm Datenarray auf die Auswahl zu begrenzen
+function reduceDataByUrl(currentUrl) {
+    let counter = 0;
+    returnData = data;
+    while (currentUrl.includes("LEVEL" + counter)) {
+        lvl = currentUrl.split("LEVEL" + counter + ":")[1].split(listSeperator)[0]
+        returnData = returnData[lvl]
+        
+        counter += 1;
+    }
+    return returnData
 }
 
 // Hinzufügen eines Vorschaubildes, falls vorhanden
 function addPreviewImage(decodedUrl, link, reason="normal") {
-    extractedData = extractData(decodedUrl);
-    mainContent = extractedData[0];
-    level1 = extractedData[1];
-    level2 = extractedData[2];
-    level3 = extractedData[3];
-    level4 = extractedData[4];
-    mediaPath = extractedData[5];
-
+    
     var previewIsSet = false;
     var previewImageSrc = null;
-
-    // Füge Vorschaubild für die Tiefe 4 ein - Suche nach Datei in Unterordner
-    if (!previewIsSet && mainContent != null && level1 != null && level2 != null && level3 != null && level4 != null && data[mainContent][level1][level2][level3][level4].hasOwnProperty("Preview")) {
-        previewImageSrc = searchPreviewImage(data[mainContent][level1][level2][level3][level4]["Preview"], [mediaName], filename, reason);
-        if (previewImageSrc != null) {
-            previewIsSet = true;
-        }
-    }
-    // Füge Vorschaubild für die Tiefe 4 ein - Suche nach Ordner/Datei in Elternordner
-    if (!previewIsSet && mainContent != null && level1 != null && level2 != null && level3 != null && level4 != null && data[mainContent][level1][level2][level3].hasOwnProperty("Preview")) {
-        previewImageSrc = searchPreviewImage(data[mainContent][level1][level2][level3]["Preview"], [mediaName, level4], filename, reason);
-        if (previewImageSrc != null) {
-            previewIsSet = true;
-        }
-    }
-    // Füge Vorschaubild für die Tiefe 3 ein - Suche nach Datei in Unterordner
-
-    if (!previewIsSet && mainContent != null && level1 != null && level2 != null && level3 != null && data[mainContent][level1][level2][level3].hasOwnProperty("Preview")) {
-        previewImageSrc = searchPreviewImage(data[mainContent][level1][level2][level3]["Preview"], [mediaName], filename, reason);
-        if (previewImageSrc != null) {
-            previewIsSet = true;
-        }
-    }
-    // Füge Vorschaubild für die Tiefe 3 ein - Suche nach Ordner/Datei in Elternordner
-    if (!previewIsSet && mainContent != null && level1 != null && level2 != null && level3 != null && data[mainContent][level1][level2].hasOwnProperty("Preview")) {
-        previewImageSrc = searchPreviewImage(data[mainContent][level1][level2]["Preview"], [mediaName, level3], filename, reason);
-        if (previewImageSrc != null) {
-            previewIsSet = true;
-        }
-    }
-    // Füge Vorschaubild für die Tiefe 2 ein - Suche nach Datei in Unterordner
-    if (!previewIsSet && mainContent != null && level1 != null && level2 != null && data[mainContent][level1][level2].hasOwnProperty("Preview")) {
-        previewImageSrc = searchPreviewImage(data[mainContent][level1][level2]["Preview"], [mediaName], filename, reason);
-        if (previewImageSrc != null) {
-            previewIsSet = true;
-        }
-    }
-    // Füge Vorschaubild für die Tiefe 2 ein - Suche nach Ordner/Datei in Elternordner
-    if (!previewIsSet && mainContent != null && level1 != null && level2 != null && data[mainContent][level1].hasOwnProperty("Preview")) {
-        previewImageSrc = searchPreviewImage(data[mainContent][level1]["Preview"], [mediaName, level2], filename, reason);
-        if (previewImageSrc != null) {
-            previewIsSet = true;
-        }
-    }
-    // Füge Vorschaubild für die Tiefe 1 ein - Suche nach Datei in Unterordner
-    if (!previewIsSet && mainContent != null && level1 != null && data[mainContent][level1].hasOwnProperty("Preview")) {
-        previewImageSrc = searchPreviewImage(data[mainContent][level1]["Preview"], [mediaName], filename, reason);
-        if (previewImageSrc != null) {
-            previewIsSet = true;
-        }
-    }
-    // Füge Vorschaubild für die Tiefe 1 ein - Suche nach Ordner/Datei in Elternordner
-    if (!previewIsSet && mainContent != null && level1 != null && data[mainContent].hasOwnProperty("Preview")) {
-        previewImageSrc = searchPreviewImage(data[mainContent]["Preview"], [mediaName, level1], filename, reason);
-        if (previewImageSrc != null) {
-            previewIsSet = true;
-        }
-    }
-    // Füge Vorschaubild für die Tiefe 0 ein - Suche nach Datei in Unterordner
-    if (!previewIsSet && mainContent != null && data[mainContent].hasOwnProperty("Preview")) {
-        previewImageSrc = searchPreviewImage(data[mainContent]["Preview"], [mediaName], filename, reason);
-        if (previewImageSrc != null) {
-            previewIsSet = true;
-        }
-    }
-    // Füge Vorschaubild für die Tiefe 0 ein - Suche nach Ordner/Datei in Elternordner
-    if (!previewIsSet && mainContent != null && data.hasOwnProperty("Preview")) {
-        previewImageSrc = searchPreviewImage(data["Preview"], [mediaName, mainContent], filename, reason);
-        if (previewImageSrc != null) {
-            previewIsSet = true;
-        }
-    }
     
+    extractedData = extractData(decodedUrl);
+    
+    dataReader = data;
+    if (extractedData["media"] == null || reason != "normal") {
+        for (key in extractedData["levels"]) {
+            keyValue = extractedData["levels"][key];
+            if (keyValue.startsWith(".")) {
+                keyValue = keyValue.replace(".", "");
+            }
+            
+            if (dataReader.hasOwnProperty(keyValue)) {
+                if (dataReader.hasOwnProperty("Preview")) {
+                    mediaName = extractedData["media"];
+                    imageFound = searchPreviewImage(dataReader["Preview"], [mediaName, keyValue], mediaName, reason);
+                    if (imageFound != null) {
+                        previewImageSrc = imageFound;
+                    }
+                }
+            }
+            dataReader = dataReader[keyValue]
+        }
+        if (previewImageSrc == null && reason != "normal") {
+            dataReader = reduceDataByUrl(decodedUrl.split(listSeperator + "MEDIA")[0]);
+            mediaName = extractedData["media"];
+            mediaName = mediaName.split("/")[mediaName.split("/").length - 1];
+            mediaName = removeFileExtension(allowedMediaExtensions, mediaName);
+            if (dataReader.hasOwnProperty("Preview")) {
+                previewImageSrc = searchPreviewImage(dataReader["Preview"], [mediaName], mediaName, reason);
+            }
+        }
+    } else {
+        dataReader = reduceDataByUrl(decodedUrl.split(listSeperator + "MEDIA")[0]);
+        mediaName = extractedData["media"];
+        mediaName = mediaName.split("/")[mediaName.split("/").length - 1];
+        mediaName = removeFileExtension(allowedMediaExtensions, mediaName);
+        previewImageSrc = searchPreviewImage(dataReader["Preview"], [mediaName], mediaName, reason);
+    }
+
+    if (previewImageSrc != null) {
+        previewIsSet = true;
+    }
+
     if (previewIsSet) {
         if (!previewImageSrc.startsWith(".")) {
             previewImageSrc = "." + previewImageSrc;
@@ -409,6 +445,7 @@ function setLastPlayed(title, url) {
     }
     
     var mediaPath = atob(url.split("?=")[1].split("#")[0]).split(listSeperator + "MEDIA:")[1].split(listSeperator)[0].split("/");
+    
     var filename = mediaPath[mediaPath.length - 1];
     if (!isImage(filename)) {
         while (mediaPath.length > 3) {
@@ -427,6 +464,7 @@ function setLastPlayed(title, url) {
                 currentPlaylist.splice(loggedUrl, 1)
             }
         }
+
     
         if (currentPlaylist.length < 5) {
             currentPlaylist.splice(0, 0, title + "|" + url);
@@ -443,6 +481,7 @@ function setHeight() {
     document.getElementById("loadingScreen").style.display = "none";
     // document.getElementById("mainBody").style.minHeight = document.documentElement.scrollHeight + "px";
     // document.getElementById("mainBody").style.minHeight = "min-co";
+    // gLoop()
 }
 
 // Funktion zum öffnen und schliessen der Untermenüs
@@ -496,7 +535,7 @@ function createLink(key, coreUrl) {
 }
 
 // Funktion zum rekursiven Durchsuchen des Daten-Arrays
-function recursiveSearch(data, searchTerm, currentLink="MAIN:", searchResults=[], depth=0, link=null) {
+function recursiveSearch(data, searchTerm, currentLink="LEVEL0:", searchResults=[], depth=0, link=null) {
     for (var key in data) {
         if (depth != 0) {
             if (key != "Preview") {
@@ -904,260 +943,87 @@ function adjustMediaType(mediaUrl, node) {
 
 // Funktion, um den letzten/nächsten Unterordner zu suchen
 function swapSeason(direction) {
+    // Lese aktuelle Informationen aus
     currentUrl = window.location.href;
-    decodedData = atob(currentUrl.split("?=")[1].split("#")[0])
-    extractedData = extractData(decodedData);
-    mainContent = extractedData[0];
-    level1 = extractedData[1];
-    level2 = extractedData[2];
-    level3 = extractedData[3];
-    level4 = extractedData[4];
-    currentMediaLocation = extractedData[5];
-    newUrl = null;
-    
-    seasonList = [];
-    mediaList = [];
-    if (mainContent != null && level1 != null && level2 != null && level3 != null) {
-        // Erstelle Schlüsselliste
-        for (var key in data[mainContent][level1][level2]) {
-            if (key != "Preview") {
-                if (!isMediaFile(allowedMediaExtensions, key)) {
-                    seasonList.push(key);
-                }
-            }
-        }
-        seasonList = seasonList.sort();
-        // Lese akteuellen Index aus
-        keyIndex = seasonList.indexOf(level3);
-        // Prüfe, ob eine weitere Staffel vorhanden ist
-        if (keyIndex != -1 && keyIndex + direction >= 0 && keyIndex + direction < seasonList.length) {
-            // Erstelle Liste aller Episoden
-            for (var key in data[mainContent][level1][level2][seasonList[keyIndex + direction]]) {
-                if (key != "Preview") {
-                    mediaList.push(key);
-                }
-            };
-            
-            // Lese erste Folge der nächsten Staffel aus
-            if (direction < 0) {
-                medialocation = mediaList.sort()[mediaList.length - 1];
-            } else {
-                medialocation = mediaList.sort()[0];
-            }
-            if (isMediaFile(allowedMediaExtensions, medialocation)) {
-                if (medialocation.startsWith(".")) {
-                    medialocation = medialocation.replace(".", "")
-                }
-                // Definiere newPlaylistname
-                newPlaylistName = mainContent + level1 + level2 + seasonList[keyIndex + direction];
-                // Setze aktuelle URL zusammen
-                newUrl = "MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + level2 + listSeperator + "LEVEL3:" + seasonList[keyIndex + direction] + listSeperator + "MEDIA:." + medialocation + listSeperator + "PL:" + newPlaylistName; 
-            } else {
-                medialocation = null;
-            }
-        }
-    } else if (mainContent != null && level1 != null && level2 != null) {
-        // Erstelle Schlüsselliste
-        for (var key in data[mainContent][level1]) {
-            if (key != "Preview") {
-                if (!isMediaFile(allowedMediaExtensions, key)) {
-                    seasonList.push(key);
-                }
-            }
-        }
-        seasonList = seasonList.sort();
-        // Lese akteuellen Index aus
-        keyIndex = seasonList.indexOf(level2);
+    decodedData = atob(currentUrl.split("?=")[1].split("#")[0]);
+    playlist = decodedData.split("PL:")[1].split(listSeperator)[0];
 
-        // Prüfe, ob eine weitere Staffel vorhanden ist
-        if (keyIndex != -1 && keyIndex + direction >= 0 && keyIndex + direction < seasonList.length) {
-            // Erstelle Liste aller Episoden
-            for (var key in data[mainContent][level1][seasonList[keyIndex + direction]]) {
-                if (key != "Preview") {
-                    mediaList.push(key);
-                }
-            };
-            // Lese erste Folge der nächsten Staffel aus
-            if (direction < 0) {
-                medialocation = mediaList.sort()[mediaList.length - 1];
-            } else {
-                medialocation = mediaList.sort()[0];
-            }
-            if (isMediaFile(allowedMediaExtensions, medialocation)) {
-                if (medialocation.startsWith(".")) {
-                    medialocation = medialocation.replace(".", "")
-                }
-                // Definiere newPlaylistname
-                newPlaylistName = mainContent + level1 + seasonList[keyIndex + direction];
-                // Setze aktuelle URL zusammen
-                newUrl = "MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + seasonList[keyIndex + direction] + listSeperator + "MEDIA:." + medialocation + listSeperator + "PL:" + newPlaylistName;
-            } else {
-                medialocation = null;
-            }
-        }
-    } else if (mainContent != null && level1 != null) {
-        // Erstelle Schlüsselliste
-        for (var key in data[mainContent]) {
-            if (key != "Preview") {
-                if (!isMediaFile(allowedMediaExtensions, key)) {
-                    seasonList.push(key);
-                }
-            }
-        }
-        seasonList = seasonList.sort();
-        // Lese akteuellen Index aus
-        keyIndex = seasonList.indexOf(level1);
-        // Prüfe, ob eine weitere Staffel vorhanden ist
-        if (keyIndex != -1 && keyIndex + direction >= 0 && keyIndex + direction < seasonList.length) {
-            // Erstelle Liste aller Episoden
-            for (var key in data[mainContent][seasonList[keyIndex + direction]]) {
-                if (key != "Preview") {
-                    mediaList.push(key);
-                }
-            };
-            // Lese erste Folge der nächsten Staffel aus
-            if (direction < 0) {
-                medialocation = mediaList.sort()[mediaList.length - 1];
-            } else {
-                medialocation = mediaList.sort()[0];
-            }
-            if (isMediaFile(allowedMediaExtensions, medialocation)) {
-                if (medialocation.startsWith(".")) {
-                    medialocation = medialocation.replace(".", "")
-                }
-                // Definiere newPlaylistname
-                newPlaylistName = mainContent + seasonList[keyIndex + direction];
-                // Setze aktuelle URL zusammen
-                newUrl = "MAIN:" + mainContent + listSeperator + "LEVEL1:" + seasonList[keyIndex + direction] + listSeperator + "MEDIA:." + medialocation + listSeperator + "PL:" + newPlaylistName;
-            } else {
-                medialocation = null;
-            }
-        }
+    // Lese daten aus URL aus
+    extractedData = extractData(decodedData);
+
+    seasonData = data;
+    url = "";
+    target = Object.keys(extractedData["levels"]).length - 1;
+    // Begrenze Datenarray auf Auswahl und erstelle Base-Url
+    for (let index = 0; index < target; index++) {
+        seasonData = seasonData[extractedData["levels"][index]];
+        url += "LEVEL" + index + ":" + extractedData["levels"][index] + listSeperator;
     }
-    if (newUrl != null) {
-        return newUrl;
-    } else {
-        return null;
+
+    searchFor = extractedData["levels"][target];
+
+    // Erstelle und sortiere Schlüsselliste
+    keyList = [];
+    Object.keys(seasonData).forEach(element => {
+        keyList.push(element);
+    });
+    keyList = keyList.sort();
+
+    // Lese aktuellen Index der Staffel aus
+    currentIndex = keyList.indexOf(searchFor);
+
+    // Prüfe, ob der neue Index innerhalb des Ranges ist
+    if (currentIndex + direction >= 0 && currentIndex + direction < keyList.length) {
+        newSeason = keyList[currentIndex + direction];
+        // Ergänze URL um neue Staffel
+        url += "LEVEL" + target + ":" + newSeason + listSeperator;
+
+        episodeList = Object.keys(seasonData[newSeason]);
+        episodeList = episodeList.sort();
+
+        // Lese nächste Episode anhand der Richtung aus
+        if (direction < 0) {
+            newEpisode = episodeList[episodeList.length - 1];
+        } else {
+            newEpisode = episodeList[0];
+        }
+        
+        // Ergänze Url um Medienpfad 
+        url += "MEDIA:" + newEpisode + listSeperator;
+
+        // Ersetze alten Playlistnamen mit neuem
+        newPlaylist = "PL:" + playlist.replace(searchFor, newSeason);
+        url += newPlaylist;
+        
+        return url;
     }
+
+    return null;
 }
 
 // Funktion zum extrahieren der Tiefen- und Medieninformationen aus dem Medienlink
 function extractFromPath(path) {
-    pathArray = path.split("/")
-    // Entferne relative Pfadangebe aus Array
-    if (pathArray[0] == ".") {
-        pathArray.splice(0, 1);
-    }
-
-    // Lese Main-Auswahl aus
-    if (pathArray.length >= 1) {
-        if (!isMediaFile(allowedMediaExtensions, pathArray[0])) {
-            mainContent = pathArray[0];
+    pathArray = path.replace("./", "").split("/");
+    srcPath = path.replace("./", "").split("/");
+    srcPath = "./" + srcPath.splice(0, srcPath.length - 1).join("/");
+    // console.log(srcPath)
+    playlist = "";
+    depth = 0;
+    url="./"
+    pathArray.forEach(element => {
+        if (!isMediaFile(allowedMediaExtensions, element)) {
+            playlist += element;
+            url += "LEVEL" + depth + ":" + element + listSeperator;
         } else {
-            // Speichere Medienpfad
-            media = pathArray[0];
-            mainContent = "";
+            url += "MEDIA:" + srcPath + "/" + element;
         }
-    } else {
-        mainContent = "";
-    }
 
-    // Lese Level1-Auswahl aus
-    if (pathArray.length >= 2) {
-        if (!isMediaFile(allowedMediaExtensions, pathArray[1])) {
-            level1 = pathArray[1];
-        } else {
-            // Speichere Medienpfad
-            media = pathArray[1];
-            level1 = "";
-        }
-    } else {
-        level1 = "";
+        depth += 1
+    });
+    if (url.includes("MEDIA")) {
+        url += listSeperator + "PL:" + playlist;
     }
-
-    // Lese Level2-Auswahl aus
-    if (pathArray.length >= 3) {
-        if (!isMediaFile(allowedMediaExtensions, pathArray[2])) {
-            level2 = pathArray[2];
-        } else {
-            // Speichere Medienpfad
-            media = pathArray[2];
-            level2 = "";
-        }
-    } else {
-        level2 = "";
-    }
-
-    // Lese Level3-Auswahl aus
-    if (pathArray.length >= 4) {
-        if (!isMediaFile(allowedMediaExtensions, pathArray[3])) {
-            level3 = pathArray[3];
-        } else {
-            // Speichere Medienpfad
-            media = pathArray[3];
-            level3 = "";
-        }
-    } else {
-        level3 = "";
-    }
-
-    // Lese Level4-Auswahl aus
-    if (pathArray.length >= 5) {
-        if (!isMediaFile(allowedMediaExtensions, pathArray[4])) {
-            level4 = pathArray[4];
-        } else {
-            // Speichere Medienpfad
-            media = pathArray[4];
-            level4 = "";
-        }
-    } else {
-        level4 = "";
-    }
-
-    // Bereite URL und Playlistenname vor
-    playlistName = "";
-    if (mainContent != "") {
-        if (!isMediaFile(allowedMediaExtensions, mainContent)) {
-            playlistName += mainContent
-        }
-        mainContent = "MAIN:" + mainContent;
-    }
-
-    if (level1 != "") {
-        if (!isMediaFile(allowedMediaExtensions, level1)) {
-            playlistName += level1;
-        }
-        level1 = listSeperator + "LEVEL1:" + level1;
-    }
-    
-    if (level2 != "") {
-        if (!isMediaFile(allowedMediaExtensions, level2)) {
-            playlistName += level2;
-        }
-        level2 = listSeperator + "LEVEL2:" + level2;
-    }
-    
-    if (level3 != "") {
-        if (!isMediaFile(allowedMediaExtensions, level3)) {
-            playlistName += level3;
-        }
-        level3 = listSeperator + "LEVEL3:" + level3;
-    }
-    
-    if (level4 != "") {
-        if (!isMediaFile(allowedMediaExtensions, level4)) {
-            playlistName += level4;
-        }
-        level4 = listSeperator + "LEVEL4:" + level4;
-    }
-    
-    if (media != "") {
-        mediaLocation = listSeperator + "MEDIA:" + path;
-    }
-
-    // Setze URL zusammen
-    path = mainContent + level1 + level2 + level3 + level4 + mediaLocation + listSeperator + "PL:" + playlistName;
-    return path
+    return url;
 }
 
 // Lade übergebene URL
@@ -1305,7 +1171,7 @@ function modifyLocalData(dataType) {
 
 // Funktion, um gespeicherte Daten mit der aktuellen Version kompatibel zu machen
 function updateData() {
-    // Update 1.28
+    // Update 1.28 - Anpassen Listenseperator
     if (localStorage.getItem("v1.28") == null) {
         ignoreList = ["mediaVolume", "timestamp", "favorites", "currentPrefix", "playlast"];
         // Prüfe alle lokal gespeicherten Daten
@@ -1371,6 +1237,47 @@ function updateData() {
 
         localStorage.setItem("v1.28", true)
     }
+
+    // Update 1.33 - Anpassen Levelstruktur
+    if (localStorage.getItem("v1.33") == null) {
+        counter = 0;
+        changeList = ["playlast"];
+        for (var searchTerm in changeList) {
+            for (var key in localStorage) {
+                if (key.includes(changeList[searchTerm])) {
+                    savedArray = localStorage.getItem(key).split(listSeperator);
+                    newArray = [];
+                    for (var item in savedArray) {
+                        currentData = savedArray[item];
+                        if (currentData.includes("start.html?=")) {
+                            filename = currentData.split("|")[0];
+                            url = currentData.split("|")[1];
+                            urlPrefix = url.split("html?=")[0] + "html?=";
+
+                            try {
+                                urlPostfix = "#" + url.split("#")[1];
+                            } catch (error) {
+                                urlPostfix = "";
+                            }
+
+                            encodedData = url.split("?=")[1].split("#")[0];
+                            decodedData = atob(encodedData);
+
+                            newData = decodedData.replace("LEVEL0:", "LEVEL0:");
+
+                            newArray.push(filename + "|" + urlPrefix + btoa(newData) + urlPostfix);
+                            counter += 1;
+                        }
+                    }
+                    if (counter > 0) {
+                        alert("Aufgrund des Updates 1.33 müssen die STEFFLIX-Daten neu eingelesen werden. Bitte Programm upadteData.exe ausführen!");
+                    }
+                    localStorage.setItem(key, newArray.join(listSeperator));
+                }
+            }
+        }
+        localStorage.setItem("v1.33", true);
+    }
 }
 
 // Funktion, um Subroutinen an das Medienelement anzuhängen
@@ -1426,7 +1333,7 @@ function appendMediafunctions(node) {
         audioCheck = document.getElementById("video").tagName == "AUDIO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= 11;
         if (videoCheck || audioCheck) {
             if (audioCheck) {
-                autoplayDuration = 11;
+                autoplayDuration = 12;
             }
             prozent = 100 - parseInt(100/10*(this.duration - currentTime - autoplayDuration + 10));
             document.getElementById("next").style.background = "linear-gradient(to right, red " + (prozent+10) + "%, #424141 0%)";
@@ -1657,6 +1564,54 @@ function detectBrowser() {
     }
 }
 
+// Tastendruck auslesen
+function checkKey(keyEvent) {
+    node = document.getElementById("smiley")
+    step = 100
+    keyEvent = keyEvent || window.event;
+    if (keyEvent.keyCode == '38') {
+        newValue = parseInt(node.style.top.replace("px", "")) - step
+        node.style.top = newValue + "px"
+    }
+    else if (keyEvent.keyCode == '40') {
+        newValue = parseInt(node.style.top.replace("px", "")) + step
+        node.style.top = newValue + "px"
+    }
+    else if (keyEvent.keyCode == '37') {
+        newValue = parseInt(node.style.left.replace("px", "")) - step 
+        node.style.left = newValue + "px"
+    }
+    else if (keyEvent.keyCode == '39') {
+        newValue = parseInt(node.style.left.replace("px", "")) + step
+        node.style.left = newValue + "px"
+    } else {
+    }
+
+}
+
+function gLoop() {
+    var node = document.getElementById("smiley")
+    var canvas = document.getElementsByTagName("body")[0]
+    var sRect = node.getBoundingClientRect();
+    var cRect = canvas.getBoundingClientRect();
+    var curY = parseInt(node.style.top.replace("px", ""))
+
+    if (sRect.bottom < cRect.bottom) {
+        node.style.top = parseInt(curY + (1 * gravity)) + "px"
+        gravity += 0.1
+    } else if (sRect.bottom > cRect.bottom) {
+        node.style.top = parseInt(curY - 1) + "px"
+        gravity = 0
+    } else {
+        gravity = 0
+    }
+
+    // while (sRect.bottom > maxY) {
+    //     curY = parseInt(node.style.top.replace("px", ""))
+    //     node.style.top = curY - 1
+    // }
+    window.requestAnimationFrame(gLoop);
+}
 
 //  __   __  _______  ______    _______  _______  ______    _______  ___   _______  __   __  __    _  _______ 
 // |  | |  ||       ||    _ |  |  _    ||       ||    _ |  |       ||   | |       ||  | |  ||  |  | ||       |
@@ -1713,6 +1668,11 @@ document.getElementById("autoplayDuration").addEventListener("change", function 
     } 
 })
 
+// Prüfe Tastendruck
+// document.onkeydown = checkKey;
+
+// GLoop
+// window.onload = gLoop();
 // Playlist Präfix 
 // playlistPrefix = "playlist-";
 
@@ -1731,7 +1691,8 @@ for (var key in data) {
         link = document.createElement("a");
         textnode = document.createTextNode(key);
         link.appendChild(textnode);
-        link.href = "start.html?=" + btoa("MAIN:" + key);
+        // link.href = "start.html?=" + btoa("LEVEL0:" + key);
+        link.href = "start.html?=" + btoa("LEVEL0:" + key);
         node.appendChild(link);
         node.id = key;
         document.getElementById("menu").appendChild(node);
@@ -1740,323 +1701,10 @@ for (var key in data) {
 // Sortiere Liste
 sortList(document.getElementsByClassName('menu')[0]);
 
-                 
-//  _____     _     
-// |     |___|_|___ 
-// | | | | .'| |   |
-// |_|_|_|__,|_|_|_|
-// Prüfe, ob aus dem Hauptmenü eine Auswahl getroffen wurde
-if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
-    // Zerlege URL in "MAIN"-Bestandteil
-    mainContent = replaceSpecialChars(decodedUriData.split("MAIN:")[1].split(listSeperator)[0].split("#")[0]);
-    playListPrefix += mainContent;
-    // Lege leere Playliste an
-    playlist = []
 
-    // Iteriere durch alle Elemente des gewählten Schlüssels
-    for (var key in data[mainContent]) {
-        if (data[mainContent].hasOwnProperty(key) && key != "Preview") {
-            node = document.createElement("LI");
-            link = document.createElement("a")
-            // Entferne HTML-Code aus Schlüsselname
-            cleanedKey = replaceSpecialChars(key);
-            if (!cleanedKey.startsWith(".")) {
-                cleanedKey = "." + cleanedKey;
-            }
-            // var mainContentPreviewImage = addPreviewImage(data[mainContent], link, cleanedKey);
-            if (decodedUriData.includes("LEVEL1")) {
-                previewPath = decodedUriData.split(listSeperator + "LEVEL1:")[0];
-            } else {
-                previewPath = decodedUriData;
-            }
-            if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
-                mainContentPreviewImage = addPreviewImage(previewPath + listSeperator + "LEVEL1:" + cleanedKey, link);
-            } else {
-                mainContentPreviewImage = addPreviewImage(previewPath + listSeperator + "MEDIA:" + cleanedKey, link);
-            }
-
-            // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
-            if (isMediaFile(allowedMediaExtensions, key)) {
-                text = key.split("/");
-                // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
-                if ((favorites != null && favorites.includes(cleanedKey))) {
-                    text = "⭐ " + text[text.length - 1];
-                } else {
-                    text = text[text.length - 1];
-                }
-                
-                // Füge Emote anhand Dateiendung hinzu
-                text = addEmoteByFileExtension(text);
-                if (!key.startsWith(".")) {
-                    key = "." + key
-                }
-                // Füge alle Elemente eines Schlüssel der Playlist zu
-                playlist.push(key);
-
-                // Erstelle Link
-                link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "MEDIA:" + key + listSeperator + "PL:" + playListPrefix) + "#mediaNav";
-                textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
-            } else {
-                link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + key);
-                textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, key));
-            }
-            link.appendChild(textnode);
-            node.appendChild(link);
-            node.id = cleanedKey.replace(".", "");
-            document.getElementById("submenu").appendChild(node);
-        }
-    }
-    document.getElementById(mainContent).className += " activeMenu";
-    // Sortiere Liste
-    sortList(document.getElementsByClassName('submenu')[0]);
-    document.getElementById("submenu").style.borderTop = "2px solid #666";
-    document.getElementById("submenu").style.display = "flex";
-
-                                  
-    //  __                _    ___   
-    // |  |   ___ _ _ ___| |  |_  |  
-    // |  |__| -_| | | -_| |   _| |_ 
-    // |_____|___|\_/|___|_|  |_____|
-    // Prüfe, ob eine "LEVEL1"-Auswahl getroffen wurde
-    if (decodedUriData.includes("LEVEL1")) {
-        document.getElementById("submenu").style.display = "none";
-        // Zerlege URL in "LEVEL1"-Bestandteil
-        level1 = replaceSpecialChars(decodedUriData.split(listSeperator + "LEVEL1:")[1].split(listSeperator)[0].split("#")[0]);
-        playListPrefix += level1;
-        // Erstelle Leere Playliste
-        playlist = []
-
-        createHochButton("submenu", "subsubmenu");
-	
-        // Iteriere über jeden Schlüsselwert
-        for (var key in data[mainContent][level1]) {
-            if (data[mainContent][level1].hasOwnProperty(key) && key != "Preview") {
-                node = document.createElement("LI");
-                link = document.createElement("a");
-                // Entferne HTML-Code aus Schlüsselname
-                cleanedKey = replaceSpecialChars(key);
-                if (!cleanedKey.startsWith(".")) {
-                    cleanedKey = "." + cleanedKey;
-                }
-
-                // Füge Vorschaubild hinzu
-                // addPreviewImage(data[mainContent][level1], link, cleanedKey);
-                if (decodedUriData.includes("LEVEL2")) {
-                    previewPath = decodedUriData.split(listSeperator + "LEVEL2:")[0];
-                } else {
-                    previewPath = decodedUriData;
-                }
-                if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
-                    addPreviewImage(previewPath + listSeperator + "LEVEL2:" + cleanedKey, link);
-                } else {
-                    addPreviewImage(previewPath + listSeperator + "MEDIA:" + cleanedKey, link);
-                }
-
-                text = key.split("/");
-                
-                // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
-                if ((favorites != null && favorites.includes(cleanedKey))){
-                    text = "⭐ " + text[text.length - 1].replace(level1, "");
-                } else {
-                    text = text[text.length - 1].replace(level1, "");
-                }
-                
-                // Füge Emote anhand Dateiendung hinzu
-                text = addEmoteByFileExtension(text);
-
-                textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
-                link.appendChild(textnode);
-                text = addEmoteByFileExtension(text);
-                
-                // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
-                if (isMediaFile(allowedMediaExtensions, key)) {
-                    if (!key.startsWith(".")) {
-                        key = "." + key
-                    }
-                    // Füge alle Medienelemente eines Schlüssel der Playlist zu
-                    playlist.push(key);
-
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "MEDIA:" + key + listSeperator + "PL:" + playListPrefix) + "#mediaNav";
-                } else {
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + key);
-                }
-                node.appendChild(link);
-                node.id = cleanedKey.replace(".", "");
-                document.getElementById("subsubmenu").appendChild(node);
-            }
-        }
-        document.getElementById(level1).className += " activeMenu";
-
-        // Sortiere Liste
-        sortList(document.getElementsByClassName('subsubmenu')[0]);
-        document.getElementById("subsubmenu").style.borderTop = "2px solid #666";
-        document.getElementById("subsubmenu").style.display = "flex";
-    }
-
-                                
-    //  __                _    ___ 
-    // |  |   ___ _ _ ___| |  |_  |
-    // |  |__| -_| | | -_| |  |  _|
-    // |_____|___|\_/|___|_|  |___|
-    // Prüfe, ob eine "LEVEL2"-Auswahl gefällt wurde
-    if (decodedUriData.includes("LEVEL2")) {
-        document.getElementById("subsubmenu").style.display = "none";
-
-        // Zerlege URL in "LEVEL2"-Bestandteil
-        level2 = replaceSpecialChars(decodedUriData.split(listSeperator + "LEVEL2:")[1].split(listSeperator)[0].split("#")[0]);
-        playListPrefix += level2;
-        // Erstelle Leere Playliste
-        playlist = []
-
-        createHochButton("subsubmenu", "subsubsubmenu");
-
-        for (var key in data[mainContent][level1][level2]) {
-            if (data[mainContent][level1][level2].hasOwnProperty(key) && key != "Preview") {
-                node = document.createElement("LI");
-                link = document.createElement("a")
-                text = key.split("/")
-                // Entferne HTML-Code aus Schlüsselname
-                cleanedKey = replaceSpecialChars(key);
-                if (!cleanedKey.startsWith(".")) {
-                    cleanedKey = "." + cleanedKey;
-                }
-
-                // Füge Vorschaubild hinzu
-                // addPreviewImage(data[mainContent][level1][level2], link, cleanedKey);
-                if (decodedUriData.includes("LEVEL3")) {
-                    previewPath = decodedUriData.split(listSeperator + "LEVEL3:")[0];
-                } else {
-                    previewPath = decodedUriData;
-                }
-                if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
-                    addPreviewImage(previewPath + listSeperator + "LEVEL3:" + cleanedKey, link);
-                } else {
-                    addPreviewImage(previewPath + listSeperator + "MEDIA:" + cleanedKey, link);
-                }
-
-                // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
-                if (favorites != null && favorites.includes(cleanedKey) && isMediaFile(allowedMediaExtensions, key)){
-                    text = "⭐ " + text[text.length - 1].replace(level1, "").replace(level2, "");
-                } else {
-                    text = text[text.length - 1].replace(level1, "").replace(level2, "");
-                }
-                
-                // Füge Emote anhand Dateiendung hinzu
-                text = addEmoteByFileExtension(text);
-
-                textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
-                link.appendChild(textnode);
-                
-                // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
-                if (isMediaFile(allowedMediaExtensions, key)) {
-                    if (!key.startsWith(".")) {
-                        key = "." + key
-                    }
-
-                    // Füge alle Elemente eines Schlüssel der Playlist zu
-                    playlist.push(key);
-
-                    // Erstelle Link
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + level2 + listSeperator + "MEDIA:" + key + listSeperator + "PL:" + playListPrefix) + "#mediaNav";
-                } else {
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + level2 + listSeperator + "LEVEL3:" + key);
-                }
-                node.appendChild(link);
-                node.id = cleanedKey.replace(".", "");
-                document.getElementById("subsubsubmenu").appendChild(node);
-            }
-        }
-        document.getElementById(level2).className += " activeMenu";
-
-        // Sortiere Liste
-        sortList(document.getElementsByClassName('subsubsubmenu')[0]);
-        document.getElementById("subsubsubmenu").style.borderTop = "2px solid #666";
-        document.getElementById("subsubsubmenu").style.display = "flex";
-    }
-
-                                
-    //  __                _    ___ 
-    // |  |   ___ _ _ ___| |  |_  |
-    // |  |__| -_| | | -_| |  |_  |
-    // |_____|___|\_/|___|_|  |___|
-    // Prüfe, ob eine "LEVEL3"-Auswahl getroffen wurde
-    if (decodedUriData.includes("LEVEL3")) {
-        document.getElementById("subsubsubmenu").style.display = "none";
-
-        // Zerlege URL in "LEVEL3"-Bestandteil
-        level3 = replaceSpecialChars(decodedUriData.split(listSeperator + "LEVEL3:")[1].split(listSeperator)[0].split("#")[0]);
-        playListPrefix += level3;
-        // Erstelle Leere Playliste
-        playlist = []
-
-        createHochButton("subsubsubmenu", "subsubsubsubmenu");
-
-        for (var key in data[mainContent][level1][level2][level3]) {
-            if (data[mainContent][level1][level2][level3].hasOwnProperty(key) && key != "Preview") {
-                node = document.createElement("LI");
-                link = document.createElement("a")
-                text = key.split("/")
-                // Entferne HTML-Code aus Schlüsselname
-                cleanedKey = replaceSpecialChars(key);
-                if (!cleanedKey.startsWith(".")) {
-                    cleanedKey = "." + cleanedKey;
-                }
-
-                // Füge Vorschaubild hinzu
-                // addPreviewImage(data[mainContent][level1][level2][level3], link, cleanedKey);
-                if (decodedUriData.includes("LEVEL4")) {
-                    previewPath = decodedUriData.split(listSeperator + "LEVEL4:")[0];
-                } else {
-                    previewPath = decodedUriData;
-                }
-                if (!isMediaFile(allowedMediaExtensions, cleanedKey)) {
-                    addPreviewImage(previewPath + listSeperator + "LEVEL4:" + cleanedKey, link);
-                } else {
-                    addPreviewImage(previewPath + listSeperator + "MEDIA:" + cleanedKey, link);
-                }
-
-                // Füge Favoritenstern hinzu, wenn Mediendatei in Favoritenliste vorhanden ist.
-                if ((favorites != null && favorites.includes(cleanedKey) && isMediaFile(allowedMediaExtensions, key))){
-                    text = "⭐ " + text[text.length - 1].replace(level1, "").replace(level2, "").replace(level3, "");
-                } else {
-                    text = text[text.length - 1].replace(level1, "").replace(level2, "").replace(level3, "");
-                }
-                
-                // Füge Emote anhand Dateiendung hinzu
-                text = addEmoteByFileExtension(text);
-
-                textnode = document.createTextNode(removeFileExtension(allowedMediaExtensions, text));
-                link.appendChild(textnode);
-                
-                // Prüfe, ob der aktuelle Schlüssel ein Medientyp ist
-                if (isMediaFile(allowedMediaExtensions, key)) {
-                    if (!key.startsWith(".")) {
-                        key = "." + key
-                    }
-                    // Füge alle Elemente eines Schlüssel der Playlist zu
-                    playlist.push(key);
-
-                    // Erstelle Medienlink
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + level2 + listSeperator + "LEVEL3:" + level3 + listSeperator + "MEDIA:" + key + listSeperator + "PL:" + playListPrefix) + "#mediaNav";
-                } else {
-                    link.href = "start.html?=" + btoa("MAIN:" + mainContent + listSeperator + "LEVEL1:" + level1 + listSeperator + "LEVEL2:" + level2 + listSeperator + "LEVEL3:" + level3 + listSeperator + "LEVEL4:" + key);
-                }
-                node.appendChild(link);
-                node.id = cleanedKey.replace(".", "");
-                document.getElementById("subsubsubsubmenu").appendChild(node);
-            }
-        }
-        document.getElementById(level3).className += " activeMenu";
-
-        // Sortiere Liste
-        sortList(document.getElementsByClassName('subsubsubsubmenu')[0]);
-        document.getElementById("subsubsubsubmenu").style.borderTop = "2px solid #666";
-        document.getElementById("subsubsubsubmenu").style.display = "flex";
-    }
-
-    // So lange kein Medientyp ausgewählt wurde, Playliste überschreiben
-    localStorage.setItem("currentPrefix", playListPrefix);
-    localStorage.setItem("playlist-" + playListPrefix, playlist.join(listSeperator));
+if (decodedUriData != null && decodedUriData.includes("LEVEL0:")) {
+    mainContent = replaceSpecialChars(decodedUriData.split("LEVEL0:")[1].split(listSeperator)[0].split("#")[0]);
+    createSubmenus(decodedUriData, data[mainContent], "LEVEL0:" + mainContent)
 } else if (window.location.href.includes("?=") && decodedUriData.includes("SEARCH:")) {
     //  _______  __   __  _______  __   __  _______ 
     // |       ||  | |  ||       ||  | |  ||       |
@@ -2098,7 +1746,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
             // Decodiere übergebene URL
             var decodedUrl = atob(lastUrl.split("?=")[1].split("#")[0]);
             // Lese die Hauptkategorie aus
-            mainContent = replaceSpecialChars(decodedUrl.split("MAIN:")[1].split(listSeperator)[0].split("#")[0]);
+            mainContent = replaceSpecialChars(decodedUrl.split("LEVEL0:")[1].split(listSeperator)[0].split("#")[0]);
             if (addPreviewImage(decodedUrl, buttonNode, "suche") != null){
                 // Styles für Button ändern
                 buttonNode.style.display = "flex";
@@ -2136,11 +1784,6 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
     
     document.getElementById("media").style.display = "block";
                                                             
-    //  _____     _     _       _                      _     _ _   
-    // |__   |_ _| |___| |_ ___| |_    ___ ___ ___ ___|_|___| | |_ 
-    // |   __| | | | -_|  _|- _|  _|  | . | -_|_ -| . | | -_| |  _|
-    // |_____|___|_|___|_| |___|_|    |_  |___|___|  _|_|___|_|_|  
-    //                                |___|       |_|                  
     // Lese neuste Version von GIT-Repository aus
     newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
     if (newestVersion != null) {
@@ -2219,6 +1862,7 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
 
                 var decodedUrl = atob(lastUrl.split("?=")[1].split("#")[0]);
                 var imageIsSet = false;
+
                 image = addPreviewImage(decodedUrl, buttonNode, "vorschau");
                 if (image != null) {
                     imageIsSet = true;
@@ -2267,7 +1911,6 @@ if (decodedUriData != null && decodedUriData.includes("MAIN:")) {
         node.style.display = "block";
 
         browserName = detectBrowser()
-        console.log(browserName)
         if (browserName == "firefox") {
             document.getElementById("firefoxBrowserHelp").style.display = "block";
         } else if (browserName == "chrome") {
@@ -2329,7 +1972,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     for (var key in localPlaylist){
         cleanedPlaylist.push(localPlaylist[key].split("|")[0])
     }
-    currentIndex = cleanedPlaylist.indexOf(medialocation);
+    const currentIndex = cleanedPlaylist.indexOf(medialocation);
     // Aktuelle Auswahl auslesen
     currentUrl = decodedUriData.split(listSeperator + "MEDIA:")[0];
     // Lese Dateinamen aus
@@ -2533,4 +2176,3 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     // Platzhalterbild für Leere Seiten erstellen
     document.getElementById("mainBody").style.backgroundImage = "url(sflix_sys/sflix_bg.jpg)";
 }
-

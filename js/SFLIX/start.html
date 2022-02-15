@@ -147,12 +147,13 @@
         </div>
         <div id="settingsBox" style="display: none;">
             <div><a class="closeButton" onclick="toggleContainer(['settingsBox'], 'none')">❌</a></div>
-            <p><b>Autoplay</b>: <input type="checkbox" onclick="checkAutoplayAmout()" id="autoplayCheckBox"></p>
-            <p><b>Anzahl autoplay</b>: <input type="number" id="amountOfAutoplay" value="0"></p>
+            <!-- <p><b>Audio und Video automatisch abspielen</b>: <input type="checkbox" id="autoplayMediaCheckBox"></p> -->
+            <p><b>Automatisch vorwärts</b>: <input type="checkbox" onclick="checkAutoplayAmout()" id="autoplayCheckBox"></p>
+            <p><b>Anzahl abzuspielender Medien</b>: <input type="number" id="amountOfAutoplay" value="0"></p>
             <p><b>Dauer bis Übergang</b>: <input type="number" id="autoplayDuration" value="30"></p>
             <a class="button" onclick="applySettings()">Speichern</a>
         </div>
-        <div id="fehlerbehebung" style="display:none">
+        <div id="fehlerbehebung" style="display: none;">
             <div style="display: flex; flex-direction: row;">
                 <div><p style="border: none;"><b>Achtung!</b> Hier ausgeführte Aktionen können nicht rückgängig gemacht werden!</p></div>
                 <div><a class="closeButton" onclick="toggleContainer(['fehlerbehebung'], 'none')">❌</a></div>
@@ -208,10 +209,6 @@
         </div>
     </div>
     <div id="navigation">
-        <ul id="submenu" class="submenu"></ul>
-        <ul id="subsubmenu" class="subsubmenu"></ul>
-        <ul id="subsubsubmenu" class="subsubsubmenu"></ul>
-        <ul id="subsubsubsubmenu" class="subsubsubsubmenu"></ul>
     </div>
     <!-- Mediencontainer -->
     <div id="media" style="display: none;">
@@ -284,6 +281,7 @@
         </div>
         <h2 id="mediaTitle"></h2>
     </div>
+    <!-- <div id="smiley" style="height: 10px; width: 10px; position: absolute; top: 10px; left: 10px;">😀</div> -->
     <!-- Mediennavigation -->
     <div id="mediaNav">
         <div id="prev"></div>

@@ -3,6 +3,12 @@
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
     <li>[<span style="color: #e21af3">BUG</span>] Ordnerübergreifendes Autoplay funktioniert noch nicht, sofern Ordner und Medieninhalt im selben Elternordner sind</li>
 </ul>
+<b>Version 1.33</b>:<br>
+<ul>
+    <li>[<span style="color: red">FEATURE</span>] Aufheben der Ordnertiefenlimitierung</li>
+    <li>[OPTIMIERUNG] Dynamischer Aufbau der Untermenüs</li>
+    <li>[OPTIMIERUNG] Ändern des Linkaufbaus für Navigation und Inhalte</li>
+</ul>
 <b>Version 1.323</b>:<br>
 <ul>
     <li>[<span style="color: red"><b>HOTFIX</b></span>] Chrome/Edge Chromium: Eingabefelder über einem Video-Element können nicht bedient werden.</li>

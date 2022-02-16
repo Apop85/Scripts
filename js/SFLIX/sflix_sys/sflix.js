@@ -1263,18 +1263,18 @@ function updateData() {
                             encodedData = url.split("?=")[1].split("#")[0];
                             decodedData = atob(encodedData);
 
-                            newData = decodedData.replace("LEVEL0:", "LEVEL0:");
+                            newData = decodedData.replace("MAIN:", "LEVEL0:");
 
                             newArray.push(filename + "|" + urlPrefix + btoa(newData) + urlPostfix);
                             counter += 1;
                         }
                     }
-                    if (counter > 0) {
-                        alert("Aufgrund des Updates 1.33 müssen die STEFFLIX-Daten neu eingelesen werden. Bitte Programm upadteData.exe ausführen!");
-                    }
                     localStorage.setItem(key, newArray.join(listSeperator));
                 }
             }
+        }
+        if (counter > 0) {
+            alert("Aufgrund des Updates 1.33 müssen die STEFFLIX-Daten neu eingelesen werden. Bitte Programm upadteData.exe ausführen!");
         }
         localStorage.setItem("v1.33", true);
     }
@@ -2176,3 +2176,4 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     // Platzhalterbild für Leere Seiten erstellen
     document.getElementById("mainBody").style.backgroundImage = "url(sflix_sys/sflix_bg.jpg)";
 }
+

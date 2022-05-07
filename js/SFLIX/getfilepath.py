@@ -9,11 +9,12 @@ print("Update STEFFLIX-Daten".center(50))
 print("".center(50, "="))
 
 homeDir = os.getcwd()
+print(homeDir)
 
 allowedFileTypes = ["jpg", "jpeg", "mp4", "mp3", "png", "ogg", "gif", "m4a"]
 diallowedItems = ["System Volume Information", "$RECYCLE.BIN", ".vscode", "sflix_sys"]
 forbiddenSymbols = ["$=$"]
-animationArray = ["\\", "|", "/", "-"]
+animationArray = ["-     ", " -    ", "  -   ", "   -  ", "    - ", "     -", "    - ", "   -  ", "  -   ", " -    "]
 
 
 def containsForbiddenSymbol(text):
@@ -33,7 +34,7 @@ def recCrawler(path, depth=0, counter=0):
     for item in folderContent:
         fileExtension = item.split(".")[-1]
         if os.path.isfile(os.path.join(path, item)) and fileExtension in allowedFileTypes:
-            data.setdefault(os.path.join(path.replace(homeDir, "."), item), None)
+            data.setdefault(os.path.join(path.replace(homeDir, "./"), item), None)
             counter += 1
         elif os.path.isdir(os.path.join(path, item)) and not item in diallowedItems:
             data.setdefault(item, {})

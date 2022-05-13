@@ -34,7 +34,7 @@ def recCrawler(path, depth=0, counter=0):
     for item in folderContent:
         fileExtension = item.split(".")[-1]
         if os.path.isfile(os.path.join(path, item)) and fileExtension in allowedFileTypes:
-            data.setdefault(os.path.join(path.replace(homeDir, "./"), item), None)
+            data.setdefault(os.path.join(path.replace(homeDir, ".\\"), item).replace("\\\\", "\\"), None)
             counter += 1
         elif os.path.isdir(os.path.join(path, item)) and not item in diallowedItems:
             data.setdefault(item, {})
@@ -46,7 +46,7 @@ def recCrawler(path, depth=0, counter=0):
 print("Durchsuche Ordner...".ljust(40), end="")
 try:  
     filelist, counter = recCrawler(homeDir)
-    print("\rDurchsuche Ordner...".ljust(40) + "OK")
+    print("\rDurchsuche Ordner...".ljust(40) + "OK     ")
     errorList = []
 
 except:

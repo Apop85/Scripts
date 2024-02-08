@@ -3,6 +3,10 @@
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
     <li>[<span style="color: #e21af3">BUG</span>] Ordnerübergreifendes Autoplay funktioniert noch nicht, sofern Ordner und Medieninhalt im selben Elternordner sind</li>
 </ul>
+<b>Version 1.36</b>:<br>
+<ul>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Fehlerbehebung bei fehlender Internetverbindung</li>
+</ul>
 <b>Version 1.35</b>:<br>
 <ul>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Fehlerbehebung bei updateData.exe. Fehlerhafte Pfadgenerierung und folgendermassen fehlerhaftes anlegen der "zuletzt gesehen"-Liste)</li>

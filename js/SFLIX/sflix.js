@@ -1811,7 +1811,13 @@ if (decodedUriData != null && decodedUriData.includes("LEVEL0:")) {
     document.getElementById("media").style.display = "block";
                                                             
     // Lese neuste Version von GIT-Repository aus
-    newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
+    try {
+        newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
+    } catch (error) {
+        newestVersion = version        
+    }
+
+    // Prüfe, ob Update verfügbar ist
     if (newestVersion != null) {
         newestVersion = parseFloat(newestVersion.split("var version = ")[1]);
     }

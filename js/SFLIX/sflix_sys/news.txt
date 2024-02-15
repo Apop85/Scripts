@@ -3,6 +3,11 @@
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
     <li>[<span style="color: #e21af3">BUG</span>] Ordnerübergreifendes Autoplay funktioniert noch nicht, sofern Ordner und Medieninhalt im selben Elternordner sind</li>
 </ul>
+<b>Version 1.37</b>:<br>
+<ul>
+    <li>[<span style="color: red">FEATURE</span>] Pfeiltasten zum 10 Sekunden vor- und zurückspulen bzw. zum lauter und leiser machen.</li>
+    <li>[OPTIMIERUNG] Im Autoplaymenü lässt sich nun 0 Sekunden auswählen, wenn man ein Video/Audiostück bis zum Ende sehen/hören möchte anstatt wie zuvor 11.</li>
+</ul>
 <b>Version 1.36</b>:<br>
 <ul>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Fehlerbehebung bei fehlender Internetverbindung</li>

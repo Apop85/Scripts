@@ -17,6 +17,7 @@ REM  */
 REM pip3 install pyinstaller
 REM pyinstaller --icon=app.ico pong.py
 REM pyinstaller pong.spec
+
 pyinstaller --paths C:\Windows\System32\downlevel --console --onefile getfilepath.py
 del updateData.exe
 del *.spec
@@ -41,5 +42,11 @@ rmdir /S /Q dist
 rmdir /S /Q __pycache__
 rmdir /S /Q build
 
-
+pyinstaller --paths C:\Windows\System32\downlevel --console --onefile setup.py
+del setup.exe
+del *.spec
+copy .\dist\setup.exe .\setup.exe
+rmdir /S /Q dist
+rmdir /S /Q __pycache__
+rmdir /S /Q build
 

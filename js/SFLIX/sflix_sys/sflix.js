@@ -1280,7 +1280,7 @@ function updateData() {
 
         // Update 1.38 - Implementierung Autoupdater
         if (localStorage.getItem("v1.38") == null) {
-            if (version == 1.38) {
+            if (version == "1.38") {
                 alert("Mit dem Update 1.38 gibt es nun die Möglichkeit, dass für updateStefflix.exe ebenfells geupdated wird. Bitte Programm updateData.exe ausführen.");
             }
         }

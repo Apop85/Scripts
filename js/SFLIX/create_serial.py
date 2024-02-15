@@ -3,8 +3,7 @@ from base64 import b64decode
 import random
 
 # Define random seed 
-randSeed = "SEED"
-random.seed(randSeed)
+randSeed = "MySeeD"
 
 # Define secret message 
 botToken = "123456789:RaNdOmChArAcTeRs"
@@ -18,6 +17,10 @@ alnumlist += alphabet
 
 newList = {}
 index = 0
+random.seed(randSeed)
+
+print(f"Seed:".ljust(25) + randSeed)
+print(f"Secret:".ljust(25) + rawSecret)
 
 # Sort alphabet randomly into 2D array
 while len(alnumlist) > 0:
@@ -34,6 +37,7 @@ while len(alnumlist) > 0:
     index += 1
 
 # Output array to decrypt data
+print("2D Alphabet Array used for de- and encryption:")
 print(newList)
 conversionMatrix = newList
 
@@ -86,15 +90,12 @@ def encryptData(secretMessage):
     privateEncoded = b64encode(number_bytes)
     
     # Print needed Informations
-    # print(f"secretKey:  {secretKey}")
-    print(f"secretKey:  {str(secretEncoded)[2:-1]}")
-    # print(f"privateKey: {privateKey}")
-    print(f"privateKey: {str(privateEncoded)[2:-1]}")
-    # print(f"publicKey:     {publicKey}")
-    print(f"publicKey:  {str(publicEncoded)[2:-1]}")
+    print(f"secretKey:".ljust(25) + str(secretEncoded)[2:-1])
+    print(f"privateKey:".ljust(25) + str(privateEncoded)[2:-1])
+    print(f"publicKey:".ljust(25) + str(publicEncoded)[2:-1])
 
     # Print human readable Serial key
-    print("Serial:     ", end="")
+    print("Serial:".ljust(25), end="")
     for i in range(0, len(str(privateEncoded)[2:-1]), 4):
         print(str(privateEncoded)[2:-1][i:i+4], end=" ")
     print()
@@ -131,7 +132,7 @@ def decryptData(publicEncoded, privateEncoded):
     privateKeyEncoded = b64encode(number_bytes)
 
     # Print decrypted key
-    print(f"decrypted:  {str(privateKeyEncoded)[2:-1]}", end="   ")
+    print(f"Decryption:".ljust(25) +  str(privateKeyEncoded)[2:-1], end="   ")
 
     return privateKeyEncoded
 
@@ -139,7 +140,7 @@ def decryptData(publicEncoded, privateEncoded):
 def createSerial(secretNumber):
     maximum = 999999999
     minimum = 100000
-    print("Serial:     ",end="")
+    print("Serial".ljust(25) ,end="")
     secretNumber = int(secretNumber)
     swap = False
     abort = False
@@ -180,17 +181,17 @@ def decryptDataToText(data):
         firstLevel = data[i]
         secondLevel = data[i+1]
         decrypted += conversionMatrix[int(firstLevel)][int(secondLevel)]
-    print(decrypted, end="   ")
+    print(f"Reconstruction:".ljust(25) + decrypted, end="   ")
     if decrypted == rawSecret:
-        print("Successfull reconstructed")
+        print("Successfull")
     else:
-        print("Reconstruction failed. DO NOT USE FOLLOWING KEYS!")
+        print("FAILED. DO NOT USE FOLLOWING KEYS!")
 
 
 if __name__ == "__main__":
     publicEncoded, privateEncoded, secretEncoded = encryptData(rawSecret)
     if secretEncoded == decryptData(publicEncoded, privateEncoded):
-        print("Decryption successfull")
+        print("Successfull")
     else:
-        print("Decryption failed")
+        print("Failed")
 

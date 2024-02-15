@@ -38,12 +38,13 @@ var seasonList = null;
 var timeoutArray = [];
 var gravity = 1;
 var maxY = 0;
+var minTime = 11;
 
 settings = localStorage.getItem("settings");
 if (settings == null) {
     autoplay = false;
     autoplayAmount = 0;
-    autoplayDuration = 30;
+    autoplayDuration = 0;
     localStorage.setItem("settings", [autoplay, autoplayAmount, autoplayDuration].join(listSeperator));
 } else {
     settings = settings.split(listSeperator);
@@ -57,7 +58,6 @@ if (settings == null) {
     autoplayDuration = parseInt(settings[2]);
     updateOptionFields(autoplay, autoplayAmount, autoplayDuration);
 }
-
 
 //  _______  __   __  __    _  ___   _  _______  ___   _______  __    _  _______  __    _ 
 // |       ||  | |  ||  |  | ||   | | ||       ||   | |       ||  |  | ||       ||  |  | |
@@ -794,9 +794,9 @@ function playlistForwards(currentIndex, localPlaylist) {
             if (document.getElementById('next').childNodes.length > 0 && document.getElementById("next").childNodes[0].innerHTML != "") {
                 // Animationsreset
                 document.getElementById('next').style.animation = "none";
-                timeoutArray.push(setTimeout('document.getElementById("next").style.animation = "autoplayLoading ' + (autoplayDuration-1) + 's"', 1000));
+                timeoutArray.push(setTimeout('document.getElementById("next").style.animation = "autoplayLoading ' + (autoplayDuration-1+minTime) + 's"', 1000));
                 // Triggere klick von Next-Link
-                timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", autoplayDuration * 1000));
+                timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", (autoplayDuration + minTime) * 1000));
             } else {
                 // Reset der Einstellungen
                 updateOptions(false, 0, document.getElementById("autoplayDuration").value);
@@ -1065,8 +1065,8 @@ function applySettings() {
     if (autoplay && document.getElementById("video").tagName == "IMG") {
         cancelTimeouts();
         if (document.getElementById("autoplayCheckBox").checked) {
-            document.getElementById('next').style.animation = "autoplayLoading " + autoplayDuration + "s";
-            timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", autoplayDuration * 1000));
+            document.getElementById('next').style.animation = "autoplayLoading " + (autoplayDuration + minTime) + "s";
+            timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", (autoplayDuration + minTime) * 1000));
         }
         updateOptions(autoplay, autoplayAmount, autoplayDuration);
     }
@@ -1112,9 +1112,9 @@ function updateOptions(autoplay, autoplayAmount, autoplayDuration) {
         autoplay = false;
     }
     
-    // Setze Wert auf 11 zurück, wenn kleiner 11
-    if (autoplayDuration < 11) {
-        autoplayDuration = 11;
+    // Setze Wert auf 0 zurück, wenn kleiner 0
+    if (autoplayDuration < 0) {
+        autoplayDuration = 0;
     }
     
     // Entferne Autoplay-Klasse
@@ -1329,16 +1329,13 @@ function appendMediafunctions(node) {
         }
 
         // Unterscheide zwischen Audio- und Video-Elementen
-        videoCheck = document.getElementById("video").tagName == "VIDEO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= autoplayDuration;
+        videoCheck = document.getElementById("video").tagName == "VIDEO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= (autoplayDuration + minTime);
         audioCheck = document.getElementById("video").tagName == "AUDIO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= 11;
         if (videoCheck || audioCheck) {
-            if (audioCheck) {
-                autoplayDuration = 12;
-            }
-            prozent = 100 - parseInt(100/10*(this.duration - currentTime - autoplayDuration + 10));
+            prozent = 100 - parseInt(100/10*(this.duration - currentTime - (autoplayDuration + minTime) + 10));
             document.getElementById("next").style.background = "linear-gradient(to right, red " + (prozent+10) + "%, #424141 0%)";
             
-            if (this.duration - currentTime <= autoplayDuration - 10) {
+            if (this.duration - currentTime <= autoplayDuration + minTime - 10) {
                 document.getElementById("next").style.background = "";
                 updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
                 if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].innerHTML != "") {
@@ -1663,8 +1660,8 @@ for (let index = 0; index < licenseFields.length; index++) {
 
 // Füge Event-Listener zu "Dauer bis Übergang" in Autoplayeinstellungen hinzu
 document.getElementById("autoplayDuration").addEventListener("change", function () {
-    if (document.getElementById("autoplayDuration").value < 11) {
-        document.getElementById("autoplayDuration").value = 11;
+    if (document.getElementById("autoplayDuration").value < 0) {
+        document.getElementById("autoplayDuration").value = 0;
     } 
 })
 
@@ -1984,7 +1981,6 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     document.title = "STEFFLIX - " + removeFileExtension(allowedMediaExtensions, mediaName); 
     document.getElementById("mediaTitle").appendChild(textnode);
     document.getElementById("mediaTitle").style.borderBottom = "1px solid rgb(221, 221, 221)";
-    
                                                  
     // Prüfe, ob die Datei eine Video- oder Musik-Datei ist
     if (isVideo(medialocation) || isMusic(medialocation)) {
@@ -2016,6 +2012,31 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
         
         document.getElementById("media").appendChild(node);
         appendMediafunctions(node);
+
+        // Detektieren Tastendruck
+        document.addEventListener('keydown', logKey);
+        function logKey(e) {
+            if (`${e.code}` == "ArrowRight") {
+                e.preventDefault();
+                document.getElementById("video").currentTime += 10;
+                console.log(1);
+            }
+            if (`${e.code}` == "ArrowLeft") {
+                e.preventDefault();
+                document.getElementById("video").currentTime -= 10;
+                console.log(2);
+            }
+            if (`${e.code}` == "ArrowUp") {
+                e.preventDefault();
+                document.getElementById("video").volume += 0.1;
+                console.log(3);
+            }
+            if (`${e.code}` == "ArrowDown") {
+                e.preventDefault();
+                document.getElementById("video").volume -= 0.1;
+                console.log(4);
+            }
+        } 
     } else if (isImage(medialocation)) {
         //  _____ _ _   _         
         // | __  |_| |_| |___ ___ 
@@ -2038,8 +2059,8 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
 
         if (document.getElementById("autoplayCheckBox").checked) {
             updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
-            document.getElementById('next').style.animation = "autoplayLoading " + autoplayDuration + "s";
-            timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", autoplayDuration * 1000));
+            document.getElementById('next').style.animation = "autoplayLoading " + (autoplayDuration + minTime) + "s";
+            timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", (autoplayDuration + minTime) * 1000));
         }
     }
 

@@ -1622,7 +1622,7 @@ function gLoop() {
 var myHeaders = new Headers(); // Currently empty
 myHeaders.append('Feature-Policy', 'autoplay self');
 
-// Lokale daten updaten
+// Lokale Daten updaten
 updateData()
 
 // Lade Favoriten
@@ -1901,7 +1901,11 @@ if (decodedUriData != null && decodedUriData.includes("LEVEL0:")) {
         document.getElementById("sflixPreview").src = "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/sflix_sys/sflix.gif";
 
         // Lade changelog
-        news = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");
+        try {
+            news = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");
+        } catch (error) {
+            news = '<h2>Keine Internetverbindung</h2>';        
+        }
 
         // Zeige Hilfe an
         node = document.getElementById("help");
@@ -2032,8 +2036,9 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
                 e.preventDefault();
                 document.getElementById("video").volume -= 0.1;
             }
-            // if (`${e.code}` == "f") {
-            //     document.getElementById("video").toggleFullscreenMode
+            // if (`${e.code}` == "KeyF") {
+            //     document.getElementById("video").FullscreenToggle();
+            //     console.log("1");
             // }
         } 
     } else if (isImage(medialocation)) {

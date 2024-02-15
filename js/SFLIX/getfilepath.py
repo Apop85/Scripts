@@ -1,5 +1,5 @@
-from operator import truediv
-import os
+# from operator import truediv
+import os, requests
 from shutil import move as moveFile
 
 os.chdir(os.getcwd())
@@ -9,12 +9,12 @@ print("Update STEFFLIX-Daten".center(50))
 print("".center(50, "="))
 
 homeDir = os.getcwd()
-print(homeDir)
+# print(homeDir)
 
 allowedFileTypes = ["jpg", "jpeg", "mp4", "mp3", "png", "ogg", "gif", "m4a"]
 diallowedItems = ["System Volume Information", "$RECYCLE.BIN", ".vscode", "sflix_sys"]
 forbiddenSymbols = ["$=$"]
-animationArray = ["-     ", " -    ", "  -   ", "   -  ", "    - ", "     -", "    - ", "   -  ", "  -   ", " -    "]
+animationArray = ["Suchen", "sUchen", "suChen", "sucHen", "suchEn", "sucheN", "suchEn", "sucHen", "suChen", "sUchen"]
 
 
 def containsForbiddenSymbol(text):
@@ -93,5 +93,24 @@ print("".center(50, "="))
 print("Update abgeschlossen".center(50))
 print(f"{counter} Medien gefunden".center(50))
 print("".center(50, "="))
-print()
-input("Enter zum Beenden")
+
+updaterPath = os.path.join(os.getcwd(), "updater.exe")
+if not os.path.exists(updaterPath):
+    url = "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/updater.exe"
+    print("Lade Autoupdater herunter...".ljust(40), end="")
+    try:
+        answer = requests.get(url)
+        fileWriter = open(updaterPath, "wb")
+        fileWriter.write(answer.content)
+        fileWriter.close()
+        print("OK")
+
+        print("Updater wird ausgeführt...".ljust(40))
+        os.system(os.path.join(os.getcwd(), "updater.exe"))
+    except:
+        print("FEHLER")
+        print()
+        input("Enter zum Beenden")
+else:
+    print()
+    input("Enter zum Beenden")

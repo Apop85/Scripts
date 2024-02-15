@@ -1,6 +1,8 @@
-from genericpath import exists
+# from genericpath import exists
 import requests, os
 from shutil import move as moveFile
+
+os.chdir(os.getcwd())
 
 print("".center(60, "="))
 print("STARTE STEFFLIXUPDATE")
@@ -12,6 +14,7 @@ os.chdir(os.getcwd())
 stefflixFiles = {
     "start.html": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/start.html",
     "updateData.exe": "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/updateData.exe",
+    "updater.exe": "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/updater.exe",
     "sflix_sys/sflix.css": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.css",
     "sflix_sys/sflix.js": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.js",
     "sflix_sys/version.js": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js"
@@ -101,8 +104,4 @@ for fileLocation in stefflixFiles.keys():
         except:
             print("FEHLER")
 
-print("".center(60, "="))
-print("UPDATE BEENDET")
-print("".center(60, "="))
-print()
-input("Enter zum Beenden")
+os.system(os.path.join(os.getcwd(), "updater.exe"))

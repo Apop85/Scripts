@@ -33,7 +33,13 @@ rmdir /S /Q dist
 rmdir /S /Q __pycache__
 rmdir /S /Q build
 
-
+pyinstaller --paths C:\Windows\System32\downlevel --console --onefile updater.py
+del updater.exe
+del *.spec
+copy .\dist\updater.exe .\updater.exe
+rmdir /S /Q dist
+rmdir /S /Q __pycache__
+rmdir /S /Q build
 
 
 

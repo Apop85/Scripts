@@ -2019,23 +2019,22 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             if (`${e.code}` == "ArrowRight") {
                 e.preventDefault();
                 document.getElementById("video").currentTime += 10;
-                console.log(1);
             }
             if (`${e.code}` == "ArrowLeft") {
                 e.preventDefault();
                 document.getElementById("video").currentTime -= 10;
-                console.log(2);
             }
             if (`${e.code}` == "ArrowUp") {
                 e.preventDefault();
                 document.getElementById("video").volume += 0.1;
-                console.log(3);
             }
             if (`${e.code}` == "ArrowDown") {
                 e.preventDefault();
                 document.getElementById("video").volume -= 0.1;
-                console.log(4);
             }
+            // if (`${e.code}` == "f") {
+            //     document.getElementById("video").toggleFullscreenMode
+            // }
         } 
     } else if (isImage(medialocation)) {
         //  _____ _ _   _         

@@ -12,12 +12,13 @@ print("".center(60, "="))
 os.chdir(os.getcwd())
 
 stefflixFiles = {
+    "sflix_sys/sflix.css": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.css",
+    "sflix_sys/sflix.js": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.js",
+    "sflix_sys/sflix.png": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.png",
+    "sflix_sys/version.js": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js",
     "start.html": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/start.html",
     "updateData.exe": "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/updateData.exe",
     "updater.exe": "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/updater.exe",
-    "sflix_sys/sflix.css": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.css",
-    "sflix_sys/sflix.js": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.js",
-    "sflix_sys/version.js": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js"
 }
 
 def writeToFile(data, fileLocation, writeMode="w"):
@@ -54,7 +55,7 @@ for fileLocation in stefflixFiles.keys():
     except:
         print("FEHLER")
 
-    if not fileLocation.endswith(".exe"):
+    if not fileLocation.endswith(".exe") and not fileLocation.endswith(".png") and not fileLocation.endswith(".jpg"):
         fileContent = answer.content.decode("UTF8")
         filePath = os.path.join(".", fileLocation)
         print("Erstelle Backup...".ljust(50), end="")

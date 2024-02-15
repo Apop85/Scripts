@@ -6,7 +6,7 @@
 </ul>
 <b>Version 1.38</b>:<br>
 <ul>
-    <li>[<span style="color: red">FEATURE</span>] updateStefflix.exe kann nun ebenfalls geupdated werden was flexiblere Updates ermöglicht. Zum Anwenden updateData.exe ausführen.</li>
+    <li>[<span style="color: red">FEATURE</span>] updateStefflix.exe kann nun ebenfalls geupdated werden was flexiblere Updates ermöglicht. Zum Anwenden updateStefflix.exe und updateData.exe ausführen.</li>
 </ul>
 <b>Version 1.37</b>:<br>
 <ul>

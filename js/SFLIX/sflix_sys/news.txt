@@ -8,6 +8,7 @@
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Pfeiltasten zum 10 Sekunden vor- und zurückspulen bzw. zum lauter und leiser machen.</li>
     <li>[OPTIMIERUNG] Im Autoplaymenü lässt sich nun 0 Sekunden auswählen, wenn man ein Video/Audiostück bis zum Ende sehen/hören möchte anstatt wie zuvor 11.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Fehlerbehebung auf Hilfeseite bei fehlender Internetverbindung</li>
 </ul>
 <b>Version 1.36</b>:<br>
 <ul>

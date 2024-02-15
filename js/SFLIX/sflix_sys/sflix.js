@@ -1277,15 +1277,15 @@ function updateData() {
             alert("Aufgrund des Updates 1.33 müssen die STEFFLIX-Daten neu eingelesen werden. Bitte Programm upadteData.exe ausführen!");
         }
         localStorage.setItem("v1.33", true);
-
-        // Update 1.38 - Implementierung Autoupdater
-        if (localStorage.getItem("v1.38") == null) {
-            if (version == "1.38") {
-                alert("Mit dem Update 1.38 gibt es nun die Möglichkeit, dass updateStefflix.exe ebenfells geupdated wird. Bitte Programm updateData.exe ausführen.");
-            }
-        }
-        localStorage.setItem("v1.38", true);
     }
+    
+    // Update 1.38 - Implementierung Autoupdater
+    if (localStorage.getItem("v1.38") == null) {
+        if (version == 1.38) {
+            alert("Mit dem Update 1.38 gibt es nun die Möglichkeit, dass updateStefflix.exe ebenfells geupdated wird. Bitte Programm updateData.exe ausführen.");
+        }
+    }
+    localStorage.setItem("v1.38", true);
 }
 
 // Funktion, um Subroutinen an das Medienelement anzuhängen

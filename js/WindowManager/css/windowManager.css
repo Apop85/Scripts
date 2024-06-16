@@ -1,0 +1,41 @@
+body {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+.window {
+    position: absolute;
+    width: 400px;
+    height: 150px;
+    border: 1px solid black;
+    background-color: white;
+    overflow: hidden;
+    border-radius: 2px;
+}
+
+.windowHeader {
+    border-bottom: 1px solid black;
+    background-color: rgb(94, 94, 94);
+    padding: 5px 10px;
+    cursor: pointer;
+    color: white;
+    font-weight: bolder;
+    font-family: monospace;
+}
+
+.windowContent {
+    padding: 5px 10px;
+    background-color: white;
+}
+
+.blur {
+    height: inherit;
+    width: inherit;
+    background-color: red;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    filter: blur(20px);
+}

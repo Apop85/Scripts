@@ -1,0 +1,258 @@
+/* alle Elemente */
+* {
+    margin: 0;
+    padding: 0;
+}
+
+/* HTML Element mit dem Tag "main */
+body {
+    /* height: 100vh; */
+    width: 100vw;
+    overflow-x: hidden;
+}
+
+/* HTML Element mit dem Tag "main */
+main {
+    margin-left: 2.5vh;
+    margin-right: 50px;
+}
+
+/* HTML Element mit dem Tag "header" */
+header {
+    position: sticky;
+    top: 0px;
+}
+
+/* Element mit der ID "headerBildContainer */
+#headerBildContainer {
+    width: 100vw;
+    height: 500px;
+    background-image: url("bilder/headerbild.png");
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+/* Element mit der ID "menuBar" */
+#menuBar {
+    width: 100vw;
+    height: 15vh;
+    background-color: #dfdfdf;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+/* Element mit der ID "seitenLogo */
+#seitenLogo {
+    width: 10vh;
+    min-width: 75px;
+    height: 10vh;
+    min-height: 75px;
+    margin: 2.5vh;
+    border-radius: 50%;
+    box-shadow: 5px 5px 5px -2px black;
+    cursor: pointer;    
+}
+
+/* Element mit der ID "menuListe" welches sich in einem Element mit der ID "hauptmenu" befindet */
+#hauptmenu #menuListe {
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    align-items: center;
+    height: 100%;
+    padding-right: 50px;
+}
+
+/* Listenelemente mit der Klasse "menuElement" */
+li.menuElement {
+    text-transform: uppercase;
+}
+
+/* Listenelemente mit der Klasse "menuElement" und Listenelemente mit der Klasse "footerMenuElement" */
+li.menuElement, li.footerMenuElement{
+    list-style: none;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    font-size: 20px;
+}
+
+/* Elemente mit der Klasse "seitenInhalt */
+.seitenInhalt {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+/* Elemente mit der Klasse "menuLink" oder "footerMenuLink */
+.menuLink, .footerMenuLink {
+    text-decoration: none;
+    color: rgb(17, 17, 17);
+}
+
+/* Alle H1-Titel */
+h1 {
+    margin-top: 15px;
+    margin-bottom: 20px;
+}
+
+/* Elemente mit der Klasse "einDrittel" */
+.einDrittel {
+    width: 33%;
+    max-width: 33%;
+}
+
+/* Elemente mit der Klasse "zweiDrittel" */
+.zweiDrittel {
+    width: 67%;
+    max-width: 67%;
+}
+
+/* Elemente mit der Klasse "volleBreite" */
+.volleBreite {
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Elemente mit der Klasse "artikelBild" */
+.artikelBild {
+    height: inherit;
+    text-align: center;
+    margin-top: auto;
+    margin-bottom: auto;
+    max-width: 100%;
+    max-height: 220px;
+}
+
+/* Elemente mit der Klasse "bildContainer" */
+.bildContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Artikel HTML-Element */
+article {
+    margin-top: 25px;
+}
+
+/* Footer HTML-Element */
+footer {
+    width: 100vw;
+    height: 10vh;
+    background-color: #dfdfdf;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Elemente mit der ID "footerMenu" */
+#footerMenu {
+    width: 80%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    margin-right: 50px;
+}
+
+/* Elemente mit der ID "footerMenuListe" */
+#footerMenuListe {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    align-items: center;
+}
+
+/* Elemente mit der ID "copyright" */
+#copyright {
+    width: fit-content;
+    margin-left: 2.5vh;
+}
+
+/* Listenelemente mit der Klasse "footerMenuElement" */
+li.footerMenuElement {
+    font-size: 16px;
+}
+
+/* Letztes Artikel HTML-Element */
+article:last-child {
+    margin-bottom: 50px
+}
+
+/* Listenelemente in einem Nav Element */
+nav li {
+    cursor: pointer;
+}
+
+/* Listenelemente in einem Nav Element, wenn mit der Maus darüber gefahren wird */
+nav li:hover {
+    background-color: #e7e7e7;
+    text-decoration: underline;
+}
+
+/* Alle Tabellen, Tabellenspalten und Tabellenzeilen sowie Tabellentitelzeilen */
+table, tr, td, th {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+/* Tabellenzeilen und Tabellentitelzeilen */
+td, th {
+    padding: 5px 2px;
+}
+
+/* Erste Tabellenspalte jeder Tabellenzeile */
+tr td:first-child {
+    font-weight: bolder;
+}
+
+/* Tabellentitelzeilen */
+th {
+    background-color: #333;
+    color: white;
+}
+
+/* Jede zweite Zeile (2n) in einer Tabelle startend beim 2. Element (+1) */
+table tr:nth-child(2n+1) {
+    background-color: #f5f5f5;
+}
+
+nav li.highlighted {
+    padding: 5px 8px;
+}
+
+
+#footerMenuListe li.highlighted {
+    padding: 5px 10.5px;
+}
+
+.highlighted::after {
+    content: "]";
+    columns: green;
+    margin-left: -5px;
+}
+
+.highlighted::before {
+    content: "[";
+    columns: green;
+    margin-right: -5px;
+}
+
+
+/* #menuListe .highlighted {
+    border-top: 2px solid black;
+    border-bottom: 2px solid black;
+}
+
+#menuListe .highlighted:first-child {
+    border-left: 2px solid black;
+}
+
+#menuListe .highlighted:last-child {
+    border-right: 2px solid black;
+} */

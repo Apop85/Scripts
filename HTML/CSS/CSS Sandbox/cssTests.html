@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webseiten Crashkurs - CSS Tests</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="cssTests.css" type="text/css">
+</head>
+<body>
+    <header>
+        <nav id="navigation">
+            <ul id="navigationsmenü">
+                <li>
+                    <h3 class="settingsTitle closed" onclick="toggleSettings('groesse')">Grösse</h3>
+                    <ul id="groesse">
+                        <li>
+                            Height: 
+                            <div>
+                                <input type="number" id="inputHeight" class="fullWidthInput" name="inputHeight" value="30" onchange="applyChanges()" onmouseover="showHint('Elementhöhe')" onmouseleave="hideHint()">
+                                <select name="inputSelectHeightUnit" id="inputSelectHeightUnit" onchange="applyChanges()" onmouseover="showHint('Einheit der Elementhöhe')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="vh">vh</option>
+                                    <option selected value="vw">vw</option>
+                                    <option value="" disabled>Absolut ohne Wert</option>
+                                    <option value="auto" onclick="removeValuesOf(['inputHeight'])">auto</option>
+                                    <option value="fit-content" onclick="removeValuesOf(['inputHeight'])">fit-content</option>
+                                    <option value="inherit" onclick="removeValuesOf(['inputHeight'])">inherit</option>
+                                    <option value="initial" onclick="removeValuesOf(['inputHeight'])">initial</option>
+                                    <option value="max-content" onclick="removeValuesOf(['inputHeight'])">max-content</option>
+                                    <option value="min-content" onclick="removeValuesOf(['inputHeight'])">min-content</option>
+                                    <option value="unset" onclick="removeValuesOf(['inputHeight'])">unset</option>
+                                </select>
+                            </div>
+                        </li>
+                        <li>
+                            Width: 
+                            <div>
+                                <input type="number" id="inputWidth" class="fullWidthInput" name="inputWidth" value="30" onchange="applyChanges()" onmouseover="showHint('Elementbreite')" onmouseleave="hideHint()">
+                                <select name="inputSelectWidthUnit" id="inputSelectWidthUnit" onchange="applyChanges()" onmouseover="showHint('Einheit der Elementbreite')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="vh">vh</option>
+                                    <option selected value="vw">vw</option>
+                                    <option value="" disabled>Absolut ohne Wert</option>
+                                    <option value="auto" onclick="removeValuesOf(['inputWidth'])">auto</option>
+                                    <option value="fit-content" onclick="removeValuesOf(['inputWidth'])">fit-content</option>
+                                    <option value="inherit" onclick="removeValuesOf(['inputWidth'])">inherit</option>
+                                    <option value="initial" onclick="removeValuesOf(['inputWidth'])">initial</option>
+                                    <option value="max-content" onclick="removeValuesOf(['inputWidth'])">max-content</option>
+                                    <option value="min-content" onclick="removeValuesOf(['inputWidth'])">min-content</option>
+                                    <option value="unset" onclick="removeValuesOf(['inputWidth'])">unset</option>
+                                </select>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <h3 class="settingsTitle closed" onclick="toggleSettings('abstaende')">Abstände</h3>
+                    <ul id="abstaende">
+                        <li>
+                            Padding: 
+                            <div>
+                                <input type="number" id="inputPadding" class="fullWidthInput" name="inputPadding" value="0" onchange="applyChanges()" onmouseover="showHint('Innenabstand')" onmouseleave="hideHint()">
+                                <select name="inputSelectPaddingUnit" id="inputSelectPaddingUnit" onchange="applyChanges()" onmouseover="showHint('Einheit Innenabstand')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option selected value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="vh">vh</option>
+                                    <option value="vw">vw</option>
+                                </select>
+                            </div>
+                        </li>
+                        <li>
+                            Margin: 
+                            <div>
+                                <input type="number" id="inputMargin" class="fullWidthInput" name="inputMargin" value="0" onchange="applyChanges()" onmouseover="showHint('Aussenabstand')" onmouseleave="hideHint()">
+                                <select name="inputSelectMarginUnit" id="inputSelectMarginUnit" onchange="applyChanges()" onmouseover="showHint('Einheit Aussenabstand')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option selected value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="vh">vh</option>
+                                    <option value="vw">vw</option>
+                                </select>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <h3 class="settingsTitle closed" onclick="toggleSettings('umrandung')">Umrandung</h3>
+                    <ul id="umrandung">
+                        <li>
+                            Border: 
+                            <div>
+                                <input type="number" id="inputBorderWidth" class="thirdWidthInput" name="inputBorderWidth" value="4" onchange="applyChanges()" onmouseover="showHint('Randbreite')" onmouseleave="hideHint()">
+                                <select name="inputSelectBorderWidthUnit" id="inputSelectBorderWidthUnit" onchange="applyChanges()" onmouseover="showHint('Einheit Randbreite')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option selected value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="vh">vh</option>
+                                    <option value="vw">vw</option>
+                                </select>
+                                <select name="inputBorderType" class="mediumWidth thirdWidthInput" id="inputBorderType" onchange="applyChanges()" onmouseover="showHint('Randtyp')" onmouseleave="hideHint()">
+                                    <option value="dashed">dashed</option>
+                                    <option value="dotted">dotted</option>
+                                    <option value="double">double</option>
+                                    <option value="groove">groove</option>
+                                    <option value="inset">inset</option>
+                                    <option value="none">none</option>
+                                    <option value="outset">outset</option>
+                                    <option value="ridge">ridge</option>
+                                    <option selected value="solid">solid</option>
+                                </select>
+                                <input type="color" id="inputBorderColor" class="thirdWidthInput" name="inputBorderColor" placeholder="Farbe" value="#FFFF00" onchange="applyChanges()" onmouseover="showHint('Randfarbe')" onmouseleave="hideHint()">
+                            </div>
+                        </li>
+                        <li>
+                            Border-Radius: 
+                            <div>
+                                <input type="number" id="inputBorderRadius" class="halfWidthInput" name="inputBorderRadius" value="0" onchange="applyChanges()" onmouseover="showHint('Eckradius')" onmouseleave="hideHint()">
+                                <select name="inputSelectBorderRadiusUnit" id="inputSelectBorderRadiusUnit" onchange="applyChanges()" onmouseover="showHint('Einheit Eckradius')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option selected value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="vh">vh</option>
+                                    <option value="vw">vw</option>
+                                </select>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <h3 class="settingsTitle closed" onclick="toggleSettings('schrifteinstellungen')">Schrifteinstellungen</h3>
+                    <ul id="schrifteinstellungen">
+                        <li>
+                            Color: <input type="color" id="inputTextColor" class="fullWidthInput" name="inputTextColor" onchange="applyChanges()" onmouseover="showHint('Textfarbe')" onmouseleave="hideHint()">
+                        </li>
+                        <li>
+                            Font-Family: 
+                            <select class="wide" name="inputFontFamily" id="inputFontFamily" onchange="applyChanges()" onmouseover="showHint('Schriftart (+Alternativen)')" onmouseleave="hideHint()">
+                                <option selected value="Roboto">Roboto</option>
+                                <option value="'Courier New', Courier, monospace">'Courier New', Courier, monospace</option>
+                                <option value="'Franclin Gothic Medium', 'Arial Narrow', Arial">'Franclin Gothic Medium', 'Arial Narrow', Arial</option>
+                                <option value="'Times New Roman', Times, serif">'Times New Roman', Times, serif</option>
+                                <option value="Arial, Helvetica, sans-serif">Arial, Helvetica, sans-serif</option>
+                                <option value="Helvetica, Arial, serif">Helvetica, Arial, serif</option>
+                                <option value="'Lucida Sans', 'Lucida Sans Regular', Verdana">'Lucida Sans', 'Lucida Sans Regular', Verdana</option>
+                                <option value="Cambria, Cochin, Georgia, Times">Cambria, Cochin, Georgia, Times</option>
+                            </select>
+                        </li>
+                        <li>
+                            Font-Weight: 
+                            <select class="wide" name="inputSelectFontWeight" class="fullWidthInput" id="inputSelectFontWeight" onchange="applyChanges()" onmouseover="showHint('Schriftstärke')" onmouseleave="hideHint()">
+                                <option selected value="normal">normal</option>
+                                <option value="bold">bold</option>
+                                <option value="bolder">bolder</option>
+                                <option value="lighter">lighter</option>
+                                <option value="100">100</option>
+                                <option value="200">200</option>
+                                <option value="300">300</option>
+                                <option value="400">400</option>
+                                <option value="500">500</option>
+                                <option value="600">600</option>
+                                <option value="700">700</option>
+                                <option value="800">800</option>
+                                <option value="800">900</option>
+                            </select>
+                        </li>
+                        <li>
+                            Font-Style: 
+                            <select class="wide" name="inputSelectFontStyle" class="fullWidthInput" id="inputSelectFontStyle" onchange="applyChanges()" onmouseover="showHint('Style des Textes')" onmouseleave="hideHint()">
+                                <option selected value="normal">normal</option>
+                                <option value="italic">italic</option>
+                                <option value="oblique">oblique</option>
+                            </select>
+                        </li>
+                        <li>
+                            Font-Size: 
+                            <div>
+                                <input type="number" id="inputFontSIze" class="halfWidthInput" name="inputFontSIze" value="16" onchange="applyChanges()" onmouseover="showHint('Schriftgrösse')" onmouseleave="hideHint()">
+                                <select name="inputFontSIzeUnit" id="inputFontSIzeUnit" onchange="applyChanges()" onmouseover="showHint('Einheit Schriftgrösse')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option selected value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="vw">vw</option>
+                                    <option value="vh">vh</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                </select>
+                            </div>
+                        </li>
+                        <li>
+                            Letter Spacing: 
+                            <div>
+                                <input type="number" id="inputLetterSpacing" class="halfWidthInput" name="inputLetterSpacing" value="0" onchange="applyChanges()" onmouseover="showHint('Buchstabenabstand')" onmouseleave="hideHint()">
+                                <select name="inputLetterSpacingUnit" id="inputLetterSpacingUnit" onchange="applyChanges()" onmouseover="showHint('Einheit Buchstabenabstand')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option selected value="pt">pt</option>
+                                    <option value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="vw">vw</option>
+                                    <option value="vh">vh</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                </select>
+                            </div>
+                        </li>
+                        <li>
+                            Line Height: 
+                            <div>
+                                <input type="number" id="inputLineHeight" class="halfWidthInput" name="inputLineHeight" onchange="applyChanges()" onmouseover="showHint('Zeilenhöhe')" onmouseleave="hideHint()">
+                                <select name="inputLineHeightUnit" id="inputLineHeightUnit" onchange="applyChanges()" onmouseover="showHint('Einheit Zeilenhöhe')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option selected value="normal" onclick="removeValuesOf(['inputLineHeight'])">normal</option>
+                                    <option value="%">%</option>
+                                    <option value="vw">vw</option>
+                                    <option value="vh">vh</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                </select>
+                            </div>
+                        </li>
+                        <li>
+                            Text-Align: 
+                            <select class="wide" name="inputTextAlign" id="inputTextAlign" onchange="applyChanges()" onmouseover="showHint('Textausrichtung')" onmouseleave="hideHint()">
+                                <option value="center">center</option>
+                                <option value="end">end</option>
+                                <option value="justify">justify</option>
+                                <option selected value="left">left</option>
+                                <option value="right">right</option>
+                                <option value="start">start</option>
+                            </select>
+                        </li>
+                        <li>
+                            Text-Transform: 
+                            <select class="wide" name="inputTextTransform" id="inputTextTransform" onchange="applyChanges()" onmouseover="showHint('Texttransformationen')" onmouseleave="hideHint()">
+                                <option selected value="none">none</option>
+                                <option value="capitalize">capitalize</option>
+                                <option value="full-width">full-width</option>
+                                <option value="lowercase">lowercase</option>
+                                <option value="math-auto">math-auto</option>
+                                <option value="uppercase">uppercase</option>
+                            </select>
+                        </li>
+                        <li>
+                            Text-Decoration: 
+                            <select class="wide" name="inputTextDecoration" id="inputTextDecoration" onchange="applyChanges()" onmouseover="showHint('Textdekoration')" onmouseleave="hideHint()">
+                                <option selected value="none">none</option>
+                                <option value="dashed">dashed</option>
+                                <option value="dotted">dotted</option>
+                                <option value="double">double</option>
+                                <option value="line-through">line-through</option>
+                                <option value="overline">overline</option>
+                                <option value="solid">solid</option>
+                                <option value="underline">underline</option>
+                                <option value="wavy">wavy</option>
+                            </select>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <h3 class="settingsTitle closed" onclick="toggleSettings('hintergrund')">Hintergrund</h3>
+                    <ul id="hintergrund">
+                        <li>
+                            Background Color: 
+                                <input type="color" id="inputBgColor" class="fullWidthInput" name="inputBgColor" value="#fadcdc" onchange="applyChanges()" onmouseover="showHint('Hintergrundfarbe')" onmouseleave="hideHint()">
+                                <input type="range" id="inputBgColorOpacity" class="fullWidthInput" name="inputBgColorOpacity" value="1" step="0.1" max="1" min="0" onchange="applyChanges()" onmouseover="showHint('Hintergrundtransparenz')" onmouseleave="hideHint()">
+                        </li>
+                        <li>
+                            Background Image:                         
+                            <select class="wide" name="inputSelectBackgroundImage" id="inputSelectBackgroundImage" onchange="applyChanges()" onmouseover="showHint('Hintergrundbild')" onmouseleave="hideHint()">
+                                <option value="" selected>Keines</option>
+                                <option value="bilder/bild.png">Bild1</option>
+                                <option value="bilder/bild2.png">Bild2</option>
+                                <option value="bilder/bild3.png">Bild3</option>
+                                <option value="bilder/bild4.png">Bild4</option>
+                                <option value="bilder/headerbild.png">Bild5</option>
+                                <option value="bilder/logo.png">Bild6</option>
+                            </select>
+                        </li>
+                        <li id="BackgroundPositionMenu" class="hidden submenu">
+                            > Background Position:
+                            <div>
+                                <input type="number" id="inputBoxBackgroundPositionX" class="thirdWidthInput" name="inputBoxBackgroundPositionX" placeholder="Horizontaler Versatz" onchange="applyChanges()" onmouseover="showHint('Horizontale Hintergrundposition')" onmouseleave="hideHint()">
+                                <select class="mediumWidth" name="inputSelectBackgroundPositionXUnit" id="inputSelectBackgroundPositionXUnit" onchange="applyChanges()" onmouseover="showHint('Einheit horizontale Hintergrundposition')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="vw">vw</option>
+                                    <option value="vh">vh</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="" disabled>Absolut ohne Wert</option>
+                                    <option selected value="center" onclick="removeValuesOf(['inputBoxBackgroundPositionX'])">center</option>
+                                    <option value="left" onclick="removeValuesOf(['inputBoxBackgroundPositionX'])">left</option>
+                                    <option value="right" onclick="removeValuesOf(['inputBoxBackgroundPositionX'])">right</option>
+                                </select>
+                                <input type="number" id="inputBoxBackgroundPositionY" class="thirdWidthInput" name="inputBoxBackgroundPositionY" placeholder="Vertikaler Versatz" onchange="applyChanges()" onmouseover="showHint('Vertikale Hintergrundposition')" onmouseleave="hideHint()">
+                                <select class="mediumWidth" name="inputSelectBackgroundPositionYUnit" id="inputSelectBackgroundPositionYUnit" onchange="applyChanges()" onmouseover="showHint('Einheit vertikale Hintergrundposition')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="vw">vw</option>
+                                    <option value="vh">vh</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="" disabled>Absolut ohne Wert</option>
+                                    <option selected value="center" onclick="removeValuesOf(['inputBoxBackgroundPositionY'])">center</option>
+                                    <option value="top" onclick="removeValuesOf(['inputBoxBackgroundPositionY'])">top</option>
+                                    <option value="bottom" onclick="removeValuesOf(['inputBoxBackgroundPositionY'])">bottom</option>
+                                </select>
+                            </div>
+                        </li>
+                        <li id="BackgroundSizeMenu" class="hidden submenu">
+                            > Background Size: 
+                            <div>
+                                <input type="number" id="inputBoxBackgroundSizeX" class="thirdWidthInput" name="inputBoxBackgroundSizeX" placeholder="Horizontaler Versatz" onchange="applyChanges()" onmouseover="showHint('Horizontale Hintergrundgrösse')" onmouseleave="hideHint()">
+                                <select class="mediumWidth" name="inputSelectBackgroundSizeXUnit" id="inputSelectBackgroundSizeXUnit" onchange="applyChanges()" onmouseover="showHint('Einheit horizontale Hintergrundgrösse')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="vw">vw</option>
+                                    <option value="vh">vh</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="" disabled>Absolut ohne Wert</option>
+                                    <option selected value="auto" onclick="removeValuesOf(['inputBoxBackgroundSizeX'])">auto</option>
+                                    <option value="cover" onclick="equalOptions('inputSelectBackgroundSizeYUnit', ['inputBoxBackgroundSizeX', 'inputBoxBackgroundSizeY'] ,14)">cover</option>
+                                    <option value="contain" onclick="equalOptions('inputSelectBackgroundSizeYUnit', ['inputBoxBackgroundSizeX', 'inputBoxBackgroundSizeY'] ,15)">contain</option>
+                                </select>
+                                <input type="number" id="inputBoxBackgroundSizeY" class="thirdWidthInput" name="inputBoxBackgroundSizeY" placeholder="Vertikaler Versatz" onchange="applyChanges()" onmouseover="showHint('Vertikale Hintergrundgrösse')" onmouseleave="hideHint()">
+                                <select class="mediumWidth" name="inputSelectBackgroundSizeYUnit" id="inputSelectBackgroundSizeYUnit" onchange="applyChanges()" onmouseover="showHint('Einheit vertikale Hintergrundgrösse')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="vw">vw</option>
+                                    <option value="vh">vh</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="" disabled>Absolut ohne Wert</option>
+                                    <option selected value="auto" onclick="removeValuesOf(['inputBoxBackgroundSizeY'])">auto</option>
+                                    <option value="" onclick="equalOptions('inputSelectBackgroundSizeXUnit', ['inputBoxBackgroundSizeX', 'inputBoxBackgroundSizeY'],14)">cover</option>
+                                    <option value="" onclick="equalOptions('inputSelectBackgroundSizeXUnit', ['inputBoxBackgroundSizeX', 'inputBoxBackgroundSizeY'],15)">contain</option>
+                                </select>
+                            </div>
+                        </li>
+                        <li id="BackgroundRepeatMenu" class="hidden submenu">
+                            > Background Repeat: 
+                            <div>
+                                <select class="wide" name="inputSelectBackgroundRepeat" id="inputSelectBackgroundRepeat" onchange="applyChanges()" onmouseover="showHint('Hintergrundwiderholung')" onmouseleave="hideHint()">
+                                    <option value="no-repeat">no-repeat</option>
+                                    <option selected value="repeat">repeat</option>
+                                    <option value="repeat-x">repeat-x</option>
+                                    <option value="repeat-y">repeat-y</option>
+                                    <option value="round">round</option>
+                                </select>
+                            </div>
+                        </li>
+                        <li id="BackgroundBlendModeMenu" class="hidden submenu">
+                            > Background Blend Mode: 
+                            <div>
+                                <select class="wide" name="inputSelectBackgroundBlendMode" id="inputSelectBackgroundBlendMode" onchange="applyChanges()" onmouseover="showHint('Hintergrund Farbmischmodus')" onmouseleave="hideHint()">
+                                    <option value="color">color</option>
+                                    <option value="color-burn">color-burn</option>
+                                    <option value="color-dodge">color-dodge</option>
+                                    <option value="darken">darken</option>
+                                    <option value="difference">difference</option>
+                                    <option value="exclusion">exclusion</option>
+                                    <option value="hard-light">hard-light</option>
+                                    <option value="hue">hue</option>
+                                    <option value="inherit">inherit</option>
+                                    <option value="initial">initial</option>
+                                    <option value="lighten">lighten</option>
+                                    <option value="luminosity">luminosity</option>
+                                    <option value="multiply">multiply</option>
+                                    <option value="normal">normal</option>
+                                    <option value="overlay">overlay</option>
+                                    <option value="revert">revert</option>
+                                    <option value="revert-layer">revert-layer</option>
+                                    <option value="saturation">saturation</option>
+                                    <option value="screen">screen</option>
+                                    <option value="soft-light">soft-light</option>
+                                    <option selected value="unset">unset</option>
+                                </select>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <h3 class="settingsTitle closed" onclick="toggleSettings('position')">Position</h3>
+                    <ul id="position">
+                        <li>
+                            Position: 
+                            <select class="mediumWidth" name="inputSelectPositionType" id="inputSelectPositionType" onchange="applyChanges()" onmouseover="showHint('Elementposition')" onmouseleave="hideHint()">
+                                <option selected value="unset" >unset</option>
+                                <option value="absolute" >absolute</option>
+                                <option value="relative" >relative</option>
+                                <option value="fixed" >fixed</option>
+                                <option value="static" >static</option>
+                                <option value="sticky" >sticky</option>
+                            </select>
+                        </li>
+                        <li id="HorizontalAlign" class="hidden submenu">
+                            > Horizontal:
+                            <div>
+                                <select name="inputSelectPositionHorizontalAlign" class="mediumWidth" id="inputSelectPositionHorizontalAlign" onchange="applyChanges()" onmouseover="showHint('Horizontale Elementposition')" onmouseleave="hideHint()">
+                                    <option value="left">left</option>
+                                    <option value="right">right</option>
+                                </select>
+                                <input type="number" id="inputPositionHorizontalAlign" class="fullWidthInput" name="inputPositionHorizontalAlign" value="-15" onchange="applyChanges()" onmouseover="showHint('Horizontale Elementposition')" onmouseleave="hideHint()">
+                                <select name="inputSelectPositionHorizontalAlignUnit" id="inputSelectPositionHorizontalAlignUnit" onchange="applyChanges()" onmouseover="showHint('Einheit horizontale Elementposition')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="vh">vh</option>
+                                    <option selected value="vw">vw</option>
+                                </select>
+                            </div>
+                        </li>
+                        <li id="VerticalAlign" class="hidden submenu">
+                            > Vertikal:
+                            <div>
+                                <select name="inputSelectPositionVerticalAlign" class="mediumWidth" id="inputSelectPositionVerticalAlign" onchange="applyChanges()" onmouseover="showHint('Vertikale Elementposition')" onmouseleave="hideHint()">
+                                    <option value="top">top</option>
+                                    <option value="bottom">bottom</option>
+                                </select>
+                                <input type="number" id="inputPositionVerticalAlign" class="fullWidthInput" name="inputPositionVerticalAlign" value="-15" onchange="applyChanges()" onmouseover="showHint('Vertikale Elementposition')" onmouseleave="hideHint()">
+                                <select name="inputSelectPositionVerticalAlignUnit" id="inputSelectPositionVerticalAlignUnit" onchange="applyChanges()" onmouseover="showHint('Einheit vertikale Elementposition')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="vh">vh</option>
+                                    <option selected value="vw">vw</option>
+                                </select>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <h3 class="settingsTitle closed" onclick="toggleSettings('displaySettings')">Display Einstellungen</h3>
+                    <ul id="displaySettings">
+                        <li>
+                            Display: 
+                            <select class="wide" name="inputDisplayType" id="inputDisplayType" onchange="applyChanges()" onmouseover="showHint('Anzeigetyp')" onmouseleave="hideHint()">
+                                <option selected value="block" >block</option>
+                                <option value="contents" >contents</option>
+                                <option value="flex" >flex</option>
+                                <option value="inline" >inline</option>
+                                <option value="inline-flex" >inline-flex</option>
+                                <option value="none" >none</option>
+                            </select>
+                        </li>
+                        <li id="FlexDirectionSetting" class="submenu">
+                            > Flex-Direction:
+                            <select class="wide" name="inputDisplayFlexDirectionSetting" id="inputDisplayFlexDirectionSetting" onchange="applyChanges()" onmouseover="showHint('Flexausrichtung')" onmouseleave="hideHint()">
+                                <option value="column">column</option>
+                                <option value="column-reverse">column-reverse</option>
+                                <option value="revert">revert</option>
+                                <option value="revert-layer">revert-layer</option>
+                                <option selected value="row">row</option>
+                                <option value="row-reverse">row-reverse</option>
+                            </select>
+                        </li>
+                        <li id="FlexWrapSetting" class="submenu">
+                            > Flex-Wrap:
+                            <select class="wide" name="inputDisplayFlexWrapSetting" id="inputDisplayFlexWrapSetting" onchange="applyChanges()" onmouseover="showHint('Umbruch Flexcontainer')" onmouseleave="hideHint()">
+                                <option value="nowrap">nowrap</option>
+                                <option value="revert">revert</option>
+                                <option selected value="wrap">wrap</option>
+                                <option value="wrap-reverse">wrap-reverse</option>
+                            </select>
+                        </li>
+                        <li id="JustifyContentSetting" class="submenu">
+                            > Justify Content:
+                            <select class="wide" name="inputDisplayFlexJustifySetting" id="inputDisplayFlexJustifySetting" onchange="applyChanges()" onmouseover="showHint('Vertikale Flexausrichtung')" onmouseleave="hideHint()">
+                                <option selected value="center">center</option>
+                                <option value="end">end</option>
+                                <option value="flex-end">flex-end</option>
+                                <option value="flex-start">flex-start</option>
+                                <option value="left">left</option>
+                                <option value="normal">normal</option>
+                                <option value="revert">revert</option>
+                                <option value="right">right</option>
+                                <option value="space-around">space-around</option>
+                                <option value="space-between">space-between</option>
+                                <option value="space-evenly">space-evenly</option>
+                            </select>
+                        </li>
+                        <li id="AlignContentSetting" class="submenu">
+                            > Align Content:
+                            <select class="wide" name="inputDisplayFlexAlignSetting" id="inputDisplayFlexAlignSetting" onchange="applyChanges()" onmouseover="showHint('Horizontale Flexausrichtung')" onmouseleave="hideHint()">
+                                <option value="baseline">baseline</option>
+                                <option selected value="center">center</option>
+                                <option value="end">end</option>
+                                <option value="first-baseline">first-baseline</option>
+                                <option value="flex-end">flex-end</option>
+                                <option value="flex-start">flex-start</option>
+                                <option value="last-baseline">last-baseline</option>
+                                <option value="revert">revert</option>
+                                <option value="space-around">space-around</option>
+                                <option value="space-between">space-between</option>
+                                <option value="space-evenly">space-evenly</option>
+                                <option value="start">start</option>
+                                <option value="stretch">stretch</option>
+                            </select>
+                        </li>
+                        <li>
+                            Overflow X: 
+                            <select class="wide" name="inputOverflowX" id="inputOverflowX" onchange="applyChanges()" onmouseover="showHint('Horizontale Überlaufanzeige')" onmouseleave="hideHint()">
+                                <option selected value="auto" >auto</option>
+                                <option value="clip" >clip</option>
+                                <option value="hidden" >hidden</option>
+                                <option value="inherit" >inherit</option>
+                                <option value="scroll" >scroll</option>
+                                <option value="visible" >visible</option>
+                            </select>
+                        </li>
+                        <li>
+                            Overflow Y: 
+                            <select class="wide" name="inputOverflowY" id="inputOverflowY" onchange="applyChanges()" onmouseover="showHint('Horizontale Überlaufanzeige')" onmouseleave="hideHint()">
+                                <option selected value="auto" >auto</option>
+                                <option value="clip" >clip</option>
+                                <option value="hidden" >hidden</option>
+                                <option value="inherit" >inherit</option>
+                                <option value="scroll" >scroll</option>
+                                <option value="visible" >visible</option>
+                            </select>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <h3 class="settingsTitle closed" onclick="toggleSettings('effekte')">Effekte</h3>
+                    <ul id="effekte">
+                        <li>
+                            Box Shadow:
+                            <div>
+                                <input type="number" id="inputBoxShadowHorizontal" class="halfWidthInput" name="inputBoxShadowHorizontal" placeholder="Horizontaler Versatz" value="0" onchange="applyChanges()" onmouseover="showHint('Horizontaler Schattenversatz')" onmouseleave="hideHint()">
+                                <select name="inputSelectShadowHorizontalUnit" id="inputSelectShadowHorizontalUnit" onchange="applyChanges()" onmouseover="showHint('Einheit horizontaler Schattenversatz')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option selected value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="vh">vh</option>
+                                    <option value="vw">vw</option>
+                                </select>
+                                <input type="number" id="inputBoxShadowVertical" class="halfWidthInput" name="inputBoxShadowVertical" placeholder="Vertikaler Versatz" value="0" onchange="applyChanges()" onmouseover="showHint('Vertikaler Schattenversatz')" onmouseleave="hideHint()">
+                                <select name="inputSelectShadowVerticalUnit" id="inputSelectShadowVerticalUnit" onchange="applyChanges()" onmouseover="showHint('Einheit vertikaler Schattenversatz')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option selected value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="vh">vh</option>
+                                    <option value="vw">vw</option>
+                                </select>
+                                <input type="number" id="inputBoxShadowBlur" class="halfWidthInput" name="inputBoxShadowBlur" placeholder="Verschwimmen" value="0" onchange="applyChanges()" onmouseover="showHint('Schattenverwischung')" onmouseleave="hideHint()">
+                                <select name="inputSelectBoxShadowBlurUnit" id="inputSelectBoxShadowBlurUnit" onchange="applyChanges()" onmouseover="showHint('Einheit Schattenverwischung')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option selected value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="vh">vh</option>
+                                    <option value="vw">vw</option>
+                                </select>
+                                <input type="number" id="inputBoxShadowSize" class="halfWidthInput" name="inputBoxShadowSize" placeholder="Verschwimmen" value="0" onchange="applyChanges()" onmouseover="showHint('Schattenskalierung')" onmouseleave="hideHint()">
+                                <select name="inputSelectBoxShadowSizeUnit" id="inputSelectBoxShadowSizeUnit" onchange="applyChanges()" onmouseover="showHint('Einheit Schattenskalierung')" onmouseleave="hideHint()">
+                                    <option value="" disabled>Absolut</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="mm">mm</option>
+                                    <option value="pt">pt</option>
+                                    <option selected value="px">px</option>
+                                    <option value="" disabled>Relativ</option>
+                                    <option value="%">%</option>
+                                    <option value="em">em</option>
+                                    <option value="rem">rem</option>
+                                    <option value="vh">vh</option>
+                                    <option value="vw">vw</option>
+                                </select>
+                                <input type="color" id="inputShadowColor" class="thirdWidthInput" name="inputShadowColor" onchange="applyChanges()" onmouseover="showHint('Schattenfarbe')" onmouseleave="hideHint()">
+                            </div>
+                        </li>
+                        <ul id="filterSettings">
+                            <li>
+                                Filter: 
+                                <select class="wide" name="inputFilterType" id="inputFilterType" onchange="applyChanges()" onmouseover="showHint('Elementfilter')" onmouseleave="hideHint()">
+                                    <option selected value="none" >none</option>
+                                    <option value="blur" >blur</option>
+                                    <option value="brightness" >brightness</option>
+                                    <option value="contrast" >contrast</option>
+                                    <option value="grayscale" >grayscale</option>
+                                    <option value="hue-rotate" >hue-rotate</option>
+                                    <option value="opacity" >opacity</option>
+                                    <option value="saturate" >saturate</option>
+                                    <option value="sepia" >sepia</option>
+                                </select>
+                            </li>
+                            <li id="inputFilterValuesWrapper" class="submenu">
+                                > Filterwert:
+                                <div>
+                                    <input type="number" id="inputFilterValue" class="fullWidthInput" name="inputFilterValue" placeholder="Verschwimmen" value="0" step="0.1" onchange="applyChanges()" onmouseover="showHint('Filterwert')" onmouseleave="hideHint()">
+
+                                    <select name="inputSelectFilterUnit" id="inputSelectFilterUnit" onchange="applyChanges()" onmouseover="showHint('Einheit Filterwert')" onmouseleave="hideHint()">
+                                        <option value="" disabled>Absolut</option>
+                                        <option value="cm">cm</option>
+                                        <option value="in">in</option>
+                                        <option value="mm">mm</option>
+                                        <option value="pt">pt</option>
+                                        <option selected value="px">px</option>
+                                        <option value="" disabled>Relativ</option>
+                                        <option value="%">%</option>
+                                        <option value="em">em</option>
+                                        <option value="rem">rem</option>
+                                        <option value="vh">vh</option>
+                                        <option value="vw">vw</option>
+                                    </select>
+                                </div>
+                            </li>
+                        </ul>
+                        <li>
+                            Opacity:
+                            <div class="flex">
+                                <span id="opacityRangeValue" class="pad10 flex flexCenterX flexCenterY">1</span>
+                                <input name="opacityRange" id="opacityRange" type="range" min="0" max="100" value="100" onchange="applyChanges()" onmouseover="showHint('Transparenz')" onmouseleave="hideHint()">
+                            </div>
+                        </li>
+                        <li>
+                            Rotation:
+                            <div class="flex">
+                                <span id="rotationRangeValue" class="pad10 flex flexCenterX flexCenterY">0</span>
+                                <input name="rotationRange" id="rotationRange" type="range" min="0" max="100" value="0" onchange="applyChanges()" onmouseover="showHint('Rotation')" onmouseleave="hideHint()">
+                            </div>
+                        </li>
+                        <li>
+                            Scale:
+                            <div class="flex">
+                                <span id="scaleRangeValue" class="pad10 flex flexCenterX flexCenterY">1</span>
+                                <input name="scaleRange" id="scaleRange" type="range" min="0" max="200" value="100" onchange="applyChanges()" onmouseover="showHint('Elementskalierung')" onmouseleave="hideHint()">
+                            </div>
+                        </li>
+                        <li>
+                            Custom: 
+                            <div>
+                                <select class="wide" name="inputSelectCustomStyle" id="inputSelectCustomStyle" onchange="applyChanges()" onmouseover="showHint('Manuelle Regeln')" onmouseleave="hideHint()">
+                                    <option value="">Nichts</option>
+                                    <option value="margin">margin</option>
+                                    <option value="padding">padding</option>
+                                    <option value="borderRadius">borderRadius</option>
+                                    <option value="borderLeft">borderLeft</option>
+                                    <option value="borderRight">borderRight</option>
+                                    <option value="borderTop">borderTop</option>
+                                    <option value="borderBottom">borderBottom</option>
+                                    <option value="boxShadow">boxShadow</option>
+                                    <option value="fontSize">fontSize</option>
+                                </select>
+                                <input type="text" id="inputCustomStyle" class="fullWidthInput" name="inputCustomStyle" placeholder="Styleregel" onchange="applyChanges()">
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <h3 class="settingsTitle closed" onclick="toggleSettings('cssCodeBox')">CSS Code</h3>
+                    <ul id="cssCodeBox">
+                        <li>
+                            <textarea readonly id="cssTextArea"></textarea>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+        <div id="steuerButtons">
+            <!-- <input type="button" class="button" id="resetButton" onclick="location.reload(true)" value="RESET"> -->
+            <input type="button" class="button" id="resetButton" onclick="resetDesign()" value="RESET">
+            <input type="button" class="button" id="saveButton" onclick="showElement('saveForm')" value="SPEICHERN">
+            <input type="button" class="button" id="loadButton" onclick="showElement('loadForm')" value="LADEN">
+        </div>
+    </header>
+    <main>
+        <div id="testWrapper">
+            <div id="testContainer">
+                <p>
+                    Lorem ipsum dolor, sit amet consectetur adipisicing elit. Magnam magni laudantium voluptate perspiciatis? Impedit reprehenderit assumenda non molestiae labore ad cumque rerum doloribus! Voluptatem quidem ut deserunt suscipit fugiat eos?
+                </p>
+                <img id="testContainerImage" src="../bilder/bild.png">
+            </div>
+        </div>
+        <div id="saveForm" class="hidden">
+            <p>Aktuelles Design speichern unter:</p>
+            <div>
+                <input type="text" name="saveAsName" id="saveAsName" placeholder="Name des Designs">
+                <div class="">
+                    <input type="button" name="saveAsOk" id="saveAsOk" value="Speichern" onclick="saveDesign()">
+                    <input type="button" name="saveAsCancel" id="saveAsCancel" value="Abbrechen" onclick="hideElement('saveForm')">
+                </div>  
+            </div>
+        </div>
+        <div id="loadForm" class="hidden">
+            <p>Design laden:</p>
+            <div>
+                <select name="loadFormSelect" id="loadFormSelect">
+                </select>
+                <div class="">
+                    <input type="button" name="loadSaved" id="loadSaved" value="Laden" onclick="loadDesign()">
+                    <input type="button" name="deleteSaved" id="deleteSaved" value="Löschen" onclick="deleteDesign()">
+                    <input type="button" name="cancelLoad" id="cancelLoad" value="Abbrechen" onclick="hideElement('loadForm')">
+                </div>  
+            </div>
+        </div>
+    </main>
+    <footer>
+        <div id="infoBox" class="hidden"></div>
+        <script src="cssTests.js"></script>
+    </footer>
+</body>
+</html>

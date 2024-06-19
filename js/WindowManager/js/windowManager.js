@@ -18,6 +18,7 @@ function toggleShadow(id, turnOn=true) {
     header = element.getElementsByClassName("windowHeader")[0]
     reorderWindows(id);
 
+    // Setzen Styles, je nach dem, ob gerade etwas markiert wird oder nicht
     if (window.getSelection().type != "Range") {
         if (turnOn || element.style.boxShadow == "") {
             element.style.boxShadow = "2px 2px 2px rgba(25,25,25,.5)";
@@ -42,17 +43,20 @@ function reorderWindows(id) {
     orderArray = new Object();
 
     if (windowElement.style.zIndex != 10000) {
+        // Erstelle Liste aller geöffneten Fenster
         for (let index = 0; index < elements.length; index++) {
             const element = elements[index];
             if (element.id != id) {
                 orderArray[element.style.zIndex] = element;
             }
         }
+
+        // Aktuelles Fenster auf höchsten Z-Index setzen
         windowElement.style.zIndex = 10000;
         oaLength = objectLength(orderArray);
-        // console.log(orderArray);
 
         counter = 0;
+        // Neuzuweisung Z-Index der offnen Fenster
         for (key in orderArray) {
             currentElement = orderArray[key];
             newZIndex = 10000 - oaLength + counter;
@@ -132,30 +136,67 @@ function objectLength(obj) {
     return counter;
 }
 
-
-function minimizeWindow(id) {
-    console.log("minimize: " + id)
+// Funktion, um die Fenster zu minimieren
+async function minimizeWindow(id) {
+    // Klone Originalfenster
     var currentWindow = document.getElementById(id);
+    clonedWindow = currentWindow.cloneNode(true);
 
-    windowHeaderHeight = currentWindow.getElementsByClassName("windowHeader")[0].offsetHeight;
-    currentWindow.style.maxHeight = windowHeaderHeight + "px";
-    currentWindow.style.maxWidth = "200px";
+    // Ausblenden Minimieren- und Schliessensymbol
+    symbol = clonedWindow.getElementsByClassName("minimizeButton")[0];
+    symbol.style.display = "none";
+    symbol = clonedWindow.getElementsByClassName("closeButton")[0];
+    symbol.style.display = "none";
 
-    symbol = currentWindow.getElementsByClassName("minimizeButton")[0];
-    symbol.innerHTML = "🔲";
-    symbol.onclick = function () {maximizeWindow(id)};
+    // Anpassen Styles
+    windowHeader = clonedWindow.getElementsByClassName("windowHeader")[0]
+    clonedWindow.style.display = "block";
+    clonedWindow.style.position = "unset";
+    windowHeaderHeight = windowHeader.offsetHeight;
+    clonedWindow.style.height = "28px";
+    clonedWindow.style.width = "200px";
+    clonedWindow.style.maxHeight = "28px";
+    clonedWindow.style.maxWidth = "200px";
+   
+    // Entfernen Originalfenster und einfügen des Klons in Footer-Element
+    minimizeWrapper = document.getElementById("minimizedWindow");
+    minimizeWrapper.appendChild(clonedWindow);
+    currentWindow.remove();
+    windowHeader.setAttribute("onclick", "maximizeWindow('" + id + "')");
 }
 
 function maximizeWindow(id) {
+    // Klonen aktuelles Fenster
     var currentWindow = document.getElementById(id);
-    currentWindow.style.maxHeight = "";
-    currentWindow.style.maxWidth = "";
+    clonedWindow = currentWindow.cloneNode(true);
 
-    symbol = currentWindow.getElementsByClassName("minimizeButton")[0];
-    symbol.innerHTML = "➖";
-    symbol.onclick = function () {minimizeWindow(id)};
+    // Entfernen Onclick Event
+    windowHeader = clonedWindow.getElementsByClassName("windowHeader")[0]
+    windowHeader.setAttribute("onclick", "");
+
+    // Einblenden Schliessen- und Minimierenknopf
+    symbol = clonedWindow.getElementsByClassName("minimizeButton")[0];
+    symbol.style.display = "";
+    symbol = clonedWindow.getElementsByClassName("closeButton")[0];
+    symbol.style.display = "";
+
+    // Zurücksetzen Styles
+    clonedWindow.style.display = "";
+    clonedWindow.style.position = "";
+    clonedWindow.style.height = "";
+    clonedWindow.style.width = "";
+    clonedWindow.style.maxHeight = "";
+    clonedWindow.style.maxWidth = "";
+
+    // Klon an Body anfügen
+    bodyElement = document.getElementsByTagName("body")[0];
+    bodyElement.appendChild(clonedWindow);
+    applyWindowManager(clonedWindow);
+
+    currentWindow.remove();
 }
 
+// Fenster schliessen (löschen)
 function closeWindow(id) {
     if (isMoving == false) {
         var currentWindow = document.getElementById(id);
@@ -163,12 +204,16 @@ function closeWindow(id) {
     }
 }
 
+// Funktion, um ein neues Fenster zu erstellen
 function createNewWindow() {
+    // Auslessen aktuelle Dimensionen
     windowWidth = window.innerWidth;
     windowHeight = window.innerHeight;
     
+    // Erstellen neues Div Element
     newWindow = document.createElement("div");
 
+    // Prüfen nächste freie Fenster-ID
     counter = 1;
     while (true) {
         checkValue = JSON.stringify(document.getElementById("window" + counter));
@@ -178,38 +223,40 @@ function createNewWindow() {
         counter += 1
     }
 
+    // Zufällige Koordinaten erstellen
     randTop = Math.floor(Math.random() * (windowHeight - 150));
     randLeft = Math.floor(Math.random() * (windowWidth - 400));
 
+    // Anwenden Styles
     newWindow.classList.add("window");
     newWindow.style.top = randTop + "px";
     newWindow.style.left = randLeft + "px";
-    // newWindow.style.top = "50px";
-    // newWindow.style.left = "50px";
     newWindow.style.zIndex = "1";
     newWindow.id = "window" + counter;
 
+    // Erstellen Header
     windowHeader = document.createElement("div");
     windowHeader.classList.add("windowHeader");
     windowHeader.innerHTML = "Fenstertitel (Window " + counter + ")";
     newWindow.appendChild(windowHeader);
 
+    // Erstllen Minimierknopf
     minimizeButton = document.createElement("span");
     minimizeButton.innerHTML = "➖";
     minimizeButton.classList.add("minimizeButton");
     minimizeButton.classList.add("windowButton");
-    // minimizeButton.onclick = function() {minimizeWindow("window" + (counter + 1))};
     minimizeButton.setAttribute("onclick", "minimizeWindow('window" + counter + "')")
     windowHeader.appendChild(minimizeButton);
 
+    // Erstellen Schliessenknopf
     closeButton = document.createElement("span");
     closeButton.innerHTML = "❌";
     closeButton.classList.add("closeButton");
     closeButton.classList.add("windowButton");
-    // closeButton.onclick = function() {closeWindow("window" + (counter + 1))};
     closeButton.setAttribute("onclick", "closeWindow('window" + counter + "')")
     windowHeader.appendChild(closeButton);
 
+    // Einfügen Fensterinhalt
     windowContent = document.createElement("div");
     windowContent.classList.add("windowContent");
     windowContent.innerHTML = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Consequatur quis doloribus natus eos odio sequi culpa laborum praesentium? Expedita iusto sit velit amet, explicabo accusamus molestias cum dignissimos repudiandae et.";

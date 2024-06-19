@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webseiten Crashkurs - HTML Elemente hervorheben</title>
+    <link rel="stylesheet" href="elmentHighlight.css" type="text/css">
+</head>
+<body>
+    <header id="top">
+        <div id="menuBar">
+            <img id="seitenLogo" src="bilder/logo.png" onclick="location.reload(true)" alt="Unser Firmenlogo">
+            <nav id="hauptmenu">
+                <ul id="menuListe">
+                    <a class="menuLink">
+                        <li class="ArtikelMenuElement menuElement" onclick="highlightElement('article', 'pink', 'ArtikelMenuElement')">
+                            Artikel
+                        </li>
+                    </a>
+                    <a class="menuLink">
+                        <li class="BilderMenuElement menuElement" onclick="highlightElement('img', 'blue', 'BilderMenuElement')">
+                            Bilder
+                        </li>
+                    </a>
+                    <a class="menuLink">
+                        <li class="ContainerMenuElement menuElement" onclick="highlightElement('div', 'bisque', 'ContainerMenuElement')">
+                            Container
+                        </li>
+                    </a>
+                    <a href="#bottom" class="menuLink">
+                        <li class="FooterMenuElement menuElement" onclick="highlightElement('footer', 'purple', 'FooterMenuElement')">
+                            Footer
+                        </li>
+                    </a>
+                    <a class="menuLink">
+                        <li class="HeaderMenuElement menuElement" onclick="highlightElement('header', 'yellow', 'HeaderMenuElement')">
+                            Header
+                        </li>
+                    </a>
+                    <a class="menuLink">
+                        <li class="ListenMenuElement menuElement" onclick="highlightLists('ListenMenuElement')">
+                            Listen
+                        </li>
+                    </a>
+                    <a class="menuLink">
+                        <li class="TabellenMenuElement menuElement" onclick="highlightTable('TabellenMenuElement')">
+                            Tabellen
+                        </li>
+                    </a>
+                    <a class="menuLink">
+                        <li class="TitelMenuElement menuElement" onclick="highlightTitles('TitelMenuElement')">
+                            Titel
+                        </li>
+                    </a>
+                    <a class="menuLink">
+                        <li class="menuElement" onclick="toggleCSS()">
+                            CSS
+                        </li>
+                    </a>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div id="headerBildContainer"></div>
+    <main>
+        <h1 class="seitenTitel">HTML Elemente</h1>
+        <div class="seitenInhalt">
+            <article class="artikelText zweiDrittel">
+                <h2>Grundgerüst</h2>
+                <p>
+                    HTML bildet das Grundgerüst jeder Webseite. Ausgesprochen bedeutet HTML "<b>H</b>yper <b>T</b>ext <b>M</b>arkup <b>L</b>anguage" oder auf Deutsch "Hypertext-Auszeichnungssprache". Das bedeutet, dass es eine Beschreibende Sprache ist. Es wird also mit den einzelnen Elmenten beschrieben, was man darstellen möchte.<br><br>
+                    Zusätzlich zu den HTML Elementen wird auch ein CSS Stylesheet geladen. Dieses definiert, wie die einzelnen Elemente formatiert werden sollen.
+                </p>
+            </article>
+            <div class="bildContainer einDrittel">
+                <img class="artikelBild" src="bilder/bild.png">
+            </div>
+            <div class="bildContainer einDrittel">
+                <img class="artikelBild" src="bilder/bild2.png">
+            </div>
+            <article class="artikelText zweiDrittel">
+                <h3>Interpretation</h3>
+                <p>
+                    Bei HTML gibt es keine Prozesslogik wie bei anderen Programmiersprachen. Der Browser interpretiert beim Empfang der Webseite den HTML Code und generiert die einzelnen Elemente. Dabei wird das Stylesheet geladen, welches bestimmt, wie die Elemente aussehen müssen und rendert die Seite entsprechend im Browsertab.<br><br>
+                </p>
+            </article>
+            <article class="artikelText zweiDrittel">
+                <h2>HTML Elemente</h2>
+                <p>Eine Webseite ist immer aus unterschiedlichen HTML Elementen aufgebaut. Je nachdem, was man gerne haben möchte gibt es bestimmte Elemente, welche man verwenden kann.
+                    Grundsätzlich kann man jedoch mit CSS jedes Element so manipulieren, wie man gerne möchte. Warum soll man sich also die Mühe machen? Die Gliederung des Inhalts in die dazu passenden Elemente hilft bei Menschen mit Sehbehinderung auf der Webseiten mit ihrem Sehhilfeprogramm zu navigieren. Diese Orientiern sich an den unterschiedlichen HTML Elementen. Werden die Elemente nicht wie eigentlich gedacht verwendet, erschwert das die Navigationsfähigkeit für diese Personen.</p>
+            </article>
+            <div class="bildContainer einDrittel">
+                <img class="artikelBild" src="bilder/bild3.png">
+            </div>
+            <article class="artikelText volleBreite">
+                <p>
+                    <h3>Übersicht</h3>
+                    <table>
+                        <tr>
+                            <th>Element</th>
+                            <th>Zweck</th>
+                        </tr>
+                        <tr>
+                            <td>html</td>
+                            <td>Das html Element ist das äusserste Element einer Webseite und beinhaltet alle anderen Elemente</td>
+                        </tr>
+                        <tr>
+                            <td>head</td>
+                            <td>Das head Element ist nicht Sichtbar. Darin werden Metainformationen gespeichert wie Sprache, Stylesheets, Schriftarten, Seitentitel usw.</td>
+                        </tr>
+                        <tr>
+                            <td>body</td>
+                            <td>Das Body Element beinhaltet alle Webseitenelemente und ist innerhalb des html Elements.</td>
+                        </tr>
+                        <tr>
+                            <td>header</td>
+                            <td>Das headerelement wird zum Erstellen des Kopfteils verwendet und beinhaltet meist auch das Navigationsmenü</td>
+                        </tr>
+                        <tr>
+                            <td>body</td>
+                            <td>Im body Element platziert man den Seiteninhalt, wie Texte Bilder oder was auch immer man auf der Webseite abbilden möchte</td>
+                        </tr>
+                        <tr>
+                            <td>footer</td>
+                            <td>Das footer Element wird für den Abschliessenden Teil einer Webseite verwendet. Viele Webseiten platzieren dort ihren Copyright Banner und oft auch nochmals ein simplifiziertes Manü</td>
+                        </tr>
+                        <tr>
+                            <td>article</td>
+                            <td>Im article Element werden meistens Texte eingebettet, welche die einzelnen Artikel einer Webseite dartstellen.</td>
+                        </tr>
+                        <tr>
+                            <td>div</td>
+                            <td>Das div Element ist für die Diversen Ansprüche, welche man nicht mit einem der oberen Elemente erreichen kann. Oft wird auf Webseiten auch das div Element anstatt des article Elements verwendet.</td>
+                        </tr>
+                        <tr>
+                            <td>input</td>
+                            <td>Mit dem Inputelement lassen sich diverse Eingabemasken erstellen. Welche Möglichkeiten du hast findest du <a href="https://wiki.selfhtml.org/wiki/HTML/Elemente/input" target="_blank">hier</a>.</td>
+                        </tr>
+                        <tr>
+                            <td>ul</td>
+                            <td>ul ist die Abkürzung für "unsorted list". Diese Liste erzeugt für jedes Element Aufzählungszeichen wie Punkte, Kreise, Striche usw.</td>
+                        </tr>
+                        <tr>
+                            <td>ol</td>
+                            <td>ol ist die Abkürzung für "ordered list". Anstatt Aufzählungszeichen besitzt diese Listenform Zahlen. </td>
+                        </tr>
+                        <tr>
+                            <td>img</td>
+                            <td>Das img Element wird für Bilder verwendet. Alternativ gibt es auch video oder audio für die unterschiedlichen Medientypen</td>
+                        </tr>
+                        <tr>
+                            <td>h1, h2, h3, h4, h5</td>
+                            <td>Die h Elemente werden für Titel verwendet. Je kleiner die Zahl nach dem "H" umso grösser die Schrift. Es bezeichnet somit die Abfolge der Titel/Untertitel. h1 = Haupttitel,  h2 = Untertitel von h1, h3 = untertitel von h2 usw.</td>
+                        </tr>
+                    </table>
+                    <br>
+                    Weitere Informationen zu HTML Elementen findest du <a href="https://de.semrush.com/blog/liste-der-html-tags/">hier</a>.
+                </p>
+            </article>
+        </div>
+    </main>
+    <footer id="bottom">
+        <div id="copyright">© __JAHR__ unsere Firma</div>
+        <nav id="footerMenu">
+            <ul id="footerMenuListe">
+                <a class="footerMenuLink">
+                    <li class="footerMenuElement ArtikelMenuElement" onclick="highlightElement('article', 'pink', 'ArtikelMenuElement')">
+                        Artikel
+                    </li>
+                </a>
+                <a class="footerMenuLink">
+                    <li class="footerMenuElement BilderMenuElement" onclick="highlightElement('img', 'blue', 'BilderMenuElement')">
+                        Bilder
+                    </li>
+                </a>
+                <a class="footerMenuLink">
+                    <li class="footerMenuElement ContainerMenuElement" onclick="highlightElement('div', 'bisque', 'ContainerMenuElement')">
+                        Container
+                    </li>
+                </a>
+                <a class="footerMenuLink">
+                    <li class="footerMenuElement FooterMenuElement" onclick="highlightElement('footer', 'purple', 'FooterMenuElement')">
+                        Footer
+                    </li>
+                </a>
+                <a href="#top" class="footerMenuLink">
+                    <li class="footerMenuElement HeaderMenuElement" onclick="highlightElement('header', 'yellow', 'HeaderMenuElement')">
+                        Header
+                    </li>
+                </a>
+                <a class="footerMenuLink">
+                    <li class="footerMenuElement ListenMenuElement" onclick="highlightLists('ListenMenuElement')">
+                        Listen
+                    </li>
+                </a>
+                <a class="footerMenuLink">
+                    <li class="footerMenuElement TabellenMenuElement" onclick="highlightTable('TabellenMenuElement')">
+                        Tabellen
+                    </li>
+                </a>
+                <a class="footerMenuLink">
+                    <li class="footerMenuElement TitelMenuElement" onclick="highlightTitles('TitelMenuElement')">
+                        Titel
+                    </li>
+                </a>
+                <a class="footerMenuLink">
+                    <li class="footerMenuElement" onclick="toggleCSS()">
+                        CSS
+                    </li>
+                </a>
+            </ul>
+        </nav>
+        <script src="elementHighlight.js"></script>
+    </footer>
+</body>
+</html>

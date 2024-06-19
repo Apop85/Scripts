@@ -11,15 +11,17 @@
     <div id="window1" class="window" style="top: 150px; left: 200px; z-index: 9998">
         <div class="windowHeader">
             Fenstertitel (Window 1)
-        </div>
+            <span onclick="minimizeWindow('window1')" class="minimizeButton windowButton">➖</span><span onclick="closeWindow('window1')" class="closeButton windowButton">❌</span>
+        </div>  
         <div class="windowContent">
             Lorem, ipsum dolor sit amet consectetur adipisicing elit. Cum sunt explicabo distinctio ducimus hic mollitia, quam ut magni esse ad voluptas assumenda officia, adipisci ab natus ipsam sint exercitationem sit!
         </div>
     </div>
     <!-- Fenster 2 -->
-    <div id="window2" class="window" style="top: 250px; left: 200px; z-index: 9999">
+    <div id="window2" class="window" style="top: 250px; left: 175px; z-index: 9999">
         <div class="windowHeader">
             Fenstertitel (Window 2)
+            <span onclick="minimizeWindow('window2')" class="minimizeButton windowButton">➖</span><span onclick="closeWindow('window2')" class="closeButton windowButton">❌</span>
         </div>
         <div class="windowContent">
             Lorem ipsum dolor sit amet consectetur, adipisicing elit. Aperiam magni molestiae, blanditiis possimus et quidem fuga vitae, magnam labore iste repudiandae libero perspiciatis neque a ducimus corrupti unde architecto quia!
@@ -29,11 +31,15 @@
     <div id="window3" class="window" style="top: 200px; left: 300px; z-index: 10000">
         <div class="windowHeader">
             Fenstertitel (Window 3)
+            <span onclick="minimizeWindow('window3')" class="minimizeButton windowButton">➖</span><span onclick="closeWindow('window3')" class="closeButton windowButton">❌</span>
         </div>
         <div class="windowContent">
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Consequatur quis doloribus natus eos odio sequi culpa laborum praesentium? Expedita iusto sit velit amet, explicabo accusamus molestias cum dignissimos repudiandae et.
         </div>
     </div>
+    <footer>
+        <button onclick="createNewWindow()" id="newWindowButton">Neues Fenster</button>
+    </footer>
     <script src="js/windowManager.js"></script>
 </body>
 </html>

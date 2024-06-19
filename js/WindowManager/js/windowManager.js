@@ -8,21 +8,28 @@
  */
 
 currentId = "";
+isMoving = false;
+minimizedWindow = []
 
 // Funktion, um den Schatten eines Fensters ein- oder auszuschalten
 function toggleShadow(id, turnOn=true) {
     if (id == "") return;
     element = document.getElementById(id);
+    header = element.getElementsByClassName("windowHeader")[0]
     reorderWindows(id);
 
     if (window.getSelection().type != "Range") {
         if (turnOn || element.style.boxShadow == "") {
             element.style.boxShadow = "2px 2px 2px rgba(25,25,25,.5)";
             element.style.opacity = ".92";
+            header.style.backgroundColor = "rgb(57, 57, 57)"
+            isMoving = true;
         } else {
             element.style.boxShadow = "";
             element.style.opacity = "";
             currentId = "";
+            header.style.backgroundColor = "";
+            isMoving = false;
         }
     }
 }
@@ -32,18 +39,26 @@ function toggleShadow(id, turnOn=true) {
 function reorderWindows(id) {
     elements = document.getElementsByClassName("window");
     windowElement = document.getElementById(id)
+    orderArray = new Object();
 
     if (windowElement.style.zIndex != 10000) {
         for (let index = 0; index < elements.length; index++) {
             const element = elements[index];
-
-            delta = 10000 - element.style.zIndex;
-
             if (element.id != id) {
-                element.style.zIndex = 10000 - (1 + delta);
+                orderArray[element.style.zIndex] = element;
             }
         }
         windowElement.style.zIndex = 10000;
+        oaLength = objectLength(orderArray);
+        // console.log(orderArray);
+
+        counter = 0;
+        for (key in orderArray) {
+            currentElement = orderArray[key];
+            newZIndex = 10000 - oaLength + counter;
+            currentElement.style.zIndex = newZIndex;
+            counter += 1;
+        }
     }
 }
 
@@ -106,6 +121,110 @@ function applyWindowManager(element) {
             element.style.top  = (mousePosition.y + offset[1]) + 'px';
         }
     }, true);
+}
+
+// Auslesen der Anzahl keys in einem Objekt
+function objectLength(obj) {
+    counter = 0
+    for (key in obj) {
+        counter += 1;
+    }
+    return counter;
+}
+
+
+function minimizeWindow(id) {
+    console.log("minimize: " + id)
+    var currentWindow = document.getElementById(id);
+
+    windowHeaderHeight = currentWindow.getElementsByClassName("windowHeader")[0].offsetHeight;
+    currentWindow.style.maxHeight = windowHeaderHeight + "px";
+    currentWindow.style.maxWidth = "200px";
+
+    symbol = currentWindow.getElementsByClassName("minimizeButton")[0];
+    symbol.innerHTML = "🔲";
+    symbol.onclick = function () {maximizeWindow(id)};
+}
+
+function maximizeWindow(id) {
+    var currentWindow = document.getElementById(id);
+    currentWindow.style.maxHeight = "";
+    currentWindow.style.maxWidth = "";
+
+    symbol = currentWindow.getElementsByClassName("minimizeButton")[0];
+    symbol.innerHTML = "➖";
+    symbol.onclick = function () {minimizeWindow(id)};
+}
+
+function closeWindow(id) {
+    if (isMoving == false) {
+        var currentWindow = document.getElementById(id);
+        currentWindow.remove();
+    }
+}
+
+function createNewWindow() {
+    windowWidth = window.innerWidth;
+    windowHeight = window.innerHeight;
+    
+    newWindow = document.createElement("div");
+
+    counter = 1;
+    while (true) {
+        checkValue = JSON.stringify(document.getElementById("window" + counter));
+        if (counter >= 10000 || checkValue == "null") {
+            break;
+        }
+        counter += 1
+    }
+
+    randTop = Math.floor(Math.random() * (windowHeight - 150));
+    randLeft = Math.floor(Math.random() * (windowWidth - 400));
+
+    newWindow.classList.add("window");
+    newWindow.style.top = randTop + "px";
+    newWindow.style.left = randLeft + "px";
+    // newWindow.style.top = "50px";
+    // newWindow.style.left = "50px";
+    newWindow.style.zIndex = "1";
+    newWindow.id = "window" + counter;
+
+    windowHeader = document.createElement("div");
+    windowHeader.classList.add("windowHeader");
+    windowHeader.innerHTML = "Fenstertitel (Window " + counter + ")";
+    newWindow.appendChild(windowHeader);
+
+    minimizeButton = document.createElement("span");
+    minimizeButton.innerHTML = "➖";
+    minimizeButton.classList.add("minimizeButton");
+    minimizeButton.classList.add("windowButton");
+    // minimizeButton.onclick = function() {minimizeWindow("window" + (counter + 1))};
+    minimizeButton.setAttribute("onclick", "minimizeWindow('window" + counter + "')")
+    windowHeader.appendChild(minimizeButton);
+
+    closeButton = document.createElement("span");
+    closeButton.innerHTML = "❌";
+    closeButton.classList.add("closeButton");
+    closeButton.classList.add("windowButton");
+    // closeButton.onclick = function() {closeWindow("window" + (counter + 1))};
+    closeButton.setAttribute("onclick", "closeWindow('window" + counter + "')")
+    windowHeader.appendChild(closeButton);
+
+    windowContent = document.createElement("div");
+    windowContent.classList.add("windowContent");
+    windowContent.innerHTML = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Consequatur quis doloribus natus eos odio sequi culpa laborum praesentium? Expedita iusto sit velit amet, explicabo accusamus molestias cum dignissimos repudiandae et.";
+    newWindow.appendChild(windowContent);
+    
+    document.getElementsByTagName("body")[0].appendChild(newWindow);
+
+    // Anpassen der Elementgrösse des Textinhalts
+    headerHeight = windowHeader.offsetHeight;
+    elementHeight = newWindow.offsetHeight;
+    delta = elementHeight - headerHeight - 12
+    windowContent.style.height = delta + "px";
+
+    reorderWindows("window" + counter);
+    applyWindowManager(newWindow);
 }
 
 // Initialisierung

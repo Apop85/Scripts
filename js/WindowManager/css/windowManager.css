@@ -17,11 +17,47 @@ body {
 .windowHeader {
     border-bottom: 1px solid black;
     background-color: rgb(94, 94, 94);
-    padding: 5px 10px;
+    padding: 6px 10px;
     cursor: pointer;
     color: white;
     font-weight: bolder;
     font-family: monospace;
+}
+
+#newWindowButton {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    z-index: 10001;
+    position: absolute;
+}
+
+/* .windowHeader::after {
+    content: "X";
+    display: inline;
+    width: auto;
+    position: absolute;
+    right: 7px;
+    padding: 0px 5px;
+} */
+
+.windowButton {
+    display: inline;
+    position: absolute;
+    background-color: #ebebeb;
+    top: 5px;
+}
+
+.windowButton:hover {
+    background-color: #d7d7d7;
+}
+
+.closeButton {
+    right: 3px;
+}
+
+.minimizeButton {
+    right: 26px;
 }
 
 .windowContent {

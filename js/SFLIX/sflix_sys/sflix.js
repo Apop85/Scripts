@@ -401,6 +401,7 @@ function addPreviewImage(decodedUrl, link, reason="normal") {
         imgNode.style.width = "30%";
         imgNode.style.boxShadow = "0px 0px 5px 2px white";
         imgNode.style.marginBottom = "10px";
+        imgNode.style.maxHeight = "85%";
         imgNode.id = mediaName;
         imgNode.loading = "lazy";
         link.style.flexDirection = "column";

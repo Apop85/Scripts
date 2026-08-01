@@ -5,6 +5,7 @@
 <b>Version 1.42</b>:<br>
 <ul>
     <li>[OPTIMIERUNG] Umstellung auf Indexed DB für bessere Datenkonsistenz und Performance. Bei Browserupdates werden die Stefflixdaten nicht mehr gelöscht.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Splashscreen wird nur noch einmal pro Tag angezeigt.</li>
 </ul>
 <b>Version 1.41</b>:<br>
 <ul>

@@ -1806,7 +1806,7 @@ if (decodedUriData != null && decodedUriData.includes("LEVEL0:")) {
     document.getElementById("media").style.display = "block";
                                                             
     // Lese neuste Version von GIT-Repository aus
-    newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
+    newestVersion = await httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
     if (newestVersion != null) {
         newestVersion = parseFloat(newestVersion.split("var version = ")[1]);
     }
@@ -1926,7 +1926,7 @@ if (decodedUriData != null && decodedUriData.includes("LEVEL0:")) {
 
         // Lade changelog
         try {
-            news = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");
+            news = await httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");
         } catch (error) {
             news = '<h2>Keine Internetverbindung</h2>';        
         }

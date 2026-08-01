@@ -170,7 +170,7 @@ function createSubmenus(decodedUriData, contentData, currentLink, depth=0, name=
 }
 
 // Funktion zum auslesen von Inhalten von anderen URLs
-async function httpGet(theUrl) {
+function httpGet(theUrl) {
     let xmlhttp;
     
     if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
@@ -1806,7 +1806,7 @@ if (decodedUriData != null && decodedUriData.includes("LEVEL0:")) {
     document.getElementById("media").style.display = "block";
                                                             
     // Lese neuste Version von GIT-Repository aus
-    newestVersion = await httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
+    newestVersion = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js");
     if (newestVersion != null) {
         newestVersion = parseFloat(newestVersion.split("var version = ")[1]);
     }
@@ -1926,7 +1926,7 @@ if (decodedUriData != null && decodedUriData.includes("LEVEL0:")) {
 
         // Lade changelog
         try {
-            news = await httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");
+            news = httpGet("https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.txt");
         } catch (error) {
             news = '<h2>Keine Internetverbindung</h2>';        
         }

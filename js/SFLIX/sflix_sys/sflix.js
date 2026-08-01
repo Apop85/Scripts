@@ -1,44 +1,45 @@
 // Variabeldeklaration
 var allowedMediaExtensions = [".mp4", ".ogg", ".mp3", ".jpg", ".jpeg", ".png", ".gif", ".m4a"];
-var mediaTypes = [".mp4"];
-var musicTypes = [".mp3", ".m4a", ".ogg"];
-var imageTypes = [".jpg", ".jpeg", ".png", ".gif"];
-var listSeperator = "$=$"
+var buttonNode = null;
+var currentFavorites = null;
+var currentIndex = null;
+var currentTimestamp = null;
+var currentUrl = null;
 var decodedUriData = null;
 var element = null;
-var currentFavorites = null;
 var favorites = null;
-var playListPrefix = "";
-var mainContent = null;
+var gravity = 1;
+var image = null;
+var imageTypes = [".jpg", ".jpeg", ".png", ".gif"];
+var isPopStateNavigation = false;
+var lastPlayed = null;
+var lastTitle = null;
+var lastUrl = null;
 var level1 = null;
 var level2 = null;
 var level3 = null;
-var newestVersion = null;
-var image = null;
-var buttonNode = null;
-var lastPlayed = null;
-var wrapperNode = null;
-var lastTitle = null;
-var lastUrl = null;
-var news = null;
-var playlistName = null;
-var localPlaylist = null;
-var medialocation = null;
-var currentIndex = null;
-var currentUrl = null;
-var mediaName = null;
-var pastTimestamp = null;
-var currentTimestamp = null;
 var linkNode = null;
-var node = null;
-var subnode = null;
-var searchTerm = null;
-var searchResults = null;
-var seasonList = null;
-var timeoutArray = [];
-var gravity = 1;
+var listSeperator = "$=$"
+var localPlaylist = null;
+var mainContent = null;
 var maxY = 0;
+var medialocation = null;
+var mediaName = null;
+var mediaTypes = [".mp4"];
 var minTime = 11;
+var musicTypes = [".mp3", ".m4a", ".ogg"];
+var newestVersion = null;
+var news = null;
+var node = null;
+var pastTimestamp = null;
+var playlistName = null;
+var playListPrefix = "";
+var searchResults = null;
+var searchTerm = null;
+var seasonList = null;
+var subnode = null;
+var timeoutArray = [];
+var wrapperNode = null;
 
 settings = localStorage.getItem("settings");
 if (settings == null) {
@@ -142,9 +143,21 @@ function createSubmenus(decodedUriData, contentData, currentLink, depth=0, name=
                     }
                     // Füge alle Medienelemente eines Schlüssel der Playlist zu
                     playlist.push(key);
-                    link.href = "start.html?=" + btoa(currentLink + listSeperator + "MEDIA:" + key + listSeperator + "PL:" + playListPrefix) + "#mediaNav";
+                    targetUrl = "start.html?=" + btoa(currentLink + listSeperator + "MEDIA:" + key + listSeperator + "PL:" + playListPrefix) + "#mediaNav";
+                    link.href = targetUrl;
+
+                    link.setAttribute(
+                        "onclick",
+                        "loadUrl('" + targetUrl + "'); return false;"
+                    );
                 } else {
-                    link.href = "start.html?=" + btoa(currentLink + listSeperator + "LEVEL" + (depth + 1) + ":" + key);
+                    targetUrl = "start.html?=" + btoa(currentLink + listSeperator + "LEVEL" + (depth + 1) + ":" + key);
+                    link.href = targetUrl;
+
+                    link.setAttribute(
+                        "onclick",
+                        "loadUrl('" + targetUrl + "'); return false;"
+                    );
                 }
                 node.appendChild(link);
                 node.id = cleanedKey.replace(".", "");
@@ -575,87 +588,204 @@ function openHelp() {
 }
 
 // Hinzufügen/Entfernen von Favoriten
+// function updateFavorites() {
+//     // Aktuelles Medium auslesen
+//     mediaName = atob(window.location.href.split("?=")[1].split("#")[0]).split(listSeperator + "MEDIA:")[1].split(listSeperator)[0];
+    
+//     // Favoriten auslesen
+//     favorites = localStorage.getItem("favorites");
+//     if (favorites == null) {
+//         favorites = [];
+//     } else {
+//         favorites = favorites.split(listSeperator);
+//         if (!Array.isArray(favorites)) {
+//             favorites = [favorites];
+//         }
+//     }
+
+//     // Leerer String aus Favoriten entfernen
+//     if (favorites.includes('')){
+//         currentIndex = favorites.indexOf("");
+//         favorites.splice(currentIndex, 1);
+//     }
+    
+//     // Stern bei Button hinzufügen/entfernen
+//     node = document.getElementById("favorite").childNodes[0];
+//     text = node.innerHTML;
+//     if (text.includes("⭐")) {
+//         text = text.replaceAll(" ⭐","");
+//         node.innerHTML = text;
+//         document.getElementById("favorite").className = document.getElementById("favorite").className.split("isFavorite").join("");
+//     } else {
+//         if (!document.getElementById("favorite").className.includes("isFavorite")) {
+//             document.getElementById("favorite").className += "isFavorite";
+//         }
+//         node.innerHTML += (" ⭐");
+//     }
+
+//     // Punkt vor Verzeichnis entfernen
+//     if (!mediaName.startsWith(".")) {
+//         mediaName = "." + mediaName;
+//     }
+
+//     // Stern von Menü hinzufügen/Entfernen
+//     // node = document.getElementById(mediaName.replace(".", "")).childNodes[0];
+//     // let favoriteNode = document.getElementById(mediaName.replace(".", ""));
+
+//     // if (!favoriteNode) {
+//     //     return;
+//     // }
+//     // // text = node.innerHTML;
+//     // text = favoriteNode.childNodes[0].innerHTML;
+
+//     // // Prüfe, ob ein Vorschaubild enthalten ist
+//     // if (node.innerHTML.includes("lazy")) {
+//     //     image = text.split(">")[0] + ">";
+//     //     text = text.split(">")[1];
+//     // }
+    
+//     // // Stern hinzufügen/entfernen
+//     // if (text.includes("⭐")) {
+//     //     text = text.replace("⭐ ", "");
+//     // } else {
+//     //     text = "⭐ " + text;
+//     // }
+
+
+//     // // Element updaten
+//     // if (node.innerHTML.includes("lazy")) {
+//     //     node.innerHTML = image + text;
+//     // } else {
+//     //     node.innerHTML = text;
+//     // }
+//     let favoriteNode = document.getElementById(mediaName.replace(".", ""));
+//     if (favoriteNode && favoriteNode.childNodes.length > 0) {
+//         let linkNode = favoriteNode.childNodes[0];
+//         if (favorites.includes(mediaName)) {
+//             linkNode.innerHTML =
+//                 linkNode.innerHTML.replace("⭐ ", "");
+//         } else {
+//             if (!linkNode.innerHTML.startsWith("⭐ ")) {
+//                 linkNode.innerHTML =
+//                     "⭐ " + linkNode.innerHTML;
+//             }
+//         }
+//     }
+
+//     // Favoriten aktualisieren
+//     if (favorites.includes(mediaName)) {
+//         currentIndex = favorites.indexOf(mediaName);
+//         favorites.splice(currentIndex, 1);
+//     } else {
+//         favorites.push(mediaName);
+//     }
+    
+//     // Speichere aktualisierte Favoritenliste
+//     localStorage.setItem("favorites", favorites.join(listSeperator));
+//     refreshFavoriteMarkers();
+// }
 function updateFavorites() {
+
     // Aktuelles Medium auslesen
     mediaName = atob(window.location.href.split("?=")[1].split("#")[0]).split(listSeperator + "MEDIA:")[1].split(listSeperator)[0];
-    
+
     // Favoriten auslesen
     favorites = localStorage.getItem("favorites");
+
     if (favorites == null) {
         favorites = [];
     } else {
         favorites = favorites.split(listSeperator);
+
         if (!Array.isArray(favorites)) {
             favorites = [favorites];
         }
     }
 
-    // Leerer String aus Favoriten entfernen
-    if (favorites.includes('')){
+    // Leereinträge entfernen
+    if (favorites.includes("")) {
         currentIndex = favorites.indexOf("");
         favorites.splice(currentIndex, 1);
     }
-    
-    
-    
-    // Stern bei Button hinzufügen/entfernen
-    node = document.getElementById("favorite").childNodes[0];
-    text = node.innerHTML;
-    if (text.includes("⭐")) {
-        text = text.replaceAll(" ⭐","");
-        node.innerHTML = text;
-        document.getElementById("favorite").className = document.getElementById("favorite").className.split("isFavorite").join("");
-    } else {
-        if (!document.getElementById("favorite").className.includes("isFavorite")) {
-            document.getElementById("favorite").className += "isFavorite";
-        }
-        node.innerHTML += (" ⭐");
-    }
 
-    // Punkt vor Verzeichnis entfernen
+    // Button unten aktualisieren
+    let favoriteButton = document.getElementById("favorite").childNodes[0];
+
+    // Medium normalisieren
     if (!mediaName.startsWith(".")) {
         mediaName = "." + mediaName;
     }
 
-    // Stern von Menü hinzufügen/Entfernen
-    // node = document.getElementById(mediaName.replace(".", "")).childNodes[0];
-    let favoriteNode = document.getElementById(mediaName.replace(".", ""));
+    // Favoritenstatus umschalten
+    var willBeFavorite = !favorites.includes(mediaName);
 
-    if (!favoriteNode) {
+    if (willBeFavorite) {
+        favorites.push(mediaName);
+    } else {
+        currentIndex = favorites.indexOf(mediaName);
+
+        if (currentIndex >= 0) {
+            favorites.splice(currentIndex, 1);
+        }
+    }
+    // Speichern
+    localStorage.setItem("favorites", favorites.join(listSeperator));
+
+    // Button unten aktualisieren
+    if (willBeFavorite) {
+        if (!document.getElementById("favorite").className.includes("isFavorite")) {
+            document.getElementById("favorite").className += " isFavorite";
+        }
+        favoriteButton.innerHTML = "Merken ⭐";
+    } else {
+        document.getElementById("favorite").className =
+            document.getElementById("favorite").className
+                .replace(" isFavorite", "")
+                .replace("isFavorite", "");
+
+        favoriteButton.innerHTML = "Merken";
+    }
+    // Menüeintrag aktualisieren
+    let favoriteNode = document.getElementById(mediaName.replace(".", ""));
+    if (favoriteNode && favoriteNode.childNodes.length > 0) {
+        let linkNode = favoriteNode.childNodes[0];
+
+        // Stern immer zuerst entfernen
+        linkNode.innerHTML = linkNode.innerHTML.replace("⭐ ", "");
+
+        // Falls Favorit nun gesetzt ist, Stern wieder hinzufügen
+        if (willBeFavorite) {
+            linkNode.innerHTML = "⭐ " + linkNode.innerHTML;
+        }
+    }
+}
+
+function refreshFavoriteMarkers() {
+    var links = document.querySelectorAll("#navigation li a");
+    links.forEach(function(link) {
+        link.innerHTML = link.innerHTML.replace("⭐ ", "");
+    });
+
+    var favorites = localStorage.getItem("favorites");
+    if (favorites == null || favorites == "") {
         return;
     }
-    text = node.innerHTML;
 
-    // Prüfe, ob ein Vorschaubild enthalten ist
-    if (node.innerHTML.includes("lazy")) {
-        image = text.split(">")[0] + ">";
-        text = text.split(">")[1];
-    }
-    
-    // Stern hinzufügen/entfernen
-    if (text.includes("⭐")) {
-        text = text.replace("⭐ ", "");
-    } else {
-        text = "⭐ " + text;
-    }
+    favorites = favorites.split(listSeperator);
+    favorites.forEach(function(favorite) {
+        var nodeId = favorite
+            .split("/")
+            .pop()
+            .replace(".", "");
 
-    // Element updaten
-    if (node.innerHTML.includes("lazy")) {
-        node.innerHTML = image + text;
-    } else {
-        node.innerHTML = text;
-    }
+        var node = document.getElementById(nodeId);
+        if (node && node.childNodes.length > 0) {
 
-    // Favoriten aktualisieren
-    if (favorites.includes(mediaName)) {
-        currentIndex = favorites.indexOf(mediaName);
-        favorites.splice(currentIndex, 1);
-    } else {
-        favorites.push(mediaName);
-    }
-    
-    // Speichere aktualisierte Favoritenliste
-    localStorage.setItem("favorites", favorites.join(listSeperator));
+            node.childNodes[0].innerHTML =
+                "⭐ " + node.childNodes[0].innerHTML;
+
+        }
+    });
 }
 
 // Funktion, um Container ein- und auszublenden
@@ -692,237 +822,53 @@ function toggleContainer(idArray, displayMode) {
     }
 }
 
-// Funnktion, um das nächste Medium aufzurufen
+// Funktion, um das nächste Medium aufzurufen
 function playlistForwards(currentIndex, localPlaylist) {
-    timeoutArray = cancelTimeouts()
+    localPlaylist = localPlaylist.split(listSeperator).sort();
 
-    // Entferne Link-Node und ersetze mit leerem Link
-    if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].href != null) {
-        document.getElementById("next").removeChild(document.getElementById("next").childNodes[0]);
-    }
-    document.getElementById("next").appendChild(document.createElement("a"));
-
-    if (document.getElementById("prev").childNodes.length > 0 && document.getElementById("prev").childNodes[0].href != null) {
-        document.getElementById("prev").removeChild(document.getElementById("prev").childNodes[0]);
-    }
-    document.getElementById("prev").appendChild(document.createElement("a"));
-
-
-    localPlaylist = localPlaylist.split(listSeperator);
     if (currentIndex + 1 < localPlaylist.length) {
-        mediaUrl = localPlaylist[currentIndex + 1];
-        currentPlaylistName = atob(window.location.href.split("?=")[1].split("#")[0]).split(listSeperator + "PL:")[1].split(listSeperator)[0];
+        var mediaUrl = localPlaylist[currentIndex + 1];
+        var currentPlaylistName = getPlaylistNameFromDecodedData(getDecodedUrlDataFromWindow());
+
         if (currentPlaylistName == "searchResults") {
             mediaUrl = mediaUrl.split("|")[1];
-            window.location.href = mediaUrl;
+            loadUrl(mediaUrl);
             return null;
         }
 
-        if (!mediaUrl.startsWith(".")) {
-            mediaUrl = "." + mediaUrl;
-        }
-        path = extractFromPath(mediaUrl);
-        
-        
-        // Ändere Item zuvor als Aktiv
-        if (!document.getElementById(mediaUrl.replace(".","")).className.includes("activeMenu")) {
-            document.getElementById(mediaUrl.replace(".","")).className += "activeMenu";
-        }
-        mediaName = localPlaylist[currentIndex + 1].split("/");
-        mediaName = mediaName[mediaName.length - 1];
-
-        document.title = "STEFFLIX - " + removeFileExtension(allowedMediaExtensions, mediaName); 
-
-        if (!isImage(mediaUrl)) {
-            setLastPlayed(mediaName, "start.html?=" + btoa(path) + "#mediaNav");
-        }
-        history.pushState({}, null, "start.html?=" + btoa(path) + "#mediaNav");
-
-        realLink = false;
-        if (currentIndex + 2 < localPlaylist.length) {
-            // Diese Staffel
-            nextName = localPlaylist[currentIndex + 2].split("/")
-            nextName = nextName[nextName.length - 1]
-        } else {
-            // Nächste Staffel
-            nextName = null;
-            url = swapSeason(1);
-            if (url != null) {
-                nextName = url.split("MEDIA:")[1].split(listSeperator)[0].split("/");
-                nextName = nextName[nextName.length - 1]
-                realLink = true;
-            }
-        }
-
-        lastName = localPlaylist[currentIndex];
-        if (!lastName.startsWith(".")) {
-            lastName = "." + lastName;
-        }
-
-        // Deaktiviere aktuelles Menüelement
-        document.getElementById(lastName.replace(".", "")).className = document.getElementById(lastName.replace(".", "")).className.split("activeMenu").join("");
-        lastName = lastName.split("/");
-        lastName = removeFileExtension(allowedMediaExtensions, lastName[lastName.length - 1]);
-
-
-        node = document.getElementById("video");
-        // Ändere Titel
-        title = document.getElementById("mediaTitle");
-        title.innerHTML = removeFileExtension(allowedMediaExtensions, addEmoteByFileExtension(mediaName))
-        
-        lastIndex = currentIndex + 1;
-        // Ändere Zurück-Button
-        subnode = document.getElementById("prev").childNodes[0]
-        subnode.setAttribute("onclick", "playlistBackwards(" + lastIndex + ",'" + localPlaylist.join(listSeperator) + "');")
-        subnode.innerHTML = "👈<span class='buttonText'> " + removeFileExtension(allowedMediaExtensions, lastName) + "</span>";
-        
-        if (nextName != null) {
-            // Ändere Vorwärts-Button
-            subnode = document.getElementById("next").childNodes[0]
-            if (!realLink) {
-                subnode.setAttribute("onclick", "playlistForwards(" + lastIndex + ",'" + localPlaylist.join(listSeperator) + "')")
-            } else {
-                // subnode.setAttribute("onclick", "");
-                subnode.setAttribute("onclick", "loadUrl('start.html?=" + btoa(url) + "')");
-            }
-            subnode.innerHTML = "<span class='buttonText'>" + removeFileExtension(allowedMediaExtensions, nextName) + " </span>👉";
-        }
-
-        node = adjustMediaType(mediaUrl, node);
-        if (node.tagName == "IMG") {
-            // node.parentNode.href = mediaUrl;
-            node.parentNode.setAttribute("onclick", "toggleFullscreenMode()");
-        } else {
-            // node.parentNode.href = null;
-            node.parentNode.setAttribute("onclick", "");
-        }
-        node.src = mediaUrl;
-        // timeoutArray.push(setTimeout('location.href = "#";location.href = "#mediaNav";', 100))
-
-
-        // Setze Timer für Autoplayfunktion, falls Autoplay aktiviert
-        if (document.getElementById("autoplayCheckBox").checked && document.getElementById("video").tagName == "IMG") {
-            updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
-            // Prüfe, ob ein Link vorhanden ist
-            if (document.getElementById('next').childNodes.length > 0 && document.getElementById("next").childNodes[0].innerHTML != "") {
-                // Animationsreset
-                document.getElementById('next').style.animation = "none";
-                timeoutArray.push(setTimeout('document.getElementById("next").style.animation = "autoplayLoading ' + (autoplayDuration-1+minTime) + 's"', 1000));
-                // Triggere klick von Next-Link
-                timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", (autoplayDuration + minTime) * 1000));
-            } else {
-                // Reset der Einstellungen
-                updateOptions(false, 0, document.getElementById("autoplayDuration").value);
-            }
+        mediaUrl = normalizeMediaLocation(mediaUrl);
+        var path = extractFromPath(mediaUrl);
+        loadDecodedMedia(path, true);
+    } else {
+        var url = swapSeason(1);
+        if (url != null) {
+            loadDecodedMedia(url, true);
         }
     }
 }
 
 // Funktion, um das letzte Medium aufzurufen
 function playlistBackwards(currentIndex, localPlaylist) {
-    timeoutArray = cancelTimeouts()
+    localPlaylist = localPlaylist.split(listSeperator).sort();
 
-    // Entferne Link-Node und ersetze mit leerem Link
-    if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].href != null) {
-        document.getElementById("next").removeChild(document.getElementById("next").childNodes[0]);
-    }
-    document.getElementById("next").appendChild(document.createElement("a"));
-
-    if (document.getElementById("prev").childNodes.length > 0 && document.getElementById("prev").childNodes[0].href != null) {
-        document.getElementById("prev").removeChild(document.getElementById("prev").childNodes[0]);
-    }
-    document.getElementById("prev").appendChild(document.createElement("a"));
-    
-    localPlaylist = localPlaylist.split(listSeperator);
     if (currentIndex - 1 >= 0) {
-        mediaUrl = localPlaylist[currentIndex - 1];
-        currentPlaylistName = atob(window.location.href.split("?=")[1].split("#")[0]).split(listSeperator + "PL:")[1].split(listSeperator)[0];
+        var mediaUrl = localPlaylist[currentIndex - 1];
+        var currentPlaylistName = getPlaylistNameFromDecodedData(getDecodedUrlDataFromWindow());
+
         if (currentPlaylistName == "searchResults") {
             mediaUrl = mediaUrl.split("|")[1];
-            window.location.href = mediaUrl;
+            loadUrl(mediaUrl);
             return null;
         }
-        if (!mediaUrl.startsWith(".")) {
-            mediaUrl = "." + mediaUrl;
-        }
-        // Ändere Item zuvor als Aktiv
-        if (!document.getElementById(mediaUrl.replace(".","")).className.includes("activeMenu")) {
-            document.getElementById(mediaUrl.replace(".","")).className += "activeMenu";
-        }
-        mediaName = localPlaylist[currentIndex - 1].split("/");
-        mediaName = mediaName[mediaName.length - 1];
-        
-        document.title = "STEFFLIX - " + removeFileExtension(allowedMediaExtensions, mediaName); 
 
-        // playlistName = "";
-        // Lese URL aus Pfad aus
-        path = extractFromPath(mediaUrl);
-        // Speichere in zuletzt gesehen-Liste, sofern kein Bild
-        if (!isImage(mediaUrl)) {
-            setLastPlayed(mediaName, "start.html?=" + btoa(path) + "#mediaNav");
+        mediaUrl = normalizeMediaLocation(mediaUrl);
+        var path = extractFromPath(mediaUrl);
+        loadDecodedMedia(path, true);
+    } else {
+        var url = swapSeason(-1);
+        if (url != null) {
+            loadDecodedMedia(url, true);
         }
-        history.pushState({}, null, "start.html?=" + btoa(path) + "#mediaNav");
-
-        realLink = false;
-        if (currentIndex - 2 >= 0) {
-            // Diese Staffel
-            lastName = localPlaylist[currentIndex - 2].split("/")
-            lastName = removeFileExtension(allowedMediaExtensions, lastName[lastName.length - 1]);
-        } else {
-            // Letzte Staffel
-            lastName = null;
-            url = swapSeason(-1);
-            if (url != null) {
-                lastName = url.split("MEDIA:")[1].split(listSeperator)[0].split("/");
-                lastName = lastName[lastName.length - 1];
-                realLink = true;
-            }
-        }
-
-        nextName = localPlaylist[currentIndex];
-        if (!nextName.startsWith(".")) {
-            nextName = "." + nextName;
-        }
-        // Deaktiviere aktuelles Menüelement
-        document.getElementById(nextName.replace(".", "")).className = document.getElementById(nextName.replace(".", "")).className.split("activeMenu").join("");
-        nextName = nextName.split("/");
-        nextName = nextName[nextName.length - 1];
-
-
-        node = document.getElementById("video");
-        // Ändere Titel
-        title = document.getElementById("mediaTitle");
-        title.innerHTML = removeFileExtension(allowedMediaExtensions, addEmoteByFileExtension(mediaName))
-        
-        lastIndex = currentIndex - 1;
-        // Ändere Zurück-Button
-        if (lastName != null) {
-            subnode = document.getElementById("prev").childNodes[0]
-            if (!realLink) {
-                subnode.setAttribute("onclick", "playlistBackwards(" + lastIndex + ",'" + localPlaylist.join(listSeperator) + "');")
-            } else {
-                // subnode.setAttribute("onclick", "");
-                subnode.setAttribute("onclick", "loadUrl('start.html?=" + btoa(url) + "')");
-            }
-            subnode.innerHTML = "👈<span class='buttonText'> " + removeFileExtension(allowedMediaExtensions, lastName) + "</span>";
-        }
-        
-        // Ändere Vorwärts-Button
-        subnode = document.getElementById("next").childNodes[0]
-        subnode.setAttribute("onclick", "playlistForwards(" + lastIndex + ",'" + localPlaylist.join(listSeperator) + "');")
-        subnode.innerHTML = "<span class='buttonText'>" + removeFileExtension(allowedMediaExtensions, nextName) + " </span>👉";
-        
-        node = adjustMediaType(mediaUrl, node);
-        if (node.tagName == "IMG") {
-            // node.parentNode.href = mediaUrl;
-            node.parentNode.setAttribute("onclick", "toggleFullscreenMode()");
-        } else {
-            // node.parentNode.href = null;
-            node.parentNode.setAttribute("onclick", "");
-        }
-        node.src = mediaUrl;
-        // timeoutArray.push(setTimeout('location.href = "#";location.href = "#mediaNav";', 100))
-
     }
 }
 
@@ -1040,8 +986,25 @@ function extractFromPath(path) {
 }
 
 // Lade übergebene URL
+// function loadUrl(url){
+//     window.location.href = url + "#mediaNav";
+// }
+// Lade übergebene URL ohne vollständigen Seitenreload
 function loadUrl(url){
-    window.location.href = url + "#mediaNav";
+    var decodedData = null;
+    // console.log("loadUrl aufgerufen:", url);
+    if (url == null || !url.includes("?=")) {
+        return;
+    }
+
+    decodedData = atob(url.split("?=")[1].split("#")[0]);
+    // console.log("MEDIA gefunden:", decodedData.includes("MEDIA:"));
+
+    if (decodedData.includes("MEDIA:")) {
+        loadDecodedMedia(decodedData, true);
+    } else {
+        window.location.href = url + "#mediaNav";
+    }
 }
 
 // Speichern der aktuellen einstellunen
@@ -1300,8 +1263,13 @@ function appendMediafunctions(node) {
         node.autoplay = true;
         node.play();
         node.setAttribute('preload', 'auto');
-        location.href = "#";
-        location.href = "#mediaNav";
+        if (!isPopStateNavigation) {
+            var mediaNavNode = document.getElementById("mediaNav");
+
+            if (mediaNavNode) {
+                mediaNavNode.scrollIntoView();
+            }
+        }
         // Lese Dateinamen aus
         medialocation = replaceSpecialChars(document.getElementById("video").src)
         mediaName = medialocation.split("/");
@@ -1634,6 +1602,301 @@ function gLoop() {
     window.requestAnimationFrame(gLoop);
 }
 
+// Funktion zum sicheren Lesen des decodierten URL-Inhalts
+function getDecodedUrlDataFromWindow() {
+    if (!window.location.href.includes("?=")) {
+        return null;
+    }
+
+    return atob(window.location.href.split("?=")[1].split("#")[0]);
+}
+
+// Funktion zum Erstellen einer start.html URL aus decodierten Daten
+function buildStartUrl(decodedData) {
+    return "start.html?=" + btoa(decodedData) + "#mediaNav";
+}
+
+// Funktion zum Lesen des Playlistnamens aus decodierten Daten
+function getPlaylistNameFromDecodedData(decodedData) {
+    if (decodedData == null || !decodedData.includes(listSeperator + "PL:")) {
+        return null;
+    }
+
+    return decodedData.split(listSeperator + "PL:")[1].split(listSeperator)[0].split("#")[0];
+}
+
+// Funktion zum Lesen des Medienpfads aus decodierten Daten
+function getMediaLocationFromDecodedData(decodedData) {
+    if (decodedData == null || !decodedData.includes("MEDIA:")) {
+        return null;
+    }
+
+    return replaceSpecialChars(decodedData.split("MEDIA:")[1].split(listSeperator)[0].split("#")[0]);
+}
+
+// Funktion zum Normalisieren eines Medienpfads
+function normalizeMediaLocation(mediaUrl) {
+    if (mediaUrl == null) {
+        return null;
+    }
+
+    if (!mediaUrl.startsWith(".")) {
+        mediaUrl = "." + mediaUrl;
+    }
+
+    return mediaUrl;
+}
+
+// Funktion zum Lesen des DOM-Keys eines Medienpfads
+function getMediaNodeId(mediaUrl) {
+    if (mediaUrl == null) {
+        return null;
+    }
+
+    if (mediaUrl.startsWith(".")) {
+        return mediaUrl.replace(".", "");
+    }
+
+    return mediaUrl;
+}
+
+// Funktion zum sicheren Setzen/Entfernen des aktiven Menüeintrags
+function setActiveMediaNode(mediaUrl, isActive) {
+    var nodeId = getMediaNodeId(mediaUrl);
+    var targetNode = document.getElementById(nodeId);
+
+    if (!targetNode) {
+        return;
+    }
+
+    if (isActive) {
+        if (!targetNode.className.includes("activeMenu")) {
+            targetNode.className += " activeMenu";
+        }
+    } else {
+        targetNode.className = targetNode.className.split("activeMenu").join("");
+    }
+}
+
+// Funktion zum Erstellen einer Playliste aus dem Datenbaum, falls sie noch nicht im localStorage vorhanden ist
+function ensurePlaylistExists(decodedData) {
+    var playlistName = getPlaylistNameFromDecodedData(decodedData);
+    var playlistKey = "playlist-" + playlistName;
+    var storedPlaylist = localStorage.getItem(playlistKey);
+
+    if (playlistName == null) {
+        return [];
+    }
+
+    if (storedPlaylist != null && storedPlaylist !== "") {
+        return storedPlaylist.split(listSeperator).sort();
+    }
+
+    var baseUrl = decodedData.split(listSeperator + "MEDIA:")[0];
+    var folderData = reduceDataByUrl(baseUrl);
+    var playlist = [];
+
+    for (var key in folderData) {
+        if (folderData.hasOwnProperty(key) && key != "Preview" && isMediaFile(allowedMediaExtensions, key)) {
+            if (!key.startsWith(".")) {
+                key = "." + key;
+            }
+            playlist.push(key);
+        }
+    }
+
+    playlist = playlist.sort();
+    localStorage.setItem(playlistKey, playlist.join(listSeperator));
+
+    return playlist;
+}
+
+// Funktion zum Erzeugen eines Navigationslinks ohne Seitenreload
+function createNavigationLink(targetNodeId, direction, currentIndex, localPlaylist, text, decodedData) {
+    var targetNode = document.getElementById(targetNodeId);
+    var subnode = document.createElement("a");
+
+    subnode.innerHTML = text;
+
+    if (decodedData != null) {
+        var targetUrl = buildStartUrl(decodedData);
+        subnode.href = targetUrl;
+        subnode.setAttribute("onclick", "loadUrl('" + targetUrl + "'); return false;");
+    } else if (direction == "back") {
+        subnode.setAttribute("onclick", "playlistBackwards(" + currentIndex + ",'" + localPlaylist.join(listSeperator) + "'); return false;");
+    } else {
+        subnode.setAttribute("onclick", "playlistForwards(" + currentIndex + ",'" + localPlaylist.join(listSeperator) + "'); return false;");
+    }
+
+    targetNode.appendChild(subnode);
+}
+
+// Funktion zum Leeren eines Navigationscontainers
+function clearNavigationNode(nodeId) {
+    var node = document.getElementById(nodeId);
+
+    while (node.childNodes.length > 0) {
+        node.removeChild(node.childNodes[0]);
+    }
+
+    node.appendChild(document.createElement("a"));
+}
+
+// Funktion zum Aktualisieren des Medientitels
+function updateMediaTitle(mediaName) {
+    var title = document.getElementById("mediaTitle");
+    title.innerHTML = removeFileExtension(allowedMediaExtensions, addEmoteByFileExtension(mediaName));
+    title.style.borderBottom = "1px solid rgb(221, 221, 221)";
+    document.title = "STEFFLIX - " + removeFileExtension(allowedMediaExtensions, mediaName);
+}
+
+// Funktion zum Aktualisieren des Favoritenbuttons beim dynamischen Medienwechsel
+function updateFavoriteButtonState(medialocation) {
+    var favoriteNode = document.getElementById("favorite");
+    var favoriteLink = null;
+
+    favorites = localStorage.getItem("favorites");
+    if (favorites != null) {
+        favorites = favorites.split(listSeperator);
+    }
+
+    if (favoriteNode.childNodes.length == 0) {
+        favoriteLink = document.createElement("a");
+        favoriteLink.setAttribute("onclick", "updateFavorites()");
+        favoriteNode.appendChild(favoriteLink);
+    } else {
+        favoriteLink = favoriteNode.childNodes[0];
+    }
+
+    if (favorites == null || !favorites.includes(medialocation)) {
+        favoriteLink.innerHTML = "Merken";
+        favoriteNode.className = favoriteNode.className.split("isFavorite").join("");
+    } else {
+        favoriteLink.innerHTML = "Merken ⭐";
+        if (!favoriteNode.className.includes("isFavorite")) {
+            favoriteNode.className += " isFavorite";
+        }
+    }
+}
+
+// Funktion zum Aktualisieren der Vor-/Zurück-Navigation nach jedem Medienwechsel
+function updatePlaylistNavigation(currentIndex, localPlaylist) {
+    var previousName = null;
+    var nextName = null;
+    var urlData = null;
+    var medialocation = null;
+
+    clearNavigationNode("prev");
+    clearNavigationNode("next");
+
+    document.getElementById("prev").removeChild(document.getElementById("prev").childNodes[0]);
+    document.getElementById("next").removeChild(document.getElementById("next").childNodes[0]);
+
+    if (currentIndex - 1 >= 0) {
+        previousName = localPlaylist[currentIndex - 1].split("/");
+        previousName = removeFileExtension(allowedMediaExtensions, previousName[previousName.length - 1]);
+        createNavigationLink("prev", "back", currentIndex, localPlaylist, "👈 <span class='buttonText'>" + previousName + "</span>", null);
+    } else {
+        urlData = swapSeason(-1);
+        if (urlData != null) {
+            medialocation = urlData.split("MEDIA:")[1].split(listSeperator)[0];
+            previousName = removeFileExtension(allowedMediaExtensions, medialocation.split("/")[medialocation.split("/").length - 1]);
+            createNavigationLink("prev", "back", currentIndex, localPlaylist, "👈 <span class='buttonText'>" + previousName + "</span>", urlData);
+        }
+    }
+
+    if (currentIndex + 1 <= localPlaylist.length - 1) {
+        nextName = localPlaylist[currentIndex + 1].split("/");
+        nextName = removeFileExtension(allowedMediaExtensions, nextName[nextName.length - 1]);
+        createNavigationLink("next", "forward", currentIndex, localPlaylist, "<span class='buttonText'>" + nextName + " </span>👉", null);
+    } else {
+        urlData = swapSeason(1);
+        if (urlData != null) {
+            medialocation = urlData.split("MEDIA:")[1].split(listSeperator)[0];
+            nextName = removeFileExtension(allowedMediaExtensions, medialocation.split("/")[medialocation.split("/").length - 1]);
+            createNavigationLink("next", "forward", currentIndex, localPlaylist, "<span class='buttonText'>" + nextName + " </span>👉", urlData);
+        }
+    }
+}
+
+// Funktion zum dynamischen Laden eines Mediums anhand decodierter URL-Daten
+function loadDecodedMedia(decodedData, pushState) {
+    timeoutArray = cancelTimeouts();
+
+    var previousDecodedData = getDecodedUrlDataFromWindow();
+    var previousMedia = getMediaLocationFromDecodedData(previousDecodedData);
+    var playlistName = getPlaylistNameFromDecodedData(decodedData);
+    var localPlaylist = ensurePlaylistExists(decodedData);
+    var medialocation = normalizeMediaLocation(getMediaLocationFromDecodedData(decodedData));
+    var cleanedPlaylist = [];
+
+    for (var key in localPlaylist) {
+        cleanedPlaylist.push(normalizeMediaLocation(localPlaylist[key].split("|")[0]));
+    }
+
+    var currentIndex = cleanedPlaylist.indexOf(medialocation);
+
+    if (currentIndex < 0) {
+        return;
+    }
+
+    setActiveMediaNode(previousMedia, false);
+    setActiveMediaNode(medialocation, true);
+
+    var mediaName = medialocation.split("/");
+    mediaName = mediaName[mediaName.length - 1].split("#")[0];
+
+    updateMediaTitle(mediaName);
+
+    var node = document.getElementById("video");
+    node = adjustMediaType(medialocation, node);
+
+    if (node.tagName == "IMG") {
+        node.parentNode.setAttribute("onclick", "toggleFullscreenMode()");
+    } else {
+        node.parentNode.setAttribute("onclick", "");
+    }
+
+    if (node.src != medialocation) {
+        node.src = medialocation;
+    }
+
+    if (!isImage(medialocation)) {
+        setLastPlayed(mediaName, buildStartUrl(decodedData));
+    }
+
+    if (pushState) {
+        history.pushState({}, null, buildStartUrl(decodedData));
+    }
+
+    localStorage.setItem("currentPrefix", playlistName);
+    localStorage.setItem("playlist-" + playlistName, localPlaylist.join(listSeperator));
+
+    updateFavoriteButtonState(medialocation);
+    document.getElementById("mediaNav").style.display = "flex";
+    updatePlaylistNavigation(currentIndex, localPlaylist);
+
+    if (document.getElementById("autoplayCheckBox").checked) {
+        if (!document.getElementById("media").className.includes("autoplaying")) {
+            document.getElementById("media").className += " autoplaying";
+        }
+
+        if (node.tagName == "IMG") {
+            updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
+            if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].innerHTML != "") {
+                document.getElementById('next').style.animation = "none";
+                timeoutArray.push(setTimeout('document.getElementById("next").style.animation = "autoplayLoading ' + (autoplayDuration - 1 + minTime) + 's"', 1000));
+                timeoutArray.push(setTimeout("document.getElementById('next').childNodes[0].click()", (autoplayDuration + minTime) * 1000));
+            } else {
+                updateOptions(false, 0, document.getElementById("autoplayDuration").value);
+            }
+        }
+    } else {
+        document.getElementById("media").className = document.getElementById("media").className.split("autoplaying").join("");
+    }
+}
+
+
 //  __   __  _______  ______    _______  _______  ______    _______  ___   _______  __   __  __    _  _______ 
 // |  | |  ||       ||    _ |  |  _    ||       ||    _ |  |       ||   | |       ||  | |  ||  |  | ||       |
 // |  |_|  ||   _   ||   | ||  | |_|   ||    ___||   | ||  |    ___||   | |_     _||  | |  ||   |_| ||    ___|
@@ -1713,7 +1976,14 @@ for (var key in data) {
         textnode = document.createTextNode(key);
         link.appendChild(textnode);
         // link.href = "start.html?=" + btoa("LEVEL0:" + key);
-        link.href = "start.html?=" + btoa("LEVEL0:" + key);
+        targetUrl = "start.html?=" + btoa("LEVEL0:" + key);
+        link.href = targetUrl;
+
+        link.setAttribute(
+            "onclick",
+            "loadUrl('" + targetUrl + "'); return false;"
+        );
+        
         node.appendChild(link);
         node.id = key;
         document.getElementById("menu").appendChild(node);
@@ -2141,6 +2411,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             subnode.appendChild(textnode);
             subnode.innerHTML = "👈 <span class='buttonText'>" + subnode.innerHTML + "</span>"
             subnode.href = "start.html?=" + btoa(urlData) + "#mediaNav";
+            subnode.setAttribute(
+                "onclick",
+                "loadUrl('start.html?=" + btoa(urlData) + "#mediaNav'); return false;"
+            );
             node.appendChild(subnode);
         }
     }
@@ -2153,6 +2427,7 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     // Erstelle Merken-Button
     node = document.getElementById("favorite")
     subnode = document.createElement("a");
+
     if (favorites == null || !favorites.includes(medialocation)) {
         textnode = document.createTextNode("Merken");
         node.className = node.className.split("isFavorite").join("");
@@ -2210,6 +2485,10 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
             subnode.innerHTML = "<span class='buttonText'>" + subnode.innerHTML + " </span>👉"
 
             subnode.href = "start.html?=" + btoa(urlData) + "#mediaNav";
+            subnode.setAttribute(
+                "onclick",
+                "loadUrl('start.html?=" + btoa(urlData) + "#mediaNav'); return false;"
+            );
             node.appendChild(subnode);
         }
     }
@@ -2226,3 +2505,15 @@ if (decodedUriData != null && decodedUriData.includes("MEDIA:")) {
     document.getElementById("mainBody").style.backgroundImage = "url(sflix_sys/sflix_bg.jpg)";
 }
 
+window.addEventListener("popstate", function() {
+    if (!window.location.href.includes("?=")) {
+        return;
+    }
+    var decodedData = atob(window.location.href.split("?=")[1].split("#")[0]);
+    if (!decodedData.includes("MEDIA:")) {
+        return;
+    }
+    isPopStateNavigation = true;
+    loadDecodedMedia(decodedData, false);
+    isPopStateNavigation = false;
+});

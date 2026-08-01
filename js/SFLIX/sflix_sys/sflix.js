@@ -170,7 +170,7 @@ function createSubmenus(decodedUriData, contentData, currentLink, depth=0, name=
 }
 
 // Funktion zum auslesen von Inhalten von anderen URLs
-function httpGet(theUrl) {
+async function httpGet(theUrl) {
     let xmlhttp;
     
     if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
@@ -197,7 +197,7 @@ function httpGet(theUrl) {
 // Funktion zum Prüfen, ob ein Dateiname einer Videodatei entspricht
 function isVideo(filename) {
     for (index in mediaTypes) {
-        if (filename.includes(mediaTypes[index])) {
+        if (filename.toLowerCase().endsWith(mediaTypes[index])) {
             return true;
         }
     }
@@ -207,7 +207,7 @@ function isVideo(filename) {
 // Funktion zum Prüfen, ob ein Dateiname einer Bilddatei entspricht
 function isImage(filename) {
     for (index in imageTypes) {
-        if (filename.includes(imageTypes[index])) {
+        if (filename.toLowerCase().endsWith(imageTypes[index])) {
             return true;
         }
     }
@@ -217,7 +217,7 @@ function isImage(filename) {
 // Funktion zum Prüfen, ob ein Dateiname einer Musikdatei entspricht
 function isMusic(filename) {
     for (index in musicTypes) {
-        if (filename.includes(musicTypes[index])) {
+        if (filename.toLowerCase().endsWith(musicTypes[index])) {
             return true;
         }
     }
@@ -424,8 +424,13 @@ function searchPreviewImage(data, searchKey, filename, type) {
                     if (filename == null || type != "normal") {
                         // Sofern die Vorschau für ein Ordner gesucht wird, jedes Resultat zurückgeben
                         return datakey;
-                    } else if (filename.includes(searchKey)) {
+                    // } else if (filename.includes(searchKey)) {
+                    } else if (datakey.includes(searchKey[key] + ".jpg")) {
+                    // } else if (filename == searchKey[key]) {
                         // Bei Mediendateien nur zurückgeben, wenn der Dateiname übereinstimmt
+                        console.log("2: " + datakey)
+                        console.log(filename)
+                        console.log(searchKey[key])
                         return datakey;
                     }
                 }
@@ -470,8 +475,10 @@ function setLastPlayed(title, url) {
         if (currentPlaylist.length < 5) {
             currentPlaylist.splice(0, 0, title + "|" + url);
         } else {
-            currentPlaylist.splice(currentPlaylist.length - 1, 1);
-            currentPlaylist.splice(0, 0, title + "|" + url);
+            currentPlaylist = currentPlaylist.slice(0,4);
+            currentPlaylist.unshift(title + "|" + url);
+            // currentPlaylist.splice(currentPlaylist.length - 1, 1);
+            // currentPlaylist.splice(0, 0, title + "|" + url);
         }
         localStorage.setItem("playlast", currentPlaylist.join(listSeperator));
     }
@@ -611,7 +618,12 @@ function updateFavorites() {
     }
 
     // Stern von Menü hinzufügen/Entfernen
-    node = document.getElementById(mediaName.replace(".", "")).childNodes[0];
+    // node = document.getElementById(mediaName.replace(".", "")).childNodes[0];
+    let favoriteNode = document.getElementById(mediaName.replace(".", ""));
+
+    if (!favoriteNode) {
+        return;
+    }
     text = node.innerHTML;
 
     // Prüfe, ob ein Vorschaubild enthalten ist
@@ -1035,8 +1047,8 @@ function loadUrl(url){
 // Speichern der aktuellen einstellunen
 function applySettings() {
     autoplay = document.getElementById("autoplayCheckBox").checked;
-    autoplayAmount = document.getElementById("amountOfAutoplay").value;
-    autoplayDuration = document.getElementById("autoplayDuration").value;
+    autoplayAmount = parseInt(document.getElementById("amountOfAutoplay").value);
+    autoplayDuration = parseInt(document.getElementById("autoplayDuration").value);
 
     if (!autoplay) {
         autoplayAmount = 0;
@@ -1090,16 +1102,9 @@ function checkAutoplayAmout() {
 
 // Funktion, um die Einstellungen anhand abgespielter Medien zu aktualisieren
 function updateOptions(autoplay, autoplayAmount, autoplayDuration) {
-    // Ändere Datentyp in Boolean
-    if (autoplay == "true") {
-        autoplay = true;
-    } else if (autoplay == "false") {
-        autoplay = false;
-    }
-
-    // Ändere Datentyp in Integer
-    autoplayAmount = parseInt(autoplayAmount);
-    autoplayDuration = parseInt(autoplayDuration);
+    autoplay = autoplay === true || autoplay === "true";
+    autoplayAmount = parseInt(autoplayAmount) || 0;
+    autoplayDuration = parseInt(autoplayDuration) || 0;
     
     // Verringere Anzahl Autoplay um 1
     if (autoplayAmount > 0) {
@@ -1294,6 +1299,7 @@ function appendMediafunctions(node) {
     node.onloadedmetadata = function() {
         node.autoplay = true;
         node.play();
+        node.setAttribute('preload', 'auto');
         location.href = "#";
         location.href = "#mediaNav";
         // Lese Dateinamen aus
@@ -1322,6 +1328,9 @@ function appendMediafunctions(node) {
     
     // Lese aktuellen Zeitstempel im Video aus
     node.addEventListener('timeupdate', function() {
+        if (!isFinite(this.duration) || this.duration <= 0) {
+            return;
+        }
         medialocation = replaceSpecialChars(document.getElementById("video").src)
         mediaName = medialocation.split("/");
         mediaName = removeFileExtension(allowedMediaExtensions, mediaName[mediaName.length -1].split("#")[0]);
@@ -1341,13 +1350,19 @@ function appendMediafunctions(node) {
         videoCheck = document.getElementById("video").tagName == "VIDEO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= (autoplayDuration + minTime);
         audioCheck = document.getElementById("video").tagName == "AUDIO" && document.getElementById("autoplayCheckBox").checked && this.duration - currentTime <= 11;
         if (videoCheck || audioCheck) {
-            prozent = 100 - parseInt(100/10*(this.duration - currentTime - (autoplayDuration + minTime) + 10));
-            document.getElementById("next").style.background = "linear-gradient(to right, red " + (prozent+10) + "%, #424141 0%)";
+            // prozent = 100 - parseInt(100/10*(this.duration - currentTime - (autoplayDuration + minTime) + 10));
+            var remaining = this.duration - currentTime;
+            var startAnimation = autoplayDuration + minTime;
+
+            prozent = ((startAnimation - remaining) / minTime) * 100;
+            // document.getElementById("next").style.background = "linear-gradient(to right, red " + (prozent+10) + "%, #424141 0%)";
+            document.getElementById("next").style.background = "linear-gradient(to right, red " + Math.min(100, Math.max(0, prozent)) + "%, #424141 0%)";
             
             if (this.duration - currentTime <= autoplayDuration + minTime - 10) {
                 document.getElementById("next").style.background = "";
                 updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
                 if (document.getElementById("next").childNodes.length > 0 && document.getElementById("next").childNodes[0].innerHTML != "") {
+                    localStorage.removeItem("timestamp-" + mediaName);
                     document.getElementById("next").childNodes[0].click();
                 } else {
                     updateOptions(false, 0, document.getElementById("autoplayDuration").value);

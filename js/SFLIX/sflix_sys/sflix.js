@@ -2220,12 +2220,18 @@ if (decodedUriData != null && decodedUriData.includes("LEVEL0:")) {
         // |_____|  _|_|__,|___|_|_|___|___|_| |___|___|_|_|
         //       |_|                                        
         // Wenn keine Auswahl getroffen wurde, Splashscreen anzeigen
-        node = document.getElementById("splashscreen");
-        node.style.display = "block";
-        image = document.createElement("img");
+        lastSplashscreen = getData("lastSplashscreen");
+        currentDate = new Date().toISOString().split('T')[0];
+        if (lastSplashscreen == null || lastSplashscreen < currentDate) {
+            node = document.getElementById("splashscreen");
+            node.style.display = "block";
+            image = document.createElement("img");
+            image.src = "sflix_sys/sflix.png";
+            node.appendChild(image);
 
-        image.src = "sflix_sys/sflix.png";
-        node.appendChild(image);
+            setData("lastSplashscreen", currentDate);
+        }
+        
 
         lastPlayed = getData("playlast");
         if (lastPlayed != null) {

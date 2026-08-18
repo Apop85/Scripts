@@ -29,7 +29,7 @@ PyGetWindow==0.0.4
 PyInstaller==3.4
 pylint==2.2.2
 PyMsgBox==1.0.6
-PyPDF2==1.26.0
+PyPDF2==1.27.5
 pyperclip==1.7.0
 PyRect==0.1.4
 PyScreeze==0.1.19

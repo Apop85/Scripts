@@ -26,7 +26,7 @@ public==2018.11.20
 PyAutoGUI==0.9.41
 pycodestyle==2.5.0
 PyGetWindow==0.0.4
-PyInstaller==3.4
+PyInstaller==3.6
 pylint==2.2.2
 PyMsgBox==1.0.6
 PyPDF2==1.26.0

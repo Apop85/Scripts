@@ -565,6 +565,8 @@ function createMediaElement(mediaUrl) {
         wrapper.addEventListener("click", toggleFullscreenMode);
         element = document.createElement("img");
         element.id = "video";
+        // Vorrang vor den Vorschaubildern in den Bändern
+        element.fetchPriority = "high";
         element.addEventListener("error", handleMediaError);
         wrapper.appendChild(element);
         return { wrapper: wrapper, element: element };

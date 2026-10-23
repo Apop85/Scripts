@@ -5,6 +5,9 @@ REM
 REM  1. Pruefen       check_release.py   (Version, Dateien, start.html)
 REM  2. Changelog     create_news.py     (news.txt -> news.json)
 REM  3. Programme     PyInstaller        (updateData, updateStefflix, updater, setup)
+REM                   Nur Programme, deren Skripte (inkl. sflix_update.py), Build-Optionen
+REM                   oder Paketversionen sich geaendert haben (build_check.py,
+REM                   build_hashes.json). Sonst bleiben .exe und Pruefsumme gleich.
 REM  4. Pruefsummen   create_checksums.py (checksums.json, nach den Programmen!)
 REM  5. Aufraeumen    build-Ordner, __pycache__
 REM
@@ -13,6 +16,7 @@ REM  und checksums.json: passen sie nicht zusammen, verweigern die Updater
 REM  die Installation.
 REM
 REM  Optional: "build_release.bat ohne-exe" fuehrt alles ausser Schritt 3 aus.
+REM            "build_release.bat force" (oder "all") baut alle Programme neu, auch unveraenderte.
 REM
 REM  Benoetigte Pakete: pip install pyinstaller requests pillow
 REM ===================================================================
@@ -21,7 +25,10 @@ cd /d "%~dp0"
 title STEFFLIX - Release bauen
 
 set "SKIP_EXE="
+set "FORCE_EXE="
 if /i "%~1"=="ohne-exe" set "SKIP_EXE=1"
+if /i "%~1"=="force" set "FORCE_EXE=1"
+if /i "%~1"=="all" set "FORCE_EXE=1"
 
 REM updateData braucht von Pillow nur JPG/PNG/GIF/WebP/BMP. AVIF, Schriften, Farbprofile,
 REM numpy und tkinter werden ausgeschlossen (spart ca. 15 MB). AVIF-Vorschaubilder
@@ -43,7 +50,7 @@ if defined SKIP_EXE (
     echo [3/5] Programme werden nicht gebaut ^(ohne-exe^).
     goto :pruefsummen
 )
-echo [3/5] Baue Programme ^(dauert einige Minuten^)...
+echo [3/5] Baue geaenderte Programme ^(dauert einige Minuten^)...
 python -c "import PyInstaller, requests, PIL" 2>nul
 if errorlevel 1 (
     echo PyInstaller, requests oder Pillow fehlt: pip install pyinstaller requests pillow
@@ -81,8 +88,17 @@ exit /b 0
 REM -------------------------------------------------------------------
 REM  :baue Quelldatei Zieldatei "zusaetzliche Optionen"
 REM  Die bestehende .exe wird erst ersetzt, wenn der Build erfolgreich war.
+REM  Unveraenderte Programme werden uebersprungen (siehe build_check.py).
 REM -------------------------------------------------------------------
 :baue
+if not defined FORCE_EXE (
+    python build_check.py pruefen "%~1" "%~2" "%~3"
+    if errorlevel 10 (
+        echo    %~2 unveraendert - wird nicht neu gebaut.
+        exit /b 0
+    )
+    if errorlevel 1 exit /b 1
+)
 echo    %~2 ...
 pyinstaller --noconfirm --log-level WARN --paths C:\Windows\System32\downlevel --console --onefile --distpath build\dist --workpath build\work --specpath build %~3 "%~1"
 if errorlevel 1 (
@@ -94,6 +110,8 @@ if errorlevel 1 (
     echo    %~2 konnte nicht ersetzt werden ^(laeuft das Programm noch?^).
     exit /b 1
 )
+python build_check.py speichern "%~1" "%~2" "%~3"
+if errorlevel 1 exit /b 1
 exit /b 0
 
 

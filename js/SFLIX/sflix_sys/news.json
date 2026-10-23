@@ -159,6 +159,10 @@
         },
         {
           "type": "BUGFIX",
+          "text": "Updates von STEFFLIX auf einem Netzwerkpfad (\\\\server\\freigabe) schlugen fehl, weil die Programme im falschen Ordner (C:\\Windows) arbeiteten. Die Programme verwenden jetzt immer ihren eigenen Ordner und brechen ab, wenn dieser kein STEFFLIX-Ordner ist."
+        },
+        {
+          "type": "BUGFIX",
           "text": "Feedback: Nachrichten mit Sonderzeichen wie &, # oder + wurden abgeschnitten oder nicht verschickt."
         },
         {

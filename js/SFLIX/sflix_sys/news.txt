@@ -41,6 +41,7 @@
     <li>[<span style="color: red">FEATURE</span>] Autoplay: neuer Schalter "Unbegrenzt", spielt ohne feste Anzahl bis zum Ende der Playliste.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Einheitliche Symbole im Menü. Die Hilfe ist inhaltlich überarbeitet, Zusatzinfos lassen sich aufklappen.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Fehlerbehebung zeigt eine kurze Statusmeldung statt eines Protokolls. Der rote Rahmen bei fast fertigen Videos entfällt (ersetzt durch die Markierung "Gesehen"), ebenso die alten Hinweisfenster der Updates 1.33 und 1.38.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Updates von STEFFLIX auf einem Netzwerkpfad (\\server\freigabe) schlugen fehl, weil die Programme im falschen Ordner (C:\Windows) arbeiteten. Die Programme verwenden jetzt immer ihren eigenen Ordner und brechen ab, wenn dieser kein STEFFLIX-Ordner ist.</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Feedback: Nachrichten mit Sonderzeichen wie &amp;, # oder + wurden abgeschnitten oder nicht verschickt.</li>
     <li>[OPTIMIERUNG] Umstieg von älteren Versionen mit einem einzigen Aufruf von updateStefflix.exe: Der neue Updater lädt fehlende Dateien nach und liest die Medien danach direkt neu ein.</li>
     <li>[OPTIMIERUNG] Der Programmcode ist in mehrere Dateien im Ordner sflix_sys/js aufgeteilt (bisher sflix_sys/sflix.js). Fehlen nach einem unvollständigen Update Dateien, zeigt STEFFLIX einen Hinweis an.</li>

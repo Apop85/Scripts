@@ -1,9 +1,9 @@
 import os
 import subprocess
 
-from sflix_update import SCRIPT_FILES, remove_obsolete_files, update_files
+from sflix_update import SCRIPT_FILES, enter_stefflix_dir, remove_obsolete_files, update_files
 
-os.chdir(os.getcwd())
+stefflixDir = enter_stefflix_dir()
 
 print("".center(60, "="))
 print("STARTE STEFFLIXUPDATE")
@@ -24,12 +24,12 @@ stefflixFiles = [
 
 def runProgram(name, *arguments):
     """Startet ein STEFFLIX-Programm im selben Fenster und wartet auf das Ende."""
-    programPath = os.path.join(os.getcwd(), name)
+    programPath = os.path.join(stefflixDir, name)
     if not os.path.exists(programPath):
         print(f"{name} nicht gefunden.")
         return False
     try:
-        subprocess.call([programPath, *arguments], cwd=os.getcwd())
+        subprocess.call([programPath, *arguments], cwd=stefflixDir)
         return True
     except OSError as error:
         print(f"{name} konnte nicht gestartet werden: {error.strerror}")

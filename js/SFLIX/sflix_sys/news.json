@@ -11,15 +11,11 @@
       "items": [
         {
           "type": "FEATURE",
-          "text": "Eigene Steuerung für Videos und Musik statt der Browser-Steuerung: Abspielen/Pause, vorheriges/nächstes Medium, 10 Sekunden zurück/vor, Zeitleiste mit geladenem Bereich und Zeitvorschau, Lautstärke (Regler fährt beim Überfahren aus) und Zeitanzeige."
+          "text": "Eigene Player-Steuerung im STEFFLIX-Design für Videos und Musik, mit Knöpfen für das vorherige/nächste Medium und 10 Sekunden zurück/vor."
         },
         {
-          "type": "FEATURE",
-          "text": "Bei Videos blendet sich die Steuerleiste während der Wiedergabe aus und erscheint wieder bei Mausbewegung, Antippen oder Tastaturbedienung. Bei Musik bleibt sie immer sichtbar."
-        },
-        {
-          "type": "FEATURE",
-          "text": "Zahnradmenü im Player: Geschwindigkeit 0,5x bis 1,75x und Herunterladen. Jedes Medium startet wieder mit 1x."
+          "type": "INTERFACE",
+          "text": "Musik-Player in derselben Grösse wie Videos: Über der Leiste wird das Vorschaubild des Titels angezeigt (sonst das des Albums bzw. Ordners), in Originalauflösung aus dem Preview-Ordner."
         },
         {
           "type": "FEATURE",
@@ -31,19 +27,11 @@
         },
         {
           "type": "FEATURE",
-          "text": "Neues Video-Vollbild: Das Video füllt den Bildschirm, darunter kann weitergescrollt und ein anderes Medium gewählt werden. Der Browser wechselt dabei ebenfalls in den Vollbildmodus (nicht auf dem iPhone). Kopfzeile und Pfadleiste werden ausgeblendet, das Video steht ganz oben. Im Vollbild wird der Titel im Video angezeigt."
+          "text": "Neues Video-Vollbild: Das Video füllt den Bildschirm, darunter kann weitergescrollt und ein anderes Medium gewählt werden. Kopfzeile und Pfadleiste werden ausgeblendet, im Video wird der Titel angezeigt."
         },
         {
           "type": "INTERFACE",
-          "text": "Smartphones: kompaktere Player-Leiste, das Zahnradmenü öffnet sich als Leiste vom unteren Bildschirmrand."
-        },
-        {
-          "type": "FEATURE",
-          "text": "Maus: Klick auf das Video startet oder pausiert, Doppelklick schaltet das Vollbild um. Touch: Tippen blendet die Leiste ein oder aus, Doppeltipp links/rechts spult 10 Sekunden zurück/vor, Doppeltipp in der Mitte schaltet das Vollbild um."
-        },
-        {
-          "type": "FEATURE",
-          "text": "Bild im Bild für Videos (Chrome, Edge, Safari)."
+          "text": "Smartphones: kompaktere Player-Leiste, die Player-Menüs öffnen sich als Leiste vom unteren Bildschirmrand."
         },
         {
           "type": "FEATURE",
@@ -56,6 +44,14 @@
         {
           "type": "OPTIMIERUNG",
           "text": "Die Lautstärke wird sofort gespeichert (bisher nur alle 10 Sekunden während der Wiedergabe)."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Grosse Ordner (z.B. 2000 Bilder mit Zufallswiedergabe): Das Menüband unter dem Player springt bei weiten Wechseln direkt zum aktuellen Medium, statt animiert über alle Kacheln zu scrollen. Dabei werden nicht mehr alle Vorschaubilder auf dem Weg geladen."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Kacheln von Folgen, Filmen und Musiktiteln ohne eigenes Vorschaubild zeigen das Bild des Ordners darüber: zuerst das der Staffel, dann das der Serie (bzw. des Albums). Das Bild der ganzen Kategorie (z.B. \"Serien\") wird dafür nicht verwendet."
         }
       ]
     },

@@ -1,19 +1,19 @@
 {
   "sflix_sys/data.js": "e7dbe47e02da199c59ab1aa7e25746d6900a05f933ea5fdcdd2ab995379bd70b",
-  "sflix_sys/js/cards.js": "83085f47df24f9617cbace9202d12c192efb31feafe81d9119a4ca0e769f200a",
-  "sflix_sys/js/core.js": "a5667ef6eade1bdc25856b3c3a3b9c10cb85ec9c10c2f0d515d24518acb87ec3",
+  "sflix_sys/js/cards.js": "0fa734936c0af9720b1bb77c04a740d975cf6587d4ad83ccbfb7f2e4e1d07890",
+  "sflix_sys/js/core.js": "23602b2f046082f711f61a64600af11d2970113a5f9304ee100a2f9c655d3608",
   "sflix_sys/js/main.js": "d1d6d1b3b840d56aa76b5e92e535a4bfebdd754b2051ec62fd117661f9933930",
-  "sflix_sys/js/pages.js": "2cd9742b900015dc31386095f4e013bb4f75eafaa6c185e87285f06e62938796",
-  "sflix_sys/js/player.js": "3a117848984c6d5a971c181af37461b0f5dc6752f597721888353083d8a931b1",
+  "sflix_sys/js/pages.js": "f783c0b911c049645194737c78d3b83d1dd4c981315556964d03066a78ef795f",
+  "sflix_sys/js/player.js": "ba15f7b8f5564fdd7d03203e4021368421d181af19d3f03ca4a908a8fc422b62",
   "sflix_sys/js/storage.js": "a8135a2f865768a51053a9757425c72112003f7bdec4cb8b9504bafe00064975",
   "sflix_sys/js/ui.js": "b04ac1bdf6086a22bd14c77942730b56ecf17d0c120cd2210ed875a8bf51f05a",
-  "sflix_sys/sflix.css": "7d57e50057d776330435666eb68c17529c49048f7037bd654cb8ce12b6efeab7",
+  "sflix_sys/sflix.css": "f9de5f0bd49acc2522f5a9f8dc5f0078cd09ab9e0b9f6d6c76648ad06656f6f8",
   "sflix_sys/sflixLogo.png": "20cf7ab9e23c212f05bd61a921576a83a1c147cb0943a96c03b0912cb6238385",
   "sflix_sys/sflixLogo.svg": "10cfcb85989863a070c8605077718083ddb676db2807a6aa712458e38e048d96",
   "sflix_sys/splash.svg": "a0261448bdafdf6188dfe03504b0bff1a09da778674368088a94220cd13ca0b4",
   "sflix_sys/version.js": "1ef1e19e693f8ea6a513f1c530de93c0e9e79cbbf85e5ed776d32faee24f7d05",
-  "start.html": "bdc6dc928dcbef7afc7165b15a96973b25d92c9539e38398d02280c5a28955d6",
-  "updateData.exe": "6ebf8dba4269a29f9a70919d0ec85dbcd93d222cd5d8a09f3ef6c3958690ad69",
-  "updateStefflix.exe": "1ad4a5972e36209d74e8e2ecfbacb39438ed790af378ddc809a2c99cf4205f81",
-  "updater.exe": "ab7187ab2b32437d9168a61490e691084ddd00ecd48d3f068939d3e23c87f239"
+  "start.html": "91457336d4ceb397e0fee1cba5fc09583fc9be2dd48c25676198ca2b9370a950",
+  "updateData.exe": "e71a7bdfa4d6f27f7d680e4bba6486c3dff9300ff18309460c1b8c5e5a46265d",
+  "updateStefflix.exe": "4d2fe4d492aa088bb27af9671d7d28b2d7f1341bd7392f3d039c4daeb481563b",
+  "updater.exe": "fcae75e2781fdadb5d9a8004bf7aec968486e500defd382acd061a29ab2a6fbe"
 }

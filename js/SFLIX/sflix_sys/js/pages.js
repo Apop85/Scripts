@@ -253,62 +253,132 @@ function renderGroupedBands(container, items, getName, singleTitle, renderItem) 
     });
 }
 
-// Unter dem Player: weitere Medien aus dem Ordner und Nachbarordner (z.B. andere Staffeln)
+// Ordner, dessen Bänder unter dem Player gerade aufgebaut sind
+var renderedBandsView = null;
+// Nur die zuletzt angeforderte Aktion ausführen (schnelles Weiterschalten)
+var mediaReadyToken = 0;
+
+// Führt "callback" aus, sobald das angezeigte Medium auf dem Bildschirm ist. So erscheint zuerst
+// das neue Bild und erst danach werden die Bänder aufgebaut und ihre Vorschaubilder geladen.
+// "Geladen" reicht dafür nicht: Ein grosses Foto muss danach noch dekodiert und gezeichnet werden,
+// und das Aufbauen vieler Kacheln würde genau das verzögern. Deshalb: laden -> dekodieren ->
+// zwei Bildschirmaktualisierungen abwarten. Rückfall nach 4 Sekunden, falls das Medium hängt.
+function whenMainMediaReady(callback) {
+    var token = ++mediaReadyToken;
+    var done = false;
+    var finish = function () {
+        if (done || token !== mediaReadyToken) {
+            return;
+        }
+        done = true;
+        callback();
+    };
+    // Erst nach dem nächsten Zeichnen des Bildschirms (das Hauptbild ist dann sichtbar)
+    var afterPaint = function () {
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                setTimeout(finish, 0);
+            });
+        });
+    };
+    var run = function () {
+        if (done || token !== mediaReadyToken) {
+            return;
+        }
+        var player = document.getElementById("video");
+        if (player != null && player.tagName == "IMG" && player.decode && player.naturalWidth > 0) {
+            player.decode().then(afterPaint, afterPaint);
+        } else {
+            afterPaint();
+        }
+    };
+    // Erst prüfen, wenn loadDecodedMedia die neue Quelle gesetzt hat (geschieht nach den Bändern)
+    setTimeout(function () {
+        var player = document.getElementById("video");
+        if (player == null) {
+            run();
+            return;
+        }
+        var isImg = player.tagName == "IMG";
+        if (isImg ? player.complete : player.readyState >= 2) {
+            run();
+            return;
+        }
+        (isImg ? ["load", "error"] : ["loadeddata", "error"]).forEach(function (type) {
+            player.addEventListener(type, run, { once: true });
+        });
+        setTimeout(finish, 4000);
+    }, 0);
+}
+
+// Unter dem Player: weitere Medien aus dem Ordner und Nachbarordner (z.B. andere Staffeln).
+// Pfadleiste sofort, die Bänder erst nach dem Laden des Mediums (siehe whenMainMediaReady).
 function renderMediaContext(mediaPath) {
     var folders = getMediaFolders(mediaPath);
     var viewKey = "media:" + folders.join("/");
 
     if (renderedFolderView !== viewKey) {
         renderedFolderView = viewKey;
+        renderedBandsView = null;
         var header = document.getElementById("navigation");
-        var bands = document.getElementById("folderBands");
         header.replaceChildren();
-        bands.replaceChildren();
         header.className = "folderHeader playerHeader";
         renderBreadcrumb(header, folders, true);
         markActiveCategory(folders[0]);
-
-        var node = getDataNode(folders);
-        var folderName = folders.length > 0 ? folders[folders.length - 1] : "STEFFLIX";
-        var children = getSortedChildren(node);
-
-        if (children.media.length > 0) {
-            var folderUrl = folders.length > 0 ? buildStartUrl(buildLevelPath(folders)) : null;
-            var mediaTrack = createCardRow(bands, "Mehr aus " + folderName, folderUrl);
-            children.media.forEach(function (path) {
-                createPlayableCard(mediaTrack, path);
-            });
-        }
-
-        if (children.folders.length > 0) {
-            var subTrack = createCardRow(bands, "Ordner in " + folderName, null);
-            children.folders.forEach(function (folder) {
-                createFolderCard(subTrack, folders.concat([folder]));
-            });
-        }
-
-        // Nachbarordner, z.B. die anderen Staffeln einer Serie
-        if (folders.length >= 2) {
-            var parentLevels = folders.slice(0, -1);
-            var siblings = getSortedChildren(getDataNode(parentLevels)).folders;
-            if (siblings.length > 1) {
-                var parentName = parentLevels[parentLevels.length - 1];
-                var siblingTrack = createCardRow(bands, "Mehr aus " + parentName, buildStartUrl(buildLevelPath(parentLevels)));
-                siblings.forEach(function (sibling) {
-                    var card = createFolderCard(siblingTrack, parentLevels.concat([sibling]));
-                    if (card != null && sibling === folderName) {
-                        card.classList.add("current");
-                    }
-                });
-            }
-        }
-        refreshRowArrows(bands);
-        // Neues Band: direkt zur aktuellen Kachel springen
-        updateCurrentCard(mediaPath, true);
-        return;
+        // Bänder des alten Ordners sofort entfernen
+        document.getElementById("folderBands").replaceChildren();
     }
 
-    updateCurrentCard(mediaPath, false);
+    whenMainMediaReady(function () {
+        if (renderedBandsView !== viewKey) {
+            renderedBandsView = viewKey;
+            renderMediaBands(folders);
+            // Neues Band: direkt zur aktuellen Kachel springen
+            updateCurrentCard(mediaPath, true);
+        } else {
+            updateCurrentCard(mediaPath, false);
+        }
+    });
+}
+
+function renderMediaBands(folders) {
+    var bands = document.getElementById("folderBands");
+    bands.replaceChildren();
+    var node = getDataNode(folders);
+    var folderName = folders.length > 0 ? folders[folders.length - 1] : "STEFFLIX";
+    var children = getSortedChildren(node);
+
+    if (children.media.length > 0) {
+        var folderUrl = folders.length > 0 ? buildStartUrl(buildLevelPath(folders)) : null;
+        var mediaTrack = createCardRow(bands, "Mehr aus " + folderName, folderUrl);
+        children.media.forEach(function (path) {
+            createPlayableCard(mediaTrack, path);
+        });
+    }
+
+    if (children.folders.length > 0) {
+        var subTrack = createCardRow(bands, "Ordner in " + folderName, null);
+        children.folders.forEach(function (folder) {
+            createFolderCard(subTrack, folders.concat([folder]));
+        });
+    }
+
+    // Nachbarordner, z.B. die anderen Staffeln einer Serie
+    if (folders.length >= 2) {
+        var parentLevels = folders.slice(0, -1);
+        var siblings = getSortedChildren(getDataNode(parentLevels)).folders;
+        if (siblings.length > 1) {
+            var parentName = parentLevels[parentLevels.length - 1];
+            var siblingTrack = createCardRow(bands, "Mehr aus " + parentName, buildStartUrl(buildLevelPath(parentLevels)));
+            siblings.forEach(function (sibling) {
+                var card = createFolderCard(siblingTrack, parentLevels.concat([sibling]));
+                if (card != null && sibling === folderName) {
+                    card.classList.add("current");
+                }
+            });
+        }
+    }
+    refreshRowArrows(bands);
 }
 
 // Hebt das laufende Medium in den Bändern hervor und scrollt es ins Bild.

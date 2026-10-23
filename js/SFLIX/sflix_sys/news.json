@@ -51,7 +51,7 @@
         },
         {
           "type": "OPTIMIERUNG",
-          "text": "Grosse Ordner (z.B. 2000 Bilder mit Zufallswiedergabe): Das Menüband unter dem Player springt bei weiten Wechseln direkt zum aktuellen Medium, statt animiert über alle Kacheln zu scrollen. Vorschaubilder werden nur noch für sichtbare Kacheln geladen (bisher lud der Browser Dutzende Bilder im Voraus)."
+          "text": "Grosse Ordner (z.B. 2000 Bilder mit Zufallswiedergabe): Das Menüband unter dem Player springt bei weiten Wechseln direkt zum aktuellen Medium, statt animiert über alle Kacheln zu scrollen. Beim Wechsel wird zuerst das neue Medium geladen und angezeigt, erst danach werden die Menübänder aufgebaut und ihre Vorschaubilder geladen."
         },
         {
           "type": "INTERFACE",

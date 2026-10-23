@@ -172,7 +172,22 @@ var iconShapes = {
     chevronUp: '<path d="M6 15l6-6 6 6"/>',
     chevronDown: '<path d="M6 9l6 6 6-6"/>',
     grip: '<circle cx="9" cy="6" r="1.2" fill="currentColor"/><circle cx="15" cy="6" r="1.2" fill="currentColor"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/><circle cx="9" cy="18" r="1.2" fill="currentColor"/><circle cx="15" cy="18" r="1.2" fill="currentColor"/>',
-    sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'
+    sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+    // Mediensteuerung
+    pause: '<rect x="6.5" y="5" width="3.6" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="13.9" y="5" width="3.6" height="14" rx="1" fill="currentColor" stroke="none"/>',
+    skipPrev: '<path d="M6 5.5v13"/><path d="M19 5.8v12.4L9.2 12z" fill="currentColor" stroke="none"/>',
+    skipNext: '<path d="M18 5.5v13"/><path d="M5 5.8v12.4L14.8 12z" fill="currentColor" stroke="none"/>',
+    back10: '<path d="M3.5 12a8.5 8.5 0 1 0 8.5-8.5 9.2 9.2 0 0 0-6.4 2.6L3.5 8.2"/><path d="M3.5 3.5v4.7h4.7"/><text x="12.2" y="15.2" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui, sans-serif" fill="currentColor" stroke="none">10</text>',
+    forward10: '<path d="M20.5 12A8.5 8.5 0 1 1 12 3.5a9.2 9.2 0 0 1 6.4 2.6l2.1 2.1"/><path d="M20.5 3.5v4.7h-4.7"/><text x="11.8" y="15.2" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui, sans-serif" fill="currentColor" stroke="none">10</text>',
+    volumeHigh: '<path d="M4 9.3h3.4L12 5.4v13.2l-4.6-3.9H4z" fill="currentColor"/><path d="M15.6 9a4.2 4.2 0 0 1 0 6M18.4 6.2a8.2 8.2 0 0 1 0 11.6"/>',
+    volumeLow: '<path d="M4 9.3h3.4L12 5.4v13.2l-4.6-3.9H4z" fill="currentColor"/><path d="M15.6 9a4.2 4.2 0 0 1 0 6"/>',
+    volumeMute: '<path d="M4 9.3h3.4L12 5.4v13.2l-4.6-3.9H4z" fill="currentColor"/><path d="M15.8 9.5l5 5M20.8 9.5l-5 5"/>',
+    fullscreen: '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
+    fullscreenExit: '<path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/>',
+    pip: '<rect x="2.5" y="4.5" width="19" height="15" rx="2"/><rect x="12" y="11.5" width="7" height="5.5" rx="1" fill="currentColor" stroke="none"/>',
+    gear: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+    // Autoplay: Unendlichkeitszeichen mit Play-Symbol (wie das frühere Autoplay-Bild)
+    autoplay: '<path d="M12 12c-1.8-2.4-3.6-3.6-5.4-3.6a3.6 3.6 0 0 0 0 7.2c1.8 0 3.6-1.2 5.4-3.6zm0 0c1.8 2.4 3.6 3.6 5.4 3.6a3.6 3.6 0 0 0 0-7.2c-1.8 0-3.6 1.2-5.4 3.6z" stroke-opacity="0.5"/><path d="M9 6.6v10.8l8.6-5.4z" fill="currentColor" stroke="none"/>'
 };
 
 // Erstellt ein Symbol als SVG-Element (nur feste Formen aus iconShapes)

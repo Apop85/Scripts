@@ -163,6 +163,8 @@
             <label class="settingRow"><span>Unbegrenzt<small>Bis zum Ende der Playliste</small></span><input type="checkbox" onclick="updateAutoplayAmountState(); checkAutoplayAmount()" id="autoplayInfinite"></label>
             <label class="settingRow"><span>Anzahl abzuspielender Medien</span><input type="number" id="amountOfAutoplay" value="0" min="0"></label>
             <label class="settingRow"><span>Dauer bis Übergang (Sekunden)</span><input type="number" id="autoplayDuration" value="0" min="0"></label>
+            <h2 class="settingsSubhead">Player</h2>
+            <label class="settingRow"><span>Browser-Steuerung verwenden<small>Statt der STEFFLIX-Steuerung für Videos und Musik</small></span><input type="checkbox" id="nativeControlsCheckBox"></label>
             <a class="button" onclick="applySettings()">Speichern</a>
         </div>
         <div id="feedbackWrapper" class="sflixModal" style="display: none;">
@@ -229,12 +231,23 @@
             </details>
 
             <h3>Autoplay</h3>
-            <p>Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste ab. Die Einstellungen befinden sich im Menü unter <a onclick="toggleContainer(['settingsBox'], 'flex')">Autoplay</a>.</p>
+            <p>Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste ab. Die Einstellungen befinden sich im Menü unter <a onclick="toggleContainer(['settingsBox'], 'flex')">Autoplay</a> und im Zahnradmenü des Players. Das Autoplay-Symbol in der Player-Leiste zeigt, ob Autoplay aktiv ist (ausgegraut = aus), und schaltet es per Klick ein oder aus. Kurz vor dem Wechsel erscheint im Player ein Countdown; ein Klick darauf startet das nächste Medium sofort.</p>
             <ul class="helpOptions">
                 <li><b>Automatisch vorwärts</b>: schaltet Autoplay ein oder aus.</li>
                 <li><b>Unbegrenzt</b>: spielt ohne feste Anzahl weiter, bis das Ende der Playliste erreicht ist.</li>
                 <li><b>Anzahl abzuspielender Medien</b>: wie viele Medien nacheinander abgespielt werden. Die Zahl wird mit jedem Medium heruntergezählt, bei 0 hält Autoplay an. Bei "Unbegrenzt" wird sie nicht verwendet.</li>
                 <li><b>Dauer bis Übergang (Sekunden)</b>: Bei Videos und Musik wechselt STEFFLIX so viele Sekunden vor dem Ende (plus etwa eine Sekunde) zum nächsten Medium, bei Musik höchstens 11 Sekunden vorher. Bei 0 also kurz vor Schluss. Bilder bleiben so viele Sekunden plus 11 Sekunden sichtbar.</li>
+            </ul>
+
+            <h3>Player</h3>
+            <p>Videos und Musik haben eine eigene Steuerleiste. Bei Videos blendet sie sich während der Wiedergabe nach kurzer Zeit aus und erscheint wieder, sobald die Maus bewegt oder das Video angetippt wird.</p>
+            <ul class="helpOptions">
+                <li><b>Leiste</b>: vorheriges / nächstes Medium, Abspielen / Pause, 10 Sekunden zurück / vor, Lautstärke, Zeitleiste, Autoplay, Zahnradmenü, Bild im Bild und Vollbild.</li>
+                <li><b>Maus</b>: Klick auf das Video startet oder pausiert, Doppelklick schaltet das Vollbild ein oder aus.</li>
+                <li><b>Touch</b>: Tippen blendet die Leiste ein oder aus. Doppeltipp links oder rechts spult 10 Sekunden zurück bzw. vor, Doppeltipp in der Mitte schaltet das Vollbild um.</li>
+                <li><b>Zahnradmenü</b>: Autoplay-Einstellungen, Geschwindigkeit (0,5x bis 1,75x, jedes Medium startet wieder mit 1x), Herunterladen und Browser-Steuerung.</li>
+                <li><b>Vollbild</b>: Das Video füllt den Bildschirm. Darunter kann weiterhin gescrollt und ein anderes Medium gewählt werden. Auf dem iPhone bleibt die Browserleiste sichtbar.</li>
+                <li><b>Browser-Steuerung</b>: Wer die bisherige Steuerung des Browsers bevorzugt, schaltet sie im Zahnradmenü oder im Menü unter <a onclick="toggleContainer(['settingsBox'], 'flex')">Autoplay</a> ein.</li>
             </ul>
 
             <h3>Tastenkürzel</h3>
@@ -243,7 +256,7 @@
                 <li><span class="shortcutKeys"><kbd class="wideKey">Leertaste</kbd><kbd>K</kbd></span><span>Abspielen / Pause</span></li>
                 <li><span class="shortcutKeys"><kbd>←</kbd><kbd>→</kbd></span><span>10 Sekunden zurück / vor (bei Bildern: vorheriges / nächstes Bild)</span></li>
                 <li><span class="shortcutKeys"><kbd>↑</kbd><kbd>↓</kbd></span><span>Lautstärke (nur wenn der Player sichtbar ist)</span></li>
-                <li><span class="shortcutKeys"><kbd>F</kbd></span><span>Vollbild</span></li>
+                <li><span class="shortcutKeys"><kbd>F</kbd></span><span>Vollbild (bei Videos auch per Doppelklick)</span></li>
                 <li><span class="shortcutKeys"><kbd>M</kbd></span><span>Ton aus / an</span></li>
                 <li><span class="shortcutKeys"><kbd>N</kbd><kbd>P</kbd></span><span>Nächstes / vorheriges Medium</span></li>
                 <li><span class="shortcutKeys"><kbd>/</kbd></span><span>Suche öffnen</span></li>

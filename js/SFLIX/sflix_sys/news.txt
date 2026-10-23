@@ -2,6 +2,20 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>
+<b>Version 2.01</b>:<br>
+<ul>
+    <li>[<span style="color: red">FEATURE</span>] Eigene Steuerung für Videos und Musik statt der Browser-Steuerung: Abspielen/Pause, vorheriges/nächstes Medium, 10 Sekunden zurück/vor, Zeitleiste mit geladenem Bereich und Zeitvorschau, Lautstärke (Regler fährt beim Überfahren aus) und Zeitanzeige.</li>
+    <li>[<span style="color: red">FEATURE</span>] Bei Videos blendet sich die Steuerleiste während der Wiedergabe aus und erscheint wieder bei Mausbewegung, Antippen oder Tastaturbedienung. Bei Musik bleibt sie immer sichtbar.</li>
+    <li>[<span style="color: red">FEATURE</span>] Zahnradmenü im Player: Autoplay-Einstellungen (Automatisch vorwärts, Unbegrenzt, Anzahl, Dauer bis Übergang), Geschwindigkeit 0,5x bis 1,75x und Herunterladen. Jedes Medium startet wieder mit 1x.</li>
+    <li>[<span style="color: red">FEATURE</span>] Autoplay-Anzeige in der Player-Leiste: ausgegraut, wenn Autoplay aus ist. Ein Klick schaltet Autoplay ein oder aus.</li>
+    <li>[<span style="color: red">FEATURE</span>] Autoplay-Countdown im Player ("Nächstes in 5 s") mit Namen des nächsten Mediums. Ein Klick darauf startet es sofort, das X schaltet Autoplay aus.</li>
+    <li>[<span style="color: red">FEATURE</span>] Neues Video-Vollbild: Das Video füllt den Bildschirm, darunter kann weitergescrollt und ein anderes Medium gewählt werden. Der Browser wechselt dabei ebenfalls in den Vollbildmodus (nicht auf dem iPhone). Im Vollbild wird der Titel angezeigt.</li>
+    <li>[<span style="color: red">FEATURE</span>] Maus: Klick auf das Video startet oder pausiert, Doppelklick schaltet das Vollbild um. Touch: Tippen blendet die Leiste ein oder aus, Doppeltipp links/rechts spult 10 Sekunden zurück/vor, Doppeltipp in der Mitte schaltet das Vollbild um.</li>
+    <li>[<span style="color: red">FEATURE</span>] Bild im Bild für Videos (Chrome, Edge, Safari).</li>
+    <li>[<span style="color: red">FEATURE</span>] Die bisherige Browser-Steuerung lässt sich im Menü unter "Autoplay" oder im Zahnradmenü wieder einschalten.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Das Fenster "Autoplay" im Menü enthält zusätzlich die Player-Einstellungen. Neuer Abschnitt "Player" in der Hilfe.</li>
+    <li>[OPTIMIERUNG] Die Lautstärke wird sofort gespeichert (bisher nur alle 10 Sekunden während der Wiedergabe).</li>
+</ul>
 <b>Version 2.00</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Favoriten-Seite im Einstellungsmenü. Favoriten können als ordnerübergreifende Playliste abgespielt werden ("Alle abspielen").</li>

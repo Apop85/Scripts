@@ -728,7 +728,6 @@ input::placeholder, textarea::placeholder {
     margin: 0 auto;
     border-radius: 12px;
     background-color: black;
-    box-shadow: var(--sflix-shadow);
 }
 
 #imageLink {
@@ -745,10 +744,14 @@ input::placeholder, textarea::placeholder {
     box-shadow: var(--sflix-shadow);
 }
 
+/* Das Audio-Element selbst ist unsichtbar, bedient wird über die eigene Leiste */
 .audioPlayer {
+    display: none;
+}
+
+.sflixPlayer.nativeControls .audioPlayer {
     display: block;
-    width: min(720px, 100%);
-    margin: 30px auto;
+    width: 100%;
 }
 
 /* Hinweis bei fehlenden oder defekten Medien */
@@ -854,6 +857,711 @@ input::placeholder, textarea::placeholder {
     background-size: 44px 44px;
     background-repeat: no-repeat;
     background-position: bottom center;
+}
+
+/* Video und Musik zeigen Autoplay in der Player-Leiste */
+#media.hasPlayerControls.autoplaying {
+    background-image: none;
+}
+
+/*
+  Eigene Mediensteuerung (Video und Musik)
+*/
+.sflixPlayer {
+    position: relative;
+    /* eigene Ebenen: Fenster und Menü der Kopfzeile bleiben immer darüber */
+    isolation: isolate;
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    color: white;
+    text-align: left;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sflixPlayer [hidden] {
+    display: none !important;
+}
+
+.sflixPlayer.isVideo {
+    border-radius: 12px;
+    background-color: black;
+    box-shadow: var(--sflix-shadow);
+}
+
+#playerContainer .sflixPlayer video {
+    max-width: none;
+    margin: 0;
+}
+
+/* Klickfläche über dem Video */
+.playerSurface {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    cursor: pointer;
+    /* kein Zoomen beim Doppeltipp */
+    touch-action: manipulation;
+}
+
+.sflixPlayer.isVideo:not(.controlsVisible),
+.sflixPlayer.isVideo:not(.controlsVisible) .playerSurface {
+    cursor: none;
+}
+
+/* Titel oben (nur im Vollbild) */
+.playerTop {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    padding: 20px 24px 50px 24px;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s;
+}
+
+.playerTitle {
+    display: block;
+    overflow: hidden;
+    font-size: clamp(1rem, 2.2vw, 1.5rem);
+    font-weight: 700;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Grosses Play-Symbol (pausiert) und Ladekreis */
+.playerCenter {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.bigPlay {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 78px;
+    height: 78px;
+    padding-left: 5px;
+    border-radius: 50%;
+    background-color: rgba(15, 15, 17, 0.6);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.bigPlay .icon {
+    width: 40px;
+    height: 40px;
+}
+
+.sflixPlayer.isPaused .bigPlay {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.playerSpinner {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--sflix-accent);
+    border-radius: 50%;
+    opacity: 0;
+    animation: playerSpin 0.9s linear infinite;
+    transition: opacity 0.2s;
+}
+
+.sflixPlayer.isWaiting .playerSpinner {
+    opacity: 1;
+}
+
+.sflixPlayer.isWaiting .bigPlay {
+    opacity: 0;
+}
+
+@keyframes playerSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Doppeltipp: "-10 s" / "+10 s" */
+.seekRipple {
+    position: absolute;
+    top: 50%;
+    z-index: 3;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background-color: rgba(15, 15, 17, 0.7);
+    font-weight: 700;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-50%);
+    transition: opacity 0.2s;
+}
+
+.seekRipple.left {
+    left: 12%;
+}
+
+.seekRipple.right {
+    right: 12%;
+}
+
+.seekRipple.visible {
+    opacity: 1;
+}
+
+/* Steuerleiste */
+.playerControls {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 4;
+    padding: 30px 14px 8px 14px;
+    border-radius: 0 0 12px 12px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.45) 60%, rgba(0, 0, 0, 0));
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s, visibility 0.25s;
+}
+
+.sflixPlayer.controlsVisible .playerControls,
+.sflixPlayer.controlsVisible .playerTop {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Zeitleiste */
+.playerProgress {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 20px;
+    cursor: pointer;
+    touch-action: none;
+    outline: none;
+}
+
+.progressTrack {
+    position: relative;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.25);
+    transition: height 0.12s;
+}
+
+.playerProgress:hover .progressTrack,
+.playerProgress.dragging .progressTrack,
+.playerProgress:focus-visible .progressTrack {
+    height: 6px;
+}
+
+.playerProgress:focus-visible .progressTrack {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+.progressBuffered,
+.progressPlayed {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    border-radius: 2px;
+}
+
+.progressBuffered {
+    background-color: rgba(255, 255, 255, 0.35);
+}
+
+.progressPlayed {
+    background-color: var(--sflix-accent);
+}
+
+.progressThumb {
+    position: absolute;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
+    border-radius: 50%;
+    background-color: var(--sflix-accent);
+    transform: translateY(-50%) scale(0);
+    transition: transform 0.12s;
+}
+
+.playerProgress:hover .progressThumb,
+.playerProgress.dragging .progressThumb,
+.playerProgress:focus-visible .progressThumb {
+    transform: translateY(-50%) scale(1);
+}
+
+.progressTooltip {
+    position: absolute;
+    bottom: 24px;
+    left: 0;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background-color: rgba(15, 15, 17, 0.9);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(-50%);
+    transition: opacity 0.12s;
+}
+
+.playerProgress.showTooltip .progressTooltip {
+    opacity: 1;
+}
+
+/* Knöpfe */
+.controlRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.controlGroup {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+}
+
+.controlGroupRight {
+    flex-shrink: 0;
+}
+
+.ctrlButton {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: transparent;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.ctrlButton:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.ctrlButton:focus-visible {
+    outline: 2px solid white;
+    outline-offset: -2px;
+}
+
+.ctrlButton:disabled {
+    opacity: 0.3;
+    background-color: transparent;
+    cursor: default;
+}
+
+.ctrlButton .icon {
+    width: 24px;
+    height: 24px;
+}
+
+.ctrlPlay .icon {
+    width: 28px;
+    height: 28px;
+}
+
+/* Autoplay-Anzeige: ausgegraut, wenn Autoplay aus ist */
+.ctrlAutoplay .icon {
+    width: 32px;
+    height: 32px;
+}
+
+/* festes Grau statt Transparenz, sonst hellen sich die Überlappungen auf */
+.ctrlAutoplay {
+    color: #5c5c64;
+}
+
+.ctrlAutoplay.active {
+    color: white;
+}
+
+.ctrlAutoplay.active .icon path:last-child {
+    fill: var(--sflix-accent);
+}
+
+.ctrlSettings .icon {
+    transition: transform 0.25s;
+}
+
+.ctrlSettings.active .icon {
+    transform: rotate(45deg);
+}
+
+.ctrlPip.active {
+    color: #ff6b6b;
+}
+
+/* Lautstärke wie bei YouTube: Regler fährt beim Überfahren aus */
+.volumeGroup {
+    display: flex;
+    align-items: center;
+}
+
+.sflixPlayer input.volumeSlider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 0;
+    height: 4px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 2px;
+    background: linear-gradient(to right, white var(--fill, 100%), rgba(255, 255, 255, 0.3) var(--fill, 100%));
+    opacity: 0;
+    cursor: pointer;
+    transition: width 0.2s, opacity 0.2s, margin 0.2s;
+}
+
+.volumeGroup:hover input.volumeSlider,
+.volumeGroup:focus-within input.volumeSlider {
+    width: 80px;
+    margin: 0 10px 0 4px;
+    opacity: 1;
+}
+
+.sflixPlayer input.volumeSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 13px;
+    height: 13px;
+    border: none;
+    border-radius: 50%;
+    background-color: white;
+}
+
+.sflixPlayer input.volumeSlider::-moz-range-thumb {
+    width: 13px;
+    height: 13px;
+    border: none;
+    border-radius: 50%;
+    background-color: white;
+}
+
+.sflixPlayer input.volumeSlider::-moz-range-track {
+    background: transparent;
+}
+
+.timeDisplay {
+    flex-shrink: 0;
+    margin-left: 8px;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Autoplay-Countdown */
+.autoplayCountdown {
+    position: absolute;
+    right: 16px;
+    bottom: 92px;
+    z-index: 5;
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    transition: bottom 0.25s;
+}
+
+.sflixPlayer.isVideo:not(.controlsVisible) .autoplayCountdown {
+    bottom: 20px;
+}
+
+.countdownNext {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    max-width: min(340px, 60vw);
+    overflow: hidden;
+    padding: 10px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    background-color: rgba(20, 20, 24, 0.88);
+    color: white;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.countdownNext:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.countdownFill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    width: 0;
+    background-color: rgba(229, 9, 20, 0.55);
+    transition: width 0.25s linear;
+}
+
+.countdownLabel {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.countdownName {
+    max-width: 100%;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.ctrlButton.countdownCancel {
+    align-self: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: rgba(20, 20, 24, 0.88);
+}
+
+.ctrlButton.countdownCancel .icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* Zahnradmenü */
+.playerMenu {
+    position: absolute;
+    right: 10px;
+    bottom: 68px;
+    z-index: 6;
+    width: min(340px, calc(100vw - 32px));
+    max-height: min(70vh, 470px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 6px 16px 10px 16px;
+    border: 1px solid var(--sflix-border);
+    border-radius: 12px;
+    background-color: rgba(26, 26, 30, 0.97);
+    box-shadow: var(--sflix-shadow);
+    color: var(--sflix-text);
+    font-size: 0.9rem;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Video: Menü bleibt innerhalb des Videos (scrollt bei kleinen Videos) */
+.sflixPlayer.isVideo .playerMenu {
+    max-height: min(470px, calc(100% - 78px));
+}
+
+.playerMenuHeading {
+    margin: 12px 0 0 0;
+    color: var(--sflix-text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.playerMenu .settingRow {
+    gap: 12px;
+    padding: 9px 0;
+}
+
+.playerMenu .settingRow span {
+    font-size: 0.88rem;
+}
+
+.playerMenu .settingRow input[type="number"] {
+    width: 72px;
+}
+
+.speedOptions {
+    display: flex;
+    gap: 6px;
+    padding: 10px 0 12px 0;
+    border-bottom: 1px solid var(--sflix-border);
+}
+
+.speedOption {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 7px 0;
+    border: 1px solid var(--sflix-input-border);
+    border-radius: 8px;
+    background-color: var(--sflix-input-bg);
+    color: var(--sflix-text);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.speedOption:hover {
+    background-color: var(--sflix-surface-hover);
+}
+
+.speedOption.active {
+    border-color: var(--sflix-accent);
+    background-color: var(--sflix-accent);
+    color: white;
+}
+
+.playerMenuLink {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--sflix-border);
+    color: var(--sflix-text);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.playerMenuLink:hover {
+    color: white;
+}
+
+.playerMenuLink .icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Musik: Leiste immer sichtbar, als Karte statt über einem Bild */
+.sflixPlayer.isAudio {
+    width: min(720px, 100%);
+    margin: 30px auto;
+}
+
+.sflixPlayer.isAudio .playerControls {
+    position: relative;
+    padding: 10px 14px 8px 14px;
+    border: 1px solid var(--sflix-border);
+    border-radius: 14px;
+    background: var(--sflix-surface);
+    box-shadow: var(--sflix-shadow);
+    opacity: 1;
+    visibility: visible;
+}
+
+.sflixPlayer.isAudio .progressTrack {
+    background-color: rgba(255, 255, 255, 0.16);
+}
+
+.sflixPlayer.isAudio .autoplayCountdown {
+    position: static;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.sflixPlayer.isAudio .playerMenu {
+    top: calc(100% + 8px);
+    bottom: auto;
+    right: 0;
+}
+
+/* Browser-Steuerung statt eigener Leiste */
+.sflixPlayer.nativeControls .playerSurface,
+.sflixPlayer.nativeControls .playerTop,
+.sflixPlayer.nativeControls .playerCenter,
+.sflixPlayer.nativeControls .seekRipple,
+.sflixPlayer.nativeControls .playerControls,
+.sflixPlayer.nativeControls .playerMenu {
+    display: none !important;
+}
+
+.sflixPlayer.isVideo.nativeControls .autoplayCountdown {
+    top: 16px;
+    bottom: auto;
+}
+
+/* Vollbild für Videos: per CSS, darunter kann weitergescrollt werden */
+html.playerCinema .firstLevelWrap,
+html.playerCinema #mediaTitle {
+    display: none;
+}
+
+html.playerCinema #media {
+    padding: 0;
+}
+
+html.playerCinema .sflixPlayer.isVideo {
+    max-width: none;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+html.playerCinema #playerContainer .sflixPlayer video {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border-radius: 0;
+    object-fit: contain;
+}
+
+html.playerCinema .playerTop {
+    display: block;
+}
+
+html.playerCinema .playerControls {
+    padding: 50px 24px 14px 24px;
+    border-radius: 0;
+}
+
+html.playerCinema .autoplayCountdown {
+    right: 28px;
+    bottom: 104px;
+}
+
+/* Touch-Geräte: grössere Zeitleiste, kein ausfahrender Lautstärkeregler (Gerätetasten) */
+@media (hover: none) {
+    .playerProgress {
+        height: 26px;
+    }
+
+    .progressThumb {
+        transform: translateY(-50%) scale(1);
+    }
+
+    .volumeGroup input.volumeSlider {
+        display: none;
+    }
 }
 
 /* Vollbild für Bilder */
@@ -1270,6 +1978,11 @@ kbd.wideKey {
     margin: 0 44px 2px 0;
     font-size: 1.35rem;
     font-weight: 700;
+}
+
+.sflixModal h2.settingsSubhead {
+    margin-top: 14px;
+    font-size: 1.1rem;
 }
 
 .sflixModal p {
@@ -2323,6 +3036,34 @@ input:focus-visible, textarea:focus-visible, video:focus-visible, audio:focus-vi
         width: 80px;
     }
 
+    /* Player: 10 Sekunden über Doppeltipp, kleinere Knöpfe */
+    .ctrlButton.ctrlSeek {
+        display: none;
+    }
+
+    .ctrlButton {
+        width: 38px;
+        height: 38px;
+    }
+
+    .playerControls {
+        padding: 24px 8px 4px 8px;
+    }
+
+    .timeDisplay {
+        margin-left: 4px;
+        font-size: 0.8rem;
+    }
+
+    .autoplayCountdown {
+        right: 10px;
+        bottom: 80px;
+    }
+
+    .countdownNext {
+        padding: 8px 12px;
+    }
+
     #licenseInputs input {
         width: 56px;
     }
@@ -2331,6 +3072,12 @@ input:focus-visible, textarea:focus-visible, video:focus-visible, audio:focus-vi
 @media (max-width: 480px) {
     #logo {
         height: 28px;
+    }
+
+    /* Player: Vor/Zurück stehen direkt unter dem Video, damit die Zeit Platz hat */
+    .ctrlButton.ctrlPrev,
+    .ctrlButton.ctrlNext {
+        display: none;
     }
 
     #menu li a {

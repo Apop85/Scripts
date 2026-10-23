@@ -5,17 +5,18 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STEFFLIX</title>
-    <link rel="shortcut icon" type="image/x-icon" href="sflix_sys/sflixLogo.png">
+    <link rel="icon" type="image/svg+xml" href="sflix_sys/sflixLogo.svg">
+    <link rel="alternate icon" type="image/png" href="sflix_sys/sflixLogo.png">
     <style>
         body {
             overflow-x: hidden;
-            background-color: #222;
+            background-color: #0f0f11;
         }
-        
+
         #loadingScreen {
             width: 100vw;
             height: 100vh;
-            background-color: #222;
+            background-color: #0f0f11;
             z-index: 100;
             display: flex;
             flex-direction: column;
@@ -27,8 +28,10 @@
         }
 
         #loadingScreen h1 {
-            color: gray;
+            color: #9c9ca5;
             margin: 20px;
+            font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-weight: 600;
         }
 
         #loadingBar {
@@ -45,11 +48,13 @@
             justify-content: center;
             width: 40px;
             height: 40px;
-            background-color: black;
+            background-color: #1b1b1f;
             animation: loading 3.0s ease-in-out;
             animation-iteration-count: infinite;
             border-radius: 20px;
-            color: black;
+            color: #1b1b1f;
+            font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-weight: 700;
             text-align: center;
             font-size: 33px;
         }
@@ -84,29 +89,29 @@
 
         @keyframes loading {
             20% {
-                background-color: black;
-                color: black;
+                background-color: #1b1b1f;
+                color: #1b1b1f;
                 font-size: 15px;
             }
             40% {
-                background-color: rgb(100, 100, 100);
-                color: gray;
-                font-size: 33px;
+                background-color: #4a2a30;
+                color: #f0d4d7;
+                font-size: 26px;
             }
             60% {
-                background-color: rgb(100, 100, 100);
-                color: gray;
-                font-size: 33px;
+                background-color: #4a2a30;
+                color: #f0d4d7;
+                font-size: 26px;
             }
             80% {
-                background-color: black;
-                color: black;
+                background-color: #1b1b1f;
+                color: #1b1b1f;
                 font-size: 15px;
             }
         }
     </style>
 </head>
-<body onload="setHeight()" onscroll="document.getElementById('mainBody').style.backgroundPositionY = Math.max(100, window.scrollY) - 200 + 'px'" id="mainBody">
+<body onload="setHeight()" id="mainBody">
     <!-- Ladescreen -->
     <div id="loadingScreen">
         <h1>Inhalte werden geladen</h1>
@@ -122,89 +127,69 @@
         </div>
     </div>
     <script src="sflix_sys/data.js"></script>
+    <!-- Von updateData.exe erstellt: umbenannte Dateien (fehlt bei Erstinstallation, wird dann ignoriert) -->
+    <script src="sflix_sys/renamed.js"></script>
     <script src="sflix_sys/version.js"></script>
     <link rel="stylesheet" href="sflix_sys/sflix.css" type="text/css">
     <!-- Navigationsmenü -->
     <div class="firstLevelWrap">
-        <a id="logoLink" href="start.html"><img id="logo" src="sflix_sys/sflixLogo.png" alt="STEFFLIX Logo"></a>
+        <a id="logoLink" href="start.html" aria-label="STEFFLIX Startseite"><img id="logo" src="sflix_sys/sflixLogo.svg" alt=""><span id="logoText">STEFFLIX</span></a>
         <ul id="menu" class="menu"></ul>
-        <form action="javascript:callSearch()">
-            <a id="searchTextField" style="display: block;" onclick="toggleContainer(['searchFieldContainer'], 'flex')"></a>
-            <div id="searchFieldContainer" style="display: none; position: absolute; z-index: 999;">
-                <input id="searchField" type="text" name="searchTerm" placeholder="Suche">
-                <a onclick="callSearch()" id="doSearchIcon">✔</a>
-                <a onclick="toggleContainer(['searchFieldContainer'], 'none')" id="closeSearchIcon">❌</a>
+        <form id="searchForm" action="javascript:callSearch()" role="search">
+            <a id="searchTextField" style="display: block;" aria-label="Suche öffnen" title="Suche (Taste /)" onclick="toggleContainer(['searchFieldContainer'], 'flex')"></a>
+            <div id="searchFieldContainer" style="display: none;">
+                <input id="searchField" type="search" name="searchTerm" placeholder="Titel, Serien oder Ordner suchen" aria-label="Suchbegriff" autocomplete="off">
+                <button type="submit" class="sflixButton primary small">Suchen</button>
+                <a class="closeButton" id="closeSearchIcon" aria-label="Suche schliessen" onclick="toggleContainer(['searchFieldContainer'], 'none')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></a>
+                <ul id="searchSuggestions" aria-label="Vorschläge"></ul>
             </div>
         </form>
-        <div id="settings">
+        <div id="settings" title="Menü">
             <div id="settingsDD">
-                <a id="settingsBoxToggler" onclick="toggleContainer(['settingsBox'], 'flex')"><table><tr><td id="autoplayIcon" style="width: 40px;"></td><td>Autoplay</td></tr></table></a>
-                <a id="feedbackBoxToggler" onclick="toggleContainer(['feedbackWrapper'], 'flex')"><table><tr><td id="supportIcon" style="width: 40px;"></td><td>Feedback</td></tr></table></a>
-                <a id="FehlerbehebungToggler" onclick="toggleContainer(['fehlerbehebung'], 'block')"><table><tr><td id="fehlerIcon" style="width: 40px;"></td><td>Fehlerbehebung</td></tr></table></a>
-                <a id="serialToggler" onclick="toggleContainer(['serialKeyWrapper'], 'flex')"><table><tr><td id="lizenzIcon" style="width: 40px;"></td><td>Lizenz</td></tr></table></a>
-                <a id="serialToggler" onclick="openHelp()"><table><tr><td id="helpIcon" style="width: 40px;"></td><td>Hilfe</td></tr></table></a>
+                <!-- Symbole: Suche und Favoriten als Inline-SVG, die übrigen per CSS (SVG mit PNG-Fallback) -->
+                <a id="searchToggler" onclick="toggleContainer(['searchFieldContainer'], 'flex')"><span class="menuIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg></span><span class="menuLabel">Suche</span></a>
+                <a id="settingsBoxToggler" onclick="toggleContainer(['settingsBox'], 'flex')"><span class="menuIcon" id="autoplayIcon"></span><span class="menuLabel">Autoplay</span></a>
+                <a id="favoritesToggler" onclick="openFavorites()"><span class="menuIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.2l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg></span><span class="menuLabel">Favoriten</span></a>
+                <a id="serialToggler" onclick="toggleContainer(['serialKeyWrapper'], 'flex')"><span class="menuIcon" id="lizenzIcon"></span><span class="menuLabel">Lizenz</span></a>
+                <!-- Nur sichtbar mit gültigem Lizenzschlüssel -->
+                <a id="feedbackBoxToggler" onclick="toggleContainer(['feedbackWrapper'], 'flex')"><span class="menuIcon" id="supportIcon"></span><span class="menuLabel">Feedback</span></a>
+                <a id="helpToggler" onclick="openHelp()"><span class="menuIcon" id="helpIcon"></span><span class="menuLabel">Hilfe</span></a>
             </div>
         </div>
-        <div id="settingsBox" style="display: none;">
-            <div><a class="closeButton" onclick="toggleContainer(['settingsBox'], 'none')">❌</a></div>
-            <!-- <p><b>Audio und Video automatisch abspielen</b>: <input type="checkbox" id="autoplayMediaCheckBox"></p> -->
-            <p><b>Automatisch vorwärts</b>: <input type="checkbox" onclick="checkAutoplayAmout()" id="autoplayCheckBox"></p>
-            <p><b>Anzahl abzuspielender Medien</b>: <input type="number" id="amountOfAutoplay" value="0"></p>
-            <p><b>Dauer bis Übergang</b>: <input type="number" id="autoplayDuration" value="30"></p>
+        <div id="settingsBox" class="sflixModal" style="display: none;">
+            <a class="closeButton" aria-label="Schliessen" onclick="toggleContainer(['settingsBox'], 'none')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></a>
+            <h2>Autoplay</h2>
+            <label class="settingRow"><span>Automatisch vorwärts</span><input type="checkbox" onclick="checkAutoplayAmount()" id="autoplayCheckBox"></label>
+            <label class="settingRow"><span>Unbegrenzt<small>Bis zum Ende der Playliste</small></span><input type="checkbox" onclick="updateAutoplayAmountState(); checkAutoplayAmount()" id="autoplayInfinite"></label>
+            <label class="settingRow"><span>Anzahl abzuspielender Medien</span><input type="number" id="amountOfAutoplay" value="0" min="0"></label>
+            <label class="settingRow"><span>Dauer bis Übergang (Sekunden)</span><input type="number" id="autoplayDuration" value="0" min="0"></label>
             <a class="button" onclick="applySettings()">Speichern</a>
         </div>
-        <div id="fehlerbehebung" style="display: none;">
-            <div style="display: flex; flex-direction: row;">
-                <div><p style="border: none;"><b>Achtung!</b> Hier ausgeführte Aktionen können nicht rückgängig gemacht werden!</p></div>
-                <div><a class="closeButton" onclick="toggleContainer(['fehlerbehebung'], 'none')">❌</a></div>
-            </div>
-            <h5>Favoriten löschen</h5>
-            <p>Sollte das Menü nicht richtig geladen und Medieninhalte nicht angezeigt werden, kann es helfen, die gesetzten Favoriten zu löschen.<br><br>
-            <a onclick="modifyLocalData('favorites')" class="button">Favoriten löschen</a></p>
-            <h5>Playlisten löschen</h5>
-            <p>Sollten die verlinkungen der Vor- und Zurückbuttons fehlerhaft sein, kann dies durch das Löschen der Playlisten behoben werden.<br><br>
-            <a onclick="modifyLocalData('playlist')" class="button">Playlisten löschen</a></p>
-            <h5>Zeitstempel löschen</h5>
-            <p>Sollten die Zeitstempel fehlerhaft sein oder das Laden der Videos nicht funktionieren, kann es helfen, die Zeitstempel zu löschen.<br><br>
-            <a onclick="modifyLocalData('timestamp')" class="button">Zeitstempel löschen</a></p>
-            <h5>Zuletzt gesehen Liste löschen</h5>
-            <p>Sollte die Startseite von STEFFLIX nicht richtig geladen werden, oder die Liste fehlerhaft sein, kann es helfen, die Liste zu löschen.<br><br>
-            <a onclick="modifyLocalData('playlast')" class="button">Zuletzt gespielt löschen</a></p>
-            <h5>Alle Daten löschen</h5>
-            <p>Nur ausführen, wenn keine andere Massnahme geholfen hat.<br><br>
-            <a onclick="modifyLocalData('all')" class="button">Alles löschen</a></p>
-            <div id="debugOutput" style="display: none;">
-                <h5>Fortschritt</h5>
-                <textarea style="width: 100%;" id="debugField" rows="10" disabled></textarea>
-                <a id="debugOkButton" style="display: none;" onclick="toggleContainer(['debugOutput'], 'none')" class="button">OK</a>
-            </div>
-        </div>
-        <div id="feedbackWrapper" style="display: none;">
+        <div id="feedbackWrapper" class="sflixModal" style="display: none;">
+            <a class="closeButton" aria-label="Schliessen" onclick="toggleContainer(['feedbackWrapper'], 'none')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></a>
+            <h2>Feedback und Bugreport</h2>
             <form>
-                <div>
-                    <a class="closeButton" onclick="toggleContainer(['feedbackWrapper'], 'none')">❌</a>
-                    <h2>Feedback und Bugreport</h2>
-                    <input type="text" id="feedbackName" placeholder="Name" required>
-                    <textarea id="feedbackText" placeholder="Nachricht" value="" autocomplete="off" required></textarea>
-                </div>
-                <span id="errorMsg"></span>
-                <a class="button"onclick="sendMessage()">Senden</a>
+                <input type="text" id="feedbackName" placeholder="Name" required>
+                <textarea id="feedbackText" placeholder="Nachricht" value="" autocomplete="off" required></textarea>
+                <p id="feedbackStatus" role="status"></p>
+                <a class="button" onclick="sendMessage()">Senden</a>
             </form>
         </div>
-        <div id="serialKeyWrapper" style="display: none;">
-            <a class="closeButton" onclick="toggleContainer(['serialKeyWrapper'], 'none')">❌</a>
+        <div id="serialKeyWrapper" class="sflixModal" style="display: none;">
+            <a class="closeButton" aria-label="Schliessen" onclick="toggleContainer(['serialKeyWrapper'], 'none')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></a>
             <h2>Lizenzschlüssel</h2>
-            <p>Der Lizenzschlüssel wird benötigt, damit das Feedbackformular verwendet werden kann.</p>
+            <p>Der Lizenzschlüssel wird benötigt, damit das Feedbackformular verwendet werden kann. Ohne gültigen Schlüssel ist der Menüpunkt «Feedback» ausgeblendet.</p>
             <form id="licenseInputs">
-                <input type="text" id="lic1" maxlength="4" placeholder="ABCD" required><span style="color: black;"> -</span>
-                <input type="text" id="lic2" maxlength="4" placeholder="EFGH" required><span style="color: black;"> -</span>
-                <input type="text" id="lic3" maxlength="4" placeholder="IJKL" required><span style="color: black;"> -</span>
-                <input type="text" id="lic4" maxlength="4" placeholder="MNOP" required><span style="color: black;"> -</span>
-                <input type="text" id="lic5" maxlength="4" placeholder="QRST" required><span style="color: black;"> -</span>
-                <input type="text" id="lic6" maxlength="4" placeholder="UVWX" required><span style="color: black;"> -</span>
-                <input type="text" id="lic7" maxlength="4" placeholder="YZ12" required><span style="color: black;"> -</span>
+                <input type="text" id="lic1" maxlength="4" placeholder="ABCD" required><span>-</span>
+                <input type="text" id="lic2" maxlength="4" placeholder="EFGH" required><span>-</span>
+                <input type="text" id="lic3" maxlength="4" placeholder="IJKL" required><span>-</span>
+                <input type="text" id="lic4" maxlength="4" placeholder="MNOP" required><span>-</span>
+                <input type="text" id="lic5" maxlength="4" placeholder="QRST" required><span>-</span>
+                <input type="text" id="lic6" maxlength="4" placeholder="UVWX" required><span>-</span>
+                <input type="text" id="lic7" maxlength="4" placeholder="YZ12" required><span>-</span>
                 <input type="text" id="lic8" maxlength="4" placeholder="3456" required>
             </form>
+            <p id="licenseMsg" role="alert"></p>
             <a class="button" id="saveSerialButton" onclick="saveLicenseKey()">Speichern</a>
         </div>
     </div>
@@ -212,86 +197,171 @@
     </div>
     <!-- Mediencontainer -->
     <div id="media" style="display: none;">
-        <a class="closeButton" id="toggleFullscreenButton" style="display: none;" onclick="toggleFullscreenMode()">❌</a>
+        <a class="closeButton" id="toggleFullscreenButton" style="display: none;" aria-label="Vollbild beenden" onclick="toggleFullscreenMode()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></a>
         <div id="help" style="display: none;">
-            <h3>Neue Medieninhalte hinzufügen</h3>
-            <p>Um neue Medieninhalte hinzuzufügen, müssen diese einfach in den entsprechenden STEFFLIX-Ordner kopiert werden und anschliessend das Programm <span class="highlighted">updateData.exe</span> ausgeführt werden.</p>
+            <h3>Neue Medien hinzufügen</h3>
+            <p>Neue Filme, Serien, Musik oder Bilder werden in den passenden Ordner im STEFFLIX-Verzeichnis kopiert. Danach liest <span class="highlighted">updateData.exe</span> die Medien neu ein, und sie erscheinen in STEFFLIX.</p>
             <ol>
-                <li>Gewünschte <a onclick="toggleContainer(['addNewMediaInfoTitle', 'addNewMediaInfo'], 'block')">Medien</a> in passenden Unterordner von STEFFLIX kopieren<br><br>
-                <h4 id="addNewMediaInfoTitle" style="text-align: left;display: none;">Unterstützte Dateiformate:</h4>
-                <ul id="addNewMediaInfo" style="display: none; text-align: left; margin-left: 30px; margin-bottom: 20px;">
-                    <li>Video: mp4</li>
-                    <li>Musik: mp3, ogg, m4a</li>
-                    <li>Bilder: jpg, png, gif</li>
-                    <p><br>Anleitung zur <a href="https://praxistipps.chip.de/mit-vlc-dateien-umwandeln-so-gehts_35221">Konvertierung von Videos mit VLC</a></p>
-                </ul></li>
-                <li>Optional: Preview-Bild in <a style="cursor: pointer;" onclick="toggleContainer(['folderExplain'], 'block')">Preview-Ordner</a> hinterlegen. Muss jpg-Format aufweisen und der Dateiname muss identisch sein wie das Zielmedium. <span id="folderExplain" style="display: none;"><b>(Der Preview-Ordner muss sich im selben Verzeichnis befinden wie das Medium)</b>:<br><br> D:\sflix\BILDER<br>├───Buddy<br>├───Pilze<br>├───Natur<br>└───<span style='color: red'>Preview</span><br><span style='margin-left: 45px;'>└───Buddy.jpg</span><br><span style='margin-left: 45px;'>└───Natur.jpg</span><br><span style='margin-left: 45px;'>└───Pilze.jpg</span><br></span><br><br></li>
-                <li>updateData.exe ausführen</li>
+                <li>Medien in den passenden Unterordner kopieren, z.B. <span class="highlighted">Serien\Meine Serie\Staffel 1</span>.</li>
+                <li>Optional ein Vorschaubild hinterlegen (siehe unten).</li>
+                <li><span class="highlighted">updateData.exe</span> ausführen.</li>
             </ol>
-
-            <h3>Autoplayfunktion</h3>
-            <p>Damit die Autoplayfunktion genutzt werden kann, muss in den <a onclick="toggleContainer(['settingsBox'], 'flex')">Optionen</a> sowohl der Haken bei Autoplay gesetzt werden als auch eine Anzahl der zu spielenden Medien angeben. <a onclick="toggleContainer(['optionHelp'], 'block')">Informationen</a><br></p>
-            <div id="optionHelp" style="display: none;">
-                <br>
+            <details class="helpDetails">
+                <summary>Unterstützte Dateiformate</summary>
                 <ul>
-                    <li><b>Autoplay</b>: Automatische Abspielfunktion aktivieren. Möchte man diese Nutzen, muss man "Anzahl autoplay" mindestens auf 1 setzen</li>
-                    <li><b>Anzahl autoplay</b>: Wie viele Medien sollen nacheinander abgespielt werden?</li>
-                    <li><b>Dauer bis Übergang</b>: Anzahl Sekunden vor Ende eines Videos/Musikstücks, bevor der nächste Titel aufgerufen werden soll. Bei Bildern, wird damit bestimmt, wie lange ein Bild sichtbar bleiben soll.</li>
+                    <li>Video: mp4, m4v, webm, ogv</li>
+                    <li>Musik: mp3, m4a, ogg, oga, opus, aac, flac, wav</li>
+                    <li>Bilder: jpg, jpeg, png, gif, webp, avif, bmp</li>
                 </ul>
-            </div>
-            <br><br><br>
+                <p>Gross- und Kleinschreibung der Dateiendung spielt keine Rolle (JPG = jpg). Videos in anderen Formaten lassen sich zum Beispiel <a href="https://praxistipps.chip.de/mit-vlc-dateien-umwandeln-so-gehts_35221">mit VLC umwandeln</a>.</p>
+            </details>
+            <details class="helpDetails">
+                <summary>Vorschaubilder (Preview-Ordner)</summary>
+                <p>Vorschaubilder liegen in einem Ordner namens <span class="highlighted">Preview</span>, und zwar im selben Verzeichnis wie das Medium oder der Ordner, zu dem sie gehören. Das Bild heisst gleich wie das Medium bzw. der Ordner (Endung jpg, png oder webp). <span class="highlighted">updateData.exe</span> verkleinert die Bilder automatisch, die Originale bleiben unverändert. Ohne Vorschaubild zeigt STEFFLIX eine farbige Kachel.</p>
+                <pre class="folderTree">D:\sflix\Bilder
+├── Buddy
+├── Natur
+├── Pilze
+└── <span class="treeHighlight">Preview</span>
+    ├── Buddy.jpg
+    ├── Natur.jpg
+    └── Pilze.jpg</pre>
+            </details>
+
+            <h3>Autoplay</h3>
+            <p>Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste ab. Die Einstellungen befinden sich im Menü unter <a onclick="toggleContainer(['settingsBox'], 'flex')">Autoplay</a>.</p>
+            <ul class="helpOptions">
+                <li><b>Automatisch vorwärts</b>: schaltet Autoplay ein oder aus.</li>
+                <li><b>Unbegrenzt</b>: spielt ohne feste Anzahl weiter, bis das Ende der Playliste erreicht ist.</li>
+                <li><b>Anzahl abzuspielender Medien</b>: wie viele Medien nacheinander abgespielt werden. Die Zahl wird mit jedem Medium heruntergezählt, bei 0 hält Autoplay an. Bei "Unbegrenzt" wird sie nicht verwendet.</li>
+                <li><b>Dauer bis Übergang (Sekunden)</b>: Bei Videos und Musik wechselt STEFFLIX so viele Sekunden vor dem Ende (plus etwa eine Sekunde) zum nächsten Medium, bei Musik höchstens 11 Sekunden vorher. Bei 0 also kurz vor Schluss. Bilder bleiben so viele Sekunden plus 11 Sekunden sichtbar.</li>
+            </ul>
+
+            <h3>Tastenkürzel</h3>
+            <p>Die Tastenkürzel funktionieren auf Medienseiten, solange nicht in ein Eingabefeld geschrieben wird.</p>
+            <ul id="shortcutHelp">
+                <li><span class="shortcutKeys"><kbd class="wideKey">Leertaste</kbd><kbd>K</kbd></span><span>Abspielen / Pause</span></li>
+                <li><span class="shortcutKeys"><kbd>←</kbd><kbd>→</kbd></span><span>10 Sekunden zurück / vor (bei Bildern: vorheriges / nächstes Bild)</span></li>
+                <li><span class="shortcutKeys"><kbd>↑</kbd><kbd>↓</kbd></span><span>Lautstärke (nur wenn der Player sichtbar ist)</span></li>
+                <li><span class="shortcutKeys"><kbd>F</kbd></span><span>Vollbild</span></li>
+                <li><span class="shortcutKeys"><kbd>M</kbd></span><span>Ton aus / an</span></li>
+                <li><span class="shortcutKeys"><kbd>N</kbd><kbd>P</kbd></span><span>Nächstes / vorheriges Medium</span></li>
+                <li><span class="shortcutKeys"><kbd>/</kbd></span><span>Suche öffnen</span></li>
+                <li><span class="shortcutKeys"><kbd>Esc</kbd></span><span>Fenster schliessen / Vollbild beenden</span></li>
+                <li><span class="shortcutKeys"><kbd>Tab</kbd><kbd>Enter</kbd></span><span>Mit der Tastatur durch Menüs und Buttons springen, mit Enter auswählen</span></li>
+            </ul>
 
             <h3>Browsereinstellungen</h3>
-            <p> Damit Medieninhalte automatisch wiedergegeben werden könne, müssen im Browser bestimmte Einstellungen vorgenommen werden.<br></p>
+            <p>Damit Videos und Musik von selbst starten (z.B. bei Autoplay), muss der Browser die automatische Wiedergabe mit Ton für STEFFLIX erlauben. So geht es im verwendeten Browser:</p>
             <div id="firefoxBrowserHelp" style="display: none;">
                 <ol>
-                    <li>Mittels <span class="highlighted">CTRL + I</span> die Webseiteneinstellungen öffnen.</li>
-                    <li>Berechtingungen-Tab öffnen.</li>
-                    <li>Unter "Automatische Wiedergabe" "Audio und Video erlauben" auswählen.</li>
+                    <li>Mit <span class="highlighted">Ctrl + I</span> die Seiteninformationen öffnen.</li>
+                    <li>Den Tab "Berechtigungen" öffnen.</li>
+                    <li>Bei "Automatische Wiedergabe" die Option "Audio und Video erlauben" wählen.</li>
                 </ol>
             </div>
             <div id="chromeBrowserHelp" style="display: none;">
                 <ol>
-                    <li>Toneinstellungen unter <span class="highlighted">chrome://settings/content/sound</span> öffnen.</li>
-                    <li>Bei "Benutzerdefinierte Einstellungen" unter "Dürfen Ton abspielen" auf "Hinzufügen" klicken.</li>
+                    <li>Die Toneinstellungen unter <span class="highlighted">chrome://settings/content/sound</span> öffnen.</li>
+                    <li>Bei den Websites, die Ton wiedergeben dürfen, auf "Hinzufügen" klicken.</li>
                     <li>Folgenden Eintrag hinzufügen: <span class="highlighted">file:///*</span></li>
                 </ol>
             </div>
             <div id="edgeBrowserHelp" style="display: none;">
                 <ol>
-                    <li>Toneinstellungen unter <span class="highlighted">edge://settings/content/mediaAutoplay</span> öffnen.</li>
+                    <li>Die Einstellungen unter <span class="highlighted">edge://settings/content/mediaAutoplay</span> öffnen.</li>
                     <li>Neben "Zulassen" auf "Hinzufügen" klicken.</li>
                     <li>Folgenden Eintrag hinzufügen: <span class="highlighted">file:///*</span></li>
                 </ol>
             </div>
             <div id="otherBrowserHelp" style="display: none;">
-                <ol>
-                    <li>Für den verwendeten Browser stehen keine Hilfestellungen zur Verfügung.</li>
-                    <li>STEFFLIX wurde für die Nutzung unter Google Chrome oder Mozilla Firefox optimiert.</li>
-                </ol>
+                <p>Für diesen Browser gibt es keine Anleitung. STEFFLIX ist für Google Chrome, Microsoft Edge und Mozilla Firefox optimiert.</p>
             </div>
-            <br>
-            
 
-            <h3 id="stefflixUpdate">STEFFLIX updaten</h3>
-            <p>Um Stefflix auf den neusten Stand zu bringen, muss das Programm <span class="highlighted">updateStefflix.exe</span> im STEFFLIX-Verzeichnis ausgeführt werden.<br><br><b>Aktuelle Version</b>: <span id="versionNow"></span><br><b>Neuste Version</b>: <span id="versionNew"></span></p><br><br><br>
+            <h3 id="stefflixUpdate">STEFFLIX aktualisieren</h3>
+            <p>Für ein Update <span class="highlighted">updateStefflix.exe</span> im STEFFLIX-Ordner ausführen. Es lädt die neue Version herunter und startet danach automatisch <span class="highlighted">updateData.exe</span>, das die Medien neu einliest.</p>
+            <dl class="versionInfo">
+                <dt>Installierte Version</dt><dd id="versionNow"></dd>
+                <dt>Neueste Version</dt><dd id="versionNew"></dd>
+            </dl>
+            <h3 id="datensicherung">Datensicherung</h3>
+            <p>Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen und die Sortierung der Startseite werden nur in diesem Browser gespeichert. Mit einer Sicherung lassen sie sich auf einen anderen Browser oder PC übertragen oder nach dem Löschen der Browserdaten wiederherstellen.</p>
+            <div class="backupActions">
+                <button type="button" id="exportDataButton" class="sflixButton primary">Daten exportieren</button>
+                <button type="button" id="importDataButton" class="sflixButton ghost">Sicherung importieren</button>
+                <input type="file" id="importDataFile" accept=".json,application/json" hidden>
+            </div>
+            <div id="backupStatus" role="status"></div>
+            <h3 id="fehlerbehebung">Fehlerbehebung</h3>
+            <p>Lädt STEFFLIX nicht richtig, stimmen die Vor- und Zurück-Buttons nicht oder setzen Videos an der falschen Stelle fort, können die gespeicherten Daten zurückgesetzt werden. Die Medien selbst werden dabei nicht verändert.</p>
+            <details class="repairDetails">
+                <summary><span class="whenClosed">Optionen zur Fehlerbehebung anzeigen</span><span class="whenOpen">Optionen ausblenden</span></summary>
+                <p class="modalWarning"><b>Achtung!</b> Hier ausgeführte Aktionen können nicht rückgängig gemacht werden!</p>
+                <div class="repairItem">
+                    <h5>Favoriten löschen</h5>
+                    <p>Werden das Menü oder die Medien nicht richtig angezeigt, kann es helfen, die Favoriten zu löschen.</p>
+                    <a onclick="modifyLocalData('favorites')" class="button danger">Favoriten löschen</a>
+                </div>
+                <div class="repairItem">
+                    <h5>Playlisten löschen</h5>
+                    <p>Führen die Vor- und Zurück-Buttons zum falschen Medium, hilft es meist, die Playlisten zu löschen. Sie werden beim nächsten Abspielen neu erstellt.</p>
+                    <a onclick="modifyLocalData('playlist')" class="button danger">Playlisten löschen</a>
+                </div>
+                <div class="repairItem">
+                    <h5>Zeitstempel löschen</h5>
+                    <p>Setzen Videos an der falschen Stelle fort oder laden sie nicht richtig, kann es helfen, die gespeicherten Abspielpositionen zu löschen. Dabei werden auch die Markierungen "Gesehen" entfernt.</p>
+                    <a onclick="modifyLocalData('timestamp')" class="button danger">Zeitstempel löschen</a>
+                </div>
+                <div class="repairItem">
+                    <h5>"Weiterschauen" leeren</h5>
+                    <p>Lädt die Startseite nicht richtig oder ist die Liste "Weiterschauen" fehlerhaft, kann es helfen, die Liste zu leeren.</p>
+                    <a onclick="modifyLocalData('playlast')" class="button danger">"Weiterschauen" leeren</a>
+                </div>
+                <div class="repairItem">
+                    <h5>Alle Daten löschen</h5>
+                    <p>Löscht alle gespeicherten Daten inklusive Einstellungen und Lizenzschlüssel. Nur ausführen, wenn keine andere Massnahme geholfen hat. Vorher am besten eine Sicherung erstellen.</p>
+                    <a onclick="modifyLocalData('all')" class="button danger">Alles löschen</a>
+                </div>
+                <div id="repairStatus" role="status"></div>
+            </details>
             <h3>Versionsvorschau</h3>
-            <img id="sflixPreview"><br><br><br>
-            <h3>CHANGELOG</h3>
+            <img id="sflixPreview" alt="Vorschau der STEFFLIX-Oberfläche">
+            <h3>Changelog</h3>
         </div>
         <h2 id="mediaTitle"></h2>
+        <p id="mediaMessage" role="alert" style="display: none;"></p>
+        <div id="playerContainer"></div>
     </div>
-    <!-- <div id="smiley" style="height: 10px; width: 10px; position: absolute; top: 10px; left: 10px;">😀</div> -->
     <!-- Mediennavigation -->
     <div id="mediaNav">
         <div id="prev"></div>
         <div id="favorite"></div>
+        <div id="shuffle"></div>
         <div id="next"></div>
     </div>
+    <!-- Menübänder der Ordnerseite bzw. unter dem Player -->
+    <div id="folderBands"></div>
     <!-- Splashscreen -->
     <div id="splashscreen"></div>
 </body>
 <footer>
-    <script src="sflix_sys/sflix.js"></script>
+    <!-- Reihenfolge ist wichtig: main.js startet die Anwendung und muss zuletzt kommen -->
+    <script src="sflix_sys/js/core.js"></script>
+    <script src="sflix_sys/js/storage.js"></script>
+    <script src="sflix_sys/js/cards.js"></script>
+    <script src="sflix_sys/js/pages.js"></script>
+    <script src="sflix_sys/js/player.js"></script>
+    <script src="sflix_sys/js/ui.js"></script>
+    <script src="sflix_sys/js/main.js"></script>
+    <script>
+        // Fehlt eine Programmdatei (z.B. nach einem unvollständigen Update), Hinweis statt leerer Seite
+        if ([typeof compareNatural, typeof getData, typeof createCard, typeof renderFolderPage,
+            typeof loadDecodedMedia, typeof toggleContainer, typeof startApplication].indexOf("undefined") >= 0) {
+            var missingNotice = document.createElement("div");
+            missingNotice.style.cssText = "position:fixed;inset:auto 16px 16px 16px;z-index:5000;padding:16px;border-radius:8px;background:#3a1d22;color:#f0d4d7;font:16px sans-serif";
+            missingNotice.textContent = "STEFFLIX ist unvollständig installiert: Programmdateien im Ordner sflix_sys/js fehlen. Bitte updateStefflix.exe erneut ausführen.";
+            document.body.appendChild(missingNotice);
+        }
+    </script>
 </footer>
 </html>

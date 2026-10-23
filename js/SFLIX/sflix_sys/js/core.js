@@ -1,0 +1,477 @@
+// STEFFLIX - core.js
+// Grundlagen: Einstellungen, Zustand, Dateitypen, Sortierung, URL-Aufbau, Datenbaum, Vorschaubilder, Symbole
+// Ladereihenfolge (start.html): core.js, storage.js, cards.js, pages.js, player.js, ui.js, main.js. Alle Funktionen sind global;
+// beim Laden wird nur in main.js Code ausgeführt.
+
+//  _______  _______  _______  _______  _______  ___      ___   __   __
+// |       ||       ||       ||       ||       ||   |    |   | |  |_|  |
+// |  _____||_     _||    ___||    ___||    ___||   |    |   | |       |
+// | |_____   |   |  |   |___ |   |___ |   |___ |   |    |   | |       |
+// |_____  |  |   |  |    ___||    ___||    ___||   |___ |   |  |     |
+//  _____| |  |   |  |   |___ |   |    |   |    |       ||   | |   _   |
+// |_______|  |___|  |_______||___|    |___|    |_______||___| |__| |__|
+
+// ===================================================================
+// Konfiguration
+// ===================================================================
+var listSeperator = "$=$";
+
+// Dateiformate, die der Browser direkt abspielen bzw. anzeigen kann.
+// Gross-/Kleinschreibung spielt keine Rolle (JPG = jpg). Muss mit allowedFileTypes in getfilepath.py übereinstimmen.
+var mediaTypes = [".mp4", ".m4v", ".webm", ".ogv"];
+
+var musicTypes = [".mp3", ".m4a", ".ogg", ".oga", ".opus", ".aac", ".flac", ".wav"];
+
+var imageTypes = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".bmp"];
+
+var allowedMediaExtensions = mediaTypes.concat(musicTypes, imageTypes);
+
+var minTime = 11;
+
+var licenseFields = ["lic1", "lic2", "lic3", "lic4", "lic5", "lic6", "lic7", "lic8"];
+
+// Playlisten, deren Einträge aus "Pfad|URL" bestehen und aus verschiedenen Ordnern stammen können
+var listPlaylists = ["searchResults", "favoritesList", "shuffleList"];
+
+var modalIds = ["settingsBox", "feedbackWrapper", "serialKeyWrapper"];
+
+var repositoryUrl = "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/";
+
+var versionUrl = repositoryUrl + "sflix_sys/version.js";
+
+var newsUrl = repositoryUrl + "sflix_sys/news.json";
+
+// Darstellung der Changelog-Typen (wie bisher in news.txt)
+var newsTypeStyles = {
+    // Helle Varianten der bisherigen Farben, damit sie auf dunklem Hintergrund lesbar sind
+    "BUG": { color: "#e879f9" },
+    "BUGFIX": { color: "#4ade80" },
+    "FEATURE": { color: "#f87171" },
+    "INTERFACE": { color: "#60a5fa" },
+    "HOTFIX": { color: "#f87171", bold: true },
+    "OPTIMIERUNG": {}
+};
+
+var previewGifUrl = "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/sflix_sys/sflix.gif";
+
+// Natürliche Sortierung: "Folge 2" vor "Folge 10", S01E02 vor S01E10
+var naturalCollator = new Intl.Collator("de", { numeric: true });
+
+// ===================================================================
+// Zustand
+// ===================================================================
+var db = null;
+
+var storageCache = {};
+
+var autoplay = false;
+
+var autoplayAmount = 0;
+
+var autoplayDuration = 0;
+
+var timeoutArray = [];
+
+var isPopStateNavigation = false;
+
+var currentMediaLocation = null;
+
+//  _______  __   __  __    _  ___   _  _______  ___   _______  __    _  _______  __    _
+// |       ||  | |  ||  |  | ||   | | ||       ||   | |       ||  |  | ||       ||  |  | |
+// |    ___||  | |  ||   |_| ||   |_| ||_     _||   | |   _   ||   |_| ||    ___||   |_| |
+// |   |___ |  |_|  ||       ||      _|  |   |  |   | |  | |  ||       ||   |___ |       |
+// |    ___||       ||  _    ||     |_   |   |  |   | |  |_|  ||  _    ||    ___||  _    |
+// |   |    |       || | |   ||    _  |  |   |  |   | |       || | |   ||   |___ | | |   |
+// |___|    |_______||_|  |__||___| |_|  |___|  |___| |_______||_|  |__||_______||_|  |__|
+
+// ===================================================================
+// Hilfsfunktionen: Sortierung und Dateinamen
+// ===================================================================
+
+function compareNatural(a, b) {
+    return naturalCollator.compare(a, b);
+}
+
+// Sortiert eine Liste natürlich (in place) und gibt sie zurück
+function sortNatural(list) {
+    return list.sort(compareNatural);
+}
+
+function hasExtension(filename, extensions) {
+    var lower = String(filename).toLowerCase();
+    for (var index = 0; index < extensions.length; index++) {
+        if (lower.endsWith(extensions[index])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Funktion zum Prüfen, ob ein Dateiname einer Videodatei entspricht
+function isVideo(filename) {
+    return hasExtension(filename, mediaTypes);
+}
+
+// Funktion zum Prüfen, ob ein Dateiname einer Bilddatei entspricht
+function isImage(filename) {
+    return hasExtension(filename, imageTypes);
+}
+
+// Funktion zum Prüfen, ob ein Dateiname einer Musikdatei entspricht
+function isMusic(filename) {
+    return hasExtension(filename, musicTypes);
+}
+
+// Prüft, ob ein Dateiname auf eine der Endungen endet
+function isMediaFile(whitelist, filename) {
+    return hasExtension(filename, whitelist);
+}
+
+// Entfernt die Dateiendung am Ende des Namens
+function stripExtension(filename) {
+    var lower = filename.toLowerCase();
+    for (var index = 0; index < allowedMediaExtensions.length; index++) {
+        var extension = allowedMediaExtensions[index];
+        if (lower.endsWith(extension)) {
+            return filename.slice(0, filename.length - extension.length);
+        }
+    }
+    return filename;
+}
+
+function getBaseName(path) {
+    var parts = String(path).split("/");
+    return parts[parts.length - 1];
+}
+
+// Anzeigename ohne Pfad und Dateiendung
+function getDisplayName(path) {
+    return stripExtension(getBaseName(path));
+}
+
+// ===================================================================
+// Symbole (SVG im Strichstil, ersetzen die früheren Emojis)
+// ===================================================================
+var iconShapes = {
+    video: '<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor" stroke="none"/>',
+    music: '<path d="M9 18V5.5l11-2v12.5"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+    image: '<rect x="3" y="3.5" width="18" height="17" rx="2.5"/><circle cx="8.5" cy="9" r="1.6"/><path d="M21 15.5l-5.2-5.2L5 20.5"/>',
+    folder: '<path d="M3 7.2A2.2 2.2 0 0 1 5.2 5h4.1l2.2 2.2h7.3A2.2 2.2 0 0 1 21 9.4v8.4a2.2 2.2 0 0 1-2.2 2.2H5.2A2.2 2.2 0 0 1 3 17.8z"/>',
+    star: '<path d="M12 3.2l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.2l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+    starFilled: '<path d="M12 3.2l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.2l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="currentColor"/>',
+    chevronLeft: '<path d="M15 18l-6-6 6-6"/>',
+    chevronRight: '<path d="M9 18l6-6-6-6"/>',
+    play: '<path d="M7 4.8v14.4l11.5-7.2z" fill="currentColor" stroke="none"/>',
+    arrowUp: '<path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/>',
+    close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    shuffle: '<path d="M16 4h4v4M20 4l-6.5 6.5M4 20l6.5-6.5M16 20h4v-4M20 20L4 4"/>',
+    download: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
+    upload: '<path d="M12 16V5M7 9.5l5-5 5 5M5 20h14"/>',
+    chevronUp: '<path d="M6 15l6-6 6 6"/>',
+    chevronDown: '<path d="M6 9l6 6 6-6"/>',
+    grip: '<circle cx="9" cy="6" r="1.2" fill="currentColor"/><circle cx="15" cy="6" r="1.2" fill="currentColor"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/><circle cx="9" cy="18" r="1.2" fill="currentColor"/><circle cx="15" cy="18" r="1.2" fill="currentColor"/>',
+    sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'
+};
+
+// Erstellt ein Symbol als SVG-Element (nur feste Formen aus iconShapes)
+function createIcon(name) {
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("class", "icon icon-" + name);
+    svg.innerHTML = iconShapes[name] || "";
+    return svg;
+}
+
+// Symbolname anhand der Dateiendung
+function getMediaIconName(filename) {
+    if (isVideo(filename)) {
+        return "video";
+    } else if (isMusic(filename)) {
+        return "music";
+    } else if (isImage(filename)) {
+        return "image";
+    }
+    return "folder";
+}
+
+// HTML Spezialcharakter in String ersetzen
+function replaceSpecialChars(string) {
+    return string.replaceAll("%20", " ").replaceAll("%C3%B6", "ö").replaceAll("%C3%BC", "ü").replaceAll("%C3%A4", "ä");
+}
+
+// Funktion zum Normalisieren eines Medienpfads
+function normalizeMediaLocation(mediaUrl) {
+    if (mediaUrl == null) {
+        return null;
+    }
+    if (!mediaUrl.startsWith(".")) {
+        mediaUrl = "." + mediaUrl;
+    }
+    return mediaUrl;
+}
+
+// ===================================================================
+// Hilfsfunktionen: URL-Daten
+// Aufbau: LEVEL0:Serien$=$LEVEL1:Show$=$MEDIA:./Serien/Show/S01E01.mp4$=$PL:SerienShow
+// ===================================================================
+
+// Kodiert die Daten für die URL. Gibt null zurück, wenn ein Name Zeichen ausserhalb
+// von Latin-1 enthält (updateData.exe ersetzt solche Zeichen).
+function encodeUrlData(decodedData) {
+    try {
+        return btoa(decodedData);
+    } catch (error) {
+        console.warn("Ungültige Zeichen - bitte updateData.exe ausführen:", decodedData);
+        return null;
+    }
+}
+
+function decodeUrlData(url) {
+    if (url == null || !url.includes("?=")) {
+        return null;
+    }
+    try {
+        return atob(url.split("?=")[1].split("#")[0]);
+    } catch (error) {
+        return null;
+    }
+}
+
+// Funktion zum sicheren Lesen des decodierten URL-Inhalts
+function getDecodedUrlDataFromWindow() {
+    return decodeUrlData(window.location.href);
+}
+
+// Funktion zum Erstellen einer start.html URL aus decodierten Daten
+function buildStartUrl(decodedData, withAnchor) {
+    var encoded = encodeUrlData(decodedData);
+    if (encoded == null) {
+        return null;
+    }
+    return "start.html?=" + encoded + (withAnchor === false ? "" : "#mediaNav");
+}
+
+// Gibt die Ordnerebenen der URL als Liste zurück
+function getLevels(decodedData) {
+    var levels = [];
+    if (decodedData == null) {
+        return levels;
+    }
+    while (decodedData.includes("LEVEL" + levels.length + ":")) {
+        levels.push(decodedData.split("LEVEL" + levels.length + ":")[1].split(listSeperator)[0]);
+    }
+    return levels;
+}
+
+function buildLevelPath(levels) {
+    return levels.map(function (level, index) {
+        return "LEVEL" + index + ":" + level;
+    }).join(listSeperator);
+}
+
+// Funktion um die Level und das Medium aus der URL auszulesen
+function extractData(decodedUrl) {
+    var levels = {};
+    getLevels(decodedUrl).forEach(function (level, index) {
+        levels[index] = level;
+    });
+    var media = null;
+    if (decodedUrl.includes("MEDIA:")) {
+        media = decodedUrl.split("MEDIA:")[1].split("#")[0].split(listSeperator)[0];
+    }
+    return { "media": media, "levels": levels };
+}
+
+// Funktion zum Lesen des Playlistnamens aus decodierten Daten
+function getPlaylistNameFromDecodedData(decodedData) {
+    if (decodedData == null || !decodedData.includes(listSeperator + "PL:")) {
+        return null;
+    }
+    return decodedData.split(listSeperator + "PL:")[1].split(listSeperator)[0].split("#")[0];
+}
+
+// Funktion zum Lesen des Medienpfads aus decodierten Daten
+function getMediaLocationFromDecodedData(decodedData) {
+    if (decodedData == null || !decodedData.includes("MEDIA:")) {
+        return null;
+    }
+    return replaceSpecialChars(decodedData.split("MEDIA:")[1].split(listSeperator)[0].split("#")[0]);
+}
+
+// Erstellt die URL-Daten für ein Medium anhand seines Pfads (./Serien/Show/S01E01.mp4)
+function buildMediaData(mediaPath, playlistName) {
+    var folders = mediaPath.replace(/^\.\//, "").split("/");
+    folders.pop();
+    if (playlistName == null) {
+        playlistName = folders.join("");
+    }
+    return buildLevelPath(folders) + listSeperator + "MEDIA:" + normalizeMediaLocation(mediaPath) + listSeperator + "PL:" + playlistName;
+}
+
+// ===================================================================
+// Hilfsfunktionen: Datenbaum
+// ===================================================================
+
+// Gibt den Teil des Datenbaums für die angegebenen Ebenen zurück (oder null)
+function getDataNode(levels) {
+    var node = data;
+    for (var index = 0; index < levels.length; index++) {
+        var level = levels[index];
+        if (level.startsWith(".")) {
+            level = level.replace(".", "");
+        }
+        if (node == null || typeof node !== "object" || !node.hasOwnProperty(level)) {
+            return null;
+        }
+        node = node[level];
+    }
+    return node;
+}
+
+// Prüft, ob ein Ordner Medien enthält (optional auch in Unterordnern)
+function hasMedia(node, recursive) {
+    if (node == null || typeof node !== "object") {
+        return false;
+    }
+    for (var key in node) {
+        if (!node.hasOwnProperty(key) || key == "Preview") {
+            continue;
+        }
+        if (isMediaFile(allowedMediaExtensions, key)) {
+            return true;
+        }
+        if (recursive && hasMedia(node[key], true)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Prüft, ob ein Medium (noch) in den Daten vorhanden ist
+function mediaExists(mediaPath) {
+    var folders = mediaPath.replace(/^\.\//, "").split("/");
+    folders.pop();
+    var folder = getDataNode(folders);
+    return folder != null && typeof folder === "object" && folder.hasOwnProperty(mediaPath);
+}
+
+// ===================================================================
+// Vorschaubilder
+// ===================================================================
+
+// Sucht im Preview-Ordner eines Datenknotens nach einem passenden Bild.
+// Zuerst wird ein exakter Namenstreffer gesucht, danach (optional) ein Teiltreffer.
+function findPreviewInFolder(folderData, names, exactOnly) {
+    if (folderData == null || typeof folderData !== "object" || folderData["Preview"] == null) {
+        return null;
+    }
+    var previews = Object.keys(folderData["Preview"]);
+    var index, name, previewIndex;
+
+    for (index = 0; index < names.length; index++) {
+        name = names[index];
+        for (previewIndex = 0; previewIndex < previews.length; previewIndex++) {
+            if (name != null && getDisplayName(previews[previewIndex]) === name) {
+                return previews[previewIndex];
+            }
+        }
+    }
+
+    if (exactOnly) {
+        return null;
+    }
+
+    for (index = 0; index < names.length; index++) {
+        name = names[index];
+        for (previewIndex = 0; previewIndex < previews.length; previewIndex++) {
+            if (name != null && getDisplayName(previews[previewIndex]).includes(name)) {
+                return previews[previewIndex];
+            }
+        }
+    }
+    return null;
+}
+
+// Sucht das passende Vorschaubild und gibt dessen Pfad zurück (oder null)
+// reason "normal": Menüeintrag, sonst Suche/Favoriten/Weiterschauen (Ordnerbild als Ersatz)
+function resolvePreviewSrc(decodedUrl, reason) {
+    reason = reason || "normal";
+    var extractedData = extractData(decodedUrl);
+    var levels = getLevels(decodedUrl);
+    var media = extractedData["media"];
+    var previewImageSrc = null;
+
+    if (media == null || reason != "normal") {
+        // Ordnerbild: das Bild der tiefsten Ebene, die eines hat
+        var node = data;
+        for (var index = 0; index < levels.length; index++) {
+            var level = levels[index].replace(/^\./, "");
+            if (node == null || typeof node !== "object" || !node.hasOwnProperty(level)) {
+                break;
+            }
+            var found = findPreviewInFolder(node, [level], false);
+            if (found != null) {
+                previewImageSrc = found;
+            }
+            node = node[level];
+        }
+        if (previewImageSrc == null && media != null) {
+            previewImageSrc = findPreviewInFolder(getDataNode(levels), [getDisplayName(media)], false);
+        }
+    } else {
+        // Medium im Menü: nur ein Bild mit identischem Namen verwenden
+        previewImageSrc = findPreviewInFolder(getDataNode(levels), [getDisplayName(media)], true);
+    }
+
+    if (previewImageSrc == null) {
+        return null;
+    }
+
+    if (!previewImageSrc.startsWith(".")) {
+        previewImageSrc = "." + previewImageSrc;
+    }
+    return previewImageSrc;
+}
+
+// Vorschaubild eines Mediums: zuerst ein Bild mit gleichem Namen, sonst (optional)
+// das Bild des tiefsten Ordners, der eines hat (z.B. Serienbild für eine Episode)
+function getPreviewForMedia(mediaPath, exactOnly) {
+    var folders = getMediaFolders(mediaPath);
+    var exact = findPreviewInFolder(getDataNode(folders), [getDisplayName(mediaPath)], true);
+    if (exact != null) {
+        return exact.startsWith(".") ? exact : "." + exact;
+    }
+    if (exactOnly || folders.length == 0) {
+        return null;
+    }
+    return resolvePreviewSrc(buildLevelPath(folders), "normal");
+}
+
+// Ordner eines Medienpfads: ./Serien/Show/S01/x.mp4 -> ["Serien", "Show", "S01"]
+function getMediaFolders(mediaPath) {
+    var folders = String(mediaPath).replace(/^\.\//, "").split("/");
+    folders.pop();
+    return folders;
+}
+
+function collectMediaPaths(node, result) {
+    for (var key in node) {
+        if (!node.hasOwnProperty(key)) {
+            continue;
+        }
+        if (isMediaFile(allowedMediaExtensions, key)) {
+            result.push(normalizeMediaLocation(key));
+        } else if (node[key] != null && typeof node[key] === "object") {
+            collectMediaPaths(node[key], result);
+        }
+    }
+    return result;
+}

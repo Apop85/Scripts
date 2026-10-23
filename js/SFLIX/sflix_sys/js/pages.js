@@ -83,7 +83,7 @@ function createPlayableCard(track, mediaPath) {
     return createMediaCard(track, mediaPath, null, {
         playData: buildMediaData(mediaPath),
         subtitle: getMediaTypeLabel(mediaPath),
-        exactPreview: true,
+        inheritPreview: true,
         progress: getMediaProgress(mediaPath)
     });
 }
@@ -303,13 +303,19 @@ function renderMediaContext(mediaPath) {
             }
         }
         refreshRowArrows(bands);
+        // Neues Band: direkt zur aktuellen Kachel springen
+        updateCurrentCard(mediaPath, true);
+        return;
     }
 
-    updateCurrentCard(mediaPath);
+    updateCurrentCard(mediaPath, false);
 }
 
-// Hebt das laufende Medium in den Bändern hervor und scrollt es ins Bild
-function updateCurrentCard(mediaPath) {
+// Hebt das laufende Medium in den Bändern hervor und scrollt es ins Bild.
+// Nur kurze Wege werden animiert: Beim animierten Scrollen über viele Kacheln würde der Browser
+// jedes Vorschaubild auf dem Weg laden (bei 2000 Bildern sehr langsam). Weite Sprünge (z.B. Zufall)
+// und neue Bänder springen deshalb direkt, dann werden nur die sichtbaren Bilder geladen.
+function updateCurrentCard(mediaPath, jump) {
     document.querySelectorAll("#folderBands .card.current[data-media]").forEach(function (card) {
         card.classList.remove("current");
     });
@@ -317,7 +323,9 @@ function updateCurrentCard(mediaPath) {
         card.classList.add("current");
         var track = card.parentNode;
         requestAnimationFrame(function () {
-            track.scrollTo({ left: Math.max(0, card.offsetLeft - track.clientWidth / 2 + card.clientWidth / 2), behavior: "smooth" });
+            var target = Math.max(0, card.offsetLeft - track.clientWidth / 2 + card.clientWidth / 2);
+            var far = Math.abs(target - track.scrollLeft) > track.clientWidth * 2;
+            track.scrollTo({ left: target, behavior: jump || far ? "auto" : "smooth" });
         });
     });
 }
@@ -773,10 +781,10 @@ function showCategoryRows(container) {
             } else {
                 var href = buildStartUrl(buildMediaData(entry.path));
                 if (href != null) {
-                    // Nur das eigene Vorschaubild, nicht das Bild der ganzen Kategorie
+                    // Eigenes Vorschaubild oder das des Ordners darüber, nicht das Bild der ganzen Kategorie
                     createMediaCard(track, entry.path, href, {
                         subtitle: getMediaTypeLabel(entry.path),
-                        exactPreview: true,
+                        inheritPreview: true,
                         progress: getMediaProgress(entry.path)
                     });
                 }

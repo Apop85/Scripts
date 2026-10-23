@@ -1466,10 +1466,57 @@ input::placeholder, textarea::placeholder {
     height: 20px;
 }
 
-/* Musik: Leiste immer sichtbar, als Karte statt über einem Bild */
+/* Musik: gleiche Breite wie Videos, Leiste immer sichtbar, darüber das Vorschaubild */
 .sflixPlayer.isAudio {
-    width: min(720px, 100%);
-    margin: 30px auto;
+    margin: 0 auto;
+}
+
+.audioArtwork {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 72vh;
+    border-radius: 12px 12px 0 0;
+    background-color: black;
+    cursor: pointer;
+}
+
+/* unscharfe, abgedunkelte Kopie füllt die Ränder (z.B. bei quadratischen Covern) */
+.artworkBackdrop {
+    position: absolute;
+    inset: -40px;
+    width: calc(100% + 80px);
+    height: calc(100% + 80px);
+    object-fit: cover;
+    filter: blur(28px) brightness(0.45);
+}
+
+.artworkImage {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.sflixPlayer.isAudio.hasArtwork {
+    box-shadow: var(--sflix-shadow);
+    border-radius: 12px 12px 14px 14px;
+}
+
+.sflixPlayer.isAudio.hasArtwork .playerControls {
+    border-top: none;
+    border-radius: 0 0 14px 14px;
+    box-shadow: none;
+}
+
+/* Countdown im Bild unten rechts, wie beim Video */
+.sflixPlayer.isAudio .audioArtwork .autoplayCountdown {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    margin: 0;
 }
 
 .sflixPlayer.isAudio .playerControls {
@@ -1497,6 +1544,16 @@ input::placeholder, textarea::placeholder {
     top: calc(100% + 8px);
     bottom: auto;
     right: 0;
+}
+
+/* Mit Bild: Menüs öffnen sich wie beim Video über der Leiste (Handy: Leiste von unten, siehe unten) */
+@media (min-width: 601px) {
+    .sflixPlayer.isAudio.hasArtwork .playerMenu {
+        top: auto;
+        right: 10px;
+        bottom: 92px;
+        max-height: min(470px, calc(100% - 102px));
+    }
 }
 
 /* Browser-Steuerung statt eigener Leiste */

@@ -467,6 +467,7 @@ function updatePlaylistNavigation(decodedData, playlist, currentIndex) {
     }
 
     updateViewerArrows();
+    updatePlayerNavButtons();
 }
 
 // ===================================================================
@@ -532,10 +533,17 @@ function updateMediaTitle(mediaName) {
     var title = document.getElementById("mediaTitle");
     title.textContent = stripExtension(mediaName);
     document.title = "STEFFLIX - " + stripExtension(mediaName);
+    updatePlayerTitle(stripExtension(mediaName));
 }
 
 // Scrollt so, dass der Player direkt unter der Kopfzeile steht
 function scrollToPlayer(smooth) {
+    // Vollbild: Kopfzeile ist ausgeblendet, das Video beginnt ganz oben
+    if (isCinemaMode()) {
+        var container = document.getElementById("playerContainer");
+        window.scrollTo({ top: container.getBoundingClientRect().top + window.scrollY, behavior: smooth ? "smooth" : "auto" });
+        return;
+    }
     var mediaNode = document.getElementById("media");
     var headerHeight = document.querySelector(".firstLevelWrap").getBoundingClientRect().height;
     var top = mediaNode.getBoundingClientRect().top + window.scrollY - headerHeight - 8;
@@ -570,7 +578,9 @@ function createMediaElement(mediaUrl) {
     }
     element.id = "video";
     element.autoplay = true;
-    element.controls = true;
+    // Eigene Steuerung (buildPlayerShell), ausser die Browser-Steuerung ist eingestellt
+    element.controls = useNativeControls();
+    element.setAttribute("playsinline", "");
 
     // Gespeicherte Lautstärke laden
     var savedVolume = parseFloat(getData("mediaVolume"));
@@ -583,7 +593,7 @@ function createMediaElement(mediaUrl) {
 
     element.addEventListener("error", handleMediaError);
     appendMediafunctions(element);
-    return { wrapper: element, element: element };
+    return { wrapper: buildPlayerShell(element), element: element };
 }
 
 // Funktion um das Media-Tag entsprechend dem Medientyp anzupassen.
@@ -594,12 +604,20 @@ function adjustMediaType(mediaUrl, node) {
         return node;
     }
 
+    // Vollbild gilt nur für Videos
+    if (wantedTag != "VIDEO") {
+        exitCinemaMode();
+    }
     var created = createMediaElement(mediaUrl);
     document.getElementById("playerContainer").replaceChildren(created.wrapper);
+    if (wantedTag != "IMG") {
+        syncPlayerState();
+    }
     return created.element;
 }
 
 function removePlayer() {
+    exitCinemaMode();
     document.getElementById("playerContainer").replaceChildren();
 }
 
@@ -739,6 +757,9 @@ function loadDecodedMedia(decodedData, pushState) {
         node.dataset.mediaPath = medialocation;
         if (node.getAttribute("src") !== medialocation) {
             node.src = medialocation;
+            if (node.tagName != "IMG") {
+                onPlayerMediaChanged(node);
+            }
         }
         setLastPlayed(mediaName, startUrl);
     } else {
@@ -773,6 +794,8 @@ function loadDecodedMedia(decodedData, pushState) {
     if (node == null) {
         skipAfterError();
     }
+    // Video/Musik zeigen Autoplay in der eigenen Leiste, Bilder weiterhin unter dem Bild
+    mediaNode.classList.toggle("hasPlayerControls", node != null && node.tagName != "IMG");
 
     if (document.getElementById("autoplayCheckBox").checked) {
         mediaNode.classList.add("autoplaying");
@@ -875,9 +898,12 @@ function appendMediafunctions(node) {
             var startAnimation = autoplayDuration + minTime;
             var prozent = ((startAnimation - remaining) / minTime) * 100;
             nextNode.style.background = "linear-gradient(to right, var(--sflix-accent) " + Math.min(100, Math.max(0, prozent)) + "%, var(--sflix-surface) 0%)";
+            // Gewechselt wird bei "Dauer bis Übergang" + 1 Sekunde vor dem Ende
+            showAutoplayCountdown(Math.ceil(remaining - (autoplayDuration + minTime - 10)), prozent);
 
             if (this.duration - currentTime <= autoplayDuration + minTime - 10) {
                 nextNode.style.background = "";
+                hideAutoplayCountdown();
                 updateOptions(autoplayChecked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
                 if (nextNode.childNodes.length > 0 && nextNode.childNodes[0].textContent != "") {
                     removeData(timestampKey);
@@ -890,6 +916,944 @@ function appendMediafunctions(node) {
                     updateOptions(false, 0, document.getElementById("autoplayDuration").value);
                 }
             }
+        } else {
+            hideAutoplayCountdown();
+        }
+    });
+}
+
+// ===================================================================
+// Eigene Mediensteuerung (Video und Musik)
+// ===================================================================
+
+// Wählbare Geschwindigkeiten (nur über das Zahnradmenü, jedes Medium startet mit 1x)
+var playbackRates = [0.5, 1, 1.25, 1.5, 1.75];
+// Nach so vielen Millisekunden ohne Bewegung blendet sich die Leiste aus (nur Video)
+var controlsHideDelay = 2500;
+// Doppeltipp: maximaler Abstand zwischen zwei Tipps
+var doubleTapDelay = 300;
+// Zustand des aktuellen Players (Elemente, Timer)
+var playerUI = null;
+// Vollbild wurde von STEFFLIX angefordert (und nicht z.B. per F11)
+var cinemaRequestedFullscreen = false;
+
+// Browser-Steuerung statt eigener Steuerung (Einstellung)
+function useNativeControls() {
+    return getData("nativeControls") === "true";
+}
+
+// Liefert den Player-Zustand, wenn er zum aktuell angezeigten Medium gehört
+function getPlayerUI() {
+    var media = document.getElementById("video");
+    return playerUI != null && playerUI.media === media ? playerUI : null;
+}
+
+function createPlayerElement(tagName, className, text) {
+    var element = document.createElement(tagName);
+    if (className) {
+        element.className = className;
+    }
+    if (text != null) {
+        element.textContent = text;
+    }
+    return element;
+}
+
+function createControlButton(className, iconName, label) {
+    var button = createPlayerElement("button", "ctrlButton " + className);
+    button.type = "button";
+    setControlButton(button, iconName, label);
+    return button;
+}
+
+function setControlButton(button, iconName, label) {
+    if (button.dataset.icon !== iconName) {
+        button.replaceChildren(createIcon(iconName));
+        button.dataset.icon = iconName;
+    }
+    button.setAttribute("aria-label", label);
+    button.title = label;
+}
+
+// 75 -> 1:15, 3725 -> 1:02:05
+function formatMediaTime(seconds) {
+    if (!isFinite(seconds) || seconds < 0) {
+        seconds = 0;
+    }
+    seconds = Math.floor(seconds);
+    var hours = Math.floor(seconds / 3600);
+    var minutes = Math.floor((seconds % 3600) / 60);
+    var rest = seconds % 60;
+    var minuteText = hours > 0 ? String(minutes).padStart(2, "0") : String(minutes);
+    return (hours > 0 ? hours + ":" : "") + minuteText + ":" + String(rest).padStart(2, "0");
+}
+
+function hasMediaDuration(media) {
+    return isFinite(media.duration) && media.duration > 0;
+}
+
+// Baut den Player rund um das Video- bzw. Audio-Element
+function buildPlayerShell(media) {
+    var isAudio = media.tagName == "AUDIO";
+    var shell = createPlayerElement("div", "sflixPlayer " + (isAudio ? "isAudio" : "isVideo") + " controlsVisible");
+    var ui = {
+        shell: shell, media: media, isAudio: isAudio,
+        hideTimer: null, clickTimer: null, tapTimer: null, rippleTimer: null,
+        lastTap: null, lastTouchTime: 0, dragging: false, rippleAmount: 0, frame: null
+    };
+    shell.appendChild(media);
+
+    if (!isAudio) {
+        // Klickfläche über dem Video: Klick = Pause, Doppelklick = Vollbild, Tipp = Leiste ein/aus
+        ui.surface = createPlayerElement("div", "playerSurface");
+        ui.top = createPlayerElement("div", "playerTop");
+        ui.title = createPlayerElement("span", "playerTitle");
+        ui.top.appendChild(ui.title);
+        ui.center = createPlayerElement("div", "playerCenter");
+        ui.bigPlay = createPlayerElement("span", "bigPlay");
+        ui.bigPlay.appendChild(createIcon("play"));
+        ui.spinner = createPlayerElement("span", "playerSpinner");
+        ui.center.append(ui.bigPlay, ui.spinner);
+        ui.ripple = createPlayerElement("div", "seekRipple");
+        shell.append(ui.surface, ui.top, ui.center, ui.ripple);
+    }
+
+    // Autoplay-Countdown: "Nächstes in 8 s"
+    ui.countdown = createPlayerElement("div", "autoplayCountdown");
+    ui.countdown.hidden = true;
+    ui.countdownNext = createPlayerElement("button", "countdownNext");
+    ui.countdownNext.type = "button";
+    ui.countdownFill = createPlayerElement("span", "countdownFill");
+    ui.countdownLabel = createPlayerElement("span", "countdownLabel");
+    ui.countdownName = createPlayerElement("span", "countdownName");
+    ui.countdownNext.append(ui.countdownFill, ui.countdownLabel, ui.countdownName);
+    ui.countdownCancel = createControlButton("countdownCancel", "close", "Autoplay ausschalten");
+    ui.countdown.append(ui.countdownNext, ui.countdownCancel);
+
+    // Steuerleiste
+    ui.controls = createPlayerElement("div", "playerControls");
+    ui.progress = createPlayerElement("div", "playerProgress");
+    ui.progress.tabIndex = 0;
+    ui.progress.setAttribute("role", "slider");
+    ui.progress.setAttribute("aria-label", "Wiedergabeposition");
+    ui.progress.setAttribute("aria-valuemin", "0");
+    var track = createPlayerElement("div", "progressTrack");
+    ui.progressBuffered = createPlayerElement("div", "progressBuffered");
+    ui.progressPlayed = createPlayerElement("div", "progressPlayed");
+    ui.progressThumb = createPlayerElement("div", "progressThumb");
+    track.append(ui.progressBuffered, ui.progressPlayed, ui.progressThumb);
+    ui.progressTooltip = createPlayerElement("div", "progressTooltip");
+    ui.progress.append(track, ui.progressTooltip);
+
+    var row = createPlayerElement("div", "controlRow");
+    var left = createPlayerElement("div", "controlGroup");
+    var right = createPlayerElement("div", "controlGroup controlGroupRight");
+
+    ui.prevButton = createControlButton("ctrlPrev", "skipPrev", "Vorheriges (P)");
+    ui.playButton = createControlButton("ctrlPlay", "play", "Abspielen (K)");
+    ui.nextButton = createControlButton("ctrlNext", "skipNext", "Nächstes (N)");
+    ui.backButton = createControlButton("ctrlSeek", "back10", "10 Sekunden zurück (Pfeil links)");
+    ui.forwardButton = createControlButton("ctrlSeek", "forward10", "10 Sekunden vor (Pfeil rechts)");
+
+    ui.volumeGroup = createPlayerElement("div", "volumeGroup");
+    ui.muteButton = createControlButton("ctrlMute", "volumeHigh", "Ton aus (M)");
+    ui.volumeSlider = createPlayerElement("input", "volumeSlider");
+    ui.volumeSlider.type = "range";
+    ui.volumeSlider.min = "0";
+    ui.volumeSlider.max = "1";
+    ui.volumeSlider.step = "0.05";
+    ui.volumeSlider.setAttribute("aria-label", "Lautstärke");
+    ui.volumeGroup.append(ui.muteButton, ui.volumeSlider);
+
+    ui.time = createPlayerElement("span", "timeDisplay", "0:00 / 0:00");
+    left.append(ui.prevButton, ui.playButton, ui.nextButton, ui.backButton, ui.forwardButton, ui.volumeGroup, ui.time);
+
+    ui.autoplayButton = createControlButton("ctrlAutoplay", "autoplay", "Autoplay");
+    ui.settingsButton = createControlButton("ctrlSettings", "gear", "Einstellungen");
+    ui.settingsButton.setAttribute("aria-haspopup", "true");
+    ui.settingsButton.setAttribute("aria-expanded", "false");
+    right.append(ui.autoplayButton, ui.settingsButton);
+    if (!isAudio) {
+        ui.pipButton = createControlButton("ctrlPip", "pip", "Bild im Bild");
+        ui.fullscreenButton = createControlButton("ctrlFullscreen", "fullscreen", "Vollbild (F)");
+        // Firefox und Safari auf dem iPhone kennen die Bild-im-Bild-Schnittstelle nicht
+        ui.pipButton.hidden = !document.pictureInPictureEnabled;
+        right.append(ui.pipButton, ui.fullscreenButton);
+    }
+    row.append(left, right);
+    ui.controls.append(ui.progress, row);
+
+    ui.menu = buildPlayerMenu(ui);
+    shell.append(ui.countdown, ui.controls, ui.menu);
+
+    playerUI = ui;
+    bindPlayerEvents(ui);
+    applyNativeControls(ui, useNativeControls());
+    updatePlayButton(ui);
+    updateVolumeControls(ui);
+    return shell;
+}
+
+// Zustand übernehmen, sobald der Player in der Seite ist (getPlayerUI braucht das Element in der Seite)
+function syncPlayerState() {
+    updatePlayerAutoplayState();
+    updatePlayerNavButtons();
+    updateFullscreenButton();
+}
+
+// Zahnradmenü: Autoplay, Geschwindigkeit, Download, Browser-Steuerung
+function buildPlayerMenu(ui) {
+    var menu = createPlayerElement("div", "playerMenu");
+    menu.hidden = true;
+    menu.setAttribute("role", "dialog");
+    menu.setAttribute("aria-label", "Player-Einstellungen");
+
+    var addSwitch = function (label, hint) {
+        var row = createPlayerElement("label", "settingRow");
+        var text = createPlayerElement("span", null, label);
+        if (hint) {
+            text.appendChild(createPlayerElement("small", null, hint));
+        }
+        var input = createPlayerElement("input");
+        input.type = "checkbox";
+        row.append(text, input);
+        menu.appendChild(row);
+        return input;
+    };
+    var addNumber = function (label) {
+        var row = createPlayerElement("label", "settingRow");
+        var input = createPlayerElement("input");
+        input.type = "number";
+        input.min = "0";
+        row.append(createPlayerElement("span", null, label), input);
+        menu.appendChild(row);
+        return input;
+    };
+
+    menu.appendChild(createPlayerElement("div", "playerMenuHeading", "Autoplay"));
+    ui.menuAutoplay = addSwitch("Automatisch vorwärts");
+    ui.menuInfinite = addSwitch("Unbegrenzt", "Bis zum Ende der Playliste");
+    ui.menuAmount = addNumber("Anzahl abzuspielender Medien");
+    ui.menuDuration = addNumber("Dauer bis Übergang (Sekunden)");
+
+    menu.appendChild(createPlayerElement("div", "playerMenuHeading", "Geschwindigkeit"));
+    ui.speedButtons = [];
+    var speedRow = createPlayerElement("div", "speedOptions");
+    speedRow.setAttribute("role", "group");
+    speedRow.setAttribute("aria-label", "Wiedergabegeschwindigkeit");
+    playbackRates.forEach(function (rate) {
+        var button = createPlayerElement("button", "speedOption", String(rate).replace(".", ",") + "x");
+        button.type = "button";
+        button.dataset.rate = rate;
+        button.addEventListener("click", function () {
+            ui.media.playbackRate = rate;
+        });
+        ui.speedButtons.push(button);
+        speedRow.appendChild(button);
+    });
+    menu.appendChild(speedRow);
+
+    menu.appendChild(createPlayerElement("div", "playerMenuHeading", "Weitere"));
+    ui.downloadLink = createPlayerElement("a", "playerMenuLink");
+    ui.downloadLink.append(createIcon("download"), createPlayerElement("span", null, "Herunterladen"));
+    menu.appendChild(ui.downloadLink);
+    ui.menuNative = addSwitch("Browser-Steuerung verwenden", "Statt der STEFFLIX-Steuerung");
+
+    // Änderungen gelten sofort und landen in denselben Einstellungen wie im Fenster "Einstellungen"
+    ui.menuAutoplay.addEventListener("change", function () {
+        document.getElementById("autoplayCheckBox").checked = ui.menuAutoplay.checked;
+        checkAutoplayAmount();
+        commitAutoplaySettings();
+    });
+    ui.menuInfinite.addEventListener("change", function () {
+        document.getElementById("autoplayInfinite").checked = ui.menuInfinite.checked;
+        updateAutoplayAmountState();
+        checkAutoplayAmount();
+        commitAutoplaySettings();
+    });
+    ui.menuAmount.addEventListener("change", function () {
+        var amount = Math.max(0, parseInt(ui.menuAmount.value) || 0);
+        document.getElementById("amountOfAutoplay").value = amount;
+        if (!isAutoplayInfinite()) {
+            document.getElementById("autoplayCheckBox").checked = amount > 0;
+        }
+        commitAutoplaySettings();
+    });
+    ui.menuDuration.addEventListener("change", function () {
+        document.getElementById("autoplayDuration").value = Math.max(0, parseInt(ui.menuDuration.value) || 0);
+        commitAutoplaySettings();
+    });
+    ui.menuNative.addEventListener("change", function () {
+        setNativeControls(ui.menuNative.checked);
+    });
+    return menu;
+}
+
+function bindPlayerEvents(ui) {
+    var media = ui.media;
+
+    // Wiedergabe
+    ui.playButton.addEventListener("click", function () {
+        togglePlayback(ui);
+    });
+    ui.prevButton.addEventListener("click", function () {
+        clickNavigation("prev");
+    });
+    ui.nextButton.addEventListener("click", function () {
+        clickNavigation("next");
+    });
+    ui.backButton.addEventListener("click", function () {
+        seekPlayerBy(ui, -10);
+    });
+    ui.forwardButton.addEventListener("click", function () {
+        seekPlayerBy(ui, 10);
+    });
+
+    // Lautstärke
+    ui.muteButton.addEventListener("click", function () {
+        if (media.muted || media.volume == 0) {
+            media.muted = false;
+            if (media.volume == 0) {
+                media.volume = 0.2;
+            }
+        } else {
+            media.muted = true;
+        }
+    });
+    ui.volumeSlider.addEventListener("input", function () {
+        var volume = parseFloat(ui.volumeSlider.value);
+        media.volume = volume;
+        media.muted = volume == 0;
+    });
+
+    // Autoplay-Anzeige: Klick schaltet Autoplay ein oder aus
+    ui.autoplayButton.addEventListener("click", function () {
+        setAutoplayFromPlayer(!document.getElementById("autoplayCheckBox").checked);
+    });
+    ui.countdownNext.addEventListener("click", function () {
+        clickNavigation("next");
+    });
+    ui.countdownCancel.addEventListener("click", function () {
+        setAutoplayFromPlayer(false);
+    });
+
+    // Zahnradmenü
+    ui.settingsButton.addEventListener("click", function () {
+        togglePlayerMenu(ui, ui.menu.hidden);
+    });
+    document.addEventListener("pointerdown", function (event) {
+        if (!ui.menu.hidden && !ui.menu.contains(event.target) && !ui.settingsButton.contains(event.target)) {
+            togglePlayerMenu(ui, false);
+        }
+    });
+
+    if (!ui.isAudio) {
+        ui.pipButton.addEventListener("click", function () {
+            if (document.pictureInPictureElement) {
+                document.exitPictureInPicture().catch(function () {});
+            } else if (media.requestPictureInPicture) {
+                media.requestPictureInPicture().catch(function () {});
+            }
+        });
+        ui.fullscreenButton.addEventListener("click", function () {
+            toggleCinemaMode();
+        });
+        media.addEventListener("enterpictureinpicture", function () {
+            ui.pipButton.classList.add("active");
+        });
+        media.addEventListener("leavepictureinpicture", function () {
+            ui.pipButton.classList.remove("active");
+        });
+        bindSurfaceEvents(ui);
+    }
+
+    // Zeitleiste
+    bindProgressEvents(ui);
+
+    // Zustand des Mediums
+    media.addEventListener("play", function () {
+        updatePlayButton(ui);
+        startProgressLoop(ui);
+        showPlayerControls(ui);
+    });
+    media.addEventListener("pause", function () {
+        updatePlayButton(ui);
+        updateProgress(ui);
+        showPlayerControls(ui);
+    });
+    media.addEventListener("ended", function () {
+        updatePlayButton(ui);
+        showPlayerControls(ui);
+    });
+    media.addEventListener("waiting", function () {
+        ui.shell.classList.add("isWaiting");
+    });
+    ["playing", "canplay", "seeked", "pause", "emptied"].forEach(function (type) {
+        media.addEventListener(type, function () {
+            ui.shell.classList.remove("isWaiting");
+        });
+    });
+    ["timeupdate", "durationchange", "loadedmetadata", "progress", "seeked", "emptied"].forEach(function (type) {
+        media.addEventListener(type, function () {
+            updateProgress(ui);
+        });
+    });
+    media.addEventListener("volumechange", function () {
+        updateVolumeControls(ui);
+        // Lautstärke sofort merken (Stummschalten wird nicht gespeichert)
+        if (!media.muted && media.volume > 0) {
+            setData("mediaVolume", media.volume);
+        }
+    });
+    media.addEventListener("ratechange", function () {
+        updateSpeedButtons(ui);
+    });
+
+    // Leiste einblenden bei Mausbewegung oder Tastaturbedienung
+    ui.shell.addEventListener("pointermove", function (event) {
+        if (event.pointerType == "mouse") {
+            showPlayerControls(ui);
+        }
+    });
+    ui.shell.addEventListener("pointerleave", function (event) {
+        if (event.pointerType == "mouse") {
+            scheduleHideControls(ui, 600);
+        }
+    });
+    ui.shell.addEventListener("focusin", function () {
+        showPlayerControls(ui);
+    });
+}
+
+// Klick, Doppelklick und Tipps auf das Video
+function bindSurfaceEvents(ui) {
+    var surface = ui.surface;
+
+    // Maus: Klick = Abspielen/Pause, Doppelklick = Vollbild
+    surface.addEventListener("click", function (event) {
+        if (Date.now() - ui.lastTouchTime < 800) {
+            return;
+        }
+        if (!ui.menu.hidden) {
+            togglePlayerMenu(ui, false);
+            return;
+        }
+        if (event.detail > 1) {
+            clearTimeout(ui.clickTimer);
+            ui.clickTimer = null;
+            if (event.detail == 2) {
+                toggleCinemaMode();
+            }
+            return;
+        }
+        // Kurz warten, ob ein Doppelklick folgt (sonst würde das Video kurz pausieren)
+        ui.clickTimer = setTimeout(function () {
+            ui.clickTimer = null;
+            togglePlayback(ui);
+        }, 220);
+    });
+
+    // Touch: Tipp = Leiste ein/aus, Doppeltipp links/rechts = 10 Sekunden, Mitte = Vollbild
+    surface.addEventListener("pointerup", function (event) {
+        if (event.pointerType == "mouse") {
+            return;
+        }
+        ui.lastTouchTime = Date.now();
+        if (!ui.menu.hidden) {
+            togglePlayerMenu(ui, false);
+            return;
+        }
+        var rect = surface.getBoundingClientRect();
+        var position = (event.clientX - rect.left) / rect.width;
+        var zone = position < 0.35 ? -1 : (position > 0.65 ? 1 : 0);
+        var now = Date.now();
+
+        if (ui.lastTap != null && now - ui.lastTap.time < doubleTapDelay && ui.lastTap.zone == zone) {
+            clearTimeout(ui.tapTimer);
+            if (zone == 0) {
+                ui.lastTap = null;
+                toggleCinemaMode();
+            } else {
+                // Weitere Tipps auf derselben Seite spulen weiter
+                ui.lastTap = { time: now, zone: zone };
+                seekPlayerBy(ui, zone * 10, true);
+            }
+            return;
+        }
+
+        ui.lastTap = { time: now, zone: zone };
+        clearTimeout(ui.tapTimer);
+        ui.tapTimer = setTimeout(function () {
+            if (ui.shell.classList.contains("controlsVisible")) {
+                hidePlayerControls(ui);
+            } else {
+                showPlayerControls(ui);
+            }
+        }, doubleTapDelay);
+    });
+}
+
+// Zeitleiste: Klicken, Ziehen, Zeit beim Überfahren
+function bindProgressEvents(ui) {
+    var progress = ui.progress;
+
+    var ratioFromEvent = function (event) {
+        var rect = progress.getBoundingClientRect();
+        return Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    };
+    var seekToEvent = function (event) {
+        if (hasMediaDuration(ui.media)) {
+            ui.media.currentTime = ratioFromEvent(event) * ui.media.duration;
+            updateProgress(ui);
+        }
+    };
+    var showTooltip = function (event) {
+        if (!hasMediaDuration(ui.media)) {
+            return;
+        }
+        var ratio = ratioFromEvent(event);
+        ui.progressTooltip.textContent = formatMediaTime(ratio * ui.media.duration);
+        ui.progressTooltip.style.left = (ratio * 100) + "%";
+        progress.classList.add("showTooltip");
+    };
+
+    progress.addEventListener("pointerdown", function (event) {
+        if (event.button !== 0) {
+            return;
+        }
+        event.preventDefault();
+        ui.dragging = true;
+        progress.classList.add("dragging");
+        progress.setPointerCapture(event.pointerId);
+        seekToEvent(event);
+        showTooltip(event);
+    });
+    progress.addEventListener("pointermove", function (event) {
+        if (ui.dragging) {
+            seekToEvent(event);
+        }
+        if (ui.dragging || event.pointerType == "mouse") {
+            showTooltip(event);
+        }
+    });
+    var stopDragging = function () {
+        ui.dragging = false;
+        progress.classList.remove("dragging");
+        progress.classList.remove("showTooltip");
+        scheduleHideControls(ui);
+    };
+    progress.addEventListener("pointerup", stopDragging);
+    progress.addEventListener("pointercancel", stopDragging);
+    progress.addEventListener("pointerleave", function () {
+        if (!ui.dragging) {
+            progress.classList.remove("showTooltip");
+        }
+    });
+    // Pfeiltasten spulen über die Tastenkürzel, hier nur Anfang/Ende
+    progress.addEventListener("keydown", function (event) {
+        if (!hasMediaDuration(ui.media)) {
+            return;
+        }
+        if (event.key === "Home") {
+            event.preventDefault();
+            ui.media.currentTime = 0;
+        } else if (event.key === "End") {
+            event.preventDefault();
+            ui.media.currentTime = ui.media.duration;
+        }
+    });
+}
+
+function togglePlayback(ui) {
+    if (ui.media.paused || ui.media.ended) {
+        var request = ui.media.play();
+        if (request && request.catch) {
+            request.catch(function () {});
+        }
+    } else {
+        ui.media.pause();
+    }
+}
+
+// Spult um "seconds" vor oder zurück. showRipple: Anzeige links/rechts im Video (Doppeltipp)
+function seekPlayerBy(ui, seconds, showRipple) {
+    var media = ui.media;
+    var target = media.currentTime + seconds;
+    if (hasMediaDuration(media)) {
+        target = Math.min(media.duration, target);
+    }
+    media.currentTime = Math.max(0, target);
+    updateProgress(ui);
+    if (showRipple && ui.ripple) {
+        var direction = seconds < 0 ? -1 : 1;
+        // Mehrere Doppeltipps hintereinander zählen zusammen (+10, +20, ...)
+        if (!ui.ripple.classList.contains("visible") || ui.rippleDirection !== direction) {
+            ui.rippleAmount = 0;
+        }
+        ui.rippleDirection = direction;
+        ui.rippleAmount += Math.abs(seconds);
+        ui.ripple.textContent = (direction < 0 ? "-" : "+") + ui.rippleAmount + " s";
+        ui.ripple.classList.toggle("left", direction < 0);
+        ui.ripple.classList.toggle("right", direction > 0);
+        ui.ripple.classList.add("visible");
+        clearTimeout(ui.rippleTimer);
+        ui.rippleTimer = setTimeout(function () {
+            ui.ripple.classList.remove("visible");
+        }, 700);
+    }
+}
+
+// Leiste ein- und ausblenden
+function showPlayerControls(ui) {
+    if (ui == null) {
+        return;
+    }
+    ui.shell.classList.add("controlsVisible");
+    scheduleHideControls(ui);
+}
+
+function hidePlayerControls(ui) {
+    // Audio: Leiste bleibt immer sichtbar. Pausiert oder bei offenem Menü ebenfalls.
+    if (ui.isAudio || ui.media.paused || ui.dragging || !ui.menu.hidden) {
+        return;
+    }
+    ui.shell.classList.remove("controlsVisible");
+}
+
+function scheduleHideControls(ui, delay) {
+    clearTimeout(ui.hideTimer);
+    if (ui.isAudio) {
+        return;
+    }
+    ui.hideTimer = setTimeout(function () {
+        // Maus über der Leiste: noch nicht ausblenden (nur mit Maus, auf Touch bleibt :hover hängen)
+        if (delay == null && document.documentElement.classList.contains("canHover") && ui.controls.matches(":hover")) {
+            scheduleHideControls(ui);
+            return;
+        }
+        hidePlayerControls(ui);
+    }, delay != null ? delay : controlsHideDelay);
+}
+
+// Für Tastenkürzel: Leiste kurz zeigen
+function revealPlayerControls() {
+    showPlayerControls(getPlayerUI());
+}
+
+function togglePlayerMenu(ui, open) {
+    if (open) {
+        refreshPlayerMenu(ui);
+    }
+    ui.menu.hidden = !open;
+    ui.settingsButton.classList.toggle("active", open);
+    ui.settingsButton.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) {
+        showPlayerControls(ui);
+    } else {
+        scheduleHideControls(ui);
+    }
+}
+
+// Für die Escape-Taste
+function closePlayerMenu() {
+    var ui = getPlayerUI();
+    if (ui == null || ui.menu.hidden) {
+        return false;
+    }
+    togglePlayerMenu(ui, false);
+    ui.settingsButton.focus();
+    return true;
+}
+
+// Überträgt die Einstellungen ins Zahnradmenü
+function refreshPlayerMenu(ui) {
+    if (ui == null) {
+        return;
+    }
+    ui.menuAutoplay.checked = document.getElementById("autoplayCheckBox").checked;
+    ui.menuInfinite.checked = isAutoplayInfinite();
+    ui.menuAmount.value = document.getElementById("amountOfAutoplay").value;
+    ui.menuAmount.disabled = isAutoplayInfinite();
+    ui.menuAmount.closest(".settingRow").classList.toggle("disabled", ui.menuAmount.disabled);
+    ui.menuDuration.value = document.getElementById("autoplayDuration").value;
+    ui.menuNative.checked = useNativeControls();
+    updateSpeedButtons(ui);
+}
+
+function updateSpeedButtons(ui) {
+    ui.speedButtons.forEach(function (button) {
+        var active = parseFloat(button.dataset.rate) === ui.media.playbackRate;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+}
+
+function updatePlayButton(ui) {
+    var playing = !ui.media.paused && !ui.media.ended;
+    setControlButton(ui.playButton, playing ? "pause" : "play", playing ? "Pause (K)" : "Abspielen (K)");
+    ui.shell.classList.toggle("isPaused", !playing);
+}
+
+function updateVolumeControls(ui) {
+    var media = ui.media;
+    var volume = media.muted ? 0 : media.volume;
+    var icon = volume == 0 ? "volumeMute" : (volume < 0.5 ? "volumeLow" : "volumeHigh");
+    setControlButton(ui.muteButton, icon, volume == 0 ? "Ton an (M)" : "Ton aus (M)");
+    ui.volumeSlider.value = volume;
+    ui.volumeSlider.style.setProperty("--fill", (volume * 100) + "%");
+}
+
+function updateProgress(ui) {
+    var media = ui.media;
+    var duration = hasMediaDuration(media) ? media.duration : 0;
+    var current = media.currentTime || 0;
+    var ratio = duration > 0 ? Math.min(1, current / duration) : 0;
+    ui.progressPlayed.style.width = (ratio * 100) + "%";
+    ui.progressThumb.style.left = (ratio * 100) + "%";
+
+    // Geladener Bereich, in dem die aktuelle Position liegt
+    var bufferedEnd = 0;
+    for (var index = 0; index < media.buffered.length; index++) {
+        if (media.buffered.start(index) <= current + 0.5) {
+            bufferedEnd = Math.max(bufferedEnd, media.buffered.end(index));
+        }
+    }
+    ui.progressBuffered.style.width = (duration > 0 ? Math.min(100, bufferedEnd / duration * 100) : 0) + "%";
+
+    ui.time.textContent = formatMediaTime(current) + " / " + formatMediaTime(duration);
+    ui.progress.setAttribute("aria-valuemax", String(Math.round(duration)));
+    ui.progress.setAttribute("aria-valuenow", String(Math.round(current)));
+    ui.progress.setAttribute("aria-valuetext", formatMediaTime(current) + " von " + formatMediaTime(duration));
+}
+
+// Flüssige Zeitleiste während der Wiedergabe (timeupdate kommt nur ca. 4x pro Sekunde)
+function startProgressLoop(ui) {
+    if (ui.frame != null) {
+        return;
+    }
+    var step = function () {
+        if (ui.media.paused || ui.media.ended || getPlayerUI() !== ui) {
+            ui.frame = null;
+            return;
+        }
+        updateProgress(ui);
+        ui.frame = requestAnimationFrame(step);
+    };
+    ui.frame = requestAnimationFrame(step);
+}
+
+// Vor/Zurück-Knöpfe nur, wenn es ein vorheriges/nächstes Medium gibt
+function updatePlayerNavButtons() {
+    var ui = getPlayerUI();
+    if (ui == null) {
+        return;
+    }
+    [["prev", ui.prevButton, "Vorheriges"], ["next", ui.nextButton, "Nächstes"]].forEach(function (entry) {
+        var link = document.querySelector("#" + entry[0] + " a");
+        entry[1].disabled = link == null;
+        var name = link == null ? "" : link.textContent.trim();
+        var label = entry[2] + (name ? ": " + name : "") + " (" + (entry[0] == "prev" ? "P" : "N") + ")";
+        entry[1].setAttribute("aria-label", label);
+        entry[1].title = label;
+    });
+}
+
+function updatePlayerTitle(text) {
+    var ui = getPlayerUI();
+    if (ui != null && ui.title) {
+        ui.title.textContent = text;
+    }
+}
+
+// Autoplay-Anzeige in der Leiste: ausgegraut, wenn Autoplay aus ist
+function updatePlayerAutoplayState() {
+    var ui = getPlayerUI();
+    if (ui == null) {
+        return;
+    }
+    var enabled = document.getElementById("autoplayCheckBox").checked;
+    ui.autoplayButton.classList.toggle("active", enabled);
+    ui.autoplayButton.setAttribute("aria-pressed", enabled ? "true" : "false");
+    var label = enabled ? "Autoplay ist an (ausschalten)" : "Autoplay ist aus (einschalten)";
+    ui.autoplayButton.setAttribute("aria-label", label);
+    ui.autoplayButton.title = label;
+    if (!enabled) {
+        hideAutoplayCountdown();
+    }
+    if (!ui.menu.hidden) {
+        refreshPlayerMenu(ui);
+    }
+}
+
+// Autoplay aus der Leiste oder dem Countdown ein-/ausschalten
+function setAutoplayFromPlayer(enabled) {
+    document.getElementById("autoplayCheckBox").checked = enabled;
+    checkAutoplayAmount();
+    commitAutoplaySettings();
+    if (!enabled) {
+        document.getElementById("next").style.background = "";
+    }
+}
+
+// Countdown bis zum nächsten Medium (secondsLeft, Fortschritt 0-100)
+function showAutoplayCountdown(secondsLeft, percent) {
+    var ui = getPlayerUI();
+    var nextLink = document.querySelector("#next a");
+    if (ui == null || nextLink == null) {
+        hideAutoplayCountdown();
+        return;
+    }
+    ui.countdownLabel.textContent = "Nächstes in " + Math.max(0, secondsLeft) + " s";
+    ui.countdownName.textContent = nextLink.textContent.trim();
+    ui.countdownFill.style.width = Math.min(100, Math.max(0, percent)) + "%";
+    ui.countdown.hidden = false;
+}
+
+function hideAutoplayCountdown() {
+    var ui = getPlayerUI();
+    if (ui != null) {
+        ui.countdown.hidden = true;
+    }
+}
+
+// Neues Medium im bestehenden Player: Geschwindigkeit 1x, Download-Link, Anzeige zurücksetzen
+function onPlayerMediaChanged(media) {
+    var ui = getPlayerUI();
+    if (ui == null || ui.media !== media) {
+        return;
+    }
+    media.defaultPlaybackRate = 1;
+    media.playbackRate = 1;
+    ui.downloadLink.href = media.getAttribute("src");
+    ui.downloadLink.setAttribute("download", getBaseName(media.dataset.mediaPath || ""));
+    hideAutoplayCountdown();
+    updateProgress(ui);
+    updatePlayButton(ui);
+    updatePlayerTitle(document.getElementById("mediaTitle").textContent);
+    showPlayerControls(ui);
+}
+
+// Umschalten zwischen eigener und Browser-Steuerung
+function applyNativeControls(ui, enabled) {
+    ui.media.controls = enabled;
+    ui.shell.classList.toggle("nativeControls", enabled);
+    if (enabled) {
+        togglePlayerMenu(ui, false);
+    }
+}
+
+function setNativeControls(enabled) {
+    setData("nativeControls", enabled ? "true" : "false");
+    var checkbox = document.getElementById("nativeControlsCheckBox");
+    if (checkbox != null) {
+        checkbox.checked = enabled;
+    }
+    var ui = getPlayerUI();
+    if (ui != null) {
+        applyNativeControls(ui, enabled);
+    }
+}
+
+// ===================================================================
+// Vollbild für Videos: per CSS, damit unter dem Video weitergescrollt werden kann.
+// Zusätzlich wechselt der Browser in den Vollbildmodus (falls möglich).
+// ===================================================================
+
+function isCinemaMode() {
+    return document.documentElement.classList.contains("playerCinema");
+}
+
+function getFullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+}
+
+function toggleCinemaMode() {
+    if (isCinemaMode()) {
+        exitCinemaMode();
+    } else {
+        enterCinemaMode();
+    }
+}
+
+function enterCinemaMode() {
+    var ui = getPlayerUI();
+    if (ui == null || ui.isAudio || isCinemaMode()) {
+        return;
+    }
+    document.documentElement.classList.add("playerCinema");
+    var root = document.documentElement;
+    var request = root.requestFullscreen || root.webkitRequestFullscreen;
+    // iPhone: keine Vollbild-Schnittstelle, dann bleibt es beim CSS-Vollbild
+    if (request && getFullscreenElement() == null) {
+        try {
+            cinemaRequestedFullscreen = true;
+            var result = request.call(root);
+            if (result && result.catch) {
+                result.catch(function () {
+                    cinemaRequestedFullscreen = false;
+                });
+            }
+        } catch (error) {
+            cinemaRequestedFullscreen = false;
+        }
+    }
+    updateFullscreenButton();
+    scrollToPlayer(false);
+    showPlayerControls(ui);
+}
+
+function exitCinemaMode() {
+    if (!isCinemaMode()) {
+        return;
+    }
+    document.documentElement.classList.remove("playerCinema");
+    if (cinemaRequestedFullscreen && getFullscreenElement() != null) {
+        var exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exit) {
+            var result = exit.call(document);
+            if (result && result.catch) {
+                result.catch(function () {});
+            }
+        }
+    }
+    cinemaRequestedFullscreen = false;
+    updateFullscreenButton();
+    if (document.getElementById("video") != null) {
+        requestAnimationFrame(function () {
+            scrollToPlayer(false);
+        });
+    }
+}
+
+function updateFullscreenButton() {
+    var ui = getPlayerUI();
+    if (ui == null || ui.fullscreenButton == null) {
+        return;
+    }
+    var active = isCinemaMode();
+    setControlButton(ui.fullscreenButton, active ? "fullscreenExit" : "fullscreen", active ? "Vollbild beenden (F)" : "Vollbild (F)");
+}
+
+// Browser-Vollbild beendet (z.B. Escape): CSS-Vollbild ebenfalls beenden
+function handleFullscreenChange() {
+    if (getFullscreenElement() == null && cinemaRequestedFullscreen) {
+        cinemaRequestedFullscreen = false;
+        exitCinemaMode();
+    } else if (isCinemaMode()) {
+        // Fenstergrösse hat sich geändert: Video wieder oben ausrichten
+        requestAnimationFrame(function () {
+            scrollToPlayer(false);
+        });
+    }
+}
+
+function initPlayerControls() {
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    // Tab-Taste: ausgeblendete Leiste wieder zeigen, damit die Knöpfe erreichbar sind
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Tab") {
+            revealPlayerControls();
         }
     });
 }

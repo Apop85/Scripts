@@ -77,9 +77,17 @@ function updateAutoplayAmountState() {
     amountField.closest(".settingRow").classList.toggle("disabled", amountField.disabled);
 }
 
-// Speichern der aktuellen Einstellungen
+// Speichern der aktuellen Einstellungen (Button "Speichern" im Fenster)
 function applySettings() {
-    autoplay = document.getElementById("autoplayCheckBox").checked;
+    commitAutoplaySettings();
+    setNativeControls(document.getElementById("nativeControlsCheckBox").checked);
+    toggleContainer(["settingsBox"], "none");
+}
+
+// Übernimmt die Autoplay-Felder aus dem Fenster "Einstellungen".
+// Wird auch vom Zahnradmenü des Players verwendet (dort ohne Fenster).
+function commitAutoplaySettings() {
+    autoplay =document.getElementById("autoplayCheckBox").checked;
     autoplayAmount = parseInt(document.getElementById("amountOfAutoplay").value) || 0;
     autoplayDuration = parseInt(document.getElementById("autoplayDuration").value) || 0;
 
@@ -102,7 +110,6 @@ function applySettings() {
 
     saveAutoplaySettings(autoplay, autoplayAmount, autoplayDuration);
     updateOptionFields(autoplay, autoplayAmount, autoplayDuration);
-    toggleContainer(["settingsBox"], "none");
 
     var player = document.getElementById("video");
     if (autoplay && player != null && player.tagName == "IMG") {
@@ -163,6 +170,8 @@ function updateOptionFields(newAutoplay, newAmount, newDuration) {
     document.getElementById("autoplayCheckBox").checked = newAutoplay;
     document.getElementById("amountOfAutoplay").value = newAmount;
     document.getElementById("autoplayDuration").value = newDuration;
+    // Autoplay-Anzeige und Zahnradmenü im Player nachführen
+    updatePlayerAutoplayState();
 }
 
 function loadSettings() {
@@ -184,6 +193,7 @@ function loadSettings() {
         updateOptionFields(autoplay, autoplayAmount, autoplayDuration);
     }
     updateAutoplayAmountState();
+    document.getElementById("nativeControlsCheckBox").checked = useNativeControls();
 }
 
 // Funktion, um die gesetzten Timeouts abzubrechen
@@ -443,7 +453,15 @@ function closeOverlays() {
         }
     });
     document.getElementById("settings").classList.remove("open");
+    if (!closedSomething && closePlayerMenu()) {
+        closedSomething = true;
+    }
     if (!closedSomething && stopDashboardEditing()) {
+        closedSomething = true;
+    }
+    // Video-Vollbild ohne Browser-Vollbild (z.B. iPhone); sonst beendet der Browser selbst
+    if (!closedSomething && isCinemaMode()) {
+        exitCinemaMode();
         closedSomething = true;
     }
     if (!closedSomething && document.getElementById("media").classList.contains("fullscreened")) {
@@ -488,8 +506,11 @@ function handleKeyboardShortcuts(event) {
     }
 
     var isPlayable = player.tagName == "VIDEO" || player.tagName == "AUDIO";
-    // Hat der Player selbst den Fokus, übernimmt der Browser die Pfeiltasten und die Leertaste
+    // Hat der Player selbst den Fokus (nur mit Browser-Steuerung möglich),
+    // übernimmt der Browser die Pfeiltasten und die Leertaste
     var targetIsPlayer = event.target === player;
+    // Sichtbarer Bereich des Players (das Audio-Element selbst ist unsichtbar)
+    var playerArea = player.closest(".sflixPlayer") || player;
     var targetIsButton = event.target.closest != null && event.target.closest("button, [role='button']") != null;
 
     switch (event.key) {
@@ -505,6 +526,7 @@ function handleKeyboardShortcuts(event) {
             } else {
                 player.pause();
             }
+            revealPlayerControls();
             break;
         case "ArrowLeft":
         case "ArrowRight":
@@ -515,6 +537,7 @@ function handleKeyboardShortcuts(event) {
             var direction = event.key === "ArrowRight" ? 1 : -1;
             if (isPlayable) {
                 player.currentTime = Math.max(0, player.currentTime + direction * 10);
+                revealPlayerControls();
             } else {
                 // Bilder: vorheriges/nächstes Bild
                 clickNavigation(direction > 0 ? "next" : "prev");
@@ -523,22 +546,23 @@ function handleKeyboardShortcuts(event) {
         case "ArrowUp":
         case "ArrowDown":
             // Nur wenn der Player sichtbar ist, sonst normal scrollen
-            if (!isPlayable || targetIsPlayer || !isElementVisible(player)) {
+            if (!isPlayable || targetIsPlayer || !isElementVisible(playerArea)) {
                 return;
             }
             event.preventDefault();
             var step = event.key === "ArrowUp" ? 0.1 : -0.1;
             player.volume = Math.round(Math.min(1, Math.max(0, player.volume + step)) * 10) / 10;
+            if (player.volume > 0) {
+                player.muted = false;
+            }
+            revealPlayerControls();
             break;
         case "f":
         case "F":
             event.preventDefault();
             if (player.tagName == "VIDEO") {
-                if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                } else if (player.requestFullscreen) {
-                    player.requestFullscreen();
-                }
+                // Vollbild per CSS (unter dem Video kann weitergescrollt werden)
+                toggleCinemaMode();
             } else if (player.tagName == "IMG") {
                 toggleFullscreenMode();
             }
@@ -548,6 +572,7 @@ function handleKeyboardShortcuts(event) {
             if (isPlayable) {
                 event.preventDefault();
                 player.muted = !player.muted;
+                revealPlayerControls();
             }
             break;
         case "n":

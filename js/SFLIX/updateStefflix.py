@@ -1,6 +1,7 @@
-# from genericpath import exists
-import requests, os
-from shutil import move as moveFile
+import os
+import subprocess
+
+from sflix_update import SCRIPT_FILES, remove_obsolete_files, update_files
 
 os.chdir(os.getcwd())
 
@@ -8,101 +9,50 @@ print("".center(60, "="))
 print("STARTE STEFFLIXUPDATE")
 print("".center(60, "="))
 
+stefflixFiles = [
+    "sflix_sys/sflix.css",
+    *SCRIPT_FILES,
+    "sflix_sys/splash.svg",
+    "sflix_sys/sflixLogo.png",
+    "sflix_sys/sflixLogo.svg",
+    "sflix_sys/version.js",
+    "start.html",
+    "updateData.exe",
+    "updater.exe",
+]
 
-os.chdir(os.getcwd())
 
-stefflixFiles = {
-    "sflix_sys/sflix.css": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.css",
-    "sflix_sys/sflix.js": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.js",
-    "sflix_sys/sflix.png": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.png",
-    "sflix_sys/version.js": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js",
-    "start.html": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/start.html",
-    "updateData.exe": "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/updateData.exe",
-    "updater.exe": "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/updater.exe",
-}
-
-def writeToFile(data, fileLocation, writeMode="w"):
+def runProgram(name, *arguments):
+    """Startet ein STEFFLIX-Programm im selben Fenster und wartet auf das Ende."""
+    programPath = os.path.join(os.getcwd(), name)
+    if not os.path.exists(programPath):
+        print(f"{name} nicht gefunden.")
+        return False
     try:
-        if writeMode == "w":
-            fileWriter = open(os.path.join(".", fileLocation), "w", encoding="utf-8")
-        elif writeMode == "wb":
-            fileWriter = open(os.path.join(".", fileLocation), "wb")
-
-        fileWriter.write(data)
-        fileWriter.close()
+        subprocess.call([programPath, *arguments], cwd=os.getcwd())
         return True
-    except:
+    except OSError as error:
+        print(f"{name} konnte nicht gestartet werden: {error.strerror}")
         return False
 
 
-def restoreFile(filePath):
-    print(f"Widerherstellung {filePath}...".ljust(50), end="")
-    try:
-        if os.path.exists(filePath + ".old"):
-            if os.path.exists(filePath):
-                os.remove(filePath)
-            moveFile(filePath + ".old", filePath)
-        print("OK")
-    except:
-        print("FEHLER")
+failed = update_files(stefflixFiles, label="Lade")
 
+if failed:
+    print()
+    print("Das Update wurde nicht installiert. Bitte später erneut versuchen.")
+    print()
+    input("Enter zum Beenden")
+else:
+    remove_obsolete_files()
 
-for fileLocation in stefflixFiles.keys():
-    print(f"Lade {fileLocation} herunter...".ljust(50), end="")
-    try:
-        answer = requests.get(stefflixFiles[fileLocation])
-        print("OK")
-    except:
-        print("FEHLER")
+    # 1. updater.exe aktualisiert updateStefflix.exe (eine laufende Datei kann sich nicht
+    #    selbst ersetzen). --no-pause: keine Enter-Abfrage mitten in der Kette.
+    print()
+    runProgram("updater.exe", "--no-pause")
 
-    if not fileLocation.endswith(".exe") and not fileLocation.endswith(".png") and not fileLocation.endswith(".jpg"):
-        fileContent = answer.content.decode("UTF8")
-        filePath = os.path.join(".", fileLocation)
-        print("Erstelle Backup...".ljust(50), end="")
-        try:
-            if os.path.exists(filePath):
-                if os.path.exists(filePath + ".old"):
-                    os.remove(filePath + ".old")
-
-            moveFile(filePath, filePath + ".old")
-
-            print("OK")
-        except:
-            print("FEHLER")
-        
-        print("Update STEFFLIX-Daten...".ljust(50), end="")
-        try:
-            success = writeToFile(fileContent, filePath)
-            if success:
-                print("OK")
-            else:
-                print("FEHLER")
-                restoreFile(filePath)
-        except:
-            print("FEHLER")
-
-    else:
-        try:
-            print("Erstelle Backup...".ljust(50), end="")
-            filePath = os.path.join(".", fileLocation)
-            if os.path.exists(filePath):
-                if os.path.exists(filePath + ".old"):
-                    os.remove(filePath + ".old")
-            moveFile(filePath, filePath + ".old")
-            
-            print("OK")
-        except:
-            print("FEHLER")
-
-        print("Update STEFFLIX-Daten...".ljust(50), end="")
-        try:
-            success = writeToFile(answer.content, filePath, "wb")
-            if success:
-                print("OK")
-            else:
-                print("FEHLER")
-                restoreFile(filePath)
-        except:
-            print("FEHLER")
-
-os.system(os.path.join(os.getcwd(), "updater.exe"))
+    # 2. updateData.exe liest die Medien neu ein (Umbenennungen, Vorschaubilder)
+    print()
+    if not runProgram("updateData.exe"):
+        print()
+        input("Enter zum Beenden")

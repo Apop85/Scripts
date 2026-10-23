@@ -2,6 +2,75 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>
+<b>Version 2.00</b>:<br>
+<ul>
+    <li>[<span style="color: red">FEATURE</span>] Favoriten-Seite im Einstellungsmenü. Favoriten können als ordnerübergreifende Playliste abgespielt werden ("Alle abspielen").</li>
+    <li>[<span style="color: red">FEATURE</span>] Suche findet nun auch Ordner mit Inhalt (z.B. eine ganze Serie). Medien werden anhand des Dateinamens gefunden.</li>
+    <li>[<span style="color: red">FEATURE</span>] Neue Tastenkürzel: Leertaste/K (Pause), F (Vollbild), M (Ton aus), N/P (nächstes/vorheriges Medium), / (Suche), Esc (Fenster schliessen). Bei Bildern blättern die Pfeiltasten. Übersicht in der Hilfe.</li>
+    <li>[<span style="color: red">FEATURE</span>] STEFFLIX lässt sich vollständig mit der Tastatur bedienen (Tab und Enter).</li>
+    <li>[<span style="color: red">FEATURE</span>] Hinweis bei fehlenden oder nicht ladbaren Medien inkl. Link zum Ordner. Bei aktivem Autoplay wird automatisch zum nächsten Medium gewechselt.</li>
+    <li>[<span style="color: red">FEATURE</span>] updateData.exe verkleinert Vorschaubilder auf eine einheitliche Grösse (480x270) für schnelleres Laden. Die Originalbilder bleiben unverändert.</li>
+    <li>[<span style="color: red">FEATURE</span>] updateData.exe benennt Dateien und Ordner mit nicht unterstützten Sonderzeichen (z.B. "–") automatisch um und zeigt die Änderungen an.</li>
+    <li>[<span style="color: red">FEATURE</span>] Die Updater prüfen heruntergeladene Dateien (Prüfsumme, gültige Programmdatei). Installiert wird nur, wenn alle Dateien gültig sind. Schlägt die Installation fehl, wird der alte Stand wiederhergestellt. Zum Anwenden updateStefflix.exe und anschliessend updateData.exe ausführen.</li>
+    <li>[<span style="color: red">FEATURE</span>] updateStefflix.exe startet nach dem Update automatisch updateData.exe.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Neue Startseite im Dark-Mode: Update-Hinweis, "Weiterschauen" mit Fortschrittsbalken und pro Kategorie ein Menüband mit 20 zufälligen Einträgen. Die Menübänder lassen sich mit Pfeilen, Ziehen, Wischen oder den Pfeiltasten durchblättern.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Update-Hinweis zeigt die Neuerungen und lässt sich für 1 Tag, 1 Woche, 1 Monat oder bis zur nächsten Version ausblenden.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Einheitliche Kacheln für Startseite, Suchresultate und Favoriten, immer gleich gross, auch ohne Vorschaubild.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Splashscreen wird immer bildschirmfüllend angezeigt und lässt sich per Klick überspringen.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Modernisierte Kopfzeile, Schrift und Ladeanimation. Hamburger-Menü statt Zahnrad.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Ordnerseiten mit Menübändern statt verschachtelter Listen, inkl. Pfadleiste (z.B. Start › Serien › Show).</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Neue Player-Seite: unter dem Player erscheinen weitere Titel aus dem Ordner und die anderen Staffeln als Menübänder.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hilfe und alle Fenster (Autoplay, Feedback, Lizenz, Fehlerbehebung) im Dark-Mode-Design mit einheitlichem Schliessen-Button.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Einheitliche Symbole statt Emojis.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Fenster aus dem Menü schliessen sich bei einem Klick daneben.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hilfeseite mit Titel, einzelnen Abschnitten und einer Übersicht zum schnellen Springen.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Die Fehlerbehebung ist aus dem Menü in die Hilfe umgezogen. Die Optionen werden erst nach dem Aufklappen angezeigt.</li>
+    <li>[<span style="color: red">FEATURE</span>] Suche zeigt schon während der Eingabe passende Ordner und Titel an. Auf der Ergebnisseite lässt sich die Suche verfeinern.</li>
+    <li>[<span style="color: red">FEATURE</span>] Die Reihenfolge der Menübänder auf der Startseite lässt sich über "Startseite anpassen" frei sortieren (ziehen oder mit Pfeilen). Das Hauptmenü übernimmt diese Reihenfolge.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Bilder im Vollbild: Pfeile links und rechts werden beim Überfahren eingeblendet (statt senkrechter Leisten). Auf Touch-Geräten wird per Wischen gewechselt.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Nach dem Klick auf eine Kachel unter dem Player wechselten die Pfeiltasten nicht mehr das Bild.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Auf Smartphones blieb das Menü nach der Auswahl offen und verdeckte das Suchfeld.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Tastenkürzel in der Hilfe werden als Tastatur-Tasten dargestellt.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Kategorieseiten (z.B. Serien) zeigen zuerst nur die Ordner, alphabetisch in Gruppen (0 – 9, A – D, ...). Die Staffeln erscheinen erst beim Öffnen einer Serie.</li>
+    <li>[<span style="color: red">FEATURE</span>] Zufallswiedergabe: Schalter "Zufall" in der Player-Leiste und Button "Zufällig abspielen" auf Ordnerseiten (alle Medien inkl. Unterordner). Jedes Medium wird nur einmal abgespielt, danach ist die Playliste zu Ende. "Zurück" und "Weiter" bewegen sich im bisherigen Verlauf, der auch ein Neuladen der Seite übersteht.</li>
+    <li>[<span style="color: red">FEATURE</span>] Gesehene Videos (ab 95 % oder bis zum Ende) werden mit einem Haken markiert. "Weiterschauen" zeigt nach einer fertigen Folge direkt die nächste an, die letzte Folge einer Serie wird markiert.</li>
+    <li>[<span style="color: red">FEATURE</span>] Datensicherung in der Hilfe: Favoriten, Fortschritt und Einstellungen lassen sich als Datei exportieren und wieder importieren.</li>
+    <li>[<span style="color: red">FEATURE</span>] Sicherungen enthalten die STEFFLIX-Version. Beim Import werden Sicherungen älterer Versionen automatisch angepasst; Sicherungen aus einer neueren Version werden abgelehnt (zuerst STEFFLIX aktualisieren).</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Neues Logo (rotes Band-S mit Farbverlauf) in der Kopfzeile und im Browser-Tab, daneben der Schriftzug STEFFLIX.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Neuer animierter Splashscreen im Stil des neuen Logos. Kürzer als bisher, auf jedem Bildschirmformat scharf und vollständig sichtbar.</li>
+    <li>[<span style="color: red">FEATURE</span>] Autoplay: neuer Schalter "Unbegrenzt", spielt ohne feste Anzahl bis zum Ende der Playliste.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Einheitliche Symbole im Menü. Die Hilfe ist inhaltlich überarbeitet, Zusatzinfos lassen sich aufklappen.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Fehlerbehebung zeigt eine kurze Statusmeldung statt eines Protokolls. Der rote Rahmen bei fast fertigen Videos entfällt (ersetzt durch die Markierung "Gesehen"), ebenso die alten Hinweisfenster der Updates 1.33 und 1.38.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Feedback: Nachrichten mit Sonderzeichen wie &amp;, # oder + wurden abgeschnitten oder nicht verschickt.</li>
+    <li>[OPTIMIERUNG] Umstieg von älteren Versionen mit einem einzigen Aufruf von updateStefflix.exe: Der neue Updater lädt fehlende Dateien nach und liest die Medien danach direkt neu ein.</li>
+    <li>[OPTIMIERUNG] Der Programmcode ist in mehrere Dateien im Ordner sflix_sys/js aufgeteilt (bisher sflix_sys/sflix.js). Fehlen nach einem unvollständigen Update Dateien, zeigt STEFFLIX einen Hinweis an.</li>
+    <li>[<span style="color: red">FEATURE</span>] Weitere Dateiformate: Video m4v, webm, ogv; Musik oga, opus, aac, flac, wav; Bilder webp, avif, bmp. Gross-/Kleinschreibung der Dateiendung spielt keine Rolle.</li>
+    <li>[OPTIMIERUNG] Die Updater laden nur noch Dateien herunter, die sich geändert haben.</li>
+    <li>[<span style="color: red">FEATURE</span>] Menüband "Meine Favoriten" auf der Startseite. Die Favoriten-Seite ist nach Kategorien (Serien, Filme, Musik, ...) gegliedert.</li>
+    <li>[OPTIMIERUNG] "Weiterschauen" merkt sich bis zu 20 Einträge.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Optimierung für Smartphones und kleine Bildschirme. Kopfzeile zweizeilig, die Suche befindet sich im Einstellungsmenü.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Kopfzeile auf grossen Bildschirmen einzeilig (Logo, Menü, Suche, Einstellungen), Logo in korrekter Grösse.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Feedback wird nur noch angezeigt, wenn ein gültiger Lizenzschlüssel hinterlegt ist. Ungültige Schlüssel werden beim Speichern erkannt.</li>
+    <li>[OPTIMIERUNG] Versionsprüfung und Changelog werden im Hintergrund geladen. Ohne Internetverbindung startet STEFFLIX ohne Verzögerung.</li>
+    <li>[OPTIMIERUNG] Natürliche Sortierung von Medien und Ordnern ("Folge 2" vor "Folge 10").</li>
+    <li>[OPTIMIERUNG] Zeitstempel werden pro Pfad gespeichert. Gleichnamige Dateien in verschiedenen Ordnern teilen sich keine Wiedergabeposition mehr. Bestehende Zeitstempel werden übernommen.</li>
+    <li>[OPTIMIERUNG] Bestehende Favoriten, Zeitstempel und "Weiterschauen"-Einträge werden beim ersten Start automatisch übernommen, auch für Dateien, die von updateData.exe umbenannt wurden.</li>
+    <li>[OPTIMIERUNG] Der Changelog wird als news.json geladen und als reiner Text dargestellt.</li>
+    <li>[OPTIMIERUNG] Überarbeitung des Programmcodes: Zusammenführen der Medienlogik, eigener Player-Container, Entfernen von nicht genutztem Code.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Sonderzeichen wie "–" in Datei- oder Ordnernamen liessen das Menü abstürzen.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Apostrophe in Dateinamen machten die Vor- und Zurück-Buttons unbrauchbar.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Dateinamen mit "None" wurden von updateData.exe fehlerhaft übernommen.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Dateiendungen in Grossbuchstaben (z.B. ".JPG") wurden nicht erkannt.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Liste der unterstützten Dateiformate in der Hilfe liess sich nicht einblenden.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Fehler beim Öffnen von Medienlinks, wenn die Playliste gelöscht wurde oder der Menüeintrag fehlte.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Der Wechsel zur nächsten Staffel konnte in den Preview-Ordner springen.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Medien aus einer Ordnerseite lösten einen kompletten Seitenreload aus.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Beim Zurück-Button des Browsers blieb der falsche Menüeintrag markiert.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Auf Medienseiten konnte im Menü bei allen Einträgen das Vorschaubild des aktuellen Mediums erscheinen.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Pfeiltasten wirkten auch beim Tippen ins Suchfeld auf das Video. Lautstärke über 100% löste einen Fehler aus.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Vollbild und Autoplay-Anzeige konnten sich gegenseitig aufheben.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Die Updater konnten bei fehlgeschlagenem Download Dateien mit falschem Inhalt überschreiben.</li>
+</ul>
 <b>Version 1.42</b>:<br>
 <ul>
     <li>[OPTIMIERUNG] Umstellung auf Indexed DB für bessere Datenkonsistenz und Performance. Bei Browserupdates werden die Stefflixdaten nicht mehr gelöscht.</li>

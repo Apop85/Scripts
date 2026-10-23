@@ -1,18 +1,8 @@
-import os, requests
+import os
 
-stefflixFiles = {
-    "sflix_sys/data.js": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/data.js",
-    "sflix_sys/sflix_bg.jpg": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix_bg.jpg",
-    "sflix_sys/sflix.css": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.css",
-    "sflix_sys/sflix.js": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.js",
-    "sflix_sys/sflix.png": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflix.png",
-    "sflix_sys/sflixLogo.png": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/sflixLogo.png",
-    "sflix_sys/version.js": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/version.js",
-    "start.html": "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/start.html",
-    "updateData.exe": "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/updateData.exe",
-    "updater.exe": "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/updater.exe",
-    "updateStefflix.exe": "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/updateStefflix.exe",
-}
+from sflix_update import FILES, update_files
+
+stefflixFiles = list(FILES.keys())
 
 def checkInput(type, text, output="default"):
     answer = None
@@ -36,33 +26,19 @@ def createPath(installPath):
         print(f"\n[WARNUNG] Der Pfad {installPath} konnte nicht erstellt werden\n")
         return False
 
-def writeToFile(data, installPath, writeMode="w"):
-    try:
-        if not os.path.exists(installPath):
-            if writeMode == "w":
-                fileWriter = open(installPath, "w", encoding="utf-8")
-            elif writeMode == "wb":
-                fileWriter = open(installPath, "wb")
-
-            fileWriter.write(data)
-            fileWriter.close()
-        return True
-    except:
-        return False
-
 print("==============================================================")
-print("     Willkommen beim Setup zum einrichten von Stefflix")
+print("        Willkommen beim Setup von STEFFLIX")
 print("==============================================================")
-print("Stefflix ist eine Browserapplikation angelehnt an Netflix um")
-print("lokale oder im Netzerk gespeicherte Mediendateien wiederzugeben")
+print("STEFFLIX ist eine Browserapplikation angelehnt an Netflix, um")
+print("lokal oder im Netzwerk gespeicherte Mediendateien abzuspielen.")
 print("")
-print("Ausser einem installierten Browser hat Stefflix keine weiteren")
+print("Ausser einem installierten Browser hat STEFFLIX keine weiteren")
 print("Voraussetzungen.")
 print("==============================================================")
 
 check = False
 while not check:
-    print("In welchem Pfad soll Stefflix installiert werden? (z.B: C:\Medien)")
+    print("In welchem Ordner soll STEFFLIX installiert werden? (z.B. C:\\Medien)")
     installPath = input("Pfad:")
     installPath = installPath.replace('"', '')
     if not os.path.exists(installPath):
@@ -84,42 +60,24 @@ try:
 except:
     print("FEHLER")
 
-for fileLocation in stefflixFiles.keys():
-    print(f"[SETUP] Lade {fileLocation} herunter...".ljust(50), end="")
+failed = update_files(stefflixFiles, base_dir=installPath, label="[SETUP] Lade", skip_existing=True)
+
+# Leere Liste der Umbenennungen (wird von updateData.exe gefüllt)
+renamedFile = os.path.join(installPath, "sflix_sys", "renamed.js")
+if not os.path.exists(renamedFile):
     try:
-        answer = requests.get(stefflixFiles[fileLocation])
-        filePath = os.path.join(installPath, fileLocation)
+        with open(renamedFile, "w", encoding="utf-8") as fileWriter:
+            fileWriter.write('var renamedPaths = {"id": "", "pairs": []};')
+    except OSError:
+        pass
+if failed:
+    print(f"\n[WARNUNG] {failed} Datei(en) konnten nicht installiert werden. Bitte Setup erneut ausführen.")
 
-        if not fileLocation.endswith(".exe") and not fileLocation.endswith(".png") and not fileLocation.endswith(".jpg"):
-            fileContent = answer.content.decode("UTF8")
-                    
-            try:
-                success = writeToFile(fileContent, filePath)
-                if success:
-                    print("OK")
-                else:
-                    print("FEHLER")
-            except:
-                print("FEHLER")
-
-        else:
-            try:
-                success = writeToFile(answer.content, filePath, "wb")
-                if success:
-                    print("OK")
-                else:
-                    print("FEHLER")
-            except:
-                print("FEHLER")
-    except:
-        print("FEHLER")
-
-    
 
 print("==============================================================")
 print("                Installation abgeschlossen")
 print("==============================================================")
-print("Für Hilfe zum Hinzufügen von Mediendateien prüfe folgende URL in deinem Browser:")
+print("Eine Anleitung zum Hinzufügen von Medien findest du unter folgender Adresse im Browser:")
 url = installPath.replace("\\", "/")
 print(f"file:///{url}/start.html?=SEVMUA==")
 print()

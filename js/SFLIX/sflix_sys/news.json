@@ -19,11 +19,11 @@
         },
         {
           "type": "FEATURE",
-          "text": "Zahnradmenü im Player: Autoplay-Einstellungen (Automatisch vorwärts, Unbegrenzt, Anzahl, Dauer bis Übergang), Geschwindigkeit 0,5x bis 1,75x und Herunterladen. Jedes Medium startet wieder mit 1x."
+          "text": "Zahnradmenü im Player: Geschwindigkeit 0,5x bis 1,75x und Herunterladen. Jedes Medium startet wieder mit 1x."
         },
         {
           "type": "FEATURE",
-          "text": "Autoplay-Anzeige in der Player-Leiste: ausgegraut, wenn Autoplay aus ist. Ein Klick schaltet Autoplay ein oder aus."
+          "text": "Autoplay-Symbol in der Player-Leiste: ausgegraut, wenn Autoplay aus ist. Ein Klick öffnet das Autoplay-Menü (Automatisch vorwärts, Unbegrenzt, Anzahl, Dauer bis Übergang)."
         },
         {
           "type": "FEATURE",
@@ -31,7 +31,11 @@
         },
         {
           "type": "FEATURE",
-          "text": "Neues Video-Vollbild: Das Video füllt den Bildschirm, darunter kann weitergescrollt und ein anderes Medium gewählt werden. Der Browser wechselt dabei ebenfalls in den Vollbildmodus (nicht auf dem iPhone). Im Vollbild wird der Titel angezeigt."
+          "text": "Neues Video-Vollbild: Das Video füllt den Bildschirm, darunter kann weitergescrollt und ein anderes Medium gewählt werden. Der Browser wechselt dabei ebenfalls in den Vollbildmodus (nicht auf dem iPhone). Kopfzeile und Pfadleiste werden ausgeblendet, das Video steht ganz oben. Im Vollbild wird der Titel im Video angezeigt."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Smartphones: kompaktere Player-Leiste, das Zahnradmenü öffnet sich als Leiste vom unteren Bildschirmrand."
         },
         {
           "type": "FEATURE",

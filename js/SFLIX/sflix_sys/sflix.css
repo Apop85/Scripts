@@ -1217,8 +1217,13 @@ input::placeholder, textarea::placeholder {
     transition: transform 0.25s;
 }
 
-.ctrlSettings.active .icon {
+.ctrlSettings.menuActive .icon {
     transform: rotate(45deg);
+}
+
+/* Knopf, dessen Menü gerade offen ist */
+.ctrlButton.menuActive {
+    background-color: rgba(255, 255, 255, 0.14);
 }
 
 .ctrlPip.active {
@@ -1376,7 +1381,7 @@ input::placeholder, textarea::placeholder {
     padding: 6px 16px 10px 16px;
     border: 1px solid var(--sflix-border);
     border-radius: 12px;
-    background-color: rgba(26, 26, 30, 0.97);
+    background-color: var(--sflix-bg-elevated);
     box-shadow: var(--sflix-shadow);
     color: var(--sflix-text);
     font-size: 0.9rem;
@@ -1509,8 +1514,11 @@ input::placeholder, textarea::placeholder {
     bottom: auto;
 }
 
-/* Vollbild für Videos: per CSS, darunter kann weitergescrollt werden */
+/* Vollbild für Videos: per CSS, darunter kann weitergescrollt werden.
+   Alles oberhalb des Videos (Kopfzeile, Breadcrumbs, Titel) wird ausgeblendet,
+   damit das Video ganz oben auf der Seite steht. */
 html.playerCinema .firstLevelWrap,
+html.playerCinema #navigation,
 html.playerCinema #mediaTitle {
     display: none;
 }
@@ -3042,17 +3050,65 @@ input:focus-visible, textarea:focus-visible, video:focus-visible, audio:focus-vi
     }
 
     .ctrlButton {
-        width: 38px;
-        height: 38px;
+        width: 34px;
+        height: 34px;
     }
 
-    .playerControls {
-        padding: 24px 8px 4px 8px;
+    .ctrlButton .icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .ctrlPlay .icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .ctrlAutoplay .icon {
+        width: 27px;
+        height: 27px;
+    }
+
+    .controlRow {
+        gap: 4px;
+    }
+
+    /* Wird es eng, wird die Zeit gekürzt statt über die Knöpfe zu laufen */
+    .controlGroup:first-child {
+        overflow: hidden;
     }
 
     .timeDisplay {
+        flex-shrink: 1;
         margin-left: 4px;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+    }
+
+    .playerControls {
+        padding: 24px 6px 2px 6px;
+    }
+
+    /* Zahnradmenü als Leiste von unten (das Video ist für das Menü zu niedrig) */
+    .sflixPlayer .playerMenu,
+    .sflixPlayer.isVideo .playerMenu,
+    .sflixPlayer.isAudio .playerMenu {
+        position: fixed;
+        top: auto;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: auto;
+        max-height: 75vh;
+        max-height: 75dvh;
+        padding: 6px 18px calc(14px + env(safe-area-inset-bottom)) 18px;
+        border-radius: 16px 16px 0 0;
+        /* abgedunkelter Hintergrund */
+        box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.55);
+    }
+
+    /* Player mit offenem Menü über Kopfzeile und Bändern */
+    .sflixPlayer.menuOpen {
+        z-index: 100;
     }
 
     .autoplayCountdown {

@@ -4,18 +4,17 @@
 </ul>
 <b>Version 2.01</b>:<br>
 <ul>
-    <li>[<span style="color: red">FEATURE</span>] Eigene Steuerung für Videos und Musik statt der Browser-Steuerung: Abspielen/Pause, vorheriges/nächstes Medium, 10 Sekunden zurück/vor, Zeitleiste mit geladenem Bereich und Zeitvorschau, Lautstärke (Regler fährt beim Überfahren aus) und Zeitanzeige.</li>
-    <li>[<span style="color: red">FEATURE</span>] Bei Videos blendet sich die Steuerleiste während der Wiedergabe aus und erscheint wieder bei Mausbewegung, Antippen oder Tastaturbedienung. Bei Musik bleibt sie immer sichtbar.</li>
-    <li>[<span style="color: red">FEATURE</span>] Zahnradmenü im Player: Geschwindigkeit 0,5x bis 1,75x und Herunterladen. Jedes Medium startet wieder mit 1x.</li>
+    <li>[<span style="color: red">FEATURE</span>] Eigene Player-Steuerung im STEFFLIX-Design für Videos und Musik, mit Knöpfen für das vorherige/nächste Medium und 10 Sekunden zurück/vor.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Musik-Player in derselben Grösse wie Videos: Über der Leiste wird das Vorschaubild des Titels angezeigt (sonst das des Albums bzw. Ordners), in Originalauflösung aus dem Preview-Ordner.</li>
     <li>[<span style="color: red">FEATURE</span>] Autoplay-Symbol in der Player-Leiste: ausgegraut, wenn Autoplay aus ist. Ein Klick öffnet das Autoplay-Menü (Automatisch vorwärts, Unbegrenzt, Anzahl, Dauer bis Übergang).</li>
     <li>[<span style="color: red">FEATURE</span>] Autoplay-Countdown im Player ("Nächstes in 5 s") mit Namen des nächsten Mediums. Ein Klick darauf startet es sofort, das X schaltet Autoplay aus.</li>
-    <li>[<span style="color: red">FEATURE</span>] Neues Video-Vollbild: Das Video füllt den Bildschirm, darunter kann weitergescrollt und ein anderes Medium gewählt werden. Der Browser wechselt dabei ebenfalls in den Vollbildmodus (nicht auf dem iPhone). Kopfzeile und Pfadleiste werden ausgeblendet, das Video steht ganz oben. Im Vollbild wird der Titel im Video angezeigt.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Smartphones: kompaktere Player-Leiste, das Zahnradmenü öffnet sich als Leiste vom unteren Bildschirmrand.</li>
-    <li>[<span style="color: red">FEATURE</span>] Maus: Klick auf das Video startet oder pausiert, Doppelklick schaltet das Vollbild um. Touch: Tippen blendet die Leiste ein oder aus, Doppeltipp links/rechts spult 10 Sekunden zurück/vor, Doppeltipp in der Mitte schaltet das Vollbild um.</li>
-    <li>[<span style="color: red">FEATURE</span>] Bild im Bild für Videos (Chrome, Edge, Safari).</li>
+    <li>[<span style="color: red">FEATURE</span>] Neues Video-Vollbild: Das Video füllt den Bildschirm, darunter kann weitergescrollt und ein anderes Medium gewählt werden. Kopfzeile und Pfadleiste werden ausgeblendet, im Video wird der Titel angezeigt.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Smartphones: kompaktere Player-Leiste, die Player-Menüs öffnen sich als Leiste vom unteren Bildschirmrand.</li>
     <li>[<span style="color: red">FEATURE</span>] Die bisherige Browser-Steuerung lässt sich im Menü unter "Autoplay" oder im Zahnradmenü wieder einschalten.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Das Fenster "Autoplay" im Menü enthält zusätzlich die Player-Einstellungen. Neuer Abschnitt "Player" in der Hilfe.</li>
     <li>[OPTIMIERUNG] Die Lautstärke wird sofort gespeichert (bisher nur alle 10 Sekunden während der Wiedergabe).</li>
+    <li>[OPTIMIERUNG] Grosse Ordner (z.B. 2000 Bilder mit Zufallswiedergabe): Das Menüband unter dem Player springt bei weiten Wechseln direkt zum aktuellen Medium, statt animiert über alle Kacheln zu scrollen. Dabei werden nicht mehr alle Vorschaubilder auf dem Weg geladen.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Kacheln von Folgen, Filmen und Musiktiteln ohne eigenes Vorschaubild zeigen das Bild des Ordners darüber: zuerst das der Staffel, dann das der Serie (bzw. des Albums). Das Bild der ganzen Kategorie (z.B. "Serien") wird dafür nicht verwendet.</li>
 </ul>
 <b>Version 2.00</b>:<br>
 <ul>

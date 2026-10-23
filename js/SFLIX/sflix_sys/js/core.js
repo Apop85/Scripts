@@ -470,6 +470,24 @@ function getPreviewForMedia(mediaPath, exactOnly) {
     return resolvePreviewSrc(buildLevelPath(folders), "normal");
 }
 
+// Vorschaubild eines Mediums mit Ersatz aus den darüberliegenden Ordnern, vom nächsten zum
+// entferntesten: Folge -> Staffel -> Serie. Das Bild der Kategorie (z.B. "Serien" oder "Filme")
+// wird nicht verwendet, sonst hätten alle Medien ohne eigenes Bild dasselbe Kategoriebild.
+function getInheritedPreview(mediaPath) {
+    var exact = getPreviewForMedia(mediaPath, true);
+    if (exact != null) {
+        return exact;
+    }
+    var folders = getMediaFolders(mediaPath);
+    for (var depth = folders.length - 1; depth >= 1; depth--) {
+        var found = findPreviewInFolder(getDataNode(folders.slice(0, depth)), [folders[depth]], false);
+        if (found != null) {
+            return found.startsWith(".") ? found : "." + found;
+        }
+    }
+    return null;
+}
+
 // Ordner eines Medienpfads: ./Serien/Show/S01/x.mp4 -> ["Serien", "Show", "S01"]
 function getMediaFolders(mediaPath) {
     var folders = String(mediaPath).replace(/^\.\//, "").split("/");

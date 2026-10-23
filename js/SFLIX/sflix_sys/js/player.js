@@ -1016,6 +1016,16 @@ function buildPlayerShell(media) {
         ui.center.append(ui.bigPlay, ui.spinner);
         ui.ripple = createPlayerElement("div", "seekRipple");
         shell.append(ui.surface, ui.top, ui.center, ui.ripple);
+    } else {
+        // Musik: Vorschaubild über der Leiste (unscharfe Kopie füllt den Hintergrund)
+        ui.artwork = createPlayerElement("div", "audioArtwork");
+        ui.artwork.hidden = true;
+        ui.artworkBackdrop = createPlayerElement("img", "artworkBackdrop");
+        ui.artworkImage = createPlayerElement("img", "artworkImage");
+        ui.artworkBackdrop.alt = "";
+        ui.artworkImage.alt = "";
+        ui.artwork.append(ui.artworkBackdrop, ui.artworkImage);
+        shell.appendChild(ui.artwork);
     }
 
     // Autoplay-Countdown: "Nächstes in 8 s"
@@ -1290,6 +1300,15 @@ function bindPlayerEvents(ui) {
             ui.pipButton.classList.remove("active");
         });
         bindSurfaceEvents(ui);
+    }
+
+    // Musik: Klick auf das Bild startet oder pausiert (nicht auf den Countdown im Bild)
+    if (ui.isAudio) {
+        ui.artwork.addEventListener("click", function (event) {
+            if (event.target.closest(".autoplayCountdown") == null) {
+                togglePlayback(ui);
+            }
+        });
     }
 
     // Zeitleiste
@@ -1790,7 +1809,62 @@ function onPlayerMediaChanged(media) {
     updateProgress(ui);
     updatePlayButton(ui);
     updatePlayerTitle(document.getElementById("mediaTitle").textContent);
+    updateAudioArtwork(ui);
     showPlayerControls(ui);
+}
+
+// Musik: Vorschaubild des Titels, sonst des Albums/Ordners (wie bei den Kacheln)
+function updateAudioArtwork(ui) {
+    if (!ui.isAudio) {
+        return;
+    }
+    var preview = getPreviewForMedia(ui.media.dataset.mediaPath || "", false);
+    var hasArtwork = preview != null;
+    ui.shell.classList.toggle("hasArtwork", hasArtwork);
+    ui.artwork.hidden = !hasArtwork;
+    // Countdown liegt im Bild (wie beim Video), ohne Bild über der Leiste
+    if (hasArtwork) {
+        ui.artwork.appendChild(ui.countdown);
+    } else {
+        ui.shell.insertBefore(ui.countdown, ui.controls);
+    }
+    ui.artworkToken = (ui.artworkToken || 0) + 1;
+    if (!hasArtwork) {
+        ui.artworkImage.removeAttribute("src");
+        ui.artworkBackdrop.removeAttribute("src");
+        return;
+    }
+    ui.artworkImage.src = preview;
+    ui.artworkBackdrop.src = preview;
+    loadOriginalArtwork(ui, preview, ui.artworkToken);
+}
+
+// updateData.exe verkleinert Vorschaubilder auf 480x270 (sflix_sys/thumbs). Für die grosse
+// Anzeige wird das Original im Preview-Ordner gesucht; bis es geladen ist, bleibt das kleine Bild.
+function loadOriginalArtwork(ui, preview, token) {
+    var match = preview.match(/^\.\/sflix_sys\/thumbs\/(.+)\.jpg$/);
+    if (match == null) {
+        return;
+    }
+    var candidates = ["jpg", "jpeg", "png", "webp", "avif", "gif", "bmp"].map(function (extension) {
+        return "./" + match[1] + "." + extension;
+    });
+    var tryCandidate = function (index) {
+        if (index >= candidates.length || token !== ui.artworkToken) {
+            return;
+        }
+        var probe = new Image();
+        probe.onload = function () {
+            if (token === ui.artworkToken) {
+                ui.artworkImage.src = candidates[index];
+            }
+        };
+        probe.onerror = function () {
+            tryCandidate(index + 1);
+        };
+        probe.src = candidates[index];
+    };
+    tryCandidate(0);
 }
 
 // Umschalten zwischen eigener und Browser-Steuerung

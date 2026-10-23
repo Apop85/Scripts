@@ -148,7 +148,9 @@ function createMediaCard(container, mediaPath, href, options) {
 
     var folders = getMediaFolders(mediaPath);
     // Fotos sind ihr eigenes Vorschaubild (ausser es gibt ein Vorschaubild mit gleichem Namen)
-    var previewSrc = isImage(mediaPath) ? (getPreviewForMedia(mediaPath, true) || mediaPath) : getPreviewForMedia(mediaPath, options.exactPreview);
+    // inheritPreview: ohne eigenes Bild das der Staffel bzw. Serie (nicht das der Kategorie)
+    var previewSrc = isImage(mediaPath) ? (getPreviewForMedia(mediaPath, true) || mediaPath)
+        : (options.inheritPreview ? getInheritedPreview(mediaPath) : getPreviewForMedia(mediaPath, options.exactPreview));
 
     var seen = isVideo(mediaPath) && isSeen(mediaPath);
     var card = createCard(container, {

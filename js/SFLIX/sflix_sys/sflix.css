@@ -1636,10 +1636,11 @@ html.playerCinema .autoplayCountdown {
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     z-index: 9997;
     margin: 0;
-    padding: 10px 0 0 0;
-    background-color: var(--sflix-bg);
+    padding: 0;
+    background-color: black;
 }
 
 #media.fullscreened #toggleFullscreenButton {
@@ -1648,7 +1649,7 @@ html.playerCinema .autoplayCountdown {
 }
 
 #media.fullscreened #playerContainer {
-    height: calc(100vh - 10px);
+    height: 100%;
 }
 
 #media.fullscreened #imageLink {

@@ -64,6 +64,37 @@ function getMediaProgress(mediaPath) {
     return Math.min(1, Math.max(0, position / duration));
 }
 
+// Vorschaubilder erst laden, wenn die Kachel sichtbar wird (oder kurz davor ist).
+// Das eingebaute loading="lazy" lädt in Chrome Bilder weit ausserhalb des sichtbaren
+// Bereichs vor; in langen Menübändern (z.B. 2000 Fotos) sind das Dutzende Bilder auf einmal.
+var cardImageObserver = null;
+
+function loadCardImageWhenVisible(image, src) {
+    if (!window.IntersectionObserver) {
+        image.loading = "lazy";
+        image.src = src;
+        return;
+    }
+    if (cardImageObserver == null) {
+        cardImageObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    cardImageObserver.unobserve(entry.target);
+                    entry.target.src = entry.target.dataset.src;
+                    entry.target.removeAttribute("data-src");
+                }
+            });
+        }, {
+            // oben/unten etwas vorladen; scrollMargin (neuere Browser): in Menübändern
+            // links/rechts etwa eine Kachelbreite vorladen, damit beim Blättern nichts aufblitzt
+            rootMargin: "300px 0px",
+            scrollMargin: "0px 320px"
+        });
+    }
+    image.dataset.src = src;
+    cardImageObserver.observe(image);
+}
+
 // Erstellt eine Kachel. Alle Kacheln sind gleich gross: Vorschau immer 16:9
 // (Bild oder Farbverlauf mit Symbol), Titel max. 2 Zeilen, Untertitel 1 Zeile.
 // options: href, title, subtitle, previewSrc, placeholderIcon, progress (0-1), seed
@@ -80,11 +111,10 @@ function createCard(container, options) {
     if (options.previewSrc) {
         var image = document.createElement("img");
         image.className = "cardImage";
-        image.src = options.previewSrc;
         image.alt = "";
-        image.loading = "lazy";
         image.decoding = "async";
         image.draggable = false;
+        loadCardImageWhenVisible(image, options.previewSrc);
         mediaNode.appendChild(image);
     } else {
         var hue = hashString(options.seed || options.title) % 360;

@@ -1,19 +1,19 @@
 {
   "sflix_sys/data.js": "e7dbe47e02da199c59ab1aa7e25746d6900a05f933ea5fdcdd2ab995379bd70b",
-  "sflix_sys/js/cards.js": "0fa734936c0af9720b1bb77c04a740d975cf6587d4ad83ccbfb7f2e4e1d07890",
+  "sflix_sys/js/cards.js": "be46a749b63c0441d3c69f2d2e7fe532ab848a9b379cbd246409705dde326fc4",
   "sflix_sys/js/core.js": "23602b2f046082f711f61a64600af11d2970113a5f9304ee100a2f9c655d3608",
   "sflix_sys/js/main.js": "d1d6d1b3b840d56aa76b5e92e535a4bfebdd754b2051ec62fd117661f9933930",
   "sflix_sys/js/pages.js": "f783c0b911c049645194737c78d3b83d1dd4c981315556964d03066a78ef795f",
-  "sflix_sys/js/player.js": "ba15f7b8f5564fdd7d03203e4021368421d181af19d3f03ca4a908a8fc422b62",
+  "sflix_sys/js/player.js": "25194368b6d87f8926bc99317cddd512fb9f2c6b3fefa5af4e821386c2c3347f",
   "sflix_sys/js/storage.js": "a8135a2f865768a51053a9757425c72112003f7bdec4cb8b9504bafe00064975",
   "sflix_sys/js/ui.js": "b04ac1bdf6086a22bd14c77942730b56ecf17d0c120cd2210ed875a8bf51f05a",
-  "sflix_sys/sflix.css": "f9de5f0bd49acc2522f5a9f8dc5f0078cd09ab9e0b9f6d6c76648ad06656f6f8",
+  "sflix_sys/sflix.css": "266cedd5e9afbc2f9cf30b3520194c9f79c38eb8e8866855bba501b4de1038db",
   "sflix_sys/sflixLogo.png": "20cf7ab9e23c212f05bd61a921576a83a1c147cb0943a96c03b0912cb6238385",
   "sflix_sys/sflixLogo.svg": "10cfcb85989863a070c8605077718083ddb676db2807a6aa712458e38e048d96",
   "sflix_sys/splash.svg": "a0261448bdafdf6188dfe03504b0bff1a09da778674368088a94220cd13ca0b4",
   "sflix_sys/version.js": "1ef1e19e693f8ea6a513f1c530de93c0e9e79cbbf85e5ed776d32faee24f7d05",
   "start.html": "91457336d4ceb397e0fee1cba5fc09583fc9be2dd48c25676198ca2b9370a950",
-  "updateData.exe": "e71a7bdfa4d6f27f7d680e4bba6486c3dff9300ff18309460c1b8c5e5a46265d",
-  "updateStefflix.exe": "4d2fe4d492aa088bb27af9671d7d28b2d7f1341bd7392f3d039c4daeb481563b",
-  "updater.exe": "fcae75e2781fdadb5d9a8004bf7aec968486e500defd382acd061a29ab2a6fbe"
+  "updateData.exe": "71e4a97ca6114e06b11a08d615e02a2a1615219184ea5fe5e9224dbf4bdcc0cb",
+  "updateStefflix.exe": "70b0f0a065b6869c35847b42bc4b86d427b6f16a14b0f2556ca0c37e9e25acb0",
+  "updater.exe": "130f4d02c34da420d10c23fa62cd454c72d1bd3d9cd12e17e43c21a713af615a"
 }

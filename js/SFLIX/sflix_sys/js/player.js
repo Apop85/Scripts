@@ -604,9 +604,19 @@ function adjustMediaType(mediaUrl, node) {
         return node;
     }
 
-    // Vollbild gilt nur für Videos
-    if (wantedTag != "VIDEO") {
+    // Vollbild beim Wechsel zwischen Bild und Video beibehalten (der Browser bleibt im Vollbild),
+    // Musik hat kein Vollbild
+    if (wantedTag == "IMG" && isCinemaMode()) {
+        document.documentElement.classList.remove("playerCinema");
+        document.getElementById("media").classList.add("fullscreened");
+        document.getElementById("mediaTitle").style.display = "none";
+    } else if (wantedTag == "VIDEO" && isImageFullscreen()) {
+        document.getElementById("media").classList.remove("fullscreened");
+        document.getElementById("mediaTitle").style.display = null;
+        document.documentElement.classList.add("playerCinema");
+    } else if (wantedTag == "AUDIO") {
         exitCinemaMode();
+        setImageFullscreen(false);
     }
     var created = createMediaElement(mediaUrl);
     document.getElementById("playerContainer").replaceChildren(created.wrapper);
@@ -1915,32 +1925,35 @@ function enterCinemaMode() {
         return;
     }
     document.documentElement.classList.add("playerCinema");
-    var root = document.documentElement;
-    var request = root.requestFullscreen || root.webkitRequestFullscreen;
-    // iPhone: keine Vollbild-Schnittstelle, dann bleibt es beim CSS-Vollbild
-    if (request && getFullscreenElement() == null) {
-        try {
-            cinemaRequestedFullscreen = true;
-            var result = request.call(root);
-            if (result && result.catch) {
-                result.catch(function () {
-                    cinemaRequestedFullscreen = false;
-                });
-            }
-        } catch (error) {
-            cinemaRequestedFullscreen = false;
-        }
-    }
+    requestBrowserFullscreen();
     updateFullscreenButton();
     scrollToPlayer(false);
     showPlayerControls(ui);
 }
 
-function exitCinemaMode() {
-    if (!isCinemaMode()) {
+// Schaltet den Browser in den Vollbildmodus (ganze Seite, damit weitergescrollt werden kann).
+// iPhone: keine Vollbild-Schnittstelle, dann bleibt es beim CSS-Vollbild.
+function requestBrowserFullscreen() {
+    var root = document.documentElement;
+    var request = root.requestFullscreen || root.webkitRequestFullscreen;
+    if (!request || getFullscreenElement() != null) {
         return;
     }
-    document.documentElement.classList.remove("playerCinema");
+    try {
+        cinemaRequestedFullscreen = true;
+        var result = request.call(root);
+        if (result && result.catch) {
+            result.catch(function () {
+                cinemaRequestedFullscreen = false;
+            });
+        }
+    } catch (error) {
+        cinemaRequestedFullscreen = false;
+    }
+}
+
+// Beendet den Browser-Vollbildmodus, aber nur wenn STEFFLIX ihn eingeschaltet hat (nicht F11)
+function exitBrowserFullscreen() {
     if (cinemaRequestedFullscreen && getFullscreenElement() != null) {
         var exit = document.exitFullscreen || document.webkitExitFullscreen;
         if (exit) {
@@ -1951,6 +1964,14 @@ function exitCinemaMode() {
         }
     }
     cinemaRequestedFullscreen = false;
+}
+
+function exitCinemaMode() {
+    if (!isCinemaMode()) {
+        return;
+    }
+    document.documentElement.classList.remove("playerCinema");
+    exitBrowserFullscreen();
     updateFullscreenButton();
     if (document.getElementById("video") != null) {
         requestAnimationFrame(function () {
@@ -1968,11 +1989,14 @@ function updateFullscreenButton() {
     setControlButton(ui.fullscreenButton, active ? "fullscreenExit" : "fullscreen", active ? "Vollbild beenden (F)" : "Vollbild (F)");
 }
 
-// Browser-Vollbild beendet (z.B. Escape): CSS-Vollbild ebenfalls beenden
+// Browser-Vollbild beendet (z.B. Escape): Video- bzw. Bild-Vollbild ebenfalls beenden
 function handleFullscreenChange() {
     if (getFullscreenElement() == null && cinemaRequestedFullscreen) {
         cinemaRequestedFullscreen = false;
         exitCinemaMode();
+        if (isImageFullscreen()) {
+            setImageFullscreen(false);
+        }
     } else if (isCinemaMode()) {
         // Fenstergrösse hat sich geändert: Video wieder oben ausrichten
         requestAnimationFrame(function () {
@@ -1992,15 +2016,28 @@ function initPlayerControls() {
     });
 }
 
-// Funktion, um in den Vollbildmodus zu wechseln (Bilder)
+// Vollbild für Bilder: Bild auf der ganzen Fläche, der Browser wechselt ebenfalls in den Vollbildmodus
+function isImageFullscreen() {
+    return document.getElementById("media").classList.contains("fullscreened");
+}
+
 function toggleFullscreenMode() {
+    setImageFullscreen(!isImageFullscreen());
+}
+
+function setImageFullscreen(active) {
     var node = document.getElementById("media");
-    if (!node.classList.contains("fullscreened")) {
+    if (active == isImageFullscreen()) {
+        return;
+    }
+    if (active) {
         node.classList.add("fullscreened");
         document.getElementById("mediaTitle").style.display = "none";
+        requestBrowserFullscreen();
     } else {
         node.classList.remove("fullscreened");
         document.getElementById("mediaTitle").style.display = null;
+        exitBrowserFullscreen();
         setTimeout(function () {
             scrollToPlayer(false);
         }, 400);

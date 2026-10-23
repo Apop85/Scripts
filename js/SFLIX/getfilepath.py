@@ -1,22 +1,23 @@
 import json
 import os
+import subprocess
 import unicodedata
 from datetime import datetime
 
-from sflix_update import DownloadError, download_file, install_file, load_checksums
+from sflix_update import DownloadError, download_file, enter_stefflix_dir, install_file, load_checksums
 
 try:
     from PIL import Image, ImageOps
 except ImportError:
     Image = None
 
-os.chdir(os.getcwd())
-
 print("".center(50, "="))
 print("Update STEFFLIX-Daten".center(50))
 print("".center(50, "="))
 
-homeDir = os.getcwd()
+# Immer im eigenen Ordner arbeiten: updateData benennt Dateien um und darf nie
+# versehentlich einen fremden Ordner (z.B. C:\Windows) durchsuchen
+homeDir = enter_stefflix_dir()
 
 # Muss mit den Listen in sflix_sys/js/core.js übereinstimmen (mediaTypes, musicTypes, imageTypes)
 allowedFileTypes = [
@@ -280,14 +281,15 @@ print("Update abgeschlossen".center(50))
 print(f"{counter} Medien gefunden".center(50))
 print("".center(50, "="))
 
-updaterPath = os.path.join(os.getcwd(), "updater.exe")
+updaterPath = os.path.join(homeDir, "updater.exe")
 if not os.path.exists(updaterPath):
     print("Lade Autoupdater herunter...".ljust(40), end="")
     try:
         install_file(updaterPath, download_file("updater.exe", load_checksums()))
         print("OK")
         print("Updater wird ausgeführt...".ljust(40))
-        os.system(f'"{updaterPath}"')
+        # Direkt starten, nicht über die Kommandozeile (diese kann keine Netzwerkpfade)
+        subprocess.call([updaterPath], cwd=homeDir)
     except (DownloadError, OSError) as error:
         print(f"FEHLER: {error}")
         print()

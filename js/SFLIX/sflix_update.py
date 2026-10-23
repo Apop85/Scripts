@@ -11,8 +11,36 @@ Erst wenn alle Prüfungen bestanden sind, wird die vorhandene Datei ersetzt.
 import hashlib
 import json
 import os
+import sys
 
 import requests
+
+
+def program_dir():
+    """Ordner, in dem das laufende Programm liegt (bei den .exe-Dateien der STEFFLIX-Ordner).
+
+    Das Arbeitsverzeichnis ist dafür nicht zuverlässig: Startet ein Programm ein anderes über
+    die Kommandozeile (z.B. updateStefflix.exe vor 2.00 mit os.system) und liegt STEFFLIX auf
+    einem Netzwerkpfad (\\\\server\\freigabe), setzt Windows das Arbeitsverzeichnis auf C:\\Windows.
+    Beim Ausführen als Python-Skript (Entwicklung, Tests) gilt weiterhin das Arbeitsverzeichnis.
+    """
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(os.path.abspath(sys.executable))
+    return os.getcwd()
+
+
+def enter_stefflix_dir():
+    """Wechselt in den Programmordner und bricht ab, wenn das kein STEFFLIX-Ordner ist
+    (Schutz davor, in einem fremden Ordner Dateien zu installieren oder umzubenennen)."""
+    folder = program_dir()
+    os.chdir(folder)
+    if not os.path.isfile(os.path.join(folder, "start.html")) or not os.path.isdir(os.path.join(folder, "sflix_sys")):
+        print(f"Dieser Ordner ist kein STEFFLIX-Ordner (start.html oder sflix_sys fehlt):\n{folder}")
+        print("Bitte das Programm im STEFFLIX-Ordner starten.")
+        print()
+        input("Enter zum Beenden")
+        sys.exit(1)
+    return folder
 
 RAW_URL = "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/"
 BIN_URL = "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/"

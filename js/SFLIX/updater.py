@@ -2,9 +2,11 @@ import os
 import subprocess
 import sys
 
-from sflix_update import WEB_FILES, remove_obsolete_files, update_files
+from sflix_update import WEB_FILES, enter_stefflix_dir, remove_obsolete_files, update_files
 
-os.chdir(os.getcwd())
+# Eigener Ordner statt Arbeitsverzeichnis: updateStefflix.exe vor 2.00 startet den Updater
+# über die Kommandozeile, die bei Netzwerkpfaden nach C:\Windows ausweicht
+stefflixDir = enter_stefflix_dir()
 
 # Der Updater aktualisiert updateStefflix.exe (sich selbst kann er nicht ersetzen)
 failed = update_files(["updateStefflix.exe"], label="Lade")
@@ -29,10 +31,10 @@ if "--no-pause" in sys.argv:
 
 # Umstieg von einer älteren Version: Medien gleich neu einlesen, damit nur ein
 # Programmaufruf nötig ist. updateData.exe fragt am Ende selbst nach Enter.
-updateDataPath = os.path.join(os.getcwd(), "updateData.exe")
+updateDataPath = os.path.join(stefflixDir, "updateData.exe")
 if missingFiles and not failed and os.path.exists(updateDataPath):
     print()
-    subprocess.call([updateDataPath], cwd=os.getcwd())
+    subprocess.call([updateDataPath], cwd=stefflixDir)
 else:
     print()
     input("Enter zum Beenden")

@@ -1070,8 +1070,10 @@ function buildPlayerShell(media) {
 
     ui.autoplayButton = createControlButton("ctrlAutoplay", "autoplay", "Autoplay");
     ui.settingsButton = createControlButton("ctrlSettings", "gear", "Einstellungen");
-    ui.settingsButton.setAttribute("aria-haspopup", "true");
-    ui.settingsButton.setAttribute("aria-expanded", "false");
+    [ui.autoplayButton, ui.settingsButton].forEach(function (button) {
+        button.setAttribute("aria-haspopup", "true");
+        button.setAttribute("aria-expanded", "false");
+    });
     right.append(ui.autoplayButton, ui.settingsButton);
     if (!isAudio) {
         ui.pipButton = createControlButton("ctrlPip", "pip", "Bild im Bild");
@@ -1083,8 +1085,14 @@ function buildPlayerShell(media) {
     row.append(left, right);
     ui.controls.append(ui.progress, row);
 
-    ui.menu = buildPlayerMenu(ui);
-    shell.append(ui.countdown, ui.controls, ui.menu);
+    // Zwei Menüs: Autoplay (Autoplay-Symbol) und Einstellungen (Zahnrad). Es ist immer nur eines offen.
+    ui.autoplayMenu = buildAutoplayMenu(ui);
+    ui.settingsMenu = buildSettingsMenu(ui);
+    ui.menus = [
+        { menu: ui.autoplayMenu, button: ui.autoplayButton },
+        { menu: ui.settingsMenu, button: ui.settingsButton }
+    ];
+    shell.append(ui.countdown, ui.controls, ui.autoplayMenu, ui.settingsMenu);
 
     playerUI = ui;
     bindPlayerEvents(ui);
@@ -1101,65 +1109,47 @@ function syncPlayerState() {
     updateFullscreenButton();
 }
 
-// Zahnradmenü: Autoplay, Geschwindigkeit, Download, Browser-Steuerung
-function buildPlayerMenu(ui) {
+function createPlayerMenu(label) {
     var menu = createPlayerElement("div", "playerMenu");
     menu.hidden = true;
     menu.setAttribute("role", "dialog");
-    menu.setAttribute("aria-label", "Player-Einstellungen");
+    menu.setAttribute("aria-label", label);
+    return menu;
+}
 
-    var addSwitch = function (label, hint) {
-        var row = createPlayerElement("label", "settingRow");
-        var text = createPlayerElement("span", null, label);
-        if (hint) {
-            text.appendChild(createPlayerElement("small", null, hint));
-        }
-        var input = createPlayerElement("input");
-        input.type = "checkbox";
-        row.append(text, input);
-        menu.appendChild(row);
-        return input;
-    };
-    var addNumber = function (label) {
-        var row = createPlayerElement("label", "settingRow");
-        var input = createPlayerElement("input");
-        input.type = "number";
-        input.min = "0";
-        row.append(createPlayerElement("span", null, label), input);
-        menu.appendChild(row);
-        return input;
-    };
+function addMenuSwitch(menu, label, hint) {
+    var row = createPlayerElement("label", "settingRow");
+    var text = createPlayerElement("span", null, label);
+    if (hint) {
+        text.appendChild(createPlayerElement("small", null, hint));
+    }
+    var input = createPlayerElement("input");
+    input.type = "checkbox";
+    row.append(text, input);
+    menu.appendChild(row);
+    return input;
+}
 
+function addMenuNumber(menu, label) {
+    var row = createPlayerElement("label", "settingRow");
+    var input = createPlayerElement("input");
+    input.type = "number";
+    input.min = "0";
+    row.append(createPlayerElement("span", null, label), input);
+    menu.appendChild(row);
+    return input;
+}
+
+// Autoplay-Menü (Klick auf das Autoplay-Symbol). Änderungen gelten sofort und
+// landen in denselben Einstellungen wie im Fenster "Autoplay" des Hauptmenüs.
+function buildAutoplayMenu(ui) {
+    var menu = createPlayerMenu("Autoplay-Einstellungen");
     menu.appendChild(createPlayerElement("div", "playerMenuHeading", "Autoplay"));
-    ui.menuAutoplay = addSwitch("Automatisch vorwärts");
-    ui.menuInfinite = addSwitch("Unbegrenzt", "Bis zum Ende der Playliste");
-    ui.menuAmount = addNumber("Anzahl abzuspielender Medien");
-    ui.menuDuration = addNumber("Dauer bis Übergang (Sekunden)");
+    ui.menuAutoplay = addMenuSwitch(menu, "Automatisch vorwärts");
+    ui.menuInfinite = addMenuSwitch(menu, "Unbegrenzt", "Bis zum Ende der Playliste");
+    ui.menuAmount = addMenuNumber(menu, "Anzahl abzuspielender Medien");
+    ui.menuDuration = addMenuNumber(menu, "Dauer bis Übergang (Sekunden)");
 
-    menu.appendChild(createPlayerElement("div", "playerMenuHeading", "Geschwindigkeit"));
-    ui.speedButtons = [];
-    var speedRow = createPlayerElement("div", "speedOptions");
-    speedRow.setAttribute("role", "group");
-    speedRow.setAttribute("aria-label", "Wiedergabegeschwindigkeit");
-    playbackRates.forEach(function (rate) {
-        var button = createPlayerElement("button", "speedOption", String(rate).replace(".", ",") + "x");
-        button.type = "button";
-        button.dataset.rate = rate;
-        button.addEventListener("click", function () {
-            ui.media.playbackRate = rate;
-        });
-        ui.speedButtons.push(button);
-        speedRow.appendChild(button);
-    });
-    menu.appendChild(speedRow);
-
-    menu.appendChild(createPlayerElement("div", "playerMenuHeading", "Weitere"));
-    ui.downloadLink = createPlayerElement("a", "playerMenuLink");
-    ui.downloadLink.append(createIcon("download"), createPlayerElement("span", null, "Herunterladen"));
-    menu.appendChild(ui.downloadLink);
-    ui.menuNative = addSwitch("Browser-Steuerung verwenden", "Statt der STEFFLIX-Steuerung");
-
-    // Änderungen gelten sofort und landen in denselben Einstellungen wie im Fenster "Einstellungen"
     ui.menuAutoplay.addEventListener("change", function () {
         document.getElementById("autoplayCheckBox").checked = ui.menuAutoplay.checked;
         checkAutoplayAmount();
@@ -1183,6 +1173,35 @@ function buildPlayerMenu(ui) {
         document.getElementById("autoplayDuration").value = Math.max(0, parseInt(ui.menuDuration.value) || 0);
         commitAutoplaySettings();
     });
+    return menu;
+}
+
+// Zahnradmenü: Geschwindigkeit, Download, Browser-Steuerung
+function buildSettingsMenu(ui) {
+    var menu = createPlayerMenu("Player-Einstellungen");
+    menu.appendChild(createPlayerElement("div", "playerMenuHeading", "Geschwindigkeit"));
+    ui.speedButtons = [];
+    var speedRow = createPlayerElement("div", "speedOptions");
+    speedRow.setAttribute("role", "group");
+    speedRow.setAttribute("aria-label", "Wiedergabegeschwindigkeit");
+    playbackRates.forEach(function (rate) {
+        var button = createPlayerElement("button", "speedOption", String(rate).replace(".", ",") + "x");
+        button.type = "button";
+        button.dataset.rate = rate;
+        button.addEventListener("click", function () {
+            ui.media.playbackRate = rate;
+        });
+        ui.speedButtons.push(button);
+        speedRow.appendChild(button);
+    });
+    menu.appendChild(speedRow);
+
+    menu.appendChild(createPlayerElement("div", "playerMenuHeading", "Weitere"));
+    ui.downloadLink = createPlayerElement("a", "playerMenuLink");
+    ui.downloadLink.append(createIcon("download"), createPlayerElement("span", null, "Herunterladen"));
+    menu.appendChild(ui.downloadLink);
+    ui.menuNative = addMenuSwitch(menu, "Browser-Steuerung verwenden", "Statt der STEFFLIX-Steuerung");
+
     ui.menuNative.addEventListener("change", function () {
         setNativeControls(ui.menuNative.checked);
     });
@@ -1226,10 +1245,6 @@ function bindPlayerEvents(ui) {
         media.muted = volume == 0;
     });
 
-    // Autoplay-Anzeige: Klick schaltet Autoplay ein oder aus
-    ui.autoplayButton.addEventListener("click", function () {
-        setAutoplayFromPlayer(!document.getElementById("autoplayCheckBox").checked);
-    });
     ui.countdownNext.addEventListener("click", function () {
         clickNavigation("next");
     });
@@ -1237,13 +1252,23 @@ function bindPlayerEvents(ui) {
         setAutoplayFromPlayer(false);
     });
 
-    // Zahnradmenü
-    ui.settingsButton.addEventListener("click", function () {
-        togglePlayerMenu(ui, ui.menu.hidden);
+    // Autoplay-Symbol öffnet das Autoplay-Menü, das Zahnrad die übrigen Einstellungen
+    ui.menus.forEach(function (entry) {
+        entry.button.addEventListener("click", function () {
+            togglePlayerMenu(ui, entry.menu, entry.menu.hidden);
+        });
     });
+    // Klick neben das Menü schliesst es. Der Klick selbst wird verschluckt, damit z.B. auf dem
+    // Handy nicht die Kachel unter dem abgedunkelten Hintergrund geöffnet wird.
+    // Die Menüknöpfe selbst wechseln direkt zum anderen Menü.
     document.addEventListener("pointerdown", function (event) {
-        if (!ui.menu.hidden && !ui.menu.contains(event.target) && !ui.settingsButton.contains(event.target)) {
-            togglePlayerMenu(ui, false);
+        var open = getOpenPlayerMenu(ui);
+        var onMenuButton = ui.menus.some(function (entry) {
+            return entry.button.contains(event.target);
+        });
+        if (open != null && !open.menu.contains(event.target) && !onMenuButton) {
+            closePlayerMenus(ui);
+            swallowNextClick();
         }
     });
 
@@ -1334,8 +1359,8 @@ function bindSurfaceEvents(ui) {
         if (Date.now() - ui.lastTouchTime < 800) {
             return;
         }
-        if (!ui.menu.hidden) {
-            togglePlayerMenu(ui, false);
+        if (isPlayerMenuOpen(ui)) {
+            closePlayerMenus(ui);
             return;
         }
         if (event.detail > 1) {
@@ -1359,8 +1384,8 @@ function bindSurfaceEvents(ui) {
             return;
         }
         ui.lastTouchTime = Date.now();
-        if (!ui.menu.hidden) {
-            togglePlayerMenu(ui, false);
+        if (isPlayerMenuOpen(ui)) {
+            closePlayerMenus(ui);
             return;
         }
         var rect = surface.getBoundingClientRect();
@@ -1514,7 +1539,7 @@ function showPlayerControls(ui) {
 
 function hidePlayerControls(ui) {
     // Audio: Leiste bleibt immer sichtbar. Pausiert oder bei offenem Menü ebenfalls.
-    if (ui.isAudio || ui.media.paused || ui.dragging || !ui.menu.hidden) {
+    if (ui.isAudio || ui.media.paused || ui.dragging || isPlayerMenuOpen(ui)) {
         return;
     }
     ui.shell.classList.remove("controlsVisible");
@@ -1540,13 +1565,18 @@ function revealPlayerControls() {
     showPlayerControls(getPlayerUI());
 }
 
-function togglePlayerMenu(ui, open) {
+// Öffnet "menu" (und schliesst das andere) oder schliesst bei open=false alle Menüs
+function togglePlayerMenu(ui, menu, open) {
     if (open) {
         refreshPlayerMenu(ui);
     }
-    ui.menu.hidden = !open;
-    ui.settingsButton.classList.toggle("active", open);
-    ui.settingsButton.setAttribute("aria-expanded", open ? "true" : "false");
+    ui.menus.forEach(function (entry) {
+        var show = open && entry.menu === menu;
+        entry.menu.hidden = !show;
+        entry.button.classList.toggle("menuActive", show);
+        entry.button.setAttribute("aria-expanded", show ? "true" : "false");
+    });
+    ui.shell.classList.toggle("menuOpen", open);
     if (open) {
         showPlayerControls(ui);
     } else {
@@ -1554,18 +1584,48 @@ function togglePlayerMenu(ui, open) {
     }
 }
 
+function closePlayerMenus(ui) {
+    togglePlayerMenu(ui, null, false);
+}
+
+// Offenes Menü als { menu, button } oder null
+function getOpenPlayerMenu(ui) {
+    return ui.menus.filter(function (entry) {
+        return !entry.menu.hidden;
+    })[0] || null;
+}
+
+function isPlayerMenuOpen(ui) {
+    return getOpenPlayerMenu(ui) != null;
+}
+
+// Verschluckt den nächsten Klick (kurz nach dem Schliessen des Menüs)
+function swallowNextClick() {
+    var handler = function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        remove();
+    };
+    var remove = function () {
+        document.removeEventListener("click", handler, true);
+    };
+    document.addEventListener("click", handler, true);
+    setTimeout(remove, 600);
+}
+
 // Für die Escape-Taste
 function closePlayerMenu() {
     var ui = getPlayerUI();
-    if (ui == null || ui.menu.hidden) {
+    var open = ui == null ? null : getOpenPlayerMenu(ui);
+    if (open == null) {
         return false;
     }
-    togglePlayerMenu(ui, false);
-    ui.settingsButton.focus();
+    closePlayerMenus(ui);
+    open.button.focus();
     return true;
 }
 
-// Überträgt die Einstellungen ins Zahnradmenü
+// Überträgt die Einstellungen ins Autoplay- und Zahnradmenü
 function refreshPlayerMenu(ui) {
     if (ui == null) {
         return;
@@ -1672,15 +1732,15 @@ function updatePlayerAutoplayState() {
         return;
     }
     var enabled = document.getElementById("autoplayCheckBox").checked;
+    // "active" = Autoplay an (Symbol hell), "menuActive" = Menü offen
     ui.autoplayButton.classList.toggle("active", enabled);
-    ui.autoplayButton.setAttribute("aria-pressed", enabled ? "true" : "false");
-    var label = enabled ? "Autoplay ist an (ausschalten)" : "Autoplay ist aus (einschalten)";
+    var label = (enabled ? "Autoplay ist an" : "Autoplay ist aus") + " (Einstellungen)";
     ui.autoplayButton.setAttribute("aria-label", label);
     ui.autoplayButton.title = label;
     if (!enabled) {
         hideAutoplayCountdown();
     }
-    if (!ui.menu.hidden) {
+    if (isPlayerMenuOpen(ui)) {
         refreshPlayerMenu(ui);
     }
 }
@@ -1738,7 +1798,7 @@ function applyNativeControls(ui, enabled) {
     ui.media.controls = enabled;
     ui.shell.classList.toggle("nativeControls", enabled);
     if (enabled) {
-        togglePlayerMenu(ui, false);
+        closePlayerMenus(ui);
     }
 }
 

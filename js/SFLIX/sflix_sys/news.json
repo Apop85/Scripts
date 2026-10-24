@@ -38,6 +38,10 @@
           "text": "Smartphones: kompaktere Player-Leiste, die Player-Menüs öffnen sich als Leiste vom unteren Bildschirmrand."
         },
         {
+          "type": "INTERFACE",
+          "text": "Der Titel im Player lässt den vorangestellten Seriennamen weg (z.B. \"S01E01 - Folgentitel\" statt \"Die Simpsons - S01E01 - Folgentitel\"). Kacheln, Suche und Favoriten zeigen weiterhin den vollen Namen."
+        },
+        {
           "type": "FEATURE",
           "text": "Die bisherige Browser-Steuerung lässt sich im Menü unter \"Autoplay\" oder im Zahnradmenü wieder einschalten."
         },

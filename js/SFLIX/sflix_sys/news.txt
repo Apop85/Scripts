@@ -11,6 +11,7 @@
     <li>[<span style="color: red">FEATURE</span>] Neues Video-Vollbild: Das Video füllt den Bildschirm, darunter kann weitergescrollt und ein anderes Medium gewählt werden. Kopfzeile und Pfadleiste werden ausgeblendet, im Video wird der Titel angezeigt.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Bilder im Vollbild: Der Browser wechselt ebenfalls in den Vollbildmodus, das Bild nutzt die ganze Fläche auf schwarzem Hintergrund. Wechselt eine Diashow im Vollbild zwischen Bild und Video, bleibt der Vollbildmodus erhalten.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Smartphones: kompaktere Player-Leiste, die Player-Menüs öffnen sich als Leiste vom unteren Bildschirmrand.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Der Titel im Player lässt den vorangestellten Seriennamen weg (z.B. "S01E01 - Folgentitel" statt "Die Simpsons - S01E01 - Folgentitel"). Kacheln, Suche und Favoriten zeigen weiterhin den vollen Namen.</li>
     <li>[<span style="color: red">FEATURE</span>] Die bisherige Browser-Steuerung lässt sich im Menü unter "Autoplay" oder im Zahnradmenü wieder einschalten.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Das Fenster "Autoplay" im Menü enthält zusätzlich die Player-Einstellungen. Neuer Abschnitt "Player" in der Hilfe.</li>
     <li>[OPTIMIERUNG] Die Lautstärke wird sofort gespeichert (bisher nur alle 10 Sekunden während der Wiedergabe).</li>

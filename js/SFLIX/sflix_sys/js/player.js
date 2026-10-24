@@ -531,9 +531,29 @@ function updateViewerArrows() {
 // Funktion zum Aktualisieren des Medientitels
 function updateMediaTitle(mediaName) {
     var title = document.getElementById("mediaTitle");
-    title.textContent = stripExtension(mediaName);
+    var playerTitle = getPlayerTitle(currentMediaLocation, stripExtension(mediaName));
+    title.textContent = playerTitle;
+    // Browser-Tab mit vollem Namen
     document.title = "STEFFLIX - " + stripExtension(mediaName);
-    updatePlayerTitle(stripExtension(mediaName));
+    updatePlayerTitle(playerTitle);
+}
+
+// Titel im Player ohne vorangestellten Serien- bzw. Ordnernamen (steht schon in der Pfadleiste):
+// "Die Simpsons - S01E01 - Folgentitel" -> "S01E01 - Folgentitel". Der Kategorieordner
+// (z.B. "Serien") zählt nicht. Ohne Bindestrich nach dem Namen bleibt der Titel unverändert.
+function getPlayerTitle(mediaPath, name) {
+    var folders = getMediaFolders(mediaPath || "");
+    for (var depth = folders.length - 1; depth >= 1; depth--) {
+        var prefix = folders[depth];
+        if (name.length > prefix.length && name.toLowerCase().startsWith(prefix.toLowerCase())) {
+            var after = name.slice(prefix.length);
+            var rest = after.replace(/^\s*-\s*/, "");
+            if (rest !== after && rest.trim() !== "") {
+                return rest;
+            }
+        }
+    }
+    return name;
 }
 
 // Scrollt so, dass der Player direkt unter der Kopfzeile steht

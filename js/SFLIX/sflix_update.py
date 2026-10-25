@@ -1,8 +1,10 @@
-"""Gemeinsame Download- und Prüffunktionen für setup, updater, updateStefflix und updateData.
+"""Dateiliste und Prüffunktionen für das Release (create_checksums.py, check_release.py).
 
 Ab Version 3.0 ist updateStefflix.exe der STEFFLIX Updater mit Oberfläche (C#, Quellcode in
-"SFLIX Tools\\SflixTools"). Er wird nicht mehr aus updateStefflix.py gebaut. updater.exe und
-updateData.exe werden nur noch für den Umstieg älterer Installationen bereitgestellt.
+"SFLIX Tools\\SflixTools"). updater.exe, updateData.exe und setup.exe sind eingefroren und werden
+nur noch für den Umstieg älterer Installationen bereitgestellt. Ihre Python-Quellen (updater.py,
+getfilepath.py, setup.py) liegen nicht mehr in diesem Ordner. Die Download-Funktionen unten
+waren in diese Programme eingebaut und bleiben als Referenz für deren Verhalten erhalten.
 
 Jede heruntergeladene Datei wird geprüft:
   1. HTTP-Status 200 und nicht leer
@@ -90,7 +92,7 @@ INSTALL_FILES = [name for name in FILES if name not in RELEASE_ONLY_FILES]
 SCRIPT_FILES = [name for name in FILES if name.startswith("sflix_sys/js/")]
 
 # Dateien der Weboberfläche, die in jeder Installation vorhanden sein müssen
-# (data.js erzeugt updateData.exe, die Programme aktualisieren sich gegenseitig)
+# (data.js erzeugt "Daten einlesen" bzw. updateData.exe, die Programme aktualisieren sich selbst)
 WEB_FILES = [name for name in INSTALL_FILES if not name.endswith(".exe") and name != "sflix_sys/data.js"]
 
 # Dateien früherer Versionen, die nach einem erfolgreichen Update gelöscht werden

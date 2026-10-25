@@ -127,7 +127,7 @@
         </div>
     </div>
     <script src="sflix_sys/data.js"></script>
-    <!-- Von updateData.exe erstellt: umbenannte Dateien (fehlt bei Erstinstallation, wird dann ignoriert) -->
+    <!-- Von updateStefflix.exe (Daten einlesen) erstellt: umbenannte Dateien (fehlt bei Erstinstallation, wird dann ignoriert) -->
     <script src="sflix_sys/renamed.js"></script>
     <script src="sflix_sys/version.js"></script>
     <link rel="stylesheet" href="sflix_sys/sflix.css" type="text/css">
@@ -202,11 +202,11 @@
         <a class="closeButton" id="toggleFullscreenButton" style="display: none;" aria-label="Vollbild beenden" onclick="toggleFullscreenMode()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></a>
         <div id="help" style="display: none;">
             <h3>Neue Medien hinzufügen</h3>
-            <p>Neue Filme, Serien, Musik oder Bilder werden in den passenden Ordner im STEFFLIX-Verzeichnis kopiert. Danach liest <span class="highlighted">updateData.exe</span> die Medien neu ein, und sie erscheinen in STEFFLIX.</p>
+            <p>Neue Filme, Serien, Musik oder Bilder werden in den passenden Ordner im STEFFLIX-Verzeichnis kopiert. Danach liest <span class="highlighted">updateStefflix.exe</span> die Medien mit der Aufgabe "Daten einlesen" neu ein, und sie erscheinen in STEFFLIX.</p>
             <ol>
                 <li>Medien in den passenden Unterordner kopieren, z.B. <span class="highlighted">Serien\Meine Serie\Staffel 1</span>.</li>
-                <li>Optional ein Vorschaubild hinterlegen (siehe unten).</li>
-                <li><span class="highlighted">updateData.exe</span> ausführen.</li>
+                <li>Optional ein Vorschaubild hinterlegen (siehe unten). Für Videos kann der Updater mit "Vorschaubilder erstellen" auch selbst eines erzeugen.</li>
+                <li><span class="highlighted">updateStefflix.exe</span> starten, "Daten einlesen" auswählen und ausführen.</li>
             </ol>
             <details class="helpDetails">
                 <summary>Unterstützte Dateiformate</summary>
@@ -215,11 +215,11 @@
                     <li>Musik: mp3, m4a, ogg, oga, opus, aac, flac, wav</li>
                     <li>Bilder: jpg, jpeg, png, gif, webp, avif, bmp</li>
                 </ul>
-                <p>Gross- und Kleinschreibung der Dateiendung spielt keine Rolle (JPG = jpg). Videos in anderen Formaten lassen sich zum Beispiel <a href="https://praxistipps.chip.de/mit-vlc-dateien-umwandeln-so-gehts_35221">mit VLC umwandeln</a>.</p>
+                <p>Gross- und Kleinschreibung der Dateiendung spielt keine Rolle (JPG = jpg). Videos in anderen Formaten (z.B. mkv oder avi) wandelt der Updater mit "Videos für SFLIX konvertieren" in passende MP4-Dateien um.</p>
             </details>
             <details class="helpDetails">
                 <summary>Vorschaubilder (Preview-Ordner)</summary>
-                <p>Vorschaubilder liegen in einem Ordner namens <span class="highlighted">Preview</span>, und zwar im selben Verzeichnis wie das Medium oder der Ordner, zu dem sie gehören. Das Bild heisst gleich wie das Medium bzw. der Ordner (Endung jpg, png oder webp). <span class="highlighted">updateData.exe</span> schneidet zu grosse Bilder auf 480x270 zu, damit sie schneller laden. Das Original bleibt daneben mit der zusätzlichen Endung <span class="highlighted">.original</span> erhalten (z.B. Show.jpg.original). Ohne Vorschaubild zeigt STEFFLIX eine farbige Kachel.</p>
+                <p>Vorschaubilder liegen in einem Ordner namens <span class="highlighted">Preview</span>, und zwar im selben Verzeichnis wie das Medium oder der Ordner, zu dem sie gehören. Das Bild heisst gleich wie das Medium bzw. der Ordner (Endung jpg, png oder webp). Beim Einlesen der Daten schneidet <span class="highlighted">updateStefflix.exe</span> zu grosse Bilder auf 480x270 zu, damit sie schneller laden (webp-Bilder bleiben unverändert). Das Original wird mit gleichem Namen im Unterordner <span class="highlighted">Preview\__original</span> aufbewahrt. Ohne Vorschaubild zeigt STEFFLIX eine farbige Kachel.</p>
                 <pre class="folderTree">D:\sflix\Bilder
 ├── Buddy
 ├── Natur
@@ -293,7 +293,24 @@
             </div>
 
             <h3 id="stefflixUpdate">STEFFLIX aktualisieren</h3>
-            <p>Für ein Update <span class="highlighted">updateStefflix.exe</span> im STEFFLIX-Ordner ausführen. Es lädt die neue Version herunter und startet danach automatisch <span class="highlighted">updateData.exe</span>, das die Medien neu einliest.</p>
+            <p>Für ein Update <span class="highlighted">updateStefflix.exe</span> im STEFFLIX-Ordner starten, die Aufgaben "Update" und "Daten einlesen" auswählen und ausführen. Der Updater lädt die neue Version herunter und liest danach die Medien neu ein. Er hält sich auch selbst aktuell und meldet beim Start, wenn eine neue Version bereitsteht.</p>
+            <details class="helpDetails">
+                <summary>Aufgaben des Updaters</summary>
+                <p>Die ausgewählten Aufgaben laufen immer in dieser Reihenfolge ab:</p>
+                <ul class="helpOptions">
+                    <li><b>Update</b>: STEFFLIX-Dateien und den Updater selbst von GitHub aktualisieren. Installiert wird nur, wenn alle Dateien vollständig und gültig heruntergeladen wurden.</li>
+                    <li><b>Ablagen leeren</b>: Die Ablageordner der Werkzeuge (Ordner, deren Name mit __ beginnt, z.B. __teile, __konvertiert, __gelöscht und __original) endgültig löschen. Vorher wird angezeigt, was gelöscht wird.</li>
+                    <li><b>Gesplittete Medien zusammenführen</b>: Videos wie "Titel pt1" und "Titel pt2" zu einer Datei zusammenfügen. Die Teile werden vorher in einer Liste ausgewählt, auf Wunsch wird neu kodiert. Die Teile können danach nach __teile verschoben werden.</li>
+                    <li><b>Videos für SFLIX konvertieren</b>: Videos in browserkompatible MP4 (H.264/AAC) umwandeln. Die MP4 ersetzt das Original im selben Ordner, das Original kommt nach __konvertiert (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.</li>
+                    <li><b>Vorschaubilder erstellen</b>: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach Preview\__gelöscht.</li>
+                    <li><b>Daten einlesen</b>: Medien neu einlesen, ungültige Zeichen in Datei- und Ordnernamen korrigieren und zu grosse Vorschaubilder verkleinern. Ordner, deren Name mit __ beginnt, werden ignoriert.</li>
+                </ul>
+                <p>Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren arbeiten im eingestellten Medienordner (Standard: der STEFFLIX-Ordner). Das dafür nötige Programm ffmpeg lädt der Updater beim ersten Bedarf selbst herunter.</p>
+            </details>
+            <details class="helpDetails">
+                <summary>STEFFLIX neu installieren</summary>
+                <p>Wird <span class="highlighted">updateStefflix.exe</span> ausserhalb eines STEFFLIX-Ordners gestartet, bietet sie die Installation von STEFFLIX in einen neuen Ordner an. Sie lädt alle Dateien herunter und kopiert sich selbst in den neuen Ordner.</p>
+            </details>
             <dl class="versionInfo">
                 <dt>Installierte Version</dt><dd id="versionNow"></dd>
                 <dt>Neueste Version</dt><dd id="versionNew"></dd>

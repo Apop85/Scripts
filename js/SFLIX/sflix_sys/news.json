@@ -1,14 +1,53 @@
 {
-  "knownBugs": [
-    {
-      "type": "BUG",
-      "text": "Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem."
-    }
-  ],
+  "knownBugs": [],
   "versions": [
     {
       "version": "2.02",
       "items": [
+        {
+          "type": "FEATURE",
+          "text": "Neuer Updater: updateStefflix.exe ist jetzt ein Programm mit eigener Oberfläche im STEFFLIX-Design und ersetzt updateStefflix.exe, updater.exe, updateData.exe und setup.exe. Die nicht mehr benötigten updater.exe und updateData.exe werden beim Update automatisch entfernt."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Durch den neuen Updater wurde die Performance deutlich verbessert."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Die Aufgaben \"Update\", \"Ablagen leeren\", \"Gesplittete Medien zusammenführen\", \"Videos für SFLIX konvertieren\", \"Vorschaubilder erstellen\" und \"Daten einlesen\" lassen sich einzeln auswählen und laufen in dieser Reihenfolge nacheinander ab."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Der Updater aktualisiert sich selbst. Beim Start prüft er im Hintergrund, ob eine neue Version vorhanden ist."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Wird updateStefflix.exe ausserhalb eines STEFFLIX-Ordners gestartet, bietet sie die Installation von STEFFLIX in einen neuen Ordner an."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: \"Vorschaubilder erstellen\" erzeugt für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner. Vorhandene Vorschaubilder bleiben unverändert, Bilder ohne zugehöriges Video werden nach Preview\\__gelöscht verschoben."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: \"Gesplittete Medien zusammenführen\" fügt aufgeteilte Videos zu einer Datei zusammen. Die Teile werden in einer Liste ausgewählt, auf Wunsch wird passend zum Dateiformat neu kodiert."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: \"Videos für SFLIX konvertieren\" wandelt Videos in browserkompatible MP4 (H.264/AAC) um. Die MP4 ersetzt das Original im selben Ordner, das Original wird nach __konvertiert verschoben (oder auf Wunsch gelöscht). Die Grafikkarte wird automatisch erkannt und genutzt, bei Problemen wird mit dem Prozessor konvertiert."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: \"Ablagen leeren\" löscht die Ablageordner der Werkzeuge (Ordner, deren Name mit __ beginnt, z.B. __konvertiert oder Preview\\__original) nach einer Bestätigung endgültig. Diese Ordner werden auch beim Einlesen der Daten ignoriert."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Der Medienordner für Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren ist einstellbar. Das für die Videobearbeitung benötigte ffmpeg wird beim ersten Bedarf automatisch heruntergeladen und geprüft."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "\"Daten einlesen\" verkleinert zu grosse Vorschaubilder direkt im Preview-Ordner auf 480x270. Das Original wird mit gleichem Namen im Unterordner Preview\\__original aufbewahrt, WebP-Bilder bleiben unverändert. \"Ablagen leeren\" löscht diese Originale bei Bedarf. Der Ordner sflix_sys\\thumbs wird nicht mehr benötigt und automatisch entfernt."
+        },
         {
           "type": "OPTIMIERUNG",
           "text": "Schnellerer Bildwechsel: Das nächste und das vorherige Bild werden im Hintergrund vorgeladen, sobald das aktuelle Bild angezeigt wird. Das gilt auch für die Zufallswiedergabe, deren nächstes Bild bereits feststeht."
@@ -16,10 +55,6 @@
         {
           "type": "BUGFIX",
           "text": "\"Zufällig abspielen\" nahm auch die Vorschaubilder der Ordner (Preview-Ordner) in die Playliste auf."
-        },
-        {
-          "type": "OPTIMIERUNG",
-          "text": "updateData.exe verkleinert zu grosse Vorschaubilder direkt im Preview-Ordner auf 480x270. Das Original bleibt daneben als \"<Dateiname>.original\" erhalten (z.B. \"Show.jpg.original\"). Der Ordner sflix_sys\\thumbs wird nicht mehr benötigt und beim nächsten Durchlauf entfernt."
         }
       ]
     },

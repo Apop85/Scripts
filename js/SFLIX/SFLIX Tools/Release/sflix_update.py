@@ -1,10 +1,13 @@
 """Dateiliste und Prüffunktionen für das Release (create_checksums.py, check_release.py).
 
 Ab Version 3.0 ist updateStefflix.exe der STEFFLIX Updater mit Oberfläche (C#, Quellcode in
-"SFLIX Tools\\SflixTools"). updater.exe, updateData.exe und setup.exe sind eingefroren und werden
-nur noch für den Umstieg älterer Installationen bereitgestellt. Ihre Python-Quellen (updater.py,
-getfilepath.py, setup.py) liegen nicht mehr in diesem Ordner. Die Download-Funktionen unten
-waren in diese Programme eingebaut und bleiben als Referenz für deren Verhalten erhalten.
+"SFLIX Tools\\SflixTools"). Er installiert auch, setup.exe gibt es nicht mehr. updater.exe und
+updateData.exe sind eingefroren und werden nur noch für den Umstieg älterer Installationen
+bereitgestellt. Ihre Python-Quellen (updater.py, getfilepath.py) liegen nicht mehr hier. Die
+Download-Funktionen unten waren in diese Programme eingebaut und bleiben als Referenz erhalten.
+
+Die Release-Skripte liegen in "SFLIX Tools\\Release". Der Release-Ordner (start.html,
+sflix_sys, die Programme, checksums.json) liegt zwei Ebenen darüber: RELEASE_DIR.
 
 Jede heruntergeladene Datei wird geprüft:
   1. HTTP-Status 200 und nicht leer
@@ -21,6 +24,8 @@ import sys
 
 import requests
 
+# Release-Ordner (dieses Skript liegt in <Release-Ordner>\SFLIX Tools\Release)
+RELEASE_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 
 def program_dir():
     """Ordner, in dem das laufende Programm liegt (bei den .exe-Dateien der STEFFLIX-Ordner).

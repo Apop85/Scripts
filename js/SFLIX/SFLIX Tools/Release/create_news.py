@@ -10,8 +10,9 @@ import os
 import re
 import sys
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
-source = sys.argv[1] if len(sys.argv) > 1 else os.path.join(base_dir, "sflix_sys", "news.txt")
+# Release-Ordner: dieses Skript liegt in <Release-Ordner>\SFLIX Tools\Release
+base_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+source =sys.argv[1] if len(sys.argv) > 1 else os.path.join(base_dir, "sflix_sys", "news.txt")
 target = sys.argv[2] if len(sys.argv) > 2 else os.path.join(base_dir, "sflix_sys", "news.json")
 
 result = {"knownBugs": [], "versions": []}

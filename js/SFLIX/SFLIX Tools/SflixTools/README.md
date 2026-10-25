@@ -36,7 +36,20 @@ Das Ergebnis ist `dist\updateStefflix.exe` (rund 0,2 MB). Benötigt wird nur .NE
 
 ## Neue Version veröffentlichen
 
-Im Ordner `C:\Users\rbald\Documents\SFLIX` **`build_release.bat` doppelklicken** (startet `release.ps1`). Das Skript fragt alles Nötige ab, Enter übernimmt jeweils den Vorschlag:
+Ordnerstruktur:
+
+```
+SFLIX\                        Release-Ordner (wird gepusht)
+├── README.md, start.html, updateStefflix.exe, updater.exe, updateData.exe
+├── checksums.json, ffmpeg.json   (müssen hier liegen: die Updater laden sie von hier)
+├── sflix_sys\
+└── SFLIX Tools\
+    ├── Release\              build_release.bat, release.ps1, check_release.py,
+    │                         create_checksums.py, create_news.py, sflix_update.py
+    └── SflixTools\           dieses Projekt (Quellcode des Updaters)
+```
+
+**`SFLIX Tools\Release\build_release.bat` doppelklicken** (startet `release.ps1`). Die Skripte arbeiten immer auf dem Release-Ordner zwei Ebenen darüber, egal von wo sie gestartet werden. Das Skript fragt alles Nötige ab, Enter übernimmt jeweils den Vorschlag:
 
 1. **Updater:** Hat sich der Quellcode hier seit dem letzten Release geändert, schlägt es vor, ihn zu bauen. Die Versionsnummer wird automatisch um eins erhöht (z.B. 3.0.4 → 3.0.5) und kann vor dem Bauen geändert werden. Danach wird `updateStefflix.exe` gebaut und nach `SFLIX` kopiert. Schlägt der Build fehl, wird die Versionsnummer zurückgesetzt.
 2. **ffmpeg:** Gibt es eine neuere stabile ffmpeg-Version, kann `ffmpeg.json` darauf gesetzt werden.
@@ -49,6 +62,8 @@ Danach nur noch pushen. Optionen: `build_release.bat -Auto` übernimmt alle Vors
 Welcher Quellcode-Stand zuletzt bereitgestellt wurde, steht in `release_state.json` (hier im Projekt). Das Selbst-Update installiert nur Versionen, die **höher** sind als die laufende. Das Skript warnt, wenn eine eingegebene Version nicht höher ist.
 
 `tools\publish.ps1` wird für diesen Ablauf nicht mehr gebraucht. Es kann aber weiterhin eine einzelne EXE samt `ffmpeg.json` in einen anderen Ordner übertragen.
+
+`setup.exe` gibt es nicht mehr: `updateStefflix.exe` installiert selbst, wenn sie außerhalb eines STEFFLIX-Ordners gestartet wird.
 
 **Umstieg bestehender Installationen:** `updateData.exe` und `updater.exe` samt ihren Einträgen in `checksums.json` noch eine Weile im Repository lassen. Die alte Python-Version lädt diese Dateien beim Update, holt dann über `updater.exe` die neue `updateStefflix.exe` und ist damit umgestellt. Die neue Version löscht die beiden alten Programme danach selbst.
 

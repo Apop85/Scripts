@@ -1,6 +1,6 @@
 """Erzeugt checksums.json für alle Dateien, die setup und die Updater herunterladen.
 
-Wird von build_release.bat nach dem Bauen der Programme aufgerufen.
+Wird von build_release.bat aufgerufen.
 checksums.json muss zusammen mit den Programmen ins Repository eingecheckt werden.
 """
 import json

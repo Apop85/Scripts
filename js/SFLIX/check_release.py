@@ -25,9 +25,10 @@ elif float(version_match.group(1)) != float(news_match.group(1)):
 else:
     print(f"Version {version_match.group(1)}")
 
-# 2. Alle Dateien der Weboberfläche vorhanden (die Programme werden erst gebaut)
-for path in FILES:
-    if not path.endswith(".exe") and not os.path.exists(os.path.join(base_dir, path)):
+# 2. Alle Dateien vorhanden, auch die eingefrorenen Übergangsprogramme (updater.exe,
+#    updateData.exe; werden nicht mehr gebaut) und setup.exe (für alte Download-Links)
+for path in list(FILES) + ["setup.exe"]:
+    if not os.path.exists(os.path.join(base_dir, path)):
         errors.append(f"Datei fehlt: {path}")
 
 # 3. start.html lädt alle Programmdateien

@@ -43,6 +43,50 @@ for path in OBSOLETE_FILES:
     if path != "sflix_sys/sflix.js" and os.path.exists(os.path.join(base_dir, path)):
         errors.append(f"Veraltete Datei sollte entfernt werden: {path}")
 
+# 5. updateStefflix.exe muss der STEFFLIX Updater ab 3.0 sein (wird nicht mehr aus
+#    updateStefflix.py gebaut, sondern aus "SFLIX Tools\SflixTools" hierher kopiert)
+def file_version(path):
+    """Dateiversion (major, minor, build) einer Windows-Programmdatei oder None."""
+    import ctypes
+    from ctypes import wintypes
+    version_dll = ctypes.WinDLL("version")
+    size = version_dll.GetFileVersionInfoSizeW(path, None)
+    if not size:
+        return None
+    buffer = ctypes.create_string_buffer(size)
+    if not version_dll.GetFileVersionInfoW(path, 0, size, buffer):
+        return None
+    pointer = ctypes.c_void_p()
+    length = wintypes.UINT()
+    if not version_dll.VerQueryValueW(buffer, "\\", ctypes.byref(pointer), ctypes.byref(length)):
+        return None
+    info = ctypes.cast(pointer, ctypes.POINTER(ctypes.c_uint32 * 13)).contents
+    # VS_FIXEDFILEINFO: dwFileVersionMS = info[2], dwFileVersionLS = info[3]
+    return (info[2] >> 16, info[2] & 0xFFFF, info[3] >> 16)
+
+
+updater_exe = os.path.join(base_dir, "updateStefflix.exe")
+if not os.path.exists(updater_exe):
+    errors.append("updateStefflix.exe fehlt (in SFLIX Tools\\SflixTools bauen und mit tools\\publish.ps1 hierher kopieren)")
+else:
+    version = file_version(updater_exe)
+    if version is None or version < (3, 0, 0):
+        errors.append("updateStefflix.exe ist nicht der STEFFLIX Updater ab 3.0 (alte Python-Version?)")
+    else:
+        print("updateStefflix.exe Version %d.%d.%d" % version)
+
+# 6. ffmpeg.json muss gültig sein (sonst lädt der Updater die eingebaute ffmpeg-Version)
+import json
+try:
+    ffmpeg = json.loads(read("ffmpeg.json"))
+    if not (ffmpeg.get("version") and str(ffmpeg.get("url", "")).startswith("https://")
+            and len(str(ffmpeg.get("sha256", ""))) == 64):
+        errors.append("ffmpeg.json ist unvollständig (version, url, sha256)")
+    else:
+        print(f"ffmpeg {ffmpeg['version']}")
+except (OSError, ValueError):
+    errors.append("ffmpeg.json fehlt oder ist kein gültiges JSON")
+
 if errors:
     print("FEHLER:")
     for error in errors:

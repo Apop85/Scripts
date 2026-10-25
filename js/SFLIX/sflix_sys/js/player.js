@@ -376,6 +376,7 @@ function initShuffleButton() {
         // Vor/Weiter neu berechnen
         if (lastNavigation != null) {
             updatePlaylistNavigation(lastNavigation.decodedData, lastNavigation.playlist, lastNavigation.currentIndex);
+            preloadNeighbourImages();
         }
     });
     node.appendChild(link);
@@ -459,15 +460,69 @@ function updatePlaylistNavigation(decodedData, playlist, currentIndex) {
     var previousData = getNeighbourData(decodedData, playlist, currentIndex, -1);
     if (previousData != null) {
         createNavigationLink("prev", previousData, -1);
+        lastNavigation.prevPath = normalizeMediaLocation(getMediaLocationFromDecodedData(previousData));
     }
 
     var nextData = getNeighbourData(decodedData, playlist, currentIndex, 1);
     if (nextData != null) {
         createNavigationLink("next", nextData, 1);
+        lastNavigation.nextPath = normalizeMediaLocation(getMediaLocationFromDecodedData(nextData));
     }
 
     updateViewerArrows();
     updatePlayerNavButtons();
+}
+
+// ===================================================================
+// Nächstes und vorheriges Bild vorladen
+// ===================================================================
+
+// Das nächste und das vorherige Medium stehen schon fest (auch in der Zufallswiedergabe, wo das
+// nächste beim Anzeigen des laufenden Mediums ausgewählt wird). Sind es Bilder, werden sie im
+// Hintergrund geladen und dekodiert, damit sie beim Weiter- bzw. Zurückschalten sofort aus dem
+// Speicher des Browsers kommen. Aufruf erst, wenn das laufende Medium angezeigt wird
+// (renderMediaContext), damit das Vorladen dem laufenden Bild keine Zeit wegnimmt.
+// Zuerst das nächste Bild (häufigere Richtung), dann das vorherige. Höchstens diese zwei.
+var preloadedImages = {};
+
+function startImagePreload(path) {
+    var image = new Image();
+    image.decoding = "async";
+    image.fetchPriority = "low";
+    image.addEventListener("load", function () {
+        if (preloadedImages[path] === image && image.decode) {
+            image.decode().catch(function () {});
+        }
+    });
+    // Gleiche Schreibweise wie node.src in loadDecodedMedia, damit der Browser die Datei wiedererkennt
+    image.src = path;
+    return image;
+}
+
+function preloadNeighbourImages() {
+    var wanted = [];
+    if (lastNavigation != null) {
+        [lastNavigation.nextPath, lastNavigation.prevPath].forEach(function (path) {
+            if (path != null && path !== currentMediaLocation && wanted.indexOf(path) < 0 && isImage(path) && mediaExists(path)) {
+                wanted.push(path);
+            }
+        });
+    }
+    // Nicht mehr benötigte Vorladungen abbrechen. Ein Bild, das inzwischen angezeigt wird,
+    // nicht abbrechen (gleiche Datei wie im Player).
+    Object.keys(preloadedImages).forEach(function (path) {
+        if (wanted.indexOf(path) < 0) {
+            if (path !== currentMediaLocation) {
+                preloadedImages[path].removeAttribute("src");
+            }
+            delete preloadedImages[path];
+        }
+    });
+    wanted.forEach(function (path) {
+        if (preloadedImages[path] == null) {
+            preloadedImages[path] = startImagePreload(path);
+        }
+    });
 }
 
 // ===================================================================
@@ -1866,37 +1921,9 @@ function updateAudioArtwork(ui) {
         ui.artworkBackdrop.removeAttribute("src");
         return;
     }
+    // Vorschaubild in Originalgrösse aus dem Preview-Ordner
     ui.artworkImage.src = preview;
     ui.artworkBackdrop.src = preview;
-    loadOriginalArtwork(ui, preview, ui.artworkToken);
-}
-
-// updateData.exe verkleinert Vorschaubilder auf 480x270 (sflix_sys/thumbs). Für die grosse
-// Anzeige wird das Original im Preview-Ordner gesucht; bis es geladen ist, bleibt das kleine Bild.
-function loadOriginalArtwork(ui, preview, token) {
-    var match = preview.match(/^\.\/sflix_sys\/thumbs\/(.+)\.jpg$/);
-    if (match == null) {
-        return;
-    }
-    var candidates = ["jpg", "jpeg", "png", "webp", "avif", "gif", "bmp"].map(function (extension) {
-        return "./" + match[1] + "." + extension;
-    });
-    var tryCandidate = function (index) {
-        if (index >= candidates.length || token !== ui.artworkToken) {
-            return;
-        }
-        var probe = new Image();
-        probe.onload = function () {
-            if (token === ui.artworkToken) {
-                ui.artworkImage.src = candidates[index];
-            }
-        };
-        probe.onerror = function () {
-            tryCandidate(index + 1);
-        };
-        probe.src = candidates[index];
-    };
-    tryCandidate(0);
 }
 
 // Umschalten zwischen eigener und Browser-Steuerung

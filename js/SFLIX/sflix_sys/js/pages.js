@@ -338,6 +338,8 @@ function renderMediaContext(mediaPath) {
         } else {
             updateCurrentCard(mediaPath, false);
         }
+        // Nächstes und vorheriges Bild im Hintergrund laden (player.js)
+        preloadNeighbourImages();
     });
 }
 

@@ -382,13 +382,22 @@ function mediaExists(mediaPath) {
 // Vorschaubilder
 // ===================================================================
 
+// updateData.exe 2.00/2.01 hat verkleinerte Kopien in sflix_sys/thumbs abgelegt und deren Pfad in
+// data.js eingetragen. Solange eine solche data.js vorhanden ist, wird stattdessen das Original im
+// Preview-Ordner verwendet (die Kopien waren immer .jpg, die meisten Originale auch).
+// Ab 2.02 verkleinert updateData.exe direkt im Preview-Ordner und trägt diese Bilder ein.
+function getOriginalPreviewPath(path) {
+    var match = /^\.\/sflix_sys\/thumbs\/(.+)$/.exec(path);
+    return match == null ? path : "./" + match[1];
+}
+
 // Sucht im Preview-Ordner eines Datenknotens nach einem passenden Bild.
 // Zuerst wird ein exakter Namenstreffer gesucht, danach (optional) ein Teiltreffer.
 function findPreviewInFolder(folderData, names, exactOnly) {
     if (folderData == null || typeof folderData !== "object" || folderData["Preview"] == null) {
         return null;
     }
-    var previews = Object.keys(folderData["Preview"]);
+    var previews = Object.keys(folderData["Preview"]).map(getOriginalPreviewPath);
     var index, name, previewIndex;
 
     for (index = 0; index < names.length; index++) {
@@ -498,6 +507,10 @@ function getMediaFolders(mediaPath) {
 function collectMediaPaths(node, result) {
     for (var key in node) {
         if (!node.hasOwnProperty(key)) {
+            continue;
+        }
+        // Preview-Ordner enthalten nur Vorschaubilder, keine Medien
+        if (key == "Preview") {
             continue;
         }
         if (isMediaFile(allowedMediaExtensions, key)) {

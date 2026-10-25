@@ -2,6 +2,12 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>
+<b>Version 2.02</b>:<br>
+<ul>
+    <li>[OPTIMIERUNG] Schnellerer Bildwechsel: Das nächste und das vorherige Bild werden im Hintergrund vorgeladen, sobald das aktuelle Bild angezeigt wird. Das gilt auch für die Zufallswiedergabe, deren nächstes Bild bereits feststeht.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] "Zufällig abspielen" nahm auch die Vorschaubilder der Ordner (Preview-Ordner) in die Playliste auf.</li>
+    <li>[OPTIMIERUNG] updateData.exe verkleinert zu grosse Vorschaubilder direkt im Preview-Ordner auf 480x270. Das Original bleibt daneben als "&lt;Dateiname&gt;.original" erhalten (z.B. "Show.jpg.original"). Der Ordner sflix_sys\thumbs wird nicht mehr benötigt und beim nächsten Durchlauf entfernt.</li>
+</ul>
 <b>Version 2.01</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Eigene Player-Steuerung im STEFFLIX-Design für Videos und Musik, mit Knöpfen für das vorherige/nächste Medium und 10 Sekunden zurück/vor.</li>

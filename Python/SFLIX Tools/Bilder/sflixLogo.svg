@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>STEFFLIX</title>
+  <defs>
+    <!-- Band: oben hell, unten dunkel, fliessender Übergang in der Mitte des S -->
+    <linearGradient id="band" gradientUnits="userSpaceOnUse" x1="0" y1="112" x2="0" y2="414">
+      <stop offset="0.30" stop-color="#e50914"/>
+      <stop offset="0.68" stop-color="#a30610"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="496" height="496" rx="112" fill="#141417" stroke="#2a2a30" stroke-width="6"/>
+  <path d="M362 170C334 120 176 112 166 196C158 244 214 252 258 262C304 272 354 284 350 334C344 414 186 414 150 346" fill="none" stroke="url(#band)" stroke-width="84" stroke-linecap="butt"/>
+</svg>

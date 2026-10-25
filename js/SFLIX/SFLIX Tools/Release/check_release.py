@@ -4,9 +4,9 @@ import os
 import re
 import sys
 
-from sflix_update import FILES, OBSOLETE_FILES, SCRIPT_FILES
+from sflix_update import FILES, OBSOLETE_FILES, RELEASE_DIR, SCRIPT_FILES
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
+base_dir = RELEASE_DIR
 errors = []
 
 
@@ -26,8 +26,8 @@ else:
     print(f"Version {version_match.group(1)}")
 
 # 2. Alle Dateien vorhanden, auch die eingefrorenen Übergangsprogramme (updater.exe,
-#    updateData.exe; werden nicht mehr gebaut) und setup.exe (für alte Download-Links)
-for path in list(FILES) + ["setup.exe"]:
+#    updateData.exe; werden nicht mehr gebaut, aber von alten Installationen geladen)
+for path in FILES:
     if not os.path.exists(os.path.join(base_dir, path)):
         errors.append(f"Datei fehlt: {path}")
 
@@ -68,7 +68,7 @@ def file_version(path):
 
 updater_exe = os.path.join(base_dir, "updateStefflix.exe")
 if not os.path.exists(updater_exe):
-    errors.append("updateStefflix.exe fehlt (in SFLIX Tools\\SflixTools bauen und mit tools\\publish.ps1 hierher kopieren)")
+    errors.append("updateStefflix.exe fehlt (build_release.bat baut sie aus SFLIX Tools\\SflixTools)")
 else:
     version = file_version(updater_exe)
     if version is None or version < (3, 0, 0):

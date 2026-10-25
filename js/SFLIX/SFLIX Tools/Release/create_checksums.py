@@ -7,9 +7,10 @@ import json
 import os
 import sys
 
-from sflix_update import CHECKSUM_FILE, FILES, checksum
+from sflix_update import CHECKSUM_FILE, FILES, RELEASE_DIR, checksum
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
+# checksums.json liegt im Release-Ordner, nicht neben diesem Skript
+base_dir = RELEASE_DIR
 result = {}
 missing = []
 

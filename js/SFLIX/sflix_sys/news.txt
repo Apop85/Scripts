@@ -1,12 +1,22 @@
-<b>Bekannte Fehler:</b>
+<!--<b>Bekannte Fehler:</b>
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
-</ul>
+</ul>-->
 <b>Version 2.02</b>:<br>
 <ul>
+    <li>[<span style="color: red">FEATURE</span>] Neuer Updater: updateStefflix.exe ist jetzt ein Programm mit eigener Oberfläche im STEFFLIX-Design und ersetzt updateStefflix.exe, updater.exe, updateData.exe und setup.exe. Die nicht mehr benötigten updater.exe und updateData.exe werden beim Update automatisch entfernt.</li>
+    <li>[OPTIMIERUNG] Durch den neuen Updater wurde die Performance deutlich verbessert.</li>
+    <li>[<span style="color: red">FEATURE</span>] Updater: Die Aufgaben "Update", "Ablagen leeren", "Gesplittete Medien zusammenführen", "Videos für SFLIX konvertieren", "Vorschaubilder erstellen" und "Daten einlesen" lassen sich einzeln auswählen und laufen in dieser Reihenfolge nacheinander ab.</li>
+    <li>[<span style="color: red">FEATURE</span>] Updater: Der Updater aktualisiert sich selbst. Beim Start prüft er im Hintergrund, ob eine neue Version vorhanden ist.</li>
+    <li>[<span style="color: red">FEATURE</span>] Updater: Wird updateStefflix.exe ausserhalb eines STEFFLIX-Ordners gestartet, bietet sie die Installation von STEFFLIX in einen neuen Ordner an.</li>
+    <li>[<span style="color: red">FEATURE</span>] Updater: "Vorschaubilder erstellen" erzeugt für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner. Vorhandene Vorschaubilder bleiben unverändert, Bilder ohne zugehöriges Video werden nach Preview\__gelöscht verschoben.</li>
+    <li>[<span style="color: red">FEATURE</span>] Updater: "Gesplittete Medien zusammenführen" fügt aufgeteilte Videos zu einer Datei zusammen. Die Teile werden in einer Liste ausgewählt, auf Wunsch wird passend zum Dateiformat neu kodiert.</li>
+    <li>[<span style="color: red">FEATURE</span>] Updater: "Videos für SFLIX konvertieren" wandelt Videos in browserkompatible MP4 (H.264/AAC) um. Die MP4 ersetzt das Original im selben Ordner, das Original wird nach __konvertiert verschoben (oder auf Wunsch gelöscht). Die Grafikkarte wird automatisch erkannt und genutzt, bei Problemen wird mit dem Prozessor konvertiert.</li>
+    <li>[<span style="color: red">FEATURE</span>] Updater: "Ablagen leeren" löscht die Ablageordner der Werkzeuge (Ordner, deren Name mit __ beginnt, z.B. __konvertiert oder Preview\__original) nach einer Bestätigung endgültig. Diese Ordner werden auch beim Einlesen der Daten ignoriert.</li>
+    <li>[<span style="color: red">FEATURE</span>] Updater: Der Medienordner für Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren ist einstellbar. Das für die Videobearbeitung benötigte ffmpeg wird beim ersten Bedarf automatisch heruntergeladen und geprüft.</li>
+    <li>[OPTIMIERUNG] "Daten einlesen" verkleinert zu grosse Vorschaubilder direkt im Preview-Ordner auf 480x270. Das Original wird mit gleichem Namen im Unterordner Preview\__original aufbewahrt, WebP-Bilder bleiben unverändert. "Ablagen leeren" löscht diese Originale bei Bedarf. Der Ordner sflix_sys\thumbs wird nicht mehr benötigt und automatisch entfernt.</li>
     <li>[OPTIMIERUNG] Schnellerer Bildwechsel: Das nächste und das vorherige Bild werden im Hintergrund vorgeladen, sobald das aktuelle Bild angezeigt wird. Das gilt auch für die Zufallswiedergabe, deren nächstes Bild bereits feststeht.</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] "Zufällig abspielen" nahm auch die Vorschaubilder der Ordner (Preview-Ordner) in die Playliste auf.</li>
-    <li>[OPTIMIERUNG] updateData.exe verkleinert zu grosse Vorschaubilder direkt im Preview-Ordner auf 480x270. Das Original bleibt daneben als "&lt;Dateiname&gt;.original" erhalten (z.B. "Show.jpg.original"). Der Ordner sflix_sys\thumbs wird nicht mehr benötigt und beim nächsten Durchlauf entfernt.</li>
 </ul>
 <b>Version 2.01</b>:<br>
 <ul>

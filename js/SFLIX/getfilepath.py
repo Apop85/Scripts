@@ -30,11 +30,14 @@ disallowedItems = ["System Volume Information", "$RECYCLE.BIN", ".vscode", "sfli
 animationArray = ["Suchen", "sUchen", "suChen", "sucHen", "suchEn", "sucheN", "suchEn", "sucHen", "suChen", "sUchen"]
 
 # Zu grosse Vorschaubilder werden direkt im Preview-Ordner auf diese Grösse zugeschnitten (16:9).
-# Das Original bleibt daneben als "<Dateiname>.original" erhalten (z.B. "Show.jpg.original").
+# Das Original kommt mit gleichem Namen nach Preview\__original (wie im Updater ab 3.0.4).
 PREVIEW_FOLDER = "Preview"
 PREVIEW_SIZE = (480, 270)
 PREVIEW_QUALITY = 80
+ORIGINAL_FOLDER = "__original"
+# Bis Updater 3.0.3 lagen Originale als "<Dateiname>.original" im Preview-Ordner. Sie ziehen um.
 ORIGINAL_SUFFIX = ".original"
+migratedOriginals = 0
 # Speicherformat je Endung. Andere Formate (z.B. avif, gif) bleiben unverändert.
 PREVIEW_FORMATS = {"jpg": "JPEG", "jpeg": "JPEG", "png": "PNG", "webp": "WEBP", "bmp": "BMP"}
 shrinkCounter = 0
@@ -121,17 +124,51 @@ def relativeUrl(fullPath):
     return "./" + os.path.relpath(fullPath, homeDir).replace("\\", "/")
 
 
+def isToolStorage(name):
+    """Ordner mit "__" im Namen sind Ablagen der Werkzeuge (z.B. __teile, __konvertiert,
+    __gelöscht, __original) und werden nicht eingelesen (wie im Updater)."""
+    return "__" in name
+
+
+def uniquePath(folder, name):
+    """Freier Dateiname im Ordner: "Name.jpg", sonst "Name (2).jpg", "Name (3).jpg" ..."""
+    stem, extension = os.path.splitext(name)
+    candidate = os.path.join(folder, name)
+    counter = 2
+    while os.path.exists(candidate):
+        candidate = os.path.join(folder, f"{stem} ({counter}){extension}")
+        counter += 1
+    return candidate
+
+
+def migrateOldOriginal(previewDir, item):
+    """Verschiebt "<Dateiname>.original" (Ablage bis Updater 3.0.3) nach Preview\\__original.
+    Gibt es dort schon eine Datei gleichen Namens, bleiben beide erhalten."""
+    global migratedOriginals
+    name = item[:-len(ORIGINAL_SUFFIX)]
+    if name == "":
+        return
+    try:
+        folder = os.path.join(previewDir, ORIGINAL_FOLDER)
+        os.makedirs(folder, exist_ok=True)
+        os.rename(os.path.join(previewDir, item), uniquePath(folder, name))
+        migratedOriginals += 1
+    except OSError:
+        errorList.append(os.path.join(previewDir, item))
+
+
 def shrinkPreview(fullPath):
-    """Schneidet ein zu grosses Vorschaubild auf PREVIEW_SIZE zu. Das Original wird in
-    "<Dateiname>.original" umbenannt, die zugeschnittene Version erhält den bisherigen Namen.
-    Pfad und Name in data.js bleiben dadurch gleich. Ohne Pillow oder bei Fehlern bleibt
-    das Bild unverändert."""
+    """Schneidet ein zu grosses Vorschaubild auf PREVIEW_SIZE zu. Das Original kommt mit
+    gleichem Namen nach Preview\\__original, die zugeschnittene Version erhält den bisherigen
+    Namen. Pfad und Name in data.js bleiben dadurch gleich. Ohne Pillow oder bei Fehlern
+    bleibt das Bild unverändert."""
     global shrinkCounter
     saveFormat = PREVIEW_FORMATS.get(fullPath.split(".")[-1].lower())
     if Image is None or saveFormat is None:
         return
 
     tempPath = fullPath + ".tmp"
+    originalPath = os.path.join(os.path.dirname(fullPath), ORIGINAL_FOLDER, os.path.basename(fullPath))
     try:
         with Image.open(fullPath) as image:
             # Animierte Bilder nicht anfassen
@@ -145,10 +182,11 @@ def shrinkPreview(fullPath):
             image = ImageOps.fit(image, PREVIEW_SIZE, Image.LANCZOS)
             options = {"quality": PREVIEW_QUALITY, "optimize": True} if saveFormat in ("JPEG", "WEBP") else {}
             image.save(tempPath, saveFormat, **options)
-        # Erst wenn die neue Version fertig ist: Original sichern, neue Version an seine Stelle.
-        # Ein bereits vorhandenes .original stammt von einem früher ersetzten Bild und wird
-        # durch das aktuelle, neuere Original ersetzt.
-        os.replace(fullPath, fullPath + ORIGINAL_SUFFIX)
+        # Erst wenn die neue Version fertig ist: Original nach Preview\__original sichern, neue
+        # Version an seine Stelle. Ein dort schon vorhandenes Original stammt von einem früher
+        # ersetzten Bild und wird durch das aktuelle, neuere Original ersetzt.
+        os.makedirs(os.path.dirname(originalPath), exist_ok=True)
+        os.replace(fullPath, originalPath)
         os.replace(tempPath, fullPath)
         shrinkCounter += 1
     except Exception:
@@ -157,10 +195,10 @@ def shrinkPreview(fullPath):
                 os.remove(tempPath)
             except OSError:
                 pass
-        # Falls das Original schon umbenannt wurde, zurückholen
-        if not os.path.exists(fullPath) and os.path.exists(fullPath + ORIGINAL_SUFFIX):
+        # Falls das Original schon verschoben wurde, zurückholen
+        if not os.path.exists(fullPath) and os.path.exists(originalPath):
             try:
-                os.replace(fullPath + ORIGINAL_SUFFIX, fullPath)
+                os.replace(originalPath, fullPath)
             except OSError:
                 pass
 
@@ -208,7 +246,9 @@ def recCrawler(path, counter=0):
         isFile = os.path.isfile(fullPath)
         fileExtension = item.split(".")[-1].lower()
 
-        if isFile and fileExtension in allowedFileTypes:
+        if isFile and isPreviewFolder and item.lower().endswith(ORIGINAL_SUFFIX):
+            migrateOldOriginal(path, item)
+        elif isFile and fileExtension in allowedFileTypes:
             item = renameIfNeeded(path, item, True)
             if item is None:
                 continue
@@ -217,7 +257,7 @@ def recCrawler(path, counter=0):
                 shrinkPreview(fullPath)
             data[relativeUrl(fullPath)] = None
             counter += 1
-        elif os.path.isdir(fullPath) and item not in disallowedItems:
+        elif os.path.isdir(fullPath) and item not in disallowedItems and not isToolStorage(item):
             item = renameIfNeeded(path, item, False)
             if item is None:
                 continue
@@ -272,7 +312,9 @@ else:
     print("Im STEFFLIX-Verzeichnis wurden keine Medien gefunden.")
 
 if shrinkCounter > 0:
-    print(f"{shrinkCounter} Vorschaubilder verkleinert (Original als .original gesichert)")
+    print(f"{shrinkCounter} Vorschaubilder verkleinert (Original in Preview\\{ORIGINAL_FOLDER} gesichert)")
+if migratedOriginals > 0:
+    print(f"{migratedOriginals} ältere .original-Dateien nach Preview\\{ORIGINAL_FOLDER} verschoben")
 
 if len(renamedItems) > 0:
     print("".center(50, "-"))

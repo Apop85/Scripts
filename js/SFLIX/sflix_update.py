@@ -1,5 +1,9 @@
 """Gemeinsame Download- und Prüffunktionen für setup, updater, updateStefflix und updateData.
 
+Ab Version 3.0 ist updateStefflix.exe der STEFFLIX Updater mit Oberfläche (C#, Quellcode in
+"SFLIX Tools\\SflixTools"). Er wird nicht mehr aus updateStefflix.py gebaut. updater.exe und
+updateData.exe werden nur noch für den Umstieg älterer Installationen bereitgestellt.
+
 Jede heruntergeladene Datei wird geprüft:
   1. HTTP-Status 200 und nicht leer
   2. .exe-Dateien müssen echte Windows-Programme sein (MZ- und PE-Kennung)
@@ -72,14 +76,22 @@ FILES = {
     "updateData.exe": BIN_URL + "updateData.exe",
     "updater.exe": BIN_URL + "updater.exe",
     "updateStefflix.exe": BIN_URL + "updateStefflix.exe",
+    # Vorgabe für ffmpeg (Version, Download-Adresse, SHA256), gelesen von updateStefflix.exe ab 3.0
+    "ffmpeg.json": RAW_URL + "ffmpeg.json",
 }
+
+# Dateien, die nur eine Prüfsumme in checksums.json brauchen und nicht installiert werden
+RELEASE_ONLY_FILES = ["ffmpeg.json"]
+
+# Dateien, die setup in einen neuen STEFFLIX-Ordner lädt
+INSTALL_FILES = [name for name in FILES if name not in RELEASE_ONLY_FILES]
 
 # Programmdateien der Weboberfläche (ab 2.00 aufgeteilt, vorher sflix_sys/sflix.js)
 SCRIPT_FILES = [name for name in FILES if name.startswith("sflix_sys/js/")]
 
 # Dateien der Weboberfläche, die in jeder Installation vorhanden sein müssen
 # (data.js erzeugt updateData.exe, die Programme aktualisieren sich gegenseitig)
-WEB_FILES = [name for name in FILES if not name.endswith(".exe") and name != "sflix_sys/data.js"]
+WEB_FILES = [name for name in INSTALL_FILES if not name.endswith(".exe") and name != "sflix_sys/data.js"]
 
 # Dateien früherer Versionen, die nach einem erfolgreichen Update gelöscht werden
 OBSOLETE_FILES = ["sflix_sys/sflix.js", "sflix_sys/sflix_bg.jpg"]

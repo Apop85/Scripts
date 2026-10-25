@@ -1,8 +1,9 @@
 import os
 
-from sflix_update import FILES, update_files
+from sflix_update import INSTALL_FILES, update_files
 
-stefflixFiles = list(FILES.keys())
+# Alle Dateien ausser denen, die nur für checksums.json da sind (z.B. ffmpeg.json)
+stefflixFiles = list(INSTALL_FILES)
 
 def checkInput(type, text, output="default"):
     answer = None

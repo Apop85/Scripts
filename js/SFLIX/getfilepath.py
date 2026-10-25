@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import unicodedata
 from datetime import datetime
@@ -28,11 +29,18 @@ allowedFileTypes = [
 disallowedItems = ["System Volume Information", "$RECYCLE.BIN", ".vscode", "sflix_sys"]
 animationArray = ["Suchen", "sUchen", "suChen", "sucHen", "suchEn", "sucheN", "suchEn", "sucHen", "suChen", "sUchen"]
 
-# Vorschaubilder werden auf diese Grösse zugeschnitten (16:9) und hier abgelegt
+# Zu grosse Vorschaubilder werden direkt im Preview-Ordner auf diese Grösse zugeschnitten (16:9).
+# Das Original bleibt daneben als "<Dateiname>.original" erhalten (z.B. "Show.jpg.original").
 PREVIEW_FOLDER = "Preview"
-THUMB_DIR = os.path.join(homeDir, "sflix_sys", "thumbs")
-THUMB_SIZE = (480, 270)
-THUMB_QUALITY = 80
+PREVIEW_SIZE = (480, 270)
+PREVIEW_QUALITY = 80
+ORIGINAL_SUFFIX = ".original"
+# Speicherformat je Endung. Andere Formate (z.B. avif, gif) bleiben unverändert.
+PREVIEW_FORMATS = {"jpg": "JPEG", "jpeg": "JPEG", "png": "PNG", "webp": "WEBP", "bmp": "BMP"}
+shrinkCounter = 0
+
+# Bis Version 2.01 wurden verkleinerte Kopien in diesem Ordner abgelegt. Er wird entfernt.
+OLD_THUMB_DIR = os.path.join(homeDir, "sflix_sys", "thumbs")
 
 # Zeichenfolgen, die STEFFLIX intern als Trennzeichen nutzt oder die in URLs Probleme machen
 forbiddenSymbols = {"$=$": "-", "|": "-", "#": "", "%": ""}
@@ -52,8 +60,6 @@ renamedPairs = []
 errorList = []
 RENAMED_FILE = os.path.join(homeDir, "sflix_sys", "renamed.js")
 RENAMED_PREFIX = "var renamedPaths = "
-thumbsInUse = set()
-thumbCounter = 0
 
 
 def sanitizeName(name):
@@ -115,44 +121,55 @@ def relativeUrl(fullPath):
     return "./" + os.path.relpath(fullPath, homeDir).replace("\\", "/")
 
 
-def createThumbnail(sourcePath):
-    """Erstellt ein verkleinertes Vorschaubild in sflix_sys/thumbs und gibt dessen Pfad zurück.
-    Ohne Pillow oder bei Fehlern wird das Originalbild verwendet."""
-    global thumbCounter
-    if Image is None:
-        return sourcePath
-
-    relative = os.path.relpath(sourcePath, homeDir)
-    thumbPath = os.path.join(THUMB_DIR, os.path.splitext(relative)[0] + ".jpg")
-    thumbsInUse.add(os.path.normcase(thumbPath))
-
-    try:
-        if os.path.exists(thumbPath) and os.path.getmtime(thumbPath) >= os.path.getmtime(sourcePath):
-            return thumbPath
-
-        os.makedirs(os.path.dirname(thumbPath), exist_ok=True)
-        with Image.open(sourcePath) as image:
-            image = ImageOps.exif_transpose(image).convert("RGB")
-            image = ImageOps.fit(image, THUMB_SIZE, Image.LANCZOS)
-            image.save(thumbPath, "JPEG", quality=THUMB_QUALITY, optimize=True)
-        thumbCounter += 1
-        return thumbPath
-    except Exception:
-        thumbsInUse.discard(os.path.normcase(thumbPath))
-        return sourcePath
-
-
-def removeUnusedThumbnails():
-    """Löscht Vorschaubilder, deren Original nicht mehr existiert."""
-    if Image is None or not os.path.isdir(THUMB_DIR):
+def shrinkPreview(fullPath):
+    """Schneidet ein zu grosses Vorschaubild auf PREVIEW_SIZE zu. Das Original wird in
+    "<Dateiname>.original" umbenannt, die zugeschnittene Version erhält den bisherigen Namen.
+    Pfad und Name in data.js bleiben dadurch gleich. Ohne Pillow oder bei Fehlern bleibt
+    das Bild unverändert."""
+    global shrinkCounter
+    saveFormat = PREVIEW_FORMATS.get(fullPath.split(".")[-1].lower())
+    if Image is None or saveFormat is None:
         return
-    for root, dirs, files in os.walk(THUMB_DIR, topdown=False):
-        for fileName in files:
-            fullPath = os.path.join(root, fileName)
-            if os.path.normcase(fullPath) not in thumbsInUse:
-                os.remove(fullPath)
-        if root != THUMB_DIR and not os.listdir(root):
-            os.rmdir(root)
+
+    tempPath = fullPath + ".tmp"
+    try:
+        with Image.open(fullPath) as image:
+            # Animierte Bilder nicht anfassen
+            if getattr(image, "is_animated", False):
+                return
+            image = ImageOps.exif_transpose(image)
+            if image.width <= PREVIEW_SIZE[0] and image.height <= PREVIEW_SIZE[1]:
+                return
+            if saveFormat == "JPEG" or image.mode not in ("RGB", "RGBA"):
+                image = image.convert("RGB")
+            image = ImageOps.fit(image, PREVIEW_SIZE, Image.LANCZOS)
+            options = {"quality": PREVIEW_QUALITY, "optimize": True} if saveFormat in ("JPEG", "WEBP") else {}
+            image.save(tempPath, saveFormat, **options)
+        # Erst wenn die neue Version fertig ist: Original sichern, neue Version an seine Stelle.
+        # Ein bereits vorhandenes .original stammt von einem früher ersetzten Bild und wird
+        # durch das aktuelle, neuere Original ersetzt.
+        os.replace(fullPath, fullPath + ORIGINAL_SUFFIX)
+        os.replace(tempPath, fullPath)
+        shrinkCounter += 1
+    except Exception:
+        if os.path.exists(tempPath):
+            try:
+                os.remove(tempPath)
+            except OSError:
+                pass
+        # Falls das Original schon umbenannt wurde, zurückholen
+        if not os.path.exists(fullPath) and os.path.exists(fullPath + ORIGINAL_SUFFIX):
+            try:
+                os.replace(fullPath + ORIGINAL_SUFFIX, fullPath)
+            except OSError:
+                pass
+
+
+def removeOldThumbnails():
+    """Entfernt den Ordner sflix_sys/thumbs mit den verkleinerten Vorschaubildern aus Version 2.00/2.01."""
+    if os.path.isdir(OLD_THUMB_DIR):
+        shutil.rmtree(OLD_THUMB_DIR, ignore_errors=True)
+        print("Alte verkleinerte Vorschaubilder entfernt (sflix_sys/thumbs)")
 
 
 def writeRenamedPaths():
@@ -197,7 +214,7 @@ def recCrawler(path, counter=0):
                 continue
             fullPath = os.path.join(path, item)
             if isPreviewFolder:
-                fullPath = createThumbnail(fullPath)
+                shrinkPreview(fullPath)
             data[relativeUrl(fullPath)] = None
             counter += 1
         elif os.path.isdir(fullPath) and item not in disallowedItems:
@@ -249,15 +266,13 @@ if len(filelist) > 0:
     except OSError:
         print("Umbenennungen konnten nicht gespeichert werden".ljust(40))
 
-    try:
-        removeUnusedThumbnails()
-    except OSError:
-        pass
+    # Erst nach dem Schreiben von data.js, damit keine Einträge mehr auf den Ordner zeigen
+    removeOldThumbnails()
 else:
     print("Im STEFFLIX-Verzeichnis wurden keine Medien gefunden.")
 
-if thumbCounter > 0:
-    print(f"{thumbCounter} Vorschaubilder verkleinert")
+if shrinkCounter > 0:
+    print(f"{shrinkCounter} Vorschaubilder verkleinert (Original als .original gesichert)")
 
 if len(renamedItems) > 0:
     print("".center(50, "-"))

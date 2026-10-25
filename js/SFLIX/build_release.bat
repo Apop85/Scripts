@@ -2,9 +2,13 @@
 REM ===================================================================
 REM  STEFFLIX - Release bauen (Doppelklick genuegt)
 REM
-REM  1. Pruefen       check_release.py   (Version, Dateien, start.html)
+REM  1. Pruefen       check_release.py   (Version, Dateien, start.html, updateStefflix.exe, ffmpeg.json)
 REM  2. Changelog     create_news.py     (news.txt -> news.json)
-REM  3. Programme     PyInstaller        (updateData, updateStefflix, updater, setup)
+REM  3. Programme     PyInstaller        (updateData, updater, setup)
+REM                   updateStefflix.exe (STEFFLIX Updater ab 3.0) wird NICHT hier gebaut, sondern in
+REM                   "SFLIX Tools\SflixTools" mit build.ps1 und mit tools\publish.ps1 -Repo <dieser Ordner>
+REM                   hierher kopiert (zusammen mit ffmpeg.json). updater und updateData werden nur
+REM                   noch fuer den Umstieg aelterer Installationen bereitgestellt.
 REM                   Nur Programme, deren Skripte (inkl. sflix_update.py), Build-Optionen
 REM                   oder Paketversionen sich geaendert haben (build_check.py,
 REM                   build_hashes.json). Sonst bleiben .exe und Pruefsumme gleich.
@@ -58,8 +62,7 @@ if errorlevel 1 (
 )
 call :baue getfilepath.py updateData.exe "%PILLOW_EXCLUDES%"
 if errorlevel 1 goto :fehler
-call :baue updateStefflix.py updateStefflix.exe ""
-if errorlevel 1 goto :fehler
+REM updateStefflix.exe wird separat gebaut (siehe oben) und hier nicht angefasst
 call :baue updater.py updater.exe ""
 if errorlevel 1 goto :fehler
 call :baue setup.py setup.exe ""

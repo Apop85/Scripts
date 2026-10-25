@@ -7,6 +7,23 @@
   ],
   "versions": [
     {
+      "version": "2.02",
+      "items": [
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Schnellerer Bildwechsel: Das nächste und das vorherige Bild werden im Hintergrund vorgeladen, sobald das aktuelle Bild angezeigt wird. Das gilt auch für die Zufallswiedergabe, deren nächstes Bild bereits feststeht."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "\"Zufällig abspielen\" nahm auch die Vorschaubilder der Ordner (Preview-Ordner) in die Playliste auf."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "updateData.exe verkleinert zu grosse Vorschaubilder direkt im Preview-Ordner auf 480x270. Das Original bleibt daneben als \"<Dateiname>.original\" erhalten (z.B. \"Show.jpg.original\"). Der Ordner sflix_sys\\thumbs wird nicht mehr benötigt und beim nächsten Durchlauf entfernt."
+        }
+      ]
+    },
+    {
       "version": "2.01",
       "items": [
         {

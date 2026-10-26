@@ -37,6 +37,10 @@
           "text": "Updater: Der Updater aktualisiert sich selbst."
         },
         {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: Zurückgebliebene Sicherungsdateien (*.old) früherer Updates im STEFFLIX-Ordner und in sflix_sys werden automatisch entfernt."
+        },
+        {
           "type": "FEATURE",
           "text": "Updater: Wird updateStefflix.exe ausserhalb eines STEFFLIX-Ordners gestartet, bietet sie die Installation von STEFFLIX in einen neuen Ordner an."
         },

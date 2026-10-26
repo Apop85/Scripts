@@ -238,6 +238,8 @@ namespace Sflix
                     try { File.Delete(old); }
                     catch { Thread.Sleep(500); }
                 }
+                // Übrige Sicherungen (*.old) alter und neuer Updates
+                Net.RemoveOldBackups(App.Root);
             });
         }
     }
@@ -262,6 +264,8 @@ namespace Sflix
             if (failed > 0)
                 throw new TaskFailedException("Das Update wurde nicht installiert. Bitte später erneut versuchen.");
             Net.RemoveObsoleteFiles(App.Root, ctx);
+            int oldRemoved = Net.RemoveOldBackups(App.Root);
+            if (oldRemoved > 0) ctx.Log("  Sicherungen (*.old) entfernt: " + oldRemoved);
 
             if (includeFfmpeg)
             {

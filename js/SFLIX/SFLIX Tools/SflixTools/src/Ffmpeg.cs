@@ -110,6 +110,17 @@ namespace Sflix
             catch { return null; }
         }
 
+        // Versionsnummer der installierten ffmpeg-Version (z.B. 9.0.2), null wenn unbekannt
+        public string InstalledVersionName()
+        {
+            try
+            {
+                JsonObject o = Json.Parse(File.ReadAllText(VersionFile, Encoding.UTF8)) as JsonObject;
+                return o == null ? null : o.Str("version");
+            }
+            catch { return null; }
+        }
+
         // Stellt sicher, dass ffmpeg da ist (lädt es bei Bedarf einmalig herunter).
         public void EnsureInstalled(TaskContext ctx)
         {

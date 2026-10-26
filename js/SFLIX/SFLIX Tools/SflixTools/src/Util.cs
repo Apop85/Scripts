@@ -287,6 +287,14 @@ namespace Sflix
                 throw new IOException(new Win32Exception(Marshal.GetLastWin32Error()).Message + ": " + target);
         }
 
+        // Verschiebt eine Datei, auch auf ein anderes Laufwerk (dann wird kopiert und gelöscht).
+        public static void MoveAcross(string source, string target, bool overwrite)
+        {
+            int flags = MOVEFILE_COPY_ALLOWED | (overwrite ? MOVEFILE_REPLACE_EXISTING : 0);
+            if (!MoveFileEx(source, target, flags))
+                throw new IOException(new Win32Exception(Marshal.GetLastWin32Error()).Message + ": " + target);
+        }
+
         // Wie Python os.rename: schlägt fehl, wenn das Ziel existiert (ausser bei reiner
         // Änderung der Gross-/Kleinschreibung). Funktioniert auch für Ordner.
         public static void Rename(string source, string target)

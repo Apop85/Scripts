@@ -6,7 +6,7 @@ Ein Programm mit Oberfläche, das die bisherigen Werkzeuge ersetzt:
 |---|---|
 | Update | `updateStefflix.py`, `updater.py`, `sflix_update.py` |
 | Gesplittete Medien zusammenführen | `teile_zusammenfuegen.py` |
-| Videos für SFLIX konvertieren | `convertVideos.py` |
+| Videos für STEFFLIX konvertieren | `convertVideos.py` |
 | Vorschaubilder erstellen | `PreviewMaker` |
 | Daten einlesen | `getfilepath.py` (`updateData.exe`) |
 
@@ -14,9 +14,19 @@ Dazu kommt „Ablagen leeren“: Es löscht `__teile`, `__konvertiert`, `__gelö
 
 „Daten einlesen“ verkleinert zu große Vorschaubilder auf 480×270. Das Original kommt nach `Preview\__original\<Dateiname>`. Bis Version 3.0.3 lag es als `<Dateiname>.original` direkt im Preview-Ordner; solche Dateien zieht „Daten einlesen“ automatisch um.
 
-Mehrere Aufgaben lassen sich gleichzeitig auswählen. Sie laufen immer in dieser Reihenfolge: Update, Ablagen leeren, Zusammenführen, Konvertieren, Vorschaubilder, Daten einlesen. „Ablagen leeren“ läuft vor Zusammenführen und Konvertieren, damit frisch gesicherte Originale nicht im selben Lauf gelöscht werden. „Daten einlesen“ kommt zuletzt, weil die anderen Aufgaben Dateien verändern.
+Das Fenster hat drei Registerkarten. Sichtbar ist nur der Bereich der gewählten Karte, der Untertitel im Kopfbild wechselt mit (UPDATES, IMPORTER, TOOLS). „Start“ führt aus, was auf der sichtbaren Karte gewählt ist:
 
-Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren arbeiten im **Medienordner**. Er wird oben im Fenster einmal festgelegt und gespeichert. Am Ende jedes Laufs zeigt das Protokoll deutlich „VORGANG BEENDET“ mit Ergebnis und Dauer.
+| Karte | Inhalt | beim Start |
+|---|---|---|
+| Updates | Update, Daten einlesen | die angehakten |
+| Importer | Medien importieren | Import, auf Wunsch Vorschaubilder, danach immer Daten einlesen |
+| Tools | Vorschaubilder, Zusammenführen, Konvertieren, Ablagen leeren, Einstellungen | die angehakten, danach immer Daten einlesen |
+
+Updates und Tools werden als Kacheln gewählt (Klick wählt aus oder ab). Unter den Kacheln gibt es für jede gewählte Kachel einen Reiter mit Beschreibung und Optionen, bei Tools zusätzlich immer den Reiter „Einstellungen“. Optionen sind Schalter. Der Start-Knopf beschreibt, was passiert („2 Tools starten“, „Importieren“ …). Dateien und Ordner, die ins Fenster gezogen werden, landen immer im Importer.
+
+Die Aufgaben laufen immer in dieser Reihenfolge: Update, Ablagen leeren, Import, Zusammenführen, Konvertieren, Vorschaubilder, Daten einlesen. „Ablagen leeren“ läuft vor Zusammenführen und Konvertieren, damit frisch gesicherte Originale nicht im selben Lauf gelöscht werden. „Daten einlesen“ kommt zuletzt, weil die anderen Aufgaben Dateien verändern.
+
+Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren arbeiten im **Medienordner**. Er wird unter Tools → Einstellungen einmal festgelegt und gespeichert. Am Ende jedes Laufs zeigt das Protokoll deutlich „VORGANG BEENDET“ mit Ergebnis und Dauer.
 
 Der Updater arbeitet nur in einem STEFFLIX-Ordner, also dort, wo `start.html` und `sflix_sys` sind. **Liegt er woanders, bietet er stattdessen die Installation an** (wie `setup.exe`):
 1. Ordner wählen.
@@ -69,7 +79,9 @@ Welcher Quellcode-Stand zuletzt bereitgestellt wurde, steht in `release_state.js
 
 ## Selbst-Update
 
-- Beim Start prüft das Programm im Hintergrund, ob auf GitHub eine neuere Version liegt. Falls ja, erscheint ein Hinweis mit „Jetzt aktualisieren“.
+- Beim Start prüft das Programm im Hintergrund, ob es Neues gibt: STEFFLIX-Dateien (Vergleich mit `checksums.json`, Versionsnummer aus `version.js` auf GitHub), dieses Programm und ein bereits installiertes ffmpeg. Falls ja, erscheint ein Fenster mit den Versionen und „Jetzt aktualisieren“ / „Später“. Nach „Später“ bleibt ein Hinweisbalken mit demselben Knopf stehen.
+- Rechts auf der Seite „Updates“ steht eine Übersicht „Versionen“ (installiert und verfügbar, Neueres in Rot). „Neu prüfen“ wiederholt die Prüfung, nach einem Update geschieht das automatisch.
+- „Patchnotes“ (im Hinweisfenster und in der Übersicht) lädt `sflix_sys/news.json` von GitHub und zeigt alle Versionen, die neuer sind als die installierte STEFFLIX-Version. Gibt es keine, wird die neueste Version gezeigt.
 - Die Aufgabe „Update“ aktualisiert zuerst die STEFFLIX-Dateien, dann ffmpeg (optional) und zuletzt sich selbst.
 - Wurde das Programm ersetzt, startet die neue Version automatisch und erledigt die restlichen ausgewählten Aufgaben.
 - Ablauf beim Ersetzen:

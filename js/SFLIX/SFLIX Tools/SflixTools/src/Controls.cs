@@ -1,6 +1,7 @@
 // Eigene Steuerelemente im dunklen STEFFLIX-Stil.
 
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -57,6 +58,7 @@ namespace Sflix
             l.AutoSize = true;
             l.ForeColor = muted ? Muted : Text;
             l.BackColor = Color.Transparent;
+            l.UseMnemonic = false;   // "&" anzeigen statt als Tastenkürzel deuten
             return l;
         }
     }
@@ -157,6 +159,9 @@ namespace Sflix
                 if (used > 0 && used < form.ClientSize.Height)
                     form.ClientSize = new Size(form.ClientSize.Width, used);
             }
+
+            // Ragt das Fenster nach dem Vergrössern unten aus dem Bildschirm, nach oben schieben
+            if (form.Bottom > work.Bottom) form.Top = Math.Max(work.Top, work.Bottom - form.Height);
         }
 
         public static Button MakeButton()
@@ -187,9 +192,411 @@ namespace Sflix
         }
     }
 
-    // Checkbox, die auch auf dunklem Hintergrund gut aussieht
+    // Registerkarten im Stil von Aktenreitern: Symbol und Text, die aktive Karte geht nahtlos
+    // in den Inhalt darunter über.
+    public class TabStrip : Control
+    {
+        readonly List<string> titles = new List<string>();
+        readonly List<Glyph> icons = new List<Glyph>();
+        readonly List<Rectangle> bounds = new List<Rectangle>();
+        int selected, hover = -1;
+
+        // Wird nach einem Wechsel aufgerufen (Index der neuen Karte)
+        public Action<int> Changed;
+
+        // Aussehen: oben unter dem Kopfbild gross, unter den Kacheln kleiner und heller
+        public Color StripBack = Branding.Background;
+        public Color ActiveFill = Theme.Back;
+        public Color InactiveFill = Color.FromArgb(0x1c, 0x1c, 0x21);
+        public Color HoverFill = Color.FromArgb(0x24, 0x24, 0x2a);
+        public int IconSize = 18, Pad = 16, TopGap = 8, Inset = 16;
+
+        public TabStrip()
+        {
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer |
+                     ControlStyles.ResizeRedraw | ControlStyles.UserPaint | ControlStyles.Selectable, true);
+            Font = new Font("Segoe UI Semibold", 10f);
+            Cursor = Cursors.Hand;
+            TabStop = true;
+        }
+
+        public void Add(string title, Glyph icon)
+        {
+            titles.Add(title);
+            icons.Add(icon);
+            Measure();
+        }
+
+        public int Count { get { return titles.Count; } }
+
+        // Alle Reiter ersetzen, ohne Changed auszulösen
+        public void SetTabs(IList<string> newTitles, IList<Glyph> newIcons, int select)
+        {
+            titles.Clear(); titles.AddRange(newTitles);
+            icons.Clear(); icons.AddRange(newIcons);
+            selected = Math.Max(0, Math.Min(select, titles.Count - 1));
+            hover = -1;
+            Measure();
+        }
+
+        public int Selected
+        {
+            get { return selected; }
+            set
+            {
+                if (value < 0 || value >= titles.Count || value == selected) return;
+                selected = value;
+                Invalidate();
+                if (Changed != null) Changed(value);
+            }
+        }
+
+        void Measure()
+        {
+            bounds.Clear();
+            int x = Theme.S(Inset);
+            int top = Theme.S(TopGap);
+            int iconSize = Theme.S(IconSize);
+            foreach (string t in titles)
+            {
+                int w = Theme.S(Pad) + iconSize + Theme.S(8) + TextRenderer.MeasureText(t, Font).Width + Theme.S(Pad);
+                bounds.Add(new Rectangle(x, top, w, Height - top));
+                x += w + Theme.S(4);
+            }
+            Invalidate();
+        }
+
+        protected override void OnResize(EventArgs e) { base.OnResize(e); Measure(); }
+        protected override void OnFontChanged(EventArgs e) { base.OnFontChanged(e); Measure(); }
+
+        int HitTest(Point p)
+        {
+            for (int i = 0; i < bounds.Count; i++) if (bounds[i].Contains(p)) return i;
+            return -1;
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            int h = HitTest(e.Location);
+            if (h != hover) { hover = h; Invalidate(); }
+            Cursor = h >= 0 ? Cursors.Hand : Cursors.Default;
+        }
+
+        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); hover = -1; Invalidate(); }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            int h = HitTest(e.Location);
+            if (h >= 0 && e.Button == MouseButtons.Left) { Focus(); Selected = h; }
+        }
+
+        protected override bool IsInputKey(Keys keyData)
+        {
+            return keyData == Keys.Left || keyData == Keys.Right || base.IsInputKey(keyData);
+        }
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            if (e.KeyCode == Keys.Left) Selected = Math.Max(0, selected - 1);
+            if (e.KeyCode == Keys.Right) Selected = Math.Min(titles.Count - 1, selected + 1);
+        }
+
+        protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
+        protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            g.Clear(StripBack);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            int bottom = Height - 1;
+            int radius = Theme.S(7);
+            for (int i = 0; i < bounds.Count; i++)
+            {
+                Rectangle r = bounds[i];
+                bool active = i == selected;
+                Color fill = active ? ActiveFill : (i == hover ? HoverFill : InactiveFill);
+                using (GraphicsPath p = TabPath(r, radius))
+                {
+                    using (SolidBrush b = new SolidBrush(fill)) g.FillPath(b, p);
+                    using (Pen pen = new Pen(active ? Theme.Line : Color.FromArgb(0x2a, 0x2a, 0x30), 1f)) g.DrawPath(pen, p);
+                }
+                if (active)
+                {
+                    // roter Streifen oben auf dem aktiven Reiter
+                    using (SolidBrush red = new SolidBrush(Theme.Red))
+                        g.FillRectangle(red, r.Left + radius, r.Top, r.Width - 2 * radius, Theme.S(3));
+                }
+                Color fore = active ? Theme.Text : (i == hover ? Color.FromArgb(0xd0, 0xd0, 0xd6) : Theme.Muted);
+                int iconSize = Theme.S(IconSize);
+                Rectangle ir = new Rectangle(r.Left + Theme.S(Pad), r.Top + (r.Height - iconSize) / 2 + Theme.S(1), iconSize, iconSize);
+                Glyphs.Draw(g, icons[i], ir, active ? Theme.Red : fore, fill);
+                Rectangle tr = new Rectangle(ir.Right + Theme.S(8), r.Top + Theme.S(1), r.Right - ir.Right - Theme.S(8), r.Height);
+                TextRenderer.DrawText(g, titles[i], Font, tr, fore, TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.NoPrefix);
+                if (active && Focused && ShowFocusCues)
+                {
+                    Rectangle fr = Rectangle.Inflate(r, -Theme.S(4), -Theme.S(6));
+                    fr.Y += Theme.S(2);
+                    ControlPaint.DrawFocusRectangle(g, fr, fore, fill);
+                }
+            }
+            // Grundlinie, unter dem aktiven Reiter offen
+            using (Pen line = new Pen(Theme.Line, 1f))
+            {
+                if (selected < bounds.Count)
+                {
+                    Rectangle a = bounds[selected];
+                    g.DrawLine(line, 0, bottom, a.Left, bottom);
+                    g.DrawLine(line, a.Right, bottom, Width, bottom);
+                }
+                else g.DrawLine(line, 0, bottom, Width, bottom);
+            }
+        }
+
+        static GraphicsPath TabPath(Rectangle r, int radius)
+        {
+            int d = radius * 2;
+            GraphicsPath p = new GraphicsPath();
+            p.AddLine(r.Left, r.Bottom + 1, r.Left, r.Top + radius);
+            p.AddArc(r.Left, r.Top, d, d, 180, 90);
+            p.AddArc(r.Right - d, r.Top, d, d, 270, 90);
+            p.AddLine(r.Right, r.Top + radius, r.Right, r.Bottom + 1);
+            return p;
+        }
+
+    }
+
+    public enum Glyph { Up, Import, Tools, Data, Photo, Merge, Convert, Trash, Settings }
+
+    // Einfache Strichsymbole im Stil der Registerkarten
+    public static class Glyphs
+    {
+        static PointF P(float s, float x, float y) { return new PointF(s * x, s * y); }
+
+        public static void Draw(Graphics g, Glyph icon, Rectangle r, Color color, Color back)
+        {
+            float s = r.Width;
+            float cx = r.Left + s / 2f, cy = r.Top + s / 2f;
+            GraphicsState state = g.Save();
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TranslateTransform(cx, cy);
+            using (Pen pen = new Pen(color, Math.Max(1.6f, s * 0.11f)))
+            using (SolidBrush brush = new SolidBrush(color))
+            using (SolidBrush bg = new SolidBrush(back))
+            {
+                pen.StartCap = pen.EndCap = LineCap.Round;
+                pen.LineJoin = LineJoin.Round;
+                switch (icon)
+                {
+                    case Glyph.Up:
+                        g.DrawLine(pen, 0, s * 0.44f, 0, -s * 0.38f);
+                        g.DrawLines(pen, new PointF[] { P(s, -0.32f, -0.06f), P(s, 0, -0.40f), P(s, 0.32f, -0.06f) });
+                        break;
+                    case Glyph.Import:
+                        g.DrawLines(pen, new PointF[] { P(s, -0.44f, 0.06f), P(s, -0.44f, 0.42f), P(s, 0.44f, 0.42f), P(s, 0.44f, 0.06f) });
+                        g.DrawLine(pen, 0, -s * 0.46f, 0, s * 0.16f);
+                        g.DrawLines(pen, new PointF[] { P(s, -0.22f, -0.06f), P(s, 0, 0.17f), P(s, 0.22f, -0.06f) });
+                        break;
+                    case Glyph.Tools:
+                        // Gabelschlüssel, schräg gestellt: Kopf oben rechts, Griff unten links
+                        g.RotateTransform(45f);
+                        g.FillEllipse(brush, -s * 0.24f, -s * 0.52f, s * 0.48f, s * 0.48f);
+                        using (Pen handle = new Pen(color, s * 0.2f))
+                        {
+                            handle.StartCap = handle.EndCap = LineCap.Round;
+                            g.DrawLine(handle, 0, -s * 0.2f, 0, s * 0.44f);
+                        }
+                        // Maulöffnung oben
+                        g.FillRectangle(bg, -s * 0.085f, -s * 0.62f, s * 0.17f, s * 0.3f);
+                        g.FillEllipse(bg, -s * 0.085f, -s * 0.39f, s * 0.17f, s * 0.14f);
+                        break;
+                    case Glyph.Data:
+                        // Datenbank: drei Scheiben übereinander
+                        g.DrawEllipse(pen, -s * 0.38f, -s * 0.46f, s * 0.76f, s * 0.26f);
+                        g.DrawLine(pen, -s * 0.38f, -s * 0.33f, -s * 0.38f, s * 0.33f);
+                        g.DrawLine(pen, s * 0.38f, -s * 0.33f, s * 0.38f, s * 0.33f);
+                        g.DrawArc(pen, -s * 0.38f, -s * 0.13f, s * 0.76f, s * 0.26f, 0, 180);
+                        g.DrawArc(pen, -s * 0.38f, s * 0.20f, s * 0.76f, s * 0.26f, 0, 180);
+                        break;
+                    case Glyph.Photo:
+                        using (GraphicsPath frame = RoundRect(new RectangleF(-s * 0.44f, -s * 0.36f, s * 0.88f, s * 0.72f), s * 0.12f))
+                            g.DrawPath(pen, frame);
+                        g.DrawEllipse(pen, s * 0.08f, -s * 0.20f, s * 0.16f, s * 0.16f);
+                        g.DrawLines(pen, new PointF[] { P(s, -0.40f, 0.28f), P(s, -0.14f, -0.02f), P(s, 0.10f, 0.22f), P(s, 0.22f, 0.10f), P(s, 0.40f, 0.28f) });
+                        break;
+                    case Glyph.Merge:
+                        g.DrawLine(pen, -s * 0.42f, -s * 0.34f, -s * 0.06f, 0);
+                        g.DrawLine(pen, -s * 0.42f, s * 0.34f, -s * 0.06f, 0);
+                        g.DrawLine(pen, -s * 0.06f, 0, s * 0.42f, 0);
+                        g.DrawLines(pen, new PointF[] { P(s, 0.22f, -0.18f), P(s, 0.42f, 0), P(s, 0.22f, 0.18f) });
+                        break;
+                    case Glyph.Convert:
+                        g.DrawLine(pen, -s * 0.40f, -s * 0.18f, s * 0.40f, -s * 0.18f);
+                        g.DrawLines(pen, new PointF[] { P(s, 0.22f, -0.36f), P(s, 0.40f, -0.18f), P(s, 0.22f, 0) });
+                        g.DrawLine(pen, s * 0.40f, s * 0.20f, -s * 0.40f, s * 0.20f);
+                        g.DrawLines(pen, new PointF[] { P(s, -0.22f, 0.02f), P(s, -0.40f, 0.20f), P(s, -0.22f, 0.38f) });
+                        break;
+                    case Glyph.Trash:
+                        g.DrawLine(pen, -s * 0.42f, -s * 0.28f, s * 0.42f, -s * 0.28f);
+                        g.DrawLines(pen, new PointF[] { P(s, -0.14f, -0.28f), P(s, -0.10f, -0.44f), P(s, 0.10f, -0.44f), P(s, 0.14f, -0.28f) });
+                        g.DrawLines(pen, new PointF[] { P(s, -0.30f, -0.16f), P(s, -0.24f, 0.44f), P(s, 0.24f, 0.44f), P(s, 0.30f, -0.16f) });
+                        g.DrawLine(pen, -s * 0.08f, -s * 0.04f, -s * 0.07f, s * 0.30f);
+                        g.DrawLine(pen, s * 0.08f, -s * 0.04f, s * 0.07f, s * 0.30f);
+                        break;
+                    case Glyph.Settings:
+                        // Zahnrad: Ring mit acht Zähnen
+                        using (Pen teeth = new Pen(color, s * 0.16f))
+                        {
+                            teeth.StartCap = teeth.EndCap = LineCap.Round;
+                            for (int i = 0; i < 8; i++)
+                            {
+                                double a = i * Math.PI / 4;
+                                g.DrawLine(teeth, (float)(Math.Cos(a) * s * 0.30f), (float)(Math.Sin(a) * s * 0.30f),
+                                                  (float)(Math.Cos(a) * s * 0.40f), (float)(Math.Sin(a) * s * 0.40f));
+                            }
+                        }
+                        g.FillEllipse(brush, -s * 0.33f, -s * 0.33f, s * 0.66f, s * 0.66f);
+                        g.FillEllipse(bg, -s * 0.13f, -s * 0.13f, s * 0.26f, s * 0.26f);
+                        break;
+                }
+            }
+            g.Restore(state);
+        }
+
+        public static GraphicsPath RoundRect(RectangleF r, float radius)
+        {
+            float d = radius * 2;
+            GraphicsPath p = new GraphicsPath();
+            p.AddArc(r.X, r.Y, d, d, 180, 90);
+            p.AddArc(r.Right - d, r.Y, d, d, 270, 90);
+            p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+            p.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
+            p.CloseFigure();
+            return p;
+        }
+    }
+
+    // Kachel zum Antippen: Symbol, Titel, kurze Beschreibung. Gewählt: roter Rand und Haken.
+    public class TileButton : Control
+    {
+        public Glyph Icon;
+        public string Title = "", Subtitle = "";
+        bool isChecked, hover;
+        public event EventHandler CheckedChanged;
+        readonly Font subFont = new Font("Segoe UI", 9f);
+
+        public TileButton()
+        {
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer |
+                     ControlStyles.ResizeRedraw | ControlStyles.UserPaint | ControlStyles.Selectable, true);
+            Font = new Font("Segoe UI Semibold", 10.5f);
+            Cursor = Cursors.Hand;
+            TabStop = true;
+            Height = Theme.S(112);
+        }
+
+        public bool Checked
+        {
+            get { return isChecked; }
+            set
+            {
+                if (isChecked == value) return;
+                isChecked = value;
+                Invalidate();
+                if (CheckedChanged != null) CheckedChanged(this, EventArgs.Empty);
+            }
+        }
+
+        protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); hover = true; Invalidate(); }
+        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); hover = false; Invalidate(); }
+        protected override void OnEnabledChanged(EventArgs e) { base.OnEnabledChanged(e); Invalidate(); }
+        protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
+        protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
+
+        protected override void OnMouseClick(MouseEventArgs e)
+        {
+            base.OnMouseClick(e);
+            if (e.Button != MouseButtons.Left || !Enabled) return;
+            Focus();
+            Checked = !Checked;
+        }
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            if (Enabled && (e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter)) { Checked = !Checked; e.Handled = true; }
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            Color back = Theme.Back;
+            for (Control p = Parent; p != null; p = p.Parent)
+                if (p.BackColor.A == 255) { back = p.BackColor; break; }
+            g.Clear(back);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            bool hot = hover && Enabled;
+            Color fill = isChecked ? Color.FromArgb(0x2a, 0x1f, 0x23) : (hot ? Color.FromArgb(0x26, 0x26, 0x2c) : Theme.Card);
+            int bw = Theme.S(2);
+            RectangleF r = new RectangleF(bw / 2f, bw / 2f, Width - bw - 1, Height - bw - 1);
+            using (GraphicsPath p = Glyphs.RoundRect(r, Theme.S(10)))
+            {
+                using (SolidBrush b = new SolidBrush(fill)) g.FillPath(b, p);
+                Color border = isChecked ? Theme.Red : (hot ? Theme.Line : (Focused && ShowFocusCues ? Theme.Line : fill));
+                using (Pen pen = new Pen(border, bw)) g.DrawPath(pen, p);
+            }
+
+            // Symbol in einem abgerundeten Feld
+            int box = Theme.S(38);
+            Rectangle ib = new Rectangle(Theme.S(14), Theme.S(14), box, box);
+            Color iconBack = isChecked ? Color.FromArgb(0x3e, 0x18, 0x1d) : Theme.Input;
+            using (GraphicsPath p = Glyphs.RoundRect(ib, Theme.S(8)))
+            using (SolidBrush b = new SolidBrush(iconBack)) g.FillPath(b, p);
+            int gs = Theme.S(20);
+            Color iconColor = !Enabled ? Theme.Line : (isChecked ? Color.FromArgb(0xff, 0x4d, 0x57) : Theme.Muted);
+            Glyphs.Draw(g, Icon, new Rectangle(ib.Left + (box - gs) / 2, ib.Top + (box - gs) / 2, gs, gs), iconColor, iconBack);
+
+            // Haken oben rechts
+            if (isChecked)
+            {
+                int d = Theme.S(22);
+                Rectangle cb = new Rectangle(Width - Theme.S(12) - d, Theme.S(12), d, d);
+                using (SolidBrush b = new SolidBrush(Theme.Red)) g.FillEllipse(b, cb);
+                using (Pen pen = new Pen(Color.White, Math.Max(2f, d / 9f)))
+                {
+                    pen.StartCap = pen.EndCap = LineCap.Round;
+                    pen.LineJoin = LineJoin.Round;
+                    g.DrawLines(pen, new PointF[] {
+                        new PointF(cb.Left + d * 0.28f, cb.Top + d * 0.52f),
+                        new PointF(cb.Left + d * 0.44f, cb.Top + d * 0.68f),
+                        new PointF(cb.Left + d * 0.74f, cb.Top + d * 0.34f) });
+                }
+            }
+
+            int tx = Theme.S(14), tw = Width - 2 * tx;
+            TextFormatFlags f = TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.NoPrefix |
+                                TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine;
+            TextRenderer.DrawText(g, Title, Font, new Rectangle(tx, ib.Bottom + Theme.S(10), tw, Theme.S(24)),
+                                  Enabled ? Theme.Text : Theme.Muted, f);
+            TextRenderer.DrawText(g, Subtitle, subFont, new Rectangle(tx, ib.Bottom + Theme.S(34), tw, Theme.S(20)), Theme.Muted, f);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) subFont.Dispose();
+            base.Dispose(disposing);
+        }
+    }
+
+    // Checkbox, die auch auf dunklem Hintergrund gut aussieht. Mit Switch = true als Schiebeschalter.
     public class DarkCheckBox : CheckBox
     {
+        bool isSwitch;
+
         public DarkCheckBox()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
@@ -197,11 +604,19 @@ namespace Sflix
             Cursor = Cursors.Hand;
         }
 
+        public bool Switch
+        {
+            get { return isSwitch; }
+            set { isSwitch = value; FitText(); Invalidate(); }
+        }
+
+        int MarkWidth() { return isSwitch ? (int)(BoxSize() * 1.75) : BoxSize(); }
+
         public void FitText()
         {
             Size sz = TextRenderer.MeasureText(Text, Font);
             int box = BoxSize();
-            Size = new Size(box + Theme.S(8) + sz.Width + Theme.S(6), Math.Max(box, sz.Height) + Theme.S(4));
+            Size = new Size(MarkWidth() + Theme.S(10) + sz.Width + Theme.S(6), Math.Max(box, sz.Height) + Theme.S(6));
         }
 
         // Die Schrift kommt oft erst vom übergeordneten Element: dann neu messen
@@ -214,9 +629,33 @@ namespace Sflix
         protected override void OnPaint(PaintEventArgs e)
         {
             Graphics g = e.Graphics;
-            g.Clear(Parent != null ? Parent.BackColor : Theme.Back);
+            // Hintergrund der nächsten nicht durchsichtigen Fläche (z.B. der Karte)
+            Color back = Theme.Back;
+            for (Control p = Parent; p != null; p = p.Parent)
+                if (p.BackColor.A == 255) { back = p.BackColor; break; }
+            g.Clear(back);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             int box = BoxSize();
+            if (isSwitch)
+            {
+                // Schiebeschalter: Bahn rot, wenn an; Knopf rechts
+                int w = MarkWidth(), h = (int)(box * 0.95);
+                RectangleF track = new RectangleF(1, (Height - h) / 2f, w - 2, h);
+                Color trackColor = Checked ? (Enabled ? Theme.Red : Branding.DarkRed) : Theme.Line;
+                using (GraphicsPath p = Glyphs.RoundRect(track, h / 2f))
+                using (SolidBrush b = new SolidBrush(trackColor)) g.FillPath(b, p);
+                float knob = h - Theme.S(6);
+                float kx = Checked ? track.Right - Theme.S(3) - knob : track.Left + Theme.S(3);
+                using (SolidBrush b = new SolidBrush(Checked ? Color.White : Theme.Muted))
+                    g.FillEllipse(b, kx, track.Top + Theme.S(3), knob, knob);
+                if (Focused && ShowFocusCues)
+                    using (Pen pen = new Pen(Theme.Muted, 1f))
+                    using (GraphicsPath p = Glyphs.RoundRect(RectangleF.Inflate(track, 2, 2), h / 2f + 2)) g.DrawPath(pen, p);
+                Rectangle tr = new Rectangle(w + Theme.S(10), 0, Width - w - Theme.S(10), Height);
+                TextRenderer.DrawText(g, Text, Font, tr, Enabled ? ForeColor : Theme.Muted,
+                                      TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.NoPrefix);
+                return;
+            }
             Rectangle r = new Rectangle(1, (Height - box) / 2, box - 2, box - 2);
             using (GraphicsPath p = Rounded(r, Theme.S(3)))
             {

@@ -13,30 +13,43 @@ namespace Sflix
 {
     public class MainForm : Form
     {
-        // Feste Reihenfolge: Update zuerst, Daten einlesen zuletzt (die anderen verändern Dateien).
-        // Ablagen leeren vor Zusammenführen/Konvertieren, damit frisch gesicherte Originale bleiben.
-        public static readonly string[] TaskIds = { "update", "cleanup", "merge", "convert", "preview", "data" };
+        // Ausführungsreihenfolge (unabhängig von der Anordnung im Fenster): Update zuerst, Daten
+        // einlesen zuletzt (die anderen verändern Dateien). Ablagen leeren vor Import, Zusammenführen
+        // und Konvertieren, damit frisch gesicherte Originale nicht im selben Lauf gelöscht werden.
+        public static readonly string[] TaskIds = { "update", "cleanup", "import", "merge", "convert", "preview", "data" };
 
         static readonly Dictionary<string, string> TaskTitles = new Dictionary<string, string> {
             { "update", "Update" },
             { "cleanup", "Ablagen leeren" },
+            { "import", "Medien importieren" },
             { "merge", "Gesplittete Medien zusammenführen" },
-            { "convert", "Videos für SFLIX konvertieren" },
+            { "convert", "Videos für STEFFLIX konvertieren" },
             { "preview", "Vorschaubilder erstellen" },
             { "data", "Daten einlesen" },
         };
 
         readonly Settings settings;
-        readonly Dictionary<string, DarkCheckBox> checks = new Dictionary<string, DarkCheckBox>();
+        readonly Dictionary<string, TileButton> checks = new Dictionary<string, TileButton>();
         readonly List<string> autoRun;
         readonly string startNotice;
 
         // Optionen
-        DarkCheckBox optFfmpeg, optMoveParts, optDeleteOriginal;
-        TextBox mediaFolder;
+        DarkCheckBox optFfmpeg, optMoveParts, optDeleteOriginal, optPreviewVideos, optPreviewImages;
+        DarkCheckBox optImportStructure, optImportConvert, optImportMove, optImportPreview;
+        TextBox mediaFolder, importSub;
         NumericUpDown convertParallel;
+        ListBox importList;
+        ComboBox importCategory;
+        Label importHint;
 
-        bool twoColumns;
+        // Registerkarten: nur der Bereich der gewählten Karte ist sichtbar
+        const int PageUpdates = 0, PageImport = 1, PageTools = 2;
+        static readonly string[] PageSubtitles = { "UPDATES", "IMPORTER", "TOOLS" };
+        static readonly string[] ToolIds = { "cleanup", "merge", "convert", "preview" };
+        TabStrip tabs;
+        Control[] pages;
+        TableLayoutPanel rootLayout;
+
         LogToggle logToggle;
         Panel tasksScroller;
         BannerPanel banner;
@@ -58,7 +71,6 @@ namespace Sflix
         double latestFraction = -2;
         string latestStatus;
         readonly object progressGate = new object();
-        byte[] pendingSelfUpdate;
         string logFile;
 
         public MainForm(Settings settings, List<string> autoRun, string startNotice)
@@ -82,13 +94,12 @@ namespace Sflix
             using (Graphics g = CreateGraphics()) Theme.Scale = g.DpiX / 96f;
             StartPosition = FormStartPosition.CenterScreen;
             Rectangle work = Screen.PrimaryScreen.WorkingArea;
-            twoColumns = work.Width - 40 >= Theme.S(1100);
-            ClientSize = new Size(Math.Min(Theme.S(twoColumns ? 1180 : 880), work.Width - 40),
-                                  Math.Min(Theme.S(twoColumns ? 860 : 1060), work.Height - 60));
+            ClientSize = new Size(Math.Min(Theme.S(940), work.Width - 40), Math.Min(Theme.S(820), work.Height - 60));
             MinimumSize = new Size(Math.Min(Theme.S(700), work.Width), Math.Min(Theme.S(400), work.Height));
 
             BuildUi();
             LoadOptions();
+            EnableDrop(this);
 
             uiTimer.Interval = 100;
             uiTimer.Tick += delegate { FlushUi(); };
@@ -104,23 +115,35 @@ namespace Sflix
             TableLayoutPanel root = new TableLayoutPanel();
             root.Dock = DockStyle.Fill;
             root.ColumnCount = 1;
-            root.RowCount = 6;
+            root.RowCount = 7;
             root.BackColor = Theme.Back;
             root.Padding = new Padding(0);
+            rootLayout = root;
             root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, Theme.S(110)));   // Kopfbild
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, Theme.S(46)));    // Registerkarten
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));                  // Update-Hinweis
-            root.RowStyles.Add(new RowStyle(SizeType.Percent, twoColumns ? 66 : 80)); // Aufgaben (scrollbar)
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 80));               // Inhalt der Karte (scrollbar)
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));                  // Knöpfe
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));                  // Fortschritt
-            root.RowStyles.Add(new RowStyle(SizeType.Percent, twoColumns ? 34 : 20)); // Protokoll
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 20));               // Protokoll
             Controls.Add(root);
 
             banner = new BannerPanel();
             banner.Version = "v" + App.VersionText;
+            banner.Subtitle = PageSubtitles[PageUpdates];
             banner.Dock = DockStyle.Fill;
             banner.Margin = new Padding(0);
             root.Controls.Add(banner, 0, 0);
+
+            tabs = new TabStrip();
+            tabs.Dock = DockStyle.Fill;
+            tabs.Margin = new Padding(0);
+            tabs.Add("Updates", Glyph.Up);
+            tabs.Add("Importer", Glyph.Import);
+            tabs.Add("Tools", Glyph.Tools);
+            tabs.Changed = ShowPage;
+            root.Controls.Add(tabs, 0, 1);
 
             // Hinweis auf neue Programmversion
             updateBar = new Panel();
@@ -136,63 +159,41 @@ namespace Sflix
             updateLabel.TextAlign = ContentAlignment.MiddleLeft;
             updateButton = Theme.MakeButton("Jetzt aktualisieren", true);
             updateButton.Dock = DockStyle.Right;
-            updateButton.Click += delegate { InstallSelfUpdate(); };
+            updateButton.Click += delegate { RunUpdateNow(); };
             updateBar.Controls.Add(updateLabel);
             updateBar.Controls.Add(updateButton);
-            root.Controls.Add(updateBar, 0, 1);
+            root.Controls.Add(updateBar, 0, 2);
 
-            // Aufgaben (scrollen, falls der Bildschirm zu klein ist)
+            // Inhalt der gewählten Karte (scrollen, falls der Bildschirm zu klein ist)
             Panel scroller = new Panel();
             tasksScroller = scroller;
             scroller.Dock = DockStyle.Fill;
             scroller.AutoScroll = true;
             scroller.Margin = new Padding(Theme.S(16), Theme.S(12), Theme.S(6), 0);
             scroller.BackColor = Theme.Back;
-            root.Controls.Add(scroller, 0, 2);
+            root.Controls.Add(scroller, 0, 3);
 
-            TableLayoutPanel tasks = new TableLayoutPanel();
-            tasks.Dock = DockStyle.Top;
-            tasks.AutoSize = true;
-            tasks.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            tasks.ColumnCount = twoColumns ? 2 : 1;
-            tasks.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            if (twoColumns) tasks.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            tasks.Margin = new Padding(0);
-            tasks.Padding = new Padding(0, 0, Theme.S(10), 0);
-            tasks.BackColor = Theme.Back;
-            scroller.Controls.Add(tasks);
-
-            // Ein Medienordner für alle Aufgaben, die Videos durchsuchen. Wird gespeichert.
-            mediaFolder = Theme.MakeTextBox();
-            TableLayoutPanel folderCard = new TableLayoutPanel();
-            folderCard.Dock = DockStyle.Fill;
-            folderCard.AutoSize = true;
-            folderCard.ColumnCount = 1;
-            folderCard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            folderCard.BackColor = Theme.Card;
-            folderCard.Padding = new Padding(Theme.S(12), Theme.S(8), Theme.S(12), Theme.S(8));
-            folderCard.Margin = new Padding(0, 0, 0, Theme.S(10));
-            folderCard.Controls.Add(FolderRow(mediaFolder, "Medienordner:"));
-            Label folderHint = Theme.MakeLabel("Gilt für Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren. " +
-                                               "Wird gespeichert – nur ändern, wenn sich der Ordner ändert.", true);
-            folderHint.Margin = new Padding(0, Theme.S(2), 0, 0);
-            folderCard.Controls.Add(folderHint);
-            tasks.Controls.Add(folderCard, 0, 0);
-            if (twoColumns) tasks.SetColumnSpan(folderCard, 2);
-
-            Label heading = Theme.MakeLabel("Was möchtest du machen?", false);
-            heading.Font = new Font("Segoe UI Semibold", 11f);
-            heading.Margin = new Padding(0, 0, 0, Theme.S(6));
-            tasks.Controls.Add(heading, 0, 1);
-            if (twoColumns) tasks.SetColumnSpan(heading, 2);
-
+            // --- Updates: Kernkomponenten ---
             optFfmpeg = SmallCheck("ffmpeg ebenfalls aktualisieren");
-            Control updateCard = TaskCard("update", "STEFFLIX-Dateien und dieses Programm von GitHub aktualisieren.",
-                new Control[] { optFfmpeg });
+            Control updatesSection = TileSection(new TileSpec[] {
+                Spec("update", Glyph.Up, "Update", "STEFFLIX und Updater von GitHub",
+                     "STEFFLIX-Dateien und dieses Programm von GitHub aktualisieren.", optFfmpeg),
+                Spec("data", Glyph.Data, "Daten einlesen", "Medien neu einlesen",
+                     "Medien neu einlesen (data.js), ungültige Zeichen in Namen korrigieren."),
+            }, null);
+
+            // --- Tools: Kacheln, darunter je gewähltem Tool ein Reiter mit seinen Optionen ---
+            optPreviewVideos = SmallCheck("für Videos (Bild aus der Mitte)");
+            optPreviewImages = SmallCheck("für Bilder");
+            FlowLayoutPanel previewRow = new FlowLayoutPanel();
+            previewRow.AutoSize = true;
+            previewRow.WrapContents = true;
+            previewRow.Margin = new Padding(0, Theme.S(2), 0, Theme.S(2));
+            optPreviewImages.Margin = new Padding(Theme.S(20), Theme.S(2), 0, Theme.S(2));
+            previewRow.Controls.Add(optPreviewVideos);
+            previewRow.Controls.Add(optPreviewImages);
 
             optMoveParts = SmallCheck("Teile danach nach „" + MergeTask.PartsFolderName + "“ verschieben");
-            Control mergeCard = TaskCard("merge", "Videos wie „Titel pt1“, „Titel pt2“ zu einer Datei zusammenfügen. Du wählst vorher aus, welche.",
-                new Control[] { optMoveParts });
 
             convertParallel = new NumericUpDown();
             convertParallel.Minimum = 0;
@@ -213,44 +214,51 @@ namespace Sflix
             parallelRow.Controls.Add(parallelLabel);
             parallelRow.Controls.Add(convertParallel);
             parallelRow.Controls.Add(parallelHint);
-            Control convertCard = TaskCard("convert", "Videos in browserkompatible MP4 (H.264/AAC) umwandeln. Das Original kommt nach „" + ConvertTask.OriginalsFolderName + "“.",
-                new Control[] { parallelRow, optDeleteOriginal });
 
-            Control previewCard = TaskCard("preview", "Aus der Mitte jedes Videos ein Vorschaubild (480×270) erstellen.",
-                new Control[0]);
+            // Einstellungen: ein Medienordner für alle Aufgaben, die Videos durchsuchen. Wird gespeichert.
+            mediaFolder = Theme.MakeTextBox();
+            Label folderHint = Theme.MakeLabel("Gilt für Vorschaubilder, Zusammenführen, Konvertieren und Ablagen leeren. " +
+                                               "Wird gespeichert – nur ändern, wenn sich der Ordner ändert.", true);
+            folderHint.MaximumSize = new Size(TextWidth, 0);
+            folderHint.Margin = new Padding(0, Theme.S(4), 0, 0);
 
-            Control dataCard = TaskCard("data", "Medien neu einlesen (data.js), ungültige Zeichen in Namen korrigieren.",
-                new Control[0]);
+            Control toolsSection = TileSection(new TileSpec[] {
+                Spec("preview", Glyph.Photo, "Vorschaubilder", "Fehlende Bilder erstellen",
+                     "Fehlende Vorschaubilder (480×270) im Preview-Ordner erstellen.", previewRow),
+                Spec("merge", Glyph.Merge, "Zusammenführen", "pt1, pt2 … zu einer Datei",
+                     "Gesplittete Videos wie „Titel pt1“, „Titel pt2“ zu einer Datei zusammenfügen. Du wählst vorher aus, welche.", optMoveParts),
+                Spec("convert", Glyph.Convert, "Konvertieren", "Videos in MP4 umwandeln",
+                     "Videos in browserkompatible MP4 (H.264/AAC) umwandeln. Das Original kommt nach „" + ConvertTask.OriginalsFolderName + "“.",
+                     parallelRow, optDeleteOriginal),
+                Spec("cleanup", Glyph.Trash, "Ablagen leeren", "__-Ordner endgültig löschen",
+                     "„__teile“, „__konvertiert“, „__gelöscht“ und „__original“ endgültig löschen. Du siehst vorher, was gelöscht wird."),
+            }, Spec("settings", Glyph.Settings, "Einstellungen", null, null, FolderRow(mediaFolder, "Medienordner:"), folderHint));
 
-            Control cleanupCard = TaskCard("cleanup", "„__teile“, „__konvertiert“, „__gelöscht“ und „__original“ endgültig löschen. Du siehst vorher, was gelöscht wird.",
-                new Control[0]);
+            Label toolsNote = Theme.MakeLabel("Die gewählten Tools laufen nacheinander, danach wird automatisch „Daten einlesen“ ausgeführt.", true);
+            toolsNote.MaximumSize = new Size(TextWidth, 0);
+            toolsNote.Margin = new Padding(0, 0, 0, Theme.S(10));
 
-            if (twoColumns)
-            {
-                // Breiter Bildschirm: zwei Spalten, damit alles ohne Scrollen sichtbar ist
-                TableLayoutPanel left = Column(), right = Column();
-                left.Margin = new Padding(0, 0, Theme.S(5), 0);
-                right.Margin = new Padding(Theme.S(5), 0, 0, 0);
-                foreach (Control c in new Control[] { updateCard, mergeCard, previewCard, convertCard, cleanupCard, dataCard })
-                {
-                    // Karten nicht in die Höhe ziehen
-                    c.Dock = DockStyle.None;
-                    c.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-                }
-                left.Controls.Add(updateCard);
-                left.Controls.Add(mergeCard);
-                left.Controls.Add(previewCard);
-                right.Controls.Add(convertCard);
-                right.Controls.Add(cleanupCard);
-                right.Controls.Add(dataCard);
-                tasks.Controls.Add(left, 0, 2);
-                tasks.Controls.Add(right, 1, 2);
-            }
-            else
-            {
-                foreach (Control c in new Control[] { updateCard, cleanupCard, mergeCard, convertCard, previewCard, dataCard })
-                    tasks.Controls.Add(c);
-            }
+            // Je Registerkarte eine Seite. Ausgeführt wird in der Reihenfolge von TaskIds.
+            // Updates: links die Kacheln, rechts die installierten und verfügbaren Versionen
+            TableLayoutPanel updatesRow = new TableLayoutPanel();
+            updatesRow.AutoSize = true;
+            updatesRow.Dock = DockStyle.Fill;
+            updatesRow.ColumnCount = 2;
+            updatesRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            updatesRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Theme.S(330)));
+            updatesRow.Margin = new Padding(0);
+            updatesRow.BackColor = Theme.Back;
+            updatesRow.Controls.Add(updatesSection, 0, 0);
+            updatesRow.Controls.Add(BuildVersionsCard(), 1, 0);
+
+            pages = new Control[] {
+                Page(new Control[] { updatesRow }),
+                Page(BuildImportPage()),
+                Page(new Control[] { toolsNote, toolsSection }),
+            };
+            // Dock Top: in umgekehrter Reihenfolge einfügen, sichtbar ist ohnehin nur eine
+            for (int i = pages.Length - 1; i >= 0; i--) scroller.Controls.Add(pages[i]);
+            for (int i = 0; i < pages.Length; i++) pages[i].Visible = i == PageUpdates;
 
             // Knöpfe
             FlowLayoutPanel buttons = new FlowLayoutPanel();
@@ -268,7 +276,7 @@ namespace Sflix
             cancelButton.Click += delegate { CancelTasks(); };
             buttons.Controls.Add(startButton);
             buttons.Controls.Add(cancelButton);
-            root.Controls.Add(buttons, 0, 3);
+            root.Controls.Add(buttons, 0, 4);
 
             // Fortschritt
             TableLayoutPanel prog = new TableLayoutPanel();
@@ -295,7 +303,7 @@ namespace Sflix
             prog.SetColumnSpan(progress, 2);
             prog.Controls.Add(statusLabel, 0, 1);
             prog.Controls.Add(detailsButton, 1, 1);
-            root.Controls.Add(prog, 0, 4);
+            root.Controls.Add(prog, 0, 5);
 
             // Protokoll
             logBox = new TextBox();
@@ -309,23 +317,49 @@ namespace Sflix
             logBox.BorderStyle = BorderStyle.None;
             logBox.Dock = DockStyle.Fill;
             logBox.Margin = new Padding(Theme.S(16), 0, Theme.S(16), Theme.S(16));
-            root.Controls.Add(logBox, 0, 5);
+            root.Controls.Add(logBox, 0, 6);
 
             // Protokoll standardmässig eingeklappt, "Details" blendet es ein
-            logToggle = new LogToggle(root, 5, 100, logBox, detailsButton);
+            logToggle = new LogToggle(root, 6, 100, logBox, detailsButton);
             logToggle.Changed = delegate(bool expanded)
             {
-                LogToggle.FitWindow(this, root, expanded, 2, 100, tasksScroller, Theme.S(300), 5);
+                LogToggle.FitWindow(this, root, expanded, 3, 100, tasksScroller, Theme.S(300), 6);
+                // Eine beim Vergrössern kurz nötige Scrollleiste bliebe sonst stehen
+                tasksScroller.AutoScroll = false;
+                tasksScroller.AutoScroll = true;
             };
         }
 
-        protected override void OnLoad(EventArgs e)
+        // Breite für umbrechende Beschreibungen
+        static int TextWidth { get { return Theme.S(800); } }
+
+        static Control Page(Control[] content)
         {
-            base.OnLoad(e);
-            logToggle.Set(false);
+            TableLayoutPanel page = Column();
+            page.Dock = DockStyle.Top;
+            page.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            page.Margin = new Padding(0);
+            page.Padding = new Padding(0, 0, Theme.S(10), 0);
+            foreach (Control c in content) page.Controls.Add(c);
+            return page;
         }
 
-        Control TaskCard(string id, string description, Control[] options)
+        // Registerkarte wechseln: nur deren Bereich zeigen, Untertitel im Kopfbild anpassen
+        void ShowPage(int index)
+        {
+            if (tabs.Selected != index) { tabs.Selected = index; return; }   // ruft ShowPage erneut auf
+            SuspendLayout();
+            for (int i = 0; i < pages.Length; i++) pages[i].Visible = i == index;
+            tasksScroller.AutoScrollPosition = new Point(0, 0);
+            ResumeLayout(true);
+            banner.Subtitle = PageSubtitles[index];
+            banner.Invalidate();
+            UpdateStartText();
+            Relayout();
+        }
+
+        // Karte ohne Häkchen mit Überschrift (für den Importer)
+        static Control SectionCard(string title, Control[] content)
         {
             TableLayoutPanel card = new TableLayoutPanel();
             card.Dock = DockStyle.Fill;
@@ -333,35 +367,756 @@ namespace Sflix
             card.ColumnCount = 1;
             card.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             card.BackColor = Theme.Card;
-            card.Padding = new Padding(Theme.S(12), Theme.S(6), Theme.S(12), Theme.S(6));
+            card.Padding = new Padding(Theme.S(12), Theme.S(8), Theme.S(12), Theme.S(8));
             card.Margin = new Padding(0, 0, 0, Theme.S(5));
-
-            DarkCheckBox check = new DarkCheckBox();
-            check.Text = TaskTitles[id];
-            check.Font = new Font("Segoe UI Semibold", 10.5f);
-            check.ForeColor = Theme.Text;
-            check.Margin = new Padding(0);
-            check.FitText();
-            checks[id] = check;
-            card.Controls.Add(check);
-
-            int indent = Theme.S(26);
-            Label desc = Theme.MakeLabel(description, true);
-            desc.Margin = new Padding(indent, 0, 0, options.Length > 0 ? Theme.S(4) : 0);
-            desc.MaximumSize = new Size(Theme.S(twoColumns ? 480 : 760), 0);
-            card.Controls.Add(desc);
-
-            foreach (Control c in options)
+            Label t = Theme.MakeLabel(title, false);
+            t.Font = new Font("Segoe UI Semibold", 10.5f);
+            t.Margin = new Padding(0, 0, 0, Theme.S(2));
+            card.Controls.Add(t);
+            foreach (Control c in content)
             {
-                c.Margin = new Padding(indent, c.Margin.Top, 0, c.Margin.Bottom);
+                c.Margin = new Padding(0, c.Margin.Top, 0, c.Margin.Bottom);
                 card.Controls.Add(c);
             }
-
-            // Klick auf die Karte schaltet die Aufgabe um
-            card.Click += delegate { check.Checked = !check.Checked; };
-            desc.Click += delegate { check.Checked = !check.Checked; };
-            check.CheckedChanged += delegate { card.BackColor = check.Checked ? Color.FromArgb(0x26, 0x20, 0x23) : Theme.Card; card.Invalidate(true); };
             return card;
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            EqualizeOptionHosts();
+            UpdateStartText();
+            logToggle.Set(false);
+        }
+
+        // ---------------------------------------------------------------
+        // Kacheln mit Options-Reitern (Updates und Tools)
+        // ---------------------------------------------------------------
+
+        class TileSpec
+        {
+            public string Id, Title, Subtitle, Description;
+            public Glyph Icon;
+            public Control[] Options;
+        }
+
+        static TileSpec Spec(string id, Glyph icon, string title, string subtitle, string description, params Control[] options)
+        {
+            TileSpec s = new TileSpec();
+            s.Id = id; s.Icon = icon; s.Title = title; s.Subtitle = subtitle; s.Description = description; s.Options = options;
+            return s;
+        }
+
+        // Ein Bereich: Kacheln oben, darunter ein Reiter je gewählter Kachel (plus ein fester
+        // Reiter, z.B. Einstellungen) mit Beschreibung und Optionen.
+        class TileSectionState
+        {
+            public TileSpec[] Specs;
+            public TileSpec Fixed;
+            public TabStrip Strip;
+            public TableLayoutPanel Host;
+            public Label Empty;
+            public readonly Dictionary<string, Control> Panels = new Dictionary<string, Control>();
+            public readonly List<string> Shown = new List<string>();
+        }
+
+        readonly List<TileSectionState> sections = new List<TileSectionState>();
+
+        Control TileSection(TileSpec[] specs, TileSpec fixedTab)
+        {
+            TileSectionState sec = new TileSectionState();
+            sec.Specs = specs;
+            sec.Fixed = fixedTab;
+            sections.Add(sec);
+
+            TableLayoutPanel col = Column();
+            col.Margin = new Padding(0);
+
+            // Kacheln nebeneinander, gleich breit
+            TableLayoutPanel grid = new TableLayoutPanel();
+            grid.AutoSize = true;
+            grid.Dock = DockStyle.Fill;
+            grid.ColumnCount = specs.Length;
+            grid.RowCount = 1;
+            grid.Margin = new Padding(0, 0, 0, Theme.S(14));
+            grid.BackColor = Theme.Back;
+            for (int i = 0; i < specs.Length; i++)
+            {
+                grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / specs.Length));
+                TileSpec spec = specs[i];
+                TileButton tile = new TileButton();
+                tile.Icon = spec.Icon;
+                tile.Title = spec.Title;
+                tile.Subtitle = spec.Subtitle;
+                tile.Dock = DockStyle.Fill;
+                tile.Margin = new Padding(i == 0 ? 0 : Theme.S(5), 0, i == specs.Length - 1 ? 0 : Theme.S(5), 0);
+                tile.CheckedChanged += delegate
+                {
+                    RefreshOptionTabs(sec, tile.Checked && !loading ? spec.Id : null);
+                    UpdateStartText();
+                };
+                checks[spec.Id] = tile;
+                grid.Controls.Add(tile, i, 0);
+            }
+
+            // Reiter für die Optionen
+            TabStrip strip = new TabStrip();
+            strip.StripBack = Theme.Back;
+            strip.ActiveFill = Theme.Card;
+            strip.InactiveFill = Color.FromArgb(0x1c, 0x1c, 0x21);
+            strip.HoverFill = Color.FromArgb(0x24, 0x24, 0x2a);
+            strip.IconSize = 16;
+            strip.Pad = 12;
+            strip.TopGap = 0;
+            strip.Inset = 0;
+            strip.Font = new Font("Segoe UI Semibold", 9.5f);
+            strip.Height = Theme.S(38);
+            strip.Dock = DockStyle.Fill;
+            strip.Margin = new Padding(0);
+            strip.Changed = delegate(int index) { ShowOptionPanel(sec, sec.Shown[index]); };
+            sec.Strip = strip;
+
+            TableLayoutPanel host = new TableLayoutPanel();
+            host.AutoSize = true;
+            host.ColumnCount = 1;
+            host.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            host.Dock = DockStyle.Fill;
+            host.BackColor = Theme.Card;
+            host.Padding = new Padding(Theme.S(16), Theme.S(12), Theme.S(16), Theme.S(14));
+            host.Margin = new Padding(0, 0, 0, Theme.S(4));
+            sec.Host = host;
+
+            List<TileSpec> all = new List<TileSpec>(specs);
+            if (fixedTab != null) all.Add(fixedTab);
+            foreach (TileSpec spec in all)
+            {
+                TableLayoutPanel panel = new TableLayoutPanel();
+                panel.AutoSize = true;
+                panel.ColumnCount = 1;
+                panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                panel.Dock = DockStyle.Fill;
+                panel.Margin = new Padding(0);
+                panel.BackColor = Color.Transparent;
+                if (!string.IsNullOrEmpty(spec.Description))
+                {
+                    Label desc = Theme.MakeLabel(spec.Description, true);
+                    desc.MaximumSize = new Size(TextWidth, 0);
+                    desc.Margin = new Padding(0, 0, 0, spec.Options.Length > 0 ? Theme.S(8) : 0);
+                    panel.Controls.Add(desc);
+                }
+                foreach (Control c in spec.Options)
+                {
+                    c.Margin = new Padding(0, c.Margin.Top, 0, c.Margin.Bottom);
+                    panel.Controls.Add(c);
+                }
+                panel.Visible = false;
+                sec.Panels[spec.Id] = panel;
+                host.Controls.Add(panel);
+            }
+            sec.Empty = Theme.MakeLabel("Wähle oben aus, was ausgeführt werden soll. Hier erscheinen dann die Optionen.", true);
+            sec.Empty.Margin = new Padding(0);
+            host.Controls.Add(sec.Empty);
+
+            col.Controls.Add(grid);
+            col.Controls.Add(strip);
+            col.Controls.Add(host);
+            RefreshOptionTabs(sec, null);
+            return col;
+        }
+
+        // Reiter neu aufbauen: einer je gewählter Kachel (in Kachel-Reihenfolge), der feste zuletzt.
+        // activate: dieser Reiter wird gezeigt (z.B. die eben gewählte Kachel).
+        void RefreshOptionTabs(TileSectionState sec, string activate)
+        {
+            // Beim Laden der Einstellungen: erster gewählter Reiter vorne
+            string current = !loading && sec.Shown.Count > 0 && sec.Strip.Selected < sec.Shown.Count ? sec.Shown[sec.Strip.Selected] : null;
+            sec.Shown.Clear();
+            List<string> titles = new List<string>();
+            List<Glyph> icons = new List<Glyph>();
+            List<TileSpec> all = new List<TileSpec>();
+            foreach (TileSpec s in sec.Specs) if (checks[s.Id].Checked) all.Add(s);
+            if (sec.Fixed != null) all.Add(sec.Fixed);
+            foreach (TileSpec s in all) { sec.Shown.Add(s.Id); titles.Add(s.Title); icons.Add(s.Icon); }
+
+            string want = activate != null && sec.Shown.Contains(activate) ? activate
+                        : current != null && sec.Shown.Contains(current) ? current
+                        : sec.Shown.Count > 0 ? sec.Shown[0] : null;
+            sec.Strip.SetTabs(titles, icons, want == null ? 0 : sec.Shown.IndexOf(want));
+            ShowOptionPanel(sec, want);
+        }
+
+        void ShowOptionPanel(TileSectionState sec, string id)
+        {
+            sec.Host.SuspendLayout();
+            foreach (KeyValuePair<string, Control> p in sec.Panels) p.Value.Visible = p.Key == id;
+            // Hinweis nur, wenn noch nichts gewählt ist
+            bool anyTile = false;
+            foreach (TileSpec s in sec.Specs) if (checks[s.Id].Checked) anyTile = true;
+            sec.Empty.Visible = !anyTile && id == null;
+            if (!anyTile && id != null && sec.Fixed != null && id == sec.Fixed.Id) sec.Empty.Visible = false;
+            sec.Host.ResumeLayout(true);
+            Relayout();
+        }
+
+        // Reiter einer Kachel (oder des festen Reiters) nach vorne holen, z.B. bei einer Rückfrage
+        void ShowOption(string id)
+        {
+            foreach (TileSectionState sec in sections)
+            {
+                if (!sec.Panels.ContainsKey(id)) continue;
+                for (int p = 0; p < pages.Length; p++)
+                    if (IsChildOf(sec.Host, pages[p])) ShowPage(p);
+                if (sec.Shown.Contains(id))
+                {
+                    sec.Strip.SetTabs(TabTitles(sec), TabIcons(sec), sec.Shown.IndexOf(id));
+                    ShowOptionPanel(sec, id);
+                }
+            }
+        }
+
+        static bool IsChildOf(Control c, Control parent)
+        {
+            for (Control p = c; p != null; p = p.Parent) if (p == parent) return true;
+            return false;
+        }
+
+        List<string> TabTitles(TileSectionState sec)
+        {
+            List<string> l = new List<string>();
+            foreach (string id in sec.Shown) l.Add(SpecOf(sec, id).Title);
+            return l;
+        }
+
+        List<Glyph> TabIcons(TileSectionState sec)
+        {
+            List<Glyph> l = new List<Glyph>();
+            foreach (string id in sec.Shown) l.Add(SpecOf(sec, id).Icon);
+            return l;
+        }
+
+        static TileSpec SpecOf(TileSectionState sec, string id)
+        {
+            foreach (TileSpec s in sec.Specs) if (s.Id == id) return s;
+            return sec.Fixed;
+        }
+
+        // Alle Options-Bereiche so hoch wie ihr höchster Reiter: das Fenster springt beim
+        // Wechseln der Reiter nicht auf und ab
+        void EqualizeOptionHosts()
+        {
+            int width = tasksScroller.ClientSize.Width - Theme.S(10);
+            if (width < Theme.S(300)) width = ClientSize.Width - Theme.S(40);
+            foreach (TileSectionState sec in sections)
+            {
+                int inner = width - sec.Host.Padding.Horizontal;
+                int max = sec.Empty.GetPreferredSize(new Size(inner, 0)).Height;
+                foreach (Control p in sec.Panels.Values)
+                    max = Math.Max(max, p.GetPreferredSize(new Size(inner, 0)).Height);
+                sec.Host.MinimumSize = new Size(0, max + sec.Host.Padding.Vertical);
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // Versionen (rechts auf der Seite Updates)
+        // ---------------------------------------------------------------
+
+        readonly Label[] verInstalled = new Label[3], verAvailable = new Label[3];
+        Label verStatus;
+        Button verRecheck;
+
+        Control BuildVersionsCard()
+        {
+            TableLayoutPanel card = new TableLayoutPanel();
+            card.AutoSize = true;
+            card.ColumnCount = 1;
+            card.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            card.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            card.BackColor = Theme.Card;
+            card.Padding = new Padding(Theme.S(16), Theme.S(12), Theme.S(16), Theme.S(12));
+            card.Margin = new Padding(Theme.S(12), 0, 0, 0);
+
+            Label title = Theme.MakeLabel("Versionen", false);
+            title.Font = new Font("Segoe UI Semibold", 10.5f);
+            title.Margin = new Padding(0, 0, 0, Theme.S(8));
+            card.Controls.Add(title);
+
+            TableLayoutPanel grid = new TableLayoutPanel();
+            grid.AutoSize = true;
+            grid.Dock = DockStyle.Fill;
+            grid.ColumnCount = 3;
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
+            grid.Margin = new Padding(0);
+            grid.BackColor = Color.Transparent;
+
+            string[] heads = { "", "Installiert", "Verfügbar" };
+            for (int c = 0; c < 3; c++)
+            {
+                Label h = Theme.MakeLabel(heads[c], true);
+                h.Font = new Font("Segoe UI", 8.5f);
+                h.Margin = new Padding(0, 0, 0, Theme.S(4));
+                grid.Controls.Add(h, c, 0);
+            }
+            string[] names = { "STEFFLIX", "Updater", "ffmpeg" };
+            for (int r = 0; r < 3; r++)
+            {
+                Panel line = new Panel();
+                line.BackColor = Theme.Line;
+                line.Height = 1;
+                line.Dock = DockStyle.Fill;
+                line.Margin = new Padding(0);
+                grid.Controls.Add(line, 0, 1 + r * 2);
+                grid.SetColumnSpan(line, 3);
+
+                Label n = Theme.MakeLabel(names[r], false);
+                verInstalled[r] = Theme.MakeLabel("", false);
+                verAvailable[r] = Theme.MakeLabel("…", true);
+                foreach (Label l in new Label[] { n, verInstalled[r], verAvailable[r] })
+                    l.Margin = new Padding(0, Theme.S(7), Theme.S(4), Theme.S(7));
+                grid.Controls.Add(n, 0, 2 + r * 2);
+                grid.Controls.Add(verInstalled[r], 1, 2 + r * 2);
+                grid.Controls.Add(verAvailable[r], 2, 2 + r * 2);
+            }
+            card.Controls.Add(grid);
+
+            verStatus = Theme.MakeLabel("Wird geprüft …", true);
+            verStatus.Font = new Font("Segoe UI", 8.5f);
+            verStatus.MaximumSize = new Size(Theme.S(290), 0);
+            verStatus.Margin = new Padding(0, Theme.S(8), 0, Theme.S(8));
+            card.Controls.Add(verStatus);
+
+            FlowLayoutPanel foot = new FlowLayoutPanel();
+            foot.AutoSize = true;
+            foot.WrapContents = false;
+            foot.Margin = new Padding(0);
+            foot.BackColor = Color.Transparent;
+            Button notes = SmallButton("Patchnotes");
+            notes.Click += delegate { ShowPatchNotes(this); };
+            verRecheck = SmallButton("Neu prüfen");
+            verRecheck.Click += delegate { CheckForUpdateInBackground(false); };
+            foot.Controls.Add(notes);
+            foot.Controls.Add(verRecheck);
+            card.Controls.Add(foot);
+
+            ShowInstalledVersions();
+            return card;
+        }
+
+        // Patchnotes von GitHub laden und zeigen: alle Versionen, die neuer sind als die installierte
+        // (sonst die aktuelle). owner: Fenster, über dem sie erscheinen.
+        void ShowPatchNotes(Form owner)
+        {
+            string local = UpdateCheck.LocalWebVersion();
+            Cursor old = owner.Cursor;
+            owner.Cursor = Cursors.WaitCursor;
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                List<PatchVersion> all = null;
+                string error = null;
+                try { all = PatchNotes.Load(CancellationToken.None); }
+                catch (Exception ex) { error = ex.Message; }
+                BeginInvoke((Action)delegate
+                {
+                    owner.Cursor = old;
+                    if (owner.IsDisposed) return;
+                    if (error != null)
+                    {
+                        MessageBox.Show(owner, "Die Patchnotes konnten nicht geladen werden:\n" + error, App.Title,
+                                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+                    bool newer;
+                    List<PatchVersion> list = PatchNotes.Select(all, local, out newer);
+                    string heading = newer ? "Neu seit STEFFLIX " + local
+                                   : "Neuerungen in STEFFLIX " + (list.Count > 0 ? list[0].Version : (local ?? ""));
+                    using (PatchNotesDialog dlg = new PatchNotesDialog(heading, list))
+                    {
+                        dlg.Icon = Icon;
+                        dlg.ShowDialog(owner);
+                    }
+                });
+            });
+        }
+
+        // Installierte Versionen stehen sofort fest (ohne Internet)
+        void ShowInstalledVersions()
+        {
+            string web = UpdateCheck.LocalWebVersion();
+            FfmpegTools ff = new FfmpegTools(App.Root, settings.GetString("ffmpeg.folder", ""));
+            verInstalled[0].Text = web ?? "unbekannt";
+            verInstalled[1].Text = App.VersionText;
+            verInstalled[2].Text = ff.Installed ? (ff.InstalledVersionName() ?? "unbekannt") : "nicht installiert";
+        }
+
+        void ShowAvailableVersions(UpdateInfo u)
+        {
+            ShowInstalledVersions();
+            SetAvailable(0, u.WebChanged ? (u.WebRemote ?? "neu") + (u.WebRemote != null && u.WebRemote == u.WebLocal ? " (neu)" : "") : u.WebLocal ?? "?", u.WebChanged);
+            SetAvailable(1, u.SelfAvailable ?? "?", u.SelfChanged);
+            SetAvailable(2, u.FfmpegRemote ?? "?", u.FfmpegChanged);
+            verStatus.Text = (u.Any ? "Update verfügbar" : "Alles aktuell") + "  ·  geprüft " + DateTime.Now.ToString("HH:mm");
+        }
+
+        void SetAvailable(int row, string text, bool newer)
+        {
+            Label l = verAvailable[row];
+            l.Text = text;
+            l.ForeColor = newer ? Color.FromArgb(0xff, 0x4d, 0x57) : Theme.Muted;
+            l.Font = newer ? new Font("Segoe UI Semibold", 9.5f) : Font;
+        }
+
+        // Beschriftung des Start-Knopfs passend zur sichtbaren Karte
+        void UpdateStartText()
+        {
+            if (startButton == null || tabs == null) return;
+            string text = "Start";
+            if (tabs.Selected == PageImport) text = "Importieren";
+            else if (tabs.Selected == PageTools)
+            {
+                int n = 0;
+                foreach (string id in ToolIds) if (checks[id].Checked) n++;
+                text = n == 0 ? "Tools starten" : n == 1 ? "1 Tool starten" : n + " Tools starten";
+            }
+            else
+            {
+                int n = 0;
+                foreach (string id in new string[] { "update", "data" }) if (checks[id].Checked) n++;
+                text = n == 2 ? "Aktualisieren und einlesen" : checks["update"].Checked ? "Aktualisieren" : checks["data"].Checked ? "Daten einlesen" : "Start";
+            }
+            startButton.Text = text;
+        }
+
+        // Nach einer Änderung der Inhalte: Fensterhöhe an den Inhalt anpassen
+        void Relayout()
+        {
+            if (logToggle != null && IsHandleCreated) logToggle.Set(logToggle.Expanded);
+        }
+
+        // ---------------------------------------------------------------
+        // Medien importieren
+        // ---------------------------------------------------------------
+
+        Control[] BuildImportPage()
+        {
+            // Liste der gewählten Dateien und Ordner, Knöpfe rechts daneben
+            importList = new ListBox();
+            importList.BackColor = Theme.Input;
+            importList.ForeColor = Theme.Text;
+            importList.BorderStyle = BorderStyle.None;
+            importList.IntegralHeight = false;
+            importList.Height = Theme.S(112);
+            importList.HorizontalScrollbar = false;
+            importList.SelectionMode = SelectionMode.MultiExtended;
+            importList.Dock = DockStyle.Fill;
+            importList.Margin = new Padding(0, 0, Theme.S(8), 0);
+            importList.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Delete) RemoveSelectedSources(); };
+
+            FlowLayoutPanel sourceButtons = new FlowLayoutPanel();
+            sourceButtons.AutoSize = true;
+            sourceButtons.FlowDirection = FlowDirection.TopDown;
+            sourceButtons.WrapContents = false;
+            sourceButtons.Margin = new Padding(0);
+            Button addFiles = SmallButton("Dateien …");
+            Button addFolder = SmallButton("Ordner …");
+            Button remove = SmallButton("Entfernen");
+            foreach (Button b in new Button[] { addFiles, addFolder, remove })
+            {
+                b.AutoSize = false;
+                b.Size = new Size(Theme.S(120), Theme.S(30));
+                b.Margin = new Padding(0, 0, 0, Theme.S(6));
+                sourceButtons.Controls.Add(b);
+            }
+            addFiles.Click += delegate { ChooseImportFiles(); };
+            addFolder.Click += delegate { ChooseImportFolder(); };
+            remove.Click += delegate { RemoveSelectedSources(); };
+
+            TableLayoutPanel sourceRow = new TableLayoutPanel();
+            sourceRow.AutoSize = true;
+            sourceRow.ColumnCount = 2;
+            sourceRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            sourceRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            sourceRow.RowStyles.Add(new RowStyle(SizeType.Absolute, Theme.S(112)));
+            sourceRow.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            sourceRow.Margin = new Padding(0, Theme.S(4), 0, Theme.S(2));
+            sourceRow.Controls.Add(importList, 0, 0);
+            sourceRow.Controls.Add(sourceButtons, 1, 0);
+
+            Label sourceDesc = Theme.MakeLabel("Videos, Musik und Bilder auswählen oder per Drag & Drop ins Fenster ziehen.", true);
+            sourceDesc.MaximumSize = new Size(TextWidth, 0);
+
+            // Ziel: Kategorie und Unterordner
+            TableLayoutPanel target = new TableLayoutPanel();
+            target.AutoSize = true;
+            target.ColumnCount = 3;
+            target.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            target.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            target.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            target.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            target.Margin = new Padding(0, Theme.S(2), 0, Theme.S(2));
+
+            importCategory = new ComboBox();
+            importCategory.DropDownStyle = ComboBoxStyle.DropDownList;
+            importCategory.FlatStyle = FlatStyle.Flat;
+            importCategory.BackColor = Theme.Input;
+            importCategory.ForeColor = Theme.Text;
+            importCategory.Dock = DockStyle.Fill;
+            importCategory.Margin = new Padding(0, Theme.S(2), Theme.S(6), Theme.S(2));
+            Button newCategory = SmallButton("Neu …");
+            newCategory.Click += delegate { AddCategory(); };
+
+            importSub = Theme.MakeTextBox();
+            importSub.Dock = DockStyle.Fill;
+            importSub.Margin = new Padding(0, Theme.S(2), Theme.S(6), Theme.S(2));
+            Button browseSub = SmallButton("Durchsuchen …");
+            browseSub.Click += delegate { ChooseSubFolder(); };
+            // gleich breit wie die Knöpfe neben der Liste
+            newCategory.MinimumSize = new Size(Theme.S(120), 0);
+            browseSub.MinimumSize = new Size(Theme.S(120), 0);
+            newCategory.Margin = browseSub.Margin = new Padding(0, Theme.S(1), 0, Theme.S(1));
+
+            Label catLabel = Theme.MakeLabel("Kategorie:", true);
+            catLabel.Margin = new Padding(0, Theme.S(6), Theme.S(6), 0);
+            Label subLabel = Theme.MakeLabel("Unterordner:", true);
+            subLabel.Margin = new Padding(0, Theme.S(6), Theme.S(6), 0);
+            target.Controls.Add(catLabel, 0, 0);
+            target.Controls.Add(importCategory, 1, 0);
+            target.Controls.Add(newCategory, 2, 0);
+            target.Controls.Add(subLabel, 0, 1);
+            target.Controls.Add(importSub, 1, 1);
+            target.Controls.Add(browseSub, 2, 1);
+
+            optImportStructure = SmallCheck("Ordnerstruktur übernehmen");
+            optImportStructure.CheckedChanged += delegate { UpdateImportHint(); };
+            optImportConvert = SmallCheck("In browserkompatibles Format konvertieren (Video MP4, Musik MP3, Bild JPG)");
+            optImportMove = SmallCheck("Verschieben statt kopieren (konvertierte Originale nach „" + ConvertTask.OriginalsFolderName + "“)");
+            optImportPreview = SmallCheck("Danach fehlende Vorschaubilder erstellen");
+
+            importHint = Theme.MakeLabel("", false);
+            importHint.ForeColor = Color.FromArgb(0xf0, 0xc4, 0x6c);
+            importHint.MaximumSize = new Size(TextWidth, 0);
+            importHint.Margin = new Padding(0, Theme.S(4), 0, 0);
+            importHint.Visible = false;
+
+            Label dataNote = Theme.MakeLabel("Anschliessend wird automatisch „Daten einlesen“ ausgeführt, damit die neuen Medien gleich in STEFFLIX erscheinen.", true);
+            dataNote.MaximumSize = new Size(TextWidth, 0);
+            dataNote.Margin = new Padding(0, Theme.S(4), 0, 0);
+
+            return new Control[] {
+                SectionCard("Was importieren?", new Control[] { sourceDesc, sourceRow, importHint }),
+                SectionCard("Ziel in STEFFLIX", new Control[] { target }),
+                SectionCard("Optionen", new Control[] { optImportStructure, optImportConvert, optImportMove, optImportPreview, dataNote }),
+            };
+        }
+
+        Button SmallButton(string text)
+        {
+            Button b = Theme.MakeButton(text, false);
+            b.Padding = new Padding(Theme.S(8), 0, Theme.S(8), 0);
+            b.Margin = new Padding(0, 0, Theme.S(6), 0);
+            return b;
+        }
+
+        static readonly string MediaFilter =
+            "Medien|*.mp4;*.m4v;*.webm;*.ogv;*.mkv;*.avi;*.mov;*.wmv;*.flv;*.ts;*.m2ts;*.mts;*.mpeg;*.mpg;*.3gp;*.vob;*.divx;*.asf;*.f4v;" +
+            "*.mp3;*.m4a;*.ogg;*.oga;*.opus;*.aac;*.flac;*.wav;*.wma;*.aiff;*.aif;*.ape;*.ac3;*.dts;*.amr;*.mka;*.wv;" +
+            "*.jpg;*.jpeg;*.png;*.gif;*.webp;*.avif;*.bmp;*.tif;*.tiff;*.heic;*.heif;*.jfif|Alle Dateien|*.*";
+
+        void ChooseImportFiles()
+        {
+            using (OpenFileDialog dlg = new OpenFileDialog())
+            {
+                dlg.Multiselect = true;
+                dlg.Filter = MediaFilter;
+                dlg.Title = "Medien zum Importieren wählen";
+                if (dlg.ShowDialog(this) == DialogResult.OK) AddImportSources(dlg.FileNames);
+            }
+        }
+
+        void ChooseImportFolder()
+        {
+            using (FolderBrowserDialog dlg = new FolderBrowserDialog())
+            {
+                dlg.Description = "Ordner zum Importieren wählen";
+                dlg.ShowNewFolderButton = false;
+                if (dlg.ShowDialog(this) == DialogResult.OK) AddImportSources(new string[] { dlg.SelectedPath });
+            }
+        }
+
+        // Eintrag der Quellenliste: Name vorne, Ort dahinter (lange Pfade wären sonst abgeschnitten)
+        class SourceItem
+        {
+            public string Path;
+            public override string ToString()
+            {
+                string name = System.IO.Path.GetFileName(Path.TrimEnd('\\'));
+                if (name.Length == 0) name = Path;
+                string where = System.IO.Path.GetDirectoryName(Path.TrimEnd('\\')) ?? "";
+                return (Directory.Exists(Path) ? "Ordner: " : "") + name + (where.Length > 0 ? "      in " + where : "");
+            }
+        }
+
+        void AddImportSources(IEnumerable<string> paths)
+        {
+            foreach (string p in paths)
+            {
+                if (!File.Exists(p) && !Directory.Exists(p)) continue;
+                bool known = false;
+                foreach (SourceItem o in importList.Items) if (string.Equals(o.Path, p, StringComparison.OrdinalIgnoreCase)) known = true;
+                if (!known)
+                {
+                    SourceItem item = new SourceItem();
+                    item.Path = p;
+                    importList.Items.Add(item);
+                }
+            }
+            // Hineingezogene Dateien landen im Importer, auch wenn gerade eine andere Karte offen ist
+            if (importList.Items.Count > 0) ShowPage(PageImport);
+            UpdateImportHint();
+        }
+
+        void RemoveSelectedSources()
+        {
+            List<object> sel = new List<object>();
+            foreach (object o in importList.SelectedItems) sel.Add(o);
+            foreach (object o in sel) importList.Items.Remove(o);
+            UpdateImportHint();
+        }
+
+        List<string> ImportSources()
+        {
+            List<string> list = new List<string>();
+            foreach (SourceItem o in importList.Items) list.Add(o.Path);
+            return list;
+        }
+
+        // Zeigt, wie viele Dateien importiert werden; nicht kompatible erzwingen "Konvertieren"
+        void UpdateImportHint()
+        {
+            if (importList == null) return;
+            List<string> sources = ImportSources();
+            if (sources.Count == 0)
+            {
+                importHint.Visible = false;
+                // Nur erzwungenes Häkchen zurücknehmen, die eigene Wahl bleibt
+                if (!optImportConvert.Enabled && importConvertWasOff) optImportConvert.Checked = false;
+                importConvertWasOff = false;
+                optImportConvert.Enabled = true;
+                Relayout();
+                return;
+            }
+            int ignored;
+            List<ImportItem> items = ImportTask.Plan(sources, optImportStructure.Checked, out ignored);
+            List<string> incompatible = new List<string>();
+            foreach (ImportItem it in items)
+                if (MediaTypes.NeedsConversion(Path.GetExtension(it.Source))) incompatible.Add(Path.GetFileName(it.Source));
+
+            StringBuilder sb = new StringBuilder();
+            sb.Append(items.Count + " Mediendatei(en) ausgewählt");
+            if (ignored > 0) sb.Append(", " + ignored + " andere Datei(en) werden nicht importiert");
+            sb.Append(".");
+            if (incompatible.Count > 0)
+            {
+                // Pflicht: diese Dateien kann STEFFLIX nur nach einer Konvertierung abspielen
+                if (!optImportConvert.Checked) importConvertWasOff = true;
+                optImportConvert.Checked = true;
+                optImportConvert.Enabled = false;
+                sb.Append(" " + incompatible.Count + " davon " + (incompatible.Count == 1 ? "ist" : "sind") +
+                          " nicht browserkompatibel und " + (incompatible.Count == 1 ? "wird" : "werden") + " konvertiert (z.B. " +
+                          string.Join(", ", incompatible.GetRange(0, Math.Min(3, incompatible.Count))) +
+                          (incompatible.Count > 3 ? ", …" : "") + ").");
+            }
+            else
+            {
+                if (!optImportConvert.Enabled && importConvertWasOff) optImportConvert.Checked = false;
+                importConvertWasOff = false;
+                optImportConvert.Enabled = true;
+            }
+            importHint.Text = sb.ToString();
+            importHint.Visible = true;
+            Relayout();
+        }
+
+        bool importConvertWasOff;
+
+        void LoadCategories(string selected)
+        {
+            importCategory.Items.Clear();
+            try
+            {
+                foreach (string d in Directory.GetDirectories(App.Root))
+                {
+                    string name = Path.GetFileName(d);
+                    if (Folders.Skip(name) || name.StartsWith(".") ||
+                        string.Equals(name, "Preview", StringComparison.OrdinalIgnoreCase) ||
+                        (File.GetAttributes(d) & (FileAttributes.Hidden | FileAttributes.System)) != 0) continue;
+                    importCategory.Items.Add(name);
+                }
+            }
+            catch { }
+            if (!string.IsNullOrEmpty(selected) && !importCategory.Items.Contains(selected)) importCategory.Items.Add(selected);
+            if (!string.IsNullOrEmpty(selected)) importCategory.SelectedItem = selected;
+            else if (importCategory.Items.Count > 0) importCategory.SelectedIndex = 0;
+        }
+
+        void AddCategory()
+        {
+            using (InputDialog dlg = new InputDialog("Neue Kategorie", "Name der neuen Kategorie (z.B. Dokumentationen). Der Ordner wird beim Import angelegt."))
+            {
+                string name = dlg.Ask(this);
+                if (string.IsNullOrEmpty(name)) return;
+                name = DataTask.SanitizeName(name);
+                if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || Folders.Skip(name) ||
+                    string.Equals(name, "Preview", StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show(this, "Dieser Name ist als Kategorie nicht möglich.", App.Title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                if (!importCategory.Items.Contains(name)) importCategory.Items.Add(name);
+                importCategory.SelectedItem = name;
+            }
+        }
+
+        void ChooseSubFolder()
+        {
+            string category = importCategory.SelectedItem as string;
+            if (string.IsNullOrEmpty(category)) return;
+            string catDir = Path.Combine(App.Root, category);
+            using (FolderBrowserDialog dlg = new FolderBrowserDialog())
+            {
+                dlg.Description = "Unterordner in „" + category + "“ wählen (oder neu anlegen)";
+                dlg.ShowNewFolderButton = true;
+                string current = Path.Combine(catDir, importSub.Text.Trim().Trim('\\'));
+                dlg.SelectedPath = Directory.Exists(current) ? current : (Directory.Exists(catDir) ? catDir : App.Root);
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                string chosen = dlg.SelectedPath.TrimEnd('\\');
+                string prefix = catDir.TrimEnd('\\');
+                if (string.Equals(chosen, prefix, StringComparison.OrdinalIgnoreCase)) { importSub.Text = ""; return; }
+                if (!chosen.StartsWith(prefix + "\\", StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show(this, "Bitte einen Ordner innerhalb der Kategorie „" + category + "“ wählen.", App.Title,
+                                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                importSub.Text = chosen.Substring(prefix.Length + 1);
+            }
+        }
+
+        // Dateien und Ordner per Drag & Drop irgendwo ins Fenster ziehen
+        void EnableDrop(Control c)
+        {
+            c.AllowDrop = true;
+            c.DragEnter += delegate(object s, DragEventArgs e)
+            {
+                e.Effect = !running && e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+            };
+            c.DragDrop += delegate(object s, DragEventArgs e)
+            {
+                if (running) return;
+                string[] paths = e.Data.GetData(DataFormats.FileDrop) as string[];
+                if (paths != null) AddImportSources(paths);
+            };
+            foreach (Control child in c.Controls) EnableDrop(child);
         }
 
         static TableLayoutPanel Column()
@@ -381,6 +1136,7 @@ namespace Sflix
             DarkCheckBox c = new DarkCheckBox();
             c.Text = text;
             c.ForeColor = Theme.Text;
+            c.Switch = true;
             c.Margin = new Padding(0, Theme.S(2), 0, Theme.S(2));
             c.FitText();
             return c;
@@ -424,17 +1180,30 @@ namespace Sflix
 
         void LoadOptions()
         {
-            foreach (string id in TaskIds)
+            loading = true;
+            // Import hat kein Häkchen: er läuft, wenn man im Importer auf Start klickt
+            foreach (string id in checks.Keys)
             {
                 bool def = id == "update" || id == "data";
                 checks[id].Checked = autoRun != null ? autoRun.Contains(id) : settings.GetBool("task." + id, def);
             }
+            optImportPreview.Checked = settings.GetBool("import.preview", true);
             optFfmpeg.Checked = settings.GetBool("update.ffmpeg", true);
             mediaFolder.Text = settings.MediaFolder();
             optMoveParts.Checked = settings.GetBool("merge.moveParts", true);
             convertParallel.Value = Math.Max(0, Math.Min(16, settings.GetInt("convert.parallel", 0)));
             optDeleteOriginal.Checked = settings.GetBool("convert.deleteOriginal", false);
+            optPreviewVideos.Checked = settings.GetBool("preview.videos", true);
+            optPreviewImages.Checked = settings.GetBool("preview.images", false);
+            optImportStructure.Checked = settings.GetBool("import.structure", true);
+            optImportConvert.Checked = settings.GetBool("import.convert", false);
+            optImportMove.Checked = settings.GetBool("import.move", false);
+            importSub.Text = settings.GetString("import.sub", "");
+            LoadCategories(settings.GetString("import.category", ""));
+            loading = false;
         }
+
+        bool loading;
 
         static string FolderSetting(string text)
         {
@@ -445,7 +1214,7 @@ namespace Sflix
         void SaveOptions(bool saveTaskSelection)
         {
             if (saveTaskSelection)
-                foreach (string id in TaskIds) settings.SetBool("task." + id, checks[id].Checked);
+                foreach (string id in checks.Keys) settings.SetBool("task." + id, checks[id].Checked);
             settings.SetBool("update.ffmpeg", optFfmpeg.Checked);
             settings.SetString("media.folder", FolderSetting(mediaFolder.Text));
             // Getrennte Ordner früherer Versionen sind damit ersetzt
@@ -453,6 +1222,16 @@ namespace Sflix
             settings.SetBool("merge.moveParts", optMoveParts.Checked);
             settings.SetInt("convert.parallel", (int)convertParallel.Value);
             settings.SetBool("convert.deleteOriginal", optDeleteOriginal.Checked);
+            settings.SetBool("preview.videos", optPreviewVideos.Checked);
+            settings.SetBool("preview.images", optPreviewImages.Checked);
+            settings.SetBool("import.structure", optImportStructure.Checked);
+            // Nur die eigene Wahl merken, nicht das erzwungene Häkchen bei nicht kompatiblen Dateien
+            if (optImportConvert.Enabled) settings.SetBool("import.convert", optImportConvert.Checked);
+            settings.SetBool("import.move", optImportMove.Checked);
+            settings.SetString("import.sub", importSub.Text.Trim());
+            settings.SetString("import.category", importCategory.SelectedItem as string ?? "");
+            settings.SetBool("import.preview", optImportPreview.Checked);
+            settings.SetBool("task.import", false);
             settings.Save();
         }
 
@@ -471,73 +1250,145 @@ namespace Sflix
             base.OnShown(e);
             AppendLog(App.Title + " " + App.VersionText + "  –  " + App.Root);
             if (startNotice != null) AppendLog(startNotice);
-            if (autoRun != null && autoRun.Count > 0) StartTasks(autoRun);
-            else CheckForUpdateInBackground();
+            if (autoRun != null && autoRun.Count > 0)
+            {
+                StartTasks(autoRun);
+                CheckForUpdateInBackground(false);   // nur die Versionsübersicht füllen
+            }
+            else CheckForUpdateInBackground(true);
         }
 
-        void CheckForUpdateInBackground()
+        // Beim Start im Hintergrund prüfen, ob STEFFLIX, der Updater oder ffmpeg neuer sind.
+        // Falls ja: Fenster mit den Versionen, "Jetzt aktualisieren" startet das Update sofort.
+        // showDialog: beim Start das Hinweisfenster zeigen; sonst nur Übersicht und Balken aktualisieren
+        void CheckForUpdateInBackground(bool showDialog)
         {
+            string ffmpegFolder = settings.GetString("ffmpeg.folder", "");
+            verStatus.Text = "Wird geprüft …";
+            verRecheck.Enabled = false;
             ThreadPool.QueueUserWorkItem(delegate
             {
                 try
                 {
-                    JsonObject checksums = Net.LoadChecksums(CancellationToken.None);
-                    Version v;
-                    string msg;
-                    byte[] data = SelfUpdate.FindNewer(checksums, CancellationToken.None, out v, out msg);
-                    if (data == null) return;
+                    UpdateInfo info = UpdateCheck.Run(new FfmpegTools(App.Root, ffmpegFolder), CancellationToken.None);
                     BeginInvoke((Action)delegate
                     {
-                        pendingSelfUpdate = data;
-                        updateLabel.Text = "Neue Version " + SelfUpdate.Short(v) + " verfügbar (installiert: " + App.VersionText + ").";
+                        verRecheck.Enabled = true;
+                        ShowAvailableVersions(info);
+                        if (!info.Any)
+                        {
+                            pendingUpdate = null;
+                            if (updateBar.Visible) { updateBar.Visible = false; Relayout(); }
+                            return;
+                        }
+                        pendingUpdate = info;
+                        updateLabel.Text = "Update verfügbar: " + info.Summary() + ".";
                         updateBar.Visible = true;
                         updateButton.Enabled = !running;
-                        logToggle.Set(logToggle.Expanded);   // Fensterhöhe an den Hinweis anpassen
+                        Relayout();   // Fensterhöhe an den Hinweis anpassen
+                        if (!showDialog || running) return;
+                        using (UpdateDialog dlg = new UpdateDialog(info, ShowPatchNotes))
+                            if (dlg.Ask(this)) RunUpdateNow();
                     });
                 }
                 catch (Exception ex)
                 {
                     pendingLog.Enqueue("Hinweis: Update-Prüfung nicht möglich (" + ex.Message + ")");
+                    BeginInvoke((Action)delegate
+                    {
+                        verRecheck.Enabled = true;
+                        verStatus.Text = "Prüfung nicht möglich (keine Verbindung?)";
+                        for (int i = 0; i < 3; i++) SetAvailable(i, "?", false);
+                    });
                 }
             });
         }
 
-        void InstallSelfUpdate()
+        UpdateInfo pendingUpdate;
+        bool forceFfmpeg;
+
+        // Update sofort ausführen (aus dem Hinweisfenster oder dem Balken)
+        void RunUpdateNow()
         {
-            if (running || pendingSelfUpdate == null) return;
-            try
-            {
-                SaveOptions(true);
-                SelfUpdate.Install(pendingSelfUpdate);
-                WriteLogFile();
-                SelfUpdate.Restart("--updated");
-                closeWhenDone = true;
-                Close();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, "Das Update konnte nicht installiert werden:\n" + ex.Message, App.Title,
-                                MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            if (running) return;
+            ShowPage(PageUpdates);
+            forceFfmpeg = pendingUpdate != null && pendingUpdate.FfmpegChanged;
+            StartTasks(new List<string> { "update" });
         }
 
         void StartTasks(List<string> preset)
         {
             if (running) return;
+            // Ausgeführt wird, was auf der sichtbaren Karte gewählt ist (nach einem Selbst-Update
+            // die Aufgaben, die noch übrig waren)
+            int page = tabs.Selected;
             List<string> selected = new List<string>();
-            foreach (string id in TaskIds) if (checks[id].Checked) selected.Add(id);
+            foreach (string id in TaskIds)
+            {
+                bool run;
+                if (preset != null) run = preset.Contains(id) && id != "import";
+                else if (page == PageUpdates) run = (id == "update" || id == "data") && checks[id].Checked;
+                else if (page == PageImport) run = id == "import" || id == "data" || (id == "preview" && optImportPreview.Checked);
+                else run = Array.IndexOf(ToolIds, id) >= 0 && checks[id].Checked;
+                if (run) selected.Add(id);
+            }
+            // Nach den Tools die Medien automatisch neu einlesen
+            if (preset == null && page == PageTools && selected.Count > 0) selected.Add("data");
             if (selected.Count == 0)
             {
-                MessageBox.Show(this, "Bitte mindestens eine Aufgabe auswählen.", App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(this, page == PageTools ? "Bitte mindestens ein Tool auswählen." : "Bitte mindestens eine Aufgabe auswählen.",
+                                App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
+            bool previewVideos = optPreviewVideos.Checked, previewImages = optPreviewImages.Checked;
+            // Nach einem Import: Einstellung der Vorschaubilder aus den Tools, mindestens für Videos
+            if (selected.Contains("import") && !previewVideos && !previewImages) previewVideos = true;
             string media = FolderOf(mediaFolder);
             if ((selected.Contains("merge") || selected.Contains("convert") || selected.Contains("preview") || selected.Contains("cleanup"))
                 && !Directory.Exists(media))
             {
-                MessageBox.Show(this, "Der Medienordner wurde nicht gefunden:\n" + media + "\n\nBitte oben einen vorhandenen Ordner wählen.",
+                ShowOption("settings");
+                MessageBox.Show(this, "Der Medienordner wurde nicht gefunden:\n" + media + "\n\nBitte unter „Tools“ → „Einstellungen“ einen vorhandenen Ordner wählen.",
                                 App.Title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
+            }
+            if (selected.Contains("preview") && !previewVideos && !previewImages)
+            {
+                ShowOption("preview");
+                MessageBox.Show(this, "Bitte bei „Vorschaubilder“ „für Videos“ und/oder „für Bilder“ einschalten.",
+                                App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            ImportOptions import = null;
+            if (selected.Contains("import"))
+            {
+                if (importList.Items.Count == 0)
+                {
+                    MessageBox.Show(this, "Bitte zuerst Dateien oder Ordner zum Importieren wählen (oder ins Fenster ziehen).",
+                                    App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                string category = importCategory.SelectedItem as string;
+                if (string.IsNullOrEmpty(category))
+                {
+                    MessageBox.Show(this, "Bitte eine Kategorie wählen oder mit „Neu …“ anlegen.",
+                                    App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                string sub = importSub.Text.Trim().Trim('\\');
+                if (sub.Contains("..") || Path.IsPathRooted(sub) || sub.IndexOfAny(new char[] { '/', ':', '*', '?', '"', '<', '>', '|' }) >= 0)
+                {
+                    MessageBox.Show(this, "Der Unterordner ist ungültig. Bitte einen Ordner innerhalb der Kategorie angeben, z.B. Meine Serie\\Staffel 1.",
+                                    App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                import = new ImportOptions();
+                import.Sources = ImportSources();
+                import.Category = category;
+                import.SubFolder = sub;
+                import.KeepStructure = optImportStructure.Checked;
+                import.Convert = optImportConvert.Checked;
+                import.Move = optImportMove.Checked;
             }
             // Beim automatischen Start nach einem Update die gespeicherte Auswahl nicht überschreiben
             SaveOptions(preset == null);
@@ -554,12 +1405,19 @@ namespace Sflix
 
             TaskRunner runner = new TaskRunner();
             runner.Tasks = selected;
-            runner.UpdateFfmpeg = optFfmpeg.Checked;
+            runner.UpdateFfmpeg = optFfmpeg.Checked || forceFfmpeg;
+            forceFfmpeg = false;
+            lastRunUpdated = selected.Contains("update");
             runner.MergeFolder = media;
             runner.MoveParts = optMoveParts.Checked;
             runner.Convert = conv;
             runner.PreviewFolder = media;
+            runner.PreviewVideos = previewVideos;
+            runner.PreviewImages = previewImages;
             runner.CleanupFolder = media;
+            if (import != null) import.Video = conv;
+            runner.Import = import;
+            lastRunImported = import != null;
 
             cts = new CancellationTokenSource();
             TaskContext ctx = new TaskContext();
@@ -581,6 +1439,13 @@ namespace Sflix
                     using (CleanupDialog dlg = new CleanupDialog(folders, media)) return dlg.Choose(this);
                 });
             };
+            ctx.AskConflict = delegate(string target)
+            {
+                return (ConflictAnswer)Invoke((Func<ConflictAnswer>)delegate
+                {
+                    using (ConflictDialog dlg = new ConflictDialog(target)) return dlg.Ask(this);
+                });
+            };
             ctx.Ffmpeg = new FfmpegTools(App.Root, settings.GetString("ffmpeg.folder", ""));
 
             SetRunning(true);
@@ -593,13 +1458,15 @@ namespace Sflix
             worker.Start();
         }
 
+        bool lastRunImported, lastRunUpdated;
+
         void SetRunning(bool value)
         {
             running = value;
             startButton.Enabled = !value;
             cancelButton.Enabled = value;
             updateButton.Enabled = !value;
-            foreach (DarkCheckBox c in checks.Values) c.Enabled = !value;
+            foreach (TileButton c in checks.Values) c.Enabled = !value;
             if (value) { progress.Value = -1; statusLabel.Text = "Läuft ..."; }
         }
 
@@ -617,6 +1484,14 @@ namespace Sflix
             FlushUi();
             SetRunning(false);
             progress.Value = result.Success ? 1 : 0;
+            // Erfolgreicher Import: Auswahl leeren, damit beim nächsten Start nicht nochmal importiert wird
+            // Update erledigt: Versionen neu prüfen (blendet den Hinweis aus, wenn alles aktuell ist)
+            if (lastRunUpdated && !result.Restart) CheckForUpdateInBackground(false);
+            if (result.Success && lastRunImported)
+            {
+                importList.Items.Clear();
+                UpdateImportHint();
+            }
             statusLabel.Text = result.Cancelled ? "Vorgang abgebrochen."
                              : result.Success ? "Vorgang beendet – alles erfolgreich."
                              : "Vorgang beendet – mit Fehlern (siehe Details).";
@@ -739,7 +1614,10 @@ namespace Sflix
         public bool MoveParts = true;
         public ConvertOptions Convert;
         public string PreviewFolder;
+        public bool PreviewVideos = true;
+        public bool PreviewImages;
         public string CleanupFolder;
+        public ImportOptions Import;
 
         static string Title(string id)
         {
@@ -747,8 +1625,9 @@ namespace Sflix
             {
                 case "update": return "Update";
                 case "cleanup": return "Ablagen leeren";
+                case "import": return "Medien importieren";
                 case "merge": return "Gesplittete Medien zusammenführen";
-                case "convert": return "Videos für SFLIX konvertieren";
+                case "convert": return "Videos für STEFFLIX konvertieren";
                 case "preview": return "Vorschaubilder erstellen";
                 case "data": return "Daten einlesen";
             }
@@ -833,7 +1712,11 @@ namespace Sflix
                 case "update": UpdateTask.Run(ctx, UpdateFfmpeg); break;
                 case "merge": MergeTask.Run(ctx, MergeFolder, MoveParts); break;
                 case "convert": ConvertTask.Run(ctx, Convert); break;
-                case "preview": PreviewTask.Run(ctx, PreviewFolder); break;
+                case "preview": PreviewTask.Run(ctx, PreviewFolder, PreviewVideos, PreviewImages); break;
+                case "import":
+                    if (Import == null) throw new TaskFailedException("Medien importieren ist nur über die Oberfläche möglich.");
+                    ImportTask.Run(ctx, Import);
+                    break;
                 case "cleanup": CleanupTask.Run(ctx, CleanupFolder); break;
                 case "data": DataTask.Run(ctx); break;
                 default: throw new TaskFailedException("Unbekannte Aufgabe: " + id);

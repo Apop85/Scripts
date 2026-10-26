@@ -24,8 +24,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX Updater")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX Updater: Update, Daten einlesen, Vorschaubilder, Zusammenführen, Konvertieren")]
-[assembly: AssemblyVersion("3.0.4.0")]
-[assembly: AssemblyFileVersion("3.0.4.0")]
+[assembly: AssemblyVersion("3.1.0.0")]
+[assembly: AssemblyFileVersion("3.1.0.0")]
 
 namespace Sflix
 {
@@ -179,6 +179,8 @@ namespace Sflix
             runner.MoveParts = settings.GetBool("merge.moveParts", true);
             runner.Convert = conv;
             runner.PreviewFolder = settings.MediaFolder();
+            runner.PreviewVideos = settings.GetBool("preview.videos", true);
+            runner.PreviewImages = settings.GetBool("preview.images", false);
             runner.CleanupFolder = settings.MediaFolder();   // ohne Oberfläche: alle Ablagen löschen
 
             ctx.LogLine(App.Title + " " + App.VersionText + " (ohne Oberfläche)  –  " + App.Root);

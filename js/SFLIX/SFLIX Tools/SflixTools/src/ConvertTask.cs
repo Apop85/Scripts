@@ -1,4 +1,4 @@
-// Aufgabe "Videos für SFLIX konvertieren" (Portierung von convertVideos.py).
+// Aufgabe "Videos für STEFFLIX konvertieren" (Portierung von convertVideos.py).
 //
 // Wandelt Videos in browserkompatible MP4 (H.264, AAC, yuv420p) um. Das Ergebnis ersetzt das
 // Original im selben Ordner, das Original kommt nach <Ordner>\__konvertiert\ (oder wird auf
@@ -179,6 +179,97 @@ namespace Sflix
             return path + "|" + fi.Length + "|" + fi.LastWriteTimeUtc.Ticks;
         }
 
+        // ---------------------------------------------------------------
+        // Gemeinsam mit dem Import genutzt
+        // ---------------------------------------------------------------
+
+        // Liegt das Video schon browserkompatibel vor? (MP4-Container mit .mp4/.m4v, H.264 in
+        // yuv420p, Ton AAC oder kein Ton, höchstens eine Tonspur)
+        public static bool IsBrowserReady(MediaInfo info, string extension)
+        {
+            string ext = (extension ?? "").ToLowerInvariant();
+            bool mp4Container = (ext == ".mp4" || ext == ".m4v") && info.Container.Contains("mp4");
+            bool videoOk = info.VideoCodec == "h264" && info.PixelFormat == "yuv420p";
+            bool audioOk = true;
+            foreach (AudioStream a in info.Audio) if (a.Codec != "aac") audioOk = false;
+            return mp4Container && videoOk && audioOk && info.Audio.Count <= 1;
+        }
+
+        // Dateinamen ohne Endung: eine Datei pro Tonspur ("Name_deu", "Name_eng"), bei einer
+        // oder keiner Tonspur einfach "Name"
+        static List<string> TrackFileNames(string stem, List<AudioStream> tracks)
+        {
+            List<string> names = new List<string>();
+            HashSet<string> usedSuffixes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < tracks.Count; i++)
+            {
+                if (tracks.Count <= 1) { names.Add(stem); continue; }
+                string lang = tracks[i] == null ? null : tracks[i].Language;
+                string suffix = !string.IsNullOrEmpty(lang) && lang != "und" ? lang : "track" + (i + 1);
+                string baseSuffix = suffix;
+                int n = 2;
+                while (usedSuffixes.Contains(suffix)) { suffix = baseSuffix + n; n++; }
+                usedSuffixes.Add(suffix);
+                names.Add(stem + "_" + suffix);
+            }
+            return names;
+        }
+
+        // Für den Import: Konverter ohne Ordnerdurchlauf
+        public static ConvertTask ForImport(TaskContext ctx, ConvertOptions opt)
+        {
+            return new ConvertTask(ctx, opt);
+        }
+
+        // Wandelt ein Video in browserkompatible MP4-Dateien im Zielordner um (pro Tonspur eine).
+        // replaceExisting(ziel): true = vorhandene Zieldatei ersetzen, false = Video überspringen.
+        // Gibt die erzeugten Dateien zurück, oder null, wenn das Video übersprungen wurde.
+        public List<string> ConvertInto(MediaInfo info, string targetDir, string stem,
+                                        Func<string, bool> replaceExisting, Action<double> progress)
+        {
+            if (info.VideoIndex < 0) throw new Exception("keine Videospur gefunden");
+            if (encoder == null)
+            {
+                encoder = ctx.Ffmpeg.DetectEncoder(ctx.Token);
+                ctx.Log("  Encoder: " + FfmpegTools.EncoderName(encoder));
+            }
+
+            List<AudioStream> tracks = new List<AudioStream>(info.Audio);
+            if (tracks.Count == 0) tracks.Add(null);
+            List<string> names = TrackFileNames(stem, tracks);
+            List<string> finals = new List<string>();
+            List<string> temps = new List<string>();
+            foreach (string name in names)
+            {
+                string final = Path.Combine(targetDir, name + ".mp4");
+                if (FileOps.Exists(final) && !replaceExisting(final)) return null;
+                finals.Add(final);
+                temps.Add(Path.Combine(targetDir, name + ".__temp__.mp4"));
+            }
+
+            Directory.CreateDirectory(targetDir);
+            try
+            {
+                for (int i = 0; i < tracks.Count; i++)
+                {
+                    int trackNr = i;
+                    ConvertTrack(info, tracks[i], temps[i], delegate(double f)
+                    {
+                        if (progress != null) progress((trackNr + Math.Min(1, f)) / tracks.Count);
+                    });
+                }
+                for (int i = 0; i < temps.Count; i++) FileOps.Replace(temps[i], finals[i]);
+            }
+            catch
+            {
+                foreach (string t in temps) FileOps.TryDelete(t);
+                throw;
+            }
+            return finals;
+        }
+
+        // ---------------------------------------------------------------
+
         string ProcessSource(int workerId, string source)
         {
             string key = CacheKey(source);
@@ -195,13 +286,7 @@ namespace Sflix
                 return "error";
             }
 
-            string ext = Path.GetExtension(source).ToLowerInvariant();
-            bool mp4Container = (ext == ".mp4" || ext == ".m4v") && info.Container.Contains("mp4");
-            bool videoOk = info.VideoCodec == "h264" && info.PixelFormat == "yuv420p";
-            bool audioOk = true;
-            foreach (AudioStream a in info.Audio) if (a.Codec != "aac") audioOk = false;
-
-            if (mp4Container && videoOk && audioOk && info.Audio.Count <= 1)
+            if (IsBrowserReady(info, Path.GetExtension(source)))
             {
                 stillCompatible[key] = true;
                 return "compatible";
@@ -212,24 +297,13 @@ namespace Sflix
             string stem = Path.GetFileNameWithoutExtension(source);
             List<AudioStream> tracks = new List<AudioStream>(info.Audio);
             if (tracks.Count == 0) tracks.Add(null);
-            bool multi = tracks.Count > 1;
+            List<string> names = TrackFileNames(stem, tracks);
 
             List<string> finals = new List<string>();
             List<string> temps = new List<string>();
-            HashSet<string> usedSuffixes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < tracks.Count; i++)
             {
-                string name = stem;
-                if (multi)
-                {
-                    string lang = tracks[i].Language;
-                    string suffix = !string.IsNullOrEmpty(lang) && lang != "und" ? lang : "track" + (i + 1);
-                    string baseSuffix = suffix;
-                    int n = 2;
-                    while (usedSuffixes.Contains(suffix)) { suffix = baseSuffix + n; n++; }
-                    usedSuffixes.Add(suffix);
-                    name = stem + "_" + suffix;
-                }
+                string name = names[i];
                 string final = Path.Combine(dir, name + ".mp4");
                 if (FileOps.Exists(final) && !string.Equals(final, source, StringComparison.OrdinalIgnoreCase))
                 {
@@ -298,13 +372,13 @@ namespace Sflix
                 }
             }
 
-            StringBuilder names = new StringBuilder();
+            StringBuilder results = new StringBuilder();
             for (int i = 0; i < finals.Count; i++)
             {
-                if (i > 0) names.Append(", ");
-                names.Append(Path.GetFileName(finals[i])).Append(" [").Append(used[i]).Append("]");
+                if (i > 0) results.Append(", ");
+                results.Append(Path.GetFileName(finals[i])).Append(" [").Append(used[i]).Append("]");
             }
-            ctx.Log("  OK      " + source + "  ->  " + names);
+            ctx.Log("  OK      " + source + "  ->  " + results);
             return "ok";
         }
 

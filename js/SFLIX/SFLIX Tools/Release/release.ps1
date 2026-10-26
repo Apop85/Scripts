@@ -352,7 +352,11 @@ try {
     Step '[4/5] Prüfen, news.json und checksums.json erzeugen'
     # --------------------------------------------------------------
     Run-Python 'check_release.py'
+    # Ändert sich news.json beim Erzeugen, wurde der Changelog (news.txt) bearbeitet
+    $newsJson = Join-Path $Root 'sflix_sys\news.json'
+    $newsBefore = if (Test-Path $newsJson) { (Get-FileHash $newsJson).Hash } else { '' }
     Run-Python 'create_news.py'
+    $newsChanged = $newsBefore -ne (Get-FileHash $newsJson).Hash
     Run-Python 'create_checksums.py'
 
     # --------------------------------------------------------------
@@ -363,11 +367,10 @@ try {
     foreach ($p in $after.PSObject.Properties) {
         if ($published[$p.Name] -ne $p.Value) { $toPush += $p.Name }
     }
-    if ($toPush.Count -gt 0 -or $released.Count -gt 0) {
-        $toPush += 'checksums.json'
-        foreach ($extra in 'sflix_sys/news.txt', 'sflix_sys/news.json') {
-            if ($toPush -contains 'sflix_sys/version.js' -or $released -match '^STEFFLIX') { $toPush += $extra }
-        }
+    if ($toPush.Count -gt 0 -or $released.Count -gt 0) { $toPush += 'checksums.json' }
+    if ($newsChanged -or $toPush -contains 'sflix_sys/version.js' -or $released -match '^STEFFLIX') {
+        $toPush += 'sflix_sys/news.txt'
+        $toPush += 'sflix_sys/news.json'
     }
     $toPush = $toPush | Select-Object -Unique
 

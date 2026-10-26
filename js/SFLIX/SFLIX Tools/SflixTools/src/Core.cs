@@ -156,6 +156,7 @@ namespace Sflix
         public Action<double, string> ProgressSink;   // Anteil 0..1 (negativ = unbestimmt), Statustext
         public Func<List<MergeGroup>, List<MergeGroup>> ChooseMerge;
         public Func<List<CleanupFolder>, List<CleanupFolder>> ChooseCleanup;   // null = alle löschen
+        public Func<string, ConflictAnswer> AskConflict;                       // null = überspringen
         public bool RestartRequested;                  // Programm wurde aktualisiert -> neu starten
 
         public FfmpegTools Ffmpeg;

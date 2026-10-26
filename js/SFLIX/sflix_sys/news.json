@@ -14,11 +14,27 @@
         },
         {
           "type": "FEATURE",
-          "text": "Updater: Die Aufgaben \"Update\", \"Ablagen leeren\", \"Gesplittete Medien zusammenführen\", \"Videos für SFLIX konvertieren\", \"Vorschaubilder erstellen\" und \"Daten einlesen\" lassen sich einzeln auswählen und laufen in dieser Reihenfolge nacheinander ab."
+          "text": "Updater: Drei Registerkarten oben im Fenster: \"Updates\" mit den Kernaufgaben \"Update\" und \"Daten einlesen\", \"Importer\" zum Übernehmen neuer Medien und \"Tools\" mit \"Vorschaubilder erstellen\", \"Gesplittete Medien zusammenführen\", \"Videos für STEFFLIX konvertieren\", \"Ablagen leeren\" und den Einstellungen. Angezeigt wird nur der Bereich der gewählten Karte, der Titel im Kopfbild wechselt passend (STEFFLIX UPDATES, IMPORTER, TOOLS)."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Updater: Updates und Tools werden als Kacheln mit Symbol ausgewählt. Für jede gewählte Kachel erscheint darunter ein eigener Reiter mit ihren Optionen. Optionen werden mit Schaltern ein- und ausgeschaltet, der Start-Knopf zeigt, was ausgeführt wird (z.B. \"2 Tools starten\")."
         },
         {
           "type": "FEATURE",
-          "text": "Updater: Der Updater aktualisiert sich selbst. Beim Start prüft er im Hintergrund, ob eine neue Version vorhanden ist."
+          "text": "Updater: Beim Start wird geprüft, ob es neue Versionen von STEFFLIX, dem Updater oder ffmpeg gibt. Falls ja, erscheint ein Hinweis mit den Versionsnummern (z.B. STEFFLIX 2.02 → 2.03), und das Update kann direkt ausgeführt werden. Auf der Seite \"Updates\" zeigt eine Übersicht rechts die installierten und die verfügbaren Versionen. Über \"Patchnotes\" lassen sich die Neuerungen der verfügbaren Versionen anzeigen. Wurde der Updater selbst aktualisiert, startet er automatisch neu."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Nach dem Importer und nach den Tools wird automatisch \"Daten einlesen\" ausgeführt, damit die Änderungen gleich in STEFFLIX sichtbar sind."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Der Importer übernimmt Videos, Musik und Bilder in eine Kategorie und einen Unterordner von STEFFLIX. Dateien und Ordner werden über Buttons oder per Drag & Drop ins Fenster gewählt (das Fenster wechselt dabei automatisch zum Importer), die Ordnerstruktur kann übernommen werden. Fehlende Vorschaubilder werden auf Wunsch gleich erstellt. Nicht kompatible Dateien werden konvertiert (Video MP4, Musik MP3, Bild JPG). Standardmässig wird kopiert, auf Wunsch verschoben (konvertierte Originale kommen dann nach __konvertiert). Bei bereits vorhandenen Dateien wird nachgefragt, ob sie ersetzt oder übersprungen werden sollen."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Der Updater aktualisiert sich selbst."
         },
         {
           "type": "FEATURE",
@@ -26,7 +42,7 @@
         },
         {
           "type": "FEATURE",
-          "text": "Updater: \"Vorschaubilder erstellen\" erzeugt für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner. Vorhandene Vorschaubilder bleiben unverändert, Bilder ohne zugehöriges Video werden nach Preview\\__gelöscht verschoben."
+          "text": "Updater: \"Vorschaubilder erstellen\" erzeugt fehlende Vorschaubilder (480x270) im Preview-Ordner, wahlweise für Videos (Bild aus der Mitte des Videos) und/oder für Bilder. Vorhandene Vorschaubilder bleiben unverändert, Vorschaubilder ohne zugehörige Mediendatei oder Ordner werden nach Preview\\__gelöscht verschoben."
         },
         {
           "type": "FEATURE",
@@ -34,7 +50,7 @@
         },
         {
           "type": "FEATURE",
-          "text": "Updater: \"Videos für SFLIX konvertieren\" wandelt Videos in browserkompatible MP4 (H.264/AAC) um. Die MP4 ersetzt das Original im selben Ordner, das Original wird nach __konvertiert verschoben (oder auf Wunsch gelöscht). Die Grafikkarte wird automatisch erkannt und genutzt, bei Problemen wird mit dem Prozessor konvertiert."
+          "text": "Updater: \"Videos für STEFFLIX konvertieren\" wandelt Videos in browserkompatible MP4 (H.264/AAC) um. Die MP4 ersetzt das Original im selben Ordner, das Original wird nach __konvertiert verschoben (oder auf Wunsch gelöscht). Die Grafikkarte wird automatisch erkannt und genutzt, bei Problemen wird mit dem Prozessor konvertiert."
         },
         {
           "type": "FEATURE",
@@ -42,7 +58,7 @@
         },
         {
           "type": "FEATURE",
-          "text": "Updater: Der Medienordner für Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren ist einstellbar. Das für die Videobearbeitung benötigte ffmpeg wird beim ersten Bedarf automatisch heruntergeladen und geprüft."
+          "text": "Updater: Der Medienordner für Vorschaubilder, Zusammenführen, Konvertieren und Ablagen leeren ist unter \"Tools\" > \"Einstellungen\" einstellbar. Das für die Videobearbeitung benötigte ffmpeg wird beim ersten Bedarf automatisch heruntergeladen und geprüft."
         },
         {
           "type": "OPTIMIERUNG",

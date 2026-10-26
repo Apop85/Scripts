@@ -22,7 +22,23 @@
         },
         {
           "type": "FEATURE",
-          "text": "Updater: Beim Start wird geprüft, ob es neue Versionen von STEFFLIX, dem Updater oder ffmpeg gibt. Falls ja, erscheint ein Hinweis mit den Versionsnummern (z.B. STEFFLIX 2.02 → 2.03), und das Update kann direkt ausgeführt werden. Auf der Seite \"Updates\" zeigt eine Übersicht rechts die installierten und die verfügbaren Versionen. Über \"Patchnotes\" lassen sich die Neuerungen der verfügbaren Versionen anzeigen. Wurde der Updater selbst aktualisiert, startet er automatisch neu."
+          "text": "Updater: Beim Start wird geprüft, ob es neue Versionen von STEFFLIX, dem Updater oder ffmpeg gibt. Falls ja, erscheint ein Hinweis mit den Versionsnummern (z.B. STEFFLIX 2.02 → 2.03), und das Update kann mit \"Jetzt aktualisieren\" direkt ausgeführt werden. Nach \"Später\" bleibt oben ein Hinweisbalken mit demselben Knopf."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Auf der Seite \"Updates\" zeigt eine Übersicht rechts die installierten und die verfügbaren Versionen von STEFFLIX, Updater und ffmpeg. \"Neu prüfen\" wiederholt die Prüfung, nach einem Update geschieht das automatisch."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Über \"Patchnotes\" (im Update-Hinweis und in der Versionsübersicht) lassen sich die Neuerungen aller Versionen anzeigen, die neuer sind als die installierte."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Wurde der Updater bei einem Update selbst erneuert, startet er automatisch neu und erledigt die restlichen Aufgaben."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Updater: In allen Texten heisst es jetzt STEFFLIX statt SFLIX."
         },
         {
           "type": "FEATURE",
@@ -31,10 +47,6 @@
         {
           "type": "FEATURE",
           "text": "Updater: Der Importer übernimmt Videos, Musik und Bilder in eine Kategorie und einen Unterordner von STEFFLIX. Dateien und Ordner werden über Buttons oder per Drag & Drop ins Fenster gewählt (das Fenster wechselt dabei automatisch zum Importer), die Ordnerstruktur kann übernommen werden. Fehlende Vorschaubilder werden auf Wunsch gleich erstellt. Nicht kompatible Dateien werden konvertiert (Video MP4, Musik MP3, Bild JPG). Standardmässig wird kopiert, auf Wunsch verschoben (konvertierte Originale kommen dann nach __konvertiert). Bei bereits vorhandenen Dateien wird nachgefragt, ob sie ersetzt oder übersprungen werden sollen."
-        },
-        {
-          "type": "FEATURE",
-          "text": "Updater: Der Updater aktualisiert sich selbst."
         },
         {
           "type": "OPTIMIERUNG",

@@ -369,6 +369,30 @@ namespace Sflix
             return 0;
         }
 
+        // Sicherungen (*.old) früherer Updates entfernen: im STEFFLIX-Ordner, in sflix_sys und
+        // sflix_sys\js (dort legen alte und neue Updater sie an). Medienordner bleiben unberührt.
+        // Gibt die Anzahl entfernter Dateien zurück.
+        public static int RemoveOldBackups(string baseDir)
+        {
+            int removed = 0;
+            string[] folders = { baseDir, Path.Combine(baseDir, "sflix_sys"), Path.Combine(baseDir, "sflix_sys", "js") };
+            foreach (string folder in folders)
+            {
+                if (!Directory.Exists(folder)) continue;
+                string[] files;
+                try { files = Directory.GetFiles(folder, "*.old"); }
+                catch { continue; }
+                foreach (string f in files)
+                {
+                    // GetFiles("*.old") findet auch z.B. "x.older": nur echte .old
+                    if (!f.EndsWith(".old", StringComparison.OrdinalIgnoreCase)) continue;
+                    try { File.Delete(f); removed++; }
+                    catch { }   // z.B. noch gesperrt: beim nächsten Start erneut
+                }
+            }
+            return removed;
+        }
+
         public static void RemoveObsoleteFiles(string baseDir, TaskContext ctx)
         {
             foreach (string name in ObsoleteFiles)

@@ -205,12 +205,23 @@
         <a class="closeButton" id="toggleFullscreenButton" style="display: none;" aria-label="Vollbild beenden" onclick="toggleFullscreenMode()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></a>
         <div id="help" style="display: none;">
             <h3>Neue Medien hinzufügen</h3>
-            <p>Neue Filme, Serien, Musik oder Bilder werden in den passenden Ordner im STEFFLIX-Verzeichnis kopiert. Danach liest <span class="highlighted">updateStefflix.exe</span> die Medien mit der Aufgabe "Daten einlesen" neu ein, und sie erscheinen in STEFFLIX.</p>
+            <p>Neue Filme, Serien, Musik oder Bilder kommen am einfachsten mit dem Importer von <span class="highlighted">updateStefflix.exe</span> in STEFFLIX. Er kopiert oder verschiebt die Medien in den richtigen Ordner, wandelt nicht unterstützte Formate auf Wunsch um und liest danach nur den Zielordner neu ein. Das geht auch bei grossen Mediatheken schnell, der Rest bleibt unverändert.</p>
             <ol>
-                <li>Medien in den passenden Unterordner kopieren, z.B. <span class="highlighted">Serien\Meine Serie\Staffel 1</span>.</li>
-                <li>Optional ein Vorschaubild hinterlegen (siehe unten). Für Videos kann der Updater mit "Vorschaubilder erstellen" auch selbst eines erzeugen.</li>
-                <li><span class="highlighted">updateStefflix.exe</span> starten, "Daten einlesen" auswählen und ausführen.</li>
+                <li><span class="highlighted">updateStefflix.exe</span> starten und die Registerkarte "Importer" öffnen. Dateien oder Ordner lassen sich auch einfach ins Fenster ziehen.</li>
+                <li>Unter "Was importieren?" mit "Dateien …" oder "Ordner …" die Medien wählen.</li>
+                <li>Unter "Ziel in STEFFLIX" die Kategorie wählen (z.B. Serien, mit "Neu …" auch eine eigene) und den Unterordner angeben, z.B. <span class="highlighted">Meine Serie\Staffel 1</span>.</li>
+                <li>Bei Bedarf die Optionen einschalten: Ordnerstruktur übernehmen, in ein browserkompatibles Format konvertieren, verschieben statt kopieren oder fehlende Vorschaubilder erstellen.</li>
+                <li>Auf "Start" klicken. Danach STEFFLIX neu laden, die Medien sind da.</li>
             </ol>
+            <details class="helpDetails">
+                <summary>Alternative: Medien von Hand kopieren</summary>
+                <p>Die Medien lassen sich auch selbst in die Ordner kopieren. Danach müssen sie eingelesen werden, damit sie in STEFFLIX erscheinen.</p>
+                <ol>
+                    <li>Medien in den passenden Unterordner kopieren, z.B. <span class="highlighted">Serien\Meine Serie\Staffel 1</span>.</li>
+                    <li>Optional ein Vorschaubild hinterlegen (siehe unten). Für Videos kann der Updater unter "Tools" mit "Vorschaubilder" auch selbst eines erzeugen.</li>
+                    <li><span class="highlighted">updateStefflix.exe</span> starten und unter "Updates" die Aufgabe "Daten einlesen" ausführen. Ist "Alle Ordner einlesen" ausgeschaltet, werden nur die gewählten Ordner eingelesen. Das ist schneller, wenn nur an wenigen Stellen etwas dazugekommen ist.</li>
+                </ol>
+            </details>
             <details class="helpDetails">
                 <summary>Unterstützte Dateiformate</summary>
                 <ul>

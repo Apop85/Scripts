@@ -121,7 +121,8 @@ namespace Sflix
             foreach (string s in sources)
             {
                 if (!Directory.Exists(s)) continue;
-                string folder = Path.GetFullPath(s).TrimEnd('\\');
+                string folder = Path.GetFullPath(s);
+                if (Path.GetPathRoot(folder) != folder) folder = folder.TrimEnd('\\');   // D:\ bleibt D:\
                 string baseDir = Path.GetDirectoryName(folder) ?? folder;
                 Walk(folder, baseDir, keepStructure, items, ref ignored);
             }

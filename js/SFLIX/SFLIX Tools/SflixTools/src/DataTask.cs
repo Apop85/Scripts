@@ -538,7 +538,9 @@ namespace Sflix
         void UpdateBranch(JsonObject data, string[] segments)
         {
             JsonObject node = data;
-            string dir = homeDir.TrimEnd('\\');
+            // Nicht kürzen: Bei STEFFLIX direkt im Laufwerk (D:\) wäre "D:" + "Filme" = "D:Filme",
+            // ein relativer Pfad, und in data.js stünde "./ilme/..."
+            string dir = homeDir;
             for (int i = 0; i < segments.Length; i++)
             {
                 string name = segments[i];

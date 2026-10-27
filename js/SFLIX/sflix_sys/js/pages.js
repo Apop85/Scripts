@@ -219,10 +219,10 @@ var groupThreshold = 12;
 // Anfangsbuchstaben zu Bändern mit etwa bandMinSize bis bandMaxSize Einträgen zusammengelegt
 // (z.B. "A – C", "S", "T – V"). Ein Buchstabe mit mehr als bandMaxSize Einträgen wird nach dem
 // zweiten Buchstaben geteilt ("Sa – Sk", "Sl – Sz").
-var singleBandLimit = 20;
+var singleBandLimit = 15;
 var bandMinSize = 10;
-var bandIdealSize = 20;
-var bandMaxSize = 30;
+var bandIdealSize = 15;
+var bandMaxSize = 25;
 
 // Buchstabe für die Gruppierung: Umlaute zählen zum Grundbuchstaben (Ä -> a), Ziffern -> "#",
 // alles andere -> "" (Sonstige)
@@ -317,11 +317,12 @@ function packAlphabetUnits(units) {
         current.items = current.items.concat(unit.items);
     });
 
-    // Ein zu kleines letztes Band an das vorherige anhängen
+    // Ein zu kleines letztes Band an das vorherige anhängen, aber nur, wenn dieses dadurch nicht
+    // länger als bandMaxSize wird. Sonst bleibt das letzte Band eben etwas kürzer.
     var last = bands[bands.length - 1];
     var previous = bands[bands.length - 2];
     if (last != null && previous != null && !last.separate && !previous.separate &&
-        last.items.length < bandMinSize && previous.items.length + last.items.length <= bandMaxSize + bandMinSize) {
+        last.items.length < bandMinSize && previous.items.length + last.items.length <= bandMaxSize) {
         previous.to = last.to;
         previous.items = previous.items.concat(last.items);
         bands.pop();

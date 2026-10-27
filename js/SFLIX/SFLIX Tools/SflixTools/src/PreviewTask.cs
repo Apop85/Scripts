@@ -110,7 +110,7 @@ namespace Sflix
                 {
                     string name = Path.GetFileName(d);
                     // __teile, __konvertiert, __gelöscht usw. bekommen keine Vorschaubilder
-                    if (Folders.Skip(name)) continue;
+                    if (Folders.Ignore(d)) continue;
                     if (string.Equals(name, "Preview", StringComparison.OrdinalIgnoreCase)) previewDirs.Add(d);
                     Collect(d, wanted, result, previewDirs, ctx);
                 }

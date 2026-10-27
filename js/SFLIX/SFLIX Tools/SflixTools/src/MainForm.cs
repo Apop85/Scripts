@@ -994,14 +994,11 @@ namespace Sflix
                         App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
-                foreach (string seg in rel.Split('\\'))
+                if (Folders.IgnoreAny(App.Root, rel))
                 {
-                    if (Folders.Skip(seg))
-                    {
-                        MessageBox.Show(this, "Ablage- und Systemordner werden nicht eingelesen.", App.Title,
-                                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        return;
-                    }
+                    MessageBox.Show(this, "Ablage-, System- und versteckte Ordner werden nicht eingelesen.", App.Title,
+                                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
                 }
                 foreach (string existing in dataFolders.Items)
                     if (string.Equals(existing, rel, StringComparison.OrdinalIgnoreCase)) return;
@@ -1161,9 +1158,7 @@ namespace Sflix
                 foreach (string d in Directory.GetDirectories(App.Root))
                 {
                     string name = Path.GetFileName(d);
-                    if (Folders.Skip(name) || name.StartsWith(".") ||
-                        string.Equals(name, "Preview", StringComparison.OrdinalIgnoreCase) ||
-                        (File.GetAttributes(d) & (FileAttributes.Hidden | FileAttributes.System)) != 0) continue;
+                    if (Folders.Ignore(d) || string.Equals(name, "Preview", StringComparison.OrdinalIgnoreCase)) continue;
                     importCategory.Items.Add(name);
                 }
             }

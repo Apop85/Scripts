@@ -1837,6 +1837,44 @@ html.playerCinema .autoplayCountdown {
     color: #d4d4d8;
 }
 
+/* Kopierbare Adressen in der Hilfe (Browsereinstellungen) */
+.copyAddress {
+    position: relative;
+    border: none;
+    font-size: inherit;
+    cursor: copy;
+}
+
+.copyAddress:hover, .copyAddress:focus-visible {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.copyAddress.copied::after, .copyAddress.copyFailed::after {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%);
+    padding: 3px 8px;
+    border-radius: 5px;
+    background-color: var(--sflix-bg);
+    border: 1px solid var(--sflix-border);
+    font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.copyAddress.copied::after {
+    content: "Kopiert";
+    color: var(--sflix-text);
+}
+
+.copyAddress.copyFailed::after {
+    content: "Bitte von Hand kopieren";
+    color: #fca5a5;
+}
+
 #help ol, #help ul {
     margin: 8px 0 20px 22px;
 }

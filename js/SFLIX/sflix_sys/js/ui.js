@@ -384,6 +384,36 @@ function detectBrowser() {
     }
 }
 
+// Hilfe: Adresse einer Einstellungsseite kopieren. Browser lassen about:, chrome:// und edge://
+// nicht per Link aus einer Seite öffnen, deshalb wird die Adresse zum Einfügen kopiert.
+function copyAddress(button) {
+    var text = button.getAttribute("data-copy") || button.textContent;
+    var done = function (ok) {
+        button.classList.remove("copied", "copyFailed");
+        button.classList.add(ok ? "copied" : "copyFailed");
+        clearTimeout(button.copyTimer);
+        button.copyTimer = setTimeout(function () { button.classList.remove("copied", "copyFailed"); }, 2500);
+    };
+    var fallback = function () {
+        var field = document.createElement("textarea");
+        field.value = text;
+        field.setAttribute("readonly", "");
+        field.style.position = "fixed";
+        field.style.opacity = "0";
+        document.body.appendChild(field);
+        field.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+        document.body.removeChild(field);
+        done(ok);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+    } else {
+        fallback();
+    }
+}
+
 // Funktion zum Setzen der Höhe des body-Elements (blendet den Ladescreen aus)
 function setHeight() {
     document.getElementById("loadingScreen").style.display = "none";

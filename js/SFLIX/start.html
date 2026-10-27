@@ -269,27 +269,47 @@
             </ul>
 
             <h3>Browsereinstellungen</h3>
-            <p>Damit Videos und Musik von selbst starten (z.B. bei Autoplay), muss der Browser die automatische Wiedergabe mit Ton für STEFFLIX erlauben. So geht es im verwendeten Browser:</p>
+            <p>So richtest du den verwendeten Browser für STEFFLIX ein. Einstellungsseiten lassen sich aus STEFFLIX nicht direkt öffnen, das verhindert der Browser. Ein Klick auf eine Adresse kopiert sie, danach die Adresse in die Adresszeile einfügen und Enter drücken.</p>
             <div id="firefoxBrowserHelp" style="display: none;">
+                <p><b>Automatische Wiedergabe</b>: Damit Videos und Musik von selbst starten (z.B. bei Autoplay), muss der Browser die Wiedergabe mit Ton erlauben.</p>
                 <ol>
                     <li>Mit <span class="highlighted">Ctrl + I</span> die Seiteninformationen öffnen.</li>
                     <li>Den Tab "Berechtigungen" öffnen.</li>
                     <li>Bei "Automatische Wiedergabe" die Option "Audio und Video erlauben" wählen.</li>
                 </ol>
+                <p><b>Daten beim Schliessen behalten</b>: Löscht Firefox beim Schliessen die Chronik oder die Website-Daten, gehen auch Favoriten, "Weiterschauen", Gesehen-Markierungen und die Sortierung der Startseite verloren. Dann STEFFLIX als Ausnahme eintragen:</p>
+                <ol>
+                    <li><button type="button" class="highlighted copyAddress" onclick="copyAddress(this)">about:preferences#history</button> öffnen.</li>
+                    <li>Ist "Die Chronik löschen, wenn Firefox geschlossen wird" eingeschaltet, auf "Ausnahmen verwalten" klicken.</li>
+                    <li><button type="button" class="highlighted copyAddress" onclick="copyAddress(this)">file:///</button> eingeben, auf "Erlauben" und danach auf "Änderungen speichern" klicken.</li>
+                    <li>Ist unter <button type="button" class="highlighted copyAddress" onclick="copyAddress(this)">about:preferences#privacy</button> bei "Cookies und Website-Daten" das Löschen beim Beenden eingeschaltet, dort unter "Ausnahmen verwalten" ebenfalls <span class="highlighted">file:///</span> erlauben.</li>
+                </ol>
             </div>
             <div id="chromeBrowserHelp" style="display: none;">
+                <p><b>Automatische Wiedergabe</b>: Damit Videos und Musik von selbst starten (z.B. bei Autoplay), muss der Browser die Wiedergabe mit Ton erlauben.</p>
                 <ol>
-                    <li>Die Toneinstellungen unter <span class="highlighted">chrome://settings/content/sound</span> öffnen.</li>
+                    <li>Die Toneinstellungen unter <button type="button" class="highlighted copyAddress" onclick="copyAddress(this)">chrome://settings/content/sound</button> öffnen.</li>
                     <li>Bei den Websites, die Ton wiedergeben dürfen, auf "Hinzufügen" klicken.</li>
-                    <li>Folgenden Eintrag hinzufügen: <span class="highlighted">file:///*</span></li>
+                    <li>Folgenden Eintrag hinzufügen: <button type="button" class="highlighted copyAddress" onclick="copyAddress(this)">file:///*</button></li>
                 </ol>
+                <p><b>Daten beim Schliessen behalten</b>: Löscht Chrome beim Schliessen die Website-Daten, gehen auch Favoriten, "Weiterschauen", Gesehen-Markierungen und die Sortierung der Startseite verloren. Dann STEFFLIX als Ausnahme eintragen:</p>
+                <ol>
+                    <li><button type="button" class="highlighted copyAddress" onclick="copyAddress(this)">chrome://settings/content/siteData</button> öffnen.</li>
+                    <li>Ist das Löschen der Websitedaten beim Schliessen aller Fenster eingeschaltet, bei den Websites, die immer Daten speichern dürfen, auf "Hinzufügen" klicken.</li>
+                    <li>Folgenden Eintrag hinzufügen: <button type="button" class="highlighted copyAddress" onclick="copyAddress(this)">file:///*</button></li>                </ol>
             </div>
             <div id="edgeBrowserHelp" style="display: none;">
+                <p><b>Automatische Wiedergabe</b>: Damit Videos und Musik von selbst starten (z.B. bei Autoplay), muss der Browser die Wiedergabe mit Ton erlauben.</p>
                 <ol>
-                    <li>Die Einstellungen unter <span class="highlighted">edge://settings/content/mediaAutoplay</span> öffnen.</li>
+                    <li>Die Einstellungen unter <button type="button" class="highlighted copyAddress" onclick="copyAddress(this)">edge://settings/content/mediaAutoplay</button> öffnen.</li>
                     <li>Neben "Zulassen" auf "Hinzufügen" klicken.</li>
-                    <li>Folgenden Eintrag hinzufügen: <span class="highlighted">file:///*</span></li>
+                    <li>Folgenden Eintrag hinzufügen: <button type="button" class="highlighted copyAddress" onclick="copyAddress(this)">file:///*</button></li>
                 </ol>
+                <p><b>Daten beim Schliessen behalten</b>: Löscht Edge beim Schliessen die Cookies und Websitedaten, gehen auch Favoriten, "Weiterschauen", Gesehen-Markierungen und die Sortierung der Startseite verloren. Dann STEFFLIX als Ausnahme eintragen:</p>
+                <ol>
+                    <li><button type="button" class="highlighted copyAddress" onclick="copyAddress(this)">edge://settings/clearBrowsingDataOnClose</button> öffnen.</li>
+                    <li>Ist "Cookies und andere Websitedaten" eingeschaltet, bei "Nicht löschen" auf "Hinzufügen" klicken.</li>
+                    <li>Folgenden Eintrag hinzufügen: <button type="button" class="highlighted copyAddress" onclick="copyAddress(this)">file:///*</button></li>                </ol>
             </div>
             <div id="otherBrowserHelp" style="display: none;">
                 <p>Für diesen Browser gibt es keine Anleitung. STEFFLIX ist für Google Chrome, Microsoft Edge und Mozilla Firefox optimiert.</p>

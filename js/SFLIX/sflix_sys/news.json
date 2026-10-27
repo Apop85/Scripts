@@ -43,6 +43,10 @@
         {
           "type": "INTERFACE",
           "text": "\"Startseite anpassen\" zeigt \"Weiterschauen\" auch ohne Einträge an (als \"zurzeit leer\"), damit sich seine Position jederzeit festlegen lässt."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Hilfe › Browsereinstellungen: Neue Anleitung für Firefox, Chrome und Edge, wie STEFFLIX als Ausnahme eingetragen wird, wenn der Browser beim Schliessen Chronik oder Website-Daten löscht. Sonst gehen dabei Favoriten, Weiterschauen, Gesehen und die Sortierung verloren. Ein Klick auf eine Adresse kopiert sie zum Einfügen in die Adresszeile."
         }
       ]
     },

@@ -151,6 +151,24 @@ Damit Videos und Musik von selbst starten (z.B. bei Autoplay), muss der Browser 
 2. Den Tab "Berechtigungen" öffnen.
 3. Bei "Automatische Wiedergabe" die Option "Audio und Video erlauben" wählen.
 
+### Daten beim Schliessen des Browsers behalten
+
+Ist im Browser eingestellt, dass er beim Schliessen die Chronik oder die Website-Daten löscht, gehen auch Favoriten, "Weiterschauen", Gesehen-Markierungen und die Sortierung der Startseite verloren. Dann STEFFLIX als Ausnahme eintragen. Die Einstellungsseiten lassen sich nicht über einen Link öffnen: Adresse in die Adresszeile kopieren und Enter drücken. In der Hilfe von STEFFLIX kopiert ein Klick auf die Adresse sie.
+
+**Mozilla Firefox**
+1. `about:preferences#history` öffnen.
+2. Ist "Die Chronik löschen, wenn Firefox geschlossen wird" eingeschaltet, auf "Ausnahmen verwalten" klicken.
+3. `file:///` eingeben, auf "Erlauben" und danach auf "Änderungen speichern" klicken.
+4. Ist unter `about:preferences#privacy` bei "Cookies und Website-Daten" das Löschen beim Beenden eingeschaltet, dort unter "Ausnahmen verwalten" ebenfalls `file:///` erlauben.
+
+**Google Chrome**
+1. `chrome://settings/content/siteData` öffnen.
+2. Ist das Löschen der Websitedaten beim Schliessen aller Fenster eingeschaltet, bei den Websites, die immer Daten speichern dürfen, auf "Hinzufügen" klicken.
+3. Folgenden Eintrag hinzufügen: `file:///*`
+**Microsoft Edge**
+1. `edge://settings/clearBrowsingDataOnClose` öffnen.
+2. Ist "Cookies und andere Websitedaten" eingeschaltet, bei "Nicht löschen" auf "Hinzufügen" klicken.
+3. Folgenden Eintrag hinzufügen: `file:///*`
 ## Datensicherung
 
 Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen und die Sortierung der Startseite werden nur im verwendeten Browser gespeichert. In der Hilfe von STEFFLIX lassen sie sich unter "Datensicherung" als Datei exportieren und wieder importieren, z.B. um sie auf einen anderen Browser oder PC zu übertragen.

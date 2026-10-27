@@ -4,6 +4,9 @@
 </ul>-->
 <b>Version 2.03</b>:<br>
 <ul>
+</ul>
+<b>Version 2.03</b>:<br>
+<ul>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Die eigene Reihenfolge der Menübänder auf der Startseite ging teilweise verloren: Wurde sortiert, während ein Band fehlte (z.B. "Weiterschauen" oder "Meine Favoriten" ohne Einträge), fiel es aus der gespeicherten Reihenfolge und erschien später wieder ganz oben. Fehlende Bänder behalten jetzt ihre Position.</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Einträge in "Weiterschauen" wurden endgültig gelöscht, wenn ein Medium beim Öffnen vorübergehend nicht in den Daten stand (z.B. während "Daten einlesen" lief). Sie bleiben jetzt erhalten und erscheinen wieder, sobald die Datei gefunden wird.</li>
     <li>[OPTIMIERUNG] STEFFLIX bittet den Browser, die gespeicherten Daten (Sortierung, Weiterschauen, Favoriten, Fortschritt) dauerhaft zu behalten und nicht bei knappem Speicherplatz zu löschen.</li>
@@ -14,6 +17,7 @@
     <li>[<span style="color: red">FEATURE</span>] Ordner (z.B. eine Serie oder Staffel), deren Videos alle gesehen sind, werden ebenfalls mit "Gesehen" markiert. Musik und Bilder zählen dabei nicht mit.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Bilderordner ohne eigenes Vorschaubild zeigen das erste Bild des Ordners (natürlich sortiert, "Bild 2" vor "Bild 10"). Liegen keine Bilder direkt im Ordner, wird das erste Bild aus den Unterordnern verwendet.</li>
     <li>[<span style="color: blue">INTERFACE</span>] "Startseite anpassen" zeigt "Weiterschauen" auch ohne Einträge an (als "zurzeit leer"), damit sich seine Position jederzeit festlegen lässt.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hilfe › Browsereinstellungen: Neue Anleitung für Firefox, Chrome und Edge, wie STEFFLIX als Ausnahme eingetragen wird, wenn der Browser beim Schliessen Chronik oder Website-Daten löscht. Sonst gehen dabei Favoriten, Weiterschauen, Gesehen und die Sortierung verloren. Ein Klick auf eine Adresse kopiert sie zum Einfügen in die Adresszeile.</li>
 </ul>
 <b>Version 2.02</b>:<br>
 <ul>

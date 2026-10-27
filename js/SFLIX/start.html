@@ -245,7 +245,7 @@
             </details>
 
             <h3>Autoplay</h3>
-            <p>Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste ab. Die Einstellungen befinden sich im Menü unter <a onclick="toggleContainer(['settingsBox'], 'flex')">Autoplay</a> und hinter dem Autoplay-Symbol in der Player-Leiste. Das Symbol zeigt, ob Autoplay aktiv ist (ausgegraut = aus); ein Klick darauf öffnet die Autoplay-Einstellungen. Kurz vor dem Wechsel erscheint im Player ein Countdown; ein Klick darauf startet das nächste Medium sofort.</p>
+            <p>Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste ab. Die Einstellungen befinden sich im Menü unter <a onclick="toggleContainer(['settingsBox'], 'flex')">Autoplay</a> und hinter dem Autoplay-Symbol in der Player-Leiste, bei Bildern hinter dem Knopf "Autoplay" unter dem Bild. Das Symbol zeigt, ob Autoplay aktiv ist (ausgegraut = aus); ein Klick darauf öffnet die Autoplay-Einstellungen. Kurz vor dem Wechsel erscheint im Player ein Countdown; ein Klick darauf startet das nächste Medium sofort.</p>
             <ul class="helpOptions">
                 <li><b>Automatisch vorwärts</b>: schaltet Autoplay ein oder aus.</li>
                 <li><b>Unbegrenzt</b>: spielt ohne feste Anzahl weiter, bis das Ende der Playliste erreicht ist.</li>
@@ -401,6 +401,8 @@
     <div id="mediaNav">
         <div id="prev"></div>
         <div id="favorite"></div>
+        <!-- Nur bei Bildern: Videos und Musik haben Autoplay in der Player-Leiste -->
+        <div id="autoplayNav" style="display: none;"></div>
         <div id="shuffle"></div>
         <div id="next"></div>
     </div>

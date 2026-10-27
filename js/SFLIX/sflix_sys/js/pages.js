@@ -123,6 +123,8 @@ function renderFolderPage(levels) {
     header.replaceChildren();
     bands.replaceChildren();
     header.className = "folderHeader";
+    // Auf Ordnerseiten steht die Pfadleiste oben (bei der Wiedergabe unter den Buttons)
+    document.getElementById("media").before(header);
 
     renderBreadcrumb(header, levels, false);
     var title = document.createElement("h1");
@@ -163,7 +165,7 @@ function renderFolderPage(levels) {
         // Wenige Unterordner mit Medien (z.B. Staffeln einer Serie): oben die Medien des Ordners,
         // darunter ein Band pro Ordner mit dessen Inhalt
         if (children.media.length > 0) {
-            renderGroupedBands(bands, children.media, getDisplayName, "Inhalt", function (track, mediaPath) {
+            renderGroupedBands(bands, children.media, "Inhalt", function (track, mediaPath) {
                 createPlayableCard(track, mediaPath);
             });
         }
@@ -183,10 +185,8 @@ function renderFolderPage(levels) {
         entries.sort(function (a, b) {
             return compareNatural(a.name, b.name);
         });
-        var singleTitle = children.folders.length > 0 ? "Alle " + levels[levels.length - 1] : "Alle Titel";
-        renderGroupedBands(bands, entries, function (entry) {
-            return entry.name;
-        }, singleTitle, function (track, entry) {
+        // Titel ist der gewählte Ordner bzw. die Kategorie (z.B. "Filme")
+        renderGroupedBands(bands, entries, levels[levels.length - 1], function (track, entry) {
             if (entry.media != null) {
                 createPlayableCard(track, entry.media);
             } else {
@@ -215,46 +215,12 @@ function shouldShowFolderContents(levels, node, folders) {
 // Bis zu so vielen Unterordnern bekommt jeder ein eigenes Band mit Inhalt (Staffeln, Alben)
 var groupThreshold = 12;
 
-// Alphabetische Bänder: bis singleBandLimit Einträge ein einziges Band. Darüber werden die
-// (sortierten) Einträge gleichmässig auf mindestens minBandCount Bänder mit höchstens
-// bandMaxSize Einträgen verteilt (14 Einträge: 5 + 5 + 4; 50 Einträge: 4 Bänder mit 13 + 13 + 12 + 12).
-var singleBandLimit = 9;
-var minBandCount = 3;
-var bandMaxSize = 15;
-
-// Latin-1-Buchstaben ohne Zerlegung in Grundbuchstabe + Akzent (é -> e geht über NFD)
-var sortCharMap = { "ß": "s", "æ": "a", "ø": "o", "œ": "o", "þ": "t", "ð": "d" };
-
-// Name zum Vergleichen: Umlaute und Akzente zählen zum Grundbuchstaben (Ä, À -> a; Ö -> o;
-// É -> e; ß -> s), damit "Öl" und "Ol" als gleicher Anfang gelten.
-function getPlainSortName(name) {
-    var plain = String(name).normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
-    var result = "";
-    for (var index = 0; index < plain.length; index++) {
-        var char = plain.charAt(index);
-        result += sortCharMap.hasOwnProperty(char) ? sortCharMap[char] : char;
-    }
-    return result;
-}
-
-// Anfang eines Namens für die Bandtitel ("S", "Sa", "Öl"). Sonderzeichen am Anfang -> "#".
-function getSortPrefix(name, length) {
-    var plain = getPlainSortName(name);
-    if (!/^[a-z0-9]/.test(plain)) {
-        return "#";
-    }
-    // Anzeige in der Schreibweise des Namens ("Öl", "Harry Potter 3"), erster Buchstabe gross
-    var prefix = String(name).trim().substring(0, length).replace(/\s+$/, "");
-    return prefix.charAt(0).toUpperCase() + prefix.substring(1);
-}
-
-// Anzahl Bänder für so viele Einträge
-function getBandCount(count) {
-    if (count <= singleBandLimit) {
-        return 1;
-    }
-    return Math.max(minBandCount, Math.ceil(count / bandMaxSize));
-}
+// Ein Band mit mehreren Zeilen: bis singleRowLimit Einträge eine Zeile, bis
+// blockRows * rowSize Einträge gleichmässig auf blockRows Zeilen verteilt (14: 5 + 5 + 4),
+// darüber jeweils nach rowSize Einträgen eine neue Zeile.
+var singleRowLimit = 9;
+var blockRows = 3;
+var rowSize = 12;
 
 // Verteilt die Einträge der Reihe nach gleichmässig; die ersten Bänder erhalten den Rest
 function splitEvenly(items, bandCount) {
@@ -270,64 +236,33 @@ function splitEvenly(items, bandCount) {
     return bands;
 }
 
-// Titel der Bänder, z.B. "A – F", "G – Sa", "Sc – Z". Wo zwei Bänder mit demselben Anfang
-// aneinanderstossen, zeigen beide Titel an dieser Stelle so viele Zeichen, bis sie sich
-// unterscheiden ("Sa" / "Sc", "Tag 5" / "Tag 6").
-function getBandLabels(bands, getName) {
-    var labels = bands.map(function (band) {
-        return {
-            first: getName(band[0]),
-            last: getName(band[band.length - 1]),
-            from: getSortPrefix(getName(band[0]), 1),
-            to: getSortPrefix(getName(band[band.length - 1]), 1)
-        };
-    });
-    for (var index = 1; index < labels.length; index++) {
-        var previous = labels[index - 1];
-        var current = labels[index];
-        // Bis zum ersten Unterschied verlängern ("Tag 5" / "Tag 6"), höchstens 20 Zeichen
-        var lastPlain = getPlainSortName(previous.last);
-        var firstPlain = getPlainSortName(current.first);
-        var common = 0;
-        while (common < lastPlain.length && common < firstPlain.length && lastPlain.charAt(common) == firstPlain.charAt(common)) {
-            common++;
-        }
-        var length = Math.min(common + 1, 20);
-        if (length > 1) {
-            previous.to = getSortPrefix(previous.last, length);
-            current.from = getSortPrefix(current.first, length);
-        }
+// Einträge der Reihe nach auf Zeilen verteilen (siehe singleRowLimit, blockRows, rowSize)
+function splitIntoRows(items) {
+    if (items.length <= singleRowLimit) {
+        return [items];
     }
-    return labels.map(function (label) {
-        // Gleich lange Angaben innerhalb eines Titels ("Sc – Sz" statt "Sc – S")
-        if (label.from.length > label.to.length && label.from.charAt(0) == label.to.charAt(0)) {
-            label.to = getSortPrefix(label.last, label.from.length);
-        } else if (label.to.length > label.from.length && label.from.charAt(0) == label.to.charAt(0)) {
-            label.from = getSortPrefix(label.first, label.to.length);
-        }
-        return label.from == label.to ? label.from : label.from + " – " + label.to;
-    });
+    if (items.length <= blockRows * rowSize) {
+        return splitEvenly(items, blockRows);
+    }
+    var rows = [];
+    for (var start = 0; start < items.length; start += rowSize) {
+        rows.push(items.slice(start, start + rowSize));
+    }
+    return rows;
 }
 
-// Zeigt Einträge in einem Band oder, bei vielen Einträgen, alphabetisch gleichmässig verteilt
-// auf mehrere Bänder (z.B. "A – F", "G – Sa", "Sc – Z").
-function renderGroupedBands(container, items, getName, singleTitle, renderItem) {
-    var bandCount = getBandCount(items.length);
-    if (bandCount == 1) {
-        var track = createCardRow(container, singleTitle, null);
-        items.forEach(function (item) {
-            renderItem(track, item);
-        });
-        return;
-    }
-
-    var bands = splitEvenly(items, bandCount);
-    var labels = getBandLabels(bands, getName);
-    bands.forEach(function (band, index) {
-        var groupTrack = createCardRow(container, labels[index], null);
-        groupTrack.parentNode.parentNode.querySelector(".rowHeader h2").appendChild(createRowCount(band.length));
-        band.forEach(function (item) {
-            renderItem(groupTrack, item);
+// Ein Band ohne Überschrift, dessen Kacheln auf mehrere Zeilen umbrechen. "title" (z.B. "Filme")
+// erscheint nur in der Rasteransicht von "Alle anzeigen".
+function renderGroupedBands(container, items, title, renderItem) {
+    var rows = splitIntoRows(items);
+    var track = createCardRow(container, title, null);
+    var section = track.parentNode.parentNode;
+    section.classList.add("untitledRow");
+    section.querySelector(".rowHeader h2").textContent = "";
+    rows.forEach(function (row, index) {
+        var rowTrack = index == 0 ? track : addRowTrack(section);
+        row.forEach(function (item) {
+            renderItem(rowTrack, item);
         });
     });
 }
@@ -402,6 +337,8 @@ function renderMediaContext(mediaPath) {
         var header = document.getElementById("navigation");
         header.replaceChildren();
         header.className = "folderHeader playerHeader";
+        // Pfadleiste unter den Buttons, damit das Medium ganz oben steht
+        document.getElementById("mediaNav").after(header);
         renderBreadcrumb(header, folders, true);
         markActiveCategory(folders[0]);
         // Bänder des alten Ordners sofort entfernen

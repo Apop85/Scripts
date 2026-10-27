@@ -307,13 +307,31 @@ function createCardRow(parent, title, linkHref, rowKey) {
     heading.textContent = title;
     header.appendChild(heading);
     if (linkHref) {
+        // Es gibt eine Seite mit dem ganzen Inhalt (z.B. die Kategorie): dorthin
         var link = document.createElement("a");
         link.className = "rowLink";
         link.href = linkHref;
         link.textContent = "Alle anzeigen ›";
         header.appendChild(link);
+    } else {
+        // Sonst alle Kacheln des Bandes als Raster
+        var gridButton = document.createElement("button");
+        gridButton.type = "button";
+        gridButton.className = "rowLink";
+        gridButton.textContent = "Alle anzeigen ›";
+        gridButton.addEventListener("click", function () {
+            openCardGrid(section, title);
+        });
+        header.appendChild(gridButton);
     }
 
+    section.appendChild(header);
+    parent.appendChild(section);
+    return addRowTrack(section);
+}
+
+// Fügt einem Band eine (weitere) Zeile hinzu und gibt deren Container für die Kacheln zurück
+function addRowTrack(section) {
     var viewport = document.createElement("div");
     viewport.className = "rowViewport atStart";
     var track = document.createElement("div");
@@ -323,13 +341,80 @@ function createCardRow(parent, title, linkHref, rowKey) {
     viewport.appendChild(previousButton);
     viewport.appendChild(track);
     viewport.appendChild(nextButton);
-
-    section.appendChild(header);
     section.appendChild(viewport);
-    parent.appendChild(section);
 
     initRowScrolling(viewport, track, previousButton, nextButton);
     return track;
+}
+
+// ===================================================================
+// Rasteransicht ("Alle anzeigen" bei Bändern ohne eigene Seite)
+// ===================================================================
+
+// Die Kacheln werden für die Dauer der Ansicht ins Raster verschoben (nicht kopiert), damit
+// sie sich genau gleich verhalten. Beim Schliessen kommen sie zurück in ihre Zeilen.
+var openGrid = null;
+
+function openCardGrid(section, title) {
+    closeCardGrid();
+    var overlay = document.createElement("div");
+    overlay.id = "cardGrid";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-label", title);
+
+    var header = document.createElement("div");
+    header.className = "cardGridHeader";
+    var heading = document.createElement("h2");
+    heading.textContent = title;
+    var closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "cardGridClose";
+    closeButton.setAttribute("aria-label", "Schliessen");
+    closeButton.appendChild(createIcon("close"));
+    closeButton.addEventListener("click", closeCardGrid);
+    header.appendChild(heading);
+    header.appendChild(closeButton);
+
+    var grid = document.createElement("div");
+    grid.className = "cardGridItems";
+    var moved = [];
+    section.querySelectorAll(".rowTrack").forEach(function (track) {
+        Array.prototype.slice.call(track.children).forEach(function (card) {
+            moved.push({ card: card, track: track });
+            grid.appendChild(card);
+        });
+    });
+    heading.appendChild(createRowCount(moved.length));
+
+    // Nach dem Klick auf eine Kachel (abspielen, Ordner öffnen) die Ansicht schliessen
+    grid.addEventListener("click", function (event) {
+        if (event.target.closest(".card") != null) {
+            setTimeout(closeCardGrid, 0);
+        }
+    });
+
+    overlay.appendChild(header);
+    overlay.appendChild(grid);
+    document.body.appendChild(overlay);
+    document.body.classList.add("gridOpen");
+    openGrid = { overlay: overlay, moved: moved, section: section };
+    closeButton.focus({ preventScroll: true });
+}
+
+// Schliesst die Rasteransicht; true, wenn eine offen war
+function closeCardGrid() {
+    if (openGrid == null) {
+        return false;
+    }
+    var current = openGrid;
+    openGrid = null;
+    current.moved.forEach(function (entry) {
+        entry.track.appendChild(entry.card);
+    });
+    current.overlay.remove();
+    document.body.classList.remove("gridOpen");
+    refreshRowArrows(current.section);
+    return true;
 }
 
 function createRowArrow(direction, iconName, label) {

@@ -43,6 +43,7 @@ function initEventListeners() {
     initSearch();
     initImageViewer();
     initShuffleButton();
+    initAutoplayNavButton();
     initPlayerControls();
 
     // Neu erstellte Elemente ebenfalls per Tastatur bedienbar machen

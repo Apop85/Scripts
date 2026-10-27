@@ -476,6 +476,10 @@ function isElementVisible(element) {
 
 // Schliesst offene Fenster, Menüs und den Bild-Vollbildmodus
 function closeOverlays() {
+    // Rasteransicht ("Alle anzeigen") zuerst schliessen
+    if (closeCardGrid()) {
+        return;
+    }
     var closedSomething = false;
     modalIds.concat(["searchFieldContainer"]).forEach(function (id) {
         if (closeContainer(id)) {

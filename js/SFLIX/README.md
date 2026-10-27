@@ -108,7 +108,7 @@ Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren arbeiten im ein
 
 ## Autoplay
 
-Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste ab. Die Einstellungen befinden sich im Menü unter "Autoplay" und hinter dem Autoplay-Symbol in der Player-Leiste. Das Symbol zeigt, ob Autoplay aktiv ist (ausgegraut = aus). Kurz vor dem Wechsel erscheint im Player ein Countdown; ein Klick darauf startet das nächste Medium sofort.
+Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste ab. Die Einstellungen befinden sich im Menü unter "Autoplay" und hinter dem Autoplay-Symbol in der Player-Leiste, bei Bildern hinter dem Knopf "Autoplay" unter dem Bild. Das Symbol zeigt, ob Autoplay aktiv ist (ausgegraut = aus). Kurz vor dem Wechsel erscheint im Player ein Countdown; ein Klick darauf startet das nächste Medium sofort.
 
 - **Automatisch vorwärts**: schaltet Autoplay ein oder aus.
 - **Unbegrenzt**: spielt ohne feste Anzahl weiter, bis das Ende der Playliste erreicht ist.

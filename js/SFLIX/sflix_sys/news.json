@@ -46,7 +46,19 @@
         },
         {
           "type": "INTERFACE",
-          "text": "Ordnerseiten (z.B. Filme): Unterordner stehen jetzt zusammen mit den Medien in den alphabetischen Bändern (ein Ordner \"Harry Potter\" bei H) statt in einem eigenen Band. Die Bänder sind gleichmässig gefüllt: Bis 9 Einträge gibt es ein einziges Band, darüber werden die Einträge alphabetisch auf mindestens drei Bänder mit höchstens 15 Einträgen verteilt (z.B. 14 Einträge: 5 + 5 + 4). Der Titel zeigt den Bereich, z.B. \"A – F\" oder \"Harry Potter 3 – Sp\"."
+          "text": "Ordnerseiten (z.B. Filme): Unterordner stehen jetzt zusammen mit den Medien alphabetisch in einem Band (ein Ordner \"Harry Potter\" bei H) statt in einem eigenen Band. Das Band bricht auf mehrere Zeilen um: bis 9 Einträge eine Zeile, bis 36 Einträge gleichmässig auf drei Zeilen (z.B. 14 Einträge: 5 + 5 + 4), darüber jeweils nach 12 Einträgen eine neue Zeile."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Jedes Menüband hat \"Alle anzeigen\". Gibt es keine eigene Seite dazu, zeigt eine Rasteransicht alle Kacheln des Bandes auf einen Blick (schliessen mit Esc oder dem Kreuz)."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Bei der Wiedergabe steht die Pfadleiste (Start › Serien › …) jetzt unter den Knöpfen Zurück/Weiter. Das Medium steht damit ganz oben."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Bei Bildern gibt es zwischen \"Merken\" und \"Zufall\" einen Knopf \"Autoplay\", der direkt die Autoplay-Einstellungen öffnet. Ist Autoplay an, ist er hervorgehoben."
         },
         {
           "type": "INTERFACE",

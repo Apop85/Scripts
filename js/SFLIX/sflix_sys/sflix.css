@@ -600,7 +600,9 @@ input::placeholder, textarea::placeholder {
     padding: 26px var(--sflix-page-pad) 10px var(--sflix-page-pad);
 }
 
+/* Bei der Wiedergabe: Pfadleiste zwischen den Buttons und den Bändern */
 .folderHeader.playerHeader {
+    padding-top: 4px;
     padding-bottom: 0;
 }
 
@@ -805,18 +807,18 @@ input::placeholder, textarea::placeholder {
     pointer-events: none;
 }
 
-#favorite, #shuffle {
+#favorite, #autoplayNav, #shuffle {
     flex: 0 0 auto;
     cursor: pointer;
 }
 
-/* Zufall-Schalter aktiv */
-#shuffle.active {
+/* Zufall bzw. Autoplay aktiv */
+#shuffle.active, #autoplayNav.active {
     background-color: rgba(229, 9, 20, 0.22);
     box-shadow: inset 0 0 0 1px rgba(229, 9, 20, 0.6);
 }
 
-#shuffle.active .icon {
+#shuffle.active .icon, #autoplayNav.active .icon {
     color: #ff6b6b;
 }
 
@@ -2552,16 +2554,95 @@ kbd.wideKey {
     color: var(--sflix-text);
 }
 
-a.rowLink {
+.rowLink {
     display: inline;
+    padding: 0;
+    border: none;
+    background: none;
     color: var(--sflix-text-muted);
+    font: inherit;
     font-size: 0.9rem;
     font-weight: 600;
     white-space: nowrap;
+    cursor: pointer;
 }
 
-a.rowLink:hover {
+.rowLink:hover {
     color: var(--sflix-text);
+}
+
+/* Band ohne Überschrift: nur "Alle anzeigen" rechts */
+.untitledRow .rowHeader {
+    justify-content: flex-end;
+}
+
+/* Weitere Zeilen eines Bandes (z.B. "Filme" mit mehreren Zeilen) liegen dicht beieinander */
+.rowViewport + .rowViewport .rowTrack {
+    padding-top: 0;
+}
+
+/* Rasteransicht "Alle anzeigen" */
+body.gridOpen {
+    overflow: hidden;
+}
+
+#cardGrid {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    overflow-y: auto;
+    background-color: var(--sflix-bg);
+    padding-bottom: 40px;
+}
+
+.cardGridHeader {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px var(--sflix-page-pad);
+    background-color: var(--sflix-bg);
+    border-bottom: 1px solid var(--sflix-border);
+}
+
+.cardGridHeader h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--sflix-text);
+}
+
+.cardGridClose {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--sflix-text);
+    cursor: pointer;
+}
+
+.cardGridClose:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+}
+
+.cardGridClose .icon {
+    width: 22px;
+    height: 22px;
+}
+
+.cardGridItems {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--card-width), 1fr));
+    gap: var(--sflix-gap);
+    padding: 18px var(--sflix-page-pad) 0 var(--sflix-page-pad);
 }
 
 .rowViewport {
@@ -2942,7 +3023,7 @@ a.card:hover img.cardImage {
     font-size: 0.9rem;
 }
 
-#dashboard.editing .rowViewport, #dashboard.editing a.rowLink {
+#dashboard.editing .rowViewport, #dashboard.editing .rowLink {
     display: none;
 }
 
@@ -3251,5 +3332,10 @@ input:focus-visible, textarea:focus-visible, video:focus-visible, audio:focus-vi
     #menu li a {
         font-size: 0.82rem;
         padding: 0 8px;
+    }
+
+    /* Bei Bildern hat die Leiste fünf Knöpfe: Autoplay und Zufall nur als Symbol */
+    #autoplayNav span, #shuffle .shuffleText {
+        display: none;
     }
 }

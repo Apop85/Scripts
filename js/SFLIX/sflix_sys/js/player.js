@@ -395,6 +395,37 @@ function updateShuffleButton() {
     link.setAttribute("aria-label", enabled ? "Zufallswiedergabe ausschalten" : "Zufallswiedergabe einschalten");
 }
 
+// Autoplay-Knopf unter Bildern (Videos und Musik haben ihn in der Player-Leiste)
+function initAutoplayNavButton() {
+    var node = document.getElementById("autoplayNav");
+    var link = document.createElement("a");
+    link.setAttribute("role", "button");
+    link.tabIndex = 0;
+    link.appendChild(createIcon("autoplay"));
+    var text = document.createElement("span");
+    text.textContent = "Autoplay";
+    link.appendChild(text);
+    link.addEventListener("click", function () {
+        toggleContainer(["settingsBox"], "flex");
+    });
+    node.appendChild(link);
+    updateAutoplayNavButton();
+}
+
+// Hervorgehoben, wenn Autoplay an ist
+function updateAutoplayNavButton() {
+    var node = document.getElementById("autoplayNav");
+    var link = node == null ? null : node.querySelector("a");
+    if (link == null) {
+        return;
+    }
+    var enabled = document.getElementById("autoplayCheckBox").checked;
+    node.classList.toggle("active", enabled);
+    var label = (enabled ? "Autoplay ist an" : "Autoplay ist aus") + " (Einstellungen)";
+    link.setAttribute("aria-label", label);
+    link.title = label;
+}
+
 // Ordnerseite: alle Medien des Ordners (inkl. Unterordner) in zufälliger Reihenfolge abspielen
 function startShuffleForFolder(levels) {
     var paths = sortNatural(collectMediaPaths(getDataNode(levels), []));
@@ -874,6 +905,8 @@ function loadDecodedMedia(decodedData, pushState) {
     }
     // Video/Musik zeigen Autoplay in der eigenen Leiste, Bilder weiterhin unter dem Bild
     mediaNode.classList.toggle("hasPlayerControls", node != null && node.tagName != "IMG");
+    // Bilder: Autoplay-Knopf zwischen "Merken" und "Zufall"
+    document.getElementById("autoplayNav").style.display = node != null && node.tagName == "IMG" ? "" : "none";
 
     if (document.getElementById("autoplayCheckBox").checked) {
         mediaNode.classList.add("autoplaying");
@@ -1824,6 +1857,7 @@ function updatePlayerTitle(text) {
 
 // Autoplay-Anzeige in der Leiste: ausgegraut, wenn Autoplay aus ist
 function updatePlayerAutoplayState() {
+    updateAutoplayNavButton();
     var ui = getPlayerUI();
     if (ui == null) {
         return;

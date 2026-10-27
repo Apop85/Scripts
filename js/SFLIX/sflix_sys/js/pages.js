@@ -215,125 +215,105 @@ function shouldShowFolderContents(levels, node, folders) {
 // Bis zu so vielen Unterordnern bekommt jeder ein eigenes Band mit Inhalt (Staffeln, Alben)
 var groupThreshold = 12;
 
-// Alphabetische Bänder: bis "singleBandLimit" Einträge ein einziges Band. Darüber werden die
-// Anfangsbuchstaben zu Bändern mit etwa bandMinSize bis bandMaxSize Einträgen zusammengelegt
-// (z.B. "A – C", "S", "T – V"). Ein Buchstabe mit mehr als bandMaxSize Einträgen wird nach dem
-// zweiten Buchstaben geteilt ("Sa – Sk", "Sl – Sz").
-var singleBandLimit = 15;
-var bandMinSize = 10;
-var bandIdealSize = 15;
-var bandMaxSize = 25;
+// Alphabetische Bänder: bis singleBandLimit Einträge ein einziges Band. Darüber werden die
+// (sortierten) Einträge gleichmässig auf mindestens minBandCount Bänder mit höchstens
+// bandMaxSize Einträgen verteilt (14 Einträge: 5 + 5 + 4; 50 Einträge: 4 Bänder mit 13 + 13 + 12 + 12).
+var singleBandLimit = 9;
+var minBandCount = 3;
+var bandMaxSize = 15;
 
-// Buchstabe für die Gruppierung: Umlaute zählen zum Grundbuchstaben (Ä -> a), Ziffern -> "#",
-// alles andere -> "" (Sonstige)
 // Latin-1-Buchstaben ohne Zerlegung in Grundbuchstabe + Akzent (é -> e geht über NFD)
 var sortCharMap = { "ß": "s", "æ": "a", "ø": "o", "œ": "o", "þ": "t", "ð": "d" };
 
-function getSortChar(name, position) {
+// Name zum Vergleichen: Umlaute und Akzente zählen zum Grundbuchstaben (Ä, À -> a; Ö -> o;
+// É -> e; ß -> s), damit "Öl" und "Ol" als gleicher Anfang gelten.
+function getPlainSortName(name) {
     var plain = String(name).normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
-    var char = plain.charAt(position);
-    if (sortCharMap.hasOwnProperty(char)) {
-        char = sortCharMap[char];
+    var result = "";
+    for (var index = 0; index < plain.length; index++) {
+        var char = plain.charAt(index);
+        result += sortCharMap.hasOwnProperty(char) ? sortCharMap[char] : char;
     }
-    if (/[a-z]/.test(char)) {
-        return char;
-    }
-    return /[0-9]/.test(char) ? "#" : "";
+    return result;
 }
 
-// Teilt die (bereits sortierten) Einträge in Abschnitte auf: Ziffern, je Buchstabe, Sonstige.
-// Sehr grosse Buchstaben werden nach dem zweiten Buchstaben weiter unterteilt.
-function buildAlphabetUnits(items, getName) {
-    var digits = { from: "0", to: "9", items: [] };
-    var others = { from: "Sonstige", to: "Sonstige", items: [], separate: true };
-    var letters = {};
-    items.forEach(function (item) {
-        var first = getSortChar(getName(item), 0);
-        if (first == "#") {
-            digits.items.push(item);
-        } else if (first == "") {
-            others.items.push(item);
-        } else {
-            letters[first] = letters[first] || [];
-            letters[first].push(item);
-        }
-    });
-
-    var units = [];
-    if (digits.items.length > 0) {
-        units.push(digits);
+// Anfang eines Namens für die Bandtitel ("S", "Sa", "Öl"). Sonderzeichen am Anfang -> "#".
+function getSortPrefix(name, length) {
+    var plain = getPlainSortName(name);
+    if (!/^[a-z0-9]/.test(plain)) {
+        return "#";
     }
-    "abcdefghijklmnopqrstuvwxyz".split("").forEach(function (letter) {
-        var list = letters[letter];
-        if (list == null) {
-            return;
-        }
-        var upper = letter.toUpperCase();
-        if (list.length <= bandMaxSize) {
-            units.push({ from: upper, to: upper, items: list });
-            return;
-        }
-        // Grosser Buchstabe: nach dem zweiten Buchstaben unterteilen ("Sa", "Sb", ...)
-        var subUnits = [];
-        list.forEach(function (item) {
-            var second = getSortChar(getName(item), 1);
-            var label = second.length == 1 && second != "#" ? upper + second : upper;
-            var last = subUnits[subUnits.length - 1];
-            if (last == null || last.from != label) {
-                subUnits.push({ from: label, to: label, items: [item] });
-            } else {
-                last.items.push(item);
-            }
-        });
-        packAlphabetUnits(subUnits).forEach(function (band) {
-            units.push(band);
-        });
-    });
-    if (others.items.length > 0) {
-        units.push(others);
-    }
-    return units;
+    // Anzeige in der Schreibweise des Namens ("Öl", "Harry Potter 3"), erster Buchstabe gross
+    var prefix = String(name).trim().substring(0, length).replace(/\s+$/, "");
+    return prefix.charAt(0).toUpperCase() + prefix.substring(1);
 }
 
-// Legt benachbarte Abschnitte zu Bändern zusammen, bis ein Band genug Einträge hat
-function packAlphabetUnits(units) {
+// Anzahl Bänder für so viele Einträge
+function getBandCount(count) {
+    if (count <= singleBandLimit) {
+        return 1;
+    }
+    return Math.max(minBandCount, Math.ceil(count / bandMaxSize));
+}
+
+// Verteilt die Einträge der Reihe nach gleichmässig; die ersten Bänder erhalten den Rest
+function splitEvenly(items, bandCount) {
     var bands = [];
-    var current = null;
-    units.forEach(function (unit) {
-        if (unit.separate) {
-            current = null;
-            bands.push({ from: unit.from, to: unit.to, items: unit.items.slice(), separate: true });
-            return;
-        }
-        if (current != null && current.items.length >= bandMinSize &&
-            (current.items.length >= bandIdealSize || current.items.length + unit.items.length > bandMaxSize)) {
-            current = null;
-        }
-        if (current == null) {
-            current = { from: unit.from, to: unit.to, items: [] };
-            bands.push(current);
-        }
-        current.to = unit.to;
-        current.items = current.items.concat(unit.items);
-    });
-
-    // Ein zu kleines letztes Band an das vorherige anhängen, aber nur, wenn dieses dadurch nicht
-    // länger als bandMaxSize wird. Sonst bleibt das letzte Band eben etwas kürzer.
-    var last = bands[bands.length - 1];
-    var previous = bands[bands.length - 2];
-    if (last != null && previous != null && !last.separate && !previous.separate &&
-        last.items.length < bandMinSize && previous.items.length + last.items.length <= bandMaxSize) {
-        previous.to = last.to;
-        previous.items = previous.items.concat(last.items);
-        bands.pop();
+    var base = Math.floor(items.length / bandCount);
+    var extra = items.length % bandCount;
+    var start = 0;
+    for (var index = 0; index < bandCount; index++) {
+        var size = base + (index < extra ? 1 : 0);
+        bands.push(items.slice(start, start + size));
+        start += size;
     }
     return bands;
 }
 
-// Zeigt Einträge in einem Band oder, bei vielen Einträgen, alphabetisch gruppiert
-// in mehreren, ungefähr gleich grossen Bändern (z.B. "0 – B", "C – F", "S", "T – Z").
+// Titel der Bänder, z.B. "A – F", "G – Sa", "Sc – Z". Wo zwei Bänder mit demselben Anfang
+// aneinanderstossen, zeigen beide Titel an dieser Stelle so viele Zeichen, bis sie sich
+// unterscheiden ("Sa" / "Sc", "Tag 5" / "Tag 6").
+function getBandLabels(bands, getName) {
+    var labels = bands.map(function (band) {
+        return {
+            first: getName(band[0]),
+            last: getName(band[band.length - 1]),
+            from: getSortPrefix(getName(band[0]), 1),
+            to: getSortPrefix(getName(band[band.length - 1]), 1)
+        };
+    });
+    for (var index = 1; index < labels.length; index++) {
+        var previous = labels[index - 1];
+        var current = labels[index];
+        // Bis zum ersten Unterschied verlängern ("Tag 5" / "Tag 6"), höchstens 20 Zeichen
+        var lastPlain = getPlainSortName(previous.last);
+        var firstPlain = getPlainSortName(current.first);
+        var common = 0;
+        while (common < lastPlain.length && common < firstPlain.length && lastPlain.charAt(common) == firstPlain.charAt(common)) {
+            common++;
+        }
+        var length = Math.min(common + 1, 20);
+        if (length > 1) {
+            previous.to = getSortPrefix(previous.last, length);
+            current.from = getSortPrefix(current.first, length);
+        }
+    }
+    return labels.map(function (label) {
+        // Gleich lange Angaben innerhalb eines Titels ("Sc – Sz" statt "Sc – S")
+        if (label.from.length > label.to.length && label.from.charAt(0) == label.to.charAt(0)) {
+            label.to = getSortPrefix(label.last, label.from.length);
+        } else if (label.to.length > label.from.length && label.from.charAt(0) == label.to.charAt(0)) {
+            label.from = getSortPrefix(label.first, label.to.length);
+        }
+        return label.from == label.to ? label.from : label.from + " – " + label.to;
+    });
+}
+
+// Zeigt Einträge in einem Band oder, bei vielen Einträgen, alphabetisch gleichmässig verteilt
+// auf mehrere Bänder (z.B. "A – F", "G – Sa", "Sc – Z").
 function renderGroupedBands(container, items, getName, singleTitle, renderItem) {
-    if (items.length <= singleBandLimit) {
+    var bandCount = getBandCount(items.length);
+    if (bandCount == 1) {
         var track = createCardRow(container, singleTitle, null);
         items.forEach(function (item) {
             renderItem(track, item);
@@ -341,11 +321,12 @@ function renderGroupedBands(container, items, getName, singleTitle, renderItem) 
         return;
     }
 
-    packAlphabetUnits(buildAlphabetUnits(items, getName)).forEach(function (band) {
-        var label = band.from == band.to ? band.from : band.from + " – " + band.to;
-        var groupTrack = createCardRow(container, label, null);
-        groupTrack.parentNode.parentNode.querySelector(".rowHeader h2").appendChild(createRowCount(band.items.length));
-        band.items.forEach(function (item) {
+    var bands = splitEvenly(items, bandCount);
+    var labels = getBandLabels(bands, getName);
+    bands.forEach(function (band, index) {
+        var groupTrack = createCardRow(container, labels[index], null);
+        groupTrack.parentNode.parentNode.querySelector(".rowHeader h2").appendChild(createRowCount(band.length));
+        band.forEach(function (item) {
             renderItem(groupTrack, item);
         });
     });

@@ -46,7 +46,7 @@
         },
         {
           "type": "INTERFACE",
-          "text": "Ordnerseiten (z.B. Filme): Unterordner stehen jetzt zusammen mit den Medien in den alphabetischen Bändern (ein Ordner \"Harry Potter\" bei H) statt in einem eigenen Band. Die Bänder richten sich nach dem Inhalt: Bis 15 Einträge gibt es ein einziges Band, darüber werden die Anfangsbuchstaben zu Bändern mit etwa 10 bis 25 Einträgen zusammengelegt (z.B. \"0 – C\", \"S\", \"T – Z\"), sehr grosse Buchstaben werden geteilt (\"Sa – Sk\"). Umlaute und Akzente zählen zum Grundbuchstaben (Ö bei O, É bei E)."
+          "text": "Ordnerseiten (z.B. Filme): Unterordner stehen jetzt zusammen mit den Medien in den alphabetischen Bändern (ein Ordner \"Harry Potter\" bei H) statt in einem eigenen Band. Die Bänder sind gleichmässig gefüllt: Bis 9 Einträge gibt es ein einziges Band, darüber werden die Einträge alphabetisch auf mindestens drei Bänder mit höchstens 15 Einträgen verteilt (z.B. 14 Einträge: 5 + 5 + 4). Der Titel zeigt den Bereich, z.B. \"A – F\" oder \"Harry Potter 3 – Sp\"."
         },
         {
           "type": "INTERFACE",

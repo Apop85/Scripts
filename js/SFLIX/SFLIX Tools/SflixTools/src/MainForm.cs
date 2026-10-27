@@ -36,6 +36,9 @@ namespace Sflix
         // Optionen
         DarkCheckBox optFfmpeg, optMoveParts, optDeleteOriginal, optPreviewVideos, optPreviewImages;
         DarkCheckBox optImportStructure, optImportConvert, optImportMove, optImportPreview;
+        DarkCheckBox optDataAll;
+        ListBox dataFolders;
+        Control dataFoldersRow;
         TextBox mediaFolder, importSub;
         NumericUpDown convertParallel;
         ListBox importList;
@@ -175,11 +178,14 @@ namespace Sflix
 
             // --- Updates: Kernkomponenten ---
             optFfmpeg = SmallCheck("ffmpeg ebenfalls aktualisieren");
+            optDataAll = SmallCheck("Alle Ordner einlesen");
+            optDataAll.CheckedChanged += delegate { dataFoldersRow.Visible = !optDataAll.Checked; Relayout(); };
+            dataFoldersRow = BuildDataFoldersRow();
             Control updatesSection = TileSection(new TileSpec[] {
                 Spec("update", Glyph.Up, "Update", "STEFFLIX und Updater von GitHub",
                      "STEFFLIX-Dateien und dieses Programm von GitHub aktualisieren.", optFfmpeg),
                 Spec("data", Glyph.Data, "Daten einlesen", "Medien neu einlesen",
-                     "Medien neu einlesen (data.js), ungültige Zeichen in Namen korrigieren."),
+                     "Medien neu einlesen (data.js), ungültige Zeichen in Namen korrigieren.", optDataAll, dataFoldersRow),
             }, null);
 
             // --- Tools: Kacheln, darunter je gewähltem Tool ein Reiter mit seinen Optionen ---
@@ -234,7 +240,8 @@ namespace Sflix
                      "„__teile“, „__konvertiert“, „__gelöscht“ und „__original“ endgültig löschen. Du siehst vorher, was gelöscht wird."),
             }, Spec("settings", Glyph.Settings, "Einstellungen", null, null, FolderRow(mediaFolder, "Medienordner:"), folderHint));
 
-            Label toolsNote = Theme.MakeLabel("Die gewählten Tools laufen nacheinander, danach wird automatisch „Daten einlesen“ ausgeführt.", true);
+            Label toolsNote = Theme.MakeLabel("Die gewählten Tools laufen nacheinander, danach wird automatisch „Daten einlesen“ ausgeführt " +
+                                              "(nur für den Medienordner, wenn er in STEFFLIX liegt).", true);
             toolsNote.MaximumSize = new Size(TextWidth, 0);
             toolsNote.Margin = new Padding(0, 0, 0, Theme.S(10));
 
@@ -898,7 +905,7 @@ namespace Sflix
             importHint.Margin = new Padding(0, Theme.S(4), 0, 0);
             importHint.Visible = false;
 
-            Label dataNote = Theme.MakeLabel("Anschliessend wird automatisch „Daten einlesen“ ausgeführt, damit die neuen Medien gleich in STEFFLIX erscheinen.", true);
+            Label dataNote = Theme.MakeLabel("Anschliessend wird der Zielordner automatisch eingelesen, damit die neuen Medien gleich in STEFFLIX erscheinen. Der Rest von data.js bleibt unverändert.", true);
             dataNote.MaximumSize = new Size(TextWidth, 0);
             dataNote.Margin = new Padding(0, Theme.S(4), 0, 0);
 
@@ -907,6 +914,113 @@ namespace Sflix
                 SectionCard("Ziel in STEFFLIX", new Control[] { target }),
                 SectionCard("Optionen", new Control[] { optImportStructure, optImportConvert, optImportMove, optImportPreview, dataNote }),
             };
+        }
+
+        // ---------------------------------------------------------------
+        // Daten einlesen: nur bestimmte Ordner
+        // ---------------------------------------------------------------
+
+        Control BuildDataFoldersRow()
+        {
+            dataFolders = new ListBox();
+            dataFolders.BackColor = Theme.Input;
+            dataFolders.ForeColor = Theme.Text;
+            dataFolders.BorderStyle = BorderStyle.None;
+            dataFolders.IntegralHeight = false;
+            dataFolders.SelectionMode = SelectionMode.MultiExtended;
+            dataFolders.Dock = DockStyle.Fill;
+            dataFolders.Margin = new Padding(0, 0, Theme.S(8), 0);
+            dataFolders.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Delete) RemoveDataFolders(); };
+
+            FlowLayoutPanel buttons = new FlowLayoutPanel();
+            buttons.AutoSize = true;
+            buttons.FlowDirection = FlowDirection.TopDown;
+            buttons.WrapContents = false;
+            buttons.Margin = new Padding(0);
+            Button add = SmallButton("Hinzufügen …");
+            Button remove = SmallButton("Entfernen");
+            foreach (Button b in new Button[] { add, remove })
+            {
+                b.AutoSize = false;
+                b.Size = new Size(Theme.S(120), Theme.S(30));
+                b.Margin = new Padding(0, 0, 0, Theme.S(6));
+                buttons.Controls.Add(b);
+            }
+            add.Click += delegate { AddDataFolder(); };
+            remove.Click += delegate { RemoveDataFolders(); };
+
+            TableLayoutPanel row = new TableLayoutPanel();
+            row.AutoSize = true;
+            row.ColumnCount = 2;
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            row.RowStyles.Add(new RowStyle(SizeType.Absolute, Theme.S(76)));
+            row.Controls.Add(dataFolders, 0, 0);
+            row.Controls.Add(buttons, 1, 0);
+
+            Label hint = Theme.MakeLabel("Nur diese Ordner werden neu eingelesen, der Rest von data.js bleibt. " +
+                                         "Nach Änderungen an vielen Orten „Alle Ordner einlesen“ verwenden.", true);
+            hint.MaximumSize = new Size(TextWidth, 0);
+            hint.Margin = new Padding(0, Theme.S(4), 0, 0);
+
+            TableLayoutPanel box = new TableLayoutPanel();
+            box.AutoSize = true;
+            box.ColumnCount = 1;
+            box.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            box.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            box.Margin = new Padding(0, Theme.S(4), 0, 0);
+            box.BackColor = Color.Transparent;
+            row.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            row.Margin = new Padding(0);
+            box.Controls.Add(row);
+            box.Controls.Add(hint);
+            return box;
+        }
+
+        void AddDataFolder()
+        {
+            using (FolderBrowserDialog dlg = new FolderBrowserDialog())
+            {
+                dlg.Description = "Ordner in STEFFLIX wählen, der neu eingelesen werden soll";
+                dlg.ShowNewFolderButton = false;
+                dlg.SelectedPath = App.Root;
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                string rel = DataTask.ToRelative(dlg.SelectedPath);
+                if (rel == null || rel.Length == 0)
+                {
+                    MessageBox.Show(this, rel == null
+                        ? "Bitte einen Ordner innerhalb des STEFFLIX-Ordners wählen."
+                        : "Für den ganzen STEFFLIX-Ordner bitte „Alle Ordner einlesen“ einschalten.",
+                        App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                foreach (string seg in rel.Split('\\'))
+                {
+                    if (Folders.Skip(seg))
+                    {
+                        MessageBox.Show(this, "Ablage- und Systemordner werden nicht eingelesen.", App.Title,
+                                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+                }
+                foreach (string existing in dataFolders.Items)
+                    if (string.Equals(existing, rel, StringComparison.OrdinalIgnoreCase)) return;
+                dataFolders.Items.Add(rel);
+            }
+        }
+
+        void RemoveDataFolders()
+        {
+            List<object> sel = new List<object>();
+            foreach (object o in dataFolders.SelectedItems) sel.Add(o);
+            foreach (object o in sel) dataFolders.Items.Remove(o);
+        }
+
+        List<string> DataFolderList()
+        {
+            List<string> list = new List<string>();
+            foreach (string s in dataFolders.Items) list.Add(s);
+            return list;
         }
 
         Button SmallButton(string text)
@@ -1200,6 +1314,10 @@ namespace Sflix
             optImportMove.Checked = settings.GetBool("import.move", false);
             importSub.Text = settings.GetString("import.sub", "");
             LoadCategories(settings.GetString("import.category", ""));
+            dataFolders.Items.Clear();
+            foreach (string f in DataTask.SplitFolders(settings.GetString("data.folders", ""))) dataFolders.Items.Add(f);
+            optDataAll.Checked = settings.GetBool("data.all", true);
+            dataFoldersRow.Visible = !optDataAll.Checked;
             loading = false;
         }
 
@@ -1231,6 +1349,8 @@ namespace Sflix
             settings.SetString("import.sub", importSub.Text.Trim());
             settings.SetString("import.category", importCategory.SelectedItem as string ?? "");
             settings.SetBool("import.preview", optImportPreview.Checked);
+            settings.SetBool("data.all", optDataAll.Checked);
+            settings.SetString("data.folders", string.Join(DataTask.FolderSeparator.ToString(), DataFolderList().ToArray()));
             settings.SetBool("task.import", false);
             settings.Save();
         }
@@ -1390,6 +1510,33 @@ namespace Sflix
                 import.Convert = optImportConvert.Checked;
                 import.Move = optImportMove.Checked;
             }
+
+            // Welche Ordner "Daten einlesen" durchsucht (null = alle)
+            List<string> dataScope = null;
+            if (import != null)
+            {
+                // Importer: nur der Zielordner
+                dataScope = new List<string> { Path.Combine(App.Root, import.Category, import.SubFolder) };
+            }
+            else if (preset == null && page == PageTools)
+            {
+                // Tools: nur der Medienordner, wenn er in STEFFLIX liegt
+                string rel = DataTask.ToRelative(media);
+                if (!string.IsNullOrEmpty(rel)) dataScope = new List<string> { media };
+            }
+            else if (selected.Contains("data") && !optDataAll.Checked)
+            {
+                dataScope = DataFolderList();
+                // Automatischer Start (z.B. nach einem Selbst-Update) ohne Ordner: alles einlesen
+                if (dataScope.Count == 0 && preset != null) dataScope = null;
+                else if (dataScope.Count == 0)
+                {
+                    ShowOption("data");
+                    MessageBox.Show(this, "Bitte bei „Daten einlesen“ mindestens einen Ordner hinzufügen oder „Alle Ordner einlesen“ einschalten.",
+                                    App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+            }
             // Beim automatischen Start nach einem Update die gespeicherte Auswahl nicht überschreiben
             SaveOptions(preset == null);
 
@@ -1411,10 +1558,12 @@ namespace Sflix
             runner.MergeFolder = media;
             runner.MoveParts = optMoveParts.Checked;
             runner.Convert = conv;
-            runner.PreviewFolder = media;
+            // Nach einem Import nur im Zielordner nach fehlenden Vorschaubildern suchen
+            runner.PreviewFolder = import != null ? dataScope[0] : media;
             runner.PreviewVideos = previewVideos;
             runner.PreviewImages = previewImages;
             runner.CleanupFolder = media;
+            runner.DataFolders = dataScope;
             if (import != null) import.Video = conv;
             runner.Import = import;
             lastRunImported = import != null;
@@ -1618,6 +1767,7 @@ namespace Sflix
         public bool PreviewImages;
         public string CleanupFolder;
         public ImportOptions Import;
+        public List<string> DataFolders;   // null = alles einlesen, sonst nur diese Ordner
 
         static string Title(string id)
         {
@@ -1712,13 +1862,17 @@ namespace Sflix
                 case "update": UpdateTask.Run(ctx, UpdateFfmpeg); break;
                 case "merge": MergeTask.Run(ctx, MergeFolder, MoveParts); break;
                 case "convert": ConvertTask.Run(ctx, Convert); break;
-                case "preview": PreviewTask.Run(ctx, PreviewFolder, PreviewVideos, PreviewImages); break;
+                case "preview":
+                    // Nach einem Import ohne neue Dateien gibt es den Zielordner eventuell nicht
+                    if (Import != null && !Directory.Exists(PreviewFolder)) { ctx.Log("Zielordner nicht vorhanden, nichts zu tun."); break; }
+                    PreviewTask.Run(ctx, PreviewFolder, PreviewVideos, PreviewImages);
+                    break;
                 case "import":
                     if (Import == null) throw new TaskFailedException("Medien importieren ist nur über die Oberfläche möglich.");
                     ImportTask.Run(ctx, Import);
                     break;
                 case "cleanup": CleanupTask.Run(ctx, CleanupFolder); break;
-                case "data": DataTask.Run(ctx); break;
+                case "data": DataTask.Run(ctx, DataFolders); break;
                 default: throw new TaskFailedException("Unbekannte Aufgabe: " + id);
             }
         }

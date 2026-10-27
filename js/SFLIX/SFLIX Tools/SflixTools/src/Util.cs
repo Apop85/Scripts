@@ -35,6 +35,19 @@ namespace Sflix
         }
 
         public bool ContainsKey(string key) { return map.ContainsKey(key); }
+        public bool Remove(string key)
+        {
+            if (!map.Remove(key)) return false;
+            keys.Remove(key);
+            return true;
+        }
+        // Schlüssel stabil sortieren (gleich bewertete behalten ihre Reihenfolge)
+        public void SortKeys(Func<string, int> rank)
+        {
+            List<string> sorted = new List<string>(System.Linq.Enumerable.OrderBy(keys, rank));
+            keys.Clear();
+            keys.AddRange(sorted);
+        }
         public int Count { get { return keys.Count; } }
         public IList<string> Keys { get { return keys; } }
 

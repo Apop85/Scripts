@@ -817,11 +817,19 @@ function showContinueWatching(container) {
         entries.push({ path: mediaPath, url: url, isLast: nextPath == null });
     });
 
+    var track = createCardRow(container, "Weiterschauen", null, "continue");
     if (entries.length == 0) {
+        // Leeres Band bleibt unsichtbar, erscheint aber unter "Startseite anpassen",
+        // damit sich seine Position auch ohne Einträge festlegen lässt
+        var row = track.closest(".cardRow");
+        row.classList.add("emptyRow");
+        var hint = document.createElement("span");
+        hint.className = "emptyRowHint";
+        hint.textContent = "zurzeit leer";
+        row.querySelector(".rowHeader").appendChild(hint);
         return false;
     }
 
-    var track = createCardRow(container, "Weiterschauen", null, "continue");
     entries.forEach(function (entry) {
         var folders = getMediaFolders(entry.path);
         var location = folders.length > 1 ? folders.slice(1).join(" › ") : folders.join(" › ");
@@ -1154,10 +1162,28 @@ function getSavedRowOrder() {
     }
 }
 
+// Speichert die angezeigte Reihenfolge. Bänder, die gerade fehlen (z.B. "Meine Favoriten"
+// ohne Einträge oder eine Kategorie ohne Medien), behalten ihre gespeicherte Position
+// neben ihrem bisherigen Vorgänger, statt aus der Reihenfolge zu fallen.
 function saveRowOrder(dashboard) {
-    setData(dashboardOrderKey, JSON.stringify(getDashboardRows(dashboard).map(function (row) {
+    var saved = getSavedRowOrder();
+    var order = getDashboardRows(dashboard).map(function (row) {
         return row.dataset.rowKey;
-    })));
+    });
+    saved.forEach(function (key, index) {
+        if (order.includes(key)) {
+            return;
+        }
+        var previous = saved.slice(0, index).reverse().find(function (candidate) {
+            return order.includes(candidate);
+        });
+        if (previous != null) {
+            order.splice(order.indexOf(previous) + 1, 0, key);
+        } else {
+            order.unshift(key);
+        }
+    });
+    setData(dashboardOrderKey, JSON.stringify(order));
     applyMenuOrder();
 }
 

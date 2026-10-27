@@ -19,8 +19,10 @@ Das Fenster hat drei Registerkarten. Sichtbar ist nur der Bereich der gewählten
 | Karte | Inhalt | beim Start |
 |---|---|---|
 | Updates | Update, Daten einlesen | die angehakten |
-| Importer | Medien importieren | Import, auf Wunsch Vorschaubilder, danach immer Daten einlesen |
-| Tools | Vorschaubilder, Zusammenführen, Konvertieren, Ablagen leeren, Einstellungen | die angehakten, danach immer Daten einlesen |
+| Importer | Medien importieren | Import, auf Wunsch Vorschaubilder (nur im Zielordner), danach Daten einlesen für den Zielordner |
+| Tools | Vorschaubilder, Zusammenführen, Konvertieren, Ablagen leeren, Einstellungen | die angehakten, danach Daten einlesen (nur der Medienordner, wenn er in STEFFLIX liegt, sonst alles) |
+
+**Teil-Einlesen:** Bei „Daten einlesen“ schaltet „Alle Ordner einlesen“ zwischen dem ganzen STEFFLIX-Ordner und einer Liste gewählter Ordner um. Die Liste wird gespeichert (`data.all`, `data.folders` relativ zum STEFFLIX-Ordner, getrennt mit `|`). Für jeden gewählten Ordner ersetzt `DataTask.UpdateBranch` dessen Zweig in der bestehenden `data.js`. Fehlende Zwischenordner werden angelegt, ein gelöschter Ordner wird entfernt, und der `Preview`-Ordner eine Ebene darüber wird mit eingelesen. Neue Einträge kommen in die Reihenfolge des Ordners, das Ergebnis entspricht also dem vollständigen Einlesen. Fehlt `data.js` oder ist sie nicht lesbar, wird alles eingelesen.
 
 Updates und Tools werden als Kacheln gewählt (Klick wählt aus oder ab). Unter den Kacheln gibt es für jede gewählte Kachel einen Reiter mit Beschreibung und Optionen, bei Tools zusätzlich immer den Reiter „Einstellungen“. Optionen sind Schalter. Der Start-Knopf beschreibt, was passiert („2 Tools starten“, „Importieren“ …). Dateien und Ordner, die ins Fenster gezogen werden, landen immer im Importer.
 
@@ -31,8 +33,10 @@ Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren arbeiten im **M
 Der Updater arbeitet nur in einem STEFFLIX-Ordner, also dort, wo `start.html` und `sflix_sys` sind. **Liegt er woanders, bietet er stattdessen die Installation an** (wie `setup.exe`):
 1. Ordner wählen.
 2. Die Dateien der Weboberfläche und `data.js` werden geladen und geprüft.
-3. `renamed.js` wird angelegt.
+3. `renamed.js` und `install.js` (eigene Kennung) werden angelegt.
 4. Der Updater kopiert sich selbst in den neuen Ordner.
+
+**Kennung der Installation** (`sflix_sys\install.js`, Klasse `InstallId` in `Core.cs`): Der Browser speichert die Daten aller `file://`-Seiten gemeinsam. Mit der zufälligen Kennung nutzt jede Installation eine eigene IndexedDB (`STEFFLIX-<Kennung>`). Der Updater prüft die Datei bei jedem Start. Fehlt sie, legt er sie an. Ist der Ordner kopiert, enthält der alte Ordner also noch dieselbe Kennung, bekommt die Kopie eine neue. Ist der Ordner verschoben, bleibt die Kennung und nur der gespeicherte Ordner ändert sich.
 
 Danach lässt sich STEFFLIX direkt öffnen oder der Updater im neuen Ordner starten. Ohne Oberfläche geht das mit `updateStefflix.exe --install <Ordner>`.
 
@@ -118,6 +122,7 @@ updateStefflix.exe --headless update,data
 ```
 
 - Aufgaben: `update`, `cleanup`, `merge`, `convert`, `preview`, `data`.
+- `data` liest ohne Oberfläche alles ein. Mit `--data-folder "Serien\Meine Serie"` (mehrfach möglich, relativ oder absolut) nur diese Ordner.
 - `cleanup` löscht ohne Oberfläche **alle** Ablagen, ohne nachzufragen.
 - Ordner und Optionen stammen aus `sflix_sys\updater_settings.json`.
 - Beim Zusammenführen wird ohne Oberfläche nur verarbeitet, was ohne Neukodieren geht.

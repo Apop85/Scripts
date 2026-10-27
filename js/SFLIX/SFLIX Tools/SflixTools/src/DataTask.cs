@@ -22,7 +22,6 @@ namespace Sflix
             "mp3", "m4a", "ogg", "oga", "opus", "aac", "flac", "wav",
             "jpg", "jpeg", "png", "gif", "webp", "avif", "bmp",
         };
-        static readonly string[] DisallowedItems = { "System Volume Information", "$RECYCLE.BIN", ".vscode", "sflix_sys" };
 
         // Zu grosse Vorschaubilder werden auf 480x270 zugeschnitten (16:9). Das Original
         // kommt nach Preview\__original\<Dateiname>.
@@ -405,9 +404,9 @@ namespace Sflix
                     counter++;
                     if (counter % 50 == 0) ctx.Progress(-1, "Durchsuche Ordner ... " + counter + " Medien");
                 }
-                // Ordner mit "__" im Namen sind Ablagen der Werkzeuge (__teile, __konvertiert,
-                // __gelöscht) und gehören nicht in die Mediathek
-                else if (Directory.Exists(fullPath) && Array.IndexOf(DisallowedItems, item) < 0 && !Folders.IsToolFolder(item))
+                // Ablagen der Werkzeuge (__teile, __konvertiert, __gelöscht), Systemordner und
+                // Papierkörbe (z.B. @Recycle) gehören nicht in die Mediathek
+                else if (Directory.Exists(fullPath) && !Folders.Ignore(fullPath))
                 {
                     item = RenameIfNeeded(path, item, false);
                     if (item == null) continue;
@@ -490,10 +489,7 @@ namespace Sflix
                 string rel = ToRelative(ToAbsolute(f));
                 if (rel == null) { ctx.Log("Liegt nicht im STEFFLIX-Ordner, übersprungen: " + f); continue; }
                 if (rel.Length == 0) { ctx.Log("Der ganze STEFFLIX-Ordner ist gewählt: alles wird eingelesen."); return false; }
-                string invalid = null;
-                foreach (string seg in rel.Split('\\'))
-                    if (Array.IndexOf(DisallowedItems, seg) >= 0 || Folders.IsToolFolder(seg)) invalid = seg;
-                if (invalid != null) { ctx.Log("Ablage- oder Systemordner, übersprungen: " + rel); continue; }
+                if (Folders.IgnoreAny(homeDir, rel)) { ctx.Log("Ablage-, System- oder versteckter Ordner, übersprungen: " + rel); continue; }
                 relFolders.Add(rel);
             }
             // Doppelte weglassen, ebenso Ordner, die in einem anderen gewählten Ordner liegen

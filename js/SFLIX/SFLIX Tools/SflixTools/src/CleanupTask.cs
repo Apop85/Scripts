@@ -93,7 +93,7 @@ namespace Sflix
                     result.Add(f);
                     continue;
                 }
-                if (Folders.Skip(name)) continue;   // sflix_sys, Papierkorb, Systemordner
+                if (Folders.Ignore(d)) continue;   // sflix_sys, Papierkorb, System- und versteckte Ordner
                 // Verknüpfungen/Junctions nicht verfolgen
                 if ((File.GetAttributes(d) & FileAttributes.ReparsePoint) != 0) continue;
                 Find(d, result, ctx);

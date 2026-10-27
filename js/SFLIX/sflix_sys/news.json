@@ -37,8 +37,20 @@
           "text": "Updater: Lag STEFFLIX direkt in einem Laufwerk (z.B. D:\\), schrieb das Einlesen einzelner Ordner (z.B. nach einem Import) falsche Pfade in data.js (\"./ilme/...\" statt \"./Filme/...\"). Medien und Vorschaubilder des Ordners wurden dann nicht mehr angezeigt. Ein vollständiges Einlesen repariert eine betroffene data.js. Auch die Kennung der Installation wird in diesem Fall jetzt mit dem richtigen Pfad gespeichert."
         },
         {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: System- und versteckte Ordner werden beim Einlesen, beim Import und von den Tools ignoriert."
+        },
+        {
           "type": "FEATURE",
           "text": "Ordner (z.B. eine Serie oder Staffel), deren Videos alle gesehen sind, werden ebenfalls mit \"Gesehen\" markiert. Musik und Bilder zählen dabei nicht mit."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Ordnerseiten (z.B. Filme): Unterordner stehen jetzt zusammen mit den Medien in den alphabetischen Bändern (ein Ordner \"Harry Potter\" bei H) statt in einem eigenen Band. Die Bänder richten sich nach dem Inhalt: Bis 20 Einträge gibt es ein einziges Band, darüber werden die Anfangsbuchstaben zu Bändern mit etwa 10 bis 30 Einträgen zusammengelegt (z.B. \"0 – C\", \"S\", \"T – Z\"), sehr grosse Buchstaben werden geteilt (\"Sa – Sk\"). Umlaute und Akzente zählen zum Grundbuchstaben (Ö bei O, É bei E)."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Die Menübänder stehen etwas näher beieinander, damit mehr auf den Bildschirm passt."
         },
         {
           "type": "INTERFACE",

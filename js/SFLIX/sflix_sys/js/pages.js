@@ -155,28 +155,43 @@ function renderFolderPage(levels) {
     }
 
     var children = getSortedChildren(node);
-
-    // Medien direkt im Ordner (z.B. Filme ohne eigenen Ordner)
     if (children.media.length > 0) {
-        renderGroupedBands(bands, children.media, getDisplayName, children.folders.length > 0 ? "Inhalt" : "Alle Titel", function (track, mediaPath) {
-            createPlayableCard(track, mediaPath);
-        });
         saveFolderPlaylist(levels, children.media);
     }
 
     if (shouldShowFolderContents(levels, node, children.folders)) {
-        // Wenige Unterordner mit Medien (z.B. Staffeln einer Serie): ein Band pro Ordner mit Inhalt
+        // Wenige Unterordner mit Medien (z.B. Staffeln einer Serie): oben die Medien des Ordners,
+        // darunter ein Band pro Ordner mit dessen Inhalt
+        if (children.media.length > 0) {
+            renderGroupedBands(bands, children.media, getDisplayName, "Inhalt", function (track, mediaPath) {
+                createPlayableCard(track, mediaPath);
+            });
+        }
         children.folders.forEach(function (folder) {
             var subLevels = levels.concat([folder]);
             var track = createCardRow(bands, folder, buildStartUrl(buildLevelPath(subLevels)));
             fillFolderTrack(track, subLevels, node[folder]);
         });
-    } else if (children.folders.length > 0) {
-        // Viele oder verschachtelte Ordner (z.B. alle Serien): nur die Ordner, alphabetisch gruppiert
-        renderGroupedBands(bands, children.folders, function (folder) {
-            return folder;
-        }, "Alle " + levels[levels.length - 1], function (track, folder) {
-            createFolderCard(track, levels.concat([folder]));
+    } else if (children.media.length > 0 || children.folders.length > 0) {
+        // Sonst Medien und Ordner gemeinsam alphabetisch (z.B. ein Ordner "Harry Potter"
+        // zwischen den Filmen unter H)
+        var entries = children.media.map(function (mediaPath) {
+            return { name: getDisplayName(mediaPath), media: mediaPath };
+        }).concat(children.folders.map(function (folder) {
+            return { name: folder, folder: folder };
+        }));
+        entries.sort(function (a, b) {
+            return compareNatural(a.name, b.name);
+        });
+        var singleTitle = children.folders.length > 0 ? "Alle " + levels[levels.length - 1] : "Alle Titel";
+        renderGroupedBands(bands, entries, function (entry) {
+            return entry.name;
+        }, singleTitle, function (track, entry) {
+            if (entry.media != null) {
+                createPlayableCard(track, entry.media);
+            } else {
+                createFolderCard(track, levels.concat([entry.folder]));
+            }
         });
     }
 
@@ -197,34 +212,127 @@ function shouldShowFolderContents(levels, node, folders) {
     });
 }
 
-// Ab dieser Anzahl werden Einträge alphabetisch auf mehrere Bänder verteilt
+// Bis zu so vielen Unterordnern bekommt jeder ein eigenes Band mit Inhalt (Staffeln, Alben)
 var groupThreshold = 12;
 
-var alphabetGroups = [
-    { label: "0 – 9", pattern: /[0-9]/ },
-    { label: "A – D", pattern: /[a-d]/ },
-    { label: "E – H", pattern: /[e-h]/ },
-    { label: "I – L", pattern: /[i-l]/ },
-    { label: "M – P", pattern: /[m-p]/ },
-    { label: "Q – T", pattern: /[q-t]/ },
-    { label: "U – Z", pattern: /[u-z]/ }
-];
+// Alphabetische Bänder: bis "singleBandLimit" Einträge ein einziges Band. Darüber werden die
+// Anfangsbuchstaben zu Bändern mit etwa bandMinSize bis bandMaxSize Einträgen zusammengelegt
+// (z.B. "A – C", "S", "T – V"). Ein Buchstabe mit mehr als bandMaxSize Einträgen wird nach dem
+// zweiten Buchstaben geteilt ("Sa – Sk", "Sl – Sz").
+var singleBandLimit = 20;
+var bandMinSize = 10;
+var bandIdealSize = 20;
+var bandMaxSize = 30;
 
-// Gruppe anhand des ersten Buchstabens (Umlaute zählen zum Grundbuchstaben: Ä -> A)
-function getAlphabetGroup(name) {
-    var firstChar = String(name).normalize("NFD").replace(/[̀-ͯ]/g, "").trim().charAt(0).toLowerCase();
-    for (var index = 0; index < alphabetGroups.length; index++) {
-        if (alphabetGroups[index].pattern.test(firstChar)) {
-            return alphabetGroups[index].label;
-        }
+// Buchstabe für die Gruppierung: Umlaute zählen zum Grundbuchstaben (Ä -> a), Ziffern -> "#",
+// alles andere -> "" (Sonstige)
+// Latin-1-Buchstaben ohne Zerlegung in Grundbuchstabe + Akzent (é -> e geht über NFD)
+var sortCharMap = { "ß": "s", "æ": "a", "ø": "o", "œ": "o", "þ": "t", "ð": "d" };
+
+function getSortChar(name, position) {
+    var plain = String(name).normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+    var char = plain.charAt(position);
+    if (sortCharMap.hasOwnProperty(char)) {
+        char = sortCharMap[char];
     }
-    return "Sonstige";
+    if (/[a-z]/.test(char)) {
+        return char;
+    }
+    return /[0-9]/.test(char) ? "#" : "";
+}
+
+// Teilt die (bereits sortierten) Einträge in Abschnitte auf: Ziffern, je Buchstabe, Sonstige.
+// Sehr grosse Buchstaben werden nach dem zweiten Buchstaben weiter unterteilt.
+function buildAlphabetUnits(items, getName) {
+    var digits = { from: "0", to: "9", items: [] };
+    var others = { from: "Sonstige", to: "Sonstige", items: [], separate: true };
+    var letters = {};
+    items.forEach(function (item) {
+        var first = getSortChar(getName(item), 0);
+        if (first == "#") {
+            digits.items.push(item);
+        } else if (first == "") {
+            others.items.push(item);
+        } else {
+            letters[first] = letters[first] || [];
+            letters[first].push(item);
+        }
+    });
+
+    var units = [];
+    if (digits.items.length > 0) {
+        units.push(digits);
+    }
+    "abcdefghijklmnopqrstuvwxyz".split("").forEach(function (letter) {
+        var list = letters[letter];
+        if (list == null) {
+            return;
+        }
+        var upper = letter.toUpperCase();
+        if (list.length <= bandMaxSize) {
+            units.push({ from: upper, to: upper, items: list });
+            return;
+        }
+        // Grosser Buchstabe: nach dem zweiten Buchstaben unterteilen ("Sa", "Sb", ...)
+        var subUnits = [];
+        list.forEach(function (item) {
+            var second = getSortChar(getName(item), 1);
+            var label = second.length == 1 && second != "#" ? upper + second : upper;
+            var last = subUnits[subUnits.length - 1];
+            if (last == null || last.from != label) {
+                subUnits.push({ from: label, to: label, items: [item] });
+            } else {
+                last.items.push(item);
+            }
+        });
+        packAlphabetUnits(subUnits).forEach(function (band) {
+            units.push(band);
+        });
+    });
+    if (others.items.length > 0) {
+        units.push(others);
+    }
+    return units;
+}
+
+// Legt benachbarte Abschnitte zu Bändern zusammen, bis ein Band genug Einträge hat
+function packAlphabetUnits(units) {
+    var bands = [];
+    var current = null;
+    units.forEach(function (unit) {
+        if (unit.separate) {
+            current = null;
+            bands.push({ from: unit.from, to: unit.to, items: unit.items.slice(), separate: true });
+            return;
+        }
+        if (current != null && current.items.length >= bandMinSize &&
+            (current.items.length >= bandIdealSize || current.items.length + unit.items.length > bandMaxSize)) {
+            current = null;
+        }
+        if (current == null) {
+            current = { from: unit.from, to: unit.to, items: [] };
+            bands.push(current);
+        }
+        current.to = unit.to;
+        current.items = current.items.concat(unit.items);
+    });
+
+    // Ein zu kleines letztes Band an das vorherige anhängen
+    var last = bands[bands.length - 1];
+    var previous = bands[bands.length - 2];
+    if (last != null && previous != null && !last.separate && !previous.separate &&
+        last.items.length < bandMinSize && previous.items.length + last.items.length <= bandMaxSize + bandMinSize) {
+        previous.to = last.to;
+        previous.items = previous.items.concat(last.items);
+        bands.pop();
+    }
+    return bands;
 }
 
 // Zeigt Einträge in einem Band oder, bei vielen Einträgen, alphabetisch gruppiert
-// in mehreren Bändern (0 – 9, A – D, ...). Leere Gruppen werden ausgelassen.
+// in mehreren, ungefähr gleich grossen Bändern (z.B. "0 – B", "C – F", "S", "T – Z").
 function renderGroupedBands(container, items, getName, singleTitle, renderItem) {
-    if (items.length <= groupThreshold) {
+    if (items.length <= singleBandLimit) {
         var track = createCardRow(container, singleTitle, null);
         items.forEach(function (item) {
             renderItem(track, item);
@@ -232,22 +340,11 @@ function renderGroupedBands(container, items, getName, singleTitle, renderItem) 
         return;
     }
 
-    var groups = {};
-    items.forEach(function (item) {
-        var label = getAlphabetGroup(getName(item));
-        groups[label] = groups[label] || [];
-        groups[label].push(item);
-    });
-
-    alphabetGroups.map(function (group) {
-        return group.label;
-    }).concat(["Sonstige"]).forEach(function (label) {
-        if (groups[label] == null) {
-            return;
-        }
+    packAlphabetUnits(buildAlphabetUnits(items, getName)).forEach(function (band) {
+        var label = band.from == band.to ? band.from : band.from + " – " + band.to;
         var groupTrack = createCardRow(container, label, null);
-        groupTrack.parentNode.parentNode.querySelector(".rowHeader h2").appendChild(createRowCount(groups[label].length));
-        groups[label].forEach(function (item) {
+        groupTrack.parentNode.parentNode.querySelector(".rowHeader h2").appendChild(createRowCount(band.items.length));
+        band.items.forEach(function (item) {
             renderItem(groupTrack, item);
         });
     });

@@ -133,7 +133,11 @@ namespace Sflix
     // Ordner, die keine Aufgabe durchsucht
     public static class Folders
     {
-        static readonly string[] SystemDirs = { "System Volume Information", "$RECYCLE.BIN", ".vscode", "sflix_sys" };
+        // Windows-Systemordner, Papierkörbe und Vorschau-Ordner von NAS (QNAP: @Recycle,
+        // Synology: #recycle und @eaDir), Entwicklungsordner und STEFFLIX selbst
+        static readonly string[] SystemDirs = {
+            "System Volume Information", "$RECYCLE.BIN", "@Recycle", "#recycle", "@eaDir", ".vscode", "sflix_sys"
+        };
 
         // Ordner mit "__" im Namen sind Ablagen der Werkzeuge (__teile, __konvertiert, __gelöscht)
         public static bool IsToolFolder(string name)
@@ -146,6 +150,36 @@ namespace Sflix
             foreach (string s in SystemDirs)
                 if (string.Equals(name, s, StringComparison.OrdinalIgnoreCase)) return true;
             return IsToolFolder(name);
+        }
+
+        // Versteckter Ordner: Name beginnt mit "." (z.B. von NAS oder Linux) oder Windows-Attribut
+        // "Versteckt" bzw. "System"
+        public static bool IsHidden(string path)
+        {
+            string name = Path.GetFileName(path.TrimEnd('\\'));
+            if (name.StartsWith(".")) return true;
+            if (Path.GetPathRoot(path) == path) return false;   // Laufwerke sind immer "versteckt"
+            try { return (File.GetAttributes(path) & (FileAttributes.Hidden | FileAttributes.System)) != 0; }
+            catch { return false; }
+        }
+
+        // Ordner überspringen: Ablage, System- oder Papierkorb-Ordner oder versteckt
+        public static bool Ignore(string path)
+        {
+            return Skip(Path.GetFileName(path.TrimEnd('\\'))) || IsHidden(path);
+        }
+
+        // Liegt der Ordner (relativ zu root) in einem Ordner, der übersprungen wird?
+        public static bool IgnoreAny(string root, string relative)
+        {
+            string dir = root;
+            foreach (string seg in relative.Split('\\'))
+            {
+                if (seg.Length == 0) continue;
+                dir = Path.Combine(dir, seg);
+                if (Ignore(dir)) return true;
+            }
+            return false;
         }
 
         // Rekursiv alle Dateien mit passender Endung. Preview-Ordner optional überspringen.
@@ -168,7 +202,7 @@ namespace Sflix
             foreach (string d in dirs)
             {
                 string name = Path.GetFileName(d);
-                if (Skip(name)) continue;
+                if (Ignore(d)) continue;
                 if (skipPreview && string.Equals(name, "Preview", StringComparison.OrdinalIgnoreCase)) continue;
                 CollectFiles(d, extensions, skipPreview, result, token);
             }

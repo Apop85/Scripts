@@ -173,7 +173,7 @@ namespace Sflix
             foreach (string d in dirs)
             {
                 // __teile (und andere Ablagen der Werkzeuge) nicht durchsuchen
-                if (Folders.Skip(Path.GetFileName(d))) continue;
+                if (Folders.Ignore(d)) continue;
                 Walk(d, groups, ctx);
             }
         }

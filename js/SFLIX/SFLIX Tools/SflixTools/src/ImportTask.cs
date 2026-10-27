@@ -153,7 +153,7 @@ namespace Sflix
             }
             foreach (string d in dirs)
             {
-                if (Folders.Skip(Path.GetFileName(d))) continue;
+                if (Folders.Ignore(d)) continue;
                 Walk(d, baseDir, keepStructure, items, ref ignored);
             }
         }

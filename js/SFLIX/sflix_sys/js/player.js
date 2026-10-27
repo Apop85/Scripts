@@ -753,17 +753,6 @@ function handleMediaError(event) {
     skipAfterError();
 }
 
-// Entfernt ein Medium aus der Liste "Weiterschauen"
-function removeFromLastPlayed(mediaPath) {
-    var lastPlayed = (getData("playlast") || "").split(listSeperator).filter(function (entry) {
-        if (!entry.includes("|")) {
-            return false;
-        }
-        return normalizeMediaLocation(getMediaLocationFromDecodedData(decodeUrlData(entry.split("|")[1]))) !== mediaPath;
-    });
-    setData("playlast", lastPlayed.join(listSeperator));
-}
-
 // ===================================================================
 // Zeitstempel (Wiedergabeposition)
 // ===================================================================
@@ -851,8 +840,10 @@ function loadDecodedMedia(decodedData, pushState) {
         setLastPlayed(mediaName, startUrl);
     } else {
         // Medium nicht (mehr) in data.js: Hinweis statt leerem Player
+        // Der Eintrag in "Weiterschauen" bleibt bestehen: Fehlt die Datei nur vorübergehend
+        // (z.B. während "Daten einlesen" oder bei nicht verbundenem Laufwerk), wäre er sonst
+        // verloren. Die Startseite blendet nicht gefundene Einträge ohnehin aus.
         removePlayer();
-        removeFromLastPlayed(medialocation);
         var folderLevels = getLevels(decodedData);
         var folderUrl = getDataNode(folderLevels) != null ? buildStartUrl(buildLevelPath(folderLevels)) : "start.html";
         showMediaMessage("«" + stripExtension(mediaName) + "» wurde nicht gefunden. " +

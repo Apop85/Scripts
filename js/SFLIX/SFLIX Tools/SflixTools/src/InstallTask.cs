@@ -2,7 +2,8 @@
 //   1. Ordner und sflix_sys anlegen
 //   2. Dateien der Weboberfläche und data.js herunterladen (geprüft über checksums.json).
 //      Vorhandene Dateien bleiben unverändert.
-//   3. sflix_sys\renamed.js anlegen (wird von "Daten einlesen" gefüllt)
+//   3. sflix_sys\renamed.js anlegen (wird von "Daten einlesen" gefüllt) und sflix_sys\install.js
+//      mit eigener Kennung (getrennter Speicher im Browser)
 //   4. Dieses Programm als updateStefflix.exe in den Ordner kopieren
 
 using System;
@@ -74,6 +75,10 @@ namespace Sflix
             string renamed = Path.Combine(target, "sflix_sys", "renamed.js");
             if (!File.Exists(renamed))
                 File.WriteAllText(renamed, "var renamedPaths = {\"id\": \"\", \"pairs\": []};", FileOps.Utf8NoBom);
+
+            // Eigene Kennung, damit diese Installation ihre Daten im Browser getrennt speichert
+            string idNote = InstallId.Ensure(target);
+            if (idNote != null) ctx.Log("  " + idNote);
 
             // Den Updater selbst in den Ordner kopieren (sein Selbst-Update holt neuere Versionen)
             string exe = Path.Combine(target, App.ExeName);

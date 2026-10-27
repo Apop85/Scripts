@@ -5,6 +5,9 @@
 //   updateStefflix.exe --run update,data     Oberfläche, startet die Aufgaben sofort
 //   updateStefflix.exe --headless data       ohne Oberfläche (z.B. für die Aufgabenplanung);
 //                                            Protokoll in sflix_sys\updater.log, Exit-Code 0 = OK
+//   updateStefflix.exe --headless data --data-folder "Serien\Show"
+//                                            nur diesen Ordner einlesen (mehrfach angeben möglich,
+//                                            relativ zum STEFFLIX-Ordner oder absolut)
 //   updateStefflix.exe --install <Ordner>    STEFFLIX ohne Oberfläche in <Ordner> installieren
 //   --updated                                (intern) Start nach einem Selbst-Update
 // Liegt das Programm nicht in einem STEFFLIX-Ordner, bietet es die Installation an.
@@ -24,8 +27,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX Updater")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX Updater: Update, Daten einlesen, Vorschaubilder, Zusammenführen, Konvertieren")]
-[assembly: AssemblyVersion("3.1.1.0")]
-[assembly: AssemblyFileVersion("3.1.1.0")]
+[assembly: AssemblyVersion("3.1.2.0")]
+[assembly: AssemblyFileVersion("3.1.2.0")]
 
 namespace Sflix
 {
@@ -41,10 +44,12 @@ namespace Sflix
             bool headless = false;
             string installTo = null;
             List<string> run = null;
+            List<string> dataFolders = new List<string>();
             for (int i = 0; i < args.Length; i++)
             {
                 string a = args[i].ToLowerInvariant();
                 if (a == "--updated") updated = true;
+                else if (a == "--data-folder" && i + 1 < args.Length) dataFolders.Add(args[++i]);
                 else if (a == "--install" && i + 1 < args.Length) installTo = args[++i];
                 else if ((a == "--run" || a == "--headless") && i + 1 < args.Length)
                 {
@@ -82,6 +87,9 @@ namespace Sflix
 
             SelfUpdate.CleanupOld();
 
+            // Eigene Kennung, damit sich mehrere Installationen im Browser nicht beeinflussen
+            string idNote = InstallId.Ensure(App.Root);
+
             // Nur eine Instanz pro STEFFLIX-Ordner. Nach einem Update kurz warten, bis die alte beendet ist.
             using (Mutex mutex = new Mutex(false, "Local\\STEFFLIX-Updater-" + Hash(App.Root.ToLowerInvariant())))
             {
@@ -96,9 +104,10 @@ namespace Sflix
                 try
                 {
                     Settings settings = Settings.Load(Path.Combine(App.SysDir, "updater_settings.json"));
-                    if (headless) return RunHeadless(settings, run);
+                    if (headless) return RunHeadless(settings, run, idNote, dataFolders);
 
                     string notice = updated ? "Programm wurde auf Version " + App.VersionText + " aktualisiert." : null;
+                    if (idNote != null) notice = notice == null ? idNote : notice + " " + idNote;
                     Application.Run(new MainForm(settings, run, notice));
                     return 0;
                 }
@@ -144,7 +153,7 @@ namespace Sflix
             }
         }
 
-        static int RunHeadless(Settings settings, List<string> tasks)
+        static int RunHeadless(Settings settings, List<string> tasks, string idNote, List<string> dataFolders)
         {
             string logFile = Path.Combine(App.SysDir, "updater.log");
             object gate = new object();
@@ -182,14 +191,19 @@ namespace Sflix
             runner.PreviewVideos = settings.GetBool("preview.videos", true);
             runner.PreviewImages = settings.GetBool("preview.images", false);
             runner.CleanupFolder = settings.MediaFolder();   // ohne Oberfläche: alle Ablagen löschen
+            // Ohne --data-folder wird wie bisher alles eingelesen
+            runner.DataFolders = dataFolders.Count > 0 ? dataFolders : null;
 
             ctx.LogLine(App.Title + " " + App.VersionText + " (ohne Oberfläche)  –  " + App.Root);
+            if (idNote != null) ctx.LogLine(idNote);
             TaskRunResult result = runner.Run(ctx);
             if (result.Restart && result.Remaining.Count > 0)
             {
                 // Die neue Version erledigt den Rest
                 ctx.LogLine("Starte neue Version für die restlichen Aufgaben ...");
-                SelfUpdate.Restart("--updated --headless " + string.Join(",", result.Remaining));
+                string restartArgs = "--updated --headless " + string.Join(",", result.Remaining);
+                foreach (string f in dataFolders) restartArgs += " --data-folder " + Proc.Quote(f);
+                SelfUpdate.Restart(restartArgs);
             }
             return result.Success ? 0 : 1;
         }

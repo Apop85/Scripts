@@ -2888,6 +2888,22 @@ a.card:hover img.cardImage {
     display: flex;
 }
 
+/* Leeres Band (z.B. "Weiterschauen" ohne Einträge): nur beim Anpassen sichtbar */
+#dashboard .cardRow.emptyRow, .emptyRowHint {
+    display: none;
+}
+
+#dashboard.editing .cardRow.emptyRow {
+    display: block;
+}
+
+#dashboard.editing .emptyRowHint {
+    display: inline;
+    margin-left: 10px;
+    color: var(--sflix-text-muted);
+    font-size: 0.9rem;
+}
+
 #dashboard.editing .rowViewport, #dashboard.editing a.rowLink {
     display: none;
 }

@@ -37,6 +37,96 @@ namespace Sflix
         }
     }
 
+    // Kennung der Installation in sflix_sys\install.js. Der Browser speichert die Daten aller
+    // file://-Seiten gemeinsam; mit der Kennung nutzt jede STEFFLIX-Installation eine eigene
+    // Datenbank (Sortierung, Weiterschauen, Favoriten ...) und beeinflusst die anderen nicht.
+    // Die Datei merkt sich auch den Ordner:
+    //   - Ordner verschoben/umbenannt (alter Ordner hat diese Kennung nicht mehr): Kennung bleibt
+    //   - Ordner kopiert (alter Ordner hat noch dieselbe Kennung): die Kopie bekommt eine neue
+    public static class InstallId
+    {
+        const string FileName = "install.js";
+        static readonly System.Text.RegularExpressions.Regex IdPattern =
+            new System.Text.RegularExpressions.Regex("var installId = \"([0-9a-f]{32})\"");
+        static readonly System.Text.RegularExpressions.Regex FolderPattern =
+            new System.Text.RegularExpressions.Regex("var installFolder = \"((?:[^\"\\\\]|\\\\.)*)\"");
+
+        public static string FilePath(string root)
+        {
+            return Path.Combine(root, "sflix_sys", FileName);
+        }
+
+        // Liest Kennung und Ordner; null, wenn die Datei fehlt oder ungültig ist
+        public static string Read(string root, out string folder)
+        {
+            folder = null;
+            try
+            {
+                string file = FilePath(root);
+                if (!File.Exists(file)) return null;
+                string text = File.ReadAllText(file, Encoding.UTF8);
+                System.Text.RegularExpressions.Match id = IdPattern.Match(text);
+                if (!id.Success) return null;
+                System.Text.RegularExpressions.Match f = FolderPattern.Match(text);
+                if (f.Success) folder = f.Groups[1].Value.Replace("\\\\", "\\").Replace("\\\"", "\"");
+                return id.Groups[1].Value;
+            }
+            catch { return null; }
+        }
+
+        // Legt die Kennung an, falls nötig. Gibt eine Meldung zurück, wenn etwas geändert wurde.
+        public static string Ensure(string root)
+        {
+            try
+            {
+                root = Path.GetFullPath(root).TrimEnd('\\');
+                string folder;
+                string id = Read(root, out folder);
+                string reason = null;
+                if (id == null)
+                {
+                    reason = "Eigene Kennung für diese Installation angelegt (sflix_sys\\install.js).";
+                }
+                else if (folder == null || !string.Equals(folder.TrimEnd('\\'), root, StringComparison.OrdinalIgnoreCase))
+                {
+                    string otherFolder;
+                    bool copied = folder != null && Directory.Exists(folder)
+                        && App.IsStefflixDir(folder) && Read(folder, out otherFolder) == id;
+                    if (copied)
+                    {
+                        id = null;
+                        reason = "Kopie einer anderen Installation erkannt: neue Kennung angelegt, damit sich beide nicht beeinflussen.";
+                    }
+                    else
+                    {
+                        reason = folder == null ? null : "Installation wurde verschoben, Kennung bleibt erhalten.";
+                    }
+                }
+                else
+                {
+                    return null;   // alles aktuell
+                }
+
+                if (id == null) id = Guid.NewGuid().ToString("N");
+                string escaped = root.Replace("\\", "\\\\").Replace("\"", "\\\"");
+                string content =
+                    "// Kennung dieser STEFFLIX-Installation (vom Updater erzeugt). Jede Installation\r\n" +
+                    "// speichert damit ihre Daten im Browser getrennt von anderen Installationen.\r\n" +
+                    "var installId = \"" + id + "\";\r\n" +
+                    "var installFolder = \"" + escaped + "\";\r\n";
+                string file = FilePath(root);
+                string tmp = file + ".tmp";
+                File.WriteAllText(tmp, content, FileOps.Utf8NoBom);
+                FileOps.Replace(tmp, file);
+                return reason;
+            }
+            catch (Exception e)
+            {
+                return "Kennung der Installation konnte nicht geschrieben werden: " + e.Message;
+            }
+        }
+    }
+
     // Ordner, die keine Aufgabe durchsucht
     public static class Folders
     {

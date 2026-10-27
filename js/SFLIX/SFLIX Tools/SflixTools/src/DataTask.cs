@@ -57,6 +57,7 @@ namespace Sflix
         int notShrinkable;
         int migratedOriginals;
         int counter;
+        int branchMedia;   // Teil-Einlesen: Medien in den gewählten Ordnern (ohne Preview darüber)
 
         DataTask(TaskContext ctx)
         {
@@ -67,6 +68,47 @@ namespace Sflix
         public static void Run(TaskContext ctx)
         {
             new DataTask(ctx).Execute();
+        }
+
+        // Nur diese Ordner einlesen (absolute Pfade im STEFFLIX-Ordner). Ihr Zweig in der
+        // bestehenden data.js wird ersetzt, alles andere bleibt. Leer oder null: alles einlesen.
+        public static void Run(TaskContext ctx, IList<string> folders)
+        {
+            DataTask task = new DataTask(ctx);
+            if (folders == null || folders.Count == 0 || !task.ExecutePartial(folders)) task.Execute();
+        }
+
+        // Einstellungen: data.all (alles einlesen) und data.folders (Ordner relativ zum
+        // STEFFLIX-Ordner, getrennt mit "|")
+        public const char FolderSeparator = '|';
+
+        public static List<string> SplitFolders(string setting)
+        {
+            List<string> list = new List<string>();
+            if (string.IsNullOrEmpty(setting)) return list;
+            foreach (string part in setting.Split(FolderSeparator))
+            {
+                string p = part.Trim().Trim('\\');
+                if (p.Length > 0 && !list.Contains(p)) list.Add(p);
+            }
+            return list;
+        }
+
+        // Relativer Pfad (Einstellungen, Kommandozeile) -> absoluter Pfad im STEFFLIX-Ordner
+        public static string ToAbsolute(string folder)
+        {
+            folder = folder.Trim().Replace('/', '\\');
+            return Path.GetFullPath(Path.IsPathRooted(folder) ? folder : Path.Combine(App.Root, folder.TrimStart('.', '\\')));
+        }
+
+        // Absoluter Pfad -> relativ zum STEFFLIX-Ordner; null, wenn er ausserhalb liegt
+        public static string ToRelative(string folder)
+        {
+            string root = Path.GetFullPath(App.Root).TrimEnd('\\');
+            string full = Path.GetFullPath(folder).TrimEnd('\\');
+            if (string.Equals(full, root, StringComparison.OrdinalIgnoreCase)) return "";
+            if (!full.StartsWith(root + "\\", StringComparison.OrdinalIgnoreCase)) return null;
+            return full.Substring(root.Length + 1);
         }
 
         // ---------------------------------------------------------------
@@ -410,21 +452,173 @@ namespace Sflix
             File.WriteAllText(file, RenamedPrefix + Json.Write(o) + ";", FileOps.Utf8NoBom);
         }
 
+        const string DataPrefix = "var data = ";
+
+        string DataFile { get { return Path.Combine(homeDir, "sflix_sys", "data.js"); } }
+
+        // Bestehende data.js lesen; null, wenn sie fehlt oder nicht lesbar ist
+        JsonObject LoadExistingData()
+        {
+            try
+            {
+                if (!File.Exists(DataFile)) return null;
+                string text = File.ReadAllText(DataFile, Encoding.UTF8).Trim();
+                if (!text.StartsWith(DataPrefix)) return null;
+                return Json.Parse(text.Substring(DataPrefix.Length).TrimEnd(';')) as JsonObject;
+            }
+            catch { return null; }
+        }
+
+        void SaveData(JsonObject filelist)
+        {
+            string dataFile = DataFile;
+            if (File.Exists(dataFile)) FileOps.Replace(dataFile, dataFile + ".bak");
+            File.WriteAllText(dataFile, DataPrefix + Json.Write(filelist) + ";", FileOps.Utf8NoBom);
+            ctx.Log("data.js gespeichert (Sicherung: data.js.bak)");
+
+            try { WriteRenamedPaths(); }
+            catch (Exception) { ctx.Log("Umbenennungen konnten nicht gespeichert werden"); }
+        }
+
+        // Teil-Einlesen: gibt false zurück, wenn stattdessen alles eingelesen werden muss
+        bool ExecutePartial(IList<string> folders)
+        {
+            // Gewählte Ordner prüfen; der STEFFLIX-Ordner selbst bedeutet "alles"
+            List<string> relFolders = new List<string>();
+            foreach (string f in folders)
+            {
+                string rel = ToRelative(ToAbsolute(f));
+                if (rel == null) { ctx.Log("Liegt nicht im STEFFLIX-Ordner, übersprungen: " + f); continue; }
+                if (rel.Length == 0) { ctx.Log("Der ganze STEFFLIX-Ordner ist gewählt: alles wird eingelesen."); return false; }
+                string invalid = null;
+                foreach (string seg in rel.Split('\\'))
+                    if (Array.IndexOf(DisallowedItems, seg) >= 0 || Folders.IsToolFolder(seg)) invalid = seg;
+                if (invalid != null) { ctx.Log("Ablage- oder Systemordner, übersprungen: " + rel); continue; }
+                relFolders.Add(rel);
+            }
+            // Doppelte weglassen, ebenso Ordner, die in einem anderen gewählten Ordner liegen
+            List<string> unique = new List<string>();
+            foreach (string a in relFolders)
+            {
+                bool covered = false;
+                foreach (string b in relFolders)
+                    if (a.StartsWith(b + "\\", StringComparison.OrdinalIgnoreCase)) covered = true;
+                foreach (string u in unique)
+                    if (string.Equals(u, a, StringComparison.OrdinalIgnoreCase)) covered = true;
+                if (!covered) unique.Add(a);
+            }
+            if (unique.Count == 0)
+            {
+                ctx.Log("Keine gültigen Ordner gewählt, es wurde nichts eingelesen.");
+                return true;
+            }
+
+            JsonObject data = LoadExistingData();
+            if (data == null)
+            {
+                ctx.Log("data.js fehlt oder ist nicht lesbar: alles wird eingelesen.");
+                return false;
+            }
+
+            foreach (string rel in unique)
+            {
+                ctx.Check();
+                ctx.Progress(-1, "Lese ein: " + rel);
+                UpdateBranch(data, rel.Split('\\'));
+            }
+            ctx.Log("Teilweise eingelesen: " + unique.Count + " Ordner, " + branchMedia + " Medien gefunden");
+            SaveData(data);
+            LogSummary();
+            return true;
+        }
+
+        // Ersetzt den Zweig eines Ordners in data.js. Fehlende Ordner auf dem Weg werden angelegt,
+        // ein nicht mehr vorhandener Ordner wird entfernt. Der Preview-Ordner darüber (Bild des
+        // Ordners selbst) wird ebenfalls neu eingelesen.
+        void UpdateBranch(JsonObject data, string[] segments)
+        {
+            JsonObject node = data;
+            string dir = homeDir.TrimEnd('\\');
+            for (int i = 0; i < segments.Length; i++)
+            {
+                string name = segments[i];
+                bool last = i == segments.Length - 1;
+                if (!Directory.Exists(Path.Combine(dir, name)))
+                {
+                    if (node.Remove(name)) ctx.Log("  " + Relative(Path.Combine(dir, name)) + ": nicht mehr vorhanden, entfernt");
+                    else ctx.Log("  " + Relative(Path.Combine(dir, name)) + ": nicht gefunden");
+                    RefreshPreview(node, dir);
+                    return;
+                }
+                // Ungültige Zeichen korrigieren wie beim vollständigen Einlesen
+                string fixedName = RenameIfNeeded(dir, name, false);
+                if (fixedName == null) return;
+                if (fixedName != name) node.Remove(name);
+
+                if (last)
+                {
+                    RefreshPreview(node, dir);
+                    int before = counter;
+                    node[fixedName] = Crawl(Path.Combine(dir, fixedName));
+                    branchMedia += counter - before;
+                    ctx.Log("  " + Relative(Path.Combine(dir, fixedName)) + ": " + (counter - before) + " Medien");
+                    OrderLikeFolder(node, dir);
+                    return;
+                }
+                JsonObject child = node.Obj(fixedName);
+                if (child == null)
+                {
+                    child = new JsonObject();
+                    node[fixedName] = child;
+                    OrderLikeFolder(node, dir);
+                }
+                node = child;
+                dir = Path.Combine(dir, fixedName);
+            }
+        }
+
+        // Preview-Ordner eines Ordners neu einlesen (falls vorhanden)
+        void RefreshPreview(JsonObject node, string dir)
+        {
+            string preview = Path.Combine(dir, PreviewFolder);
+            if (Directory.Exists(preview))
+            {
+                bool isNew = !node.ContainsKey(PreviewFolder);
+                node[PreviewFolder] = Crawl(preview);
+                if (isNew) OrderLikeFolder(node, dir);
+            }
+            else node.Remove(PreviewFolder);
+        }
+
+        // Einträge in derselben Reihenfolge wie beim vollständigen Einlesen (Reihenfolge im
+        // Ordner). Teile der Weboberfläche zeigen Einträge in dieser Reihenfolge an.
+        static void OrderLikeFolder(JsonObject node, string dir)
+        {
+            Dictionary<string, int> position = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                string[] entries = Directory.GetFileSystemEntries(dir);
+                for (int i = 0; i < entries.Length; i++) position[Path.GetFileName(entries[i])] = i;
+            }
+            catch { return; }
+            node.SortKeys(delegate(string key)
+            {
+                // Dateien stehen als "./Pfad/Datei.mp4" in data.js, Ordner mit ihrem Namen
+                string name = key.StartsWith("./") ? key.Substring(key.LastIndexOf('/') + 1) : key;
+                int p;
+                return position.TryGetValue(name, out p) ? p : int.MaxValue;
+            });
+        }
+
         void Execute()
         {
             ctx.Progress(-1, "Durchsuche Ordner ...");
             JsonObject filelist = Crawl(homeDir);
             ctx.Log("Ordner durchsucht: " + counter + " Medien gefunden");
 
-            string dataFile = Path.Combine(homeDir, "sflix_sys", "data.js");
             if (filelist.Count > 0)
             {
-                if (File.Exists(dataFile)) FileOps.Replace(dataFile, dataFile + ".bak");
-                File.WriteAllText(dataFile, "var data = " + Json.Write(filelist) + ";", FileOps.Utf8NoBom);
-                ctx.Log("data.js gespeichert (Sicherung: data.js.bak)");
-
-                try { WriteRenamedPaths(); }
-                catch (Exception) { ctx.Log("Umbenennungen konnten nicht gespeichert werden"); }
+                SaveData(filelist);
 
                 // Bis Version 2.01 wurden verkleinerte Kopien in sflix_sys\thumbs abgelegt
                 string oldThumbs = Path.Combine(homeDir, "sflix_sys", "thumbs");
@@ -438,7 +632,11 @@ namespace Sflix
             {
                 ctx.Log("Im STEFFLIX-Verzeichnis wurden keine Medien gefunden.");
             }
+            LogSummary();
+        }
 
+        void LogSummary()
+        {
             if (shrinkCounter > 0)
                 ctx.Log(shrinkCounter + " Vorschaubilder verkleinert (Original in Preview\\" + OriginalFolder + " gesichert)");
             if (migratedOriginals > 0)

@@ -26,6 +26,11 @@ function modifyLocalData(dataType) {
     }
 
     getAllDataKeys().forEach(function (key) {
+        // Bleibt immer erhalten, sonst würden beim nächsten Start die alten gemeinsamen Daten
+        // wieder übernommen
+        if (key === sharedDataImportedKey) {
+            return;
+        }
         // "Zeitstempel löschen" entfernt auch die Gesehen-Markierungen
         var isSeenMarker = dataType == "timestamp" && key.startsWith("seen-");
         if (dataType == "all" || key.includes(dataType) || isSeenMarker) {
@@ -334,8 +339,23 @@ function getAllDataKeys() {
     return Object.keys(storageCache);
 }
 
+// Der Browser speichert die Daten aller file://-Seiten gemeinsam. Damit sich mehrere
+// STEFFLIX-Installationen auf einem PC nicht beeinflussen, nutzt jede ihre eigene Datenbank.
+// Die Kennung schreibt updateStefflix.exe in sflix_sys/install.js. Ohne Kennung (älterer
+// Updater) gilt wie bisher die gemeinsame Datenbank "STEFFLIX".
+var sharedDatabaseName = "STEFFLIX";
+var sharedDataImportedKey = "sharedDataImported";
+
+function getDatabaseName() {
+    if (typeof installId === "string" && /^[0-9a-f]{32}$/.test(installId)) {
+        return sharedDatabaseName + "-" + installId;
+    }
+    return sharedDatabaseName;
+}
+
 function initDatabase(callback) {
-    var request = indexedDB.open("STEFFLIX", 1);
+    var databaseName = getDatabaseName();
+    var request = indexedDB.open(databaseName, 1);
 
     request.onupgradeneeded = function (event) {
         var database = event.target.result;
@@ -346,8 +366,16 @@ function initDatabase(callback) {
 
     request.onsuccess = function (event) {
         db = event.target.result;
+        requestPersistentStorage();
         loadDatabaseCache(function () {
-            migrateLocalStorageToIndexedDB(callback);
+            var next = function () {
+                migrateLocalStorageToIndexedDB(callback);
+            };
+            if (databaseName !== sharedDatabaseName && getData(sharedDataImportedKey) == null) {
+                importSharedDatabase(next);
+            } else {
+                next();
+            }
         });
     };
 
@@ -358,6 +386,19 @@ function initDatabase(callback) {
             callback();
         }
     };
+}
+
+// Bittet den Browser, die gespeicherten Daten (Sortierung, Weiterschauen, Favoriten ...)
+// nicht automatisch zu löschen, wenn der Speicherplatz knapp wird. Nicht jeder Browser
+// unterstützt das unter file://, dann bleibt alles wie bisher.
+function requestPersistentStorage() {
+    try {
+        if (navigator.storage && navigator.storage.persist) {
+            navigator.storage.persist().catch(function () { });
+        }
+    } catch (error) {
+        // ignorieren
+    }
 }
 
 function loadDatabaseCache(callback) {
@@ -385,6 +426,81 @@ function loadDatabaseCache(callback) {
         if (callback) {
             callback();
         }
+    };
+}
+
+// Einmalig beim ersten Start mit eigener Kennung: die bisher gemeinsamen Daten übernehmen,
+// damit nichts verloren geht. Vorhandene Einträge der eigenen Datenbank bleiben unverändert.
+// Die gemeinsame Datenbank selbst wird nicht verändert.
+function importSharedDatabase(callback) {
+    var finished = false;
+    var finish = function () {
+        if (finished) {
+            return;
+        }
+        finished = true;
+        setData(sharedDataImportedKey, new Date().toISOString());
+        if (callback) {
+            callback();
+        }
+    };
+
+    var request;
+    try {
+        request = indexedDB.open(sharedDatabaseName);
+    } catch (error) {
+        finish();
+        return;
+    }
+    // Gibt es keine gemeinsame Datenbank, wird sie nicht angelegt
+    request.onupgradeneeded = function (event) {
+        event.target.transaction.abort();
+    };
+    request.onerror = function (event) {
+        event.preventDefault();
+        finish();
+    };
+    request.onsuccess = function (event) {
+        var shared = event.target.result;
+        if (!shared.objectStoreNames.contains("storage")) {
+            shared.close();
+            finish();
+            return;
+        }
+        var entries = {};
+        var readTransaction = shared.transaction(["storage"], "readonly");
+        readTransaction.objectStore("storage").openCursor().onsuccess = function (cursorEvent) {
+            var cursor = cursorEvent.target.result;
+            if (cursor) {
+                entries[cursor.key] = cursor.value;
+                cursor.continue();
+            }
+        };
+        readTransaction.oncomplete = function () {
+            shared.close();
+            var keys = Object.keys(entries).filter(function (key) {
+                return !storageCache.hasOwnProperty(key);
+            });
+            if (keys.length == 0 || !db) {
+                finish();
+                return;
+            }
+            var writeTransaction = db.transaction(["storage"], "readwrite");
+            var store = writeTransaction.objectStore("storage");
+            keys.forEach(function (key) {
+                storageCache[key] = entries[key];
+                store.put(entries[key], key);
+            });
+            writeTransaction.oncomplete = finish;
+            writeTransaction.onerror = function (writeEvent) {
+                console.error("Übernahme der gemeinsamen Daten fehlgeschlagen", writeEvent);
+                finish();
+            };
+        };
+        readTransaction.onerror = function () {
+            shared.close();
+            finish();
+        };
     };
 }
 
@@ -456,7 +572,7 @@ function migrateBackupData(data, backupVersion) {
 
 // Markierungen erledigter Migrationen ("v2.00") und umbenannter Pfade
 function isMigrationFlag(key) {
-    return /^v\d+(\.\d+)*$/.test(key) || key === "renamedPathsApplied";
+    return /^v\d+(\.\d+)*$/.test(key) || key === "renamedPathsApplied" || key === sharedDataImportedKey;
 }
 
 function showBackupStatus(text, isError) {

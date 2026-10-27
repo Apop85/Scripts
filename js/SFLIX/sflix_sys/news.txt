@@ -2,6 +2,19 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.03</b>:<br>
+<ul>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Die eigene Reihenfolge der Menübänder auf der Startseite ging teilweise verloren: Wurde sortiert, während ein Band fehlte (z.B. "Weiterschauen" oder "Meine Favoriten" ohne Einträge), fiel es aus der gespeicherten Reihenfolge und erschien später wieder ganz oben. Fehlende Bänder behalten jetzt ihre Position.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Einträge in "Weiterschauen" wurden endgültig gelöscht, wenn ein Medium beim Öffnen vorübergehend nicht in den Daten stand (z.B. während "Daten einlesen" lief). Sie bleiben jetzt erhalten und erscheinen wieder, sobald die Datei gefunden wird.</li>
+    <li>[OPTIMIERUNG] STEFFLIX bittet den Browser, die gespeicherten Daten (Sortierung, Weiterschauen, Favoriten, Fortschritt) dauerhaft zu behalten und nicht bei knappem Speicherplatz zu löschen.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Mehrere STEFFLIX-Installationen auf einem PC (in verschiedenen Ordnern) teilten sich im Browser denselben Speicher und veränderten gegenseitig Sortierung, Weiterschauen, Favoriten und Fortschritt. Jede Installation speichert ihre Daten jetzt getrennt. Beim ersten Start werden die bisherigen Daten einmalig übernommen, damit nichts verloren geht.</li>
+    <li>[<span style="color: red">FEATURE</span>] Updater: Jede Installation erhält eine eigene, zufällige Kennung (sflix_sys\install.js). Wird ein STEFFLIX-Ordner kopiert, bekommt die Kopie beim nächsten Start des Updaters automatisch eine neue Kennung. Beim Verschieben oder Umbenennen des Ordners bleibt sie erhalten.</li>
+    <li>[<span style="color: red">FEATURE</span>] Updater: "Daten einlesen" hat den Schalter "Alle Ordner einlesen". Ist er aus, lassen sich einzelne Ordner wählen, die neu eingelesen werden. Nur deren Einträge in data.js werden ersetzt, der Rest bleibt unverändert. Die Ordnerwahl wird gespeichert. Ohne Oberfläche geht das mit --data-folder.</li>
+    <li>[OPTIMIERUNG] Updater: Nach einem Import wird nur der Zielordner neu eingelesen und nach fehlenden Vorschaubildern durchsucht, statt die ganze Mediathek. Nach den Tools wird nur der Medienordner eingelesen, wenn er in STEFFLIX liegt.</li>
+    <li>[<span style="color: red">FEATURE</span>] Ordner (z.B. eine Serie oder Staffel), deren Videos alle gesehen sind, werden ebenfalls mit "Gesehen" markiert. Musik und Bilder zählen dabei nicht mit.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Bilderordner ohne eigenes Vorschaubild zeigen das erste Bild des Ordners (natürlich sortiert, "Bild 2" vor "Bild 10"). Liegen keine Bilder direkt im Ordner, wird das erste Bild aus den Unterordnern verwendet.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] "Startseite anpassen" zeigt "Weiterschauen" auch ohne Einträge an (als "zurzeit leer"), damit sich seine Position jederzeit festlegen lässt.</li>
+</ul>
 <b>Version 2.02</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Neuer Updater: updateStefflix.exe ist jetzt ein Programm mit eigener Oberfläche im STEFFLIX-Design und ersetzt updateStefflix.exe, updater.exe, updateData.exe und setup.exe. Die nicht mehr benötigten updater.exe und updateData.exe werden beim Update automatisch entfernt.</li>

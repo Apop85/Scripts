@@ -208,14 +208,53 @@ function createFolderCard(container, folderLevels, options) {
         return null;
     }
     var node = getDataNode(folderLevels);
-    return createCard(container, {
+    var card = createCard(container, {
         href: href,
         title: folderLevels[folderLevels.length - 1],
         subtitle: options.subtitle != null ? options.subtitle : describeFolder(node),
-        previewSrc: resolvePreviewSrc(levelPath, "normal"),
+        // Ohne eigenes Vorschaubild: bei Bilderordnern das erste Bild
+        previewSrc: resolvePreviewSrc(levelPath, "normal") || getFirstImageInFolder(node),
         placeholderIcon: getFolderIconName(node),
         seed: levelPath
     });
+    if (isFolderSeen(node)) {
+        addCardLabel(card, "Gesehen", true);
+    }
+    return card;
+}
+
+// Ein Ordner gilt als gesehen, wenn er Videos enthält (auch in Unterordnern) und alle
+// davon gesehen sind. Musik und Bilder haben keine Gesehen-Markierung und zählen nicht.
+function isFolderSeen(node) {
+    var videos = collectMediaPaths(node, []).filter(isVideo);
+    return videos.length > 0 && videos.every(isSeen);
+}
+
+// Erstes Bild eines Ordners (natürlich sortiert, "Bild 2" vor "Bild 10"). Liegen keine
+// Bilder direkt im Ordner, wird in den Unterordnern gesucht (ebenfalls sortiert).
+function getFirstImageInFolder(node) {
+    if (node == null || typeof node !== "object") {
+        return null;
+    }
+    var keys = Object.keys(node).filter(function (key) {
+        return key != "Preview";
+    });
+    var images = sortNatural(keys.filter(function (key) {
+        return isImage(key) && isMediaFile(allowedMediaExtensions, key);
+    }));
+    if (images.length > 0) {
+        return normalizeMediaLocation(images[0]);
+    }
+    var folders = sortNatural(keys.filter(function (key) {
+        return node[key] != null && typeof node[key] === "object";
+    }));
+    for (var index = 0; index < folders.length; index++) {
+        var found = getFirstImageInFolder(node[folders[index]]);
+        if (found != null) {
+            return found;
+        }
+    }
+    return null;
 }
 
 // Kurzbeschreibung eines Ordners: "3 Ordner" oder "12 Medien"

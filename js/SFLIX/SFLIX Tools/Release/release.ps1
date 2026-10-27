@@ -331,13 +331,23 @@ try {
             if ($Auto -or -not (Ask-YesNo 'Version trotzdem ohne Einträge erhöhen?' $false)) { Fail 'Abgebrochen: ohne Changelog-Eintrag wird die Version nicht erhöht.' }
         }
 
-        # news.txt: neuen Block vor der bisher obersten Version einfügen (CRLF wie in der Datei)
+        # news.txt (CRLF wie in der Datei): Gibt es schon einen Block für diese Version, kommen die
+        # Einträge an dessen Ende. Sonst wird ein neuer Block vor der bisher obersten Version eingefügt.
         $news = [IO.File]::ReadAllText($newsTxt)
         $nl = if ($news -match "`r`n") { "`r`n" } else { "`n" }
         $pos = $news.IndexOf('<b>Version ')
         if ($pos -lt 0) { Fail 'In news.txt wurde kein Eintrag "<b>Version ...</b>" gefunden.' }
-        $block = "<b>Version $newWeb</b>:<br>$nl<ul>$nl" + (($entries | ForEach-Object { $_ + $nl }) -join '') + "</ul>$nl"
-        [IO.File]::WriteAllText($newsTxt, $news.Insert($pos, $block), $Utf8)
+        $lines = ($entries | ForEach-Object { $_ + $nl }) -join ''
+        $existing = [regex]::Match($news, '<b>Version\s+' + [regex]::Escape($newWeb) + '\s*</b>')
+        if ($existing.Success) {
+            $end = $news.IndexOf('</ul>', $existing.Index)
+            if ($end -lt 0) { Fail "Der Block für Version $newWeb in news.txt hat kein </ul>." }
+            if ($entries.Count -gt 0) { [IO.File]::WriteAllText($newsTxt, $news.Insert($end, $lines), $Utf8) }
+            Info "news.txt hat schon einen Block für $newWeb, die Einträge wurden dort angehängt."
+        } else {
+            $block = "<b>Version $newWeb</b>:<br>$nl<ul>$nl" + $lines + "</ul>$nl"
+            [IO.File]::WriteAllText($newsTxt, $news.Insert($pos, $block), $Utf8)
+        }
 
         # version.js
         $vjsNew = $vjs.Substring(0, $m.Index) + "version = $newWeb" + $vjs.Substring($m.Index + $m.Length)

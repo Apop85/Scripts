@@ -46,11 +46,21 @@ D:\STEFFLIX
 
 ## Neue Medien hinzufügen
 
-Neue Filme, Serien, Musik oder Bilder werden in den passenden Ordner im STEFFLIX-Verzeichnis kopiert. Danach liest `updateStefflix.exe` die Medien mit der Aufgabe "Daten einlesen" neu ein, und sie erscheinen in STEFFLIX.
+Neue Filme, Serien, Musik oder Bilder kommen am einfachsten mit dem Importer von `updateStefflix.exe` in STEFFLIX. Er kopiert oder verschiebt die Medien in den richtigen Ordner, wandelt nicht unterstützte Formate auf Wunsch um und liest danach nur den Zielordner neu ein. Das geht auch bei grossen Mediatheken schnell, der Rest bleibt unverändert.
+
+1. `updateStefflix.exe` starten und die Registerkarte "Importer" öffnen. Dateien oder Ordner lassen sich auch einfach ins Fenster ziehen.
+2. Unter "Was importieren?" mit "Dateien …" oder "Ordner …" die Medien wählen.
+3. Unter "Ziel in STEFFLIX" die Kategorie wählen (z.B. Serien, mit "Neu …" auch eine eigene) und den Unterordner angeben, z.B. `Meine Serie\Staffel 1`.
+4. Bei Bedarf die Optionen einschalten: Ordnerstruktur übernehmen, in ein browserkompatibles Format konvertieren, verschieben statt kopieren oder fehlende Vorschaubilder erstellen.
+5. Auf "Start" klicken. Danach STEFFLIX neu laden, die Medien sind da.
+
+### Alternative: Medien von Hand kopieren
+
+Die Medien lassen sich auch selbst in die Ordner kopieren. Danach müssen sie eingelesen werden, damit sie in STEFFLIX erscheinen.
 
 1. Medien in den passenden Unterordner kopieren, z.B. `Serien\Meine Serie\Staffel 1`.
-2. Optional ein Vorschaubild hinterlegen (siehe unten). Für Videos kann der Updater mit "Vorschaubilder erstellen" auch selbst eines erzeugen.
-3. `updateStefflix.exe` starten, "Daten einlesen" auswählen und ausführen.
+2. Optional ein Vorschaubild hinterlegen (siehe unten). Für Videos kann der Updater unter "Tools" mit "Vorschaubilder" auch selbst eines erzeugen.
+3. `updateStefflix.exe` starten und unter "Updates" die Aufgabe "Daten einlesen" ausführen. Ist "Alle Ordner einlesen" ausgeschaltet, werden nur die gewählten Ordner eingelesen. Das ist schneller, wenn nur an wenigen Stellen etwas dazugekommen ist.
 
 ### Unterstützte Dateiformate
 

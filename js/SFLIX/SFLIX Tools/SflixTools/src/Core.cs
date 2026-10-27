@@ -79,9 +79,12 @@ namespace Sflix
         {
             try
             {
-                root = Path.GetFullPath(root).TrimEnd('\\');
+                // Dateizugriffe mit dem vollen Pfad (bei D:\ wäre "D:" ein relativer Pfad),
+                // Vergleiche ohne abschliessendes "\"
+                string rootPath = Path.GetFullPath(root);
+                root = rootPath.TrimEnd('\\');
                 string folder;
-                string id = Read(root, out folder);
+                string id = Read(rootPath, out folder);
                 string reason = null;
                 if (id == null)
                 {
@@ -108,13 +111,13 @@ namespace Sflix
                 }
 
                 if (id == null) id = Guid.NewGuid().ToString("N");
-                string escaped = root.Replace("\\", "\\\\").Replace("\"", "\\\"");
+                string escaped = rootPath.Replace("\\", "\\\\").Replace("\"", "\\\"");
                 string content =
                     "// Kennung dieser STEFFLIX-Installation (vom Updater erzeugt). Jede Installation\r\n" +
                     "// speichert damit ihre Daten im Browser getrennt von anderen Installationen.\r\n" +
                     "var installId = \"" + id + "\";\r\n" +
                     "var installFolder = \"" + escaped + "\";\r\n";
-                string file = FilePath(root);
+                string file = FilePath(rootPath);
                 string tmp = file + ".tmp";
                 File.WriteAllText(tmp, content, FileOps.Utf8NoBom);
                 FileOps.Replace(tmp, file);

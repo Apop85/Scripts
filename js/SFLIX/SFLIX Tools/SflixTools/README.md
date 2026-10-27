@@ -67,7 +67,7 @@ SFLIX\                        Release-Ordner (wird gepusht)
 
 1. **Updater:** Hat sich der Quellcode hier seit dem letzten Release geändert, schlägt es vor, ihn zu bauen. Die Versionsnummer wird automatisch um eins erhöht (z.B. 3.0.4 → 3.0.5) und kann vor dem Bauen geändert werden. Danach wird `updateStefflix.exe` gebaut und nach `SFLIX` kopiert. Schlägt der Build fehl, wird die Versionsnummer zurückgesetzt.
 2. **ffmpeg:** Gibt es eine neuere stabile ffmpeg-Version, kann `ffmpeg.json` darauf gesetzt werden.
-3. **STEFFLIX-Version:** Wurden Dateien der Weboberfläche geändert, kann `version.js` erhöht werden (z.B. 2.02 → 2.03). Die Changelog-Einträge werden dabei abgefragt und in `news.txt` eingefügt.
+3. **STEFFLIX-Version:** Wurden Dateien der Weboberfläche geändert, kann `version.js` erhöht werden (z.B. 2.02 → 2.03). Die Changelog-Einträge werden dabei abgefragt und in `news.txt` eingefügt. Gibt es dort schon einen Block für die eingegebene Version, kommen sie an dessen Ende statt in einen neuen Block.
 4. **Prüfen:** `check_release.py`, `create_news.py`, `create_checksums.py`.
 5. **Übersicht:** welche Dateien sich geändert haben und zusammen gepusht werden müssen.
 

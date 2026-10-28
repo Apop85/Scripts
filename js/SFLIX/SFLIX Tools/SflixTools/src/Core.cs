@@ -130,6 +130,34 @@ namespace Sflix
         }
     }
 
+    // sflix_sys\updater_info.js: installierte Versionen von Updater und ffmpeg für die Hilfe und den
+    // Update-Hinweis in STEFFLIX (der Browser kann die EXE nicht lesen). Wird bei jedem Start und nach
+    // einer ffmpeg-Installation geschrieben, nur wenn sich etwas geändert hat. Nicht pushen.
+    public static class UpdaterInfo
+    {
+        public const string FileName = "updater_info.js";
+
+        public static void Write(string root, string ffmpegFolder)
+        {
+            try
+            {
+                string ffmpeg = null;
+                try { ffmpeg = new FfmpegTools(root, ffmpegFolder).InstalledVersionName(); }
+                catch { }
+                string content =
+                    "// Vom Updater geschrieben: installierte Versionen (für die Hilfe in STEFFLIX)\r\n" +
+                    "var updaterInfo = { \"updater\": \"" + App.VersionText + "\", \"ffmpeg\": \"" +
+                    (ffmpeg ?? "").Replace("\\", "").Replace("\"", "") + "\" };\r\n";
+                string file = Path.Combine(root, "sflix_sys", FileName);
+                if (File.Exists(file) && File.ReadAllText(file, Encoding.UTF8) == content) return;
+                string tmp = file + ".tmp";
+                File.WriteAllText(tmp, content, FileOps.Utf8NoBom);
+                FileOps.Replace(tmp, file);
+            }
+            catch { }   // nur eine Anzeige in STEFFLIX, darf den Updater nie stören
+        }
+    }
+
     // Ordner, die keine Aufgabe durchsucht
     public static class Folders
     {
@@ -319,6 +347,9 @@ namespace Sflix
         public Func<List<CleanupFolder>, List<CleanupFolder>> ChooseCleanup;   // null = alle löschen
         public Func<string, ConflictAnswer> AskConflict;                       // null = überspringen
         public Func<string, EpisodeList> ChooseEpisodeList;   // Folgen umbenennen: Suchbegriff -> Liste, null = abgebrochen
+        // Gespeicherte Folgenliste gefunden (zweiter Wert: Neuladen ist eben fehlgeschlagen):
+        // "use", "reload", "search" oder null = abbrechen
+        public Func<EpisodeList, string, string> ChooseCachedEpisodeList;
         public Func<EpisodePlan, bool> ConfirmEpisodePlan;     // Vorschau; true = umbenennen (Auswahl in Ops[i].Selected)
         public bool RestartRequested;                  // Programm wurde aktualisiert -> neu starten
         public string Summary;                         // kurzes Ergebnis der Aufgabe für die Zusammenfassung

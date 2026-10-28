@@ -369,6 +369,22 @@ try {
     $newsChanged = $newsBefore -ne (Get-FileHash $newsJson).Hash
     Run-Python 'create_checksums.py'
 
+    # versions.json: neueste Versionen von Updater und ffmpeg für die Hilfe und den Update-Hinweis
+    # in STEFFLIX (wird nur von GitHub gelesen, der Updater lädt sie nicht herunter)
+    $versionsJson = Join-Path $Root 'versions.json'
+    $versionsBefore = if (Test-Path $versionsJson) { [IO.File]::ReadAllText($versionsJson, $Utf8) } else { '' }
+    $exeVersion = Get-FileVersion (Join-Path $Root 'updateStefflix.exe')
+    $updaterVersion = if ($exeVersion) { Short $exeVersion } else { '' }
+    $ffmpegVersion = ''
+    $ffmpegManifest = Join-Path $Root 'ffmpeg.json'
+    if (Test-Path $ffmpegManifest) { $ffmpegVersion = [string](Get-Content $ffmpegManifest -Raw -Encoding UTF8 | ConvertFrom-Json).version }
+    $versionsText = "{`n  `"updater`": `"$updaterVersion`",`n  `"ffmpeg`": `"$ffmpegVersion`"`n}`n"
+    if ($versionsText -ne $versionsBefore) {
+        [IO.File]::WriteAllText($versionsJson, $versionsText, $Utf8)
+        Good "versions.json: Updater $updaterVersion, ffmpeg $ffmpegVersion"
+    }
+    $versionsChanged = $versionsText -ne $versionsBefore
+
     # --------------------------------------------------------------
     Step '[5/5] Übersicht'
     # --------------------------------------------------------------
@@ -382,6 +398,7 @@ try {
         $toPush += 'sflix_sys/news.txt'
         $toPush += 'sflix_sys/news.json'
     }
+    if ($versionsChanged) { $toPush += 'versions.json' }
     $toPush = $toPush | Select-Object -Unique
 
     Write-Host ''

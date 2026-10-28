@@ -28,8 +28,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX Updater")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX Updater: Update, Daten einlesen, Vorschaubilder, Zusammenführen, Konvertieren")]
-[assembly: AssemblyVersion("3.2.0.0")]
-[assembly: AssemblyFileVersion("3.2.0.0")]
+[assembly: AssemblyVersion("3.2.1.0")]
+[assembly: AssemblyFileVersion("3.2.1.0")]
 
 namespace Sflix
 {
@@ -105,6 +105,7 @@ namespace Sflix
                 try
                 {
                     Settings settings = Settings.Load(Path.Combine(App.SysDir, "updater_settings.json"));
+                    UpdaterInfo.Write(App.Root, settings.GetString("ffmpeg.folder", ""));
                     if (headless) return RunHeadless(settings, run, idNote, dataFolders);
 
                     string notice = updated ? "Programm wurde auf Version " + App.VersionText + " aktualisiert." : null;

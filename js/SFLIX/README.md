@@ -91,7 +91,7 @@ Beim Einlesen der Daten schneidet `updateStefflix.exe` zu grosse Bilder auf 480x
 
 ## STEFFLIX aktualisieren
 
-`updateStefflix.exe` im STEFFLIX-Ordner starten, die Aufgaben "Update" und "Daten einlesen" auswählen und ausführen. Der Updater lädt die neue Version herunter und liest danach die Medien neu ein. Er hält sich auch selbst aktuell und meldet beim Start, wenn eine neue Version bereitsteht.
+`updateStefflix.exe` im STEFFLIX-Ordner starten, die Aufgaben "Update" und "Daten einlesen" auswählen und ausführen. Der Updater lädt die neue Version herunter und liest danach die Medien neu ein. Er hält sich auch selbst aktuell und meldet beim Start, wenn eine neue Version bereitsteht. Die Hilfe in STEFFLIX zeigt die installierten und neuesten Versionen von STEFFLIX, Updater und ffmpeg, und auf der Startseite erscheint ein Hinweis, wenn ein Update bereitsteht (abschaltbar unter Einstellungen › Startseite).
 
 ### Aufgaben des Updaters
 
@@ -99,7 +99,7 @@ Die ausgewählten Aufgaben laufen immer in dieser Reihenfolge ab:
 
 - **Update**: STEFFLIX-Dateien und den Updater selbst von GitHub aktualisieren. Installiert wird nur, wenn alle Dateien vollständig und gültig heruntergeladen wurden.
 - **Ablagen leeren**: Die Ablageordner der Werkzeuge (Ordner, deren Name mit `__` beginnt, z.B. `__teile`, `__konvertiert`, `__gelöscht` und `__original`) endgültig löschen. Vorher wird angezeigt, was gelöscht wird. Nur innerhalb des STEFFLIX-Ordners möglich.
-- **Folgen umbenennen**: Die Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen, z.B. `Serie - S01E02 - Titel.mp4` im Ordner `Staffel 01`. Erkannt werden Namen mit `S01E02` oder `1x02`. Vorher werden alle Änderungen angezeigt, danach lässt sich der letzte Lauf rückgängig machen.
+- **Folgen umbenennen**: Die Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen, z.B. `Serie - S01E02 - Titel.mp4` im Ordner `Staffel 01`. Erkannt werden Namen mit `S01E02` oder `1x02`. Vorher werden alle Änderungen angezeigt, danach lässt sich der letzte Lauf rückgängig machen. Geladene Folgenlisten werden gespeichert, beim nächsten Lauf lässt sich die gespeicherte Liste verwenden oder neu laden.
 - **Gesplittete Medien zusammenführen**: Videos wie "Titel pt1" und "Titel pt2" zu einer Datei zusammenfügen. Die Teile werden vorher in einer Liste ausgewählt, auf Wunsch wird neu kodiert. Die Teile können danach nach `__teile` verschoben werden.
 - **Videos für SFLIX konvertieren**: Videos in browserkompatible MP4 (H.264/AAC) umwandeln. Die MP4 ersetzt das Original im selben Ordner, das Original kommt nach `__konvertiert` (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.
 - **Vorschaubilder erstellen**: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach `Preview\__gelöscht`.
@@ -109,18 +109,21 @@ Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren durchsuchen mit
 
 ## Autoplay
 
-Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste ab. Die Einstellungen befinden sich hinter dem Autoplay-Symbol in der Player-Leiste, bei Bildern hinter dem Knopf "Autoplay" unter dem Bild. Das Symbol zeigt, ob Autoplay aktiv ist (ausgegraut = aus). Kurz vor dem Wechsel erscheint im Player ein Countdown; ein Klick darauf startet das nächste Medium sofort.
+Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste ab. Die Einstellungen befinden sich hinter dem Autoplay-Symbol in der Player-Leiste, bei Bildern hinter dem Knopf "Autoplay" unter dem Bild. Das Symbol zeigt, ob Autoplay aktiv ist (ausgegraut = aus), und daneben, wie viele Medien noch folgen (bei "Unbegrenzt" ∞). Kurz vor dem Wechsel erscheint im Player ein Countdown; ein Klick darauf startet das nächste Medium sofort.
 
 - **Automatisch vorwärts**: schaltet Autoplay ein oder aus.
 - **Unbegrenzt**: spielt ohne feste Anzahl weiter, bis das Ende der Playliste erreicht ist.
 - **Anzahl abzuspielender Medien**: wie viele Medien nacheinander abgespielt werden. Die Zahl wird mit jedem Medium heruntergezählt, bei 0 hält Autoplay an. Bei "Unbegrenzt" wird sie nicht verwendet.
 - **Dauer bis Übergang (Sekunden)**: Bei Videos und Musik wechselt STEFFLIX so viele Sekunden vor dem Ende (plus etwa eine Sekunde) zum nächsten Medium, bei Musik höchstens 11 Sekunden vorher. Bilder bleiben so viele Sekunden plus 11 Sekunden sichtbar.
+- **Gilt für**: Die Dauer wird pro Ordner gespeichert und gilt auch für alle Unterordner ohne eigenen Wert, z.B. für eine ganze Serie und abweichend für eine Staffel. Ohne Eintrag gilt 0. Alle Einträge stehen unter Einstellungen › Wiedergabe.
+- **Übergang hier** (Stoppuhr in der Player-Leiste): übernimmt die verbleibende Zeit des Mediums als Dauer bis Übergang, z.B. beim Beginn des Abspanns.
 
 ## Player
 
 Videos und Musik haben eine eigene Steuerleiste. Bei Videos blendet sie sich während der Wiedergabe nach kurzer Zeit aus und erscheint wieder, sobald die Maus bewegt oder das Video angetippt wird. Bei Musik bleibt sie sichtbar; darüber wird das Vorschaubild des Titels angezeigt (sonst das des Albums bzw. Ordners).
 
-- **Leiste**: vorheriges / nächstes Medium, Abspielen / Pause, 10 Sekunden zurück / vor, Lautstärke, Zeitleiste, Autoplay-Menü, Zahnradmenü, Bild im Bild und Vollbild.
+- **Leiste**: vorheriges / nächstes Medium, Abspielen / Pause, 10 Sekunden zurück / vor, Lautstärke, Zeitleiste, Übergang hier, Autoplay-Menü, Zahnradmenü, Bild im Bild und Vollbild.
+- **Musik**: Neben dem Player steht die Playliste mit allen Titeln und ihrer Dauer, der laufende Titel ist hervorgehoben. Ein Klick spielt einen Titel ab. Auf dem Handy steht die Liste unter dem Player.
 - **Maus**: Klick auf das Video startet oder pausiert, Doppelklick schaltet das Vollbild ein oder aus.
 - **Touch**: Tippen blendet die Leiste ein oder aus. Doppeltipp links oder rechts spult 10 Sekunden zurück bzw. vor, Doppeltipp in der Mitte schaltet das Vollbild um.
 - **Zahnradmenü**: Geschwindigkeit (0,5x bis 1,75x), Herunterladen und Browser-Steuerung.
@@ -182,17 +185,19 @@ Ist im Browser eingestellt, dass er beim Schliessen die Chronik oder die Website
 3. Folgenden Eintrag hinzufügen: `file:///*`
 ## Einstellungen
 
-Im Menü unter "Einstellungen" lassen sich festlegen: Kachelgrösse (Klein, Mittel, Gross), Kacheln pro Zeile, Markierungen auf den Kacheln ("Gesehen", "Letzte Folge"), Animationen reduzieren, Startbildschirm überspringen, alphabetische Gruppen auf Ordnerseiten (A–D, E–H … mit Sprungleiste, Bilder und Musik ausnehmbar), Artikel beim Sortieren ignorieren ("Der Pate" unter P), Ordner getrennt von Medien, die Anzahl Einträge bei "Weiterschauen" und die Browser-Steuerung. Änderungen gelten sofort und nur im verwendeten Browser.
+Im Menü unter "Einstellungen" lassen sich festlegen: Kachelgrösse (Klein, Mittel, Gross), Kacheln pro Zeile (fest oder automatisch nach Fensterbreite), Markierungen auf den Kacheln ("Gesehen", "Letzte Folge"), Animationen reduzieren, Startbildschirm überspringen, alphabetische Gruppen auf Ordnerseiten (A–D, E–H … mit Sprungleiste, Bilder und Musik ausnehmbar), Artikel beim Sortieren ignorieren ("Der Pate" unter P), Ordner getrennt von Medien, die Anzahl Einträge bei "Weiterschauen", Update-Hinweise, die Browser-Steuerung und die Dauer bis Übergang je Ordner. Änderungen gelten sofort und nur im verwendeten Browser.
+
+Den Lizenzschlüssel für das Feedbackformular unter Einstellungen › Lizenz eingeben. Mit gültigem Schlüssel erscheint im Menü der Eintrag "Feedback".
 
 ## Datensicherung
 
-Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen und die Sortierung der Startseite werden nur im verwendeten Browser gespeichert. Unter Einstellungen › Datensicherung lassen sie sich als Datei exportieren und wieder importieren, z.B. um sie auf einen anderen Browser oder PC zu übertragen.
+Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen, die Dauer bis Übergang je Ordner und die Sortierung der Startseite werden nur im verwendeten Browser gespeichert. Unter Einstellungen › Datensicherung lassen sie sich als Datei exportieren und wieder importieren, z.B. um sie auf einen anderen Browser oder PC zu übertragen.
 
 Gibt es mehrere STEFFLIX-Ordner auf einem PC, speichert jeder seine Daten getrennt. Der Updater legt dafür in jedem Ordner eine eigene Kennung an (`sflix_sys\install.js`). Diese Datei nicht in einen anderen STEFFLIX-Ordner kopieren. Wer einen ganzen Ordner kopiert, startet danach einmal den Updater in der Kopie, dann bekommt sie automatisch eine neue Kennung.
 
 ## Fehlerbehebung
 
-Lädt STEFFLIX nicht richtig, stimmen die Vor- und Zurück-Buttons nicht oder setzen Videos an der falschen Stelle fort, können unter Einstellungen › Fehlerbehebung die gespeicherten Daten zurückgesetzt werden (Favoriten, Playlisten, Zeitstempel, "Weiterschauen" oder alles). Die Medien selbst werden dabei nicht verändert. Vorher am besten eine Sicherung erstellen.
+Lädt STEFFLIX nicht richtig, stimmen die Vor- und Zurück-Buttons nicht oder setzen Videos an der falschen Stelle fort, hilft Einstellungen › Fehlerbehebung: "Gespeicherte Daten prüfen" zeigt verwaiste Einträge (z.B. nach dem Umbenennen im Explorer) und entfernt nur diese. Eine Diagnose mit Versionen und Browser lässt sich kopieren. Unter den weiteren Optionen lassen sich Favoriten, Playlisten, Zeitstempel, "Weiterschauen" oder alles zurücksetzen. Die Medien selbst werden dabei nicht verändert. Vor "Alle Daten löschen" wird eine Sicherung angeboten.
 
 Fehlen Programmdateien, z.B. nach einem abgebrochenen Update, `updateStefflix.exe` erneut mit der Aufgabe "Update" ausführen.
 

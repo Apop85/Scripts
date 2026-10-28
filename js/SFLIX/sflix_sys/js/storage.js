@@ -48,6 +48,215 @@ function modifyLocalData(dataType) {
     status.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
+// "Alle Daten löschen": vorher eine Sicherung anbieten
+function confirmDeleteAllData() {
+    var status = document.getElementById("repairStatus");
+    status.className = "backupInfo";
+    status.replaceChildren(document.createTextNode("Alle gespeicherten Daten löschen? Vorher am besten eine Sicherung erstellen, damit sich Favoriten, Fortschritt und Einstellungen wiederherstellen lassen."));
+    var actions = document.createElement("div");
+    actions.className = "backupConfirm";
+    var exportButton = document.createElement("button");
+    exportButton.type = "button";
+    exportButton.className = "sflixButton primary small";
+    exportButton.textContent = "Sicherung exportieren";
+    var deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "sflixButton danger small";
+    deleteButton.textContent = "Alles löschen";
+    var cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.className = "sflixButton ghost small";
+    cancelButton.textContent = "Abbrechen";
+    actions.append(exportButton, deleteButton, cancelButton);
+    status.appendChild(actions);
+    exportButton.addEventListener("click", function () {
+        exportUserData();
+        exportButton.textContent = "Sicherung erstellt";
+        exportButton.disabled = true;
+    });
+    deleteButton.addEventListener("click", function () {
+        modifyLocalData("all");
+    });
+    cancelButton.addEventListener("click", function () {
+        status.replaceChildren();
+        status.className = "";
+    });
+    status.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// ===================================================================
+// Fehlerbehebung: gespeicherte Daten prüfen und verwaiste Einträge entfernen
+// ===================================================================
+
+// Pfad eines "Weiterschauen"-Eintrags (Titel|URL)
+function getLastPlayedPath(entry) {
+    if (!entry.includes("|")) {
+        return null;
+    }
+    return normalizeMediaLocation(getMediaLocationFromDecodedData(decodeUrlData(entry.split("|")[1])));
+}
+
+// Zählt je Art die Einträge und die verwaisten (Medium bzw. Ordner gibt es nicht mehr)
+function analyzeStoredData() {
+    var result = [];
+    var add = function (id, label, total, orphans) {
+        result.push({ id: id, label: label, total: total, orphans: orphans });
+    };
+
+    var favorites = getFavorites();
+    add("favorites", "Favoriten", favorites.length, favorites.filter(function (path) {
+        return !mediaExists(path);
+    }).length);
+
+    var lastPlayed = (getData("playlast") || "").split(listSeperator).filter(function (entry) {
+        return entry !== "";
+    });
+    add("playlast", "\"Weiterschauen\"", lastPlayed.length, lastPlayed.filter(function (entry) {
+        var path = getLastPlayedPath(entry);
+        return path == null || !mediaExists(path);
+    }).length);
+
+    [["timestamp-./", "timestamp", "Abspielpositionen"], ["seen-./", "seen", "Gesehen-Markierungen"], ["timestampDuration-./", "duration", "Gespeicherte Spieldauer"]].forEach(function (kind) {
+        var keys = getAllDataKeys().filter(function (key) {
+            return key.startsWith(kind[0]);
+        });
+        add(kind[1], kind[2], keys.length, keys.filter(function (key) {
+            return !mediaExists(key.slice(kind[0].length - 2));
+        }).length);
+    });
+
+    var transitions = Object.keys(getTransitionMap());
+    add("transitions", "Dauer bis Übergang je Ordner", transitions.length, transitions.filter(function (folder) {
+        return !folderExists(folder);
+    }).length);
+
+    var playlists = getAllDataKeys().filter(function (key) {
+        return key.startsWith("playlist-");
+    });
+    add("playlists", "Playlisten", playlists.length, playlists.filter(function (key) {
+        return (getData(key) || "").split(listSeperator).some(function (entry) {
+            return entry !== "" && !mediaExists(normalizeMediaLocation(entry.split("|")[0]));
+        });
+    }).length);
+    return result;
+}
+
+// Entfernt nur verwaiste Einträge, alles andere bleibt unverändert
+function removeOrphanedData() {
+    var removed = 0;
+    var favorites = getFavorites();
+    var keptFavorites = favorites.filter(function (path) {
+        return mediaExists(path);
+    });
+    if (keptFavorites.length !== favorites.length) {
+        removed += favorites.length - keptFavorites.length;
+        setData("favorites", keptFavorites.join(listSeperator));
+    }
+
+    var lastPlayed = (getData("playlast") || "").split(listSeperator).filter(function (entry) {
+        return entry !== "";
+    });
+    var keptLastPlayed = lastPlayed.filter(function (entry) {
+        var path = getLastPlayedPath(entry);
+        return path != null && mediaExists(path);
+    });
+    if (keptLastPlayed.length !== lastPlayed.length) {
+        removed += lastPlayed.length - keptLastPlayed.length;
+        setData("playlast", keptLastPlayed.join(listSeperator));
+    }
+
+    getAllDataKeys().forEach(function (key) {
+        ["timestamp-./", "seen-./", "timestampDuration-./"].forEach(function (prefix) {
+            if (key.startsWith(prefix) && !mediaExists(key.slice(prefix.length - 2))) {
+                removeData(key);
+                removed += 1;
+            }
+        });
+        // Veraltete Playlisten werden beim nächsten Abspielen neu erstellt
+        if (key.startsWith("playlist-") && (getData(key) || "").split(listSeperator).some(function (entry) {
+            return entry !== "" && !mediaExists(normalizeMediaLocation(entry.split("|")[0]));
+        })) {
+            removeData(key);
+            removed += 1;
+        }
+    });
+
+    var transitions = getTransitionMap();
+    Object.keys(transitions).forEach(function (folder) {
+        if (!folderExists(folder)) {
+            delete transitions[folder];
+            removed += 1;
+        }
+    });
+    saveTransitionMap(transitions);
+    return removed;
+}
+
+function showDataCheck() {
+    var container = document.getElementById("checkDataResult");
+    container.replaceChildren();
+    container.className = "backupInfo";
+    var analysis = analyzeStoredData();
+    var table = document.createElement("table");
+    table.className = "dataCheckTable";
+    var head = document.createElement("tr");
+    ["Art", "Einträge", "Verwaist"].forEach(function (text) {
+        var cell = document.createElement("th");
+        cell.textContent = text;
+        head.appendChild(cell);
+    });
+    table.appendChild(head);
+    var totalOrphans = 0;
+    var totalEntries = 0;
+    analysis.forEach(function (entry) {
+        var row = document.createElement("tr");
+        [entry.label, entry.total, entry.orphans].forEach(function (value, index) {
+            var cell = document.createElement("td");
+            cell.textContent = value;
+            if (index == 2 && entry.orphans > 0) {
+                cell.className = "dataCheckOrphans";
+            }
+            row.appendChild(cell);
+        });
+        table.appendChild(row);
+        totalOrphans += entry.orphans;
+        totalEntries += entry.total;
+    });
+    container.appendChild(table);
+
+    var note = document.createElement("p");
+    if (totalOrphans == 0) {
+        note.textContent = "Alles in Ordnung: Alle Einträge zeigen auf vorhandene Medien und Ordner.";
+        container.appendChild(note);
+        return;
+    }
+    note.textContent = totalOrphans + " verwaiste Einträge gefunden. Sie zeigen auf Medien oder Ordner, die in den eingelesenen Daten fehlen. Vor dem Entfernen prüfen, ob alle Laufwerke verbunden sind und die Daten aktuell eingelesen wurden, sonst gehen Einträge verloren, die nur vorübergehend fehlen.";
+    if (totalOrphans == totalEntries) {
+        note.textContent += " Achtung: Alle Einträge wären betroffen. Das deutet eher auf fehlende Medien hin als auf alte Einträge.";
+    }
+    container.appendChild(note);
+    var actions = document.createElement("div");
+    actions.className = "backupConfirm";
+    var removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "sflixButton danger small";
+    removeButton.textContent = "Verwaiste Einträge entfernen (" + totalOrphans + ")";
+    removeButton.addEventListener("click", function () {
+        var removed = removeOrphanedData();
+        showDataCheck();
+        var done = document.createElement("p");
+        done.className = "dataCheckDone";
+        done.textContent = removed + " Einträge entfernt.";
+        container.prepend(done);
+    });
+    actions.appendChild(removeButton);
+    container.appendChild(actions);
+}
+
+function initDataCheck() {
+    document.getElementById("checkDataButton").addEventListener("click", showDataCheck);
+}
+
 // Funktion, um gespeicherte Daten mit der aktuellen Version kompatibel zu machen
 function updateData() {
     // Update 1.28 - Anpassen Listenseperator
@@ -136,6 +345,9 @@ function updateData() {
         normalizeLastPlayedUrls();
         setData("v2.00", true);
     }
+
+    // Ab 2.04: Playlisten neu erstellen, sobald sich die eingelesenen Medien geändert haben
+    refreshPlaylistsOnDataChange();
 }
 
 // "Weiterschauen" enthielt bis 1.42 teils absolute Adressen (file:///D:/sflix/start.html?=...).
@@ -249,8 +461,53 @@ function applyRenamedPaths() {
         setData("playlast", lastPlayed.join(listSeperator));
     }
 
+    // Dauer bis Übergang je Ordner (Schlüssel ohne "./", z.B. "Serien/Show/Staffel 01")
+    var transitions = getTransitionMap();
+    var mappedTransitions = {};
+    var transitionsChanged = false;
+    Object.keys(transitions).forEach(function (folder) {
+        var newFolder = folder === "" ? "" : mapRenamedPath("./" + folder, pairs).replace(/^\.\//, "");
+        if (newFolder !== folder) {
+            transitionsChanged = true;
+        }
+        // Zwei alte Ordner im selben neuen (Staffeln zusammengeführt): der bestehende Wert bleibt
+        if (!mappedTransitions.hasOwnProperty(newFolder) || newFolder === folder) {
+            mappedTransitions[newFolder] = transitions[folder];
+        }
+    });
+    if (transitionsChanged) {
+        saveTransitionMap(mappedTransitions);
+    }
+
     removePlaylists();
     setData("renamedPathsApplied", String(renamedPaths.id));
+}
+
+// Kurzer Fingerabdruck der eingelesenen Medien (Anzahl und Pfade). Ändert er sich, werden die
+// Playlisten neu erstellt, damit Vor/Zurück neue oder entfernte Medien richtig berücksichtigen.
+function getDataSignature() {
+    var paths = collectMediaPaths(typeof data === "object" && data != null ? data : {}, []);
+    var hash = 2166136261;
+    paths.forEach(function (path) {
+        for (var index = 0; index < path.length; index++) {
+            hash ^= path.charCodeAt(index);
+            hash = Math.imul(hash, 16777619);
+        }
+        hash ^= 47;
+    });
+    return paths.length + "-" + (hash >>> 0).toString(16);
+}
+
+function refreshPlaylistsOnDataChange() {
+    var signature = getDataSignature();
+    var stored = getData("dataSignature");
+    if (stored !== signature) {
+        // Beim ersten Start mit 2.04 ist noch nichts gespeichert: dann nur merken
+        if (stored != null) {
+            removePlaylists();
+        }
+        setData("dataSignature", signature);
+    }
 }
 
 // Bildet den Dateinamen so nach, wie Version 1.42 ihn für Zeitstempel verwendet hat
@@ -572,7 +829,7 @@ function migrateBackupData(data, backupVersion) {
 
 // Markierungen erledigter Migrationen ("v2.00") und umbenannter Pfade
 function isMigrationFlag(key) {
-    return /^v\d+(\.\d+)*$/.test(key) || key === "renamedPathsApplied" || key === sharedDataImportedKey;
+    return /^v\d+(\.\d+)*$/.test(key) || key === "renamedPathsApplied" || key === sharedDataImportedKey || key === "dataSignature";
 }
 
 function showBackupStatus(text, isError) {

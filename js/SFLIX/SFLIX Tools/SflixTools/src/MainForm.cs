@@ -1950,6 +1950,13 @@ namespace Sflix
                     using (EpisodeSearchDialog dlg = new EpisodeSearchDialog(term)) return dlg.Choose(this);
                 });
             };
+            ctx.ChooseCachedEpisodeList = delegate(EpisodeList cached, string failure)
+            {
+                return (string)Invoke((Func<string>)delegate
+                {
+                    using (EpisodeCacheDialog dlg = new EpisodeCacheDialog(cached, failure)) return dlg.Choose(this);
+                });
+            };
             ctx.ConfirmEpisodePlan = delegate(EpisodePlan plan)
             {
                 return (bool)Invoke((Func<bool>)delegate

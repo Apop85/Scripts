@@ -34,13 +34,16 @@ var licenseFields = ["lic1", "lic2", "lic3", "lic4", "lic5", "lic6", "lic7", "li
 // Playlisten, deren Einträge aus "Pfad|URL" bestehen und aus verschiedenen Ordnern stammen können
 var listPlaylists = ["searchResults", "favoritesList", "shuffleList"];
 
-var modalIds = ["settingsBox", "feedbackWrapper", "serialKeyWrapper"];
+var modalIds = ["settingsBox", "feedbackWrapper"];
 
 var repositoryUrl = "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/";
 
 var versionUrl = repositoryUrl + "sflix_sys/version.js";
 
 var newsUrl = repositoryUrl + "sflix_sys/news.json";
+
+// Neueste Versionen von Updater und ffmpeg (schreibt build_release, nur auf GitHub)
+var versionsUrl = repositoryUrl + "versions.json";
 
 // Darstellung der Changelog-Typen (wie bisher in news.txt)
 var newsTypeStyles = {
@@ -135,6 +138,7 @@ var displaySettingsKey = "displaySettings";
 
 var displaySettingDefaults = {
     cardSize: "medium",       // small, medium, large
+    rowAuto: false,           // Kacheln pro Zeile nach verfügbarer Breite
     rowSize: 12,              // Kacheln pro Zeile, danach beginnt eine neue Zeile
     showMarkers: true,        // "Gesehen", "Letzte Folge" ... auf Kacheln
     reduceMotion: false,
@@ -145,7 +149,8 @@ var displaySettingDefaults = {
     jumpBar: true,            // Sprungleiste zu den Gruppen
     ignoreArticles: true,
     separateFolders: false,   // Ordner in einem eigenen Band über den Medien
-    continueMax: 20           // Einträge in "Weiterschauen"
+    continueMax: 20,          // Einträge in "Weiterschauen"
+    showUpdateHints: true     // Hinweise auf neue Versionen von STEFFLIX und Updater
 };
 
 var displaySettingLimits = {
@@ -221,6 +226,114 @@ function applyDisplaySettings() {
     root.classList.toggle("cardsSmall", size === "small");
     root.classList.toggle("cardsLarge", size === "large");
     root.classList.toggle("reduceMotion", getSetting("reduceMotion"));
+}
+
+// ===================================================================
+// Dauer bis Übergang je Ordner
+// Gespeichert als JSON { "": 5, "Serien/Show": 85 } unter "transitionByFolder" (gehört damit zur
+// Datensicherung). "" steht für alle Ordner. Es gilt der Wert des nächsten Ordners darüber,
+// der einen eigenen Wert hat, sonst 0.
+// ===================================================================
+var transitionKey = "transitionByFolder";
+
+var transitionMax = 3600;
+
+function getTransitionMap() {
+    var stored = null;
+    try {
+        stored = JSON.parse(getData(transitionKey) || "null");
+    } catch (error) {
+        stored = null;
+    }
+    var map = {};
+    if (stored == null || typeof stored !== "object" || Array.isArray(stored)) {
+        return map;
+    }
+    Object.keys(stored).forEach(function (folder) {
+        var seconds = parseInt(stored[folder], 10);
+        if (!isNaN(seconds) && seconds >= 0) {
+            map[folder] = Math.min(transitionMax, seconds);
+        }
+    });
+    return map;
+}
+
+function saveTransitionMap(map) {
+    if (Object.keys(map).length == 0) {
+        removeData(transitionKey);
+    } else {
+        setData(transitionKey, JSON.stringify(map));
+    }
+}
+
+// seconds = null entfernt den Eintrag (der Ordner erbt dann wieder)
+function setTransition(folder, seconds) {
+    var map = getTransitionMap();
+    if (seconds == null) {
+        delete map[folder];
+    } else {
+        var value = parseInt(seconds, 10);
+        map[folder] = Math.min(transitionMax, Math.max(0, isNaN(value) ? 0 : value));
+    }
+    saveTransitionMap(map);
+}
+
+// Geltender Wert für ein Medium: { seconds, folder } (folder = null: kein Eintrag, Standard 0)
+function getTransitionFor(mediaPath) {
+    var map = getTransitionMap();
+    var folders = mediaPath ? getMediaFolders(mediaPath) : [];
+    for (var depth = folders.length; depth >= 0; depth--) {
+        var key = folders.slice(0, depth).join("/");
+        if (map.hasOwnProperty(key)) {
+            return { seconds: map[key], folder: key };
+        }
+    }
+    return { seconds: 0, folder: null };
+}
+
+// Wählbare Ebenen für ein Medium: alle Ordner, Kategorie, Serie, Staffel ...
+function getTransitionScopes(mediaPath) {
+    var folders = mediaPath ? getMediaFolders(mediaPath) : [];
+    var scopes = [{ folder: "", label: "Alle Ordner" }];
+    for (var depth = 1; depth <= folders.length; depth++) {
+        scopes.push({ folder: folders.slice(0, depth).join("/"), label: folders.slice(0, depth).join(" › ") });
+    }
+    return scopes;
+}
+
+// Vorauswahl: der Ordner, von dem der Wert kommt, sonst die Ebene unter der Kategorie (Serie)
+function getDefaultTransitionScope(mediaPath) {
+    var current = getTransitionFor(mediaPath);
+    if (current.folder != null) {
+        return current.folder;
+    }
+    var folders = mediaPath ? getMediaFolders(mediaPath) : [];
+    return folders.slice(0, Math.min(2, folders.length)).join("/");
+}
+
+function getTransitionLabel(folder) {
+    return folder === "" ? "Alle Ordner" : folder.split("/").join(" › ");
+}
+
+// Vergleicht Versionsnummern wie "3.2.10" und "3.2.9" (positiv, wenn a neuer ist)
+function compareVersions(a, b) {
+    var partsA = String(a || "").split(".");
+    var partsB = String(b || "").split(".");
+    for (var index = 0; index < Math.max(partsA.length, partsB.length); index++) {
+        var difference = (parseInt(partsA[index], 10) || 0) - (parseInt(partsB[index], 10) || 0);
+        if (difference !== 0) {
+            return difference;
+        }
+    }
+    return 0;
+}
+
+// Vom Updater geschrieben (sflix_sys/updater_info.js): installierte Versionen von Updater und ffmpeg
+function getUpdaterInfo() {
+    if (typeof updaterInfo === "undefined" || updaterInfo == null || typeof updaterInfo !== "object") {
+        return null;
+    }
+    return updaterInfo;
 }
 
 function hasExtension(filename, extensions) {
@@ -299,6 +412,10 @@ var iconShapes = {
     chevronDown: '<path d="M6 9l6 6 6-6"/>',
     grip: '<circle cx="9" cy="6" r="1.2" fill="currentColor"/><circle cx="15" cy="6" r="1.2" fill="currentColor"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/><circle cx="9" cy="18" r="1.2" fill="currentColor"/><circle cx="15" cy="18" r="1.2" fill="currentColor"/>',
     sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+    // Übergang festlegen: Stoppuhr mit Pfeil
+    transition: '<circle cx="11" cy="13.5" r="7.5"/><path d="M11 9.5v4l2.6 1.6M9 2.5h4M11 2.5V6"/><path d="M18.5 4.5l2 2" />',
+    copy: '<rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 8.5V5.5a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/>',
+    trash: '<path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/>',
     // Mediensteuerung
     pause: '<rect x="6.5" y="5" width="3.6" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="13.9" y="5" width="3.6" height="14" rx="1" fill="currentColor" stroke="none"/>',
     skipPrev: '<path d="M6 5.5v13"/><path d="M19 5.8v12.4L9.2 12z" fill="currentColor" stroke="none"/>',

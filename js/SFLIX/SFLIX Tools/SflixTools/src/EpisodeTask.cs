@@ -33,6 +33,8 @@ namespace Sflix
     {
         public string Source;
         public string SeriesTitle;
+        public string SeriesId;           // Kennung bei der Quelle (zum Neuladen ohne Suche)
+        public DateTime Loaded = DateTime.Now;   // bei gespeicherten Listen: Zeitpunkt des Ladens
         public readonly SortedDictionary<int, SortedDictionary<int, string>> Seasons = new SortedDictionary<int, SortedDictionary<int, string>>();
 
         public void Add(int season, int episode, string title)
@@ -82,6 +84,174 @@ namespace Sflix
 
         // Reihenfolge der Suche: zuerst deutsche Titel
         public static readonly EpisodeSource[] All = { new FernsehserienSource(), new TvmazeSource() };
+
+        public static EpisodeSource ByName(string name)
+        {
+            foreach (EpisodeSource s in All)
+                if (string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase)) return s;
+            return null;
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Gespeicherte Folgenlisten (sflix_sys\folgen_cache.json), damit nicht bei jedem Lauf dieselbe
+    // Abfrage an die Webseite geht. Gefunden wird eine Liste über den Seriennamen (Ordnername oder
+    // gefundener Titel, ohne Gross-/Kleinschreibung, Jahr und Satzzeichen), nicht über den Pfad.
+    // Gespeichert wird nur eine Liste mit mindestens einer Folge; ein fehlgeschlagenes Neuladen
+    // überschreibt nichts. Kein Ablaufdatum, "Neu laden" ersetzt den alten Stand.
+    // ------------------------------------------------------------------
+    public static class EpisodeCache
+    {
+        const string FileName = "folgen_cache.json";
+
+        public static string FilePath { get { return Path.Combine(App.SysDir, FileName); } }
+
+        // "Breaking Bad (2008)" -> "breaking bad"
+        public static string Normalize(string name)
+        {
+            string s = (name ?? "").ToLowerInvariant();
+            s = Regex.Replace(s, @"\(\s*(19|20)\d\d\s*\)", " ");
+            s = Regex.Replace(s, @"[^\p{L}\p{Nd}]+", " ");
+            return s.Trim();
+        }
+
+        static List<object> ReadEntries()
+        {
+            try
+            {
+                if (!File.Exists(FilePath)) return new List<object>();
+                JsonObject root = Json.Parse(File.ReadAllText(FilePath, Encoding.UTF8)) as JsonObject;
+                List<object> series = root != null ? root.Arr("series") : null;
+                return series ?? new List<object>();
+            }
+            catch { return new List<object>(); }
+        }
+
+        static bool Matches(JsonObject entry, string key)
+        {
+            if (entry == null || key == "") return false;
+            List<object> names = entry.Arr("names");
+            if (names != null)
+                foreach (object n in names)
+                    if (n is string && (string)n == key) return true;
+            return Normalize(entry.Str("title")) == key;
+        }
+
+        // Gespeicherte Liste für einen Serienordner, sonst null
+        public static EpisodeList Find(string folderName)
+        {
+            string key = Normalize(folderName);
+            foreach (object o in ReadEntries())
+            {
+                JsonObject entry = o as JsonObject;
+                if (!Matches(entry, key)) continue;
+                EpisodeList list = new EpisodeList();
+                list.Source = entry.Str("source");
+                list.SeriesId = entry.Str("id");
+                list.SeriesTitle = entry.Str("title") ?? folderName;
+                DateTime loaded;
+                if (DateTime.TryParse(entry.Str("loaded") ?? "", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out loaded))
+                    list.Loaded = loaded;
+                JsonObject seasons = entry.Obj("seasons");
+                if (seasons != null)
+                    foreach (string season in seasons.Keys)
+                    {
+                        JsonObject episodes = seasons.Obj(season);
+                        int s;
+                        if (episodes == null || !int.TryParse(season, NumberStyles.Integer, CultureInfo.InvariantCulture, out s)) continue;
+                        foreach (string episode in episodes.Keys)
+                        {
+                            int e;
+                            if (int.TryParse(episode, NumberStyles.Integer, CultureInfo.InvariantCulture, out e))
+                                list.Add(s, e, episodes.Str(episode));
+                        }
+                    }
+                return list.Count > 0 ? list : null;
+            }
+            return null;
+        }
+
+        // Speichert die Liste (ersetzt einen Eintrag derselben Serie). Leere Listen nie.
+        public static void Save(string folderName, EpisodeList list, TaskContext ctx)
+        {
+            if (list == null || list.Count == 0) return;
+            try
+            {
+                List<string> names = new List<string>();
+                foreach (string n in new string[] { Normalize(folderName), Normalize(list.SeriesTitle) })
+                    if (n != "" && !names.Contains(n)) names.Add(n);
+
+                List<object> kept = new List<object>();
+                foreach (object o in ReadEntries())
+                {
+                    JsonObject entry = o as JsonObject;
+                    if (entry == null) continue;
+                    bool same = string.Equals(entry.Str("source"), list.Source, StringComparison.OrdinalIgnoreCase)
+                        && !string.IsNullOrEmpty(list.SeriesId) && entry.Str("id") == list.SeriesId;
+                    foreach (string n in names) if (Matches(entry, n)) same = true;
+                    if (!same) kept.Add(entry);
+                }
+
+                JsonObject seasons = new JsonObject();
+                foreach (KeyValuePair<int, SortedDictionary<int, string>> season in list.Seasons)
+                {
+                    JsonObject episodes = new JsonObject();
+                    foreach (KeyValuePair<int, string> ep in season.Value)
+                        episodes[ep.Key.ToString(CultureInfo.InvariantCulture)] = ep.Value ?? "";
+                    seasons[season.Key.ToString(CultureInfo.InvariantCulture)] = episodes;
+                }
+                List<object> nameList = new List<object>();
+                foreach (string n in names) nameList.Add(n);
+                JsonObject item = new JsonObject();
+                item["names"] = nameList;
+                item["source"] = list.Source ?? "";
+                item["id"] = list.SeriesId ?? "";
+                item["title"] = list.SeriesTitle ?? "";
+                item["loaded"] = list.Loaded.ToString("o", CultureInfo.InvariantCulture);
+                item["seasons"] = seasons;
+                kept.Insert(0, item);
+
+                JsonObject root = new JsonObject();
+                root["series"] = kept;
+                string tmp = FilePath + ".tmp";
+                File.WriteAllText(tmp, Json.Write(root, 1), FileOps.Utf8NoBom);
+                FileOps.Replace(tmp, FilePath);
+            }
+            catch (Exception e)
+            {
+                if (ctx != null) ctx.Log("Warnung: Folgenliste konnte nicht gespeichert werden: " + e.Message);
+            }
+        }
+
+        // Dieselbe Serie neu von der Quelle laden (ohne Suche). null, wenn das nicht geht.
+        public static EpisodeList Reload(EpisodeList cached, CancellationToken token, out string error)
+        {
+            error = null;
+            EpisodeSource src = EpisodeSource.ByName(cached.Source);
+            if (src == null || string.IsNullOrEmpty(cached.SeriesId))
+            {
+                error = "Quelle unbekannt";
+                return null;
+            }
+            try
+            {
+                SeriesHit hit = new SeriesHit();
+                hit.Id = cached.SeriesId;
+                hit.Title = cached.SeriesTitle;
+                EpisodeList fresh = src.Load(hit, token);
+                if (fresh == null || fresh.Count == 0)
+                {
+                    error = "keine Folgen gefunden";
+                    return null;
+                }
+                return fresh;
+            }
+            catch (Exception e)
+            {
+                error = e.Message;
+                return null;
+            }
+        }
     }
 
     static class EpisodeHttp
@@ -199,6 +369,7 @@ namespace Sflix
             EpisodeList list = new EpisodeList();
             list.Source = Name;
             list.SeriesTitle = hit.Title;
+            list.SeriesId = hit.Id;
             // Jede Folge ist ein Link mit title="<Staffel>.<Folge> <Titel>", z.B. "1.01 Kulturelle Unterschiede"
             foreach (Match m in Regex.Matches(page, "<a role=\"row\"[^>]*\\btitle=\"(\\d+)\\.(\\d+)\\s+([^\"]*)\""))
                 list.Add(int.Parse(m.Groups[1].Value), int.Parse(m.Groups[2].Value), WebUtility.HtmlDecode(m.Groups[3].Value));
@@ -248,6 +419,7 @@ namespace Sflix
             EpisodeList list = new EpisodeList();
             list.Source = Name;
             list.SeriesTitle = hit.Title;
+            list.SeriesId = hit.Id;
             List<object> arr = Json.Parse(json) as List<object>;
             if (arr != null)
                 foreach (object o in arr)
@@ -538,7 +710,8 @@ namespace Sflix
 
             ctx.Log("Serienordner: " + seriesDir);
             ctx.Progress(-1, "Folgenliste wählen ...");
-            EpisodeList list = ctx.ChooseEpisodeList(Path.GetFileName(seriesDir));
+            string folderName = Path.GetFileName(seriesDir);
+            EpisodeList list = ChooseList(ctx, folderName);
             if (list == null)
             {
                 ctx.Log("Keine Folgenliste gewählt, nichts umbenannt.");
@@ -565,6 +738,40 @@ namespace Sflix
             }
             Execute(ctx, plan);
             LogLists(ctx, plan);
+        }
+
+        // Gespeicherte Liste verwenden, dieselbe Serie neu laden oder neu suchen. Neu geladene oder
+        // gesuchte Listen werden gespeichert (nur mit Folgen, ein Fehler überschreibt nichts).
+        static EpisodeList ChooseList(TaskContext ctx, string folderName)
+        {
+            EpisodeList cached = EpisodeCache.Find(folderName);
+            string failure = null;
+            while (cached != null && ctx.ChooseCachedEpisodeList != null)
+            {
+                string choice = ctx.ChooseCachedEpisodeList(cached, failure);
+                if (choice == null) return null;
+                if (choice == "use")
+                {
+                    ctx.Log("Gespeicherte Folgenliste vom " + cached.Loaded.ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) + " verwendet.");
+                    return cached;
+                }
+                if (choice == "search") break;
+                ctx.Progress(-1, "Lade Folgen von „" + cached.SeriesTitle + "“ ...");
+                string error;
+                EpisodeList fresh = EpisodeCache.Reload(cached, ctx.Token, out error);
+                ctx.Token.ThrowIfCancellationRequested();
+                if (fresh != null)
+                {
+                    EpisodeCache.Save(folderName, fresh, ctx);
+                    ctx.Log("Folgenliste neu geladen und gespeichert.");
+                    return fresh;
+                }
+                ctx.Log("Warnung: Folgenliste konnte nicht neu geladen werden (" + error + "). Die gespeicherte Liste bleibt erhalten.");
+                failure = error;
+            }
+            EpisodeList list = ctx.ChooseEpisodeList(folderName);
+            if (list != null) EpisodeCache.Save(folderName, list, ctx);
+            return list;
         }
 
         static void LogLists(TaskContext ctx, EpisodePlan plan)

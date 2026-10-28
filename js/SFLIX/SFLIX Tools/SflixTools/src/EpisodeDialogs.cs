@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
@@ -234,6 +235,71 @@ namespace Sflix
             Icon = owner.Icon;
             ShowDialog(owner);
             return DialogResult == DialogResult.OK ? Result : null;
+        }
+    }
+
+    // Gespeicherte Folgenliste gefunden: verwenden, neu laden, andere Serie suchen oder abbrechen
+    public class EpisodeCacheDialog : Form
+    {
+        string choice;
+
+        public EpisodeCacheDialog(EpisodeList cached, string failure)
+        {
+            Text = "Gespeicherte Folgenliste";
+            ConflictDialog.Setup(this);
+
+            TableLayoutPanel root = new TableLayoutPanel();
+            root.Dock = DockStyle.Fill;
+            root.AutoSize = true;
+            root.ColumnCount = 1;
+            root.Padding = new Padding(Theme.S(16), Theme.S(14), Theme.S(16), Theme.S(12));
+
+            Label title = Theme.MakeLabel("Für „" + cached.SeriesTitle + "“ ist eine Folgenliste gespeichert.", false);
+            title.Font = new Font("Segoe UI Semibold", 10.5f);
+            title.MaximumSize = new Size(Theme.S(560), 0);
+            Label info = Theme.MakeLabel(cached.Source + ", geladen am " + cached.Loaded.ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) +
+                ", " + cached.Seasons.Count + (cached.Seasons.Count == 1 ? " Staffel, " : " Staffeln, ") + cached.Count + " Folgen", true);
+            info.MaximumSize = new Size(Theme.S(560), 0);
+            info.Margin = new Padding(0, Theme.S(4), 0, Theme.S(10));
+            Label question = Theme.MakeLabel(failure == null
+                ? "Soll die gespeicherte Liste verwendet oder neu von der Webseite geladen werden?"
+                : "Neu laden ist fehlgeschlagen (" + failure + "). Die gespeicherte Liste bleibt erhalten und kann verwendet werden.", false);
+            question.MaximumSize = new Size(Theme.S(560), 0);
+            if (failure != null) question.ForeColor = Color.FromArgb(0xfa, 0xcc, 0x15);
+
+            FlowLayoutPanel buttons = new FlowLayoutPanel();
+            buttons.AutoSize = true;
+            buttons.FlowDirection = FlowDirection.RightToLeft;
+            buttons.Dock = DockStyle.Fill;
+            buttons.Margin = new Padding(0, Theme.S(14), 0, 0);
+            Button cancel = Theme.MakeButton("Abbrechen", false);
+            Button search = Theme.MakeButton("Andere Serie suchen", false);
+            Button reload = Theme.MakeButton(failure == null ? "Neu laden" : "Nochmals laden", false);
+            Button use = Theme.MakeButton("Gespeicherte verwenden", true);
+            cancel.Click += delegate { choice = null; DialogResult = DialogResult.Cancel; };
+            search.Click += delegate { choice = "search"; DialogResult = DialogResult.OK; };
+            reload.Click += delegate { choice = "reload"; DialogResult = DialogResult.OK; };
+            use.Click += delegate { choice = "use"; DialogResult = DialogResult.OK; };
+            buttons.Controls.Add(cancel);
+            buttons.Controls.Add(search);
+            buttons.Controls.Add(reload);
+            buttons.Controls.Add(use);
+
+            root.Controls.Add(title);
+            root.Controls.Add(info);
+            root.Controls.Add(question);
+            root.Controls.Add(buttons);
+            Controls.Add(root);
+            AcceptButton = use;
+            CancelButton = cancel;
+        }
+
+        public string Choose(Form owner)
+        {
+            Icon = owner.Icon;
+            ShowIcon = true;
+            ShowDialog(owner);
+            return DialogResult == DialogResult.OK ? choice : null;
         }
     }
 

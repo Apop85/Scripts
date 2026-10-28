@@ -6,7 +6,7 @@
       "items": [
         {
           "type": "FEATURE",
-          "text": "Neuer Menüpunkt \"Einstellungen\". Alle Änderungen gelten sofort, eine Vorschau zeigt die Kacheln direkt mit den gewählten Einstellungen. Die Einstellungen gehören zur Datensicherung und lassen sich mit \"Auf Standard zurücksetzen\" zurücksetzen (Favoriten, Gesehen, \"Weiterschauen\", Autoplay und die Sortierung der Startseite bleiben dabei erhalten)."
+          "text": "Neuer Menüpunkt \"Einstellungen\". Alle Änderungen gelten sofort, eine Vorschau zeigt die Kacheln direkt mit den gewählten Einstellungen. Die Einstellungen gehören zur Datensicherung und lassen sich mit \"Auf Standard zurücksetzen\" zurücksetzen (Favoriten, Gesehen, \"Weiterschauen\", Autoplay, die Dauer bis Übergang je Ordner, der Lizenzschlüssel und die Sortierung der Startseite bleiben dabei erhalten). Die Abschnitte heissen Darstellung, Sortierung, Startseite, Wiedergabe, Datensicherung, Fehlerbehebung und Lizenz."
         },
         {
           "type": "INTERFACE",
@@ -14,7 +14,7 @@
         },
         {
           "type": "FEATURE",
-          "text": "Einstellungen: \"Kacheln pro Zeile\" legt fest, nach wie vielen Kacheln ein Band auf eine neue Zeile umbricht (Standard 12)."
+          "text": "Einstellungen: \"Kacheln pro Zeile\" legt fest, nach wie vielen Kacheln ein Band auf eine neue Zeile umbricht (Standard 12). Mit \"Kacheln pro Zeile automatisch\" kommen genau so viele Kacheln in eine Zeile, wie nebeneinander Platz haben, auch auf dem Handy. Ändert sich die Fenstergrösse, werden die Zeilen neu verteilt."
         },
         {
           "type": "FEATURE",
@@ -46,7 +46,35 @@
         },
         {
           "type": "INTERFACE",
-          "text": "Datensicherung (exportieren und importieren) und Fehlerbehebung befinden sich jetzt in den Einstellungen. Die Hilfe verweist darauf."
+          "text": "Datensicherung (exportieren und importieren), Fehlerbehebung und die Eingabe des Lizenzschlüssels befinden sich jetzt in den Einstellungen. Der Menüpunkt \"Lizenz\" entfällt, \"Feedback\" erscheint wie bisher nur mit gültigem Schlüssel. Ein gespeicherter Schlüssel wird nur als **** angezeigt. Die Hilfe verweist darauf."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Fehlerbehebung: \"Gespeicherte Daten prüfen\" zeigt, wie viele Favoriten, Einträge in \"Weiterschauen\", Abspielpositionen und weitere Daten gespeichert sind und wie viele davon auf Medien oder Ordner zeigen, die es nicht mehr gibt. Nur diese verwaisten Einträge lassen sich gezielt entfernen. Eine Diagnose (Versionen, Browser, Speicher, Anzahl Medien) lässt sich kopieren und mit Lizenz im Feedback mitschicken. Vor \"Alle Daten löschen\" wird angeboten, eine Sicherung zu erstellen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Playlisten werden automatisch neu erstellt, sobald sich die eingelesenen Medien ändern. Vor und Zurück berücksichtigen so neue oder entfernte Medien, ohne dass die Playlisten von Hand gelöscht werden müssen."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Musik: Neben dem Player steht eine Playliste mit allen Titeln, ihrer Dauer und der Gesamtdauer, wie man sie von Musikplayern kennt. Der laufende Titel ist hervorgehoben, ein Klick spielt einen Titel ab. Auf dem Handy steht die Liste unter dem Player. Die Dauer wird beim ersten Anzeigen aus den Dateien gelesen und gespeichert."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Dauer bis Übergang gilt jetzt je Ordner: Ein Wert gilt für den Ordner und alle Unterordner ohne eigenen Wert, z.B. für eine ganze Serie und abweichend für eine Staffel. Ohne Eintrag gilt 0. Im Autoplay-Menü wählt \"Gilt für\" den Ordner. Der neue Knopf \"Übergang hier\" in der Player-Leiste übernimmt die verbleibende Zeit des Mediums. Unter Einstellungen › Wiedergabe stehen alle Einträge zum Bearbeiten (einklappbar). Die Werte gehören zur Datensicherung, umbenannte Ordner ziehen mit. Hinweis: Ein bisher eingestellter Wert für alles wird nicht übernommen und muss einmal neu gesetzt werden."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Player: Bei aktivem Autoplay zeigt das Autoplay-Symbol, wie viele Medien noch folgen, bei \"Unbegrenzt\" das Zeichen ∞."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Hilfe: Bei Autoplay und Player stehen die Symbole der Player-Leiste neben den Erklärungen. Unter \"STEFFLIX aktualisieren\" stehen die installierten und neuesten Versionen von STEFFLIX, Updater und ffmpeg."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Startseite: Ist ein neuer Updater verfügbar, erscheint ein Hinweis wie bei STEFFLIX-Updates. Unter Einstellungen › Startseite lassen sich die Update-Hinweise ausblenden."
         },
         {
           "type": "INTERFACE",
@@ -54,7 +82,7 @@
         },
         {
           "type": "FEATURE",
-          "text": "Updater: Neues Tool \"Folgen umbenennen\". Es holt die Folgenliste einer Serie von fernsehserien.de (deutsche Titel, sonst TVmaze) und benennt die Dateien um, z.B. \"Serie - S01E02 - Titel.mp4\" im Ordner \"Staffel 01\". Erkannt werden S01E02 und 1x02, Doppelfolgen wie S01E01E02 zählen als erste Folge. Staffelordner werden angeglichen (\"Staffel 1\" wird \"Staffel 01\", gibt es beide, werden sie zusammengeführt), Folgen in der falschen Staffel oder direkt im Serienordner kommen in den richtigen Staffelordner. Vorher zeigt eine Vorschau alle Änderungen, fehlende Folgen und nicht zugeordnete Dateien. Bei mehreren Dateien für dieselbe Folge wählst du, welche umbenannt wird. Vorschaubilder ziehen mit, Favoriten, Fortschritt und \"Weiterschauen\" bleiben erhalten, und der letzte Lauf lässt sich rückgängig machen."
+          "text": "Updater: Neues Tool \"Folgen umbenennen\". Es holt die Folgenliste einer Serie von fernsehserien.de (deutsche Titel, sonst TVmaze) und benennt die Dateien um, z.B. \"Serie - S01E02 - Titel.mp4\" im Ordner \"Staffel 01\". Erkannt werden S01E02 und 1x02, Doppelfolgen wie S01E01E02 zählen als erste Folge. Staffelordner werden angeglichen (\"Staffel 1\" wird \"Staffel 01\", gibt es beide, werden sie zusammengeführt), Folgen in der falschen Staffel oder direkt im Serienordner kommen in den richtigen Staffelordner. Vorher zeigt eine Vorschau alle Änderungen, fehlende Folgen und nicht zugeordnete Dateien. Bei mehreren Dateien für dieselbe Folge wählst du, welche umbenannt wird. Vorschaubilder ziehen mit, Favoriten, Fortschritt und \"Weiterschauen\" bleiben erhalten, und der letzte Lauf lässt sich rückgängig machen. Geladene Folgenlisten werden gespeichert: Beim nächsten Lauf für dieselbe Serie fragt das Tool, ob die gespeicherte Liste verwendet, neu geladen oder eine andere Serie gesucht werden soll. Schlägt das Neuladen fehl, bleibt die gespeicherte Liste erhalten."
         },
         {
           "type": "FEATURE",
@@ -71,6 +99,10 @@
         {
           "type": "INTERFACE",
           "text": "Updater: Das Protokoll (\"Details\") erscheint rechts neben dem Inhalt, seine Breite lässt sich mit einem Schieber anpassen. Zeilen sind nach Fehler, Hinweis und Erfolg eingefärbt und haben eine Uhrzeit. Neu sind eine Suche, der Filter \"Nur Fehler und Warnungen\" sowie die Knöpfe Kopieren, Leeren und \"Datei öffnen\". Bei einem Fehler öffnet sich das Protokoll von selbst."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: Schreibt bei jedem Start seine Version und die installierte ffmpeg-Version in sflix_sys\\updater_info.js, damit STEFFLIX sie in der Hilfe anzeigen und auf einen neuen Updater hinweisen kann."
         },
         {
           "type": "INTERFACE",

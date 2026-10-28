@@ -221,6 +221,8 @@ namespace Sflix
                 File.WriteAllText(VersionFile, Json.Write(m.ToJson(), 2), FileOps.Utf8NoBom);
                 encoder = null;
                 ctx.Log("  ffmpeg " + m.Version + " installiert");
+                // Für die Versionsanzeige in der Hilfe von STEFFLIX
+                UpdaterInfo.Write(App.Root, Dir);
             }
             finally
             {

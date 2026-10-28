@@ -18,15 +18,8 @@ function toggleContainer(idArray, displayMode) {
             node.style.display = displayMode;
             if (idArray[key] == "searchFieldContainer") {
                 document.getElementById("searchField").focus();
-            } else if (idArray[key] == "serialKeyWrapper") {
-                var license = getData("serial");
-                if (license != null) {
-                    var serialIndex = 0;
-                    for (var index = 0; index < licenseFields.length; index++) {
-                        document.getElementById(licenseFields[index]).value = license.slice(serialIndex, serialIndex + 4);
-                        serialIndex += 4;
-                    }
-                }
+            } else if (idArray[key] == "settingsBox") {
+                fillTransitionFields(document.getElementById("autoplayDuration"), document.getElementById("autoplayDurationScope"));
             }
             // Video-Interaktion einschränken (Chrome Bug Workaround)
             if (needsVideoWorkaround) {
@@ -65,9 +58,75 @@ function isAutoplayInfinite() {
     return document.getElementById("autoplayInfinite").checked;
 }
 
-// Einstellungen speichern: Autoplay, Anzahl, Dauer, Unbegrenzt
-function saveAutoplaySettings(newAutoplay, newAmount, newDuration) {
-    setData("settings", [newAutoplay, newAmount, newDuration, isAutoplayInfinite()].join(listSeperator));
+// Einstellungen speichern: Autoplay, Anzahl, (früher Dauer), Unbegrenzt.
+// Die Dauer bis Übergang gilt seit 2.04 je Ordner (transitionByFolder), der dritte Wert bleibt 0.
+function saveAutoplaySettings(newAutoplay, newAmount) {
+    setData("settings", [newAutoplay, newAmount, 0, isAutoplayInfinite()].join(listSeperator));
+}
+
+// Dauer bis Übergang für das laufende Medium übernehmen (aus dem Ordner bzw. dessen Eltern)
+function refreshTransitionForMedia(mediaPath) {
+    autoplayDuration = getTransitionFor(mediaPath).seconds;
+    document.getElementById("autoplayDuration").value = autoplayDuration;
+}
+
+// Füllt ein Feld "Dauer bis Übergang" und die Auswahl "Gilt für" für das laufende Medium.
+// scope: gewählte Ebene ("" = alle Ordner), sonst die Vorauswahl
+function fillTransitionFields(durationInput, scopeSelect, scope) {
+    var mediaPath = currentMediaLocation;
+    if (scope == null) {
+        scope = getDefaultTransitionScope(mediaPath);
+    }
+    scopeSelect.replaceChildren();
+    getTransitionScopes(mediaPath).forEach(function (entry) {
+        var option = document.createElement("option");
+        option.value = entry.folder;
+        option.textContent = entry.label;
+        scopeSelect.appendChild(option);
+    });
+    scopeSelect.value = scope;
+    durationInput.value = getTransitionValueAt(scope, mediaPath);
+}
+
+// Wert, der auf einer Ebene gilt: der eigene, sonst der geerbte
+function getTransitionValueAt(scope, mediaPath) {
+    var map = getTransitionMap();
+    if (map.hasOwnProperty(scope)) {
+        return map[scope];
+    }
+    var parts = scope === "" ? [] : scope.split("/");
+    for (var depth = parts.length - 1; depth >= 0; depth--) {
+        var key = parts.slice(0, depth).join("/");
+        if (map.hasOwnProperty(key)) {
+            return map[key];
+        }
+    }
+    return 0;
+}
+
+// Speichert die Eingabe für die gewählte Ebene und übernimmt sie für das laufende Medium
+function saveTransitionFromFields(durationInput, scopeSelect) {
+    var seconds = Math.min(transitionMax, Math.max(0, parseInt(durationInput.value, 10) || 0));
+    durationInput.value = seconds;
+    setTransition(scopeSelect.value, seconds);
+    refreshTransitionForMedia(currentMediaLocation);
+    restartImageAutoplay();
+}
+
+// Bilder: läuft Autoplay schon, mit der neuen Dauer neu starten
+function restartImageAutoplay() {
+    var player = document.getElementById("video");
+    var nextNode = document.getElementById("next");
+    if (!autoplay || player == null || player.tagName != "IMG") {
+        return;
+    }
+    timeoutArray = cancelTimeouts();
+    nextNode.style.animation = "none";
+    void nextNode.offsetWidth;
+    nextNode.style.animation = "autoplayLoading " + (autoplayDuration + minTime) + "s";
+    timeoutArray.push(setTimeout(function () {
+        clickNavigation("next");
+    }, (autoplayDuration + minTime) * 1000));
 }
 
 // Anzahl ist bei "Unbegrenzt" ohne Bedeutung und wird ausgegraut
@@ -79,6 +138,7 @@ function updateAutoplayAmountState() {
 
 // Speichern der Autoplay-Einstellungen (Button "Speichern" im Autoplay-Fenster)
 function applySettings() {
+    saveTransitionFromFields(document.getElementById("autoplayDuration"), document.getElementById("autoplayDurationScope"));
     commitAutoplaySettings();
     toggleContainer(["settingsBox"], "none");
 }
@@ -108,6 +168,10 @@ function fillSettingsFields(page) {
     // Unteroptionen (z.B. "Bilder ausnehmen") nur bei eingeschalteter Hauptoption
     page.querySelectorAll("[data-depends]").forEach(function (row) {
         row.style.display = getSetting(row.dataset.depends) ? "" : "none";
+    });
+    // Gegenteil: ausgeblendet, solange die Option eingeschaltet ist (z.B. "Kacheln pro Zeile")
+    page.querySelectorAll("[data-hides]").forEach(function (row) {
+        row.style.display = getSetting(row.dataset.hides) ? "none" : "";
     });
     document.getElementById("nativeControlsCheckBox").checked = useNativeControls();
 }
@@ -194,14 +258,237 @@ function initSettingsPage() {
 
     fillSettingsFields(page);
     renderSettingsPreview();
+    initTransitionOverview();
+    initLicenseSection();
+    initDataCheck();
+    initDiagnosis();
+}
+
+// ===================================================================
+// Einstellungen › Wiedergabe: Dauer bis Übergang je Ordner
+// ===================================================================
+
+// Alle Ordner des Datenbaums als "Serien/Show" (für die Auswahl beim Hinzufügen)
+function collectFolderPaths(node, prefix, result) {
+    if (node == null || typeof node !== "object") {
+        return result;
+    }
+    Object.keys(node).forEach(function (key) {
+        if (key == "Preview" || isMediaFile(allowedMediaExtensions, key) || !hasMedia(node[key], true)) {
+            return;
+        }
+        var path = prefix ? prefix + "/" + key : key;
+        result.push(path);
+        collectFolderPaths(node[key], path, result);
+    });
+    return result;
+}
+
+function folderExists(folder) {
+    return folder === "" || getDataNode(folder.split("/")) != null;
+}
+
+function showTransitionStatus(text) {
+    var status = document.getElementById("transitionStatus");
+    status.className = text ? "backupInfo" : "";
+    status.textContent = text || "";
+}
+
+function renderTransitionOverview() {
+    var map = getTransitionMap();
+    var folders = Object.keys(map).sort(function (a, b) {
+        return a === "" ? -1 : (b === "" ? 1 : compareSortNames(a, b));
+    });
+    document.getElementById("transitionCount").textContent = folders.length;
+    var list = document.getElementById("transitionList");
+    list.replaceChildren();
+    if (folders.length == 0) {
+        var empty = document.createElement("p");
+        empty.className = "transitionEmpty";
+        empty.textContent = "Noch keine Einträge. Überall gilt 0 Sekunden.";
+        list.appendChild(empty);
+        return;
+    }
+    folders.forEach(function (folder) {
+        var row = document.createElement("div");
+        row.className = "transitionRow";
+        var name = document.createElement("span");
+        name.className = "transitionFolder";
+        name.textContent = getTransitionLabel(folder);
+        if (!folderExists(folder)) {
+            row.classList.add("missing");
+            var hint = document.createElement("small");
+            hint.textContent = "Ordner nicht gefunden";
+            name.appendChild(hint);
+        }
+        var input = document.createElement("input");
+        input.type = "number";
+        input.min = "0";
+        input.max = String(transitionMax);
+        input.value = map[folder];
+        input.setAttribute("aria-label", "Sekunden für " + getTransitionLabel(folder));
+        input.addEventListener("change", function () {
+            setTransition(folder, input.value);
+            input.value = getTransitionMap()[folder];
+            showTransitionStatus(getTransitionLabel(folder) + ": " + input.value + " Sekunden gespeichert.");
+        });
+        var unit = document.createElement("span");
+        unit.className = "transitionUnit";
+        unit.textContent = "s";
+        var remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "sflixButton ghost small transitionRemove";
+        remove.setAttribute("aria-label", "Eintrag für " + getTransitionLabel(folder) + " entfernen");
+        remove.title = "Entfernen (der Ordner erbt dann wieder)";
+        remove.appendChild(createIcon("trash"));
+        remove.addEventListener("click", function () {
+            setTransition(folder, null);
+            renderTransitionOverview();
+            showTransitionStatus(getTransitionLabel(folder) + " entfernt.");
+        });
+        row.append(name, input, unit, remove);
+        list.appendChild(row);
+    });
+}
+
+function initTransitionOverview() {
+    var datalist = document.getElementById("transitionFolderList");
+    var labels = {};
+    var allOption = document.createElement("option");
+    allOption.value = getTransitionLabel("");
+    datalist.appendChild(allOption);
+    labels[allOption.value] = "";
+    collectFolderPaths(data, "", []).forEach(function (folder) {
+        var option = document.createElement("option");
+        option.value = getTransitionLabel(folder);
+        labels[option.value] = folder;
+        datalist.appendChild(option);
+    });
+
+    var folderInput = document.getElementById("transitionAddFolder");
+    var secondsInput = document.getElementById("transitionAddSeconds");
+    document.getElementById("transitionAddButton").addEventListener("click", function () {
+        var label = folderInput.value.trim().replace(/\s*[›>\/\\]\s*/g, " › ");
+        if (!labels.hasOwnProperty(label)) {
+            showTransitionStatus("Bitte einen Ordner aus der Liste wählen.");
+            folderInput.focus();
+            return;
+        }
+        setTransition(labels[label], secondsInput.value);
+        folderInput.value = "";
+        renderTransitionOverview();
+        showTransitionStatus(label + ": " + getTransitionMap()[labels[label]] + " Sekunden gespeichert.");
+    });
+    renderTransitionOverview();
+}
+
+// ===================================================================
+// Einstellungen › Lizenz
+// ===================================================================
+
+// Gespeicherter Schlüssel: Felder zeigen ****. Ein Klick leert alle Felder für eine neue Eingabe.
+function fillLicenseFields() {
+    var hasLicense = isValidLicense(getData("serial"));
+    licenseFields.forEach(function (fieldId) {
+        var field = document.getElementById(fieldId);
+        field.value = hasLicense ? "****" : "";
+        field.dataset.masked = hasLicense ? "true" : "";
+    });
+    var message = document.getElementById("licenseMsg");
+    message.className = hasLicense ? "licenseActive" : "";
+    message.textContent = hasLicense
+        ? "Lizenz aktiv. Das Feedbackformular ist im Menü verfügbar."
+        : "Kein Lizenzschlüssel hinterlegt.";
+    document.getElementById("removeSerialButton").hidden = !hasLicense;
+}
+
+function isLicenseMasked() {
+    return document.getElementById(licenseFields[0]).dataset.masked === "true";
+}
+
+function clearLicenseMask() {
+    if (!isLicenseMasked()) {
+        return;
+    }
+    licenseFields.forEach(function (fieldId) {
+        var field = document.getElementById(fieldId);
+        field.value = "";
+        field.dataset.masked = "";
+    });
+}
+
+function initLicenseSection() {
+    licenseFields.forEach(function (fieldId, index) {
+        var field = document.getElementById(fieldId);
+        field.addEventListener("focus", clearLicenseMask);
+        field.addEventListener("input", function () {
+            // Eingefügter ganzer Schlüssel (mit oder ohne Bindestriche) auf die Felder verteilen
+            var compact = field.value.replace(/[\s-]/g, "");
+            if (compact.length > 4) {
+                for (var part = 0; part + index < licenseFields.length; part++) {
+                    document.getElementById(licenseFields[index + part]).value = compact.slice(part * 4, part * 4 + 4);
+                }
+                document.getElementById("saveSerialButton").focus();
+                return;
+            }
+            if (field.value.length == 4 && index + 1 < licenseFields.length) {
+                document.getElementById(licenseFields[index + 1]).focus();
+            } else if (field.value.length == 4) {
+                document.getElementById("saveSerialButton").focus();
+            }
+        });
+    });
+    document.getElementById("saveSerialButton").addEventListener("click", saveLicenseKey);
+    document.getElementById("removeSerialButton").addEventListener("click", function () {
+        removeData("serial");
+        updateFeedbackVisibility();
+        fillLicenseFields();
+        document.getElementById("licenseMsg").textContent = "Lizenzschlüssel entfernt. Der Menüpunkt \"Feedback\" ist ausgeblendet.";
+    });
+    fillLicenseFields();
+}
+
+// ===================================================================
+// Einstellungen › Fehlerbehebung: Diagnose
+// ===================================================================
+
+function buildDiagnosisText() {
+    var info = getUpdaterInfo();
+    var paths = collectMediaPaths(data, []);
+    var count = function (test) {
+        return paths.filter(test).length;
+    };
+    var lines = [
+        "STEFFLIX " + formatVersion(version),
+        "Updater: " + (info && info.updater ? info.updater : "unbekannt"),
+        "ffmpeg: " + (info ? (info.ffmpeg || "nicht installiert") : "unbekannt"),
+        "Browser: " + detectBrowser() + " (" + navigator.userAgent + ")",
+        "Speicher: " + (getDatabaseName() === sharedDatabaseName ? "gemeinsam (keine install.js)" : "eigener Speicher dieser Installation") + ", " + getAllDataKeys().length + " Einträge",
+        "Medien: " + paths.length + " (Videos " + count(isVideo) + ", Musik " + count(isMusic) + ", Bilder " + count(isImage) + ")",
+        "Kategorien: " + Object.keys(data || {}).filter(function (key) { return key != "Preview"; }).length,
+        "Bildschirm: " + window.innerWidth + "x" + window.innerHeight + ", Pixelverhältnis " + (window.devicePixelRatio || 1),
+        "Einstellungen: " + JSON.stringify(getDisplaySettings())
+    ];
+    return lines.join("\n");
+}
+
+function initDiagnosis() {
+    var node = document.getElementById("diagnosisText");
+    node.textContent = buildDiagnosisText();
+    var button = document.getElementById("copyDiagnosisButton");
+    button.prepend(createIcon("copy"));
+    button.setAttribute("data-copy", node.textContent);
+    button.addEventListener("click", function () {
+        button.setAttribute("data-copy", buildDiagnosisText());
+        copyAddress(button);
+    });
 }
 
 // Übernimmt die Autoplay-Felder aus dem Fenster "Einstellungen".
 // Wird auch vom Zahnradmenü des Players verwendet (dort ohne Fenster).
 function commitAutoplaySettings() {
-    autoplay =document.getElementById("autoplayCheckBox").checked;
+    autoplay = document.getElementById("autoplayCheckBox").checked;
     autoplayAmount = parseInt(document.getElementById("amountOfAutoplay").value) || 0;
-    autoplayDuration = parseInt(document.getElementById("autoplayDuration").value) || 0;
 
     if (!autoplay) {
         autoplayAmount = 0;
@@ -220,8 +507,8 @@ function commitAutoplaySettings() {
         mediaNode.classList.add("autoplaying");
     }
 
-    saveAutoplaySettings(autoplay, autoplayAmount, autoplayDuration);
-    updateOptionFields(autoplay, autoplayAmount, autoplayDuration);
+    saveAutoplaySettings(autoplay, autoplayAmount);
+    updateOptionFields(autoplay, autoplayAmount);
 
     var player = document.getElementById("video");
     if (autoplay && player != null && player.tagName == "IMG") {
@@ -248,11 +535,11 @@ function checkAutoplayAmount() {
     }
 }
 
-// Funktion, um die Einstellungen anhand abgespielter Medien zu aktualisieren
-function updateOptions(newAutoplay, newAmount, newDuration) {
+// Funktion, um die Einstellungen anhand abgespielter Medien zu aktualisieren.
+// Der dritte Wert (Dauer) wird nicht mehr verwendet, sie gilt je Ordner.
+function updateOptions(newAutoplay, newAmount) {
     newAutoplay = newAutoplay === true || newAutoplay === "true";
     newAmount = parseInt(newAmount) || 0;
-    newDuration = parseInt(newDuration) || 0;
 
     // Verringere Anzahl Autoplay um 1 und deaktiviere Autoplay bei 0 (nicht bei "Unbegrenzt")
     if (!isAutoplayInfinite()) {
@@ -261,8 +548,6 @@ function updateOptions(newAutoplay, newAmount, newDuration) {
             newAutoplay = false;
         }
     }
-
-    newDuration = Math.max(0, newDuration);
 
     // Entferne Autoplay-Klasse
     if (!newAutoplay) {
@@ -273,15 +558,15 @@ function updateOptions(newAutoplay, newAmount, newDuration) {
         }
     }
 
-    updateOptionFields(newAutoplay, newAmount, newDuration);
-    saveAutoplaySettings(newAutoplay, newAmount, newDuration);
+    updateOptionFields(newAutoplay, newAmount);
+    saveAutoplaySettings(newAutoplay, newAmount);
 }
 
 // Funktion, um die gespeicherten Einstellungen auf das Einstellungsmenü zu übertragen
-function updateOptionFields(newAutoplay, newAmount, newDuration) {
+function updateOptionFields(newAutoplay, newAmount) {
     document.getElementById("autoplayCheckBox").checked = newAutoplay;
     document.getElementById("amountOfAutoplay").value = newAmount;
-    document.getElementById("autoplayDuration").value = newDuration;
+    document.getElementById("autoplayDuration").value = autoplayDuration;
     // Autoplay-Anzeige und Zahnradmenü im Player nachführen
     updatePlayerAutoplayState();
 }
@@ -292,18 +577,20 @@ function loadSettings() {
     if (settings == null) {
         autoplay = false;
         autoplayAmount = 0;
-        autoplayDuration = 0;
         document.getElementById("autoplayInfinite").checked = false;
-        saveAutoplaySettings(autoplay, autoplayAmount, autoplayDuration);
+        saveAutoplaySettings(autoplay, autoplayAmount);
     } else {
         settings = settings.split(listSeperator);
         autoplay = settings[0] != "false";
         autoplayAmount = parseInt(settings[1]) || 0;
-        autoplayDuration = parseInt(settings[2]) || 0;
+        // Der dritte Wert (frühere Dauer bis Übergang für alles) wird seit 2.04 nicht mehr gelesen:
+        // die Dauer gilt je Ordner und ist ohne Eintrag 0.
         // Vierter Wert ab 2.00 (ältere Einstellungen haben ihn nicht)
         document.getElementById("autoplayInfinite").checked = settings[3] === "true";
-        updateOptionFields(autoplay, autoplayAmount, autoplayDuration);
+        updateOptionFields(autoplay, autoplayAmount);
     }
+    // Bis ein Medium geladen ist, gilt der Wert für alle Ordner
+    refreshTransitionForMedia(null);
     updateAutoplayAmountState();
     document.getElementById("nativeControlsCheckBox").checked = useNativeControls();
 }
@@ -423,7 +710,12 @@ function sendMessage() {
     // Als Formulardaten senden: Sonderzeichen wie & # + und Zeilenumbrüche bleiben erhalten
     var body = new URLSearchParams();
     body.append("chat_id", telegramConf[1]);
-    body.append("text", "ABSENDER: " + sender + "\nNACHRICHT:\n" + message);
+    var text = "ABSENDER: " + sender + "\nNACHRICHT:\n" + message;
+    if (document.getElementById("feedbackDiagnosis").checked) {
+        text += "\n\nDIAGNOSE:\n" + buildDiagnosisText();
+    }
+    // Telegram nimmt höchstens 4096 Zeichen
+    body.append("text", text.slice(0, 4000));
 
     showFeedbackStatus("Nachricht wird gesendet...", "info");
     fetch("https://api.telegram.org/bot" + telegramConf[0] + "/sendMessage", { method: "POST", body: body })
@@ -458,26 +750,33 @@ function updateFeedbackVisibility() {
 }
 
 // Funktion zum Abspeichern des Lizenzschlüssels
+// (Einstellungen › Lizenz). Unveränderte Sternchen behalten den gespeicherten Schlüssel.
 function saveLicenseKey() {
     var messageNode = document.getElementById("licenseMsg");
+    if (isLicenseMasked()) {
+        messageNode.className = "licenseActive";
+        messageNode.textContent = "Lizenz unverändert. Für einen neuen Schlüssel in ein Feld klicken und neu eingeben.";
+        return;
+    }
     var licenseKey = "";
     for (var index = 0; index < licenseFields.length; index++) {
         licenseKey += document.getElementById(licenseFields[index]).value.trim();
     }
 
     if (licenseKey == "") {
-        // Leere Felder: Schlüssel entfernen
-        removeData("serial");
-    } else if (!isValidLicense(licenseKey)) {
+        messageNode.className = "licenseError";
+        messageNode.textContent = "Bitte den Lizenzschlüssel eingeben. Zum Entfernen \"Entfernen\" wählen.";
+        return;
+    }
+    if (!isValidLicense(licenseKey)) {
+        messageNode.className = "licenseError";
         messageNode.textContent = "Lizenzschlüssel ungültig. Bitte Eingabe prüfen.";
         return;
-    } else {
-        setData("serial", licenseKey);
     }
-
-    messageNode.textContent = "";
+    setData("serial", licenseKey);
     updateFeedbackVisibility();
-    toggleContainer(["serialKeyWrapper"], "none");
+    fillLicenseFields();
+    messageNode.textContent = "Lizenz gespeichert. Das Feedbackformular ist im Menü verfügbar.";
 }
 
 // Funktion, um den verwendeten Browser auszulesen

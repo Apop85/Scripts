@@ -827,6 +827,8 @@ function loadDecodedMedia(decodedData, pushState) {
 
     var wasShowingMedia = currentMediaLocation != null;
     currentMediaLocation = medialocation;
+    // Dauer bis Übergang aus dem Ordner des Mediums (bzw. dem nächsten darüber mit eigenem Wert)
+    refreshTransitionForMedia(medialocation);
     var playlistName = getPlaylistNameFromDecodedData(decodedData);
     recordShuffleHistory(medialocation, playlistName);
     var localPlaylist = ensurePlaylistExists(decodedData);
@@ -897,6 +899,8 @@ function loadDecodedMedia(decodedData, pushState) {
     document.getElementById("favorite").style.visibility = node == null ? "hidden" : "";
     document.getElementById("mediaNav").style.display = "flex";
     updatePlaylistNavigation(decodedData, localPlaylist, currentIndex);
+    // Musik: Playliste neben dem Player
+    renderMusicPlaylist(localPlaylist, playlistName, node != null && node.tagName == "AUDIO" ? medialocation : null);
 
     var mediaNode = document.getElementById("media");
     var nextNode = document.getElementById("next");
@@ -936,6 +940,250 @@ function clickNavigation(nodeId) {
     if (link != null) {
         link.click();
     }
+}
+
+// ===================================================================
+// Musik: Playliste neben dem Player (auf dem Handy darunter)
+// ===================================================================
+
+// Aufgebaute Liste (Playliste und Einträge), damit beim Weiterschalten nur die Markierung wechselt
+var renderedMusicListKey = null;
+// Warteschlange für das Auslesen der Spieldauer (nur sichtbare Zeilen, eine nach der anderen)
+var durationQueue = [];
+var durationLoading = false;
+var durationObserver = null;
+
+// mediaPath = laufender Titel (Musik), sonst null: Liste entfernen
+function renderMusicPlaylist(playlist, playlistName, mediaPath) {
+    var mediaNode = document.getElementById("media");
+    var aside = document.getElementById("musicPlaylist");
+    if (mediaPath == null || playlist.length == 0) {
+        if (mediaNode.classList.contains("musicLayout")) {
+            mediaNode.style.display = "block";
+        }
+        mediaNode.classList.remove("musicLayout");
+        if (aside != null) {
+            aside.remove();
+        }
+        renderedMusicListKey = null;
+        durationQueue = [];
+        return;
+    }
+    mediaNode.classList.add("musicLayout");
+    // loadDecodedMedia setzt "block", die Musikansicht braucht das Raster (sflix.css)
+    mediaNode.style.display = "grid";
+    var key = playlistName + "|" + playlist.length + "|" + playlist[0] + "|" + playlist[playlist.length - 1];
+    if (aside == null || renderedMusicListKey !== key) {
+        aside = buildMusicPlaylist(playlist, playlistName);
+        var old = document.getElementById("musicPlaylist");
+        if (old != null) {
+            old.replaceWith(aside);
+        } else {
+            document.getElementById("playerContainer").after(aside);
+        }
+        renderedMusicListKey = key;
+    }
+    markCurrentPlaylistRow(aside, mediaPath);
+}
+
+function buildMusicPlaylist(playlist, playlistName) {
+    var aside = document.createElement("aside");
+    aside.id = "musicPlaylist";
+    aside.setAttribute("aria-label", "Playliste");
+    var inner = document.createElement("div");
+    inner.className = "musicPlaylistInner";
+    var header = document.createElement("div");
+    header.className = "musicPlaylistHeader";
+    var title = document.createElement("span");
+    title.textContent = "Playliste";
+    var count = document.createElement("span");
+    count.className = "musicPlaylistCount";
+    count.textContent = playlist.length + " Titel";
+    header.append(title, count);
+    var list = document.createElement("ol");
+    list.className = "musicPlaylistRows";
+    inner.append(header, list);
+    aside.appendChild(inner);
+
+    var entries = playlist.map(function (entry, index) {
+        var path = normalizeMediaLocation(entry.split("|")[0]);
+        return { name: getDisplayName(path), media: path, entry: entry, number: index + 1 };
+    });
+
+    // Alphabetische Gruppen (Einstellung) als Zwischentitel, nur bei Ordner-Playlisten
+    var groups = [];
+    if (!isListPlaylist(playlistName) && entries.length > 0) {
+        var folderNode = getDataNode(getMediaFolders(entries[0].media));
+        if (shouldGroupAlphabetically(folderNode, entries)) {
+            groups = groupAlphabetically(entries);
+        }
+    }
+    if (groups.length < 2) {
+        groups = [{ label: null, entries: entries }];
+    }
+
+    if (durationObserver != null) {
+        durationObserver.disconnect();
+    }
+    durationQueue = [];
+    durationObserver = window.IntersectionObserver ? new IntersectionObserver(function (observed) {
+        observed.forEach(function (item) {
+            if (item.isIntersecting) {
+                durationObserver.unobserve(item.target);
+                queueDuration(item.target);
+            }
+        });
+    }, { root: inner, rootMargin: "200px 0px" }) : null;
+
+    var fragment = document.createDocumentFragment();
+    groups.forEach(function (group) {
+        if (group.label != null) {
+            var heading = document.createElement("li");
+            heading.className = "musicPlaylistGroup";
+            heading.textContent = group.label;
+            fragment.appendChild(heading);
+        }
+        group.entries.forEach(function (item) {
+            fragment.appendChild(createPlaylistRow(item, playlistName));
+        });
+    });
+    list.appendChild(fragment);
+    list.querySelectorAll(".musicPlaylistRow").forEach(function (row) {
+        if (row.dataset.durationMissing === "true") {
+            if (durationObserver != null) {
+                durationObserver.observe(row);
+            } else {
+                queueDuration(row);
+            }
+        }
+    });
+    updatePlaylistTotal(aside);
+    return aside;
+}
+
+function createPlaylistRow(item, playlistName) {
+    var li = document.createElement("li");
+    var link = document.createElement("a");
+    link.className = "musicPlaylistRow";
+    link.dataset.media = item.media;
+    if (!setMediaLink(link, getPlaylistEntryData(item.entry, playlistName))) {
+        link.removeAttribute("href");
+    }
+    var number = document.createElement("span");
+    number.className = "playlistNumber";
+    number.textContent = item.number;
+    var name = document.createElement("span");
+    name.className = "playlistTitle";
+    name.textContent = getPlayerTitle(item.media, item.name);
+    name.title = item.name;
+    var duration = document.createElement("span");
+    duration.className = "playlistDuration";
+    var stored = parseInt(getData("timestampDuration-" + item.media), 10);
+    if (stored > 0) {
+        duration.textContent = formatMediaTime(stored);
+        link.dataset.seconds = stored;
+    } else {
+        link.dataset.durationMissing = "true";
+    }
+    link.append(number, name, duration);
+    li.appendChild(link);
+    return li;
+}
+
+function markCurrentPlaylistRow(aside, mediaPath) {
+    aside.querySelectorAll(".musicPlaylistRow.current").forEach(function (row) {
+        row.classList.remove("current");
+        row.removeAttribute("aria-current");
+        row.querySelector(".playlistNumber").replaceChildren(document.createTextNode(row.dataset.number || ""));
+    });
+    var row = aside.querySelector('.musicPlaylistRow[data-media="' + CSS.escape(mediaPath) + '"]');
+    if (row == null) {
+        return;
+    }
+    var number = row.querySelector(".playlistNumber");
+    row.dataset.number = number.textContent;
+    number.replaceChildren(createIcon("volumeHigh"));
+    row.classList.add("current");
+    row.setAttribute("aria-current", "true");
+    // Laufenden Titel in der Liste sichtbar machen (nur die Liste scrollen, nicht die Seite)
+    var inner = aside.querySelector(".musicPlaylistInner");
+    requestAnimationFrame(function () {
+        var top = row.offsetTop - inner.clientHeight / 2 + row.clientHeight / 2;
+        inner.scrollTo({ top: Math.max(0, top), behavior: getSetting("reduceMotion") ? "auto" : "smooth" });
+    });
+}
+
+// Gesamtdauer, sobald alle Titel bekannt sind
+function updatePlaylistTotal(aside) {
+    var rows = aside.querySelectorAll(".musicPlaylistRow");
+    var total = 0;
+    var complete = true;
+    rows.forEach(function (row) {
+        var seconds = parseInt(row.dataset.seconds, 10);
+        if (seconds > 0) {
+            total += seconds;
+        } else if (row.dataset.durationFailed !== "true") {
+            complete = false;
+        }
+    });
+    var count = aside.querySelector(".musicPlaylistCount");
+    count.textContent = rows.length + " Titel" + (complete && total > 0 ? " · " + formatMediaTime(total) : "");
+}
+
+function queueDuration(row) {
+    durationQueue.push(row);
+    loadNextDuration();
+}
+
+// Liest die Spieldauer aus den Metadaten (nur die Kopfdaten der Datei werden geladen) und
+// speichert sie wie der Player unter "timestampDuration-<Pfad>"
+function loadNextDuration() {
+    if (durationLoading || durationQueue.length == 0) {
+        return;
+    }
+    var row = durationQueue.shift();
+    if (!row.isConnected || row.dataset.durationMissing !== "true") {
+        loadNextDuration();
+        return;
+    }
+    durationLoading = true;
+    var probe = document.createElement("audio");
+    probe.preload = "metadata";
+    var finished = false;
+    var timer = null;
+    var done = function (seconds) {
+        if (finished) {
+            return;
+        }
+        finished = true;
+        clearTimeout(timer);
+        probe.removeAttribute("src");
+        probe.load();
+        row.dataset.durationMissing = "";
+        if (seconds > 0) {
+            setData("timestampDuration-" + row.dataset.media, seconds);
+            row.dataset.seconds = seconds;
+            row.querySelector(".playlistDuration").textContent = formatMediaTime(seconds);
+        } else {
+            row.dataset.durationFailed = "true";
+        }
+        var aside = row.closest("#musicPlaylist");
+        if (aside != null) {
+            updatePlaylistTotal(aside);
+        }
+        durationLoading = false;
+        loadNextDuration();
+    };
+    probe.addEventListener("loadedmetadata", function () {
+        done(isFinite(probe.duration) && probe.duration > 0 ? Math.round(probe.duration) : 0);
+    });
+    probe.addEventListener("error", function () {
+        done(0);
+    });
+    timer = setTimeout(function () {
+        done(0);
+    }, 8000);
+    probe.src = row.dataset.media;
 }
 
 // Funktion, um Subroutinen an das Medienelement anzuhängen
@@ -1190,13 +1438,20 @@ function buildPlayerShell(media) {
     ui.time = createPlayerElement("span", "timeDisplay", "0:00 / 0:00");
     left.append(ui.prevButton, ui.playButton, ui.nextButton, ui.backButton, ui.forwardButton, ui.volumeGroup, ui.time);
 
+    // Übergang festlegen: verbleibende Zeit als "Dauer bis Übergang" übernehmen
+    ui.transitionButton = createControlButton("ctrlTransition", "transition", "Übergang hier: verbleibende Zeit als Dauer bis Übergang übernehmen");
     ui.autoplayButton = createControlButton("ctrlAutoplay", "autoplay", "Autoplay");
+    // Anzahl der noch folgenden Medien bzw. ∞ (nur bei aktivem Autoplay)
+    ui.autoplayBadge = createPlayerElement("span", "ctrlBadge");
+    ui.autoplayBadge.hidden = true;
+    ui.autoplayBadge.setAttribute("aria-hidden", "true");
+    ui.autoplayButton.appendChild(ui.autoplayBadge);
     ui.settingsButton = createControlButton("ctrlSettings", "gear", "Einstellungen");
     [ui.autoplayButton, ui.settingsButton].forEach(function (button) {
         button.setAttribute("aria-haspopup", "true");
         button.setAttribute("aria-expanded", "false");
     });
-    right.append(ui.autoplayButton, ui.settingsButton);
+    right.append(ui.transitionButton, ui.autoplayButton, ui.settingsButton);
     if (!isAudio) {
         ui.pipButton = createControlButton("ctrlPip", "pip", "Bild im Bild");
         ui.fullscreenButton = createControlButton("ctrlFullscreen", "fullscreen", "Vollbild (F)");
@@ -1214,7 +1469,11 @@ function buildPlayerShell(media) {
         { menu: ui.autoplayMenu, button: ui.autoplayButton },
         { menu: ui.settingsMenu, button: ui.settingsButton }
     ];
-    shell.append(ui.countdown, ui.controls, ui.autoplayMenu, ui.settingsMenu);
+    // Kurze Meldung im Player (z.B. nach "Übergang hier")
+    ui.toast = createPlayerElement("div", "playerToast");
+    ui.toast.hidden = true;
+    ui.toast.setAttribute("role", "status");
+    shell.append(ui.countdown, ui.controls, ui.autoplayMenu, ui.settingsMenu, ui.toast);
 
     playerUI = ui;
     bindPlayerEvents(ui);
@@ -1262,6 +1521,50 @@ function addMenuNumber(menu, label) {
     return input;
 }
 
+function addMenuSelect(menu, label, hint) {
+    var row = createPlayerElement("label", "settingRow settingRowSelect");
+    var text = createPlayerElement("span", null, label);
+    if (hint) {
+        text.appendChild(createPlayerElement("small", null, hint));
+    }
+    var select = createPlayerElement("select");
+    row.append(text, select);
+    menu.appendChild(row);
+    return select;
+}
+
+// Meldung unten im Player, verschwindet nach einigen Sekunden
+function showPlayerToast(ui, text) {
+    ui.toast.textContent = text;
+    ui.toast.hidden = false;
+    clearTimeout(ui.toastTimer);
+    ui.toastTimer = setTimeout(function () {
+        ui.toast.hidden = true;
+    }, 4000);
+}
+
+// "Übergang hier": verbleibende Zeit für die gewählte Ebene speichern
+function setTransitionFromPlayer(ui) {
+    var media = ui.media;
+    if (!hasMediaDuration(media) || currentMediaLocation == null) {
+        return;
+    }
+    var seconds = Math.max(0, Math.floor(media.duration - media.currentTime));
+    var scope = ui.menuScopeMedia === currentMediaLocation && ui.menuScope.options.length > 0
+        ? ui.menuScope.value
+        : getDefaultTransitionScope(currentMediaLocation);
+    setTransition(scope, seconds);
+    refreshTransitionForMedia(currentMediaLocation);
+    var text = "Dauer bis Übergang für «" + getTransitionLabel(scope) + "»: " + seconds + " s";
+    if (ui.isAudio && seconds > 10) {
+        text += " (bei Musik wird höchstens 11 s vor dem Ende gewechselt)";
+    }
+    showPlayerToast(ui, text);
+    if (isPlayerMenuOpen(ui)) {
+        refreshPlayerMenu(ui);
+    }
+}
+
 // Autoplay-Menü (Klick auf das Autoplay-Symbol). Änderungen gelten sofort und
 // landen in denselben Einstellungen wie im Fenster "Autoplay" des Hauptmenüs.
 function buildAutoplayMenu(ui) {
@@ -1271,6 +1574,8 @@ function buildAutoplayMenu(ui) {
     ui.menuInfinite = addMenuSwitch(menu, "Unbegrenzt", "Bis zum Ende der Playliste");
     ui.menuAmount = addMenuNumber(menu, "Anzahl abzuspielender Medien");
     ui.menuDuration = addMenuNumber(menu, "Dauer bis Übergang (Sekunden)");
+    ui.menuScope = addMenuSelect(menu, "Gilt für", "Auch für Unterordner ohne eigenen Wert");
+    ui.menuScopeMedia = null;
 
     ui.menuAutoplay.addEventListener("change", function () {
         document.getElementById("autoplayCheckBox").checked = ui.menuAutoplay.checked;
@@ -1292,8 +1597,10 @@ function buildAutoplayMenu(ui) {
         commitAutoplaySettings();
     });
     ui.menuDuration.addEventListener("change", function () {
-        document.getElementById("autoplayDuration").value = Math.max(0, parseInt(ui.menuDuration.value) || 0);
-        commitAutoplaySettings();
+        saveTransitionFromFields(ui.menuDuration, ui.menuScope);
+    });
+    ui.menuScope.addEventListener("change", function () {
+        ui.menuDuration.value = getTransitionValueAt(ui.menuScope.value, currentMediaLocation);
     });
     return menu;
 }
@@ -1369,6 +1676,9 @@ function bindPlayerEvents(ui) {
 
     ui.countdownNext.addEventListener("click", function () {
         clickNavigation("next");
+    });
+    ui.transitionButton.addEventListener("click", function () {
+        setTransitionFromPlayer(ui);
     });
     ui.countdownCancel.addEventListener("click", function () {
         setAutoplayFromPlayer(false);
@@ -1766,7 +2076,10 @@ function refreshPlayerMenu(ui) {
     ui.menuAmount.value = document.getElementById("amountOfAutoplay").value;
     ui.menuAmount.disabled = isAutoplayInfinite();
     ui.menuAmount.closest(".settingRow").classList.toggle("disabled", ui.menuAmount.disabled);
-    ui.menuDuration.value = document.getElementById("autoplayDuration").value;
+    // "Gilt für": beim Öffnen die Vorauswahl, bei offenem Menü die gewählte Ebene behalten
+    var keepScope = ui.menuScopeMedia === currentMediaLocation && isPlayerMenuOpen(ui) ? ui.menuScope.value : null;
+    fillTransitionFields(ui.menuDuration, ui.menuScope, keepScope);
+    ui.menuScopeMedia = currentMediaLocation;
     ui.menuNative.checked = useNativeControls();
     updateSpeedButtons(ui);
 }
@@ -1866,7 +2179,12 @@ function updatePlayerAutoplayState() {
     var enabled = document.getElementById("autoplayCheckBox").checked;
     // "active" = Autoplay an (Symbol hell), "menuActive" = Menü offen
     ui.autoplayButton.classList.toggle("active", enabled);
-    var label = (enabled ? "Autoplay ist an" : "Autoplay ist aus") + " (Einstellungen)";
+    var amount = parseInt(document.getElementById("amountOfAutoplay").value, 10) || 0;
+    var badge = !enabled ? "" : (isAutoplayInfinite() ? "∞" : String(amount));
+    ui.autoplayBadge.textContent = badge;
+    ui.autoplayBadge.hidden = badge === "";
+    ui.autoplayBadge.classList.toggle("infinite", badge === "∞");
+    var label = (enabled ? "Autoplay ist an" + (isAutoplayInfinite() ? ", unbegrenzt" : ", noch " + amount + (amount == 1 ? " Medium" : " Medien")) : "Autoplay ist aus") + " (Einstellungen)";
     ui.autoplayButton.setAttribute("aria-label", label);
     ui.autoplayButton.title = label;
     if (!enabled) {

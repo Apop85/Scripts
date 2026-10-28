@@ -115,9 +115,34 @@ function saveFolderPlaylist(levels, mediaPaths) {
     setData("playlist-" + playlistName, mediaPaths.join(listSeperator));
 }
 
+// Angezeigte Ordnerseite und Kacheln pro Zeile beim Aufbau (für "Kacheln pro Zeile automatisch")
+var currentFolderLevels = null;
+var renderedCardsPerRow = 0;
+
+// Ändert sich die Fensterbreite so, dass mehr oder weniger Kacheln Platz haben, wird die
+// Ordnerseite neu verteilt (die Scrollposition bleibt erhalten)
+function initAutoRowResize() {
+    var timer = null;
+    window.addEventListener("resize", function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+            if (!getSetting("rowAuto") || currentFolderLevels == null || renderedFolderView !== "folder:" + currentFolderLevels.join("/")) {
+                return;
+            }
+            if (getCardsPerRow() !== renderedCardsPerRow) {
+                var scroll = window.scrollY;
+                renderFolderPage(currentFolderLevels);
+                window.scrollTo(0, scroll);
+            }
+        }, 200);
+    });
+}
+
 // Ordnerseite: oben die Medien des Ordners, darunter ein Band pro Unterordner
 function renderFolderPage(levels) {
     renderedFolderView = "folder:" + levels.join("/");
+    currentFolderLevels = levels;
+    renderedCardsPerRow = getCardsPerRow();
     var header = document.getElementById("navigation");
     var bands = document.getElementById("folderBands");
     header.replaceChildren();
@@ -240,8 +265,23 @@ function splitEvenly(items, bandCount) {
     return bands;
 }
 
-// Einträge der Reihe nach auf Zeilen verteilen (siehe blockRows und "Kacheln pro Zeile")
+// Kacheln, die nebeneinander ganz Platz haben (aus --cards-per-view, je nach Breite und Kachelgrösse)
+function getCardsPerRow() {
+    var value = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cards-per-view"));
+    return Math.max(1, Math.floor(isNaN(value) ? 5 : value));
+}
+
+// Einträge der Reihe nach auf Zeilen verteilen (siehe blockRows und "Kacheln pro Zeile").
+// "Kacheln pro Zeile automatisch": jede Zeile genau so voll, wie Platz ist.
 function splitIntoRows(items) {
+    if (getSetting("rowAuto")) {
+        var perRow = getCardsPerRow();
+        var autoRows = [];
+        for (var autoStart = 0; autoStart < items.length; autoStart += perRow) {
+            autoRows.push(items.slice(autoStart, autoStart + perRow));
+        }
+        return autoRows.length > 0 ? autoRows : [items];
+    }
     var rowSize = getSetting("rowSize");
     var singleRowLimit = Math.round(rowSize * 0.75);
     if (items.length <= singleRowLimit) {
@@ -442,7 +482,9 @@ function whenMainMediaReady(callback) {
 // Pfadleiste sofort, die Bänder erst nach dem Laden des Mediums (siehe whenMainMediaReady).
 function renderMediaContext(mediaPath) {
     var folders = getMediaFolders(mediaPath);
-    var viewKey = "media:" + folders.join("/");
+    // Musik zeigt die Titel in der Playliste neben dem Player statt in einem Band
+    var musicList = isMusic(mediaPath);
+    var viewKey = "media:" + folders.join("/") + (musicList ? ":music" : "");
 
     if (renderedFolderView !== viewKey) {
         renderedFolderView = viewKey;
@@ -461,7 +503,7 @@ function renderMediaContext(mediaPath) {
     whenMainMediaReady(function () {
         if (renderedBandsView !== viewKey) {
             renderedBandsView = viewKey;
-            renderMediaBands(folders);
+            renderMediaBands(folders, musicList);
             // Neues Band: direkt zur aktuellen Kachel springen
             updateCurrentCard(mediaPath, true);
         } else {
@@ -472,14 +514,14 @@ function renderMediaContext(mediaPath) {
     });
 }
 
-function renderMediaBands(folders) {
+function renderMediaBands(folders, musicList) {
     var bands = document.getElementById("folderBands");
     bands.replaceChildren();
     var node = getDataNode(folders);
     var folderName = folders.length > 0 ? folders[folders.length - 1] : "STEFFLIX";
     var children = getSortedChildren(node);
 
-    if (children.media.length > 0) {
+    if (children.media.length > 0 && !musicList) {
         var folderUrl = folders.length > 0 ? buildStartUrl(buildLevelPath(folders)) : null;
         var mediaTrack = createCardRow(bands, "Mehr aus " + folderName, folderUrl);
         children.media.forEach(function (path) {
@@ -1101,8 +1143,8 @@ function isUpdateBannerDismissed(newestVersion) {
     return Date.now() < dismissed.until;
 }
 
-function dismissUpdateBanner(banner, newestVersion, days) {
-    setData("updateBannerDismissed", JSON.stringify({
+function dismissUpdateBanner(banner, newestVersion, days, storageKey) {
+    setData(storageKey || "updateBannerDismissed", JSON.stringify({
         version: newestVersion,
         until: days > 0 ? Date.now() + days * 24 * 60 * 60 * 1000 : 0
     }));
@@ -1112,7 +1154,23 @@ function dismissUpdateBanner(banner, newestVersion, days) {
     }, 300);
 }
 
-function createUpdateBanner(newestVersion) {
+// Hinweis auf einen neuen Updater: wie beim STEFFLIX-Update, Versionen als Text ("3.2.1")
+function isUpdaterBannerDismissed(newestUpdater) {
+    var dismissed = null;
+    try {
+        dismissed = JSON.parse(getData("updaterBannerDismissed") || "null");
+    } catch (error) {
+        dismissed = null;
+    }
+    if (dismissed == null || typeof dismissed.version !== "string" || compareVersions(newestUpdater, dismissed.version) > 0) {
+        return false;
+    }
+    return dismissed.until === 0 || Date.now() < dismissed.until;
+}
+
+// options (nur für den Updater): { heading, meta, storageKey }
+function createUpdateBanner(newestVersion, options) {
+    options = options || {};
     var banner = document.createElement("section");
     banner.className = "updateBanner";
     banner.setAttribute("aria-label", "Update verfügbar");
@@ -1124,10 +1182,10 @@ function createUpdateBanner(newestVersion) {
     var content = document.createElement("div");
     content.className = "updateContent";
     var heading = document.createElement("h2");
-    heading.textContent = "STEFFLIX " + formatVersion(newestVersion) + " ist verfügbar";
+    heading.textContent = options.heading || "STEFFLIX " + formatVersion(newestVersion) + " ist verfügbar";
     var meta = document.createElement("p");
     meta.className = "updateMeta";
-    meta.textContent = "Installiert ist Version " + formatVersion(version) + ".";
+    meta.textContent = options.meta || "Installiert ist Version " + formatVersion(version) + ".";
     var newsList = document.createElement("ul");
     newsList.className = "updateNews";
     newsList.style.display = "none";
@@ -1151,7 +1209,7 @@ function createUpdateBanner(newestVersion) {
         button.className = "sflixButton ghost small";
         button.textContent = option[0];
         button.addEventListener("click", function () {
-            dismissUpdateBanner(banner, newestVersion, option[1]);
+            dismissUpdateBanner(banner, newestVersion, option[1], options.storageKey);
         });
         snooze.appendChild(button);
     });
@@ -1200,15 +1258,54 @@ function fillUpdateNews(banner, newestVersion) {
     });
 }
 
+// Startseite: Hinweis auf eine neue STEFFLIX-Version, sonst auf einen neuen Updater
+// (abschaltbar unter Einstellungen › Startseite)
 function checkForUpdate(container) {
+    if (!getSetting("showUpdateHints")) {
+        return;
+    }
     fetchText(versionUrl).then(function (text) {
         var newestVersion = parseVersion(text);
-        if (newestVersion == null || newestVersion <= version || isUpdateBannerDismissed(newestVersion)) {
+        if (newestVersion != null && newestVersion > version) {
+            // Das STEFFLIX-Update bringt auch den neuen Updater mit
+            if (!isUpdateBannerDismissed(newestVersion)) {
+                var banner = createUpdateBanner(newestVersion);
+                container.insertBefore(banner, container.firstChild);
+                fillUpdateNews(banner, newestVersion);
+            }
             return;
         }
-        var banner = createUpdateBanner(newestVersion);
+        checkForUpdaterUpdate(container);
+    });
+}
+
+// Neueste Versionen von Updater und ffmpeg (versions.json auf GitHub), sonst null
+function fetchVersions() {
+    return fetchText(versionsUrl).then(function (text) {
+        try {
+            var versions = JSON.parse(text);
+            return versions != null && typeof versions === "object" ? versions : null;
+        } catch (error) {
+            return null;
+        }
+    });
+}
+
+function checkForUpdaterUpdate(container) {
+    var info = getUpdaterInfo();
+    if (info == null || !info.updater) {
+        return;
+    }
+    fetchVersions().then(function (versions) {
+        if (versions == null || typeof versions.updater !== "string" || compareVersions(versions.updater, info.updater) <= 0 || isUpdaterBannerDismissed(versions.updater)) {
+            return;
+        }
+        var banner = createUpdateBanner(versions.updater, {
+            heading: "Updater " + versions.updater + " ist verfügbar",
+            meta: "Installiert ist Version " + info.updater + ". Beim Start von updateStefflix.exe die Aufgabe \"Update\" ausführen.",
+            storageKey: "updaterBannerDismissed"
+        });
         container.insertBefore(banner, container.firstChild);
-        fillUpdateNews(banner, newestVersion);
     });
 }
 
@@ -1583,7 +1680,12 @@ function showHelpPage() {
     fetchText(versionUrl).then(function (text) {
         var newestVersion = parseVersion(text);
         versionNewNode.textContent = newestVersion != null ? formatVersion(newestVersion) : "unbekannt (keine Internetverbindung?)";
+        markVersionCell(versionNewNode, newestVersion != null && newestVersion > version);
     });
+    fillToolVersions();
+
+    // Symbole der Player-Leiste in den Erklärungen
+    fillHelpIcons(document.getElementById("help"));
 
     fetchText(newsUrl).then(function (text) {
         var news = null;
@@ -1607,11 +1709,48 @@ function showHelpPage() {
     buildSectionPage("help", "Hilfe", "Medien hinzufügen, Autoplay, Player, Tastenkürzel, Browsereinstellungen, Updates und Einstellungen");
 }
 
+// Neuere Version verfügbar: Zelle hervorheben
+function markVersionCell(cell, isNewer) {
+    cell.classList.toggle("versionNewer", isNewer);
+}
+
+// Hilfe: installierte (updater_info.js) und neueste Versionen (versions.json) von Updater und ffmpeg
+function fillToolVersions() {
+    var info = getUpdaterInfo();
+    var unknown = "unbekannt (Updater starten)";
+    document.getElementById("updaterVersionNow").textContent = info && info.updater ? info.updater : unknown;
+    document.getElementById("ffmpegVersionNow").textContent = info ? (info.ffmpeg || "nicht installiert") : unknown;
+    var updaterNew = document.getElementById("updaterVersionNew");
+    var ffmpegNew = document.getElementById("ffmpegVersionNew");
+    updaterNew.textContent = "wird geprüft...";
+    ffmpegNew.textContent = "wird geprüft...";
+    fetchVersions().then(function (versions) {
+        var offline = "unbekannt";
+        updaterNew.textContent = versions && versions.updater ? versions.updater : offline;
+        ffmpegNew.textContent = versions && versions.ffmpeg ? versions.ffmpeg : offline;
+        if (versions && info) {
+            markVersionCell(updaterNew, !!versions.updater && !!info.updater && compareVersions(versions.updater, info.updater) > 0);
+            // ffmpeg wird nur bei Bedarf installiert: nur hervorheben, wenn eine ältere installiert ist
+            markVersionCell(ffmpegNew, !!versions.ffmpeg && !!info.ffmpeg && versions.ffmpeg !== info.ffmpeg);
+        }
+    });
+}
+
+// Ersetzt <span class="helpIcon" data-icon="..."> durch das Symbol aus iconShapes
+function fillHelpIcons(root) {
+    root.querySelectorAll(".helpIcon[data-icon]").forEach(function (node) {
+        if (node.firstChild == null) {
+            node.appendChild(createIcon(node.dataset.icon));
+        }
+    });
+}
+
 // Seite "Einstellungen": gleicher Aufbau wie die Hilfe (Abschnitte und Übersicht)
 function showSettingsPage() {
     document.getElementById("media").style.display = "block";
     document.getElementById("settingsPage").style.display = "grid";
-    buildSectionPage("settingsPage", "Einstellungen", "Darstellung, Ordnerseiten, Startseite und Wiedergabe, Datensicherung und Fehlerbehebung");
+    fillHelpIcons(document.getElementById("settingsPage"));
+    buildSectionPage("settingsPage", "Einstellungen", "Darstellung, Sortierung, Startseite, Wiedergabe, Datensicherung, Fehlerbehebung und Lizenz");
     initSettingsPage();
     initBackup();
 }

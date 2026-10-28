@@ -24,15 +24,10 @@ function initEventListeners() {
         }
     });
 
-    // Lizenzschlüsselfelder: automatisch ins nächste Feld springen
-    licenseFields.forEach(function (fieldId, index) {
-        document.getElementById(fieldId).addEventListener("input", function () {
-            if (document.getElementById(fieldId).value.length == 4 && index + 1 < licenseFields.length) {
-                document.getElementById(licenseFields[index + 1]).focus();
-            } else if (index + 1 >= licenseFields.length) {
-                document.getElementById("saveSerialButton").focus();
-            }
-        });
+    // "Gilt für": Wert der gewählten Ebene anzeigen (gespeichert wird mit "Speichern")
+    document.getElementById("autoplayDurationScope").addEventListener("change", function () {
+        var scope = document.getElementById("autoplayDurationScope").value;
+        document.getElementById("autoplayDuration").value = getTransitionValueAt(scope, currentMediaLocation);
     });
 
     // Tastatur
@@ -45,6 +40,7 @@ function initEventListeners() {
     initShuffleButton();
     initAutoplayNavButton();
     initPlayerControls();
+    initAutoRowResize();
 
     // Neu erstellte Elemente ebenfalls per Tastatur bedienbar machen
     enhanceAccessibility(document.body);

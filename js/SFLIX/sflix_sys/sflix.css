@@ -3524,8 +3524,11 @@ input:focus-visible, textarea:focus-visible, video:focus-visible, audio:focus-vi
     grid-area: message;
 }
 
+/* Unten ausrichten: ohne Vorschaubild ist der Player nur die Leiste, sie steht dann direkt
+   über Vor/Zurück/Merken/Zufall statt oben neben der höheren Playliste */
 #media.musicLayout #playerContainer {
     grid-area: player;
+    align-self: end;
     min-width: 0;
 }
 

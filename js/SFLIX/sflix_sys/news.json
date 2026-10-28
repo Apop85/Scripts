@@ -58,7 +58,7 @@
         },
         {
           "type": "FEATURE",
-          "text": "Musik: Neben dem Player steht eine Playliste mit allen Titeln, ihrer Dauer und der Gesamtdauer, wie man sie von Musikplayern kennt. Der laufende Titel ist hervorgehoben, ein Klick spielt einen Titel ab. Auf dem Handy steht die Liste unter dem Player. Die Dauer wird beim ersten Anzeigen aus den Dateien gelesen und gespeichert."
+          "text": "Musik: Neben dem Player steht eine Playliste mit allen Titeln, ihrer Dauer und der Gesamtdauer, wie man sie von Musikplayern kennt. Der laufende Titel ist hervorgehoben, ein Klick spielt einen Titel ab. Auf dem Handy steht die Liste unter dem Player. Hat ein Titel kein Vorschaubild, steht die Steuerleiste direkt über den Knöpfen Vor/Zurück/Merken/Zufall. Die Dauer wird beim ersten Anzeigen aus den Dateien gelesen und gespeichert."
         },
         {
           "type": "FEATURE",

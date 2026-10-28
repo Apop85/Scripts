@@ -93,6 +93,7 @@ namespace Sflix
 
             ctx.Log("Erstellt: " + created + "   Schon vorhanden: " + skipped +
                     "   Nach " + TrashDirName + " verschoben: " + deleted + "   Fehler: " + failed);
+            ctx.Summary = created + " erstellt, " + skipped + " vorhanden, " + deleted + " verschoben, " + failed + " Fehler";
             if (failed > 0) throw new TaskFailedException(failed + " Vorschaubild(er) konnten nicht erstellt werden");
         }
 

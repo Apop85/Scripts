@@ -21,5 +21,9 @@
   "import.move": false,
   "import.sub": "",
   "import.category": "SFLIX Tools",
-  "import.preview": true
+  "import.preview": true,
+  "data.all": true,
+  "data.folders": "",
+  "task.rename": false,
+  "log.width": 1150
 }

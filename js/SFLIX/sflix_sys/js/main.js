@@ -72,6 +72,8 @@ function startApplication() {
     // Alle Seiten im Dark-Mode-Design
     document.body.classList.add("darkPage");
     loadSettings();
+    // Kachelgrösse und Animationen aus den Einstellungen
+    applyDisplaySettings();
 
     // Lokale Daten updaten
     updateData();
@@ -95,6 +97,8 @@ function startApplication() {
         window.scrollTo(0, 0);
     } else if (decodedUriData == "HELP") {
         showHelpPage();
+    } else if (decodedUriData == "SETTINGS") {
+        showSettingsPage();
     } else {
         showStartPage();
     }

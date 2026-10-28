@@ -16,12 +16,16 @@ namespace Sflix
         // Ausführungsreihenfolge (unabhängig von der Anordnung im Fenster): Update zuerst, Daten
         // einlesen zuletzt (die anderen verändern Dateien). Ablagen leeren vor Import, Zusammenführen
         // und Konvertieren, damit frisch gesicherte Originale nicht im selben Lauf gelöscht werden.
-        public static readonly string[] TaskIds = { "update", "cleanup", "import", "merge", "convert", "preview", "data" };
+        // Folgen umbenennen vor Zusammenführen, Konvertieren und Vorschaubildern: diese arbeiten
+        // dann schon mit den neuen Namen.
+        public static readonly string[] TaskIds = { "update", "cleanup", "import", "rename", "renameundo", "merge", "convert", "preview", "data" };
 
         static readonly Dictionary<string, string> TaskTitles = new Dictionary<string, string> {
             { "update", "Update" },
             { "cleanup", "Ablagen leeren" },
             { "import", "Medien importieren" },
+            { "rename", "Folgen umbenennen" },
+            { "renameundo", "Folgen umbenennen rückgängig machen" },
             { "merge", "Gesplittete Medien zusammenführen" },
             { "convert", "Videos für STEFFLIX konvertieren" },
             { "preview", "Vorschaubilder erstellen" },
@@ -39,7 +43,10 @@ namespace Sflix
         DarkCheckBox optDataAll;
         ListBox dataFolders;
         Control dataFoldersRow;
-        TextBox mediaFolder, importSub;
+        TextBox installFolderBox, importSub, renameFolder;
+        FolderPick pickPreview, pickMerge, pickConvert, pickCleanup;
+        Label renameUndoInfo;
+        Button renameUndoButton;
         NumericUpDown convertParallel;
         ListBox importList;
         ComboBox importCategory;
@@ -48,12 +55,18 @@ namespace Sflix
         // Registerkarten: nur der Bereich der gewählten Karte ist sichtbar
         const int PageUpdates = 0, PageImport = 1, PageTools = 2;
         static readonly string[] PageSubtitles = { "UPDATES", "IMPORTER", "TOOLS" };
-        static readonly string[] ToolIds = { "cleanup", "merge", "convert", "preview" };
+        static readonly string[] ToolIds = { "cleanup", "rename", "merge", "convert", "preview" };
         TabStrip tabs;
         Control[] pages;
         TableLayoutPanel rootLayout;
 
-        LogToggle logToggle;
+        // Protokoll rechts neben dem Inhalt (Details), Breite per Splitter
+        LogPanel logPanel;
+        SplitBar splitBar;
+        TableLayoutPanel body;
+        Button detailsButton;
+        bool logExpanded;
+        int logWidth;
         Panel tasksScroller;
         BannerPanel banner;
         Panel updateBar;
@@ -62,7 +75,6 @@ namespace Sflix
         Button startButton, cancelButton;
         DarkProgress progress;
         Label statusLabel;
-        TextBox logBox;
 
         // Laufende Aufgaben
         Thread worker;
@@ -118,7 +130,7 @@ namespace Sflix
             TableLayoutPanel root = new TableLayoutPanel();
             root.Dock = DockStyle.Fill;
             root.ColumnCount = 1;
-            root.RowCount = 7;
+            root.RowCount = 6;
             root.BackColor = Theme.Back;
             root.Padding = new Padding(0);
             rootLayout = root;
@@ -126,10 +138,9 @@ namespace Sflix
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, Theme.S(110)));   // Kopfbild
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, Theme.S(46)));    // Registerkarten
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));                  // Update-Hinweis
-            root.RowStyles.Add(new RowStyle(SizeType.Percent, 80));               // Inhalt der Karte (scrollbar)
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));              // Inhalt der Karte, rechts das Protokoll
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));                  // Knöpfe
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));                  // Fortschritt
-            root.RowStyles.Add(new RowStyle(SizeType.Percent, 20));               // Protokoll
             Controls.Add(root);
 
             banner = new BannerPanel();
@@ -174,7 +185,41 @@ namespace Sflix
             scroller.AutoScroll = true;
             scroller.Margin = new Padding(Theme.S(16), Theme.S(12), Theme.S(6), 0);
             scroller.BackColor = Theme.Back;
-            root.Controls.Add(scroller, 0, 3);
+
+            // Inhalt | Splitter | Protokoll (eingeklappt: nur der Inhalt)
+            body = new TableLayoutPanel();
+            body.Dock = DockStyle.Fill;
+            body.AutoSize = true;
+            body.ColumnCount = 3;
+            body.RowCount = 1;
+            body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 0));
+            body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 0));
+            body.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            body.Margin = new Padding(0);
+            body.Padding = new Padding(0);
+            body.BackColor = Theme.Back;
+            splitBar = new SplitBar();
+            splitBar.Dock = DockStyle.Fill;
+            splitBar.Margin = new Padding(0, Theme.S(12), 0, 0);
+            splitBar.Visible = false;
+            logWidth = settings.GetInt("log.width", 0);
+            if (logWidth < Theme.S(280)) logWidth = Theme.S(460);
+            splitBar.GetWidth = delegate { return logWidth; };
+            splitBar.SetWidth = SetLogWidth;
+            splitBar.DragEnded = delegate { settings.SetInt("log.width", logWidth); EqualizeOptionHosts(); Relayout(); };
+            logPanel = new LogPanel();
+            logPanel.Dock = DockStyle.Fill;
+            logPanel.Margin = new Padding(0, Theme.S(12), Theme.S(16), 0);
+            logPanel.Visible = false;
+            logPanel.LogFile = logFile;
+            logPanel.BeforeOpenFile = WriteLogFile;
+            // Bei einem Fehler das Protokoll von selbst zeigen
+            logPanel.ErrorAdded = delegate { if (!logExpanded) SetLogExpanded(true); };
+            body.Controls.Add(scroller, 0, 0);
+            body.Controls.Add(splitBar, 1, 0);
+            body.Controls.Add(logPanel, 2, 0);
+            root.Controls.Add(body, 0, 3);
 
             // --- Updates: Kernkomponenten ---
             optFfmpeg = SmallCheck("ffmpeg ebenfalls aktualisieren");
@@ -221,27 +266,56 @@ namespace Sflix
             parallelRow.Controls.Add(convertParallel);
             parallelRow.Controls.Add(parallelHint);
 
-            // Einstellungen: ein Medienordner für alle Aufgaben, die Videos durchsuchen. Wird gespeichert.
-            mediaFolder = Theme.MakeTextBox();
-            Label folderHint = Theme.MakeLabel("Gilt für Vorschaubilder, Zusammenführen, Konvertieren und Ablagen leeren. " +
-                                               "Wird gespeichert – nur ändern, wenn sich der Ordner ändert.", true);
+            // Einstellungen: der Installationsordner wird bei der Installation festgelegt und hier nur angezeigt
+            installFolderBox = Theme.MakeTextBox();
+            installFolderBox.ReadOnly = true;
+            installFolderBox.BackColor = Theme.Card;
+            installFolderBox.ForeColor = Theme.Muted;
+            Label folderHint = Theme.MakeLabel("Wird bei der Installation festgelegt. Mit „Alles“ durchsuchen die Tools den ganzen Installationsordner, " +
+                                               "sonst nur die gewählten Ordner (auch ausserhalb von STEFFLIX, ausser bei „Ablagen leeren“).", true);
             folderHint.MaximumSize = new Size(TextWidth, 0);
             folderHint.Margin = new Padding(0, Theme.S(4), 0, 0);
 
+            // Ordner je Tool (werden nicht gespeichert, Standard: Alles)
+            pickPreview = MakeFolderPick("Vorschaubilder", false);
+            pickMerge = MakeFolderPick("Zusammenführen", false);
+            pickConvert = MakeFolderPick("Konvertieren", false);
+            pickCleanup = MakeFolderPick("Ablagen leeren", true);
+
+            // Folgen umbenennen: ein Serienordner, darunter "Rückgängig"
+            renameFolder = Theme.MakeTextBox();
+            Control renameRow = FolderRow(renameFolder, "Serienordner:");
+            FlowLayoutPanel undoRow = new FlowLayoutPanel();
+            undoRow.AutoSize = true;
+            undoRow.WrapContents = false;
+            undoRow.Margin = new Padding(0, Theme.S(8), 0, 0);
+            undoRow.BackColor = Color.Transparent;
+            renameUndoButton = SmallButton("Letztes Umbenennen rückgängig");
+            renameUndoButton.Click += delegate { UndoRename(); };
+            renameUndoInfo = Theme.MakeLabel("", true);
+            renameUndoInfo.Margin = new Padding(Theme.S(4), Theme.S(6), 0, 0);
+            undoRow.Controls.Add(renameUndoButton);
+            undoRow.Controls.Add(renameUndoInfo);
+
             Control toolsSection = TileSection(new TileSpec[] {
                 Spec("preview", Glyph.Photo, "Vorschaubilder", "Fehlende Bilder erstellen",
-                     "Fehlende Vorschaubilder (480×270) im Preview-Ordner erstellen.", previewRow),
+                     "Fehlende Vorschaubilder (480×270) im Preview-Ordner erstellen.", previewRow, pickPreview.Root),
+                Spec("rename", Glyph.Rename, "Folgen umbenennen", "Titel aus dem Internet",
+                     "Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen: „Serie - S01E02 - Titel“ " +
+                     "im Ordner „Staffel 01“. Erkannt werden S01E02 und 1x02. Du wählst die Serie und siehst vorher alle Änderungen.",
+                     renameRow, undoRow),
                 Spec("merge", Glyph.Merge, "Zusammenführen", "pt1, pt2 … zu einer Datei",
-                     "Gesplittete Videos wie „Titel pt1“, „Titel pt2“ zu einer Datei zusammenfügen. Du wählst vorher aus, welche.", optMoveParts),
+                     "Gesplittete Videos wie „Titel pt1“, „Titel pt2“ zu einer Datei zusammenfügen. Du wählst vorher aus, welche.", optMoveParts, pickMerge.Root),
                 Spec("convert", Glyph.Convert, "Konvertieren", "Videos in MP4 umwandeln",
                      "Videos in browserkompatible MP4 (H.264/AAC) umwandeln. Das Original kommt nach „" + ConvertTask.OriginalsFolderName + "“.",
-                     parallelRow, optDeleteOriginal),
+                     parallelRow, optDeleteOriginal, pickConvert.Root),
                 Spec("cleanup", Glyph.Trash, "Ablagen leeren", "__-Ordner endgültig löschen",
-                     "„__teile“, „__konvertiert“, „__gelöscht“ und „__original“ endgültig löschen. Du siehst vorher, was gelöscht wird."),
-            }, Spec("settings", Glyph.Settings, "Einstellungen", null, null, FolderRow(mediaFolder, "Medienordner:"), folderHint));
+                     "„__teile“, „__konvertiert“, „__gelöscht“, „__original“ und „" + EpisodeTask.ReplacedFolderName + "“ endgültig löschen. " +
+                     "Du siehst vorher, was gelöscht wird. Nur innerhalb des Installationsordners möglich.", pickCleanup.Root),
+            }, Spec("settings", Glyph.Settings, "Einstellungen", null, null, FolderRow(installFolderBox, "Installationsordner:", false), folderHint));
 
-            Label toolsNote = Theme.MakeLabel("Die gewählten Tools laufen nacheinander, danach wird automatisch „Daten einlesen“ ausgeführt " +
-                                              "(nur für den Medienordner, wenn er in STEFFLIX liegt).", true);
+            Label toolsNote = Theme.MakeLabel("Die gewählten Tools laufen nacheinander. Danach werden die betroffenen Ordner automatisch neu " +
+                                              "eingelesen („Daten einlesen“), sofern sie im Installationsordner liegen.", true);
             toolsNote.MaximumSize = new Size(TextWidth, 0);
             toolsNote.Margin = new Padding(0, 0, 0, Theme.S(10));
 
@@ -305,36 +379,266 @@ namespace Sflix
             statusLabel.Height = Theme.S(26);
             statusLabel.TextAlign = ContentAlignment.MiddleLeft;
             statusLabel.Margin = new Padding(0, Theme.S(4), 0, 0);
-            Button detailsButton = LogToggle.MakeButton();
+            // "Details" blendet das Protokoll rechts ein und aus (standardmässig eingeklappt)
+            detailsButton = LogToggle.MakeButton();
+            detailsButton.Text = "Details ▸";
+            detailsButton.Click += delegate { SetLogExpanded(!logExpanded); };
             prog.Controls.Add(progress, 0, 0);
             prog.SetColumnSpan(progress, 2);
             prog.Controls.Add(statusLabel, 0, 1);
             prog.Controls.Add(detailsButton, 1, 1);
             root.Controls.Add(prog, 0, 5);
+        }
 
-            // Protokoll
-            logBox = new TextBox();
-            logBox.Multiline = true;
-            logBox.ReadOnly = true;
-            logBox.ScrollBars = ScrollBars.Vertical;
-            logBox.WordWrap = false;
-            logBox.Font = new Font("Consolas", 9f);
-            logBox.BackColor = Theme.LogBack;
-            logBox.ForeColor = Color.FromArgb(0xd0, 0xd0, 0xd6);
-            logBox.BorderStyle = BorderStyle.None;
-            logBox.Dock = DockStyle.Fill;
-            logBox.Margin = new Padding(Theme.S(16), 0, Theme.S(16), Theme.S(16));
-            root.Controls.Add(logBox, 0, 6);
+        // ---------------------------------------------------------------
+        // Protokoll ein- und ausblenden, Breite, Fensterhöhe
+        // ---------------------------------------------------------------
 
-            // Protokoll standardmässig eingeklappt, "Details" blendet es ein
-            logToggle = new LogToggle(root, 6, 100, logBox, detailsButton);
-            logToggle.Changed = delegate(bool expanded)
+        const int MinContentWidth = 560;   // Mindestbreite des Inhalts neben dem Protokoll (vor Skalierung)
+
+        void SetLogExpanded(bool expanded)
+        {
+            bool changed = expanded != logExpanded;
+            logExpanded = expanded;
+            detailsButton.Text = expanded ? "Details ◂" : "Details ▸";
+            Rectangle work = Screen.FromControl(this).WorkingArea;
+            int extra = splitBar.Width + logWidth;
+            Size minimum = new Size(Math.Min(Theme.S(700) + (expanded ? extra : 0), work.Width), MinimumSize.Height);
+            // Beim Zuklappen die Mindestgrösse zuerst verkleinern, sonst lässt sich das Fenster nicht
+            // schmaler machen. Beim Aufklappen erst danach vergrössern, sonst wächst es doppelt.
+            if (!expanded || !changed) MinimumSize = minimum;
+
+            body.SuspendLayout();
+            splitBar.Visible = expanded;
+            logPanel.Visible = expanded;
+            body.ColumnStyles[1] = new ColumnStyle(SizeType.Absolute, expanded ? splitBar.Width : 0);
+            body.ColumnStyles[2] = new ColumnStyle(SizeType.Absolute, expanded ? logWidth : 0);
+            body.ResumeLayout(true);
+
+            // Das Fenster wird um das Protokoll breiter bzw. wieder schmaler
+            if (changed && IsHandleCreated && WindowState == FormWindowState.Normal)
             {
-                LogToggle.FitWindow(this, root, expanded, 3, 100, tasksScroller, Theme.S(300), 6);
-                // Eine beim Vergrössern kurz nötige Scrollleiste bliebe sonst stehen
-                tasksScroller.AutoScroll = false;
-                tasksScroller.AutoScroll = true;
-            };
+                if (expanded)
+                {
+                    Width = Math.Min(Width + extra, work.Width);
+                    if (Right > work.Right) Left = Math.Max(work.Left, work.Right - Width);
+                    SetLogWidth(logWidth);   // passt das Protokoll nicht ganz, wird es schmaler
+                }
+                else Width = Math.Max(MinimumSize.Width, Width - extra);
+            }
+            if (expanded && changed) MinimumSize = minimum;
+            if (expanded) logPanel.ScrollToBottom();
+            EqualizeOptionHosts();
+            Relayout();
+        }
+
+        // Breite des Protokolls (Splitter), begrenzt: der Inhalt behält seine Mindestbreite
+        void SetLogWidth(int width)
+        {
+            int max = body.ClientSize.Width - splitBar.Width - Theme.S(MinContentWidth);
+            width = Math.Max(Theme.S(280), Math.Min(width, Math.Max(Theme.S(280), max)));
+            logWidth = width;
+            if (!logExpanded) return;
+            body.ColumnStyles[2] = new ColumnStyle(SizeType.Absolute, width);
+        }
+
+        // Fensterhöhe an den Inhalt anpassen. Ist das Protokoll offen, bekommt es mindestens
+        // eine brauchbare Höhe; ist der Bildschirm zu niedrig, scrollt der Inhalt.
+        void FitHeight()
+        {
+            if (!IsHandleCreated || WindowState != FormWindowState.Normal || rootLayout == null) return;
+            Rectangle work = Screen.FromControl(this).WorkingArea;
+            int maxClient = work.Height - (Height - ClientSize.Height) - 20;
+
+            rootLayout.SuspendLayout();
+            rootLayout.RowStyles[3] = new RowStyle(SizeType.AutoSize);
+            tasksScroller.AutoSize = true;
+            tasksScroller.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            rootLayout.ResumeLayout(true);
+            int natural = rootLayout.GetPreferredSize(new Size(rootLayout.Width, 0)).Height;
+            if (logExpanded) natural = Math.Max(natural, Theme.S(640));
+
+            rootLayout.SuspendLayout();
+            tasksScroller.AutoSize = false;
+            rootLayout.RowStyles[3] = new RowStyle(SizeType.Percent, 100);
+            rootLayout.ResumeLayout(true);
+            ClientSize = new Size(ClientSize.Width, Math.Min(natural, maxClient));
+            if (Bottom > work.Bottom) Top = Math.Max(work.Top, work.Bottom - Height);
+            // Eine beim Vergrössern kurz nötige Scrollleiste bliebe sonst stehen
+            tasksScroller.AutoScroll = false;
+            tasksScroller.AutoScroll = true;
+        }
+
+        // ---------------------------------------------------------------
+        // Ordnerwahl der Tools: "Alles" oder eine Liste von Ordnern
+        // ---------------------------------------------------------------
+
+        class FolderItem
+        {
+            public string Path;
+            public override string ToString()
+            {
+                string rel = DataTask.ToRelative(Path);
+                return string.IsNullOrEmpty(rel) ? Path : rel;
+            }
+        }
+
+        class FolderPick
+        {
+            public DarkCheckBox All;
+            public ListBox List;
+            public Control Row;
+            public Control Root;
+            public string Tool;
+            public bool InsideOnly;
+
+            public List<string> Folders()
+            {
+                List<string> list = new List<string>();
+                if (All.Checked) { list.Add(App.Root); return list; }
+                foreach (FolderItem f in List.Items) list.Add(f.Path);
+                return list;
+            }
+        }
+
+        FolderPick MakeFolderPick(string tool, bool insideOnly)
+        {
+            FolderPick pick = new FolderPick();
+            pick.Tool = tool;
+            pick.InsideOnly = insideOnly;
+            pick.All = SmallCheck("Alles (ganzer Installationsordner)");
+            pick.All.Checked = true;
+
+            pick.List = new ListBox();
+            pick.List.BackColor = Theme.Input;
+            pick.List.ForeColor = Theme.Text;
+            pick.List.BorderStyle = BorderStyle.None;
+            pick.List.IntegralHeight = false;
+            pick.List.SelectionMode = SelectionMode.MultiExtended;
+            pick.List.Dock = DockStyle.Fill;
+            pick.List.Margin = new Padding(0, 0, Theme.S(8), 0);
+            pick.List.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Delete) RemovePickFolders(pick); };
+
+            FlowLayoutPanel buttons = new FlowLayoutPanel();
+            buttons.AutoSize = true;
+            buttons.FlowDirection = FlowDirection.TopDown;
+            buttons.WrapContents = false;
+            buttons.Margin = new Padding(0);
+            Button add = SmallButton("Hinzufügen …");
+            Button remove = SmallButton("Entfernen");
+            foreach (Button b in new Button[] { add, remove })
+            {
+                b.AutoSize = false;
+                b.Size = new Size(Theme.S(120), Theme.S(30));
+                b.Margin = new Padding(0, 0, 0, Theme.S(6));
+                buttons.Controls.Add(b);
+            }
+            add.Click += delegate { AddPickFolder(pick); };
+            remove.Click += delegate { RemovePickFolders(pick); };
+
+            TableLayoutPanel row = new TableLayoutPanel();
+            row.AutoSize = true;
+            row.ColumnCount = 2;
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            row.RowStyles.Add(new RowStyle(SizeType.Absolute, Theme.S(72)));
+            row.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            row.Margin = new Padding(0, Theme.S(4), 0, 0);
+            row.Controls.Add(pick.List, 0, 0);
+            row.Controls.Add(buttons, 1, 0);
+            row.Visible = false;
+            pick.Row = row;
+
+            TableLayoutPanel box = new TableLayoutPanel();
+            box.AutoSize = true;
+            box.ColumnCount = 1;
+            box.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            box.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            box.Margin = new Padding(0, Theme.S(6), 0, 0);
+            box.BackColor = Color.Transparent;
+            box.Controls.Add(pick.All);
+            box.Controls.Add(row);
+            pick.Root = box;
+            pick.All.CheckedChanged += delegate { row.Visible = !pick.All.Checked; Relayout(); };
+            return pick;
+        }
+
+        void AddPickFolder(FolderPick pick)
+        {
+            using (FolderBrowserDialog dlg = new FolderBrowserDialog())
+            {
+                dlg.Description = "Ordner für „" + pick.Tool + "“ wählen" + (pick.InsideOnly ? " (nur im Installationsordner)" : "");
+                dlg.ShowNewFolderButton = false;
+                dlg.SelectedPath = App.Root;
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                string path = Path.GetFullPath(dlg.SelectedPath);
+                string rel = DataTask.ToRelative(path);
+                string reason;
+                if (pick.InsideOnly && !Folders.IsInsideRoot(path, out reason))
+                {
+                    MessageBox.Show(this, "„" + pick.Tool + "“ ist nur im Installationsordner möglich, damit nicht versehentlich andere Daten gelöscht werden.\n\n" +
+                                    "Der gewählte Ordner " + reason + ":\n" + path, App.Title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                if (rel != null && rel.Length == 0)
+                {
+                    MessageBox.Show(this, "Für den ganzen Installationsordner bitte „Alles“ einschalten.", App.Title,
+                                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                if (rel != null && Folders.IgnoreAny(App.Root, rel))
+                {
+                    MessageBox.Show(this, "Ablage-, System- und versteckte Ordner werden von den Tools übersprungen.", App.Title,
+                                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                foreach (FolderItem existing in pick.List.Items)
+                    if (string.Equals(existing.Path, path, StringComparison.OrdinalIgnoreCase)) return;
+                FolderItem item = new FolderItem();
+                item.Path = path;
+                pick.List.Items.Add(item);
+            }
+        }
+
+        void RemovePickFolders(FolderPick pick)
+        {
+            List<object> sel = new List<object>();
+            foreach (object o in pick.List.SelectedItems) sel.Add(o);
+            foreach (object o in sel) pick.List.Items.Remove(o);
+        }
+
+        FolderPick PickOf(string id)
+        {
+            switch (id)
+            {
+                case "preview": return pickPreview;
+                case "merge": return pickMerge;
+                case "convert": return pickConvert;
+                case "cleanup": return pickCleanup;
+            }
+            return null;
+        }
+
+        // ---------------------------------------------------------------
+        // Folgen umbenennen: Rückgängig
+        // ---------------------------------------------------------------
+
+        void UpdateUndoInfo()
+        {
+            string series;
+            string info = EpisodeTask.UndoInfo(out series);
+            renameUndoButton.Enabled = info != null && !running;
+            renameUndoInfo.Text = info ?? "Noch nichts umbenannt.";
+        }
+
+        void UndoRename()
+        {
+            string series;
+            string info = EpisodeTask.UndoInfo(out series);
+            if (info == null || running) return;
+            if (MessageBox.Show(this, "Das letzte Umbenennen rückgängig machen?\n\n" + info, App.Title,
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+            StartTasks(new List<string> { "renameundo", "data" });
         }
 
         // Breite für umbrechende Beschreibungen
@@ -393,7 +697,7 @@ namespace Sflix
             base.OnLoad(e);
             EqualizeOptionHosts();
             UpdateStartText();
-            logToggle.Set(false);
+            SetLogExpanded(false);
         }
 
         // ---------------------------------------------------------------
@@ -797,7 +1101,7 @@ namespace Sflix
         // Nach einer Änderung der Inhalte: Fensterhöhe an den Inhalt anpassen
         void Relayout()
         {
-            if (logToggle != null && IsHandleCreated) logToggle.Set(logToggle.Expanded);
+            FitHeight();
         }
 
         // ---------------------------------------------------------------
@@ -1251,7 +1555,7 @@ namespace Sflix
             return c;
         }
 
-        Control FolderRow(TextBox box, string label)
+        Control FolderRow(TextBox box, string label, bool withBrowse = true)
         {
             TableLayoutPanel row = new TableLayoutPanel();
             row.Dock = DockStyle.Fill;
@@ -1279,7 +1583,8 @@ namespace Sflix
             };
             row.Controls.Add(l, 0, 0);
             row.Controls.Add(box, 1, 0);
-            row.Controls.Add(browse, 2, 0);
+            if (withBrowse) row.Controls.Add(browse, 2, 0);
+            else box.Margin = new Padding(0, Theme.S(2), 0, 0);
             return row;
         }
 
@@ -1298,7 +1603,8 @@ namespace Sflix
             }
             optImportPreview.Checked = settings.GetBool("import.preview", true);
             optFfmpeg.Checked = settings.GetBool("update.ffmpeg", true);
-            mediaFolder.Text = settings.MediaFolder();
+            installFolderBox.Text = App.Root;
+            UpdateUndoInfo();
             optMoveParts.Checked = settings.GetBool("merge.moveParts", true);
             convertParallel.Value = Math.Max(0, Math.Min(16, settings.GetInt("convert.parallel", 0)));
             optDeleteOriginal.Checked = settings.GetBool("convert.deleteOriginal", false);
@@ -1318,20 +1624,14 @@ namespace Sflix
 
         bool loading;
 
-        static string FolderSetting(string text)
-        {
-            text = text.Trim();
-            return string.Equals(text.TrimEnd('\\'), App.Root.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase) ? "" : text;
-        }
-
         void SaveOptions(bool saveTaskSelection)
         {
             if (saveTaskSelection)
                 foreach (string id in checks.Keys) settings.SetBool("task." + id, checks[id].Checked);
             settings.SetBool("update.ffmpeg", optFfmpeg.Checked);
-            settings.SetString("media.folder", FolderSetting(mediaFolder.Text));
-            // Getrennte Ordner früherer Versionen sind damit ersetzt
-            foreach (string old in new string[] { "convert.folder", "merge.folder", "preview.folder" }) settings.SetString(old, "");
+            // Der frühere Medienordner ist durch die Ordnerwahl je Tool ersetzt
+            foreach (string old in new string[] { "media.folder", "convert.folder", "merge.folder", "preview.folder" }) settings.SetString(old, "");
+            settings.SetInt("log.width", logWidth);
             settings.SetBool("merge.moveParts", optMoveParts.Checked);
             settings.SetInt("convert.parallel", (int)convertParallel.Value);
             settings.SetBool("convert.deleteOriginal", optDeleteOriginal.Checked);
@@ -1348,12 +1648,6 @@ namespace Sflix
             settings.SetString("data.folders", string.Join(DataTask.FolderSeparator.ToString(), DataFolderList().ToArray()));
             settings.SetBool("task.import", false);
             settings.Save();
-        }
-
-        static string FolderOf(TextBox box)
-        {
-            string t = box.Text.Trim();
-            return t.Length == 0 ? App.Root : t;
         }
 
         // ---------------------------------------------------------------
@@ -1458,14 +1752,52 @@ namespace Sflix
             bool previewVideos = optPreviewVideos.Checked, previewImages = optPreviewImages.Checked;
             // Nach einem Import: Einstellung der Vorschaubilder aus den Tools, mindestens für Videos
             if (selected.Contains("import") && !previewVideos && !previewImages) previewVideos = true;
-            string media = FolderOf(mediaFolder);
-            if ((selected.Contains("merge") || selected.Contains("convert") || selected.Contains("preview") || selected.Contains("cleanup"))
-                && !Directory.Exists(media))
+            // Ordner der Tools (Standard "Alles" = Installationsordner)
+            Dictionary<string, List<string>> toolFolders = new Dictionary<string, List<string>>();
+            foreach (string id in new string[] { "preview", "merge", "convert", "cleanup" })
             {
-                ShowOption("settings");
-                MessageBox.Show(this, "Der Medienordner wurde nicht gefunden:\n" + media + "\n\nBitte unter „Tools“ → „Einstellungen“ einen vorhandenen Ordner wählen.",
+                List<string> list = PickOf(id).Folders();
+                if (selected.Contains(id) && preset == null && page == PageTools)
+                {
+                    if (list.Count == 0)
+                    {
+                        ShowOption(id);
+                        MessageBox.Show(this, "Bitte bei „" + PickOf(id).Tool + "“ mindestens einen Ordner hinzufügen oder „Alles“ einschalten.",
+                                        App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+                    foreach (string f in list)
+                    {
+                        string reason = null;
+                        bool missing = !Directory.Exists(f);
+                        if (missing || (id == "cleanup" && !Folders.IsInsideRoot(f, out reason)))
+                        {
+                            ShowOption(id);
+                            MessageBox.Show(this, missing ? "Ordner nicht gefunden:\n" + f
+                                : "„Ablagen leeren“ ist nur im Installationsordner möglich. Dieser Ordner " + reason + ":\n" + f,
                                 App.Title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                            return;
+                        }
+                    }
+                }
+                if (list.Count == 0) list.Add(App.Root);   // automatischer Start: ganzer Installationsordner
+                toolFolders[id] = list;
+            }
+            string renameDir = null;
+            if (selected.Contains("rename"))
+            {
+                renameDir = renameFolder.Text.Trim();
+                string message = null;
+                if (renameDir.Length == 0) message = "Bitte bei „Folgen umbenennen“ den Ordner der Serie wählen.";
+                else if (!Directory.Exists(renameDir)) message = "Der Serienordner wurde nicht gefunden:\n" + renameDir;
+                else if (DataTask.ToRelative(renameDir) == "") message = "Bitte den Ordner einer einzelnen Serie wählen, nicht den ganzen Installationsordner.";
+                if (message != null)
+                {
+                    ShowOption("rename");
+                    MessageBox.Show(this, message, App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                renameDir = Path.GetFullPath(renameDir).TrimEnd('\\');
             }
             if (selected.Contains("preview") && !previewVideos && !previewImages)
             {
@@ -1515,9 +1847,35 @@ namespace Sflix
             }
             else if (preset == null && page == PageTools)
             {
-                // Tools: nur der Medienordner, wenn er in STEFFLIX liegt
-                string rel = DataTask.ToRelative(media);
-                if (!string.IsNullOrEmpty(rel)) dataScope = new List<string> { media };
+                // Tools: nur die Ordner, in denen sich etwas geändert haben kann und die im
+                // Installationsordner liegen. "Alles" liest alles ein. Ablagen leeren ändert data.js nicht.
+                List<string> touched = new List<string>();
+                foreach (string id in new string[] { "preview", "merge", "convert" })
+                    if (selected.Contains(id)) touched.AddRange(toolFolders[id]);
+                if (renameDir != null) touched.Add(renameDir);
+                bool all = false;
+                List<string> inside = new List<string>();
+                foreach (string f in touched)
+                {
+                    string rel = DataTask.ToRelative(f);
+                    if (rel == null) continue;
+                    if (rel.Length == 0) all = true;
+                    else inside.Add(f);
+                }
+                if (!all)
+                {
+                    if (inside.Count > 0) dataScope = Folders.WithoutNested(inside);
+                    else selected.Remove("data");   // nichts in STEFFLIX betroffen
+                }
+            }
+            else if (selected.Contains("renameundo"))
+            {
+                // Rückgängig: nur den Serienordner neu einlesen
+                string series;
+                EpisodeTask.UndoInfo(out series);
+                string rel = series != null ? DataTask.ToRelative(series) : null;
+                if (rel == null) selected.Remove("data");
+                else if (rel.Length > 0) dataScope = new List<string> { series };
             }
             else if (selected.Contains("data") && !optDataAll.Checked)
             {
@@ -1536,7 +1894,7 @@ namespace Sflix
             SaveOptions(preset == null);
 
             ConvertOptions conv = new ConvertOptions();
-            conv.Folder = media;
+            conv.Folder = App.Root;
             conv.Parallel = (int)convertParallel.Value;
             conv.DeleteOriginal = optDeleteOriginal.Checked;
             conv.Preset = settings.GetString("convert.preset", "medium");
@@ -1550,14 +1908,16 @@ namespace Sflix
             runner.UpdateFfmpeg = optFfmpeg.Checked || forceFfmpeg;
             forceFfmpeg = false;
             lastRunUpdated = selected.Contains("update");
-            runner.MergeFolder = media;
+            runner.MergeFolders = toolFolders["merge"];
             runner.MoveParts = optMoveParts.Checked;
             runner.Convert = conv;
+            runner.ConvertFolders = toolFolders["convert"];
             // Nach einem Import nur im Zielordner nach fehlenden Vorschaubildern suchen
-            runner.PreviewFolder = import != null ? dataScope[0] : media;
+            runner.PreviewFolders = import != null ? new List<string> { dataScope[0] } : toolFolders["preview"];
             runner.PreviewVideos = previewVideos;
             runner.PreviewImages = previewImages;
-            runner.CleanupFolder = media;
+            runner.CleanupFolders = toolFolders["cleanup"];
+            runner.RenameFolder = renameDir;
             runner.DataFolders = dataScope;
             if (import != null) import.Video = conv;
             runner.Import = import;
@@ -1580,7 +1940,21 @@ namespace Sflix
             {
                 return (List<CleanupFolder>)Invoke((Func<List<CleanupFolder>>)delegate
                 {
-                    using (CleanupDialog dlg = new CleanupDialog(folders, media)) return dlg.Choose(this);
+                    using (CleanupDialog dlg = new CleanupDialog(folders, App.Root)) return dlg.Choose(this);
+                });
+            };
+            ctx.ChooseEpisodeList = delegate(string term)
+            {
+                return (EpisodeList)Invoke((Func<EpisodeList>)delegate
+                {
+                    using (EpisodeSearchDialog dlg = new EpisodeSearchDialog(term)) return dlg.Choose(this);
+                });
+            };
+            ctx.ConfirmEpisodePlan = delegate(EpisodePlan plan)
+            {
+                return (bool)Invoke((Func<bool>)delegate
+                {
+                    using (EpisodePlanDialog dlg = new EpisodePlanDialog(plan)) return dlg.Confirm(this);
                 });
             };
             ctx.AskConflict = delegate(string target)
@@ -1611,6 +1985,7 @@ namespace Sflix
             cancelButton.Enabled = value;
             updateButton.Enabled = !value;
             foreach (TileButton c in checks.Values) c.Enabled = !value;
+            renameUndoButton.Enabled = !value && EpisodeTask.UndoFileExists;
             if (value) { progress.Value = -1; statusLabel.Text = "Läuft ..."; }
         }
 
@@ -1627,6 +2002,7 @@ namespace Sflix
         {
             FlushUi();
             SetRunning(false);
+            UpdateUndoInfo();
             progress.Value = result.Success ? 1 : 0;
             // Erfolgreicher Import: Auswahl leeren, damit beim nächsten Start nicht nochmal importiert wird
             // Update erledigt: Versionen neu prüfen (blendet den Hinweis aus, wenn alles aktuell ist)
@@ -1693,18 +2069,14 @@ namespace Sflix
 
         void FlushUi()
         {
-            StringBuilder sb = new StringBuilder();
+            List<string> lines = new List<string>();
             string line;
             while (pendingLog.TryDequeue(out line))
             {
-                sb.Append(line).Append("\r\n");
+                lines.Add(line);
                 unsavedLog.Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")).Append("  ").Append(line).Append("\r\n");
             }
-            if (sb.Length > 0)
-            {
-                if (logBox.TextLength > 2000000) logBox.Text = logBox.Text.Substring(logBox.TextLength - 1000000);
-                logBox.AppendText(sb.ToString());
-            }
+            if (lines.Count > 0) logPanel.Add(lines);
 
             double f;
             string s;
@@ -1754,13 +2126,13 @@ namespace Sflix
     {
         public List<string> Tasks;
         public bool UpdateFfmpeg = true;
-        public string MergeFolder;
+        // Ordner je Tool; null = ganzer Installationsordner. Mehrere Ordner laufen nacheinander.
+        public List<string> MergeFolders, ConvertFolders, PreviewFolders, CleanupFolders;
         public bool MoveParts = true;
         public ConvertOptions Convert;
-        public string PreviewFolder;
         public bool PreviewVideos = true;
         public bool PreviewImages;
-        public string CleanupFolder;
+        public string RenameFolder;        // Folgen umbenennen: Serienordner
         public ImportOptions Import;
         public List<string> DataFolders;   // null = alles einlesen, sonst nur diese Ordner
 
@@ -1771,6 +2143,8 @@ namespace Sflix
                 case "update": return "Update";
                 case "cleanup": return "Ablagen leeren";
                 case "import": return "Medien importieren";
+                case "rename": return "Folgen umbenennen";
+                case "renameundo": return "Folgen umbenennen rückgängig";
                 case "merge": return "Gesplittete Medien zusammenführen";
                 case "convert": return "Videos für STEFFLIX konvertieren";
                 case "preview": return "Vorschaubilder erstellen";
@@ -1793,6 +2167,8 @@ namespace Sflix
                 ctx.Log("");
                 ctx.Log("=== " + Title(id) + " ===");
                 ctx.Progress(-1, Title(id) + " ...");
+                ctx.Summary = null;
+                DateTime taskStart = DateTime.Now;
                 string outcome;
                 try
                 {
@@ -1819,7 +2195,10 @@ namespace Sflix
                     outcome = "Fehler";
                     result.Success = false;
                 }
-                summary.Add(Title(id).PadRight(36) + outcome);
+                // z.B. "Daten einlesen    OK  –  1234 Medien  (12 s)"
+                summary.Add(Title(id).PadRight(36) + outcome +
+                            (string.IsNullOrEmpty(ctx.Summary) ? "" : "  –  " + ctx.Summary) +
+                            "  (" + Fmt.Time((DateTime.Now - taskStart).TotalSeconds) + ")");
 
                 if (ctx.RestartRequested)
                 {
@@ -1855,21 +2234,48 @@ namespace Sflix
             switch (id)
             {
                 case "update": UpdateTask.Run(ctx, UpdateFfmpeg); break;
-                case "merge": MergeTask.Run(ctx, MergeFolder, MoveParts); break;
-                case "convert": ConvertTask.Run(ctx, Convert); break;
+                case "merge": ForEachFolder(ctx, MergeFolders, delegate(string f) { MergeTask.Run(ctx, f, MoveParts); }); break;
+                case "convert": ForEachFolder(ctx, ConvertFolders, delegate(string f) { Convert.Folder = f; ConvertTask.Run(ctx, Convert); }); break;
                 case "preview":
                     // Nach einem Import ohne neue Dateien gibt es den Zielordner eventuell nicht
-                    if (Import != null && !Directory.Exists(PreviewFolder)) { ctx.Log("Zielordner nicht vorhanden, nichts zu tun."); break; }
-                    PreviewTask.Run(ctx, PreviewFolder, PreviewVideos, PreviewImages);
+                    if (Import != null && PreviewFolders != null && PreviewFolders.Count > 0 && !Directory.Exists(PreviewFolders[0]))
+                    {
+                        ctx.Log("Zielordner nicht vorhanden, nichts zu tun.");
+                        break;
+                    }
+                    ForEachFolder(ctx, PreviewFolders, delegate(string f) { PreviewTask.Run(ctx, f, PreviewVideos, PreviewImages); });
                     break;
                 case "import":
                     if (Import == null) throw new TaskFailedException("Medien importieren ist nur über die Oberfläche möglich.");
                     ImportTask.Run(ctx, Import);
                     break;
-                case "cleanup": CleanupTask.Run(ctx, CleanupFolder); break;
+                case "cleanup": CleanupTask.Run(ctx, CleanupFolders ?? new List<string> { App.Root }); break;
+                case "rename": EpisodeTask.Run(ctx, RenameFolder); break;
+                case "renameundo": EpisodeTask.Undo(ctx); break;
                 case "data": DataTask.Run(ctx, DataFolders); break;
                 default: throw new TaskFailedException("Unbekannte Aufgabe: " + id);
             }
+        }
+
+        // Führt ein Tool für jeden gewählten Ordner aus. Ein Fehler in einem Ordner hält die
+        // anderen nicht auf; am Ende werden alle Fehler gemeldet.
+        static void ForEachFolder(TaskContext ctx, List<string> folders, Action<string> run)
+        {
+            List<string> list = Folders.WithoutNested(folders != null && folders.Count > 0 ? folders : new List<string> { App.Root });
+            List<string> errors = new List<string>();
+            List<string> results = new List<string>();
+            foreach (string f in list)
+            {
+                ctx.Check();
+                if (list.Count > 1) ctx.Log("Ordner: " + f);
+                ctx.Summary = null;
+                try { run(f); }
+                catch (TaskFailedException e) { errors.Add(list.Count > 1 ? Path.GetFileName(f.TrimEnd('\\')) + ": " + e.Message : e.Message); }
+                if (!string.IsNullOrEmpty(ctx.Summary))
+                    results.Add(list.Count > 1 ? Path.GetFileName(f.TrimEnd('\\')) + ": " + ctx.Summary : ctx.Summary);
+            }
+            ctx.Summary = results.Count > 0 ? string.Join("; ", results.ToArray()) : null;
+            if (errors.Count > 0) throw new TaskFailedException(string.Join("; ", errors.ToArray()));
         }
     }
 }

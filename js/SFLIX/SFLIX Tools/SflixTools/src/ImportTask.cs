@@ -224,6 +224,7 @@ namespace Sflix
             if (opt.Move) RemoveEmptySourceFolders();
 
             ctx.Log("Importiert: " + imported + " (davon konvertiert: " + converted + ")   Übersprungen: " + skipped + "   Fehler: " + failed);
+            ctx.Summary = imported + " importiert (" + converted + " konvertiert), " + skipped + " übersprungen, " + failed + " Fehler";
             if (failed > 0) throw new TaskFailedException(failed + " Datei(en) konnten nicht importiert werden");
         }
 

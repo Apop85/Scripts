@@ -369,7 +369,7 @@ namespace Sflix
 
     }
 
-    public enum Glyph { Up, Import, Tools, Data, Photo, Merge, Convert, Trash, Settings }
+    public enum Glyph { Up, Import, Tools, Data, Photo, Merge, Convert, Trash, Settings, Rename }
 
     // Einfache Strichsymbole im Stil der Registerkarten
     public static class Glyphs
@@ -445,6 +445,18 @@ namespace Sflix
                         g.DrawLines(pen, new PointF[] { P(s, -0.30f, -0.16f), P(s, -0.24f, 0.44f), P(s, 0.24f, 0.44f), P(s, 0.30f, -0.16f) });
                         g.DrawLine(pen, -s * 0.08f, -s * 0.04f, -s * 0.07f, s * 0.30f);
                         g.DrawLine(pen, s * 0.08f, -s * 0.04f, s * 0.07f, s * 0.30f);
+                        break;
+                    case Glyph.Rename:
+                        // Textzeilen mit Stift: Namen bearbeiten
+                        g.DrawLine(pen, -s * 0.42f, -s * 0.30f, s * 0.06f, -s * 0.30f);
+                        g.DrawLine(pen, -s * 0.42f, -s * 0.04f, -s * 0.10f, -s * 0.04f);
+                        g.DrawLine(pen, -s * 0.42f, s * 0.22f, -s * 0.24f, s * 0.22f);
+                        using (Pen pencil = new Pen(color, s * 0.17f))
+                        {
+                            pencil.StartCap = LineCap.Triangle;
+                            pencil.EndCap = LineCap.Round;
+                            g.DrawLine(pencil, -s * 0.06f, s * 0.36f, s * 0.34f, -s * 0.04f);
+                        }
                         break;
                     case Glyph.Settings:
                         // Zahnrad: Ring mit acht Zähnen

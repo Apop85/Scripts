@@ -77,6 +77,7 @@ namespace Sflix
                 if (status == "ok") ok++; else if (status == "skip") skipped++; else failed++;
             }
             ctx.Log("Zusammengefügt: " + ok + "   Übersprungen: " + skipped + "   Fehler: " + failed);
+            ctx.Summary = ok + " zusammengefügt, " + skipped + " übersprungen, " + failed + " Fehler";
             if (failed > 0) throw new TaskFailedException(failed + " Video(s) konnten nicht zusammengefügt werden");
         }
 

@@ -9,8 +9,11 @@ Ein Programm mit Oberfläche, das die bisherigen Werkzeuge ersetzt:
 | Videos für STEFFLIX konvertieren | `convertVideos.py` |
 | Vorschaubilder erstellen | `PreviewMaker` |
 | Daten einlesen | `getfilepath.py` (`updateData.exe`) |
+| Folgen umbenennen | `folgenliste.py`, `serien_umbenennen.py` |
 
-Dazu kommt „Ablagen leeren“: Es löscht `__teile`, `__konvertiert`, `__gelöscht` und `__original` (alle Ordner, deren Name mit `__` beginnt) im Medienordner endgültig, nachdem eine Liste zur Bestätigung angezeigt wurde.
+Dazu kommt „Ablagen leeren“: Es löscht `__teile`, `__konvertiert`, `__gelöscht`, `__original` und `__ersetzt` (alle Ordner, deren Name mit `__` beginnt) endgültig, nachdem eine Liste zur Bestätigung angezeigt wurde. **Nur innerhalb des Installationsordners:** Ordner ausserhalb werden bei der Wahl abgelehnt und beim Start nochmals geprüft (`Folders.IsInsideRoot`), Verknüpfungen (Junctions, symbolische Links) werden nie verfolgt und nie gelöscht. Das gilt auch ohne Oberfläche.
+
+**Folgen umbenennen** (`EpisodeTask.cs`, Dialoge in `EpisodeDialogs.cs`): Serienordner wählen, im Dialog die Serie suchen (fernsehserien.de mit deutschen Titeln, ohne Treffer oder mit „Nicht dabei“ TVmaze mit englischen Titeln), Folgen laden. Folgennummern werden aus `S01E02`, `S01 E02`, `1x02` erkannt; Doppelfolgen (`S01E01E02`, `S01E0102`, `S02E03-E04`) zählen als kleinste Nummer. Zielname `Serie - S01E02 - Titel.ext` (ß → ss, Zeichen wie beim Einlesen bereinigt) im Ordner `Staffel 01`. Staffelordner werden angeglichen (`Staffel 1`, `Season 1`, `S01` → `Staffel 01`), gibt es beide, wird zusammengeführt. Folgen in der falschen Staffel oder direkt im Serienordner werden verschoben. Die Vorschau zeigt alle Änderungen, mehrere Dateien für dieselbe Folge sind nicht angehakt (nur eine wählbar), dazu fehlende Folgen und nicht zugeordnete Dateien. Vorschaubilder ziehen mit, ersetzte Dateien kommen nach `<Serie>\__ersetzt`, `renamed.js` wird ergänzt (`DataTask.AppendRenamedPairs`). Jeder Lauf steht in `sflix_sys\folgen_rueckgaengig.json`; „Letztes Umbenennen rückgängig“ (Aufgabe `renameundo`) spielt ihn rückwärts ab.
 
 „Daten einlesen“ verkleinert zu große Vorschaubilder auf 480×270. Das Original kommt nach `Preview\__original\<Dateiname>`. Bis Version 3.0.3 lag es als `<Dateiname>.original` direkt im Preview-Ordner; solche Dateien zieht „Daten einlesen“ automatisch um.
 
@@ -20,15 +23,17 @@ Das Fenster hat drei Registerkarten. Sichtbar ist nur der Bereich der gewählten
 |---|---|---|
 | Updates | Update, Daten einlesen | die angehakten |
 | Importer | Medien importieren | Import, auf Wunsch Vorschaubilder (nur im Zielordner), danach Daten einlesen für den Zielordner |
-| Tools | Vorschaubilder, Zusammenführen, Konvertieren, Ablagen leeren, Einstellungen | die angehakten, danach Daten einlesen (nur der Medienordner, wenn er in STEFFLIX liegt, sonst alles) |
+| Tools | Vorschaubilder, Folgen umbenennen, Zusammenführen, Konvertieren, Ablagen leeren, Einstellungen | die angehakten, danach Daten einlesen nur für die betroffenen Ordner im Installationsordner (mit „Alles“ alles, nach „Ablagen leeren“ allein nichts) |
 
 **Teil-Einlesen:** Bei „Daten einlesen“ schaltet „Alle Ordner einlesen“ zwischen dem ganzen STEFFLIX-Ordner und einer Liste gewählter Ordner um. Die Liste wird gespeichert (`data.all`, `data.folders` relativ zum STEFFLIX-Ordner, getrennt mit `|`). Für jeden gewählten Ordner ersetzt `DataTask.UpdateBranch` dessen Zweig in der bestehenden `data.js`. Fehlende Zwischenordner werden angelegt, ein gelöschter Ordner wird entfernt, und der `Preview`-Ordner eine Ebene darüber wird mit eingelesen. Neue Einträge kommen in die Reihenfolge des Ordners, das Ergebnis entspricht also dem vollständigen Einlesen. Fehlt `data.js` oder ist sie nicht lesbar, wird alles eingelesen.
 
 Updates und Tools werden als Kacheln gewählt (Klick wählt aus oder ab). Unter den Kacheln gibt es für jede gewählte Kachel einen Reiter mit Beschreibung und Optionen, bei Tools zusätzlich immer den Reiter „Einstellungen“. Optionen sind Schalter. Der Start-Knopf beschreibt, was passiert („2 Tools starten“, „Importieren“ …). Dateien und Ordner, die ins Fenster gezogen werden, landen immer im Importer.
 
-Die Aufgaben laufen immer in dieser Reihenfolge: Update, Ablagen leeren, Import, Zusammenführen, Konvertieren, Vorschaubilder, Daten einlesen. „Ablagen leeren“ läuft vor Zusammenführen und Konvertieren, damit frisch gesicherte Originale nicht im selben Lauf gelöscht werden. „Daten einlesen“ kommt zuletzt, weil die anderen Aufgaben Dateien verändern.
+Die Aufgaben laufen immer in dieser Reihenfolge: Update, Ablagen leeren, Import, Folgen umbenennen (bzw. rückgängig), Zusammenführen, Konvertieren, Vorschaubilder, Daten einlesen. „Ablagen leeren“ läuft vor Zusammenführen und Konvertieren, damit frisch gesicherte Originale nicht im selben Lauf gelöscht werden. „Folgen umbenennen“ läuft vor den anderen Tools, die dann schon mit den neuen Namen arbeiten. „Daten einlesen“ kommt zuletzt, weil die anderen Aufgaben Dateien verändern.
 
-Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren arbeiten im **Medienordner**. Er wird unter Tools → Einstellungen einmal festgelegt und gespeichert. Am Ende jedes Laufs zeigt das Protokoll deutlich „VORGANG BEENDET“ mit Ergebnis und Dauer.
+**Ordner der Tools:** Vorschaubilder, Zusammenführen, Konvertieren und Ablagen leeren haben je ein eigenes Ordnerfeld mit dem Schalter „Alles“ (ganzer Installationsordner, Standard) oder einer Liste mehrerer Ordner (`FolderPick` in `MainForm`). Die Wahl wird nicht gespeichert. Ordner ausserhalb von STEFFLIX sind erlaubt (ausser bei Ablagen leeren), für sie wird `data.js` nicht angepasst. Mehrere Ordner laufen nacheinander (`TaskRunner.ForEachFolder`, doppelte und verschachtelte fallen weg). Der **Installationsordner** steht unter Tools → Einstellungen nur zur Ansicht; er wird bei der Installation festgelegt. Der frühere `media.folder` wird nicht mehr verwendet.
+
+**Protokoll** (`LogView.cs`): „Details“ blendet es rechts neben dem Inhalt ein, das Fenster wird dabei breiter. Die Breite lässt sich am Splitter ziehen und wird gespeichert (`log.width`). Zeilen sind nach Art gefärbt (Fehler, Hinweis, Erfolg, Überschrift) und haben eine Uhrzeit. Oben: Kopieren, Leeren, Protokolldatei öffnen, Suche und „Nur Fehler und Warnungen“. Bei einer Fehlerzeile klappt das Protokoll von selbst auf. Die Zusammenfassung am Ende nennt je Aufgabe das Ergebnis (`TaskContext.Summary`) und die Dauer; „Daten einlesen“ zeigt zusätzlich eine Übersicht je Kategorie (Videos, Musik, Bilder, Ordner, Videos ohne Vorschaubild). Am Ende jedes Laufs steht deutlich „VORGANG BEENDET“ mit Ergebnis und Dauer.
 
 Der Updater arbeitet nur in einem STEFFLIX-Ordner, also dort, wo `start.html` und `sflix_sys` sind. **Liegt er woanders, bietet er stattdessen die Installation an** (wie `setup.exe`):
 1. Ordner wählen.
@@ -121,10 +126,10 @@ Ordner, deren Name `__` enthält, sind Ablagen der Werkzeuge. Keine Aufgabe durc
 updateStefflix.exe --headless update,data
 ```
 
-- Aufgaben: `update`, `cleanup`, `merge`, `convert`, `preview`, `data`.
+- Aufgaben: `update`, `cleanup`, `merge`, `convert`, `preview`, `data`, `renameundo`. `rename` braucht die Oberfläche (Auswahl der Serie).
 - `data` liest ohne Oberfläche alles ein. Mit `--data-folder "Serien\Meine Serie"` (mehrfach möglich, relativ oder absolut) nur diese Ordner.
-- `cleanup` löscht ohne Oberfläche **alle** Ablagen, ohne nachzufragen.
-- Ordner und Optionen stammen aus `sflix_sys\updater_settings.json`.
+- `cleanup` löscht ohne Oberfläche **alle** Ablagen im Installationsordner, ohne nachzufragen.
+- Die Tools arbeiten ohne Oberfläche im ganzen Installationsordner, Optionen stammen aus `sflix_sys\updater_settings.json`.
 - Beim Zusammenführen wird ohne Oberfläche nur verarbeitet, was ohne Neukodieren geht.
 - Das Protokoll steht in `sflix_sys\updater.log`. Exit-Code 0 bedeutet, dass alles in Ordnung war.
 

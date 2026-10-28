@@ -169,6 +169,52 @@ namespace Sflix
             return Skip(Path.GetFileName(path.TrimEnd('\\'))) || IsHidden(path);
         }
 
+        // Liegt der Ordner wirklich im STEFFLIX-Ordner? Nein, wenn er ausserhalb liegt oder der Weg
+        // dorthin über eine Verknüpfung (Junction, symbolischer Link) führt, die nach aussen zeigen kann.
+        public static bool IsInsideRoot(string folder, out string reason)
+        {
+            reason = null;
+            string rel;
+            try { rel = DataTask.ToRelative(folder); }
+            catch (Exception e) { reason = e.Message; return false; }
+            if (rel == null) { reason = "liegt ausserhalb des Installationsordners"; return false; }
+            string dir = Path.GetFullPath(App.Root);
+            foreach (string seg in rel.Split('\\'))
+            {
+                if (seg.Length == 0) continue;
+                dir = Path.Combine(dir, seg);
+                try
+                {
+                    if ((File.GetAttributes(dir) & FileAttributes.ReparsePoint) != 0) { reason = "führt über eine Verknüpfung"; return false; }
+                }
+                catch (Exception e) { reason = e.Message; return false; }
+            }
+            return true;
+        }
+
+        // Ordnerliste ohne Doppelte und ohne Ordner, die in einem anderen gewählten liegen
+        public static List<string> WithoutNested(IEnumerable<string> folders)
+        {
+            List<string> full = new List<string>();
+            foreach (string f in folders)
+            {
+                string p = Path.GetFullPath(f).TrimEnd('\\');
+                bool known = false;
+                foreach (string k in full) if (string.Equals(k, p, StringComparison.OrdinalIgnoreCase)) known = true;
+                if (!known) full.Add(p);
+            }
+            List<string> result = new List<string>();
+            foreach (string a in full)
+            {
+                bool covered = false;
+                foreach (string b in full)
+                    if (a.StartsWith(b + "\\", StringComparison.OrdinalIgnoreCase)) covered = true;
+                // Laufwerk (D:) wieder mit "\", sonst wäre es ein relativer Pfad
+                if (!covered) result.Add(a.EndsWith(":") ? a + "\\" : a);
+            }
+            return result;
+        }
+
         // Liegt der Ordner (relativ zu root) in einem Ordner, der übersprungen wird?
         public static bool IgnoreAny(string root, string relative)
         {
@@ -254,18 +300,6 @@ namespace Sflix
         }
         public void SetString(string key, string value) { data[key] = value; }
 
-        // Der eine Medienordner für Zusammenführen, Konvertieren und Vorschaubilder.
-        // Leer -> STEFFLIX-Ordner. Ältere Einstellungen mit getrennten Ordnern werden übernommen.
-        public string MediaFolder()
-        {
-            foreach (string key in new string[] { "media.folder", "convert.folder", "merge.folder", "preview.folder" })
-            {
-                string s = data.Str(key);
-                if (!string.IsNullOrEmpty(s)) return s;
-            }
-            return App.Root;
-        }
-
         // Ordner aus den Einstellungen; leer oder nicht vorhanden -> STEFFLIX-Ordner
         public string GetFolder(string key)
         {
@@ -284,7 +318,10 @@ namespace Sflix
         public Func<List<MergeGroup>, List<MergeGroup>> ChooseMerge;
         public Func<List<CleanupFolder>, List<CleanupFolder>> ChooseCleanup;   // null = alle löschen
         public Func<string, ConflictAnswer> AskConflict;                       // null = überspringen
+        public Func<string, EpisodeList> ChooseEpisodeList;   // Folgen umbenennen: Suchbegriff -> Liste, null = abgebrochen
+        public Func<EpisodePlan, bool> ConfirmEpisodePlan;     // Vorschau; true = umbenennen (Auswahl in Ops[i].Selected)
         public bool RestartRequested;                  // Programm wurde aktualisiert -> neu starten
+        public string Summary;                         // kurzes Ergebnis der Aufgabe für die Zusammenfassung
 
         public FfmpegTools Ffmpeg;
 

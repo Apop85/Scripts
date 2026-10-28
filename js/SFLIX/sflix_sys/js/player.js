@@ -82,8 +82,9 @@ function setLastPlayed(title, url) {
     });
 
     currentPlaylist.unshift(title + "|" + url);
-    // Maximal 20 Einträge (einer pro Serie/Ordner)
-    setData("playlast", currentPlaylist.slice(0, 20).join(listSeperator));
+    // Maximal 50 Einträge (einer pro Serie/Ordner). Wie viele davon "Weiterschauen" zeigt,
+    // legen die Einstellungen fest (Standard 20).
+    setData("playlast", currentPlaylist.slice(0, displaySettingLimits.continueMax[1]).join(listSeperator));
 }
 
 function getFavorites() {

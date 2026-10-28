@@ -2,6 +2,83 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.04",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Neuer Menüpunkt \"Einstellungen\". Alle Änderungen gelten sofort, eine Vorschau zeigt die Kacheln direkt mit den gewählten Einstellungen. Die Einstellungen gehören zur Datensicherung und lassen sich mit \"Auf Standard zurücksetzen\" zurücksetzen (Favoriten, Gesehen, \"Weiterschauen\", Autoplay und die Sortierung der Startseite bleiben dabei erhalten)."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Die Kacheln sind auf dem Computer etwas grösser (5 statt 6 nebeneinander), die Vorschaubilder wirken dadurch ruhiger. In den Einstellungen lässt sich die Kachelgrösse auf \"Klein\", \"Mittel\" oder \"Gross\" stellen. Auf dem Handy bleibt sie gleich."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Einstellungen: \"Kacheln pro Zeile\" legt fest, nach wie vielen Kacheln ein Band auf eine neue Zeile umbricht (Standard 12)."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Einstellungen: Alphabetische Gruppen teilen Ordnerseiten in Bänder A–D, E–H, I–L, M–P, Q–T, U–Z und 0–9 / # ein, jedes mit eigener Rasteransicht. Eine Sprungleiste oben auf der Seite führt direkt zu einer Gruppe. Gruppiert wird nur, wenn es mehr als eine Gruppe gibt, Serienfolgen bleiben in ihrer Reihenfolge, Bilder und Musik lassen sich ausnehmen."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Einstellungen: Artikel werden beim Sortieren ignoriert (\"Der Pate\" steht unter P, \"The Office\" unter O). Das gilt für Ordnerseiten, Gruppen und die Reihenfolge von Vor/Zurück und Autoplay. Lässt sich ausschalten."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Einstellungen: \"Ordner getrennt von Medien\" zeigt Unterordner in einem eigenen Band über den Medien statt alphabetisch dazwischen."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Einstellungen: Markierungen auf Kacheln (\"Gesehen\", \"Letzte Folge\", \"Letzter Titel\") lassen sich ausblenden. \"Gesehen\" wird weiterhin gespeichert."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Einstellungen: \"Animationen reduzieren\" schaltet Übergänge und das Vergrössern der Kacheln beim Überfahren aus. \"Startbildschirm überspringen\" blendet das Logo beim ersten Start des Tages aus."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Einstellungen: Die Anzahl Einträge in \"Weiterschauen\" ist einstellbar (5 bis 50, Standard 20)."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "\"Browser-Steuerung verwenden\" ist vom Autoplay-Fenster in die Einstellungen umgezogen. Der Menüpunkt \"Autoplay\" entfällt, Autoplay wird über das Autoplay-Symbol im Player bzw. den Knopf \"Autoplay\" unter Bildern eingestellt."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Datensicherung (exportieren und importieren) und Fehlerbehebung befinden sich jetzt in den Einstellungen. Die Hilfe verweist darauf."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Das Band \"Meine Favoriten\" auf der Startseite heisst jetzt \"Favoriten\". Wie \"Weiterschauen\" erscheint es unter \"Startseite anpassen\" auch ohne Einträge, damit sich seine Position jederzeit festlegen lässt."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Neues Tool \"Folgen umbenennen\". Es holt die Folgenliste einer Serie von fernsehserien.de (deutsche Titel, sonst TVmaze) und benennt die Dateien um, z.B. \"Serie - S01E02 - Titel.mp4\" im Ordner \"Staffel 01\". Erkannt werden S01E02 und 1x02, Doppelfolgen wie S01E01E02 zählen als erste Folge. Staffelordner werden angeglichen (\"Staffel 1\" wird \"Staffel 01\", gibt es beide, werden sie zusammengeführt), Folgen in der falschen Staffel oder direkt im Serienordner kommen in den richtigen Staffelordner. Vorher zeigt eine Vorschau alle Änderungen, fehlende Folgen und nicht zugeordnete Dateien. Bei mehreren Dateien für dieselbe Folge wählst du, welche umbenannt wird. Vorschaubilder ziehen mit, Favoriten, Fortschritt und \"Weiterschauen\" bleiben erhalten, und der letzte Lauf lässt sich rückgängig machen."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Vorschaubilder, Zusammenführen, Konvertieren und Ablagen leeren haben je ein eigenes Ordnerfeld. Mit \"Alles\" durchsuchen sie den ganzen Installationsordner, sonst nur die gewählten Ordner (mehrere möglich, auch ausserhalb von STEFFLIX). Danach werden nur die betroffenen Ordner neu eingelesen statt der ganzen Mediathek."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Updater: Der frühere \"Medienordner\" heisst \"Installationsordner\" und wird nur noch angezeigt. Festgelegt wird er bei der Installation."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: \"Ablagen leeren\" löscht nur noch innerhalb des Installationsordners, damit nicht versehentlich Daten auf der Festplatte verschwinden. Verknüpfte Ordner, die nach aussen zeigen, werden nie geleert."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Updater: Das Protokoll (\"Details\") erscheint rechts neben dem Inhalt, seine Breite lässt sich mit einem Schieber anpassen. Zeilen sind nach Fehler, Hinweis und Erfolg eingefärbt und haben eine Uhrzeit. Neu sind eine Suche, der Filter \"Nur Fehler und Warnungen\" sowie die Knöpfe Kopieren, Leeren und \"Datei öffnen\". Bei einem Fehler öffnet sich das Protokoll von selbst."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Updater: Die Zusammenfassung am Ende nennt für jede Aufgabe das Ergebnis und die Dauer (z.B. \"3 konvertiert, 10 bereits kompatibel\"). Nach \"Daten einlesen\" zeigt eine Übersicht je Kategorie, wie viele Videos, Titel, Bilder und Ordner gefunden wurden und wie vielen Videos ein Vorschaubild fehlt."
+        }
+      ]
+    },
+    {
       "version": "2.03",
       "items": [
         {

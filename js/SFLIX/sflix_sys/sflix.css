@@ -47,7 +47,9 @@
     --sflix-page-pad: clamp(16px, 4vw, 60px);
     --sflix-header-height: 47px;
     --sflix-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    --cards-per-view: 6;
+    /* Kachelgrösse "Mittel" (Standard), "Klein" und "Gross" siehe html.cardsSmall / html.cardsLarge */
+    --cards-per-view: 5;
+    --grid-card-min: 240px;
     --card-width: calc((100vw - 2 * var(--sflix-page-pad) - (var(--cards-per-view) - 1) * var(--sflix-gap)) / var(--cards-per-view));
     color-scheme: dark;
 }
@@ -1744,8 +1746,8 @@ html.playerCinema .autoplayCountdown {
  |  _  | | |  _|  __/
  |_| |_|_|_|_|  \___|
 */
-/* Links die Abschnitte als Karten, rechts die mitlaufende Übersicht */
-#help {
+/* Links die Abschnitte als Karten, rechts die mitlaufende Übersicht (Hilfe und Einstellungen) */
+#help, #settingsPage {
     max-width: 1200px;
     margin: 26px auto 60px auto;
     grid-template-columns: minmax(0, 1fr) 240px;
@@ -1760,7 +1762,7 @@ html.playerCinema .autoplayCountdown {
     order: -2;
 }
 
-#help .helpHeader p {
+#help .helpHeader p, #settingsPage .helpHeader p {
     margin: 4px 0 0 0;
     color: var(--sflix-text-muted);
 }
@@ -1785,7 +1787,7 @@ html.playerCinema .autoplayCountdown {
     margin-bottom: 0;
 }
 
-#help h3 {
+#help h3, #settingsPage h3 {
     margin: 0 0 14px 0;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--sflix-border);
@@ -1834,7 +1836,7 @@ html.playerCinema .autoplayCountdown {
     color: var(--sflix-text);
 }
 
-#help p {
+#help p, #settingsPage p {
     margin-bottom: 10px;
     color: #d4d4d8;
 }
@@ -1877,11 +1879,11 @@ html.playerCinema .autoplayCountdown {
     color: #fca5a5;
 }
 
-#help ol, #help ul {
+#help ol, #help ul, #settingsPage ol, #settingsPage ul {
     margin: 8px 0 20px 22px;
 }
 
-#help li {
+#help li, #settingsPage li {
     margin-bottom: 6px;
 }
 
@@ -2158,7 +2160,149 @@ kbd.wideKey {
     background-position: calc(100% + 1px) 50%;
 }
 
-/* Datensicherung (in der Hilfe) */
+/* Seite "Einstellungen" */
+.settingSub {
+    padding-left: 24px;
+}
+
+.settingSub > span {
+    border-left: 2px solid var(--sflix-border);
+    padding-left: 12px;
+}
+
+/* Auswahl aus mehreren Werten (Kachelgrösse) */
+.settingChoice {
+    display: inline-flex;
+    flex-shrink: 0;
+    border: 1px solid var(--sflix-input-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.settingChoice button {
+    padding: 7px 14px;
+    border: none;
+    background-color: var(--sflix-input-bg);
+    color: var(--sflix-text-muted);
+    font: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.settingChoice button + button {
+    border-left: 1px solid var(--sflix-input-border);
+}
+
+.settingChoice button:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--sflix-text);
+}
+
+.settingChoice button.active {
+    background-color: var(--sflix-accent);
+    color: white;
+}
+
+/* Vorschau der Kacheln über die ganze Breite des Abschnitts */
+.settingsPreview {
+    margin: 18px -30px 0 -30px;
+    overflow: hidden;
+}
+
+#settingsPage .settingsPreviewLabel {
+    margin: 0 30px 2px 30px;
+    color: var(--sflix-text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+#settingsPreviewRow .cardRow {
+    margin-bottom: 0;
+}
+
+#settingsPreviewRow .rowTrack {
+    padding-left: 30px;
+    padding-right: 30px;
+}
+
+#settingsStatus:empty {
+    display: none;
+}
+
+#settingsStatus {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-left: 3px solid #4ade80;
+    border-radius: 10px;
+    background-color: var(--sflix-surface);
+    line-height: 1.5;
+}
+
+/* Einstellung "Animationen reduzieren" */
+html.reduceMotion *, html.reduceMotion *::before, html.reduceMotion *::after {
+    transition: none !important;
+    scroll-behavior: auto !important;
+}
+
+html.reduceMotion a.card:hover, html.reduceMotion a.card:focus-visible,
+html.reduceMotion a.card:hover img.cardImage {
+    transform: none;
+}
+
+/* Alphabetische Gruppen auf Ordnerseiten: Sprungleiste und Abstand beim Anspringen */
+.jumpBar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 4px 0 18px 0;
+    padding: 0 var(--sflix-page-pad);
+}
+
+.jumpBarItem {
+    padding: 6px 14px;
+    border: 1px solid var(--sflix-border);
+    border-radius: 999px;
+    background-color: var(--sflix-surface);
+    color: var(--sflix-text);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.jumpBarItem:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+.cardRow.alphabetGroup {
+    scroll-margin-top: calc(var(--sflix-header-height) + 16px);
+}
+
+@media (max-width: 800px) {
+    /* Auswahl unter die Beschreibung, sonst wird der Text zu schmal */
+    .settingChoiceRow {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .settingsPreview {
+        margin: 18px -18px 0 -18px;
+    }
+
+    #settingsPage .settingsPreviewLabel {
+        margin: 0 18px 2px 18px;
+    }
+
+    #settingsPreviewRow .rowTrack {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+}
+
+/* Datensicherung (Einstellungen) */
 .backupActions {
     display: flex;
     flex-wrap: wrap;
@@ -2890,7 +3034,7 @@ a.card:hover img.cardImage {
 
 .cardGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(var(--grid-card-min), 1fr));
     gap: 22px var(--sflix-gap);
 }
 
@@ -3042,21 +3186,44 @@ body.rowSorting {
     cursor: grabbing;
 }
 
-/* Anzahl Kacheln pro Band je nach Bildschirmbreite */
+/* Anzahl Kacheln pro Band je nach Bildschirmbreite und Kachelgrösse (Einstellungen).
+   Mittel: 5 / 4 / 4, Klein: 6 / 5 / 4, Gross: 4 / 3 / 3. Ab 800 px abwärts für alle gleich. */
+html.cardsSmall {
+    --cards-per-view: 6;
+    --grid-card-min: 200px;
+}
+
+html.cardsLarge {
+    --cards-per-view: 4;
+    --grid-card-min: 290px;
+}
+
 @media (max-width: 1400px) {
     :root {
+        --cards-per-view: 4;
+    }
+
+    html.cardsSmall {
         --cards-per-view: 5;
+    }
+
+    html.cardsLarge {
+        --cards-per-view: 3;
     }
 }
 
 @media (max-width: 1100px) {
-    :root {
+    :root, html.cardsSmall {
         --cards-per-view: 4;
+    }
+
+    html.cardsLarge {
+        --cards-per-view: 3;
     }
 }
 
 @media (max-width: 800px) {
-    :root {
+    :root, html.cardsSmall, html.cardsLarge {
         --cards-per-view: 3;
         --sflix-gap: 10px;
     }
@@ -3073,7 +3240,7 @@ body.rowSorting {
 }
 
 @media (max-width: 600px) {
-    :root {
+    :root, html.cardsSmall, html.cardsLarge {
         /* angeschnittene Kachel zeigt, dass man wischen kann */
         --cards-per-view: 2.3;
     }
@@ -3159,8 +3326,8 @@ input:focus-visible, textarea:focus-visible, video:focus-visible, audio:focus-vi
         padding: 12px;
     }
 
-    /* Hilfe: Übersicht als senkrechte Liste über den Abschnitten */
-    #help {
+    /* Hilfe und Einstellungen: Übersicht als senkrechte Liste über den Abschnitten */
+    #help, #settingsPage {
         margin: 16px auto 40px auto;
         grid-template-columns: minmax(0, 1fr);
         gap: 14px;

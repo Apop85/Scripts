@@ -161,38 +161,44 @@ function renderFolderPage(levels) {
         saveFolderPlaylist(levels, children.media);
     }
 
+    var mediaEntries = children.media.map(function (mediaPath) {
+        return { name: getDisplayName(mediaPath), media: mediaPath };
+    });
+    var folderEntries = children.folders.map(function (folder) {
+        return { name: folder, folder: folder };
+    });
+    var renderEntry = function (track, entry) {
+        if (entry.media != null) {
+            createPlayableCard(track, entry.media);
+        } else {
+            createFolderCard(track, levels.concat([entry.folder]));
+        }
+    };
+
     if (shouldShowFolderContents(levels, node, children.folders)) {
         // Wenige Unterordner mit Medien (z.B. Staffeln einer Serie): oben die Medien des Ordners,
         // darunter ein Band pro Ordner mit dessen Inhalt
-        if (children.media.length > 0) {
-            renderGroupedBands(bands, children.media, "Inhalt", function (track, mediaPath) {
-                createPlayableCard(track, mediaPath);
-            });
+        if (mediaEntries.length > 0) {
+            renderFolderEntries(bands, mediaEntries, "Inhalt", node, renderEntry);
         }
         children.folders.forEach(function (folder) {
             var subLevels = levels.concat([folder]);
             var track = createCardRow(bands, folder, buildStartUrl(buildLevelPath(subLevels)));
             fillFolderTrack(track, subLevels, node[folder]);
         });
-    } else if (children.media.length > 0 || children.folders.length > 0) {
+    } else if (getSetting("separateFolders") && mediaEntries.length > 0 && folderEntries.length > 0) {
+        // Einstellung "Ordner getrennt von Medien": oben ein Band mit den Ordnern, darunter die Medien
+        renderGroupedBands(bands, folderEntries, "Ordner", renderEntry, true);
+        renderFolderEntries(bands, mediaEntries, "Medien", node, renderEntry, true);
+    } else if (mediaEntries.length > 0 || folderEntries.length > 0) {
         // Sonst Medien und Ordner gemeinsam alphabetisch (z.B. ein Ordner "Harry Potter"
         // zwischen den Filmen unter H)
-        var entries = children.media.map(function (mediaPath) {
-            return { name: getDisplayName(mediaPath), media: mediaPath };
-        }).concat(children.folders.map(function (folder) {
-            return { name: folder, folder: folder };
-        }));
+        var entries = mediaEntries.concat(folderEntries);
         entries.sort(function (a, b) {
-            return compareNatural(a.name, b.name);
+            return compareSortNames(a.name, b.name);
         });
         // Titel ist der gewählte Ordner bzw. die Kategorie (z.B. "Filme")
-        renderGroupedBands(bands, entries, levels[levels.length - 1], function (track, entry) {
-            if (entry.media != null) {
-                createPlayableCard(track, entry.media);
-            } else {
-                createFolderCard(track, levels.concat([entry.folder]));
-            }
-        });
+        renderFolderEntries(bands, entries, levels[levels.length - 1], node, renderEntry);
     }
 
     if (children.media.length == 0 && children.folders.length == 0) {
@@ -215,12 +221,10 @@ function shouldShowFolderContents(levels, node, folders) {
 // Bis zu so vielen Unterordnern bekommt jeder ein eigenes Band mit Inhalt (Staffeln, Alben)
 var groupThreshold = 12;
 
-// Ein Band mit mehreren Zeilen: bis singleRowLimit Einträge eine Zeile, bis
-// blockRows * rowSize Einträge gleichmässig auf blockRows Zeilen verteilt (14: 5 + 5 + 4),
-// darüber jeweils nach rowSize Einträgen eine neue Zeile.
-var singleRowLimit = 9;
+// Ein Band mit mehreren Zeilen. rowSize ist "Kacheln pro Zeile" aus den Einstellungen (Standard 12):
+// bis drei Viertel davon eine Zeile (12: bis 9), bis blockRows * rowSize Einträge gleichmässig auf
+// blockRows Zeilen verteilt (14: 5 + 5 + 4), darüber jeweils nach rowSize Einträgen eine neue Zeile.
 var blockRows = 3;
-var rowSize = 12;
 
 // Verteilt die Einträge der Reihe nach gleichmässig; die ersten Bänder erhalten den Rest
 function splitEvenly(items, bandCount) {
@@ -236,13 +240,17 @@ function splitEvenly(items, bandCount) {
     return bands;
 }
 
-// Einträge der Reihe nach auf Zeilen verteilen (siehe singleRowLimit, blockRows, rowSize)
+// Einträge der Reihe nach auf Zeilen verteilen (siehe blockRows und "Kacheln pro Zeile")
 function splitIntoRows(items) {
+    var rowSize = getSetting("rowSize");
+    var singleRowLimit = Math.round(rowSize * 0.75);
     if (items.length <= singleRowLimit) {
         return [items];
     }
     if (items.length <= blockRows * rowSize) {
-        return splitEvenly(items, blockRows);
+        // Bei wenigen Kacheln pro Zeile (z.B. 4) keine fast leeren Zeilen: mindestens ein Drittel davon
+        var minPerRow = Math.ceil(rowSize / blockRows);
+        return splitEvenly(items, Math.min(blockRows, Math.ceil(items.length / minPerRow)));
     }
     var rows = [];
     for (var start = 0; start < items.length; start += rowSize) {
@@ -251,20 +259,125 @@ function splitIntoRows(items) {
     return rows;
 }
 
-// Ein Band ohne Überschrift, dessen Kacheln auf mehrere Zeilen umbrechen. "title" (z.B. "Filme")
-// erscheint nur in der Rasteransicht von "Alle anzeigen".
-function renderGroupedBands(container, items, title, renderItem) {
+// Ein Band, dessen Kacheln auf mehrere Zeilen umbrechen. Ohne showTitle erscheint "title"
+// (z.B. "Filme") nur in der Rasteransicht von "Alle anzeigen". Gibt das Band zurück.
+function renderGroupedBands(container, items, title, renderItem, showTitle) {
     var rows = splitIntoRows(items);
     var track = createCardRow(container, title, null);
     var section = track.parentNode.parentNode;
-    section.classList.add("untitledRow");
-    section.querySelector(".rowHeader h2").textContent = "";
+    if (!showTitle) {
+        section.classList.add("untitledRow");
+        section.querySelector(".rowHeader h2").textContent = "";
+    }
     rows.forEach(function (row, index) {
         var rowTrack = index == 0 ? track : addRowTrack(section);
         row.forEach(function (item) {
             renderItem(rowTrack, item);
         });
     });
+    return section;
+}
+
+// ===================================================================
+// Alphabetische Gruppen (Einstellung): A–D, E–H, I–L, M–P, Q–T, U–Z, 0–9 / #
+// ===================================================================
+var alphabetGroups = [
+    { label: "A–D", letters: "ABCD" },
+    { label: "E–H", letters: "EFGH" },
+    { label: "I–L", letters: "IJKL" },
+    { label: "M–P", letters: "MNOP" },
+    { label: "Q–T", letters: "QRST" },
+    { label: "U–Z", letters: "UVWXYZ" }
+];
+var otherGroupLabel = "0–9 / #";
+
+// Gruppe eines Namens. Umlaute zählen beim Grundbuchstaben (Ä bei A), führende Artikel
+// werden je nach Einstellung übergangen.
+function getAlphabetGroup(name) {
+    var first = getSortName(name).normalize("NFD").replace(/[̀-ͯ]/g, "").charAt(0).toUpperCase();
+    for (var index = 0; index < alphabetGroups.length; index++) {
+        if (first !== "" && alphabetGroups[index].letters.indexOf(first) >= 0) {
+            return alphabetGroups[index].label;
+        }
+    }
+    return otherGroupLabel;
+}
+
+// Teilt sortierte Einträge ({ name, ... }) in Gruppen auf, leere Gruppen fallen weg
+function groupAlphabetically(entries) {
+    var labels = alphabetGroups.map(function (group) {
+        return group.label;
+    }).concat([otherGroupLabel]);
+    var byLabel = {};
+    entries.forEach(function (entry) {
+        var label = getAlphabetGroup(entry.name);
+        (byLabel[label] = byLabel[label] || []).push(entry);
+    });
+    return labels.filter(function (label) {
+        return byLabel[label] != null;
+    }).map(function (label) {
+        return { label: label, entries: byLabel[label] };
+    });
+}
+
+// Serienfolgen (S01E02) bleiben immer in ihrer Reihenfolge. Bilder- und Musikordner lassen sich
+// in den Einstellungen ausnehmen.
+var episodePattern = /S\d{1,3}\s*E\d{1,4}/i;
+
+function shouldGroupAlphabetically(node, entries) {
+    if (!getSetting("alphaGroups")) {
+        return false;
+    }
+    var type = getFolderIconName(node);
+    if ((type == "image" && getSetting("groupExcludeImages")) || (type == "music" && getSetting("groupExcludeMusic"))) {
+        return false;
+    }
+    return !entries.some(function (entry) {
+        return entry.media != null && episodePattern.test(entry.name);
+    });
+}
+
+// Zeigt Einträge eines Ordners: in Gruppen, wenn eingeschaltet und es mehr als eine Gruppe gibt,
+// sonst in einem Band. Jede Gruppe bricht nach "Kacheln pro Zeile" auf weitere Zeilen um.
+function renderFolderEntries(container, entries, title, node, renderItem, showTitle) {
+    var groups = shouldGroupAlphabetically(node, entries) ? groupAlphabetically(entries) : [];
+    if (groups.length < 2) {
+        renderGroupedBands(container, entries, title, renderItem, showTitle);
+        return;
+    }
+    var jumpBar = getSetting("jumpBar") ? createJumpBar(container) : null;
+    groups.forEach(function (group) {
+        var section = renderGroupedBands(container, group.entries, group.label, renderItem, true);
+        section.classList.add("alphabetGroup");
+        section.querySelector(".rowHeader h2").appendChild(createRowCount(group.entries.length));
+        if (jumpBar != null) {
+            addJumpTarget(jumpBar, group.label, section);
+        }
+    });
+}
+
+// Sprungleiste über den Gruppen (A–D | E–H | ...), nur mit vorhandenen Gruppen
+function createJumpBar(container) {
+    var nav = document.createElement("nav");
+    nav.className = "jumpBar";
+    nav.setAttribute("aria-label", "Zu einer Gruppe springen");
+    container.appendChild(nav);
+    return nav;
+}
+
+function addJumpTarget(jumpBar, label, section) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "jumpBarItem";
+    button.textContent = label;
+    button.addEventListener("click", function () {
+        section.scrollIntoView({ behavior: getSetting("reduceMotion") ? "auto" : "smooth", block: "start" });
+        var firstCard = section.querySelector(".card");
+        if (firstCard != null) {
+            firstCard.focus({ preventScroll: true });
+        }
+    });
+    jumpBar.appendChild(button);
 }
 
 // Ordner, dessen Bänder unter dem Player gerade aufgebaut sind
@@ -758,10 +871,23 @@ function showFavoritesPage() {
     });
 }
 
+// Leeres Band bleibt unsichtbar, erscheint aber unter "Startseite anpassen",
+// damit sich seine Position auch ohne Einträge festlegen lässt
+function markRowEmpty(track) {
+    var row = track.closest(".cardRow");
+    row.classList.add("emptyRow");
+    var hint = document.createElement("span");
+    hint.className = "emptyRowHint";
+    hint.textContent = "zurzeit leer";
+    row.querySelector(".rowHeader").appendChild(hint);
+}
+
 // Startseite: die zuletzt hinzugefügten Favoriten (max. 20)
 function showFavoritesRow(container) {
     var entries = buildFavoriteEntries();
+    var track = createCardRow(container, "Favoriten", buildStartUrl("FAVORITES", false), "favorites");
     if (entries.length == 0) {
+        markRowEmpty(track);
         return false;
     }
     var order = getFavorites();
@@ -769,7 +895,6 @@ function showFavoritesRow(container) {
         return order.indexOf(b.path) - order.indexOf(a.path);
     });
 
-    var track = createCardRow(container, "Meine Favoriten", buildStartUrl("FAVORITES", false), "favorites");
     entries.slice(0, 20).forEach(function (entry) {
         createMediaCard(track, entry.path, entry.url, { progress: getMediaProgress(entry.path) });
     });
@@ -835,18 +960,12 @@ function showContinueWatching(container) {
 
     var track = createCardRow(container, "Weiterschauen", null, "continue");
     if (entries.length == 0) {
-        // Leeres Band bleibt unsichtbar, erscheint aber unter "Startseite anpassen",
-        // damit sich seine Position auch ohne Einträge festlegen lässt
-        var row = track.closest(".cardRow");
-        row.classList.add("emptyRow");
-        var hint = document.createElement("span");
-        hint.className = "emptyRowHint";
-        hint.textContent = "zurzeit leer";
-        row.querySelector(".rowHeader").appendChild(hint);
+        markRowEmpty(track);
         return false;
     }
 
-    entries.forEach(function (entry) {
+    // Anzahl gemäss Einstellungen (gespeichert werden bis zu 50)
+    entries.slice(0, getSetting("continueMax")).forEach(function (entry) {
         var folders = getMediaFolders(entry.path);
         var location = folders.length > 1 ? folders.slice(1).join(" › ") : folders.join(" › ");
         createMediaCard(track, entry.path, entry.url, {
@@ -922,6 +1041,10 @@ function getSplashDedication(date) {
 
 // Splashscreen einmal pro Tag, immer bildschirmfüllend. Klick überspringt ihn.
 function showSplashscreen() {
+    // Einstellung "Startbildschirm überspringen" (die Widmungen an den zwei Gedenktagen bleiben)
+    if (getSetting("skipSplash") && getSplashDedication(new Date()) == null) {
+        return;
+    }
     var lastSplashscreen = getData("lastSplashscreen");
     var currentDate = new Date().toISOString().split("T")[0];
     if (lastSplashscreen != null && lastSplashscreen >= currentDate) {
@@ -1178,8 +1301,8 @@ function getSavedRowOrder() {
     }
 }
 
-// Speichert die angezeigte Reihenfolge. Bänder, die gerade fehlen (z.B. "Meine Favoriten"
-// ohne Einträge oder eine Kategorie ohne Medien), behalten ihre gespeicherte Position
+// Speichert die angezeigte Reihenfolge. Bänder, die gerade fehlen (z.B. eine Kategorie
+// ohne Medien), behalten ihre gespeicherte Position
 // neben ihrem bisherigen Vorgänger, statt aus der Reihenfolge zu fallen.
 function saveRowOrder(dashboard) {
     var saved = getSavedRowOrder();
@@ -1481,14 +1604,27 @@ function showHelpPage() {
         renderNews(changelogNode, news);
     });
 
-    buildHelpSections();
+    buildSectionPage("help", "Hilfe", "Medien hinzufügen, Autoplay, Player, Tastenkürzel, Browsereinstellungen, Updates und Einstellungen");
+}
+
+// Seite "Einstellungen": gleicher Aufbau wie die Hilfe (Abschnitte und Übersicht)
+function showSettingsPage() {
+    document.getElementById("media").style.display = "block";
+    document.getElementById("settingsPage").style.display = "grid";
+    buildSectionPage("settingsPage", "Einstellungen", "Darstellung, Ordnerseiten, Startseite und Wiedergabe, Datensicherung und Fehlerbehebung");
+    initSettingsPage();
     initBackup();
 }
 
-// Gliedert die Hilfe in Abschnitte (eine Karte pro Überschrift) und erstellt
-// rechts eine Übersicht, die den aktuell sichtbaren Abschnitt markiert.
-function buildHelpSections() {
-    var help = document.getElementById("help");
+// Öffne Einstellungen, optional bei einem Abschnitt (z.B. "datensicherung")
+function openSettings(anchor) {
+    window.location.href = buildStartUrl("SETTINGS", false) + (anchor ? "#" + anchor : "");
+}
+
+// Gliedert eine Seite (Hilfe, Einstellungen) in Abschnitte (eine Karte pro Überschrift) und
+// erstellt rechts eine Übersicht, die den aktuell sichtbaren Abschnitt markiert.
+function buildSectionPage(pageId, pageTitle, pageInfo) {
+    var help = document.getElementById(pageId);
     var content = document.createElement("div");
     content.className = "helpContent";
     var toc = document.createElement("nav");
@@ -1509,7 +1645,7 @@ function buildHelpSections() {
         if (node.nodeName === "H3") {
             section = document.createElement("section");
             section.className = "helpSection";
-            section.id = "help-" + tocLinks.length;
+            section.id = pageId + "-" + tocLinks.length;
             content.appendChild(section);
 
             var link = document.createElement("a");
@@ -1552,20 +1688,20 @@ function buildHelpSections() {
     separator.textContent = "›";
     var current = document.createElement("span");
     current.className = "breadcrumbCurrent";
-    current.textContent = "Hilfe";
+    current.textContent = pageTitle;
     breadcrumb.appendChild(startLink);
     breadcrumb.appendChild(separator);
     breadcrumb.appendChild(current);
     var title = document.createElement("h1");
     title.className = "folderTitle";
-    title.textContent = "Hilfe";
+    title.textContent = pageTitle;
     var info = document.createElement("p");
     info.className = "folderInfo";
-    info.textContent = "Medien hinzufügen, Autoplay, Tastenkürzel, Updates, Datensicherung und Fehlerbehebung";
+    info.textContent = pageInfo;
     header.appendChild(breadcrumb);
     header.appendChild(title);
     header.appendChild(info);
-    document.title = "STEFFLIX - Hilfe";
+    document.title = "STEFFLIX - " + pageTitle;
 
     help.appendChild(header);
     help.appendChild(content);

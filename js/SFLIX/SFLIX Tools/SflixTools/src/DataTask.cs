@@ -420,6 +420,19 @@ namespace Sflix
         // nächsten Start Favoriten, Zeitstempel und "Weiterschauen" an.
         void WriteRenamedPaths()
         {
+            WriteRenamed(homeDir, renamedPairs);
+        }
+
+        // Umbenennungen anderer Aufgaben (z.B. "Folgen umbenennen") in renamed.js ergänzen.
+        // pairs: Listen ["./alter/Pfad", "./neuer/Pfad"] in der Reihenfolge der Umbenennung.
+        public static void AppendRenamedPairs(List<object> pairs)
+        {
+            if (pairs == null || pairs.Count == 0) return;
+            WriteRenamed(App.Root, pairs);
+        }
+
+        static void WriteRenamed(string homeDir, List<object> renamedPairs)
+        {
             string file = Path.Combine(homeDir, "sflix_sys", "renamed.js");
             JsonObject previous = null;
             if (File.Exists(file))
@@ -524,8 +537,103 @@ namespace Sflix
             }
             ctx.Log("Teilweise eingelesen: " + unique.Count + " Ordner, " + branchMedia + " Medien gefunden");
             SaveData(data);
+            List<string> categories = new List<string>();
+            foreach (string rel in unique)
+            {
+                string category = rel.Split('\\')[0];
+                if (!categories.Contains(category)) categories.Add(category);
+            }
+            LogOverview(data, categories);
+            ctx.Summary = unique.Count + " Ordner, " + branchMedia + " Medien";
             LogSummary();
             return true;
+        }
+
+        // ---------------------------------------------------------------
+        // Übersicht je Kategorie (Protokoll)
+        // ---------------------------------------------------------------
+
+        class Counts
+        {
+            public int Videos, Music, Images, Folders, MissingPreviews;
+            public void Add(Counts c)
+            {
+                Videos += c.Videos; Music += c.Music; Images += c.Images; Folders += c.Folders; MissingPreviews += c.MissingPreviews;
+            }
+        }
+
+        static readonly HashSet<string> VideoTypes = new HashSet<string> { "mp4", "m4v", "webm", "ogv" };
+        static readonly HashSet<string> MusicTypes = new HashSet<string> { "mp3", "m4a", "ogg", "oga", "opus", "aac", "flac", "wav" };
+
+        static void CountNode(JsonObject node, Counts c)
+        {
+            HashSet<string> previews = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            JsonObject preview = node.Obj(PreviewFolder);
+            if (preview != null)
+                foreach (string key in preview.Keys)
+                {
+                    string name = key.Substring(key.LastIndexOf('/') + 1);
+                    int dot = name.LastIndexOf('.');
+                    previews.Add(dot > 0 ? name.Substring(0, dot) : name);
+                }
+            foreach (KeyValuePair<string, object> kv in node)
+            {
+                if (kv.Key == PreviewFolder) continue;
+                JsonObject child = kv.Value as JsonObject;
+                if (child != null)
+                {
+                    c.Folders++;
+                    CountNode(child, c);
+                    continue;
+                }
+                string file = kv.Key.Substring(kv.Key.LastIndexOf('/') + 1);
+                int dot = file.LastIndexOf('.');
+                string ext = dot >= 0 ? file.Substring(dot + 1).ToLowerInvariant() : "";
+                if (VideoTypes.Contains(ext))
+                {
+                    c.Videos++;
+                    if (!previews.Contains(file.Substring(0, dot))) c.MissingPreviews++;
+                }
+                else if (MusicTypes.Contains(ext)) c.Music++;
+                else c.Images++;
+            }
+        }
+
+        static string Describe(Counts c)
+        {
+            List<string> parts = new List<string>();
+            if (c.Videos > 0) parts.Add(c.Videos + (c.Videos == 1 ? " Video" : " Videos"));
+            if (c.Music > 0) parts.Add(c.Music + (c.Music == 1 ? " Titel" : " Titel"));
+            if (c.Images > 0) parts.Add(c.Images + (c.Images == 1 ? " Bild" : " Bilder"));
+            if (c.Folders > 0) parts.Add(c.Folders + " Ordner");
+            if (parts.Count == 0) parts.Add("leer");
+            string text = string.Join(", ", parts.ToArray());
+            if (c.MissingPreviews > 0) text += "  –  " + c.MissingPreviews + (c.MissingPreviews == 1 ? " Video ohne Vorschaubild" : " Videos ohne Vorschaubild");
+            return text;
+        }
+
+        // Je Kategorie (oberste Ordner): Videos, Musik, Bilder, Ordner, Videos ohne eigenes Vorschaubild.
+        // only: nur diese Kategorien (Teil-Einlesen), null = alle
+        void LogOverview(JsonObject data, ICollection<string> only)
+        {
+            Counts total = new Counts();
+            List<string[]> rows = new List<string[]>();
+            foreach (KeyValuePair<string, object> kv in data)
+            {
+                JsonObject category = kv.Value as JsonObject;
+                if (category == null || kv.Key == PreviewFolder) continue;
+                if (only != null && !only.Contains(kv.Key)) continue;
+                Counts c = new Counts();
+                CountNode(category, c);
+                total.Add(c);
+                rows.Add(new string[] { kv.Key, Describe(c) });
+            }
+            if (rows.Count == 0) return;
+            int width = 8;
+            foreach (string[] r in rows) width = Math.Max(width, r[0].Length + 2);
+            ctx.Log(only == null ? "Übersicht:" : "Übersicht der eingelesenen Kategorien:");
+            foreach (string[] r in rows) ctx.Log("  " + r[0].PadRight(width) + r[1]);
+            if (rows.Count > 1) ctx.Log("  " + "Gesamt".PadRight(width) + Describe(total));
         }
 
         // Ersetzt den Zweig eines Ordners in data.js. Fehlende Ordner auf dem Weg werden angelegt,
@@ -614,9 +722,11 @@ namespace Sflix
             JsonObject filelist = Crawl(homeDir);
             ctx.Log("Ordner durchsucht: " + counter + " Medien gefunden");
 
+            ctx.Summary = counter + " Medien";
             if (filelist.Count > 0)
             {
                 SaveData(filelist);
+                LogOverview(filelist, null);
 
                 // Bis Version 2.01 wurden verkleinerte Kopien in sflix_sys\thumbs abgelegt
                 string oldThumbs = Path.Combine(homeDir, "sflix_sys", "thumbs");

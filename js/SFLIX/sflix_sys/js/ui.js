@@ -1,5 +1,5 @@
 // STEFFLIX - ui.js
-// Bedienung: Fenster, Autoplay-Einstellungen, Feedback und Lizenz, Hamburger-Menü, Tastatur
+// Bedienung: Fenster, Autoplay-Einstellungen, Seite "Einstellungen", Feedback und Lizenz, Hamburger-Menü, Tastatur
 // Ladereihenfolge (start.html): core.js, storage.js, cards.js, pages.js, player.js, ui.js, main.js. Alle Funktionen sind global;
 // beim Laden wird nur in main.js Code ausgeführt.
 
@@ -77,11 +77,123 @@ function updateAutoplayAmountState() {
     amountField.closest(".settingRow").classList.toggle("disabled", amountField.disabled);
 }
 
-// Speichern der aktuellen Einstellungen (Button "Speichern" im Fenster)
+// Speichern der Autoplay-Einstellungen (Button "Speichern" im Autoplay-Fenster)
 function applySettings() {
     commitAutoplaySettings();
-    setNativeControls(document.getElementById("nativeControlsCheckBox").checked);
     toggleContainer(["settingsBox"], "none");
+}
+
+// ===================================================================
+// Seite "Einstellungen": jede Änderung wird sofort gespeichert und angewendet
+// ===================================================================
+
+// Überträgt die gespeicherten Werte in die Felder der Seite
+function fillSettingsFields(page) {
+    page.querySelectorAll("input[data-setting]").forEach(function (input) {
+        var value = getSetting(input.dataset.setting);
+        if (input.type == "checkbox") {
+            input.checked = value;
+        } else {
+            input.value = value;
+        }
+    });
+    page.querySelectorAll(".settingChoice[data-setting]").forEach(function (group) {
+        var value = getSetting(group.dataset.setting);
+        group.querySelectorAll("button[data-value]").forEach(function (button) {
+            var active = button.dataset.value === value;
+            button.classList.toggle("active", active);
+            button.setAttribute("aria-checked", active ? "true" : "false");
+        });
+    });
+    // Unteroptionen (z.B. "Bilder ausnehmen") nur bei eingeschalteter Hauptoption
+    page.querySelectorAll("[data-depends]").forEach(function (row) {
+        row.style.display = getSetting(row.dataset.depends) ? "" : "none";
+    });
+    document.getElementById("nativeControlsCheckBox").checked = useNativeControls();
+}
+
+// Vorschau unter "Darstellung": einige Kacheln, damit Grösse und Markierungen sofort sichtbar sind.
+// Bevorzugt Videos mit Vorschaubild, gesehene zuerst (zeigen die Markierung).
+function renderSettingsPreview() {
+    var container = document.getElementById("settingsPreviewRow");
+    container.replaceChildren();
+    var paths = collectMediaPaths(data, []);
+    var videos = paths.filter(isVideo);
+    var candidates = (videos.length > 0 ? videos : paths).slice(0, 400).map(function (path) {
+        return { path: path, score: (isSeen(path) ? 2 : 0) + (getInheritedPreview(path) != null ? 1 : 0) };
+    }).sort(function (a, b) {
+        return b.score - a.score;
+    }).map(function (entry) {
+        return entry.path;
+    });
+    if (candidates.length == 0) {
+        container.closest(".settingsPreview").style.display = "none";
+        return;
+    }
+    var track = createCardRow(container, "Vorschau", null);
+    var section = track.closest(".cardRow");
+    section.classList.add("untitledRow");
+    section.querySelector(".rowHeader").remove();
+    candidates.slice(0, 12).forEach(function (path) {
+        createMediaCard(track, path, buildStartUrl(buildMediaData(path)), {
+            subtitle: getMediaTypeLabel(path),
+            inheritPreview: true,
+            progress: getMediaProgress(path)
+        });
+    });
+    refreshRowArrows(container);
+}
+
+function showSettingsStatus(text) {
+    var status = document.getElementById("settingsStatus");
+    status.className = "backupInfo";
+    status.textContent = text;
+}
+
+function initSettingsPage() {
+    var page = document.getElementById("settingsPage");
+    var afterChange = function (name) {
+        fillSettingsFields(page);
+        if (["cardSize", "showMarkers"].includes(name)) {
+            renderSettingsPreview();
+        } else {
+            refreshRowArrows(page);
+        }
+    };
+
+    page.querySelectorAll("input[data-setting]").forEach(function (input) {
+        var name = input.dataset.setting;
+        input.addEventListener("change", function () {
+            if (input.type == "checkbox") {
+                setSetting(name, input.checked);
+            } else {
+                // Ausserhalb des Bereichs wird auf die Grenze gesetzt
+                input.value = setSetting(name, input.value);
+            }
+            afterChange(name);
+        });
+    });
+    page.querySelectorAll(".settingChoice[data-setting]").forEach(function (group) {
+        group.querySelectorAll("button[data-value]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                setSetting(group.dataset.setting, button.dataset.value);
+                afterChange(group.dataset.setting);
+            });
+        });
+    });
+    document.getElementById("nativeControlsCheckBox").addEventListener("change", function (event) {
+        setNativeControls(event.target.checked);
+    });
+    document.getElementById("resetSettingsButton").addEventListener("click", function () {
+        resetDisplaySettings();
+        setNativeControls(false);
+        fillSettingsFields(page);
+        renderSettingsPreview();
+        showSettingsStatus("Alle Einstellungen wurden auf den Standard zurückgesetzt.");
+    });
+
+    fillSettingsFields(page);
+    renderSettingsPreview();
 }
 
 // Übernimmt die Autoplay-Felder aus dem Fenster "Einstellungen".

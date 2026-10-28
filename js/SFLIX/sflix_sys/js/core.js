@@ -1,5 +1,6 @@
 // STEFFLIX - core.js
-// Grundlagen: Einstellungen, Zustand, Dateitypen, Sortierung, URL-Aufbau, Datenbaum, Vorschaubilder, Symbole
+// Grundlagen: Konfiguration, Einstellungen der Oberfläche, Zustand, Dateitypen, Sortierung, URL-Aufbau,
+// Datenbaum, Vorschaubilder, Symbole
 // Ladereihenfolge (start.html): core.js, storage.js, cards.js, pages.js, player.js, ui.js, main.js. Alle Funktionen sind global;
 // beim Laden wird nur in main.js Code ausgeführt.
 
@@ -92,9 +93,134 @@ function compareNatural(a, b) {
     return naturalCollator.compare(a, b);
 }
 
-// Sortiert eine Liste natürlich (in place) und gibt sie zurück
+// Artikel am Anfang, die beim Sortieren und Gruppieren übergangen werden ("Der Pate" unter P)
+var leadingArticles = /^(der|die|das|ein|eine|the|a|an)\s+(?=[0-9A-Za-zÀ-ÿ])/i;
+
+// Name ohne führenden Artikel (nur wenn in den Einstellungen eingeschaltet)
+function getSortName(name) {
+    name = String(name);
+    if (!getSetting("ignoreArticles")) {
+        return name;
+    }
+    var stripped = name.replace(leadingArticles, "");
+    return stripped === "" ? name : stripped;
+}
+
+// Vergleicht Namen oder Pfade ("./Filme/Der Pate.mp4") Abschnitt für Abschnitt, jeweils ohne
+// führenden Artikel. Bei Gleichstand entscheidet der vollständige Name.
+function compareSortNames(a, b) {
+    var partsA = String(a).split("/");
+    var partsB = String(b).split("/");
+    var length = Math.min(partsA.length, partsB.length);
+    for (var index = 0; index < length; index++) {
+        var result = compareNatural(getSortName(partsA[index]), getSortName(partsB[index]));
+        if (result !== 0) {
+            return result;
+        }
+    }
+    return partsA.length - partsB.length || compareNatural(a, b);
+}
+
+// Sortiert eine Liste natürlich (in place) und gibt sie zurück. Gilt für Ordnerseiten
+// und Playlisten gleichermassen, damit Vor/Zurück der angezeigten Reihenfolge folgt.
 function sortNatural(list) {
-    return list.sort(compareNatural);
+    return list.sort(compareSortNames);
+}
+
+// ===================================================================
+// Einstellungen der Oberfläche (Seite "Einstellungen")
+// Gespeichert als JSON unter "displaySettings", gehört damit zur Datensicherung.
+// ===================================================================
+var displaySettingsKey = "displaySettings";
+
+var displaySettingDefaults = {
+    cardSize: "medium",       // small, medium, large
+    rowSize: 12,              // Kacheln pro Zeile, danach beginnt eine neue Zeile
+    showMarkers: true,        // "Gesehen", "Letzte Folge" ... auf Kacheln
+    reduceMotion: false,
+    skipSplash: false,
+    alphaGroups: false,       // Ordnerseiten in Gruppen A–D, E–H ...
+    groupExcludeImages: true,
+    groupExcludeMusic: false,
+    jumpBar: true,            // Sprungleiste zu den Gruppen
+    ignoreArticles: true,
+    separateFolders: false,   // Ordner in einem eigenen Band über den Medien
+    continueMax: 20           // Einträge in "Weiterschauen"
+};
+
+var displaySettingLimits = {
+    rowSize: [4, 30],
+    continueMax: [5, 50]
+};
+
+var cardSizes = ["small", "medium", "large"];
+
+var displaySettingsCache = null;
+
+function clampSetting(name, value) {
+    var limits = displaySettingLimits[name];
+    value = parseInt(value, 10);
+    if (isNaN(value)) {
+        return displaySettingDefaults[name];
+    }
+    return Math.min(limits[1], Math.max(limits[0], value));
+}
+
+function getDisplaySettings() {
+    if (displaySettingsCache != null) {
+        return displaySettingsCache;
+    }
+    var stored = null;
+    try {
+        stored = JSON.parse(getData(displaySettingsKey) || "null");
+    } catch (error) {
+        stored = null;
+    }
+    var settings = {};
+    Object.keys(displaySettingDefaults).forEach(function (name) {
+        var fallback = displaySettingDefaults[name];
+        var value = stored != null && typeof stored === "object" ? stored[name] : undefined;
+        if (typeof fallback === "boolean") {
+            settings[name] = typeof value === "boolean" ? value : fallback;
+        } else if (displaySettingLimits[name]) {
+            settings[name] = value == null ? fallback : clampSetting(name, value);
+        } else {
+            settings[name] = cardSizes.includes(value) ? value : fallback;
+        }
+    });
+    // Vor dem Laden der Datenbank nicht zwischenspeichern (dann gälten nur die Standardwerte)
+    if (db != null) {
+        displaySettingsCache = settings;
+    }
+    return settings;
+}
+
+function getSetting(name) {
+    return getDisplaySettings()[name];
+}
+
+function setSetting(name, value) {
+    var settings = getDisplaySettings();
+    settings[name] = displaySettingLimits[name] ? clampSetting(name, value) : value;
+    displaySettingsCache = settings;
+    setData(displaySettingsKey, JSON.stringify(settings));
+    applyDisplaySettings();
+    return settings[name];
+}
+
+function resetDisplaySettings() {
+    removeData(displaySettingsKey);
+    displaySettingsCache = null;
+    applyDisplaySettings();
+}
+
+// Einstellungen, die per CSS wirken (Kachelgrösse, Animationen)
+function applyDisplaySettings() {
+    var root = document.documentElement;
+    var size = getSetting("cardSize");
+    root.classList.toggle("cardsSmall", size === "small");
+    root.classList.toggle("cardsLarge", size === "large");
+    root.classList.toggle("reduceMotion", getSetting("reduceMotion"));
 }
 
 function hasExtension(filename, extensions) {

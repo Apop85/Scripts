@@ -25,14 +25,33 @@ namespace Sflix
 
         public static void Run(TaskContext ctx, string root)
         {
-            if (!Directory.Exists(root)) throw new TaskFailedException("Ordner nicht gefunden: " + root);
+            Run(ctx, new List<string> { root });
+        }
 
+        // Durchsucht alle Ordner und zeigt die Ablagen gemeinsam zur Auswahl. Gelöscht wird nur
+        // innerhalb des Installationsordners, damit nicht versehentlich andere Daten verschwinden.
+        public static void Run(TaskContext ctx, IList<string> roots)
+        {
             ctx.Progress(-1, "Suche Ablagen ...");
             List<CleanupFolder> found = new List<CleanupFolder>();
-            Find(root, found, ctx);
+            List<string> searched = new List<string>();
+            foreach (string root in Folders.WithoutNested(roots))
+            {
+                string reason;
+                if (!Directory.Exists(root)) { ctx.Log("Hinweis: Ordner nicht gefunden, übersprungen: " + root); continue; }
+                if (!Folders.IsInsideRoot(root, out reason))
+                {
+                    ctx.Log("Hinweis: " + root + " " + reason + ", übersprungen. Ablagen werden nur im Installationsordner geleert.");
+                    continue;
+                }
+                searched.Add(root);
+                Find(root, found, ctx);
+            }
+            if (searched.Count == 0) throw new TaskFailedException("Kein gültiger Ordner im Installationsordner gewählt");
             if (found.Count == 0)
             {
-                ctx.Log("Keine Ablagen (__teile, __konvertiert, __gelöscht, __original ...) gefunden in " + root);
+                ctx.Log("Keine Ablagen (__teile, __konvertiert, __gelöscht, __original ...) gefunden in " + string.Join(", ", searched.ToArray()));
+                ctx.Summary = "keine Ablagen gefunden";
                 return;
             }
 
@@ -45,6 +64,7 @@ namespace Sflix
             if (selected == null || selected.Count == 0)
             {
                 ctx.Log("Nichts gelöscht.");
+                ctx.Summary = "nichts gelöscht";
                 return;
             }
 
@@ -57,6 +77,9 @@ namespace Sflix
                 ctx.Progress((double)i / selected.Count, "Lösche " + f.Path);
                 try
                 {
+                    // Nochmals prüfen, unmittelbar vor dem Löschen
+                    string reason;
+                    if (!Folders.IsInsideRoot(f.Path, out reason)) throw new IOException("nicht gelöscht, " + reason);
                     DeleteTree(f.Path);
                     deleted++;
                     freed += f.Size;
@@ -69,6 +92,7 @@ namespace Sflix
                 }
             }
             ctx.Log("Gelöscht: " + deleted + " Ablage(n), " + Fmt.Size(freed) + " frei   Fehler: " + failed);
+            ctx.Summary = deleted + " Ablage(n) gelöscht, " + Fmt.Size(freed) + " frei, " + failed + " Fehler";
             if (failed > 0) throw new TaskFailedException(failed + " Ablage(n) konnten nicht (vollständig) gelöscht werden");
         }
 
@@ -84,6 +108,16 @@ namespace Sflix
             foreach (string d in dirs)
             {
                 string name = System.IO.Path.GetFileName(d);
+                // Verknüpfungen/Junctions nie verfolgen und nie als Ablage löschen (sie können
+                // auf Ordner ausserhalb von STEFFLIX zeigen)
+                bool link;
+                try { link = (File.GetAttributes(d) & FileAttributes.ReparsePoint) != 0; }
+                catch { continue; }
+                if (link)
+                {
+                    if (IsStorageFolder(name)) ctx.Log("Hinweis: " + d + " ist eine Verknüpfung und wird nicht geleert.");
+                    continue;
+                }
                 if (IsStorageFolder(name))
                 {
                     CleanupFolder f = new CleanupFolder();
@@ -94,8 +128,6 @@ namespace Sflix
                     continue;
                 }
                 if (Folders.Ignore(d)) continue;   // sflix_sys, Papierkorb, System- und versteckte Ordner
-                // Verknüpfungen/Junctions nicht verfolgen
-                if ((File.GetAttributes(d) & FileAttributes.ReparsePoint) != 0) continue;
                 Find(d, result, ctx);
             }
         }

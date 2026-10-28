@@ -152,7 +152,11 @@ function createMediaCard(container, mediaPath, href, options) {
     var previewSrc = isImage(mediaPath) ? (getPreviewForMedia(mediaPath, true) || mediaPath)
         : (options.inheritPreview ? getInheritedPreview(mediaPath) : getPreviewForMedia(mediaPath, options.exactPreview));
 
-    var seen = isVideo(mediaPath) && isSeen(mediaPath);
+    // Markierungen ("Gesehen", "Letzte Folge") lassen sich in den Einstellungen ausblenden.
+    // Gespeichert wird "Gesehen" trotzdem.
+    var showMarkers = getSetting("showMarkers");
+    var seen = showMarkers && isVideo(mediaPath) && isSeen(mediaPath);
+    var label = showMarkers ? options.label : null;
     var card = createCard(container, {
         href: href,
         title: options.title || getDisplayName(mediaPath),
@@ -165,8 +169,8 @@ function createMediaCard(container, mediaPath, href, options) {
     });
     card.dataset.media = mediaPath;
     setCardFavorite(card, getFavorites().includes(mediaPath));
-    if (seen || options.label) {
-        addCardLabel(card, options.label || "Gesehen", seen && !options.label);
+    if (seen || label) {
+        addCardLabel(card, label || "Gesehen", seen && !label);
     }
     if (options.playData) {
         setMediaLink(card, options.playData);
@@ -217,7 +221,7 @@ function createFolderCard(container, folderLevels, options) {
         placeholderIcon: getFolderIconName(node),
         seed: levelPath
     });
-    if (isFolderSeen(node)) {
+    if (getSetting("showMarkers") && isFolderSeen(node)) {
         addCardLabel(card, "Gesehen", true);
     }
     return card;

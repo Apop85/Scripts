@@ -98,17 +98,18 @@ Beim Einlesen der Daten schneidet `updateStefflix.exe` zu grosse Bilder auf 480x
 Die ausgewählten Aufgaben laufen immer in dieser Reihenfolge ab:
 
 - **Update**: STEFFLIX-Dateien und den Updater selbst von GitHub aktualisieren. Installiert wird nur, wenn alle Dateien vollständig und gültig heruntergeladen wurden.
-- **Ablagen leeren**: Die Ablageordner der Werkzeuge (Ordner, deren Name mit `__` beginnt, z.B. `__teile`, `__konvertiert`, `__gelöscht` und `__original`) endgültig löschen. Vorher wird angezeigt, was gelöscht wird.
+- **Ablagen leeren**: Die Ablageordner der Werkzeuge (Ordner, deren Name mit `__` beginnt, z.B. `__teile`, `__konvertiert`, `__gelöscht` und `__original`) endgültig löschen. Vorher wird angezeigt, was gelöscht wird. Nur innerhalb des STEFFLIX-Ordners möglich.
+- **Folgen umbenennen**: Die Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen, z.B. `Serie - S01E02 - Titel.mp4` im Ordner `Staffel 01`. Erkannt werden Namen mit `S01E02` oder `1x02`. Vorher werden alle Änderungen angezeigt, danach lässt sich der letzte Lauf rückgängig machen.
 - **Gesplittete Medien zusammenführen**: Videos wie "Titel pt1" und "Titel pt2" zu einer Datei zusammenfügen. Die Teile werden vorher in einer Liste ausgewählt, auf Wunsch wird neu kodiert. Die Teile können danach nach `__teile` verschoben werden.
 - **Videos für SFLIX konvertieren**: Videos in browserkompatible MP4 (H.264/AAC) umwandeln. Die MP4 ersetzt das Original im selben Ordner, das Original kommt nach `__konvertiert` (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.
 - **Vorschaubilder erstellen**: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach `Preview\__gelöscht`.
 - **Daten einlesen**: Medien neu einlesen, ungültige Zeichen in Datei- und Ordnernamen korrigieren und zu grosse Vorschaubilder verkleinern. Ordner, deren Name mit `__` beginnt, sowie System- und versteckte Ordner werden ignoriert. Mit dem Schalter "Alle Ordner einlesen" wird alles eingelesen. Ist er aus, lassen sich einzelne Ordner wählen, und nur diese werden aktualisiert. Das geht deutlich schneller bei grossen Mediatheken. Nach einem Import liest der Updater automatisch nur den Zielordner ein.
 
-Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren arbeiten im eingestellten Medienordner (Standard: der STEFFLIX-Ordner). Das dafür nötige Programm ffmpeg lädt der Updater beim ersten Bedarf selbst herunter.
+Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren durchsuchen mit "Alles" den ganzen STEFFLIX-Ordner, sonst nur die gewählten Ordner. Danach werden nur die betroffenen Ordner neu eingelesen. Das dafür nötige Programm ffmpeg lädt der Updater beim ersten Bedarf selbst herunter.
 
 ## Autoplay
 
-Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste ab. Die Einstellungen befinden sich im Menü unter "Autoplay" und hinter dem Autoplay-Symbol in der Player-Leiste, bei Bildern hinter dem Knopf "Autoplay" unter dem Bild. Das Symbol zeigt, ob Autoplay aktiv ist (ausgegraut = aus). Kurz vor dem Wechsel erscheint im Player ein Countdown; ein Klick darauf startet das nächste Medium sofort.
+Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste ab. Die Einstellungen befinden sich hinter dem Autoplay-Symbol in der Player-Leiste, bei Bildern hinter dem Knopf "Autoplay" unter dem Bild. Das Symbol zeigt, ob Autoplay aktiv ist (ausgegraut = aus). Kurz vor dem Wechsel erscheint im Player ein Countdown; ein Klick darauf startet das nächste Medium sofort.
 
 - **Automatisch vorwärts**: schaltet Autoplay ein oder aus.
 - **Unbegrenzt**: spielt ohne feste Anzahl weiter, bis das Ende der Playliste erreicht ist.
@@ -124,7 +125,7 @@ Videos und Musik haben eine eigene Steuerleiste. Bei Videos blendet sie sich wä
 - **Touch**: Tippen blendet die Leiste ein oder aus. Doppeltipp links oder rechts spult 10 Sekunden zurück bzw. vor, Doppeltipp in der Mitte schaltet das Vollbild um.
 - **Zahnradmenü**: Geschwindigkeit (0,5x bis 1,75x), Herunterladen und Browser-Steuerung.
 - **Vollbild**: Das Video füllt den Bildschirm. Darunter kann weiterhin gescrollt und ein anderes Medium gewählt werden.
-- **Browser-Steuerung**: Wer die Steuerung des Browsers bevorzugt, schaltet sie im Zahnradmenü oder im Menü unter "Autoplay" ein.
+- **Browser-Steuerung**: Wer die Steuerung des Browsers bevorzugt, schaltet sie im Zahnradmenü oder im Menü unter "Einstellungen" ein.
 
 ## Tastenkürzel
 
@@ -179,15 +180,19 @@ Ist im Browser eingestellt, dass er beim Schliessen die Chronik oder die Website
 1. `edge://settings/clearBrowsingDataOnClose` öffnen.
 2. Ist "Cookies und andere Websitedaten" eingeschaltet, bei "Nicht löschen" auf "Hinzufügen" klicken.
 3. Folgenden Eintrag hinzufügen: `file:///*`
+## Einstellungen
+
+Im Menü unter "Einstellungen" lassen sich festlegen: Kachelgrösse (Klein, Mittel, Gross), Kacheln pro Zeile, Markierungen auf den Kacheln ("Gesehen", "Letzte Folge"), Animationen reduzieren, Startbildschirm überspringen, alphabetische Gruppen auf Ordnerseiten (A–D, E–H … mit Sprungleiste, Bilder und Musik ausnehmbar), Artikel beim Sortieren ignorieren ("Der Pate" unter P), Ordner getrennt von Medien, die Anzahl Einträge bei "Weiterschauen" und die Browser-Steuerung. Änderungen gelten sofort und nur im verwendeten Browser.
+
 ## Datensicherung
 
-Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen und die Sortierung der Startseite werden nur im verwendeten Browser gespeichert. In der Hilfe von STEFFLIX lassen sie sich unter "Datensicherung" als Datei exportieren und wieder importieren, z.B. um sie auf einen anderen Browser oder PC zu übertragen.
+Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen und die Sortierung der Startseite werden nur im verwendeten Browser gespeichert. Unter Einstellungen › Datensicherung lassen sie sich als Datei exportieren und wieder importieren, z.B. um sie auf einen anderen Browser oder PC zu übertragen.
 
 Gibt es mehrere STEFFLIX-Ordner auf einem PC, speichert jeder seine Daten getrennt. Der Updater legt dafür in jedem Ordner eine eigene Kennung an (`sflix_sys\install.js`). Diese Datei nicht in einen anderen STEFFLIX-Ordner kopieren. Wer einen ganzen Ordner kopiert, startet danach einmal den Updater in der Kopie, dann bekommt sie automatisch eine neue Kennung.
 
 ## Fehlerbehebung
 
-Lädt STEFFLIX nicht richtig, stimmen die Vor- und Zurück-Buttons nicht oder setzen Videos an der falschen Stelle fort, können in der Hilfe von STEFFLIX unter "Fehlerbehebung" die gespeicherten Daten zurückgesetzt werden (Favoriten, Playlisten, Zeitstempel, "Weiterschauen" oder alles). Die Medien selbst werden dabei nicht verändert. Vorher am besten eine Sicherung erstellen.
+Lädt STEFFLIX nicht richtig, stimmen die Vor- und Zurück-Buttons nicht oder setzen Videos an der falschen Stelle fort, können unter Einstellungen › Fehlerbehebung die gespeicherten Daten zurückgesetzt werden (Favoriten, Playlisten, Zeitstempel, "Weiterschauen" oder alles). Die Medien selbst werden dabei nicht verändert. Vorher am besten eine Sicherung erstellen.
 
 Fehlen Programmdateien, z.B. nach einem abgebrochenen Update, `updateStefflix.exe` erneut mit der Aufgabe "Update" ausführen.
 

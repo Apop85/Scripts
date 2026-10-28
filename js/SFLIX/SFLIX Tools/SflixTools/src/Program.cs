@@ -11,7 +11,8 @@
 //   updateStefflix.exe --install <Ordner>    STEFFLIX ohne Oberfläche in <Ordner> installieren
 //   --updated                                (intern) Start nach einem Selbst-Update
 // Liegt das Programm nicht in einem STEFFLIX-Ordner, bietet es die Installation an.
-// Aufgaben: update, cleanup, merge, convert, preview, data
+// Aufgaben: update, cleanup, merge, convert, preview, data, renameundo (letztes "Folgen umbenennen"
+// rückgängig machen); "rename" braucht die Oberfläche (Auswahl der Serie)
 // Umgebungsvariablen für Tests: SFLIX_DIR (STEFFLIX-Ordner), SFLIX_UPDATE_URL (Update-Server)
 
 using System;
@@ -27,8 +28,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX Updater")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX Updater: Update, Daten einlesen, Vorschaubilder, Zusammenführen, Konvertieren")]
-[assembly: AssemblyVersion("3.1.4.0")]
-[assembly: AssemblyFileVersion("3.1.4.0")]
+[assembly: AssemblyVersion("3.2.0.0")]
+[assembly: AssemblyFileVersion("3.2.0.0")]
 
 namespace Sflix
 {
@@ -172,7 +173,7 @@ namespace Sflix
             ctx.Ffmpeg = new FfmpegTools(App.Root, settings.GetString("ffmpeg.folder", ""));
 
             ConvertOptions conv = new ConvertOptions();
-            conv.Folder = settings.MediaFolder();
+            conv.Folder = App.Root;
             conv.Parallel = settings.GetInt("convert.parallel", 0);
             conv.DeleteOriginal = settings.GetBool("convert.deleteOriginal", false);
             conv.Preset = settings.GetString("convert.preset", "medium");
@@ -184,13 +185,16 @@ namespace Sflix
             TaskRunner runner = new TaskRunner();
             runner.Tasks = tasks ?? new List<string>();
             runner.UpdateFfmpeg = settings.GetBool("update.ffmpeg", true);
-            runner.MergeFolder = settings.MediaFolder();
+            // Ohne Oberfläche arbeiten die Tools im ganzen Installationsordner
+            List<string> all = new List<string> { App.Root };
+            runner.MergeFolders = all;
             runner.MoveParts = settings.GetBool("merge.moveParts", true);
             runner.Convert = conv;
-            runner.PreviewFolder = settings.MediaFolder();
+            runner.ConvertFolders = all;
+            runner.PreviewFolders = all;
             runner.PreviewVideos = settings.GetBool("preview.videos", true);
             runner.PreviewImages = settings.GetBool("preview.images", false);
-            runner.CleanupFolder = settings.MediaFolder();   // ohne Oberfläche: alle Ablagen löschen
+            runner.CleanupFolders = all;   // ohne Oberfläche: alle Ablagen im Installationsordner löschen
             // Ohne --data-folder wird wie bisher alles eingelesen
             runner.DataFolders = dataFolders.Count > 0 ? dataFolders : null;
 

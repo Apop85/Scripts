@@ -109,6 +109,7 @@ namespace Sflix
             ctx.Check();
             ctx.Log("Konvertiert: " + converted + "   Bereits kompatibel: " + compatible + "   Fehler: " + failed
                     + "   Dauer: " + Fmt.Time(watch.Elapsed.TotalSeconds));
+            ctx.Summary = converted + " konvertiert, " + compatible + " bereits kompatibel, " + failed + " Fehler";
             if (failed > 0) throw new TaskFailedException(failed + " Video(s) konnten nicht konvertiert werden");
         }
 

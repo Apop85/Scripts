@@ -28,8 +28,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX Updater")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX Updater: Update, Daten einlesen, Vorschaubilder, Zusammenführen, Konvertieren")]
-[assembly: AssemblyVersion("3.2.1.0")]
-[assembly: AssemblyFileVersion("3.2.1.0")]
+[assembly: AssemblyVersion("3.2.2.0")]
+[assembly: AssemblyFileVersion("3.2.2.0")]
 
 namespace Sflix
 {

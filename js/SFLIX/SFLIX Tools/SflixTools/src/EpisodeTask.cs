@@ -2,8 +2,8 @@
 //
 // 1. Folgenliste einer Serie aus dem Internet holen: fernsehserien.de (deutsche Titel),
 //    sonst TVmaze (englische Titel). Die Auswahl der Serie geschieht im Dialog (EpisodeDialogs.cs).
-// 2. Plan erstellen: Folgennummer aus dem Dateinamen (S01E02, 1x02, Doppelfolgen S01E01E02 und
-//    S01E0102 zählen als kleinste Nummer), Zielname "Serie - S01E02 - Titel.ext" im Ordner
+// 2. Plan erstellen: Folgennummern aus dem Dateinamen (S01E02, 1x02; Doppelfolgen wie S01E01E02,
+//    S01E0102 oder 1x01-02 behalten alle Nummern), Zielname "Serie - S01E02 - Titel.ext" im Ordner
 //    "Staffel 01". Staffelordner werden angeglichen ("Staffel 1" -> "Staffel 01"), gibt es beide,
 //    wird zusammengeführt. Folgen in der falschen Staffel oder direkt im Serienordner werden
 //    in den richtigen Staffelordner verschoben.
@@ -444,7 +444,8 @@ namespace Sflix
         public string Kind;        // "folder" (umbenennen), "merge" (zusammenführen), "rename", "move"
         public string Source;      // vollständiger Pfad
         public string Target;      // vollständiger Pfad
-        public int Season, Episode;
+        public int Season, Episode;   // Episode = erste Folge (bei Doppelfolgen die kleinste)
+        public List<int> Episodes = new List<int>();   // alle Folgen der Datei (Doppelfolgen: mehrere)
         public string Note = "";
         public string Group;       // gleiche Zielfolge: nur eine Datei darf gewählt sein
         public bool Selected = true;
@@ -470,8 +471,14 @@ namespace Sflix
         static readonly string[] PreviewExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
 
         static readonly Regex DoubleFour = new Regex(@"S(\d{1,3})[ ._-]*E(\d{2})(\d{2})(?!\d)", RegexOptions.IgnoreCase);
-        static readonly Regex SeasonEpisode = new Regex(@"S(\d{1,3})[ ._-]*E(\d{1,4})((?:[ ._-]*-?[ ._-]*E\d{1,4})*)", RegexOptions.IgnoreCase);
+        static readonly Regex SeasonEpisode = new Regex(@"S(\d{1,3})[ ._-]*E(\d{1,4})(?!\d)", RegexOptions.IgnoreCase);
         static readonly Regex Cross = new Regex(@"(?<![0-9])(\d{1,2})x(\d{2,3})(?![0-9])", RegexOptions.IgnoreCase);
+        // Weitere Teile einer Doppelfolge direkt danach: "E03", "-E03", " E03" oder "-03" bzw. "-1x03".
+        // Eine Nummer ohne "E" zählt nur, wenn sie knapp über der letzten liegt (sonst z.B. ein Jahr).
+        static readonly Regex MoreWithE = new Regex(@"\G[ ._]*-?[ ._]*E(\d{1,4})(?!\d)", RegexOptions.IgnoreCase);
+        static readonly Regex MoreWithDash = new Regex(@"\G[ ._]*-[ ._]*(?:\d{1,2}x)?(\d{1,3})(?![\dp])", RegexOptions.IgnoreCase);
+        // Teil-Angabe am Ende eines Titels: "Pilot (1)", "Pilot, Teil 1", "Pilot - Part 2"
+        static readonly Regex TitlePart = new Regex(@"^(?<base>.*?)(?<sep>\s*\(\s*(?:Teil|Part|Pt\.?)?\s*|,?\s*(?:-\s*)?(?:Teil|Part|Pt\.?)\s*)(?<n>\d+)(?<end>\s*\)?)$", RegexOptions.IgnoreCase);
         static readonly Regex SeasonFolder = new Regex(@"^(?:staffel|season|s)[ ._-]*0*(\d{1,3})$", RegexOptions.IgnoreCase);
 
         public const string ReplacedFolderName = "__ersetzt";
@@ -480,35 +487,105 @@ namespace Sflix
         public static string UndoFile { get { return Path.Combine(App.SysDir, UndoFileName); } }
         public static bool UndoFileExists { get { return File.Exists(UndoFile); } }
 
-        // Folgennummer aus einem Dateinamen; false, wenn keine erkannt wird
+        // Folgennummer aus einem Dateinamen (bei Doppelfolgen die kleinste); false, wenn keine erkannt wird
         public static bool ParseEpisode(string fileName, out int season, out int episode)
         {
-            season = episode = 0;
+            List<int> episodes;
+            episode = 0;
+            if (!ParseEpisodes(fileName, out season, out episodes)) return false;
+            episode = episodes[0];
+            return true;
+        }
+
+        // Alle Folgen einer Datei, aufsteigend und ohne Doppelte: S01E02 -> [2], S01E02E03, S01E02-E03,
+        // S01E02-03, S01E0203, 1x02-03 und 1x02-1x03 -> [2, 3]
+        public static bool ParseEpisodes(string fileName, out int season, out List<int> episodes)
+        {
+            season = 0;
+            episodes = new List<int>();
             string stem = Path.GetFileNameWithoutExtension(fileName);
             Match m = DoubleFour.Match(stem);
+            int end;
             if (m.Success)
             {
                 season = int.Parse(m.Groups[1].Value);
-                episode = Math.Min(int.Parse(m.Groups[2].Value), int.Parse(m.Groups[3].Value));
-                return true;
+                episodes.Add(int.Parse(m.Groups[2].Value));
+                episodes.Add(int.Parse(m.Groups[3].Value));
+                end = m.Index + m.Length;
             }
-            m = SeasonEpisode.Match(stem);
-            if (m.Success)
+            else
             {
+                m = SeasonEpisode.Match(stem);
+                if (!m.Success) m = Cross.Match(stem);
+                if (!m.Success) return false;
                 season = int.Parse(m.Groups[1].Value);
-                episode = int.Parse(m.Groups[2].Value);
-                foreach (Match extra in Regex.Matches(m.Groups[3].Value, @"\d+"))
-                    episode = Math.Min(episode, int.Parse(extra.Value));
-                return true;
+                episodes.Add(int.Parse(m.Groups[2].Value));
+                end = m.Index + m.Length;
             }
-            m = Cross.Match(stem);
-            if (m.Success)
+            // Weitere Teile direkt danach
+            while (end < stem.Length)
             {
-                season = int.Parse(m.Groups[1].Value);
-                episode = int.Parse(m.Groups[2].Value);
-                return true;
+                Match more = MoreWithE.Match(stem, end);
+                if (more.Success)
+                {
+                    episodes.Add(int.Parse(more.Groups[1].Value));
+                    end = more.Index + more.Length;
+                    continue;
+                }
+                more = MoreWithDash.Match(stem, end);
+                int last = episodes[episodes.Count - 1];
+                int n;
+                if (!more.Success || !int.TryParse(more.Groups[1].Value, out n) || n <= last || n > last + 3) break;
+                episodes.Add(n);
+                end = more.Index + more.Length;
             }
-            return false;
+            List<int> sorted = new List<int>();
+            foreach (int e in episodes) if (!sorted.Contains(e)) sorted.Add(e);
+            sorted.Sort();
+            episodes = sorted;
+            return true;
+        }
+
+        // "S01E02" bzw. "S01E02E03"
+        public static string EpisodeLabel(int season, IList<int> episodes)
+        {
+            StringBuilder sb = new StringBuilder("S" + season.ToString("00", CultureInfo.InvariantCulture));
+            foreach (int e in episodes) sb.Append("E" + e.ToString("00", CultureInfo.InvariantCulture));
+            return sb.ToString();
+        }
+
+        // Titel einer Doppelfolge: "Pilot (1)" + "Pilot (2)" -> "Pilot (1+2)", gleiche Titel einmal,
+        // sonst "Titel A + Titel B"
+        public static string CombineTitles(IList<string> titles)
+        {
+            List<string> list = new List<string>();
+            foreach (string t in titles) if (!string.IsNullOrEmpty(t)) list.Add(t.Trim());
+            if (list.Count == 0) return "";
+            if (list.Count == 1) return list[0];
+            bool allSame = true;
+            foreach (string t in list) if (!string.Equals(t, list[0], StringComparison.OrdinalIgnoreCase)) allSame = false;
+            if (allSame) return list[0];
+
+            Match first = TitlePart.Match(list[0]);
+            if (first.Success && first.Groups["base"].Value.Trim().Length > 0)
+            {
+                List<string> numbers = new List<string>();
+                bool samePattern = true;
+                foreach (string t in list)
+                {
+                    Match p = TitlePart.Match(t);
+                    if (!p.Success || !string.Equals(p.Groups["base"].Value.Trim(), first.Groups["base"].Value.Trim(), StringComparison.OrdinalIgnoreCase)
+                        || !string.Equals(p.Groups["sep"].Value, first.Groups["sep"].Value, StringComparison.OrdinalIgnoreCase))
+                    {
+                        samePattern = false;
+                        break;
+                    }
+                    numbers.Add(p.Groups["n"].Value);
+                }
+                if (samePattern)
+                    return first.Groups["base"].Value + first.Groups["sep"].Value + string.Join("+", numbers.ToArray()) + first.Groups["end"].Value;
+            }
+            return string.Join(" + ", list.ToArray());
         }
 
         public static string SeasonFolderName(int season)
@@ -520,8 +597,13 @@ namespace Sflix
         // nicht verarbeiten kann, werden ersetzt (wie bei "Daten einlesen").
         public static string BuildName(string series, int season, int episode, string title, string ext)
         {
-            string name = series + " - S" + season.ToString("00", CultureInfo.InvariantCulture) +
-                          "E" + episode.ToString("00", CultureInfo.InvariantCulture);
+            return BuildName(series, season, new int[] { episode }, title, ext);
+        }
+
+        // Doppelfolgen: "Serie - S01E02E03 - Titel.ext"
+        public static string BuildName(string series, int season, IList<int> episodes, string title, string ext)
+        {
+            string name = series + " - " + EpisodeLabel(season, episodes);
             string cleanTitle = CleanPart(title ?? "");
             if (cleanTitle.Length > 0) name += " - " + cleanTitle;
             name = CleanPart(name);
@@ -577,25 +659,39 @@ namespace Sflix
             files.Sort(StringComparer.OrdinalIgnoreCase);
             HashSet<string> covered = new HashSet<string>();
             List<EpisodeOp> fileOps = new List<EpisodeOp>();
+            // Welche Datei welche Folge enthält (für Konflikte zwischen Doppelfolge und Einzelfolge);
+            // unveränderte Dateien zählen mit (ohne Vorgang)
+            Dictionary<string, List<string>> claims = new Dictionary<string, List<string>>();
             foreach (string file in files)
             {
                 string rel = file.Substring(seriesDir.Length + 1);
-                int season, episode;
-                if (!ParseEpisode(Path.GetFileName(file), out season, out episode))
+                int season;
+                List<int> episodes;
+                if (!ParseEpisodes(Path.GetFileName(file), out season, out episodes))
                 {
                     plan.Unmatched.Add(rel + ": keine Folgennummer (S01E02 oder 1x02) erkannt");
                     continue;
                 }
-                string title = list.Title(season, episode);
-                if (title == null)
+                // Titel aller Teile; der erste Teil muss in der Folgenliste stehen
+                List<string> titles = new List<string>();
+                foreach (int e in episodes) titles.Add(list.Title(season, e));
+                if (titles[0] == null)
                 {
-                    plan.Unmatched.Add(rel + ": S" + season.ToString("00") + "E" + episode.ToString("00") + " steht nicht in der Folgenliste");
+                    plan.Unmatched.Add(rel + ": " + EpisodeLabel(season, episodes) + " steht nicht in der Folgenliste");
                     continue;
                 }
-                covered.Add(season + "x" + episode);
+                foreach (int e in episodes) covered.Add(season + "x" + e);
+                string title = CombineTitles(titles);
                 string targetDir = Path.Combine(seriesDir, SeasonFolderName(season));
-                string target = Path.Combine(targetDir, BuildName(plan.SeriesName, season, episode, title, Path.GetExtension(file)));
+                string target = Path.Combine(targetDir, BuildName(plan.SeriesName, season, episodes, title, Path.GetExtension(file)));
                 string dirAfterFolders = MapFolder(Path.GetDirectoryName(file), folderMap);
+                foreach (int e in episodes)
+                {
+                    List<string> c;
+                    string key = season + "x" + e;
+                    if (!claims.TryGetValue(key, out c)) { c = new List<string>(); claims[key] = c; }
+                    if (!c.Contains(target.ToLowerInvariant())) c.Add(target.ToLowerInvariant());
+                }
                 if (string.Equals(dirAfterFolders, targetDir, StringComparison.OrdinalIgnoreCase) &&
                     Path.GetFileName(file) == Path.GetFileName(target))
                 {
@@ -606,10 +702,16 @@ namespace Sflix
                 op.Source = file;
                 op.Target = target;
                 op.Season = season;
-                op.Episode = episode;
+                op.Episode = episodes[0];
+                op.Episodes = episodes;
                 bool moves = !string.Equals(dirAfterFolders, targetDir, StringComparison.OrdinalIgnoreCase);
                 op.Kind = moves ? "move" : "rename";
                 op.Note = moves ? "nach „" + SeasonFolderName(season) + "“ verschieben" : "";
+                if (episodes.Count > 1 && episodes[episodes.Count - 1] - episodes[0] != episodes.Count - 1)
+                    op.Note = "Hinweis: Folgennummern nicht fortlaufend, Dateiname prüfen" + (op.Note.Length > 0 ? ", " + op.Note : "");
+                for (int i = 1; i < titles.Count; i++)
+                    if (titles[i] == null)
+                        op.Note = "Hinweis: E" + episodes[i].ToString("00") + " steht nicht in der Folgenliste" + (op.Note.Length > 0 ? ", " + op.Note : "");
                 fileOps.Add(op);
             }
 
@@ -626,11 +728,23 @@ namespace Sflix
             foreach (EpisodeOp op in fileOps)
             {
                 List<EpisodeOp> same = byTarget[op.Target];
+                // Doppelfolge und Einzelfolge mit gemeinsamer Folge (z.B. S01E02E03 und S01E03)
+                int overlap = -1;
+                foreach (int e in op.Episodes)
+                    if (claims[op.Season + "x" + e].Count > 1) { overlap = e; break; }
                 if (same.Count > 1)
                 {
                     op.Group = op.Target.ToLowerInvariant();
                     op.Selected = false;
-                    op.Note = "Mehrere Dateien für S" + op.Season.ToString("00") + "E" + op.Episode.ToString("00") + ": eine wählen" +
+                    op.Note = "Mehrere Dateien für " + EpisodeLabel(op.Season, op.Episodes) + ": eine wählen" +
+                              (op.Note.Length > 0 ? ", " + op.Note : "");
+                }
+                else if (overlap >= 0)
+                {
+                    // Gruppe nach der ersten gemeinsamen Folge: nur eine der Dateien lässt sich wählen
+                    op.Group = "folge:" + op.Season + "x" + overlap;
+                    op.Selected = false;
+                    op.Note = "E" + overlap.ToString("00") + " steckt in mehreren Dateien (Doppelfolge und Einzelfolge): eine wählen" +
                               (op.Note.Length > 0 ? ", " + op.Note : "");
                 }
                 else if (File.Exists(op.Target) && !sources.Contains(op.Target))

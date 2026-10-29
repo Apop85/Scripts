@@ -160,6 +160,21 @@ final class SmbSource implements Closeable {
             return n;
         }
 
+        /** Springt nur die Leseposition vor, ohne die übersprungenen Daten über das Netz zu lesen. */
+        @Override
+        public long skip(long n) {
+            if (n <= 0) return 0;
+            long buffered = bufLen - bufPos;
+            if (n <= buffered) {
+                bufPos += (int) n;
+                return n;
+            }
+            bufPos = bufLen;
+            long jump = Math.min(n - buffered, Math.max(0, end - pos));
+            pos += jump;
+            return buffered + jump;
+        }
+
         @Override
         public int available() {
             return bufLen - bufPos;

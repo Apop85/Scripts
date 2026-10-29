@@ -351,8 +351,11 @@ public class BrowserActivity extends Activity {
                 headers.put("Content-Range", "bytes " + start + "-" + end + "/" + size);
             }
             headers.put("Content-Length", String.valueOf(Math.max(0, end - start + 1)));
+            // Der Strom beginnt immer am Dateianfang: Die WebView überspringt bei Range-Anfragen
+            // selbst bis zum Start (InputStream.skip). Begänne er schon bei "start", würde doppelt
+            // gesprungen (Spulen falsch, MP4 mit Inhaltsverzeichnis am Ende startet gar nicht).
             return new WebResourceResponse(mime, charset, code, reason, headers,
-                    new SmbSource.RangeStream(f, start, end + 1));
+                    new SmbSource.RangeStream(f, 0, end + 1));
         } catch (FileNotFoundException e) {
             if (mainFrame) return errorPage("STEFFLIX wurde in dieser Freigabe nicht gefunden.", "Es fehlt: " + rel);
             return status(404, "Not Found");

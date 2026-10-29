@@ -479,7 +479,22 @@ namespace Sflix
         static readonly Regex MoreWithDash = new Regex(@"\G[ ._]*-[ ._]*(?:\d{1,2}x)?(\d{1,3})(?![\dp])", RegexOptions.IgnoreCase);
         // Teil-Angabe am Ende eines Titels: "Pilot (1)", "Pilot, Teil 1", "Pilot - Part 2"
         static readonly Regex TitlePart = new Regex(@"^(?<base>.*?)(?<sep>\s*\(\s*(?:Teil|Part|Pt\.?)?\s*|,?\s*(?:-\s*)?(?:Teil|Part|Pt\.?)\s*)(?<n>\d+)(?<end>\s*\)?)$", RegexOptions.IgnoreCase);
-        static readonly Regex SeasonFolder = new Regex(@"^(?:staffel|season|s)[ ._-]*0*(\d{1,3})$", RegexOptions.IgnoreCase);
+        // Staffelordner: "Staffel 1", "staffel1", "Staffel 01 (Blu-ray)", "Season 1 HD", "S01" …
+        // Nicht: mehrere Staffeln ("Staffel 1-3", "Staffel 1 + 2", "Season 1 und 2") und Folgen ("S01E01")
+        static readonly Regex SeasonFolder = new Regex(
+            @"^(?:staffel|season|s)[ ._-]*0*(\d{1,3})(?!\d)" +
+            @"(?![ ._]*(?:[-+&,]|bis\b|und\b|to\b|and\b)[ ._]*(?:s(?:taffel|eason)?[ ._-]*)?\d)" +
+            @"(?![ ._-]*e\d)(?:[^0-9].*)?$", RegexOptions.IgnoreCase);
+
+        // Ist der Ordnername ein Staffelordner? season = Staffelnummer
+        public static bool IsSeasonFolder(string folderName, out int season)
+        {
+            season = 0;
+            Match m = SeasonFolder.Match(folderName ?? "");
+            if (!m.Success) return false;
+            season = int.Parse(m.Groups[1].Value);
+            return true;
+        }
 
         public const string ReplacedFolderName = "__ersetzt";
         const string UndoFileName = "folgen_rueckgaengig.json";

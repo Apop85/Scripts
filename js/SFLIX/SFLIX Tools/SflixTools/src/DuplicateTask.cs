@@ -56,7 +56,7 @@ namespace Sflix
             Dictionary<string, int> inIdentical = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);   // Datei -> Gruppe
             FindIdentical(ctx, files, groups, inIdentical);
             FindEpisodes(ctx, folder, files, groups, inIdentical);
-            FindSameName(files, groups, inIdentical);
+            FindSameName(folder, files, groups, inIdentical);
 
             // Angaben für den Vergleich und die Vorauswahl
             int done = 0, total = 0;
@@ -224,22 +224,20 @@ namespace Sflix
             }
         }
 
-        // Serie eines Videos: im Installationsordner Kategorie\Serie, sonst der erste Ordner unter dem
-        // gewählten Ordner. null = keine Serie (Datei direkt in der Kategorie)
+        // Serie eines Videos, vom Staffelordner aus bestimmt: Liegt die Folge in einem Staffelordner
+        // ("Staffel 1", "Season 01 HD" …), ist die Serie der Ordner darüber, sonst der Ordner der
+        // Folge selbst. So bleiben Serien in Unterordnern (Serien\Star Trek\TOS\Staffel 1 und
+        // Serien\Star Trek\TNG\Staffel 1) getrennt. null = keine Serie (Datei direkt im
+        // Installationsordner oder in einer Kategorie: dort liegen verschiedene Serien lose).
         static string SeriesKey(string root, string file)
         {
-            string dir = Path.GetDirectoryName(file);
-            string rel = DataTask.ToRelative(dir);
-            string[] parts;
-            if (rel != null)
-            {
-                parts = rel.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-                return parts.Length >= 2 ? (parts[0] + "\\" + parts[1]).ToLowerInvariant() : null;
-            }
-            string baseDir = root.TrimEnd('\\');
-            if (!dir.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase)) return null;
-            parts = dir.Substring(baseDir.Length).Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-            return parts.Length >= 1 ? parts[0].ToLowerInvariant() : baseDir.ToLowerInvariant();
+            string dir = Path.GetDirectoryName(file).TrimEnd('\\');
+            int season;
+            string series = EpisodeTask.IsSeasonFolder(Path.GetFileName(dir), out season) ? Path.GetDirectoryName(dir) : dir;
+            if (string.IsNullOrEmpty(series)) return null;
+            string rel = DataTask.ToRelative(series);
+            if (rel != null && rel.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries).Length < 2) return null;
+            return series.TrimEnd('\\').ToLowerInvariant();
         }
 
         static void FindEpisodes(TaskContext ctx, string root, List<string> files, List<DupeGroup> groups, Dictionary<string, int> inIdentical)
@@ -331,15 +329,22 @@ namespace Sflix
         // "Film.mp4" neben "Film.mkv". Preview-, Ablage-, System- und versteckte Ordner sind schon
         // beim Sammeln ausgeschlossen. Keine Gruppe, die schon als identisch gemeldet ist oder
         // genau dieselben Dateien wie eine andere Gruppe hat.
-        static void FindSameName(List<string> files, List<DupeGroup> groups, Dictionary<string, int> inIdentical)
+        static void FindSameName(string root, List<string> files, List<DupeGroup> groups, Dictionary<string, int> inIdentical)
         {
             Dictionary<string, List<string>> byName = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, string> displayName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (string f in files)
             {
                 string name = Path.GetFileNameWithoutExtension(f).Trim();
                 if (name.Length == 0) continue;
+                // Folgen ("S01E01.mp4") heissen in jeder Serie gleich: nur innerhalb derselben Serie vergleichen
+                string key = name;
+                int season;
+                List<int> eps;
+                if (EpisodeTask.ParseEpisodes(Path.GetFileName(f), out season, out eps) && eps != null && eps.Count > 0)
+                    key = name + "|" + (SeriesKey(root, f) ?? Path.GetDirectoryName(f).ToLowerInvariant());
                 List<string> l;
-                if (!byName.TryGetValue(name, out l)) { l = new List<string>(); byName[name] = l; }
+                if (!byName.TryGetValue(key, out l)) { l = new List<string>(); byName[key] = l; displayName[key] = name; }
                 l.Add(f);
             }
             foreach (KeyValuePair<string, List<string>> kv in byName)
@@ -366,7 +371,7 @@ namespace Sflix
                 if (known) continue;
                 DupeGroup g = new DupeGroup();
                 g.SameName = true;
-                g.Title = "Gleicher Name: " + kv.Key + (c.Count > 2 ? " (" + c.Count + " Dateien)" : "");
+                g.Title = "Gleicher Name: " + displayName[kv.Key] + (c.Count > 2 ? " (" + c.Count + " Dateien)" : "");
                 g.Files.AddRange(c);
                 groups.Add(g);
             }
@@ -409,6 +414,7 @@ namespace Sflix
         readonly Label info;
         readonly List<DupeGroup> groups;
         DupeChoice result;
+        bool syncing;
 
         public DuplicateDialog(List<DupeGroup> groups, FfmpegTools ff)
         {
@@ -431,11 +437,15 @@ namespace Sflix
             intro.MaximumSize = new Size(ClientSize.Width - Theme.S(24), 0);
             intro.Padding = new Padding(Theme.S(12), Theme.S(10), Theme.S(12), Theme.S(8));
 
-            view = new CompareView(ff, true);
+            view = new CompareView(ff, true, true);
             view.CheckBoxes = true;
             view.Dock = DockStyle.Fill;
             view.GroupTitles = new List<string>();
             List<List<CompareEntry>> entries = new List<List<CompareEntry>>();
+            // Eine Datei, die in irgendeiner Gruppe behalten wird, ist überall "behalten"
+            HashSet<string> keptAnywhere = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (DupeGroup g in groups) foreach (string f in g.Files) if (!g.Remove.Contains(f)) keptAnywhere.Add(f);
+            foreach (DupeGroup g in groups) g.Remove.RemoveWhere(delegate(string f) { return keptAnywhere.Contains(f); });
             foreach (DupeGroup g in groups)
             {
                 view.GroupTitles.Add(g.Title);
@@ -446,6 +456,8 @@ namespace Sflix
                     e.Path = g.Files[i];
                     e.Facts = g.Facts[i];
                     e.Label = g.Remove.Contains(e.Path) ? "aussortieren" : "behalten";
+                    // Grund der Gruppe: gleicher Inhalt, gleiche Folge oder gleicher Dateiname
+                    e.Reason = g.Identical ? "Datei" : g.SameName ? "Dateiname" : "Folge";
                     e.Note = DataTask.ToRelative(Path.GetDirectoryName(e.Path)) ?? Path.GetDirectoryName(e.Path);
                     e.Tag = g.Remove.Contains(e.Path);
                     list.Add(e);
@@ -462,6 +474,23 @@ namespace Sflix
                 if (ce == null) return;
                 ce.Label = e.Item.Checked ? "aussortieren" : "behalten";
                 e.Item.Text = ce.Label;
+                // Dieselbe Datei in anderen Gruppen gleich anhaken (sonst behalten und aussortieren zugleich)
+                if (!syncing)
+                {
+                    syncing = true;
+                    try
+                    {
+                        for (int i = 0; i < view.List.Items.Count; i++)
+                        {
+                            ListViewItem other = view.List.Items[i];
+                            CompareEntry oe = other != null ? other.Tag as CompareEntry : null;
+                            if (oe != null && other != e.Item && string.Equals(oe.Path, ce.Path, StringComparison.OrdinalIgnoreCase)
+                                && other.Checked != e.Item.Checked)
+                                other.Checked = e.Item.Checked;
+                        }
+                    }
+                    finally { syncing = false; }
+                }
                 UpdateInfo();
             };
 

@@ -542,9 +542,18 @@ namespace Sflix
     {
         public Glyph Icon;
         public string Title = "", Subtitle = "";
-        bool isChecked, hover;
+        bool isChecked, hover, compact;
+
+        // Kompakt: Symbol links neben Titel und Untertitel (niedriger, z.B. bei den Tools)
+        public bool Compact
+        {
+            get { return compact; }
+            set { compact = value; Height = Theme.S(value ? 70 : 112); Invalidate(); }
+        }
         public event EventHandler CheckedChanged;
         readonly Font subFont = new Font("Segoe UI", 9f);
+        readonly Font compactTitleFont = new Font("Segoe UI Semibold", 10f);
+        readonly Font compactSubFont = new Font("Segoe UI", 8.5f);
 
         public TileButton()
         {
@@ -610,7 +619,8 @@ namespace Sflix
 
             // Symbol in einem abgerundeten Feld
             int box = Theme.S(38);
-            Rectangle ib = new Rectangle(Theme.S(14), Theme.S(14), box, box);
+            Rectangle ib = compact ? new Rectangle(Theme.S(14), (Height - box) / 2, box, box)
+                                   : new Rectangle(Theme.S(14), Theme.S(14), box, box);
             Color iconBack = isChecked ? Color.FromArgb(0x3e, 0x18, 0x1d) : Theme.Input;
             using (GraphicsPath p = Glyphs.RoundRect(ib, Theme.S(8)))
             using (SolidBrush b = new SolidBrush(iconBack)) g.FillPath(b, p);
@@ -621,8 +631,10 @@ namespace Sflix
             // Haken oben rechts
             if (isChecked)
             {
-                int d = Theme.S(22);
-                Rectangle cb = new Rectangle(Width - Theme.S(12) - d, Theme.S(12), d, d);
+                // Kompakt: kleines Abzeichen auf der Ecke des Symbols, damit der Text die ganze Breite hat
+                int d = Theme.S(compact ? 18 : 22);
+                Rectangle cb = compact ? new Rectangle(ib.Right - d + Theme.S(6), ib.Top - Theme.S(6), d, d)
+                                       : new Rectangle(Width - Theme.S(12) - d, Theme.S(12), d, d);
                 using (SolidBrush b = new SolidBrush(Theme.Red)) g.FillEllipse(b, cb);
                 using (Pen pen = new Pen(Color.White, Math.Max(2f, d / 9f)))
                 {
@@ -635,17 +647,28 @@ namespace Sflix
                 }
             }
 
-            int tx = Theme.S(14), tw = Width - 2 * tx;
             TextFormatFlags f = TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.NoPrefix |
                                 TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine;
-            TextRenderer.DrawText(g, Title, Font, new Rectangle(tx, ib.Bottom + Theme.S(10), tw, Theme.S(24)),
-                                  Enabled ? Theme.Text : Theme.Muted, f);
-            TextRenderer.DrawText(g, Subtitle, subFont, new Rectangle(tx, ib.Bottom + Theme.S(34), tw, Theme.S(20)), Theme.Muted, f);
+            if (compact)
+            {
+                // Titel und Untertitel rechts neben dem Symbol, zusammen vertikal zentriert
+                int tx = ib.Right + Theme.S(12), tw = Width - tx - Theme.S(10);
+                int top = (Height - Theme.S(42)) / 2;
+                TextRenderer.DrawText(g, Title, compactTitleFont, new Rectangle(tx, top, tw, Theme.S(22)), Enabled ? Theme.Text : Theme.Muted, f);
+                TextRenderer.DrawText(g, Subtitle, compactSubFont, new Rectangle(tx, top + Theme.S(23), tw, Theme.S(19)), Theme.Muted, f);
+            }
+            else
+            {
+                int tx = Theme.S(14), tw = Width - 2 * tx;
+                TextRenderer.DrawText(g, Title, Font, new Rectangle(tx, ib.Bottom + Theme.S(10), tw, Theme.S(24)),
+                                      Enabled ? Theme.Text : Theme.Muted, f);
+                TextRenderer.DrawText(g, Subtitle, subFont, new Rectangle(tx, ib.Bottom + Theme.S(34), tw, Theme.S(20)), Theme.Muted, f);
+            }
         }
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing) subFont.Dispose();
+            if (disposing) { subFont.Dispose(); compactTitleFont.Dispose(); compactSubFont.Dispose(); }
             base.Dispose(disposing);
         }
     }

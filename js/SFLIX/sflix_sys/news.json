@@ -47,7 +47,7 @@
         },
         {
           "type": "FEATURE",
-          "text": "Updater: Neues Tool \"Duplikate finden\" findet identische Dateien, gleiche Folgen einer Serie, auch bei unterschiedlicher Schreibweise (S01E01 = 1x01 = S1E1), und gleiche Dateinamen (ohne Preview- und Ablage-Ordner). Ein Vergleich zeigt Grösse, Auflösung, Dauer und Codecs, vorausgewählt bleibt die bessere Fassung. Aussortierte Dateien kommen nach \"__duplikate\", Favoriten und Fortschritt gehen auf die behaltene Datei über. Nicht abspielbare behaltene Videos lassen sich gleich konvertieren."
+          "text": "Updater: Neues Tool \"Duplikate finden\" findet identische Dateien, gleiche Folgen einer Serie, auch bei unterschiedlicher Schreibweise (S01E01 = 1x01 = S1E1), und gleiche Dateinamen (ohne Preview- und Ablage-Ordner). Als Serie gilt der Ordner über dem Staffelordner, so bleiben Serien in Unterordnern (z.B. mehrere Serien unter einem Ordner) getrennt. Ein Vergleich zeigt den Grund (Datei, Folge oder Dateiname), Grösse, Auflösung, Dauer und Codecs, vorausgewählt bleibt die bessere Fassung. Steht eine Datei in mehreren Gruppen, gilt ihr Häkchen überall. Aussortierte Dateien kommen nach \"__duplikate\", Favoriten und Fortschritt gehen auf die behaltene Datei über. Nicht abspielbare behaltene Videos lassen sich gleich konvertieren."
         },
         {
           "type": "INTERFACE",
@@ -63,7 +63,11 @@
         },
         {
           "type": "INTERFACE",
-          "text": "Updater: Neuer, wärmerer Rotton. Die Tools stehen in zwei Reihen."
+          "text": "Updater: Neuer, wärmerer Rotton. Die Tools stehen in zwei Reihen mit niedrigeren Kacheln (Symbol neben dem Text). Beim Wechseln der Reiter flackert das Fenster nicht mehr, während des Aufbaus erscheint der Warte-Mauszeiger."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: \"Folgen umbenennen\" erkennt mehr Staffelordner, z.B. \"staffel1\", \"Season 1 HD\" oder \"Staffel 01 (Blu-ray)\", und benennt sie in \"Staffel 01\" um. Ordner mit mehreren Staffeln (\"Staffel 1-3\") bleiben unverändert."
         },
         {
           "type": "BUGFIX",

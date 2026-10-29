@@ -453,8 +453,11 @@ namespace Sflix
                 entries.Add(list);
             }
             view.SetGroups(entries);
+            view.Rendered = UpdateInfo;
             view.List.ItemChecked += delegate(object s, ItemCheckedEventArgs e)
             {
+                // Während die Tabelle neu aufgebaut wird, sind die Einträge noch unvollständig
+                if (view.Rendering || e.Item == null) return;
                 CompareEntry ce = e.Item.Tag as CompareEntry;
                 if (ce == null) return;
                 ce.Label = e.Item.Checked ? "aussortieren" : "behalten";
@@ -503,10 +506,16 @@ namespace Sflix
 
         void UpdateInfo()
         {
-            int n = view.CheckedEntries().Count;
-            long bytes = 0;
-            foreach (CompareEntry e in view.CheckedEntries()) bytes += Math.Max(0, e.Facts.Size);
-            info.Text = n + " Datei(en) aussortieren (" + Fmt.Size(bytes) + ")";
+            // Beim Schliessen meldet die Liste noch Änderungen, während sie abgebaut wird
+            if (info == null || view == null || IsDisposed || Disposing || !Visible) return;
+            try
+            {
+                List<CompareEntry> chosen = view.CheckedEntries();
+                long bytes = 0;
+                foreach (CompareEntry e in chosen) bytes += Math.Max(0, e.Facts.Size);
+                info.Text = chosen.Count + " Datei(en) aussortieren (" + Fmt.Size(bytes) + ")";
+            }
+            catch (Exception) { }
         }
 
         void Finish()

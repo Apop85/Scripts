@@ -208,7 +208,21 @@ namespace Sflix
             foreach (List<CompareEntry> g in groups) entries.AddRange(g);
             foreach (CompareEntry e in entries) if (e.Facts == null) e.Facts = MediaFacts.Basic(e.Path);
             Render();
-            ProbeInBackground();
+            // Ergebnisse kommen per BeginInvoke zurück, das braucht das Fenster-Handle
+            if (IsHandleCreated) ProbeInBackground();
+            else probeWhenReady = true;
+        }
+
+        bool probeWhenReady;
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            if (probeWhenReady)
+            {
+                probeWhenReady = false;
+                ProbeInBackground();
+            }
         }
 
         public IEnumerable<CompareEntry> Entries { get { return entries; } }
@@ -264,11 +278,29 @@ namespace Sflix
             });
         }
 
+        // Während des Neuaufbaus meldet die ListView angehakte Elemente schon beim Einfügen, bevor
+        // sie fertig in der Liste stehen. Wer ItemChecked auswertet, prüft deshalb Rendering und
+        // reagiert danach auf Rendered.
+        public bool Rendering { get; private set; }
+        public Action Rendered;
+
         void Render()
+        {
+            Rendering = true;
+            try { RenderItems(); }
+            finally { Rendering = false; }
+            if (Rendered != null) Rendered();
+        }
+
+        void RenderItems()
         {
             // Häkchen beibehalten
             Dictionary<CompareEntry, bool> checks = new Dictionary<CompareEntry, bool>();
-            foreach (ListViewItem it in List.Items) if (it.Tag is CompareEntry) checks[(CompareEntry)it.Tag] = it.Checked;
+            for (int i = 0; i < List.Items.Count; i++)
+            {
+                ListViewItem it = List.Items[i];
+                if (it != null && it.Tag is CompareEntry) checks[(CompareEntry)it.Tag] = it.Checked;
+            }
             int top = List.TopItem != null ? List.TopItem.Index : 0;
             List.BeginUpdate();
             List.Items.Clear();
@@ -364,7 +396,11 @@ namespace Sflix
         public List<CompareEntry> CheckedEntries()
         {
             List<CompareEntry> list = new List<CompareEntry>();
-            foreach (ListViewItem it in List.Items) if (it.Checked && it.Tag is CompareEntry) list.Add((CompareEntry)it.Tag);
+            for (int i = 0; i < List.Items.Count; i++)
+            {
+                ListViewItem it = List.Items[i];
+                if (it != null && it.Checked && it.Tag is CompareEntry) list.Add((CompareEntry)it.Tag);
+            }
             return list;
         }
     }

@@ -283,12 +283,18 @@ namespace Sflix
         List<MediaCheckItem> Checked()
         {
             List<MediaCheckItem> l = new List<MediaCheckItem>();
-            foreach (ListViewItem row in list.Items) if (row.Checked) l.Add((MediaCheckItem)row.Tag);
+            for (int i = 0; i < list.Items.Count; i++)
+            {
+                ListViewItem row = list.Items[i];
+                if (row != null && row.Checked && row.Tag is MediaCheckItem) l.Add((MediaCheckItem)row.Tag);
+            }
             return l;
         }
 
         void UpdateButtons()
         {
+            // Beim Schliessen meldet die Liste noch Änderungen, während sie abgebaut wird
+            if (IsDisposed || Disposing || convertButton == null || info == null) return;
             int convert = 0, preview = 0;
             foreach (MediaCheckItem it in Checked())
             {

@@ -66,6 +66,10 @@
           "text": "Updater: Neuer, wärmerer Rotton. Die Tools stehen in zwei Reihen."
         },
         {
+          "type": "BUGFIX",
+          "text": "Updater: \"Duplikate finden\" stürzte beim Schliessen der Auswahl ab. Ausserdem wurden Auflösung und Dauer in der Vergleichstabelle teilweise nicht nachgeladen."
+        },
+        {
           "type": "FEATURE",
           "text": "Updater: Neue Befehle für die Kommandozeile: --license, --license-remove, --ffmpeg (beim Installieren) und --log."
         }

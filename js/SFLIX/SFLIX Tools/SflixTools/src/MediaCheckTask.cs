@@ -3,8 +3,10 @@
 // konvertieren bzw. Vorschaubilder erstellen. Ohne Oberfläche wird nur das Ergebnis protokolliert.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Windows.Forms;
 
@@ -17,7 +19,13 @@ namespace Sflix
         {
             if (!f.HasVideo)
             {
-                // Musik: die Endungen in MediaTypes.ReadyAudio spielen alle Browser
+                // Musik: die Endungen in MediaTypes.ReadyAudio spielen alle Browser, M4A aber nur mit AAC oder MP3 (nicht ALAC)
+                if (ext == ".m4a" && f.Probed)
+                {
+                    if (f.AudioCodecList.Count == 0) return false;
+                    foreach (string a in f.AudioCodecList) if (a != "aac" && a != "mp3") return false;
+                    return true;
+                }
                 return MediaTypes.ReadyAudio.Contains(ext) || MediaTypes.ReadyVideo.Contains(ext);
             }
             List<string> audio = f.AudioCodecList;
@@ -55,17 +63,108 @@ namespace Sflix
         public string Kind;     // "format", "broken", "empty", "preview"
         public string Problem;
         public MediaFacts Facts;
-        public bool CanConvert { get { return Kind == "format" && MediaTypes.Kind(System.IO.Path.GetExtension(Path).ToLowerInvariant()) == "video"; } }
+        public bool CanConvert
+        {
+            get
+            {
+                string kind = MediaTypes.Kind(System.IO.Path.GetExtension(Path).ToLowerInvariant());
+                return Kind == "format" && (kind == "video" || kind == "audio");
+            }
+        }
     }
 
+    // Eine Datei im Ergebnis: alle Auffälligkeiten und die gewählten Aktionen.
+    // Löschen schliesst Konvertieren und Vorschaubild aus, die beiden anderen gehen zusammen.
+    public class MediaCheckFile
+    {
+        public string Path;
+        public MediaFacts Facts;
+        public List<MediaCheckItem> Problems = new List<MediaCheckItem>();
+        public bool Delete, Convert, Preview;
+
+        public bool Has(string kind)
+        {
+            foreach (MediaCheckItem p in Problems) if (p.Kind == kind) return true;
+            return false;
+        }
+
+        public bool CanConvert
+        {
+            get
+            {
+                foreach (MediaCheckItem p in Problems) if (p.CanConvert) return true;
+                return false;
+            }
+        }
+
+        public bool CanPreview { get { return Has("preview"); } }
+
+        // Vorschlag: defekte und leere Dateien löschen, sonst konvertieren und/oder Vorschaubild erstellen
+        public void Suggest()
+        {
+            Delete = Has("broken") || Has("empty");
+            Convert = !Delete && CanConvert;
+            Preview = !Delete && CanPreview;
+        }
+
+        // Schwerste Auffälligkeit zuerst (für die Sortierung)
+        public int Order
+        {
+            get
+            {
+                int o = 9;
+                foreach (MediaCheckItem p in Problems) o = Math.Min(o, MediaCheckDialog.Order(p.Kind));
+                return o;
+            }
+        }
+
+        public string ProblemText
+        {
+            get
+            {
+                List<string> parts = new List<string>();
+                foreach (MediaCheckItem p in Problems) parts.Add(p.Problem);
+                return string.Join("; ", parts.ToArray());
+            }
+        }
+
+        // Gruppiert die Auffälligkeiten je Datei (Reihenfolge der ersten Auffälligkeit)
+        public static List<MediaCheckFile> FromItems(List<MediaCheckItem> items)
+        {
+            List<MediaCheckFile> files = new List<MediaCheckFile>();
+            Dictionary<string, MediaCheckFile> byPath = new Dictionary<string, MediaCheckFile>(StringComparer.OrdinalIgnoreCase);
+            foreach (MediaCheckItem it in items)
+            {
+                MediaCheckFile f;
+                if (!byPath.TryGetValue(it.Path, out f))
+                {
+                    f = new MediaCheckFile();
+                    f.Path = it.Path;
+                    f.Facts = it.Facts;
+                    byPath[it.Path] = f;
+                    files.Add(f);
+                }
+                f.Problems.Add(it);
+            }
+            foreach (MediaCheckFile f in files) f.Suggest();
+            return files;
+        }
+    }
+
+    // Gewählte Dateioperationen aus dem Ergebnis
     public class MediaCheckChoice
     {
-        public string Action;               // "convert" oder "preview"
-        public List<string> Files = new List<string>();
+        public List<string> Delete = new List<string>();
+        public List<string> Convert = new List<string>();
+        public List<string> Preview = new List<string>();
+        public int Count { get { return Delete.Count + Convert.Count + Preview.Count; } }
     }
 
     public static class MediaCheckTask
     {
+        // Ablage für gelöschte Medien (im Ordner der Datei, das Vorschaubild in Preview\__gelöscht)
+        public const string DeletedFolderName = "__gelöscht";
+
         public static void Run(TaskContext ctx, List<string> folders, ConvertOptions convert, bool previewVideos, bool previewImages)
         {
             ctx.Ffmpeg.EnsureInstalled(ctx);
@@ -99,6 +198,9 @@ namespace Sflix
                 {
                     if (kind == "video") facts.Probe(ctx.Ffmpeg, ctx.Token);
                     items.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
+                    // Das Vorschaubild gilt auch nach dem Konvertieren (gleicher Name, andere Endung)
+                    if (((kind == "video" && previewVideos) || (kind == "image" && previewImages)) && !HasPreview(file))
+                        items.Add(Item(file, "preview", "kein Vorschaubild", facts));
                     continue;
                 }
                 if (kind == "video")
@@ -108,47 +210,129 @@ namespace Sflix
                     if (!MediaCheck.IsPlayable(facts, ext)) items.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
                     if (previewVideos && !HasPreview(file)) items.Add(Item(file, "preview", "kein Vorschaubild", facts));
                 }
+                else if (kind == "audio" && ext == ".m4a")
+                {
+                    // M4A kann ALAC enthalten, das der Browser nicht abspielt
+                    facts.Probe(ctx.Ffmpeg, ctx.Token);
+                    if (facts.ProbeError != null) { items.Add(Item(file, "broken", "defekt: " + facts.ProbeError, facts)); continue; }
+                    if (!MediaCheck.IsPlayable(facts, ext)) items.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
+                }
                 else if (kind == "image" && previewImages && !HasPreview(file))
                 {
                     items.Add(Item(file, "preview", "kein Vorschaubild", facts));
                 }
             }
 
-            int format = 0, broken = 0, empty = 0, preview = 0;
+            int format = 0, broken = 0, empty = 0, preview = 0, logged = 0;
+            // Mit Oberfläche steht alles in der Ergebnisliste: im Protokoll nur die ersten Einträge
+            int maxLogged = ctx.ChooseMediaCheck != null ? 100 : int.MaxValue;
             foreach (MediaCheckItem it in items)
             {
                 if (it.Kind == "format") format++;
                 else if (it.Kind == "broken") broken++;
                 else if (it.Kind == "empty") empty++;
                 else preview++;
-                ctx.Log("  " + (it.Kind == "preview" ? "Hinweis: " : it.Kind == "format" ? "WARNUNG " : "FEHLER ") + it.Problem + "  –  " + it.Path);
+                if (logged++ < maxLogged) ctx.Log("  " + (it.Kind == "preview" ? "Hinweis: " : it.Kind == "format" ? "WARNUNG " : "FEHLER ") + it.Problem + "  –  " + it.Path);
             }
+            if (items.Count > maxLogged) ctx.Log("  … und " + (items.Count - maxLogged) + " weitere (alle stehen in der Ergebnisliste)");
             ctx.Log("Nicht abspielbar: " + format + "   Defekt: " + broken + "   Leer: " + empty + "   Ohne Vorschaubild: " + preview);
             ctx.Summary = files.Count + " geprüft, " + format + " nicht abspielbar, " + broken + " defekt, " + empty + " leer, " + preview + " ohne Vorschaubild";
             if (items.Count == 0 || ctx.ChooseMediaCheck == null) return;
 
             MediaCheckChoice choice = ctx.ChooseMediaCheck(items);
-            if (choice == null || choice.Files.Count == 0) return;
-            if (choice.Action == "convert")
+            if (choice == null || choice.Count == 0) return;
+            Execute(ctx, roots, choice, convert);
+        }
+
+        // Reihenfolge: löschen, konvertieren, dann Vorschaubilder (für konvertierte Dateien vom Ergebnis)
+        static void Execute(TaskContext ctx, List<string> roots, MediaCheckChoice choice, ConvertOptions convert)
+        {
+            int failed = 0;
+            if (choice.Delete.Count > 0)
             {
                 ctx.Log("");
-                ctx.Log("Konvertiere " + choice.Files.Count + " Video(s) ...");
-                foreach (string root in roots)
+                ctx.Log("Verschiebe " + choice.Delete.Count + " Datei(en) nach „" + DeletedFolderName + "“ ...");
+                foreach (string f in choice.Delete)
                 {
-                    HashSet<string> only = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    foreach (string f in choice.Files) if (f.StartsWith(root.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase)) only.Add(f);
-                    if (only.Count == 0) continue;
-                    convert.Folder = root;
-                    convert.OnlyFiles = only;
-                    try { ConvertTask.Run(ctx, convert); }
-                    finally { convert.OnlyFiles = null; }
+                    ctx.Check();
+                    try
+                    {
+                        MoveToDeleted(f);
+                        ctx.Log("  GELÖSCHT  " + f + "  ->  " + DeletedFolderName);
+                    }
+                    catch (Exception e)
+                    {
+                        failed++;
+                        ctx.Log("  FEHLER  " + f + " :: " + e.Message);
+                    }
                 }
             }
-            else if (choice.Action == "preview")
+
+            ConcurrentDictionary<string, List<string>> results = new ConcurrentDictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            if (choice.Convert.Count > 0)
             {
                 ctx.Log("");
-                ctx.Log("Erstelle " + choice.Files.Count + " Vorschaubild(er) ...");
-                PreviewTask.MakeFor(ctx, choice.Files);
+                ctx.Log("Konvertiere " + choice.Convert.Count + " Datei(en) ...");
+                // Gewählte Musik immer umwandeln, auch wenn "Auch Musik" beim Tool Konvertieren aus ist
+                bool audio = convert.Audio;
+                convert.Audio = true;
+                convert.Results = results;
+                try
+                {
+                    foreach (string root in roots)
+                    {
+                        HashSet<string> only = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        foreach (string f in choice.Convert) if (f.StartsWith(root.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase)) only.Add(f);
+                        if (only.Count == 0) continue;
+                        convert.Folder = root;
+                        convert.OnlyFiles = only;
+                        // Fehler einzelner Dateien: trotzdem weiter mit den Vorschaubildern
+                        try { ConvertTask.Run(ctx, convert); }
+                        catch (TaskFailedException) { failed++; }
+                        finally { convert.OnlyFiles = null; }
+                    }
+                }
+                finally { convert.Audio = audio; convert.Results = null; }
+            }
+
+            if (choice.Preview.Count > 0)
+            {
+                // Konvertierte Dateien heissen jetzt anders (.mp4), Vorschaubilder für das Ergebnis erstellen
+                List<string> targets = new List<string>();
+                foreach (string f in choice.Preview)
+                {
+                    List<string> made;
+                    if (results.TryGetValue(f, out made)) targets.AddRange(made);
+                    else if (File.Exists(f)) targets.Add(f);
+                }
+                ctx.Log("");
+                ctx.Log("Erstelle " + targets.Count + " Vorschaubild(er) ...");
+                PreviewTask.MakeFor(ctx, targets);
+            }
+            if (failed > 0) throw new TaskFailedException("Nicht alle Dateioperationen waren erfolgreich");
+        }
+
+        // Datei nach <Ordner>\__gelöscht, ihr Vorschaubild nach Preview\__gelöscht ("Ablagen leeren" löscht endgültig)
+        static void MoveToDeleted(string file)
+        {
+            string dir = Path.GetDirectoryName(file);
+            string storage = Path.Combine(dir, DeletedFolderName);
+            Directory.CreateDirectory(storage);
+            FileOps.Rename(file, FileOps.UniquePath(storage, Path.GetFileName(file)));
+
+            // Vorschaubild nur mitnehmen, wenn es kein anderes Medium mit gleichem Namen gibt (z.B. Film.mp4 neben Film.mkv)
+            string stem = Path.GetFileNameWithoutExtension(file);
+            foreach (string other in Directory.GetFiles(dir, stem + ".*"))
+                if (string.Equals(Path.GetFileNameWithoutExtension(other), stem, StringComparison.OrdinalIgnoreCase) &&
+                    MediaTypes.Kind(Path.GetExtension(other).ToLowerInvariant()) != null) return;
+            string previewDir = Path.Combine(dir, "Preview");
+            foreach (string ext in new string[] { ".jpg", ".jpeg", ".png", ".webp" })
+            {
+                string p = Path.Combine(previewDir, stem + ext);
+                if (!File.Exists(p)) continue;
+                string trash = Path.Combine(previewDir, DeletedFolderName);
+                Directory.CreateDirectory(trash);
+                try { FileOps.Rename(p, FileOps.UniquePath(trash, Path.GetFileName(p))); } catch { }
             }
         }
 
@@ -169,70 +353,140 @@ namespace Sflix
         }
     }
 
-    // Ergebnis von "Medien prüfen": anhaken, dann konvertieren oder Vorschaubilder erstellen
+    // Ergebnis von "Medien prüfen": eine Zeile je Datei, Aktionen als Kästchen in den ersten drei Spalten
+    // (Löschen, Konvertieren, Vorschaubild). "Ausführen" startet alle gewählten Dateioperationen.
     public class MediaCheckDialog : Form
     {
+        const int ColDelete = 0, ColConvert = 1, ColPreview = 2;
+        static readonly Glyph[] ActionIcons = { Glyph.Trash, Glyph.Convert, Glyph.Photo };
+
         readonly ListView list;
-        readonly Button convertButton, previewButton;
+        readonly Button runButton;
         readonly Label info;
+        readonly List<MediaCheckFile> files;
+        readonly List<ListViewItem> allRows = new List<ListViewItem>();
+        readonly Dictionary<string, Button> filterButtons = new Dictionary<string, Button>();
+        readonly TextBox search;
+        readonly Timer searchDelay = new Timer();
+        string filterKind;      // null = alle
         MediaCheckChoice result;
+
+        static readonly string[] Kinds = { "broken", "empty", "format", "preview" };
+
+        static string KindName(string kind)
+        {
+            return kind == "broken" ? "Defekt" : kind == "empty" ? "Leer" : kind == "format" ? "Nicht abspielbar" : "Ohne Vorschaubild";
+        }
+
+        public static int Order(string kind)
+        {
+            return kind == "broken" ? 0 : kind == "empty" ? 1 : kind == "format" ? 2 : 3;
+        }
 
         public MediaCheckDialog(List<MediaCheckItem> items)
         {
+            files = MediaCheckFile.FromItems(items);
             Text = "Medien prüfen – Ergebnis";
             BackColor = Theme.Back;
             ForeColor = Theme.Text;
             Font = new Font("Segoe UI", 9.5f);
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(Theme.S(1040), Theme.S(600));
-            MinimumSize = new Size(Theme.S(700), Theme.S(400));
+            ClientSize = new Size(Theme.S(1100), Theme.S(620));
+            MinimumSize = new Size(Theme.S(760), Theme.S(420));
             MinimizeBox = false;
             ShowInTaskbar = false;
 
-            Label intro = Theme.MakeLabel(items.Count + " Auffälligkeiten gefunden. Einträge anhaken und wählen, was mit ihnen passieren soll. " +
-                                          "Konvertieren geht für Videos (Originale nach „" + ConvertTask.OriginalsFolderName + "“), Musik und Bilder über den Importer. " +
-                                          "Defekte und leere Dateien bitte von Hand ersetzen oder löschen.", true);
+            Label intro = Theme.MakeLabel(files.Count + " Dateien mit Auffälligkeiten. Je Datei wählst du in den ersten drei Spalten: " +
+                                          "Löschen (Papierkorb, die Datei kommt nach „" + MediaCheckTask.DeletedFolderName + "“), " +
+                                          "Konvertieren (Videos zu MP4, Musik zu MP3, das Original kommt nach „" + ConvertTask.OriginalsFolderName + "“) " +
+                                          "und Vorschaubild erstellen (Bildsymbol). Löschen schliesst die anderen aus. " +
+                                          "Vorausgewählt: defekte und leere Dateien löschen, sonst konvertieren und Vorschaubilder erstellen.", true);
             intro.Dock = DockStyle.Top;
             intro.AutoSize = true;
             intro.MaximumSize = new Size(ClientSize.Width - Theme.S(24), 0);
             intro.Padding = new Padding(Theme.S(12), Theme.S(10), Theme.S(12), Theme.S(8));
+            Resize += delegate { intro.MaximumSize = new Size(ClientSize.Width - Theme.S(24), 0); };
 
             list = new ListView();
             list.View = View.Details;
-            list.CheckBoxes = true;
             list.FullRowSelect = true;
             list.Dock = DockStyle.Fill;
             list.BackColor = Theme.Card;
             list.ForeColor = Theme.Text;
             list.BorderStyle = BorderStyle.None;
-            list.HeaderStyle = ColumnHeaderStyle.Nonclickable;
             list.ShowItemToolTips = true;
             DarkList.Apply(list);
-            list.Columns.Add("Datei", Theme.S(300));
-            list.Columns.Add("Problem", Theme.S(260));
+            // Kästchen und Symbole der Aktionsspalten (nach DarkList, damit sie darüber gezeichnet werden)
+            // Zeile nicht als Ganzes zeichnen, sonst kommt DrawSubItem nicht für jede Zelle
+            list.DrawItem += delegate(object s, DrawListViewItemEventArgs e) { e.DrawDefault = false; };
+            list.DrawSubItem += DrawActionCell;
+            list.DrawColumnHeader += DrawActionHeader;
+            list.MouseClick += OnListClick;
+            list.KeyDown += OnListKey;
+            list.Columns.Add("", Theme.S(46), HorizontalAlignment.Center);
+            list.Columns.Add("", Theme.S(46), HorizontalAlignment.Center);
+            list.Columns.Add("", Theme.S(46), HorizontalAlignment.Center);
+            list.Columns.Add("Datei", Theme.S(280));
+            list.Columns.Add("Problem", Theme.S(280));
             list.Columns.Add("Grösse", Theme.S(80));
-            list.Columns.Add("Video / Ton", Theme.S(150));
-            list.Columns.Add("Ordner", Theme.S(240));
-            List<MediaCheckItem> sorted = new List<MediaCheckItem>(items);
-            sorted.Sort(delegate(MediaCheckItem a, MediaCheckItem b)
+            list.Columns.Add("Video / Ton", Theme.S(140));
+            list.Columns.Add("Ordner", Theme.S(220));
+
+            // Zeilen einmal erzeugen, Filter und Suche zeigen davon nur einen Teil
+            List<MediaCheckFile> sorted = new List<MediaCheckFile>(files);
+            sorted.Sort(delegate(MediaCheckFile a, MediaCheckFile b)
             {
-                int k = Order(a.Kind).CompareTo(Order(b.Kind));
+                int k = a.Order.CompareTo(b.Order);
                 return k != 0 ? k : string.Compare(a.Path, b.Path, StringComparison.OrdinalIgnoreCase);
             });
-            foreach (MediaCheckItem it in sorted)
+            Dictionary<string, string> folders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (MediaCheckFile f in sorted)
             {
-                ListViewItem row = new ListViewItem(Path.GetFileName(it.Path));
-                row.SubItems.Add(it.Problem);
-                row.SubItems.Add(Fmt.Size(Math.Max(0, it.Facts.Size)));
-                row.SubItems.Add(it.Facts.CodecText);
-                row.SubItems.Add(DataTask.ToRelative(Path.GetDirectoryName(it.Path)) ?? Path.GetDirectoryName(it.Path));
-                row.ToolTipText = it.Path;
-                row.Tag = it;
-                row.ForeColor = it.Kind == "broken" || it.Kind == "empty" ? Color.FromArgb(0xff, 0x6b, 0x6b)
-                              : it.Kind == "format" ? Color.FromArgb(0xf0, 0xc4, 0x6c) : Theme.Text;
-                list.Items.Add(row);
+                ListViewItem row = new ListViewItem("");
+                row.SubItems.Add("");
+                row.SubItems.Add("");
+                row.SubItems.Add(Path.GetFileName(f.Path));
+                ListSort.Add(row, f.ProblemText, f.Order + " " + f.ProblemText);
+                ListSort.Add(row, Fmt.Size(Math.Max(0, f.Facts.Size)), Math.Max(0, f.Facts.Size));
+                row.SubItems.Add(f.Facts.CodecText);
+                string dir = Path.GetDirectoryName(f.Path), rel;
+                if (!folders.TryGetValue(dir, out rel)) folders[dir] = rel = DataTask.ToRelative(dir) ?? dir;
+                row.SubItems.Add(rel);
+                row.ToolTipText = f.Path;
+                row.Tag = f;
+                // Farbe je Zelle setzen: beim Zeichnen Zelle für Zelle gilt die Farbe der Zeile nicht
+                row.UseItemStyleForSubItems = false;
+                Color color = f.Has("broken") || f.Has("empty") ? Color.FromArgb(0xff, 0x6b, 0x6b)
+                            : f.Has("format") ? Color.FromArgb(0xf0, 0xc4, 0x6c) : Theme.Text;
+                foreach (ListViewItem.ListViewSubItem sub in row.SubItems) sub.ForeColor = color;
+                UpdateKeys(row);
+                allRows.Add(row);
             }
-            list.ItemChecked += delegate { UpdateButtons(); };
+
+            // Filter nach Art (mit Anzahl) und Suche nach Datei oder Ordner
+            FlowLayoutPanel filterBar = new FlowLayoutPanel();
+            filterBar.Dock = DockStyle.Top;
+            filterBar.AutoSize = true;
+            filterBar.WrapContents = true;
+            filterBar.Padding = new Padding(Theme.S(12), 0, Theme.S(12), Theme.S(8));
+            AddFilterButton(filterBar, null, "Alle (" + files.Count + ")");
+            foreach (string kind in Kinds)
+            {
+                int n = 0;
+                foreach (MediaCheckFile f in files) if (f.Has(kind)) n++;
+                if (n > 0) AddFilterButton(filterBar, kind, KindName(kind) + " (" + n + ")");
+            }
+            Label searchLabel = Theme.MakeLabel("Suche:", true);
+            searchLabel.Margin = new Padding(Theme.S(16), Theme.S(8), Theme.S(6), 0);
+            search = Theme.MakeTextBox();
+            search.Width = Theme.S(240);
+            search.Margin = new Padding(0, Theme.S(4), 0, 0);
+            searchDelay.Interval = 250;
+            searchDelay.Tick += delegate { searchDelay.Stop(); ApplyFilter(); };
+            search.TextChanged += delegate { searchDelay.Stop(); searchDelay.Start(); };
+            filterBar.Controls.Add(searchLabel);
+            filterBar.Controls.Add(search);
+            FormClosed += delegate { searchDelay.Dispose(); };
 
             Panel listHost = new Panel();
             listHost.Dock = DockStyle.Fill;
@@ -246,75 +500,249 @@ namespace Sflix
             buttons.Padding = new Padding(Theme.S(12), Theme.S(10), Theme.S(12), Theme.S(12));
             Button close = Theme.MakeButton("Schliessen", false);
             close.Click += delegate { result = null; DialogResult = DialogResult.Cancel; };
-            convertButton = Theme.MakeButton("Ausgewählte konvertieren", true);
-            convertButton.Click += delegate { Finish("convert"); };
-            previewButton = Theme.MakeButton("Vorschaubilder erstellen", false);
-            previewButton.Click += delegate { Finish("preview"); };
-            Button allFormat = Theme.MakeButton("Alle nicht abspielbaren", false);
-            allFormat.Click += delegate { CheckKind("format"); };
-            Button allPreview = Theme.MakeButton("Alle ohne Vorschaubild", false);
-            allPreview.Click += delegate { CheckKind("preview"); };
+            runButton = Theme.MakeButton("Ausführen", true);
+            runButton.Click += delegate { Finish(); };
+            Button suggest = Theme.MakeButton("Vorschlag", false);
+            suggest.Click += delegate { SetVisible(true); };
+            Button none = Theme.MakeButton("Keine", false);
+            none.Click += delegate { SetVisible(false); };
             info = Theme.MakeLabel("", true);
             info.Margin = new Padding(0, Theme.S(8), Theme.S(12), 0);
             buttons.Controls.Add(close);
-            buttons.Controls.Add(convertButton);
-            buttons.Controls.Add(previewButton);
-            buttons.Controls.Add(allPreview);
-            buttons.Controls.Add(allFormat);
+            buttons.Controls.Add(runButton);
+            buttons.Controls.Add(none);
+            buttons.Controls.Add(suggest);
             buttons.Controls.Add(info);
 
             Controls.Add(listHost);
             Controls.Add(buttons);
+            Controls.Add(filterBar);
             Controls.Add(intro);
             CancelButton = close;
+            ApplyFilter();
+        }
+
+        // ---------------------------------------------------------------
+        // Aktionsspalten
+        // ---------------------------------------------------------------
+
+        static bool Applicable(MediaCheckFile f, int col)
+        {
+            return col == ColDelete || (col == ColConvert && f.CanConvert) || (col == ColPreview && f.CanPreview);
+        }
+
+        static bool IsSet(MediaCheckFile f, int col)
+        {
+            return col == ColDelete ? f.Delete : col == ColConvert ? f.Convert : f.Preview;
+        }
+
+        // Aktion setzen: Löschen schliesst die anderen aus und umgekehrt
+        static void Set(MediaCheckFile f, int col, bool value)
+        {
+            if (!Applicable(f, col)) return;
+            if (col == ColDelete)
+            {
+                f.Delete = value;
+                if (value) { f.Convert = false; f.Preview = false; }
+            }
+            else
+            {
+                if (col == ColConvert) f.Convert = value; else f.Preview = value;
+                if (value) f.Delete = false;
+            }
+        }
+
+        // Sortierschlüssel der Aktionsspalten: gewählt zuerst, dann möglich, dann nicht möglich
+        static void UpdateKeys(ListViewItem row)
+        {
+            MediaCheckFile f = (MediaCheckFile)row.Tag;
+            for (int c = ColDelete; c <= ColPreview; c++)
+                row.SubItems[c].Tag = !Applicable(f, c) ? 2 : IsSet(f, c) ? 0 : 1;
+        }
+
+        void OnListClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Left) return;
+            ListViewHitTestInfo hit = list.HitTest(e.Location);
+            if (hit.Item == null || hit.SubItem == null) return;
+            int col = hit.Item.SubItems.IndexOf(hit.SubItem);
+            if (col < ColDelete || col > ColPreview) return;
+            Toggle(new ListViewItem[] { hit.Item }, col);
+        }
+
+        // Tastatur für die markierten Zeilen: Entf = löschen, K = konvertieren, V = Vorschaubild (jeweils umschalten)
+        void OnListKey(object sender, KeyEventArgs e)
+        {
+            int col = e.KeyCode == Keys.Delete ? ColDelete : e.KeyCode == Keys.K ? ColConvert : e.KeyCode == Keys.V ? ColPreview : -1;
+            if (col < 0 || list.SelectedItems.Count == 0) return;
+            ListViewItem[] rows = new ListViewItem[list.SelectedItems.Count];
+            list.SelectedItems.CopyTo(rows, 0);
+            Toggle(rows, col);
+            e.Handled = true;
+        }
+
+        void Toggle(ListViewItem[] rows, int col)
+        {
+            // Neuer Wert nach der ersten Zeile, für die die Aktion möglich ist
+            bool? value = null;
+            foreach (ListViewItem row in rows)
+            {
+                MediaCheckFile f = (MediaCheckFile)row.Tag;
+                if (Applicable(f, col)) { value = !IsSet(f, col); break; }
+            }
+            if (value == null) return;
+            foreach (ListViewItem row in rows)
+            {
+                Set((MediaCheckFile)row.Tag, col, value.Value);
+                UpdateKeys(row);
+                list.Invalidate(row.Bounds);
+            }
             UpdateButtons();
         }
 
-        static int Order(string kind)
+        void DrawActionCell(object sender, DrawListViewSubItemEventArgs e)
         {
-            return kind == "broken" ? 0 : kind == "empty" ? 1 : kind == "format" ? 2 : 3;
-        }
-
-        void CheckKind(string kind)
-        {
-            foreach (ListViewItem row in list.Items) row.Checked = ((MediaCheckItem)row.Tag).Kind == kind;
-        }
-
-        List<MediaCheckItem> Checked()
-        {
-            List<MediaCheckItem> l = new List<MediaCheckItem>();
-            for (int i = 0; i < list.Items.Count; i++)
+            if (e.ColumnIndex < ColDelete || e.ColumnIndex > ColPreview) return;
+            e.DrawDefault = false;
+            MediaCheckFile f = e.Item.Tag as MediaCheckFile;
+            bool selected = e.Item.Selected;
+            using (SolidBrush b = new SolidBrush(selected ? (list.Focused ? SystemColors.Highlight : Theme.Input) : list.BackColor))
+                e.Graphics.FillRectangle(b, e.Bounds);
+            if (f == null || !Applicable(f, e.ColumnIndex)) return;
+            int size = Theme.S(15);
+            Rectangle box = new Rectangle(e.Bounds.X + (e.Bounds.Width - size) / 2, e.Bounds.Y + (e.Bounds.Height - size) / 2, size, size);
+            bool on = IsSet(f, e.ColumnIndex);
+            Color fill = e.ColumnIndex == ColDelete ? Theme.Red : Color.FromArgb(0x3d, 0x8b, 0x5a);
+            SmoothingMode old = e.Graphics.SmoothingMode;
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            if (on)
             {
-                ListViewItem row = list.Items[i];
-                if (row != null && row.Checked && row.Tag is MediaCheckItem) l.Add((MediaCheckItem)row.Tag);
+                using (SolidBrush b = new SolidBrush(fill)) e.Graphics.FillRectangle(b, box);
+                using (Pen p = new Pen(Color.White, Math.Max(1.5f, Theme.S(2))))
+                {
+                    p.StartCap = LineCap.Round; p.EndCap = LineCap.Round;
+                    e.Graphics.DrawLines(p, new PointF[] {
+                        new PointF(box.Left + size * 0.22f, box.Top + size * 0.52f),
+                        new PointF(box.Left + size * 0.42f, box.Top + size * 0.72f),
+                        new PointF(box.Left + size * 0.78f, box.Top + size * 0.30f) });
+                }
             }
-            return l;
+            else
+            {
+                using (SolidBrush b = new SolidBrush(Theme.Input)) e.Graphics.FillRectangle(b, box);
+                using (Pen p = new Pen(Theme.Muted)) e.Graphics.DrawRectangle(p, box);
+            }
+            e.Graphics.SmoothingMode = old;
+        }
+
+        void DrawActionHeader(object sender, DrawListViewColumnHeaderEventArgs e)
+        {
+            if (e.ColumnIndex < ColDelete || e.ColumnIndex > ColPreview) return;
+            // Symbol links (rechts steht bei Sortierung das Dreieck)
+            int size = Theme.S(16);
+            Rectangle r = new Rectangle(e.Bounds.X + Theme.S(7), e.Bounds.Y + (e.Bounds.Height - size) / 2, size, size);
+            Glyphs.Draw(e.Graphics, ActionIcons[e.ColumnIndex], r, Theme.Text, Theme.Input);
+        }
+
+        // ---------------------------------------------------------------
+        // Filter, Sammelauswahl, Ausführen
+        // ---------------------------------------------------------------
+
+        void AddFilterButton(FlowLayoutPanel bar, string kind, string text)
+        {
+            Button b = Theme.MakeButton(text, false);
+            b.Margin = new Padding(0, 0, Theme.S(6), 0);
+            b.Click += delegate { filterKind = kind; ApplyFilter(); };
+            filterButtons[kind ?? ""] = b;
+            bar.Controls.Add(b);
+        }
+
+        // Nur die Zeilen der gewählten Art bzw. mit dem Suchtext zeigen (Aktionen bleiben erhalten)
+        void ApplyFilter()
+        {
+            foreach (KeyValuePair<string, Button> p in filterButtons)
+            {
+                bool active = p.Key == (filterKind ?? "");
+                p.Value.BackColor = active ? Theme.Line : Theme.Input;
+                p.Value.FlatAppearance.BorderColor = active ? Theme.Muted : Theme.Line;
+            }
+            string q = search.Text.Trim();
+            List<ListViewItem> shown = new List<ListViewItem>();
+            foreach (ListViewItem row in allRows)
+            {
+                MediaCheckFile f = (MediaCheckFile)row.Tag;
+                if (filterKind != null && !f.Has(filterKind)) continue;
+                if (q.Length > 0 && f.Path.IndexOf(q, StringComparison.OrdinalIgnoreCase) < 0) continue;
+                shown.Add(row);
+            }
+            Cursor old = Cursor.Current;
+            Cursor.Current = Cursors.WaitCursor;
+            list.BeginUpdate();
+            try
+            {
+                list.Items.Clear();
+                list.Items.AddRange(shown.ToArray());
+                ListSort.Of(list).Apply();
+            }
+            finally
+            {
+                list.EndUpdate();
+                Cursor.Current = old;
+            }
+            UpdateButtons();
+        }
+
+        // Für alle angezeigten Zeilen: Vorschlag (true) bzw. keine Aktion (false)
+        void SetVisible(bool suggest)
+        {
+            foreach (ListViewItem row in list.Items)
+            {
+                MediaCheckFile f = (MediaCheckFile)row.Tag;
+                if (suggest) f.Suggest();
+                else { f.Delete = false; f.Convert = false; f.Preview = false; }
+                UpdateKeys(row);
+            }
+            list.Invalidate();
+            UpdateButtons();
+        }
+
+        MediaCheckChoice BuildChoice()
+        {
+            MediaCheckChoice c = new MediaCheckChoice();
+            foreach (MediaCheckFile f in files)
+            {
+                if (f.Delete) c.Delete.Add(f.Path);
+                else
+                {
+                    if (f.Convert) c.Convert.Add(f.Path);
+                    if (f.Preview) c.Preview.Add(f.Path);
+                }
+            }
+            return c;
         }
 
         void UpdateButtons()
         {
-            // Beim Schliessen meldet die Liste noch Änderungen, während sie abgebaut wird
-            if (IsDisposed || Disposing || convertButton == null || info == null) return;
-            int convert = 0, preview = 0;
-            foreach (MediaCheckItem it in Checked())
-            {
-                if (it.CanConvert) convert++;
-                if (it.Kind == "preview") preview++;
-            }
-            convertButton.Enabled = convert > 0;
-            previewButton.Enabled = preview > 0;
-            convertButton.Text = convert > 0 ? convert + " konvertieren" : "Ausgewählte konvertieren";
-            previewButton.Text = preview > 0 ? preview + " Vorschaubild(er) erstellen" : "Vorschaubilder erstellen";
-            info.Text = Checked().Count + " ausgewählt";
+            if (IsDisposed || Disposing || runButton == null || info == null) return;
+            MediaCheckChoice c = BuildChoice();
+            List<string> parts = new List<string>();
+            if (c.Delete.Count > 0) parts.Add(c.Delete.Count + " löschen");
+            if (c.Convert.Count > 0) parts.Add(c.Convert.Count + " konvertieren");
+            if (c.Preview.Count > 0) parts.Add(c.Preview.Count + " Vorschaubild" + (c.Preview.Count == 1 ? "" : "er"));
+            runButton.Enabled = c.Count > 0;
+            runButton.Text = c.Count > 0 ? "Ausführen: " + string.Join(", ", parts.ToArray()) : "Ausführen";
+            info.Text = list.Items.Count + " von " + files.Count + " angezeigt";
         }
 
-        void Finish(string action)
+        void Finish()
         {
-            result = new MediaCheckChoice();
-            result.Action = action;
-            foreach (MediaCheckItem it in Checked())
-                if ((action == "convert" && it.CanConvert) || (action == "preview" && it.Kind == "preview"))
-                    if (!result.Files.Contains(it.Path)) result.Files.Add(it.Path);
+            MediaCheckChoice c = BuildChoice();
+            if (c.Count == 0) return;
+            if (c.Delete.Count > 0 &&
+                MessageBox.Show(this, c.Delete.Count + " Datei(en) kommen samt Vorschaubild nach „" + MediaCheckTask.DeletedFolderName +
+                                "“. Endgültig löscht sie erst „Ablagen leeren“. Fortfahren?",
+                                App.Title, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
+            result = c;
             DialogResult = DialogResult.OK;
         }
 

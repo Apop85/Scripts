@@ -32,7 +32,7 @@ namespace Sflix
             { "rename", "Folgen umbenennen" },
             { "renameundo", "Folgen umbenennen rückgängig machen" },
             { "merge", "Gesplittete Medien zusammenführen" },
-            { "convert", "Videos für STEFFLIX konvertieren" },
+            { "convert", "Videos und Musik für STEFFLIX konvertieren" },
             { "preview", "Vorschaubilder erstellen" },
             { "data", "Daten einlesen" },
         };
@@ -43,7 +43,7 @@ namespace Sflix
         readonly string startNotice;
 
         // Optionen
-        DarkCheckBox optFfmpeg, optMoveParts, optDeleteOriginal, optPreviewVideos, optPreviewImages;
+        DarkCheckBox optFfmpeg, optMoveParts, optDeleteOriginal, optConvertAudio, optPreviewVideos, optPreviewImages;
         DarkCheckBox optImportStructure, optImportConvert, optImportMove, optImportPreview;
         DarkCheckBox optDataAll;
         ListBox dataFolders;
@@ -271,6 +271,7 @@ namespace Sflix
             convertParallel.ForeColor = Theme.Text;
             convertParallel.BorderStyle = BorderStyle.FixedSingle;
             optDeleteOriginal = SmallCheck("Originale löschen statt nach „" + ConvertTask.OriginalsFolderName + "“ verschieben");
+            optConvertAudio = SmallCheck("Auch Musik in MP3 umwandeln (z.B. WMA, AIFF, ALAC in M4A)");
             FlowLayoutPanel parallelRow = new FlowLayoutPanel();
             parallelRow.AutoSize = true;
             parallelRow.WrapContents = false;
@@ -298,6 +299,10 @@ namespace Sflix
             pickMerge = MakeFolderPick("Zusammenführen", false);
             pickConvert = MakeFolderPick("Konvertieren", false);
             pickCleanup = MakeFolderPick("Ablagen leeren", true);
+            pickCleanup.Changed = RefreshCleanupInfo;
+            cleanupInfo = Theme.MakeLabel("", true);
+            cleanupInfo.MaximumSize = new Size(TextWidth, 0);
+            cleanupInfo.Margin = new Padding(0, Theme.S(4), 0, Theme.S(2));
             pickDupes = MakeFolderPick("Duplikate finden", false);
             pickCheck = MakeFolderPick("Medien prüfen", false);
 
@@ -329,16 +334,17 @@ namespace Sflix
                      pickDupes.Root),
                 Spec("merge", Glyph.Merge, "Zusammenführen", "pt1, pt2 … zu einer Datei",
                      "Gesplittete Videos wie „Titel pt1“, „Titel pt2“ zu einer Datei zusammenfügen. Du wählst vorher aus, welche.", optMoveParts, pickMerge.Root),
-                Spec("convert", Glyph.Convert, "Konvertieren", "Videos in MP4 umwandeln",
-                     "Videos in browserkompatible MP4 (H.264/AAC) umwandeln. Das Original kommt nach „" + ConvertTask.OriginalsFolderName + "“.",
-                     parallelRow, optDeleteOriginal, pickConvert.Root),
+                Spec("convert", Glyph.Convert, "Konvertieren", "Video MP4, Musik MP3",
+                     "Videos in browserkompatible MP4 (H.264/AAC) umwandeln, auf Wunsch auch nicht abspielbare Musik in MP3. " +
+                     "Das Original kommt nach „" + ConvertTask.OriginalsFolderName + "“.",
+                     parallelRow, optConvertAudio, optDeleteOriginal, pickConvert.Root),
                 Spec("check", Glyph.Inspect, "Medien prüfen", "Nicht abspielbar, defekt",
                      "Findet Medien, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), defekte und leere Dateien sowie Medien ohne Vorschaubild " +
                      "(gemäss „Vorschaubilder“: Videos und/oder Bilder). Im Ergebnis wählst du, was konvertiert bzw. mit Vorschaubild versehen wird.",
                      pickCheck.Root),
                 Spec("cleanup", Glyph.Trash, "Ablagen leeren", "__-Ordner löschen",
                      "„__teile“, „__konvertiert“, „__gelöscht“, „__original“, „" + EpisodeTask.ReplacedFolderName + "“ und „" + DuplicateTask.FolderName + "“ endgültig löschen. " +
-                     "Du siehst vorher, was gelöscht wird. Nur innerhalb des Installationsordners möglich.", pickCleanup.Root),
+                     "Du siehst vorher, was gelöscht wird. Nur innerhalb des Installationsordners möglich.", cleanupInfo, pickCleanup.Root),
             }, Spec("settings", Glyph.Settings, "Einstellungen", null, null, FolderRow(installFolderBox, "Installationsordner:", false), folderHint, BuildFfmpegRow()));
 
             Label toolsNote = Theme.MakeLabel("Die gewählten Tools laufen nacheinander. Danach werden die betroffenen Ordner automatisch neu " +
@@ -527,6 +533,9 @@ namespace Sflix
             public Control Root;
             public string Tool;
             public bool InsideOnly;
+            public Action Changed;   // Auswahl geändert (z.B. Speicher der Ablagen neu berechnen)
+
+            public void Notify() { if (Changed != null) Changed(); }
 
             public List<string> Folders()
             {
@@ -595,7 +604,7 @@ namespace Sflix
             box.Controls.Add(pick.All);
             box.Controls.Add(row);
             pick.Root = box;
-            pick.All.CheckedChanged += delegate { row.Visible = !pick.All.Checked; Relayout(); };
+            pick.All.CheckedChanged += delegate { row.Visible = !pick.All.Checked; Relayout(); pick.Notify(); };
             return pick;
         }
 
@@ -634,6 +643,7 @@ namespace Sflix
                 item.Path = path;
                 pick.List.Items.Add(item);
             }
+            pick.Notify();
         }
 
         void RemovePickFolders(FolderPick pick)
@@ -641,6 +651,51 @@ namespace Sflix
             List<object> sel = new List<object>();
             foreach (object o in pick.List.SelectedItems) sel.Add(o);
             foreach (object o in sel) pick.List.Items.Remove(o);
+            if (sel.Count > 0) pick.Notify();
+        }
+
+        // ---------------------------------------------------------------
+        // Ablagen leeren: belegter Speicher, im Hintergrund berechnet
+        // ---------------------------------------------------------------
+
+        Label cleanupInfo;
+        int cleanupGeneration;
+        CancellationTokenSource cleanupCts;
+
+        void RefreshCleanupInfo()
+        {
+            if (cleanupInfo == null || pickCleanup == null) return;
+            // Eine laufende Berechnung abbrechen, ihr Ergebnis wäre veraltet
+            if (cleanupCts != null) cleanupCts.Cancel();
+            cleanupCts = new CancellationTokenSource();
+            CancellationToken token = cleanupCts.Token;
+            int gen = ++cleanupGeneration;
+            List<string> roots = pickCleanup.Folders();
+            cleanupInfo.Text = "Belegter Speicher wird berechnet …";
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                string text;
+                try
+                {
+                    List<CleanupFolder> found = CleanupTask.Scan(roots, token);
+                    long size = 0;
+                    int files = 0;
+                    foreach (CleanupFolder f in found) { size += f.Size; files += f.Files; }
+                    text = found.Count == 0 ? "Keine Ablagen gefunden."
+                         : "Die Ablagen belegen " + Fmt.Size(size) + " (" + files + " Dateien in " + found.Count + " Ordnern).";
+                }
+                catch (OperationCanceledException) { return; }
+                catch (Exception e) { text = "Belegter Speicher nicht ermittelt: " + e.Message; }
+                try
+                {
+                    BeginInvoke((Action)delegate
+                    {
+                        if (gen != cleanupGeneration || cleanupInfo.IsDisposed) return;
+                        cleanupInfo.Text = text;
+                    });
+                }
+                catch (InvalidOperationException) { }
+            });
         }
 
         FolderPick PickOf(string id)
@@ -953,6 +1008,7 @@ namespace Sflix
                 Relayout();
             }
             finally { FreezePainting(false); }
+            if (id == "cleanup") RefreshCleanupInfo();
         }
 
         // Reiter einer Kachel (oder des festen Reiters) nach vorne holen, z.B. bei einer Rückfrage
@@ -1866,6 +1922,7 @@ namespace Sflix
             optMoveParts.Checked = settings.GetBool("merge.moveParts", true);
             convertParallel.Value = Math.Max(0, Math.Min(16, settings.GetInt("convert.parallel", 0)));
             optDeleteOriginal.Checked = settings.GetBool("convert.deleteOriginal", false);
+            optConvertAudio.Checked = settings.GetBool("convert.audio", true);
             optPreviewVideos.Checked = settings.GetBool("preview.videos", true);
             optPreviewImages.Checked = settings.GetBool("preview.images", false);
             optImportStructure.Checked = settings.GetBool("import.structure", true);
@@ -1893,6 +1950,7 @@ namespace Sflix
             settings.SetBool("merge.moveParts", optMoveParts.Checked);
             settings.SetInt("convert.parallel", (int)convertParallel.Value);
             settings.SetBool("convert.deleteOriginal", optDeleteOriginal.Checked);
+            settings.SetBool("convert.audio", optConvertAudio.Checked);
             settings.SetBool("preview.videos", optPreviewVideos.Checked);
             settings.SetBool("preview.images", optPreviewImages.Checked);
             settings.SetBool("import.structure", optImportStructure.Checked);
@@ -2156,6 +2214,7 @@ namespace Sflix
             conv.Folder = App.Root;
             conv.Parallel = (int)convertParallel.Value;
             conv.DeleteOriginal = optDeleteOriginal.Checked;
+            conv.Audio = optConvertAudio.Checked;
             conv.Preset = settings.GetString("convert.preset", "medium");
             conv.QualitySD = settings.GetInt("convert.qualitySD", 21);
             conv.QualityHD = settings.GetInt("convert.qualityHD", 19);
@@ -2189,6 +2248,7 @@ namespace Sflix
             ctx.Token = cts.Token;
             ctx.Settings = settings;
             ctx.LogLine = delegate(string line) { pendingLog.Enqueue(line); };
+            FileOps.Notice = ctx.Log;
             ctx.ProgressSink = delegate(double f, string s) { lock (progressGate) { latestFraction = f; latestStatus = s; } };
             ctx.ChooseMerge = delegate(List<MergeGroup> groups)
             {
@@ -2237,6 +2297,7 @@ namespace Sflix
             {
                 return (MediaCheckChoice)Invoke((Func<MediaCheckChoice>)delegate
                 {
+                    ShowPreparing();
                     using (MediaCheckDialog dlg = new MediaCheckDialog(items)) return dlg.Choose(this);
                 });
             };
@@ -2244,6 +2305,7 @@ namespace Sflix
             {
                 return (DupeChoice)Invoke((Func<DupeChoice>)delegate
                 {
+                    ShowPreparing();
                     using (DuplicateDialog dlg = new DuplicateDialog(groups, ctx.Ffmpeg)) return dlg.Choose(this);
                 });
             };
@@ -2287,6 +2349,8 @@ namespace Sflix
             UpdateUndoInfo();
             ShowFfmpegInfo();
             ShowInstalledVersions();
+            // Tools können Ablagen gefüllt oder geleert haben
+            if (cleanupInfo != null && cleanupInfo.Visible) RefreshCleanupInfo();
             progress.Value = result.Success ? 1 : 0;
             // Erfolgreicher Import: Auswahl leeren, damit beim nächsten Start nicht nochmal importiert wird
             // Update erledigt: Versionen neu prüfen (blendet den Hinweis aus, wenn alles aktuell ist)
@@ -2345,6 +2409,18 @@ namespace Sflix
         // ---------------------------------------------------------------
 
         readonly StringBuilder unsavedLog = new StringBuilder();
+
+        // Vor einem grossen Ergebnis-Dialog: Protokoll nachführen, Hinweis und Warte-Mauszeiger zeigen,
+        // solange die Tabelle aufgebaut wird (der Dialog setzt den Mauszeiger danach selbst zurück)
+        void ShowPreparing()
+        {
+            FlushUi();
+            progress.Value = -1;
+            statusLabel.Text = "Ergebnis wird aufbereitet …";
+            statusLabel.Refresh();
+            progress.Refresh();
+            Cursor.Current = Cursors.WaitCursor;
+        }
 
         void AppendLog(string line)
         {
@@ -2453,7 +2529,7 @@ namespace Sflix
                 case "rename": return "Folgen umbenennen";
                 case "renameundo": return "Folgen umbenennen rückgängig";
                 case "merge": return "Gesplittete Medien zusammenführen";
-                case "convert": return "Videos für STEFFLIX konvertieren";
+                case "convert": return "Videos und Musik für STEFFLIX konvertieren";
                 case "preview": return "Vorschaubilder erstellen";
                 case "data": return "Daten einlesen";
             }

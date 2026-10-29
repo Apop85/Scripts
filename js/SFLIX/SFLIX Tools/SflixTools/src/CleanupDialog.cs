@@ -43,10 +43,7 @@ namespace Sflix
             list.ForeColor = Theme.Text;
             list.BorderStyle = BorderStyle.None;
             list.HeaderStyle = ColumnHeaderStyle.Nonclickable;
-            list.OwnerDraw = true;
-            list.DrawColumnHeader += DrawHeader;
-            list.DrawItem += delegate(object s, DrawListViewItemEventArgs e) { e.DrawDefault = true; };
-            list.DrawSubItem += delegate(object s, DrawListViewSubItemEventArgs e) { e.DrawDefault = true; };
+            DarkList.Apply(list);
             list.Columns.Add("Ordner (im Medienordner)", Theme.S(560));
             list.Columns.Add("Dateien", Theme.S(80), HorizontalAlignment.Right);
             list.Columns.Add("Grösse", Theme.S(100), HorizontalAlignment.Right);
@@ -59,8 +56,8 @@ namespace Sflix
                 string shown = f.Path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? f.Path.Substring(prefix.Length) : f.Path;
                 ListViewItem item = new ListViewItem(shown);
                 item.ToolTipText = f.Path;
-                item.SubItems.Add(f.Files.ToString());
-                item.SubItems.Add(Fmt.Size(f.Size));
+                ListSort.Add(item, f.Files.ToString(), f.Files);
+                ListSort.Add(item, Fmt.Size(f.Size), f.Size);
                 item.SubItems.Add(f.Problem ?? "");
                 item.Tag = f;
                 item.Checked = true;
@@ -120,16 +117,6 @@ namespace Sflix
                 count++;
             }
             totalLabel.Text = count + " Ordner, " + files + " Dateien, " + Fmt.Size(size);
-        }
-
-        void DrawHeader(object sender, DrawListViewColumnHeaderEventArgs e)
-        {
-            using (SolidBrush b = new SolidBrush(Theme.Input)) e.Graphics.FillRectangle(b, e.Bounds);
-            using (Pen p = new Pen(Theme.Line)) e.Graphics.DrawLine(p, e.Bounds.Right - 1, e.Bounds.Top, e.Bounds.Right - 1, e.Bounds.Bottom);
-            TextFormatFlags flags = TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis |
-                (e.Header.TextAlign == HorizontalAlignment.Right ? TextFormatFlags.Right : TextFormatFlags.Left);
-            Rectangle r = new Rectangle(e.Bounds.X + Theme.S(6), e.Bounds.Y, e.Bounds.Width - Theme.S(12), e.Bounds.Height);
-            TextRenderer.DrawText(e.Graphics, e.Header.Text, list.Font, r, Theme.Muted, flags);
         }
 
         public List<CleanupFolder> Choose(Form owner)

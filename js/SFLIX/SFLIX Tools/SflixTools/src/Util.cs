@@ -293,27 +293,189 @@ namespace Sflix
 
         public static readonly UTF8Encoding Utf8NoBom = new UTF8Encoding(false);
 
+        const int ERROR_ACCESS_DENIED = 5, ERROR_SHARING_VIOLATION = 32, ERROR_LOCK_VIOLATION = 33;
+
         // Wie Python os.replace: verschiebt und überschreibt ein vorhandenes Ziel.
         public static void Replace(string source, string target)
         {
-            if (!MoveFileEx(source, target, MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED))
-                throw new IOException(new Win32Exception(Marshal.GetLastWin32Error()).Message + ": " + target);
+            Move(source, target, MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
         }
 
         // Verschiebt eine Datei, auch auf ein anderes Laufwerk (dann wird kopiert und gelöscht).
         public static void MoveAcross(string source, string target, bool overwrite)
         {
-            int flags = MOVEFILE_COPY_ALLOWED | (overwrite ? MOVEFILE_REPLACE_EXISTING : 0);
-            if (!MoveFileEx(source, target, flags))
-                throw new IOException(new Win32Exception(Marshal.GetLastWin32Error()).Message + ": " + target);
+            Move(source, target, MOVEFILE_COPY_ALLOWED | (overwrite ? MOVEFILE_REPLACE_EXISTING : 0));
         }
 
         // Wie Python os.rename: schlägt fehl, wenn das Ziel existiert (ausser bei reiner
         // Änderung der Gross-/Kleinschreibung). Funktioniert auch für Ordner.
         public static void Rename(string source, string target)
         {
-            if (!MoveFileEx(source, target, 0))
-                throw new IOException(new Win32Exception(Marshal.GetLastWin32Error()).Message + ": " + target);
+            Move(source, target, 0);
+        }
+
+        // Verschieben mit zwei Hilfen für Netzlaufwerke (NAS):
+        // - Schreibgeschützte Dateien (Attribut, oft per SMB gesetzt) lässt Windows nicht verschieben,
+        //   ersetzen oder löschen ("Zugriff verweigert"): Attribut entfernen und erneut versuchen,
+        //   danach am Ziel wieder setzen.
+        // - Kurz geöffnete Dateien (Indexdienst des NAS, Virenscanner, Vorschau): kurz warten und wiederholen.
+        // - Fehlt auf der Datei das Recht "Löschen" (z.B. Dateien, die auf dem NAS selbst angelegt wurden und
+        //   dem NAS-Administrator gehören), wird es für die Benutzer ergänzt, die die Datei schon ändern dürfen.
+        static void Move(string source, string target, int flags)
+        {
+            bool readOnlyRemoved = false, deleteGranted = false;
+            for (int attempt = 0; ; attempt++)
+            {
+                if (MoveFileEx(source, target, flags))
+                {
+                    if (readOnlyRemoved) TrySetReadOnly(target);
+                    return;
+                }
+                int error = Marshal.GetLastWin32Error();
+                if (error == ERROR_ACCESS_DENIED && !readOnlyRemoved)
+                {
+                    bool changed = ClearReadOnly(source);
+                    if ((flags & MOVEFILE_REPLACE_EXISTING) != 0) ClearReadOnly(target);
+                    if (changed) { readOnlyRemoved = true; continue; }
+                }
+                if (error == ERROR_ACCESS_DENIED && !deleteGranted)
+                {
+                    deleteGranted = true;
+                    bool granted = TryGrantDelete(source);
+                    if ((flags & MOVEFILE_REPLACE_EXISTING) != 0 && File.Exists(target)) granted |= TryGrantDelete(target);
+                    if (granted) continue;
+                }
+                if ((error == ERROR_SHARING_VIOLATION || error == ERROR_LOCK_VIOLATION || error == ERROR_ACCESS_DENIED) && attempt < 3)
+                {
+                    Thread.Sleep(400 * (attempt + 1));
+                    continue;
+                }
+                throw new IOException(Describe(error) + ": " + target);
+            }
+        }
+
+        // Löscht eine Datei, auch schreibgeschützt; wiederholt bei kurz geöffneten Dateien
+        public static void Delete(string path)
+        {
+            bool deleteGranted = false;
+            for (int attempt = 0; ; attempt++)
+            {
+                try
+                {
+                    if (!File.Exists(path)) return;
+                    ClearReadOnly(path);
+                    File.Delete(path);
+                    return;
+                }
+                catch (Exception e)
+                {
+                    if (!(e is IOException || e is UnauthorizedAccessException)) throw;
+                    if (e is UnauthorizedAccessException && !deleteGranted)
+                    {
+                        deleteGranted = true;
+                        if (TryGrantDelete(path)) continue;
+                    }
+                    if (attempt >= 3) throw new IOException(Describe(e is UnauthorizedAccessException ? ERROR_ACCESS_DENIED : ERROR_SHARING_VIOLATION) + ": " + path, e);
+                    Thread.Sleep(400 * (attempt + 1));
+                }
+            }
+        }
+
+        // Leeren Ordner löschen, auch mit Attribut Schreibgeschützt
+        public static void DeleteEmptyDirectory(string dir)
+        {
+            try { File.SetAttributes(dir, FileAttributes.Directory); } catch { }
+            try { Directory.Delete(dir, false); }
+            catch (UnauthorizedAccessException)
+            {
+                if (!TryGrantDelete(dir)) throw;
+                Directory.Delete(dir, false);
+            }
+        }
+
+        // Meldungen für das Protokoll (z.B. "Recht Löschen ergänzt"), wird vom laufenden Auftrag gesetzt
+        public static Action<string> Notice;
+
+        // Hat jede Regel mit Schreibrecht auch "Löschen"?
+        static bool HasDeleteRight(string path, bool isDir)
+        {
+            System.Security.AccessControl.FileSystemSecurity sec = isDir
+                ? (System.Security.AccessControl.FileSystemSecurity)Directory.GetAccessControl(path, System.Security.AccessControl.AccessControlSections.Access)
+                : File.GetAccessControl(path, System.Security.AccessControl.AccessControlSections.Access);
+            foreach (System.Security.AccessControl.FileSystemAccessRule r in sec.GetAccessRules(true, true, typeof(System.Security.Principal.SecurityIdentifier)))
+            {
+                if (r.AccessControlType != System.Security.AccessControl.AccessControlType.Allow) continue;
+                if ((r.FileSystemRights & System.Security.AccessControl.FileSystemRights.WriteData) == 0) continue;
+                if ((r.FileSystemRights & System.Security.AccessControl.FileSystemRights.Delete) == 0) return false;
+            }
+            return true;
+        }
+
+        // Ergänzt das Recht "Löschen" für alle, die die Datei bzw. den Ordner schon ändern dürfen (Schreiben erlaubt).
+        // Klappt nur, wenn der Benutzer die Rechte ändern darf. Mit Sicherheitskennungen (SID), damit nichts
+        // übersetzt werden muss: Benutzer des NAS sind unter Windows oft nicht bekannt.
+        public static bool TryGrantDelete(string path)
+        {
+            try
+            {
+                bool isDir = Directory.Exists(path);
+                if (!isDir && !File.Exists(path)) return false;
+                System.Security.AccessControl.FileSystemSecurity sec = isDir
+                    ? (System.Security.AccessControl.FileSystemSecurity)Directory.GetAccessControl(path, System.Security.AccessControl.AccessControlSections.Access)
+                    : File.GetAccessControl(path, System.Security.AccessControl.AccessControlSections.Access);
+                System.Security.AccessControl.AuthorizationRuleCollection rules =
+                    sec.GetAccessRules(true, true, typeof(System.Security.Principal.SecurityIdentifier));
+                bool changed = false;
+                foreach (System.Security.AccessControl.FileSystemAccessRule r in rules)
+                {
+                    if (r.AccessControlType != System.Security.AccessControl.AccessControlType.Allow) continue;
+                    if ((r.FileSystemRights & System.Security.AccessControl.FileSystemRights.WriteData) == 0) continue;
+                    if ((r.FileSystemRights & System.Security.AccessControl.FileSystemRights.Delete) != 0) continue;
+                    sec.AddAccessRule(new System.Security.AccessControl.FileSystemAccessRule(r.IdentityReference,
+                        System.Security.AccessControl.FileSystemRights.Delete, System.Security.AccessControl.AccessControlType.Allow));
+                    changed = true;
+                }
+                if (!changed) return false;
+                if (isDir) Directory.SetAccessControl(path, (System.Security.AccessControl.DirectorySecurity)sec);
+                else File.SetAccessControl(path, (System.Security.AccessControl.FileSecurity)sec);
+                // Manche NAS (Linux-Rechte) melden Erfolg, speichern "Löschen" aber nicht: nachprüfen
+                if (!HasDeleteRight(path, isDir)) return false;
+                Action<string> notice = Notice;
+                if (notice != null) notice("  Hinweis: Recht „Löschen“ ergänzt (fehlte auf dem NAS): " + path);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        // true, wenn das Attribut gesetzt war und entfernt wurde
+        static bool ClearReadOnly(string path)
+        {
+            try
+            {
+                if (!File.Exists(path)) return false;
+                FileAttributes a = File.GetAttributes(path);
+                if ((a & FileAttributes.ReadOnly) == 0) return false;
+                File.SetAttributes(path, a & ~FileAttributes.ReadOnly);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        static void TrySetReadOnly(string path)
+        {
+            try { if (File.Exists(path)) File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.ReadOnly); } catch { }
+        }
+
+        // Fehlermeldung mit Hinweis, woran es auf einem NAS meist liegt
+        static string Describe(int error)
+        {
+            string text = new Win32Exception(error).Message;
+            if (error == ERROR_ACCESS_DENIED)
+                text += " (Datei evtl. geöffnet, z.B. in STEFFLIX oder vom Indexdienst des NAS, oder sie gehört auf dem NAS einem anderen Benutzer, " +
+                        "z.B. dem Administrator, bzw. das Recht „Löschen“ fehlt: im NAS Besitzer oder Rechte für den Ordner neu setzen)";
+            else if (error == ERROR_SHARING_VIOLATION || error == ERROR_LOCK_VIOLATION)
+                text += " (Datei ist in einem anderen Programm geöffnet)";
+            return text;
         }
 
         public static bool Exists(string path)
@@ -338,7 +500,7 @@ namespace Sflix
 
         public static void TryDelete(string path)
         {
-            try { if (File.Exists(path)) File.Delete(path); } catch { }
+            try { Delete(path); } catch { }
         }
 
         // Python os.path.splitext: führende Punkte gehören zum Namen (".hidden" hat keine Endung).

@@ -10,25 +10,6 @@ using System.Windows.Forms;
 
 namespace Sflix
 {
-    static class DarkList
-    {
-        // Spaltenköpfe dunkel zeichnen (sonst hell im Windows-Stil)
-        public static void Apply(ListView list)
-        {
-            list.OwnerDraw = true;
-            list.DrawItem += delegate(object s, DrawListViewItemEventArgs e) { e.DrawDefault = true; };
-            list.DrawSubItem += delegate(object s, DrawListViewSubItemEventArgs e) { e.DrawDefault = true; };
-            list.DrawColumnHeader += delegate(object s, DrawListViewColumnHeaderEventArgs e)
-            {
-                using (SolidBrush b = new SolidBrush(Theme.Input)) e.Graphics.FillRectangle(b, e.Bounds);
-                using (Pen p = new Pen(Theme.Line)) e.Graphics.DrawLine(p, e.Bounds.Right - 1, e.Bounds.Top, e.Bounds.Right - 1, e.Bounds.Bottom);
-                Rectangle r = new Rectangle(e.Bounds.X + Theme.S(6), e.Bounds.Y, e.Bounds.Width - Theme.S(12), e.Bounds.Height);
-                TextRenderer.DrawText(e.Graphics, e.Header.Text, list.Font, r, Theme.Muted,
-                    TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.Left);
-            };
-        }
-    }
-
     // Serie suchen: Treffer der aktuellen Quelle, "Nächste Quelle" wechselt zu TVmaze.
     // Netzwerkzugriffe laufen im Hintergrund, das Fenster bleibt bedienbar.
     public class EpisodeSearchDialog : Form
@@ -190,6 +171,8 @@ namespace Sflix
                             item.Tag = h;
                             list.Items.Add(item);
                         }
+                        // Gewählte Sortierung auch für neue Treffer
+                        ListSort.Of(list).Apply();
                         if (list.Items.Count > 0) { list.Items[0].Selected = true; list.Focus(); }
                         SetBusy(false, hits.Count == 0
                             ? "Keine Treffer. Tipp: Originaltitel oder einen kürzeren Namen versuchen."
@@ -364,7 +347,7 @@ namespace Sflix
                 item.SubItems.Add(op.Kind == "folder" || op.Kind == "merge" ? Path.GetFileName(op.Target) : Rel(op.Target));
                 long size = -1;
                 try { if (File.Exists(op.Source)) size = new FileInfo(op.Source).Length; } catch { }
-                item.SubItems.Add(size >= 0 ? Fmt.Size(size) : "");
+                ListSort.Add(item, size >= 0 ? Fmt.Size(size) : "", size >= 0 ? (object)size : null);
                 item.SubItems.Add(op.Note);
                 item.Tag = op;
                 item.Checked = op.Selected;

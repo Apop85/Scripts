@@ -70,7 +70,7 @@ Die Medien lassen sich auch selbst in die Ordner kopieren. Danach müssen sie ei
 | Musik  | mp3, m4a, ogg, oga, opus, aac, flac, wav  |
 | Bilder | jpg, jpeg, png, gif, webp, avif, bmp      |
 
-Gross- und Kleinschreibung der Dateiendung spielt keine Rolle (JPG = jpg). Videos in anderen Formaten (z.B. mkv oder avi) wandelt der Updater mit "Videos für SFLIX konvertieren" in passende MP4-Dateien um.
+Gross- und Kleinschreibung der Dateiendung spielt keine Rolle (JPG = jpg). Videos in anderen Formaten (z.B. mkv oder avi) wandelt der Updater mit dem Tool "Konvertieren" in passende MP4-Dateien um, Musik wie WMA oder AIFF in MP3.
 
 ### Vorschaubilder (Preview-Ordner)
 
@@ -102,8 +102,10 @@ Die ausgewählten Aufgaben laufen immer in dieser Reihenfolge ab:
 - **Folgen umbenennen**: Die Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen, z.B. `Serie - S01E02 - Titel.mp4` im Ordner `Staffel 01`. Erkannt werden Namen mit `S01E02` oder `1x02`. Doppelfolgen behalten alle Nummern, z.B. `Serie - S01E02E03 - Titel.mp4`. Vorher werden alle Änderungen angezeigt; bei mehreren Dateien für eine Folge oder einem vorhandenen Ziel vergleicht die Vorschau Grösse, Auflösung und Dauer. Danach lässt sich der letzte Lauf rückgängig machen. Geladene Folgenlisten werden gespeichert, beim nächsten Lauf lässt sich die gespeicherte Liste verwenden oder neu laden.
 - **Duplikate finden**: Identische Dateien, gleiche Folgen einer Serie (`S01E01` = `1x01` = `S1E1`) und gleiche Dateinamen finden (Preview- und Ablage-Ordner zählen nicht). Ein Vergleich zeigt Grösse, Auflösung, Dauer und Codecs, vorausgewählt bleibt die bessere Fassung. Aussortierte Dateien kommen nach `__duplikate`, Favoriten und Fortschritt gehen auf die behaltene Datei über.
 - **Gesplittete Medien zusammenführen**: Videos wie "Titel pt1" und "Titel pt2" zu einer Datei zusammenfügen. Die Teile werden vorher in einer Liste ausgewählt, auf Wunsch wird neu kodiert. Die Teile können danach nach `__teile` verschoben werden.
-- **Videos für SFLIX konvertieren**: Videos in browserkompatible MP4 (H.264/AAC) umwandeln. Die MP4 ersetzt das Original im selben Ordner, das Original kommt nach `__konvertiert` (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.
-- **Medien prüfen**: Medien finden, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), dazu defekte und leere Dateien sowie Medien ohne Vorschaubild. Im Ergebnis lassen sie sich gleich konvertieren bzw. mit Vorschaubild versehen.
+- **Konvertieren**: Videos in browserkompatible MP4 (H.264/AAC) umwandeln, auf Wunsch auch nicht abspielbare Musik (z.B. WMA, AIFF, ALAC) in MP3. Das Ergebnis ersetzt das Original im selben Ordner, das Original kommt nach `__konvertiert` (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.
+- **Medien prüfen**: Medien finden, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton, WMA), dazu defekte und leere Dateien sowie Medien ohne Vorschaubild. Im Ergebnis wählst du je Datei Löschen (nach `__gelöscht`), Konvertieren und/oder Vorschaubild erstellen; defekte und leere Dateien sind zum Löschen vorgemerkt. „Ausführen“ erledigt alles in einem Durchgang.
+
+Alle Tabellen im Updater lassen sich mit einem Klick auf den Spaltenkopf sortieren.
 - **Vorschaubilder erstellen**: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach `Preview\__gelöscht`.
 - **Daten einlesen**: Medien neu einlesen, ungültige Zeichen in Datei- und Ordnernamen korrigieren und zu grosse Vorschaubilder verkleinern. Ordner, deren Name mit `__` beginnt, sowie System- und versteckte Ordner werden ignoriert. Mit dem Schalter "Alle Ordner einlesen" wird alles eingelesen. Ist er aus, lassen sich einzelne Ordner wählen, und nur diese werden aktualisiert. Das geht deutlich schneller bei grossen Mediatheken. Nach einem Import liest der Updater automatisch nur den Zielordner ein.
 

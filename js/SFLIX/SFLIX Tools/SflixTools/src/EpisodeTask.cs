@@ -1112,7 +1112,7 @@ namespace Sflix
             }
             if (Directory.GetFileSystemEntries(source).Length == 0)
             {
-                Directory.Delete(source);
+                FileOps.DeleteEmptyDirectory(source);
                 journal.Ops.Add(new List<object> { "rmdir", source });
             }
             return moved;
@@ -1200,7 +1200,7 @@ namespace Sflix
                     }
                     else if (kind == "mkdir")
                     {
-                        if (Directory.Exists(a) && Directory.GetFileSystemEntries(a).Length == 0) Directory.Delete(a);
+                        if (Directory.Exists(a) && Directory.GetFileSystemEntries(a).Length == 0) FileOps.DeleteEmptyDirectory(a);
                     }
                     else if (kind == "rmdir")
                     {

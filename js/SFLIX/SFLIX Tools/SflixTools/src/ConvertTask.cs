@@ -1,4 +1,4 @@
-// Aufgabe "Videos für STEFFLIX konvertieren" (Portierung von convertVideos.py).
+// Aufgabe "Videos und Musik für STEFFLIX konvertieren" (Portierung von convertVideos.py).
 //
 // Wandelt Videos in browserkompatible MP4 (H.264, AAC, yuv420p) um. Das Ergebnis ersetzt das
 // Original im selben Ordner, das Original kommt nach <Ordner>\__konvertiert\ (oder wird auf
@@ -32,6 +32,10 @@ namespace Sflix
         public int QualitySD = 21, QualityHD = 19, QualityFullHD = 18, Quality4K = 17;
         // Nur diese Dateien (z.B. aus "Medien prüfen" oder "Duplikate finden"), null = alle im Ordner
         public HashSet<string> OnlyFiles;
+        // Auch Musik, die der Browser nicht abspielt (z.B. WMA, AIFF, ALAC in M4A), in MP3 umwandeln
+        public bool Audio = true;
+        // Falls gesetzt: Original -> erzeugte Dateien (z.B. für Vorschaubilder danach)
+        public ConcurrentDictionary<string, List<string>> Results;
     }
 
     public class ConvertTask
@@ -72,9 +76,11 @@ namespace Sflix
             if (!Directory.Exists(opt.Folder)) throw new TaskFailedException("Ordner nicht gefunden: " + opt.Folder);
             ctx.Ffmpeg.EnsureInstalled(ctx);
 
-            ctx.Progress(-1, "Suche Videos ...");
+            ctx.Progress(-1, "Suche Medien ...");
+            HashSet<string> extensions = new HashSet<string>(VideoExtensions, StringComparer.OrdinalIgnoreCase);
+            if (opt.Audio) { extensions.UnionWith(MediaTypes.ConvertAudio); extensions.UnionWith(CheckedAudio); }
             List<string> files = new List<string>();
-            Folders.CollectFiles(opt.Folder, VideoExtensions, true, files, ctx.Token);
+            Folders.CollectFiles(opt.Folder, extensions, true, files, ctx.Token);
             files.RemoveAll(delegate(string f)
             {
                 string name = Path.GetFileName(f);
@@ -83,16 +89,27 @@ namespace Sflix
             if (opt.OnlyFiles != null) files.RemoveAll(delegate(string f) { return !opt.OnlyFiles.Contains(f); });
             files.Sort(StringComparer.OrdinalIgnoreCase);
             total = files.Count;
-            ctx.Log(total + " Videos gefunden in " + opt.Folder);
+            int music = 0;
+            foreach (string f in files) if (IsAudio(f)) music++;
+            ctx.Log((total - music) + " Videos" + (opt.Audio ? " und " + music + " Musikdateien" : "") + " gefunden in " + opt.Folder);
             if (total == 0) return;
 
             LoadCache();
 
-            ctx.Progress(-1, "Prüfe Grafikkarte ...");
-            encoder = ctx.Ffmpeg.DetectEncoder(ctx.Token);
-            int parallel = opt.Parallel > 0 ? opt.Parallel
+            int parallel;
+            if (music < total)
+            {
+                ctx.Progress(-1, "Prüfe Grafikkarte ...");
+                encoder = ctx.Ffmpeg.DetectEncoder(ctx.Token);
+                parallel = opt.Parallel > 0 ? opt.Parallel
                          : encoder == "libx264" ? Math.Max(1, Environment.ProcessorCount / 2) : 2;
-            ctx.Log("Encoder: " + FfmpegTools.EncoderName(encoder) + ", " + parallel + " Videos gleichzeitig");
+                ctx.Log("Encoder: " + FfmpegTools.EncoderName(encoder) + ", " + parallel + " Dateien gleichzeitig");
+            }
+            else
+            {
+                // Nur Musik: MP3 kodiert die CPU schnell, ein Kern je Datei
+                parallel = opt.Parallel > 0 ? opt.Parallel : Math.Max(1, Environment.ProcessorCount / 2);
+            }
 
             ConcurrentQueue<string> queue = new ConcurrentQueue<string>(files);
             Stopwatch watch = Stopwatch.StartNew();
@@ -113,7 +130,142 @@ namespace Sflix
             ctx.Log("Konvertiert: " + converted + "   Bereits kompatibel: " + compatible + "   Fehler: " + failed
                     + "   Dauer: " + Fmt.Time(watch.Elapsed.TotalSeconds));
             ctx.Summary = converted + " konvertiert, " + compatible + " bereits kompatibel, " + failed + " Fehler";
-            if (failed > 0) throw new TaskFailedException(failed + " Video(s) konnten nicht konvertiert werden");
+            if (failed > 0) throw new TaskFailedException(failed + " Datei(en) konnten nicht konvertiert werden");
+        }
+
+        // Musik mit diesen Endungen spielt der Browser meist ab, ausser bei bestimmten Codecs (z.B. ALAC in M4A):
+        // sie werden untersucht und nur bei Bedarf umgewandelt
+        static readonly HashSet<string> CheckedAudio = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".m4a" };
+
+        static bool IsAudio(string path)
+        {
+            return MediaTypes.Kind(Path.GetExtension(path).ToLowerInvariant()) == "audio";
+        }
+
+        // Spielt der Browser die Musik ab? (Endung und Codec)
+        public static bool IsAudioReady(MediaInfo info, string extension)
+        {
+            string ext = (extension ?? "").ToLowerInvariant();
+            if (MediaTypes.ConvertAudio.Contains(ext)) return false;
+            if (!CheckedAudio.Contains(ext)) return MediaTypes.ReadyAudio.Contains(ext);
+            if (info.Audio.Count == 0) return false;
+            foreach (AudioStream a in info.Audio) if (a.Codec != "aac" && a.Codec != "mp3") return false;
+            return true;
+        }
+
+        // Musik in MP3 umwandeln (erste Tonspur, Tags übernehmen), Original wie bei Videos sichern
+        string ProcessAudio(int workerId, string source, string key)
+        {
+            MediaInfo info = ctx.Ffmpeg.Probe(source, ctx.Token);
+            if (info.Audio.Count == 0)
+            {
+                ctx.Log("  FEHLER  " + source + " :: keine Tonspur gefunden");
+                return "error";
+            }
+            if (IsAudioReady(info, Path.GetExtension(source)))
+            {
+                stillCompatible[key] = true;
+                return "compatible";
+            }
+            string dir = Path.GetDirectoryName(source);
+            string stem = Path.GetFileNameWithoutExtension(source);
+            string final = Path.Combine(dir, stem + ".mp3");
+            if (FileOps.Exists(final))
+            {
+                ctx.Log("  FEHLER  " + source + " :: Zieldatei existiert bereits: " + Path.GetFileName(final));
+                return "error";
+            }
+            string temp = Path.Combine(dir, stem + ".__temp__.mp3");
+            List<string> args = new List<string> {
+                "-hide_banner", "-nostdin", "-loglevel", "error", "-y",
+                "-i", source,
+                "-map", "0:a:0", "-c:a", "libmp3lame", "-q:a", "2",
+                "-map_metadata", "0", "-id3v2_version", "3",
+                "-progress", "pipe:1", "-nostats",
+                temp,
+            };
+            double duration = info.Duration;
+            ProcResult r = Proc.Run(ctx.Ffmpeg.FfmpegPath, args, ctx.Token, delegate(string line)
+            {
+                if (duration <= 0 || !line.StartsWith("out_time_us=")) return;
+                long us;
+                if (long.TryParse(line.Substring(12), NumberStyles.Integer, CultureInfo.InvariantCulture, out us))
+                {
+                    lock (gate) { active[workerId] = Math.Min(1, us / 1e6 / duration); }
+                    ReportProgress();
+                }
+            });
+            string error = null;
+            if (r.ExitCode != 0)
+            {
+                string err = r.StdErr.Trim();
+                if (err.Length > 400) err = err.Substring(err.Length - 400);
+                error = "ffmpeg: " + (err.Length > 0 ? err : "Fehler " + r.ExitCode);
+            }
+            else if (!File.Exists(temp)) error = "keine Ausgabedatei";
+            else
+            {
+                try
+                {
+                    MediaInfo dst = ctx.Ffmpeg.Probe(temp, ctx.Token);
+                    if (dst.Audio.Count != 1 || dst.Audio[0].Codec != "mp3") error = "Ergebnis ist kein MP3";
+                    else if (info.Duration > 0 && Math.Abs(info.Duration - dst.Duration) > Math.Max(1.0, info.Duration * 0.005))
+                        error = "Länge passt nicht: " + Fmt.Time(dst.Duration) + " statt " + Fmt.Time(info.Duration);
+                }
+                catch (OperationCanceledException) { FileOps.TryDelete(temp); throw; }
+                catch (Exception e) { error = "Ergebnis nicht lesbar (" + e.Message + ")"; }
+            }
+            if (error != null)
+            {
+                FileOps.TryDelete(temp);
+                throw new Exception(error);
+            }
+            PlaceResults(source, new List<string> { temp }, new List<string> { final });
+            if (opt.Results != null) opt.Results[source] = new List<string> { final };
+            ctx.Log("  OK      " + source + "  ->  " + Path.GetFileName(final) + " [MP3]");
+            return "ok";
+        }
+
+        // Original sichern (oder löschen), dann die geprüften Ergebnisse an ihren Platz; bei Fehlern zurück
+        void PlaceResults(string source, List<string> temps, List<string> finals)
+        {
+            string dir = Path.GetDirectoryName(source);
+            string movedOriginal = null;
+            try
+            {
+                if (opt.DeleteOriginal)
+                {
+                    FileOps.Delete(source);
+                }
+                else
+                {
+                    string storage = Path.Combine(dir, OriginalsFolderName);
+                    Directory.CreateDirectory(storage);
+                    movedOriginal = FileOps.UniquePath(storage, Path.GetFileName(source));
+                    FileOps.Rename(source, movedOriginal);
+                }
+            }
+            catch (Exception e)
+            {
+                foreach (string t in temps) FileOps.TryDelete(t);
+                throw new Exception("Original kann nicht verschoben werden (" + e.Message + ")");
+            }
+
+            for (int i = 0; i < temps.Count; i++)
+            {
+                try
+                {
+                    FileOps.Rename(temps[i], finals[i]);
+                }
+                catch (Exception e)
+                {
+                    // Zurück auf den alten Stand
+                    for (int j = 0; j < i; j++) { try { FileOps.Rename(finals[j], temps[j]); } catch { } }
+                    foreach (string t in temps) FileOps.TryDelete(t);
+                    if (movedOriginal != null) { try { FileOps.Rename(movedOriginal, source); } catch { } }
+                    throw new Exception("Ergebnis kann nicht umbenannt werden (" + e.Message + ")");
+                }
+            }
         }
 
         void Worker(int id, ConcurrentQueue<string> queue)
@@ -282,6 +434,7 @@ namespace Sflix
                 stillCompatible[key] = true;
                 return "compatible";
             }
+            if (IsAudio(source)) return ProcessAudio(workerId, source, key);
 
             MediaInfo info = ctx.Ffmpeg.Probe(source, ctx.Token);
             if (info.VideoIndex < 0)
@@ -339,42 +492,8 @@ namespace Sflix
             }
 
             // Alles geprüft: Original sichern (oder löschen), Ergebnisse an ihren Platz
-            string movedOriginal = null;
-            try
-            {
-                if (opt.DeleteOriginal)
-                {
-                    File.Delete(source);
-                }
-                else
-                {
-                    string storage = Path.Combine(dir, OriginalsFolderName);
-                    Directory.CreateDirectory(storage);
-                    movedOriginal = FileOps.UniquePath(storage, Path.GetFileName(source));
-                    FileOps.Rename(source, movedOriginal);
-                }
-            }
-            catch (Exception e)
-            {
-                foreach (string t in temps) FileOps.TryDelete(t);
-                throw new Exception("Original kann nicht verschoben werden (" + e.Message + ")");
-            }
-
-            for (int i = 0; i < temps.Count; i++)
-            {
-                try
-                {
-                    FileOps.Rename(temps[i], finals[i]);
-                }
-                catch (Exception e)
-                {
-                    // Zurück auf den alten Stand
-                    for (int j = 0; j < i; j++) { try { FileOps.Rename(finals[j], temps[j]); } catch { } }
-                    foreach (string t in temps) FileOps.TryDelete(t);
-                    if (movedOriginal != null) { try { FileOps.Rename(movedOriginal, source); } catch { } }
-                    throw new Exception("Ergebnis kann nicht umbenannt werden (" + e.Message + ")");
-                }
-            }
+            PlaceResults(source, temps, finals);
+            if (opt.Results != null) opt.Results[source] = new List<string>(finals);
 
             StringBuilder results = new StringBuilder();
             for (int i = 0; i < finals.Count; i++)

@@ -242,9 +242,30 @@ namespace Sflix
             }
             else
             {
-                box.SuspendLayout();
-                foreach (LogEntry e in added) if (IsShown(e)) AppendEntry(e);
-                box.ResumeLayout();
+                List<LogEntry> shown = added.FindAll(IsShown);
+                if (shown.Count > 20)
+                {
+                    // Viele Zeilen auf einmal als RTF anhängen: Zeile für Zeile dauert bei tausenden Zeilen Minuten
+                    StringBuilder rtf = new StringBuilder();
+                    RtfHeader(rtf);
+                    bool first = box.TextLength == 0;
+                    foreach (LogEntry e in shown)
+                    {
+                        if (!first) rtf.Append(@"\par ");
+                        first = false;
+                        RtfEntry(rtf, e);
+                    }
+                    rtf.Append("}");
+                    box.SelectionStart = box.TextLength;
+                    box.SelectionLength = 0;
+                    box.SelectedRtf = rtf.ToString();
+                }
+                else
+                {
+                    box.SuspendLayout();
+                    foreach (LogEntry e in shown) AppendEntry(e);
+                    box.ResumeLayout();
+                }
                 ScrollToEnd();
             }
             UpdateCount();
@@ -279,10 +300,7 @@ namespace Sflix
         void Render()
         {
             StringBuilder rtf = new StringBuilder();
-            rtf.Append(@"{\rtf1\ansi\deff0{\fonttbl{\f0 Consolas;}}{\colortbl;");
-            foreach (Color c in new Color[] { TimeColor, NormalColor, ErrorColor, WarningColor, SuccessColor, HeadingColor })
-                rtf.Append(@"\red").Append(c.R).Append(@"\green").Append(c.G).Append(@"\blue").Append(c.B).Append(";");
-            rtf.Append(@"}\f0\fs18 ");
+            RtfHeader(rtf);
             bool first = true;
             int shown = 0;
             foreach (LogEntry e in entries)
@@ -291,19 +309,32 @@ namespace Sflix
                 if (!first) rtf.Append(@"\par ");
                 first = false;
                 shown++;
-                if (e.Text.Trim().Length == 0) continue;
-                rtf.Append(@"\cf1 ").Append(e.Time.ToString("HH:mm:ss", CultureInfo.InvariantCulture)).Append("  ");
-                int color = e.Kind == LogKind.Error ? 3 : e.Kind == LogKind.Warning ? 4 : e.Kind == LogKind.Success ? 5
-                          : e.Kind == LogKind.Heading ? 6 : e.Kind == LogKind.Muted ? 1 : 2;
-                rtf.Append(@"\cf").Append(color).Append(e.Kind == LogKind.Heading ? @"\b " : " ");
-                Escape(rtf, Display(e));
-                if (e.Kind == LogKind.Heading) rtf.Append(@"\b0 ");
+                RtfEntry(rtf, e);
             }
             if (shown == 0 && entries.Count > 0) rtf.Append(@"\cf1 Keine passenden Zeilen.");
             rtf.Append("}");
             box.Rtf = rtf.ToString();
             ScrollToEnd();
             UpdateCount();
+        }
+
+        void RtfHeader(StringBuilder rtf)
+        {
+            rtf.Append(@"{\rtf1\ansi\deff0{\fonttbl{\f0 Consolas;}}{\colortbl;");
+            foreach (Color c in new Color[] { TimeColor, NormalColor, ErrorColor, WarningColor, SuccessColor, HeadingColor })
+                rtf.Append(@"\red").Append(c.R).Append(@"\green").Append(c.G).Append(@"\blue").Append(c.B).Append(";");
+            rtf.Append(@"}\f0\fs18 ");
+        }
+
+        static void RtfEntry(StringBuilder rtf, LogEntry e)
+        {
+            if (e.Text.Trim().Length == 0) return;
+            rtf.Append(@"\cf1 ").Append(e.Time.ToString("HH:mm:ss", CultureInfo.InvariantCulture)).Append("  ");
+            int color = e.Kind == LogKind.Error ? 3 : e.Kind == LogKind.Warning ? 4 : e.Kind == LogKind.Success ? 5
+                      : e.Kind == LogKind.Heading ? 6 : e.Kind == LogKind.Muted ? 1 : 2;
+            rtf.Append(@"\cf").Append(color).Append(e.Kind == LogKind.Heading ? @"\b " : " ");
+            Escape(rtf, Display(e));
+            if (e.Kind == LogKind.Heading) rtf.Append(@"\b0 ");
         }
 
         static void Escape(StringBuilder sb, string text)

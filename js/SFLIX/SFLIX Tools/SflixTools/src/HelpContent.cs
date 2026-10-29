@@ -104,19 +104,45 @@ namespace Sflix
             t.Add(new HelpTopic("Konvertieren",
                 "Wandelt Videos in browserkompatible MP4-Dateien (H.264/AAC) um, bei mehreren Tonspuren je eine Datei. " +
                 "Der Updater nutzt die Grafikkarte (NVIDIA, Intel, AMD), sonst den Prozessor. Originale kommen nach „__konvertiert“.\n" +
-                "- Gleichzeitig: wie viele Videos parallel umgewandelt werden (0 = automatisch).\n" +
+                "- Gleichzeitig: wie viele Dateien parallel umgewandelt werden (0 = automatisch).\n" +
+                "- Auch Musik in MP3 umwandeln: Musik, die der Browser nicht abspielt (z.B. WMA, AIFF, APE, ALAC in M4A), wird zu MP3 mit hoher Qualität, " +
+                "Titel und Interpret bleiben erhalten. Abspielbare Musik (MP3, AAC, FLAC, OGG …) bleibt unverändert.\n" +
                 "- Originale löschen statt verschieben."));
 
             t.Add(new HelpTopic("Medien prüfen",
                 "Prüft die Medien in den gewählten Ordnern und listet Probleme auf:\n" +
-                "- Nicht abspielbar: Format oder Codec, den der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3/DTS-Ton).\n" +
+                "- Nicht abspielbar: Format oder Codec, den der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3/DTS-Ton, WMA, ALAC).\n" +
                 "- Defekt: ffprobe kann die Datei nicht lesen.\n" +
                 "- Leer: Datei mit 0 Byte.\n" +
                 "- Ohne Vorschaubild.\n" +
-                "Im Ergebnis hakst du Einträge an und wählst „Ausgewählte konvertieren“ oder „Vorschaubilder erstellen“. Danach wird neu eingelesen."));
+                "Im Ergebnis steht jede Datei einmal. In den ersten drei Spalten wählst du die Aktionen:\n" +
+                "- Papierkorb: löschen. Die Datei kommt samt Vorschaubild nach „__gelöscht“, endgültig löscht sie „Ablagen leeren“. Schliesst die anderen Aktionen aus.\n" +
+                "- Pfeile: konvertieren (Videos zu MP4, Musik zu MP3).\n" +
+                "- Bild: Vorschaubild erstellen (nach dem Konvertieren für die neue Datei). Geht zusammen mit Konvertieren.\n" +
+                "Vorausgewählt: defekte und leere Dateien löschen, sonst konvertieren und Vorschaubilder erstellen. " +
+                "Ein Klick auf ein Kästchen schaltet um; für markierte Zeilen geht das auch mit Entf, K und V. Du kannst nach Art filtern und nach " +
+                "Datei oder Ordner suchen, die Auswahl bleibt erhalten. „Vorschlag“ und „Keine“ gelten für die angezeigten Zeilen. " +
+                "„Ausführen“ startet alle gewählten Dateioperationen, danach wird neu eingelesen."));
+
+            t.Add(new HelpTopic("Tabellen",
+                "Alle Tabellen im Updater (Ergebnisse, Vorschau, Vergleich) lassen sich sortieren: Klick auf den Spaltenkopf sortiert aufsteigend, " +
+                "ein zweiter Klick absteigend. Ein kleines Dreieck zeigt die Spalte. Grösse und Dauer werden als Zahl sortiert, Namen mit Zahlen natürlich " +
+                "(„Folge 2“ vor „Folge 10“). In Tabellen mit Gruppen (z.B. Duplikate) wird innerhalb jeder Gruppe sortiert."));
+
+            t.Add(new HelpTopic("NAS und Netzlaufwerke",
+                "Die Tools arbeiten auch auf einem NAS. Schreibgeschützte Dateien verschieben, ersetzen und löschen sie trotzdem " +
+                "(der Schreibschutz bleibt beim Verschieben erhalten). Ist eine Datei kurz geöffnet, wird es nach einer Pause erneut versucht.\n" +
+                "Meldet das Protokoll trotzdem „Zugriff verweigert“:\n" +
+                "- Die Datei ist geöffnet, z.B. in STEFFLIX im Browser, in der Vorschau des Explorers oder vom Indexdienst des NAS. Schliessen und erneut starten.\n" +
+                "- Auf dem NAS fehlt das Recht „Löschen“. Wo das NAS Windows-Rechte speichert, ergänzt der Updater es selbst (steht dann im Protokoll). " +
+                "NAS mit Linux-Rechten (z.B. QNAP) speichern es nicht pro Datei: Gehört die Datei einem anderen Benutzer, etwa dem Administrator " +
+                "(Dateien aus der Download-Station oder dem Dateimanager des NAS), im NAS den Besitzer bzw. die Rechte des Ordners neu setzen und auf alle Unterordner anwenden.\n" +
+                "- Der Updater läuft als Administrator: Dann sind verbundene Netzlaufwerke (z.B. M:) oft nicht oder mit anderen Zugangsdaten verbunden. " +
+                "Den Updater normal starten."));
 
             t.Add(new HelpTopic("Ablagen leeren",
                 "Die Tools legen Originale und Teile in Ablagen ab, statt sie zu löschen: „__teile“, „__konvertiert“, „__gelöscht“, „__original“, „__ersetzt“ und „__duplikate“. " +
+                "Unter dem Tool steht, wie viel Speicher die Ablagen belegen (wird im Hintergrund berechnet). " +
                 "„Ablagen leeren“ zeigt sie mit Grösse an und löscht nach Bestätigung endgültig. Das geht nur innerhalb des Installationsordners, " +
                 "Verknüpfungen werden nie verfolgt oder gelöscht."));
 
@@ -165,7 +191,7 @@ namespace Sflix
                 "# Ablagen der Tools (Ordner mit „__“)\n" +
                 "- __teile: Teile nach dem Zusammenführen\n" +
                 "- __konvertiert: Originale nach dem Konvertieren oder Importieren\n" +
-                "- __gelöscht: Vorschaubilder ohne Medium\n" +
+                "- __gelöscht: Vorschaubilder ohne Medium und bei „Medien prüfen“ gelöschte Dateien\n" +
                 "- __original: Originale verkleinerter Vorschaubilder\n" +
                 "- __ersetzt: beim Umbenennen ersetzte Dateien\n" +
                 "- __duplikate: aussortierte Duplikate\n\n" +

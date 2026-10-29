@@ -1,0 +1,26 @@
+# Persoenliche und geheime Daten (nie pushen)
+sflix_sys/install.js
+sflix_sys/license.js
+SFLIX Tools/Lizenz/lizenzen.json
+SFLIX Tools/Android/signing/
+
+# Lokale Dateien des Updaters
+sflix_sys/renamed.js
+sflix_sys/updater_settings.json
+sflix_sys/updater_info.js
+sflix_sys/folgen_cache.json
+sflix_sys/folgen_rueckgaengig.json
+sflix_sys/updater.log
+sflix_sys/ffmpeg/
+*.old
+*.new
+
+# Build der Android-App
+SFLIX Tools/Android/.gradle/
+SFLIX Tools/Android/app/build/
+SFLIX Tools/Android/build/
+SFLIX Tools/Android/dist/
+SFLIX Tools/Android/local.properties
+
+# Build des Updaters (Zwischenprodukte)
+SFLIX Tools/SflixTools/obj/

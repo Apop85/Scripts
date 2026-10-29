@@ -691,14 +691,8 @@ function createMediaElement(mediaUrl) {
     element.controls = useNativeControls();
     element.setAttribute("playsinline", "");
 
-    // Gespeicherte Lautstärke laden
-    var savedVolume = parseFloat(getData("mediaVolume"));
-    if (isNaN(savedVolume)) {
-        savedVolume = 1;
-    } else if (savedVolume == 0) {
-        savedVolume = 0.2;
-    }
-    element.volume = Math.min(1, Math.max(0, savedVolume));
+    // Gespeicherte Lautstärke laden (je Ordner, siehe getVolumeFor)
+    element.volume = getVolumeFor(mediaUrl);
 
     element.addEventListener("error", handleMediaError);
     appendMediafunctions(element);
@@ -868,6 +862,8 @@ function loadDecodedMedia(decodedData, pushState) {
         if (node.getAttribute("src") !== medialocation) {
             node.src = medialocation;
             if (node.tagName != "IMG") {
+                // Lautstärke des Ordners (bzw. des nächsten darüber) übernehmen
+                node.volume = getVolumeFor(medialocation);
                 onPlayerMediaChanged(node);
             }
         }
@@ -1205,17 +1201,34 @@ function appendMediafunctions(node) {
         }
         // Lese Zeitstempel des ausgewählten Mediums aus
         var pastTimestamp = readTimestamp(node);
+        var resumed = false;
         if (pastTimestamp != null) {
             // Prüfe Zeitstempel für Medien die länger als 10 Minuten sind
             if (this.duration >= 600 && 100 / this.duration * pastTimestamp < 95) {
                 // Setze Abspielzeitpunkt auf Zeitstempel
                 node.currentTime = pastTimestamp;
+                resumed = true;
             } else {
                 // Lösche Zeitstempel
                 removeData(getTimestampKey(node));
             }
         }
+        // Intro überspringen: nur Videos und nur beim Start von vorne
+        if (!resumed && node.tagName == "VIDEO") {
+            var intro = getIntroFor(node.dataset.mediaPath).value;
+            if (intro > 0 && intro < this.duration - 1) {
+                node.currentTime = intro;
+            }
+        }
     };
+
+    // Lautstärke sofort im Ordner des Mediums merken (Stummschalten wird nicht gespeichert).
+    // Gilt auch für die Browser-Steuerung.
+    node.addEventListener("volumechange", function () {
+        if (!node.muted && node.volume > 0) {
+            saveVolumeFor(node.dataset.mediaPath, node.volume);
+        }
+    });
 
     // Zu Ende abgespielte Videos gelten als gesehen
     node.addEventListener("ended", function () {
@@ -1241,7 +1254,6 @@ function appendMediafunctions(node) {
         // Speichere Videoposition alle 10 Sek
         if (currentTime != 0 && currentTimestamp != currentTime && currentTime % 10 == 0) {
             setData(timestampKey, currentTime);
-            setData("mediaVolume", player.volume);
         }
 
         // Videos ab 95 % als gesehen markieren
@@ -1439,7 +1451,7 @@ function buildPlayerShell(media) {
     left.append(ui.prevButton, ui.playButton, ui.nextButton, ui.backButton, ui.forwardButton, ui.volumeGroup, ui.time);
 
     // Übergang festlegen: verbleibende Zeit als "Dauer bis Übergang" übernehmen
-    ui.transitionButton = createControlButton("ctrlTransition", "transition", "Übergang hier: verbleibende Zeit als Dauer bis Übergang übernehmen");
+    ui.transitionButton = createControlButton("ctrlTransition", "transition", "Abspann ab hier: verbleibende Zeit als Dauer bis Übergang übernehmen");
     ui.autoplayButton = createControlButton("ctrlAutoplay", "autoplay", "Autoplay");
     // Anzahl der noch folgenden Medien bzw. ∞ (nur bei aktivem Autoplay)
     ui.autoplayBadge = createPlayerElement("span", "ctrlBadge");
@@ -1543,21 +1555,46 @@ function showPlayerToast(ui, text) {
     }, 4000);
 }
 
-// "Übergang hier": verbleibende Zeit für die gewählte Ebene speichern
+// Videos: In der ersten Hälfte legt der Knopf das Intro fest, in der zweiten den Abspann.
+// Musik hat kein Intro.
+function isIntroPosition(ui) {
+    var media = ui.media;
+    return !ui.isAudio && hasMediaDuration(media) && media.currentTime < media.duration / 2;
+}
+
+function updateTransitionButton(ui) {
+    var intro = isIntroPosition(ui);
+    if (ui.transitionButton.dataset.mode === (intro ? "intro" : "outro")) {
+        return;
+    }
+    ui.transitionButton.dataset.mode = intro ? "intro" : "outro";
+    setControlButton(ui.transitionButton, "transition", intro
+        ? "Intro bis hier: abgelaufene Zeit als Intro überspringen"
+        : "Abspann ab hier: verbleibende Zeit als Dauer bis Übergang übernehmen");
+}
+
+// "Intro bis hier" bzw. "Abspann ab hier": Zeit für die gewählte Ebene speichern
 function setTransitionFromPlayer(ui) {
     var media = ui.media;
     if (!hasMediaDuration(media) || currentMediaLocation == null) {
         return;
     }
-    var seconds = Math.max(0, Math.floor(media.duration - media.currentTime));
     var scope = ui.menuScopeMedia === currentMediaLocation && ui.menuScope.options.length > 0
         ? ui.menuScope.value
         : getDefaultTransitionScope(currentMediaLocation);
-    setTransition(scope, seconds);
-    refreshTransitionForMedia(currentMediaLocation);
-    var text = "Dauer bis Übergang für «" + getTransitionLabel(scope) + "»: " + seconds + " s";
-    if (ui.isAudio && seconds > 10) {
-        text += " (bei Musik wird höchstens 11 s vor dem Ende gewechselt)";
+    var text;
+    if (isIntroPosition(ui)) {
+        var introSeconds = Math.max(0, Math.floor(media.currentTime));
+        setFolderValue("intro", scope, introSeconds);
+        text = "Intro überspringen für «" + getTransitionLabel(scope) + "»: " + introSeconds + " s";
+    } else {
+        var seconds = Math.max(0, Math.floor(media.duration - media.currentTime));
+        setTransition(scope, seconds);
+        refreshTransitionForMedia(currentMediaLocation);
+        text = "Dauer bis Übergang für «" + getTransitionLabel(scope) + "»: " + seconds + " s";
+        if (ui.isAudio && seconds > 10) {
+            text += " (bei Musik wird höchstens 11 s vor dem Ende gewechselt)";
+        }
     }
     showPlayerToast(ui, text);
     if (isPlayerMenuOpen(ui)) {
@@ -1574,6 +1611,8 @@ function buildAutoplayMenu(ui) {
     ui.menuInfinite = addMenuSwitch(menu, "Unbegrenzt", "Bis zum Ende der Playliste");
     ui.menuAmount = addMenuNumber(menu, "Anzahl abzuspielender Medien");
     ui.menuDuration = addMenuNumber(menu, "Dauer bis Übergang (Sekunden)");
+    // Intro überspringen gibt es nur bei Videos
+    ui.menuIntro = ui.isAudio ? null : addMenuNumber(menu, "Intro überspringen (Sekunden)");
     ui.menuScope = addMenuSelect(menu, "Gilt für", "Auch für Unterordner ohne eigenen Wert");
     ui.menuScopeMedia = null;
 
@@ -1599,8 +1638,18 @@ function buildAutoplayMenu(ui) {
     ui.menuDuration.addEventListener("change", function () {
         saveTransitionFromFields(ui.menuDuration, ui.menuScope);
     });
+    if (ui.menuIntro != null) {
+        ui.menuIntro.addEventListener("change", function () {
+            var seconds = Math.min(transitionMax, Math.max(0, parseInt(ui.menuIntro.value, 10) || 0));
+            ui.menuIntro.value = seconds;
+            setFolderValue("intro", ui.menuScope.value, seconds);
+        });
+    }
     ui.menuScope.addEventListener("change", function () {
         ui.menuDuration.value = getTransitionValueAt(ui.menuScope.value, currentMediaLocation);
+        if (ui.menuIntro != null) {
+            ui.menuIntro.value = getFolderValueAt("intro", ui.menuScope.value);
+        }
     });
     return menu;
 }
@@ -1766,10 +1815,6 @@ function bindPlayerEvents(ui) {
     });
     media.addEventListener("volumechange", function () {
         updateVolumeControls(ui);
-        // Lautstärke sofort merken (Stummschalten wird nicht gespeichert)
-        if (!media.muted && media.volume > 0) {
-            setData("mediaVolume", media.volume);
-        }
     });
     media.addEventListener("ratechange", function () {
         updateSpeedButtons(ui);
@@ -2079,6 +2124,9 @@ function refreshPlayerMenu(ui) {
     // "Gilt für": beim Öffnen die Vorauswahl, bei offenem Menü die gewählte Ebene behalten
     var keepScope = ui.menuScopeMedia === currentMediaLocation && isPlayerMenuOpen(ui) ? ui.menuScope.value : null;
     fillTransitionFields(ui.menuDuration, ui.menuScope, keepScope);
+    if (ui.menuIntro != null) {
+        ui.menuIntro.value = getFolderValueAt("intro", ui.menuScope.value);
+    }
     ui.menuScopeMedia = currentMediaLocation;
     ui.menuNative.checked = useNativeControls();
     updateSpeedButtons(ui);
@@ -2128,6 +2176,9 @@ function updateProgress(ui) {
     ui.progress.setAttribute("aria-valuemax", String(Math.round(duration)));
     ui.progress.setAttribute("aria-valuenow", String(Math.round(current)));
     ui.progress.setAttribute("aria-valuetext", formatMediaTime(current) + " von " + formatMediaTime(duration));
+    if (ui.transitionButton) {
+        updateTransitionButton(ui);
+    }
 }
 
 // Flüssige Zeitleiste während der Wiedergabe (timeupdate kommt nur ca. 4x pro Sekunde)

@@ -60,7 +60,9 @@ namespace Sflix
                 JsonObject v = o as JsonObject;
                 if (v == null || v.Str("version") == null) continue;
                 PatchVersion pv = new PatchVersion();
-                pv.Version = v.Str("version");
+                // Ab STEFFLIX 2.5.0 steht die Version als x.y.z in "name", "version" ist die alte Zahl
+                pv.Version = WebVersion.ToName(v.Str("name") ?? v.Str("version"));
+                if (pv.Version == null) continue;
                 if (v.Arr("items") != null)
                     foreach (object i in v.Arr("items"))
                     {
@@ -77,24 +79,18 @@ namespace Sflix
         public static System.Collections.Generic.List<PatchVersion> Select(System.Collections.Generic.List<PatchVersion> all, string installed, out bool newer)
         {
             System.Collections.Generic.List<PatchVersion> result = new System.Collections.Generic.List<PatchVersion>();
-            double local = Num(installed);
-            if (local > 0)
-                foreach (PatchVersion v in all) if (Num(v.Version) > local) result.Add(v);
+            string local = WebVersion.ToName(installed);
+            if (local != null)
+                foreach (PatchVersion v in all) if (WebVersion.Compare(v.Version, local) > 0) result.Add(v);
             newer = result.Count > 0;
             if (!newer && all.Count > 0)
             {
                 PatchVersion latest = all[0];
-                foreach (PatchVersion v in all) if (Num(v.Version) > Num(latest.Version)) latest = v;
+                foreach (PatchVersion v in all) if (WebVersion.Compare(v.Version, latest.Version) > 0) latest = v;
                 result.Add(latest);
             }
-            result.Sort(delegate(PatchVersion a, PatchVersion b) { return Num(b.Version).CompareTo(Num(a.Version)); });
+            result.Sort(delegate(PatchVersion a, PatchVersion b) { return WebVersion.Compare(b.Version, a.Version); });
             return result;
-        }
-
-        static double Num(string v)
-        {
-            double d;
-            return double.TryParse(v ?? "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out d) ? d : 0;
         }
 
         // HTML-Reste entfernen (news.txt enthält z.B. &amp;)
@@ -156,11 +152,51 @@ namespace Sflix
             return u;
         }
 
-        // version.js: "var version = 2.02;"
+        // version.js: ab 2.5.0 'var versionName = "2.5.0";', bis 2.04 nur 'var version = 2.04;'.
+        // Ergebnis immer x.y.z (2.04 -> 2.4.0).
         public static string ParseWebVersion(string text)
         {
-            Match m = Regex.Match(text ?? "", @"version\s*=\s*[""']?(\d+(?:\.\d+)*)");
-            return m.Success ? m.Groups[1].Value : null;
+            Match n = Regex.Match(text ?? "", @"\bversionName\s*=\s*[""'](\d+(?:\.\d+)*)[""']");
+            if (n.Success) return WebVersion.ToName(n.Groups[1].Value);
+            Match m = Regex.Match(text ?? "", @"\bversion\s*=\s*[""']?(\d+(?:\.\d+)*)");
+            return m.Success ? WebVersion.ToName(m.Groups[1].Value) : null;
+        }
+    }
+
+    // STEFFLIX-Versionen: ab 2.5.0 x.y.z, bis 2.04 eine Zahl. Umrechnung wie
+    // "SFLIX Tools\Release\versioning.py": alte Zahl = x + y/100 + z/10000.
+    public static class WebVersion
+    {
+        // "2.04" -> "2.4.0", "1.323" -> "1.32.3", "2.0501" -> "2.5.1"; x.y.z bleibt. null bei Unsinn.
+        public static string ToName(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return null;
+            string[] parts = text.Trim().Split('.');
+            int major, minor = 0, patch = 0;
+            if (!int.TryParse(parts[0], out major)) return null;
+            if (parts.Length >= 3)
+            {
+                if (!int.TryParse(parts[1], out minor) || !int.TryParse(parts[2], out patch)) return null;
+                return major + "." + minor + "." + patch;
+            }
+            string dec = parts.Length > 1 ? parts[1] : "";
+            if (dec.Length > 0 && !Regex.IsMatch(dec, @"^\d+$")) return null;
+            if (dec.Length <= 2) minor = int.Parse(dec.PadRight(2, '0'));
+            else if (dec.Length == 3) { minor = int.Parse(dec.Substring(0, 2)); patch = int.Parse(dec.Substring(2, 1)); }
+            else { minor = int.Parse(dec.Substring(0, 2)); patch = int.Parse(dec.Substring(2, 2)); }
+            return major + "." + minor + "." + patch;
+        }
+
+        // positiv, wenn a neuer ist
+        public static int Compare(string a, string b)
+        {
+            string[] pa = (ToName(a) ?? "0.0.0").Split('.'), pb = (ToName(b) ?? "0.0.0").Split('.');
+            for (int i = 0; i < 3; i++)
+            {
+                int d = int.Parse(pa[i]).CompareTo(int.Parse(pb[i]));
+                if (d != 0) return d;
+            }
+            return 0;
         }
     }
 

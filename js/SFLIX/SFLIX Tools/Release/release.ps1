@@ -13,7 +13,8 @@
 #                 änderbar), updateStefflix.exe gebaut und hierher kopiert.
 #   2. ffmpeg     Gibt es eine neuere stabile ffmpeg-Version, kann ffmpeg.json aktualisiert werden.
 #   3. STEFFLIX   Wurden Dateien der Weboberfläche geändert, kann die Version in version.js
-#                 erhöht und ein Changelog-Eintrag in news.txt ergänzt werden.
+#                 erhöht und ein Changelog-Eintrag in news.txt ergänzt werden. Format x.y.z
+#                 (ab 2.5.0), version.js erhält zusätzlich die alte Zahl (siehe versioning.py).
 #   4. Prüfen     check_release.py, create_news.py, create_checksums.py
 #   5. Übersicht  welche Dateien sich geändert haben und gepusht werden müssen
 #
@@ -137,6 +138,39 @@ function Set-ProgramVersion([string]$programCs, [version]$v) {
 }
 
 function Short([version]$v) { "$($v.Major).$($v.Minor).$($v.Build)" }
+
+# STEFFLIX-Versionen (gleiche Regeln wie versioning.py): ab 2.5.0 x.y.z, dazu die alte Zahl
+# x + y/100 + z/10000 für Installationen bis 2.04 ("2.5.0" -> "2.05", "2.5.1" -> "2.0501")
+function Convert-LegacyVersion([string]$text) {
+    $parts = $text.Trim().Split('.')
+    if ($parts.Count -ge 3) { return "$([int]$parts[0]).$([int]$parts[1]).$([int]$parts[2])" }
+    $dec = if ($parts.Count -gt 1) { $parts[1] } else { '' }
+    if ($dec.Length -le 2) { $minor = [int]($dec.PadRight(2, '0')); $patch = 0 }
+    elseif ($dec.Length -eq 3) { $minor = [int]$dec.Substring(0, 2); $patch = [int]$dec.Substring(2, 1) }
+    else { $minor = [int]$dec.Substring(0, 2); $patch = [int]$dec.Substring(2, 2) }
+    return "$([int]$parts[0]).$minor.$patch"
+}
+
+function Get-WebVersionName([string]$vjs) {
+    $n = [regex]::Match($vjs, '\bversionName\s*=\s*["'']([\d.]+)["'']')
+    if ($n.Success) { return Convert-LegacyVersion $n.Groups[1].Value }
+    $l = [regex]::Match($vjs, '\bversion\s*=\s*([\d.]+)')
+    if ($l.Success) { return Convert-LegacyVersion $l.Groups[1].Value }
+    return $null
+}
+
+function Get-LegacyNumber([string]$name) {
+    $v = [version]$name
+    $s = "$($v.Major)." + $v.Minor.ToString('00')
+    if ($v.Build -gt 0) { $s += $v.Build.ToString('00') }
+    return $s
+}
+
+function Get-VersionJsText([string]$name) {
+    "// Alte Zahl zuerst: STEFFLIX und Updater bis 2.04 lesen nur diese Zeile`n" +
+    "var version = $(Get-LegacyNumber $name);`n" +
+    "var versionName = `"$name`";`n"
+}
 
 # Nur HTML-Sonderzeichen kodieren, Umlaute bleiben wie in den bisherigen Einträgen direkt stehen
 function Html([string]$s) { $s.Replace('&', '&amp;').Replace('<', '&lt;').Replace('>', '&gt;') }
@@ -267,9 +301,8 @@ try {
     $versionJs = Join-Path $Root 'sflix_sys\version.js'
     $newsTxt = Join-Path $Root 'sflix_sys\news.txt'
     $vjs = [IO.File]::ReadAllText($versionJs)
-    $m = [regex]::Match($vjs, 'version\s*=\s*(\d+)\.(\d+)')
-    if (-not $m.Success) { Fail 'Version in version.js nicht gefunden.' }
-    $webVersion = "$($m.Groups[1].Value).$($m.Groups[2].Value)"
+    $webVersion = Get-WebVersionName $vjs
+    if (-not $webVersion) { Fail 'Version in version.js nicht gefunden.' }
 
     # Geänderte Dateien der Weboberfläche seit dem letzten Release (checksums.json)
     $webChanged = @()
@@ -289,13 +322,13 @@ try {
     if ($Auto) { Info 'Automatischer Modus: Version und Changelog bleiben unverändert.' }
     else { $bumpWeb = Ask-YesNo 'STEFFLIX-Version erhöhen und Changelog ergänzen?' ($webChanged.Count -gt 0 -and $webChanged -notcontains 'sflix_sys/version.js') }
     if ($bumpWeb) {
-        $major = [int]$m.Groups[1].Value; $minor = [int]$m.Groups[2].Value
-        $minorDigits = $m.Groups[2].Value.Length
-        $next = $minor + 1
-        if ($next -ge [math]::Pow(10, $minorDigits)) { $suggestWeb = "$($major + 1).$('0' * $minorDigits)" }
-        else { $suggestWeb = "$major." + $next.ToString().PadLeft($minorDigits, '0') }
-        $newWeb = Ask-Text 'Neue STEFFLIX-Version' $suggestWeb '^\d+\.\d+$' 'z.B. 2.03'
-        if ([double]::Parse($newWeb, [Globalization.CultureInfo]::InvariantCulture) -le [double]::Parse($webVersion, [Globalization.CultureInfo]::InvariantCulture)) {
+        # Vorschlag: nächste Minor-Version (2.5.0 -> 2.6.0)
+        $cur = [version]$webVersion
+        $suggestWeb = "$($cur.Major).$($cur.Minor + 1).0"
+        Info 'Tipp: 2.5.1 = kleine Korrektur, 2.6.0 = neue Funktionen, 3.0.0 = grosser Umbau (y und z unter 100).'
+        $newWeb = Ask-Text 'Neue STEFFLIX-Version' $suggestWeb '^\d+\.\d{1,2}\.\d{1,2}$' 'z.B. 2.6.0'
+        $newWeb = Short ([version]$newWeb)
+        if ([version]$newWeb -le $cur) {
             Warn "$newWeb ist nicht höher als $webVersion."
             if (-not (Ask-YesNo 'Trotzdem fortfahren?' $false)) { Fail 'Abgebrochen.' }
         }
@@ -349,9 +382,8 @@ try {
             [IO.File]::WriteAllText($newsTxt, $news.Insert($pos, $block), $Utf8)
         }
 
-        # version.js
-        $vjsNew = $vjs.Substring(0, $m.Index) + "version = $newWeb" + $vjs.Substring($m.Index + $m.Length)
-        [IO.File]::WriteAllText($versionJs, $vjsNew, $Utf8)
+        # version.js: alte Zahl zuerst (für Installationen bis 2.04), dann x.y.z
+        [IO.File]::WriteAllText($versionJs, (Get-VersionJsText $newWeb), $Utf8)
         Good "STEFFLIX-Version $newWeb, $($entries.Count) Changelog-Eintrag/Einträge"
         $released += "STEFFLIX $newWeb"
     } else {

@@ -98,14 +98,20 @@ Beim Einlesen der Daten schneidet `updateStefflix.exe` zu grosse Bilder auf 480x
 Die ausgewählten Aufgaben laufen immer in dieser Reihenfolge ab:
 
 - **Update**: STEFFLIX-Dateien und den Updater selbst von GitHub aktualisieren. Installiert wird nur, wenn alle Dateien vollständig und gültig heruntergeladen wurden.
-- **Ablagen leeren**: Die Ablageordner der Werkzeuge (Ordner, deren Name mit `__` beginnt, z.B. `__teile`, `__konvertiert`, `__gelöscht` und `__original`) endgültig löschen. Vorher wird angezeigt, was gelöscht wird. Nur innerhalb des STEFFLIX-Ordners möglich.
-- **Folgen umbenennen**: Die Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen, z.B. `Serie - S01E02 - Titel.mp4` im Ordner `Staffel 01`. Erkannt werden Namen mit `S01E02` oder `1x02`. Doppelfolgen behalten alle Nummern, z.B. `Serie - S01E02E03 - Titel.mp4`. Vorher werden alle Änderungen angezeigt, danach lässt sich der letzte Lauf rückgängig machen. Geladene Folgenlisten werden gespeichert, beim nächsten Lauf lässt sich die gespeicherte Liste verwenden oder neu laden.
+- **Ablagen leeren**: Die Ablageordner der Werkzeuge (Ordner, deren Name mit `__` beginnt, z.B. `__teile`, `__konvertiert`, `__gelöscht`, `__original` und `__duplikate`) endgültig löschen. Vorher wird angezeigt, was gelöscht wird. Nur innerhalb des STEFFLIX-Ordners möglich.
+- **Folgen umbenennen**: Die Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen, z.B. `Serie - S01E02 - Titel.mp4` im Ordner `Staffel 01`. Erkannt werden Namen mit `S01E02` oder `1x02`. Doppelfolgen behalten alle Nummern, z.B. `Serie - S01E02E03 - Titel.mp4`. Vorher werden alle Änderungen angezeigt; bei mehreren Dateien für eine Folge oder einem vorhandenen Ziel vergleicht die Vorschau Grösse, Auflösung und Dauer. Danach lässt sich der letzte Lauf rückgängig machen. Geladene Folgenlisten werden gespeichert, beim nächsten Lauf lässt sich die gespeicherte Liste verwenden oder neu laden.
+- **Duplikate finden**: Identische Dateien, gleiche Folgen einer Serie (`S01E01` = `1x01` = `S1E1`) und gleiche Dateinamen finden (Preview- und Ablage-Ordner zählen nicht). Ein Vergleich zeigt Grösse, Auflösung, Dauer und Codecs, vorausgewählt bleibt die bessere Fassung. Aussortierte Dateien kommen nach `__duplikate`, Favoriten und Fortschritt gehen auf die behaltene Datei über.
 - **Gesplittete Medien zusammenführen**: Videos wie "Titel pt1" und "Titel pt2" zu einer Datei zusammenfügen. Die Teile werden vorher in einer Liste ausgewählt, auf Wunsch wird neu kodiert. Die Teile können danach nach `__teile` verschoben werden.
 - **Videos für SFLIX konvertieren**: Videos in browserkompatible MP4 (H.264/AAC) umwandeln. Die MP4 ersetzt das Original im selben Ordner, das Original kommt nach `__konvertiert` (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.
+- **Medien prüfen**: Medien finden, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), dazu defekte und leere Dateien sowie Medien ohne Vorschaubild. Im Ergebnis lassen sie sich gleich konvertieren bzw. mit Vorschaubild versehen.
 - **Vorschaubilder erstellen**: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach `Preview\__gelöscht`.
 - **Daten einlesen**: Medien neu einlesen, ungültige Zeichen in Datei- und Ordnernamen korrigieren und zu grosse Vorschaubilder verkleinern. Ordner, deren Name mit `__` beginnt, sowie System- und versteckte Ordner werden ignoriert. Mit dem Schalter "Alle Ordner einlesen" wird alles eingelesen. Ist er aus, lassen sich einzelne Ordner wählen, und nur diese werden aktualisiert. Das geht deutlich schneller bei grossen Mediatheken. Nach einem Import liest der Updater automatisch nur den Zielordner ein.
 
-Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren durchsuchen mit "Alles" den ganzen STEFFLIX-Ordner, sonst nur die gewählten Ordner. Danach werden nur die betroffenen Ordner neu eingelesen. Das dafür nötige Programm ffmpeg lädt der Updater beim ersten Bedarf selbst herunter.
+Die Tools durchsuchen mit "Alles" den ganzen STEFFLIX-Ordner, sonst nur die gewählten Ordner. Danach werden nur die betroffenen Ordner neu eingelesen. Das dafür nötige Programm ffmpeg installiert das Setup auf Wunsch gleich mit, sonst lädt es der Updater beim ersten Bedarf. Es liegt je Benutzer in `%LOCALAPPDATA%\STEFFLIX\ffmpeg`, der Ordner lässt sich unter Tools › Einstellungen ändern.
+
+Gibt es eine Datei schon (Importer, Folgen umbenennen), zeigt ein Vergleich beide Dateien mit Grösse, Auflösung, Dauer, Video/Ton und Datum, bevor du ersetzt oder überspringst.
+
+Der Reiter **Hilfe** im Updater (auch mit F1) erklärt alle Funktionen und die Befehle für die Kommandozeile, z.B. `updateStefflix.exe --headless data` für die Windows-Aufgabenplanung. Das Protokoll ("Details") lässt sich mit "In Datei speichern" nach `sflix_sys\updater.log` schreiben; ohne Oberfläche geschieht das immer.
 
 ## Autoplay
 
@@ -115,8 +121,9 @@ Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste 
 - **Unbegrenzt**: spielt ohne feste Anzahl weiter, bis das Ende der Playliste erreicht ist.
 - **Anzahl abzuspielender Medien**: wie viele Medien nacheinander abgespielt werden. Die Zahl wird mit jedem Medium heruntergezählt, bei 0 hält Autoplay an. Bei "Unbegrenzt" wird sie nicht verwendet.
 - **Dauer bis Übergang (Sekunden)**: Bei Videos und Musik wechselt STEFFLIX so viele Sekunden vor dem Ende (plus etwa eine Sekunde) zum nächsten Medium, bei Musik höchstens 11 Sekunden vorher. Bilder bleiben so viele Sekunden plus 11 Sekunden sichtbar.
-- **Gilt für**: Die Dauer wird pro Ordner gespeichert und gilt auch für alle Unterordner ohne eigenen Wert, z.B. für eine ganze Serie und abweichend für eine Staffel. Ohne Eintrag gilt 0. Alle Einträge stehen unter Einstellungen › Wiedergabe.
-- **Übergang hier** (Stoppuhr in der Player-Leiste): übernimmt die verbleibende Zeit des Mediums als Dauer bis Übergang, z.B. beim Beginn des Abspanns.
+- **Intro überspringen (Sekunden)**: nur Videos. Beginnt ein Video von vorne, startet es so viele Sekunden später, z.B. nach dem Vorspann. Wird es an einer gespeicherten Stelle fortgesetzt, gilt diese.
+- **Gilt für**: Intro und Dauer werden pro Ordner gespeichert und gelten auch für alle Unterordner ohne eigenen Wert, z.B. für eine ganze Serie und abweichend für eine Staffel. Ohne Eintrag gilt 0. Alle Einträge stehen unter Einstellungen › Wiedergabe.
+- **Intro bis hier / Abspann ab hier** (Stoppuhr in der Player-Leiste): In der ersten Hälfte eines Videos übernimmt der Knopf die abgelaufene Zeit als Intro, in der zweiten Hälfte (und bei Musik) die verbleibende Zeit als Dauer bis Übergang, z.B. beim Beginn des Abspanns.
 
 ## Player
 
@@ -185,13 +192,13 @@ Ist im Browser eingestellt, dass er beim Schliessen die Chronik oder die Website
 3. Folgenden Eintrag hinzufügen: `file:///*`
 ## Einstellungen
 
-Im Menü unter "Einstellungen" lassen sich festlegen: Kachelgrösse (Klein, Mittel, Gross), Kacheln pro Zeile (fest oder automatisch nach Fensterbreite), Markierungen auf den Kacheln ("Gesehen", "Letzte Folge"), Animationen reduzieren, Startbildschirm überspringen, alphabetische Gruppen auf Ordnerseiten (A–D, E–H … mit Sprungleiste, Bilder und Musik ausnehmbar), Artikel beim Sortieren ignorieren ("Der Pate" unter P), Ordner getrennt von Medien, die Anzahl Einträge bei "Weiterschauen", Update-Hinweise, die Browser-Steuerung und die Dauer bis Übergang je Ordner. Änderungen gelten sofort und nur im verwendeten Browser.
+Im Menü unter "Einstellungen" lassen sich festlegen: Kachelgrösse (Klein, Mittel, Gross), Kacheln pro Zeile (fest oder automatisch nach Fensterbreite), Markierungen auf den Kacheln ("Gesehen", "Letzte Folge"), Animationen reduzieren, Startbildschirm überspringen, alphabetische Gruppen auf Ordnerseiten (A–D, E–H … mit Sprungleiste, Bilder und Musik ausnehmbar), Artikel beim Sortieren ignorieren ("Der Pate" unter P), Ordner getrennt von Medien, die Anzahl Einträge bei "Weiterschauen", Update-Hinweise, die Browser-Steuerung sowie Intro und Abspann je Ordner. Änderungen gelten sofort und nur im verwendeten Browser. Die Lautstärke merkt sich STEFFLIX je Ordner (Album, Staffel).
 
-Den Lizenzschlüssel für das Feedbackformular unter Einstellungen › Lizenz eingeben. Mit gültigem Schlüssel erscheint im Menü der Eintrag "Feedback".
+Den Lizenzschlüssel für das Feedbackformular im Updater unter "Lizenz" eingeben (oder schon im Setup). Er gilt dann für diese Installation in allen Browsern, mit bestätigtem Schlüssel erscheint im Menü der Eintrag "Feedback". Im Updater heisst der Reiter danach ebenfalls "Feedback". Schlüssel bis STEFFLIX 2.4.0 sind nicht mehr gültig.
 
 ## Datensicherung
 
-Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen, die Dauer bis Übergang je Ordner und die Sortierung der Startseite werden nur im verwendeten Browser gespeichert. Unter Einstellungen › Datensicherung lassen sie sich als Datei exportieren und wieder importieren, z.B. um sie auf einen anderen Browser oder PC zu übertragen.
+Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen, Intro, Abspann und Lautstärke je Ordner sowie die Sortierung der Startseite werden nur im verwendeten Browser gespeichert. Unter Einstellungen › Datensicherung lassen sie sich als Datei exportieren und wieder importieren, z.B. um sie auf einen anderen Browser oder PC zu übertragen.
 
 Gibt es mehrere STEFFLIX-Ordner auf einem PC, speichert jeder seine Daten getrennt. Der Updater legt dafür in jedem Ordner eine eigene Kennung an (`sflix_sys\install.js`). Diese Datei nicht in einen anderen STEFFLIX-Ordner kopieren. Wer einen ganzen Ordner kopiert, startet danach einmal den Updater in der Kopie, dann bekommt sie automatisch eine neue Kennung.
 

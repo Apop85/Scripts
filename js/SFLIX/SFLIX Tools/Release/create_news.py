@@ -3,12 +3,18 @@
 news.txt bleibt die Quelle (wird von STEFFLIX vor 2.00 direkt gelesen und darum weiter
 gepflegt). STEFFLIX ab 2.00 liest news.json. Nach jeder Änderung an news.txt ausführen:
     python create_news.py
+
+Jede Version erhält "name" (x.y.z, ab 2.5.0 das Format von STEFFLIX) und "version" (die alte
+Zahl, z.B. "2.05"). STEFFLIX bis 2.04 und der Updater bis 3.2 lesen nur "version".
 """
 import html
 import json
 import os
 import re
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from versioning import legacy_number, version_name  # noqa: E402
 
 # Release-Ordner: dieses Skript liegt in <Release-Ordner>\SFLIX Tools\Release
 base_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
@@ -25,7 +31,8 @@ for line in open(source, encoding="utf-8"):
         continue
     version = re.match(r"<b>Version ([\d.]+)</b>", line)
     if version:
-        entry = {"version": version.group(1), "items": []}
+        name = version_name(version.group(1))
+        entry = {"version": legacy_number(name), "name": name, "items": []}
         result["versions"].append(entry)
         current = entry["items"]
         continue

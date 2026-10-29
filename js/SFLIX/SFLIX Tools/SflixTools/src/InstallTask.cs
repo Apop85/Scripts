@@ -12,6 +12,14 @@ using System.IO;
 
 namespace Sflix
 {
+    // Zusätzliche Wahl im Setup
+    public class InstallOptions
+    {
+        public bool Ffmpeg;            // ffmpeg mitinstallieren
+        public string FfmpegFolder;    // Ordner für ffmpeg (Standard: FfmpegLocation.DefaultFolder)
+        public string LicenseKey;      // optional
+    }
+
     public static class InstallTask
     {
         // Anleitung zum Hinzufügen von Medien (wie setup.py)
@@ -23,6 +31,11 @@ namespace Sflix
         }
 
         public static void Run(TaskContext ctx, string target)
+        {
+            Run(ctx, target, null);
+        }
+
+        public static void Run(TaskContext ctx, string target, InstallOptions options)
         {
             target = Path.GetFullPath(target);
             ctx.Log("Installationsordner: " + target);
@@ -98,9 +111,44 @@ namespace Sflix
             ctx.Log("Installiert: " + loaded + "   Bereits vorhanden: " + existing + "   Fehler: " + failed);
             if (failed > 0)
                 throw new TaskFailedException(failed + " Datei(en) konnten nicht installiert werden. Bitte die Installation erneut ausführen.");
+
+            if (options != null) InstallExtras(ctx, target, options);
             ctx.Log("");
             ctx.Log("Anleitung zum Hinzufügen von Medien (im Browser öffnen):");
             ctx.Log("  " + GuideUrl(target));
+        }
+
+        // ffmpeg und Lizenz. Fehler hier brechen die Installation nicht ab (beides geht auch später
+        // im Updater), sie stehen als Hinweis im Protokoll.
+        static void InstallExtras(TaskContext ctx, string target, InstallOptions options)
+        {
+            Settings settings = Settings.Load(Path.Combine(target, "sflix_sys", "updater_settings.json"));
+            if (options.Ffmpeg)
+            {
+                string folder = string.IsNullOrEmpty(options.FfmpegFolder) ? FfmpegLocation.DefaultFolder : options.FfmpegFolder;
+                // Ein anderer als der Standardordner wird gemerkt
+                bool isDefault = string.Equals(Path.GetFullPath(folder).TrimEnd('\\'), FfmpegLocation.DefaultFolder.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);
+                settings.SetString("ffmpeg.folder", isDefault ? "" : folder);
+                settings.Save();
+                ctx.Log("");
+                ctx.Log("ffmpeg (" + folder + "):");
+                FfmpegTools ff = new FfmpegTools(target, folder);
+                if (ff.Installed) ctx.Log("  bereits vorhanden (" + (ff.InstalledVersionName() ?? "Version unbekannt") + ")");
+                else
+                {
+                    try { ff.InstallNow(ctx); }
+                    catch (Exception e) { ctx.Log("Hinweis: ffmpeg konnte nicht installiert werden (" + e.Message + "). Es wird beim ersten Bedarf geladen."); }
+                }
+                UpdaterInfo.Write(target, folder);
+            }
+            if (!string.IsNullOrEmpty(options.LicenseKey))
+            {
+                ctx.Log("");
+                ctx.Log("Lizenz:");
+                string message;
+                bool ok = LicenseStore.Save(target, options.LicenseKey, out message);
+                ctx.Log((ok ? "  " : "Hinweis: ") + message);
+            }
         }
     }
 }

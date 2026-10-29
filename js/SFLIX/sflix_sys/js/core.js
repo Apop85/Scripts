@@ -29,8 +29,6 @@ var allowedMediaExtensions = mediaTypes.concat(musicTypes, imageTypes);
 
 var minTime = 11;
 
-var licenseFields = ["lic1", "lic2", "lic3", "lic4", "lic5", "lic6", "lic7", "lic8"];
-
 // Playlisten, deren Einträge aus "Pfad|URL" bestehen und aus verschiedenen Ordnern stammen können
 var listPlaylists = ["searchResults", "favoritesList", "shuffleList"];
 
@@ -238,10 +236,21 @@ var transitionKey = "transitionByFolder";
 
 var transitionMax = 3600;
 
-function getTransitionMap() {
+// Werte je Ordner (gleicher Aufbau für Übergang, Intro und Lautstärke): { "": 5, "Serien/Show": 85 }.
+// kind: { key: Speicherschlüssel, parse: Text -> Zahl oder NaN, clamp: Zahl -> gültiger Wert }
+var folderValueKinds = {
+    transition: { key: "transitionByFolder", parse: function (v) { return parseInt(v, 10); }, clamp: function (v) { return Math.min(transitionMax, Math.max(0, v)); } },
+    // Intro überspringen (Sekunden ab Beginn, nur Videos, seit 2.5.0)
+    intro: { key: "introByFolder", parse: function (v) { return parseInt(v, 10); }, clamp: function (v) { return Math.min(transitionMax, Math.max(0, v)); } },
+    // Lautstärke 0.05 bis 1 (seit 2.5.0)
+    volume: { key: "volumeByFolder", parse: function (v) { return parseFloat(v); }, clamp: function (v) { return Math.round(Math.min(1, Math.max(0.05, v)) * 100) / 100; } }
+};
+
+function getFolderValueMap(kindName) {
+    var kind = folderValueKinds[kindName];
     var stored = null;
     try {
-        stored = JSON.parse(getData(transitionKey) || "null");
+        stored = JSON.parse(getData(kind.key) || "null");
     } catch (error) {
         stored = null;
     }
@@ -250,45 +259,109 @@ function getTransitionMap() {
         return map;
     }
     Object.keys(stored).forEach(function (folder) {
-        var seconds = parseInt(stored[folder], 10);
-        if (!isNaN(seconds) && seconds >= 0) {
-            map[folder] = Math.min(transitionMax, seconds);
+        var value = kind.parse(stored[folder]);
+        if (!isNaN(value) && value >= 0) {
+            map[folder] = kind.clamp(value);
         }
     });
     return map;
 }
 
-function saveTransitionMap(map) {
+function saveFolderValueMap(kindName, map) {
+    var key = folderValueKinds[kindName].key;
     if (Object.keys(map).length == 0) {
-        removeData(transitionKey);
+        removeData(key);
     } else {
-        setData(transitionKey, JSON.stringify(map));
+        setData(key, JSON.stringify(map));
     }
 }
 
-// seconds = null entfernt den Eintrag (der Ordner erbt dann wieder)
-function setTransition(folder, seconds) {
-    var map = getTransitionMap();
-    if (seconds == null) {
+// value = null entfernt den Eintrag (der Ordner erbt dann wieder)
+function setFolderValue(kindName, folder, value) {
+    var kind = folderValueKinds[kindName];
+    var map = getFolderValueMap(kindName);
+    if (value == null) {
         delete map[folder];
     } else {
-        var value = parseInt(seconds, 10);
-        map[folder] = Math.min(transitionMax, Math.max(0, isNaN(value) ? 0 : value));
+        var parsed = kind.parse(value);
+        map[folder] = kind.clamp(isNaN(parsed) ? 0 : parsed);
     }
-    saveTransitionMap(map);
+    saveFolderValueMap(kindName, map);
 }
 
-// Geltender Wert für ein Medium: { seconds, folder } (folder = null: kein Eintrag, Standard 0)
-function getTransitionFor(mediaPath) {
-    var map = getTransitionMap();
+// Geltender Wert für ein Medium: { value, folder } (folder = null: kein Eintrag, value = fallback)
+function getFolderValueFor(kindName, mediaPath, fallback) {
+    var map = getFolderValueMap(kindName);
     var folders = mediaPath ? getMediaFolders(mediaPath) : [];
     for (var depth = folders.length; depth >= 0; depth--) {
         var key = folders.slice(0, depth).join("/");
         if (map.hasOwnProperty(key)) {
-            return { seconds: map[key], folder: key };
+            return { value: map[key], folder: key };
         }
     }
-    return { seconds: 0, folder: null };
+    return { value: fallback, folder: null };
+}
+
+// Wert, der auf einer Ebene gilt: der eigene, sonst der geerbte, sonst 0
+function getFolderValueAt(kindName, scope) {
+    var map = getFolderValueMap(kindName);
+    if (map.hasOwnProperty(scope)) {
+        return map[scope];
+    }
+    var parts = scope === "" ? [] : scope.split("/");
+    for (var depth = parts.length - 1; depth >= 0; depth--) {
+        var key = parts.slice(0, depth).join("/");
+        if (map.hasOwnProperty(key)) {
+            return map[key];
+        }
+    }
+    return 0;
+}
+
+function getTransitionMap() {
+    return getFolderValueMap("transition");
+}
+
+function saveTransitionMap(map) {
+    saveFolderValueMap("transition", map);
+}
+
+// seconds = null entfernt den Eintrag (der Ordner erbt dann wieder)
+function setTransition(folder, seconds) {
+    setFolderValue("transition", folder, seconds);
+}
+
+// Geltender Wert für ein Medium: { seconds, folder } (folder = null: kein Eintrag, Standard 0)
+function getTransitionFor(mediaPath) {
+    var found = getFolderValueFor("transition", mediaPath, 0);
+    return { seconds: found.value, folder: found.folder };
+}
+
+// Intro überspringen: Sekunden ab Beginn für ein Medium (0 = kein Intro)
+function getIntroFor(mediaPath) {
+    return getFolderValueFor("intro", mediaPath, 0);
+}
+
+// Lautstärke je Ordner: Wert des Ordners bzw. des nächsten darüber, sonst die zuletzt
+// eingestellte Lautstärke (mediaVolume), sonst 1. Stumm (0) startet mit 0.2.
+function getVolumeFor(mediaPath) {
+    var last = parseFloat(getData("mediaVolume"));
+    var fallback = isNaN(last) ? 1 : (last == 0 ? 0.2 : Math.min(1, last));
+    return getFolderValueFor("volume", mediaPath, fallback).value;
+}
+
+// Merkt die Lautstärke im Ordner des Mediums (Album, Staffel) und als zuletzt verwendete
+function saveVolumeFor(mediaPath, volume) {
+    if (!mediaPath || !(volume > 0)) {
+        return;
+    }
+    var rounded = folderValueKinds.volume.clamp(volume);
+    // Unverändert (z.B. beim Laden eines Mediums gesetzt): nichts speichern
+    if (Math.abs(getVolumeFor(mediaPath) - rounded) < 0.005) {
+        return;
+    }
+    setFolderValue("volume", getMediaFolders(mediaPath).join("/"), rounded);
+    setData("mediaVolume", rounded);
 }
 
 // Wählbare Ebenen für ein Medium: alle Ordner, Kategorie, Serie, Staffel ...
@@ -326,6 +399,62 @@ function compareVersions(a, b) {
         }
     }
     return 0;
+}
+
+// ===================================================================
+// STEFFLIX-Version: ab 2.5.0 im Format x.y.z (versionName in version.js). Bis 2.04 gab es nur
+// die Zahl "version" (2.04), die alte Installationen weiterhin lesen. Umrechnung wie
+// "SFLIX Tools\Release\versioning.py": alte Zahl = x + y/100 + z/10000.
+// ===================================================================
+
+// "2.04" -> "2.4.0", "1.323" -> "1.32.3", "2.0501" -> "2.5.1"; x.y.z bleibt
+function toVersionName(value) {
+    if (value == null || value === "") {
+        return null;
+    }
+    var text = typeof value === "number" ? String(value) : String(value).trim();
+    var parts = text.split(".");
+    if (parts.length >= 3) {
+        return parts.slice(0, 3).map(function (part) { return String(parseInt(part, 10) || 0); }).join(".");
+    }
+    var major = parseInt(parts[0], 10);
+    if (isNaN(major)) {
+        return null;
+    }
+    var decimals = parts.length > 1 ? parts[1] : "";
+    var minor, patch;
+    if (decimals.length <= 2) {
+        minor = parseInt((decimals + "00").slice(0, 2), 10);
+        patch = 0;
+    } else if (decimals.length == 3) {
+        minor = parseInt(decimals.slice(0, 2), 10);
+        patch = parseInt(decimals.slice(2), 10);
+    } else {
+        minor = parseInt(decimals.slice(0, 2), 10);
+        patch = parseInt(decimals.slice(2, 4), 10);
+    }
+    return major + "." + minor + "." + patch;
+}
+
+// Installierte Version als x.y.z
+function getVersionName() {
+    if (typeof versionName === "string" && versionName !== "") {
+        return toVersionName(versionName);
+    }
+    return toVersionName(typeof version !== "undefined" ? version : null);
+}
+
+// Version aus dem Inhalt einer version.js (z.B. von GitHub), null wenn unbekannt
+function parseVersionJs(text) {
+    if (text == null) {
+        return null;
+    }
+    var name = /\bversionName\s*=\s*["']([\d.]+)["']/.exec(text);
+    if (name != null) {
+        return toVersionName(name[1]);
+    }
+    var legacy = /\bversion\s*=\s*([\d.]+)/.exec(text);
+    return legacy != null ? toVersionName(legacy[1]) : null;
 }
 
 // Vom Updater geschrieben (sflix_sys/updater_info.js): installierte Versionen von Updater und ffmpeg

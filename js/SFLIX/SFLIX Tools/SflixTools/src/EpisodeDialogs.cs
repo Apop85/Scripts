@@ -309,10 +309,15 @@ namespace Sflix
     {
         readonly EpisodePlan plan;
         readonly ListView list;
+        readonly TextBox details;
+        readonly CompareView compare;
+        readonly Label compareTitle;
         bool adjusting;
         bool confirmed;
 
-        public EpisodePlanDialog(EpisodePlan plan)
+        public EpisodePlanDialog(EpisodePlan plan) : this(plan, null) { }
+
+        public EpisodePlanDialog(EpisodePlan plan, FfmpegTools ff)
         {
             this.plan = plan;
             Text = "Folgen umbenennen – Vorschau";
@@ -346,9 +351,10 @@ namespace Sflix
             list.HeaderStyle = ColumnHeaderStyle.Nonclickable;
             list.ShowItemToolTips = true;
             DarkList.Apply(list);
-            list.Columns.Add("Aktion", Theme.S(140));
-            list.Columns.Add("Bisher", Theme.S(360));
-            list.Columns.Add("Neu", Theme.S(360));
+            list.Columns.Add("Aktion", Theme.S(120));
+            list.Columns.Add("Bisher", Theme.S(340));
+            list.Columns.Add("Neu", Theme.S(340));
+            list.Columns.Add("Grösse", Theme.S(80));
             list.Columns.Add("Hinweis", Theme.S(200));
             foreach (EpisodeOp op in plan.Ops)
             {
@@ -356,6 +362,9 @@ namespace Sflix
                 ListViewItem item = new ListViewItem(action);
                 item.SubItems.Add(Rel(op.Source));
                 item.SubItems.Add(op.Kind == "folder" || op.Kind == "merge" ? Path.GetFileName(op.Target) : Rel(op.Target));
+                long size = -1;
+                try { if (File.Exists(op.Source)) size = new FileInfo(op.Source).Length; } catch { }
+                item.SubItems.Add(size >= 0 ? Fmt.Size(size) : "");
                 item.SubItems.Add(op.Note);
                 item.Tag = op;
                 item.Checked = op.Selected;
@@ -379,7 +388,9 @@ namespace Sflix
                 foreach (string u in plan.Unmatched) info.Add("  " + u);
             }
             if (info.Count == 0) info.Add("Alle Folgen der Liste sind vorhanden, alle Dateien wurden zugeordnet.");
-            TextBox details = new TextBox();
+            info.Add("");
+            info.Add("Tipp: Eine gelbe Zeile (mehrere Dateien für eine Folge) oder eine Zeile mit vorhandenem Ziel anklicken, um die Dateien zu vergleichen.");
+            details = new TextBox();
             details.Multiline = true;
             details.ReadOnly = true;
             details.ScrollBars = ScrollBars.Vertical;
@@ -389,11 +400,22 @@ namespace Sflix
             details.Font = new Font("Consolas", 9f);
             details.Text = string.Join("\r\n", info.ToArray());
             details.Dock = DockStyle.Fill;
+            // Vergleich der Dateien einer Konfliktzeile (statt der Liste fehlender Folgen)
+            compare = new CompareView(ff, true);
+            compare.Dock = DockStyle.Fill;
+            compare.Visible = false;
+            compareTitle = Theme.MakeLabel("", true);
+            compareTitle.Dock = DockStyle.Top;
+            compareTitle.Visible = false;
+            compareTitle.Padding = new Padding(0, 0, 0, Theme.S(4));
             Panel detailsHost = new Panel();
             detailsHost.Dock = DockStyle.Bottom;
-            detailsHost.Height = Theme.S(120);
+            detailsHost.Height = Theme.S(170);
             detailsHost.Padding = new Padding(Theme.S(12), Theme.S(8), Theme.S(12), 0);
             detailsHost.Controls.Add(details);
+            detailsHost.Controls.Add(compare);
+            detailsHost.Controls.Add(compareTitle);
+            list.SelectedIndexChanged += delegate { ShowCompare(); };
 
             Panel listHost = new Panel();
             listHost.Dock = DockStyle.Fill;
@@ -438,6 +460,44 @@ namespace Sflix
             Controls.Add(detailsHost);
             Controls.Add(buttons);
             CancelButton = cancel;
+        }
+
+        // Gewählte Zeile: Dateien derselben Folge bzw. vorhandenes Ziel vergleichen
+        void ShowCompare()
+        {
+            EpisodeOp op = list.SelectedItems.Count > 0 ? list.SelectedItems[0].Tag as EpisodeOp : null;
+            List<CompareEntry> entries = new List<CompareEntry>();
+            if (op != null && op.Kind != "folder" && op.Kind != "merge")
+            {
+                if (op.Group != null)
+                {
+                    foreach (EpisodeOp other in plan.Ops)
+                        if (other.Group == op.Group) entries.Add(Entry(other == op ? "gewählt" : "andere", other.Source, Path.GetFileName(other.Target)));
+                }
+                if (File.Exists(op.Target) && !string.Equals(op.Target, op.Source, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (entries.Count == 0) entries.Add(Entry("neu", op.Source, null));
+                    bool known = false;
+                    foreach (CompareEntry e in entries) if (string.Equals(e.Path, op.Target, StringComparison.OrdinalIgnoreCase)) known = true;
+                    if (!known) entries.Add(Entry("vorhanden", op.Target, "wird ersetzt (Ablage „" + EpisodeTask.ReplacedFolderName + "“)"));
+                }
+            }
+            bool show = entries.Count >= 2;
+            details.Visible = !show;
+            compare.Visible = show;
+            compareTitle.Visible = show;
+            if (!show) return;
+            compareTitle.Text = op.Group != null ? "Mehrere Dateien für dieselbe Folge, nur eine kann umbenannt werden:" : "Das Ziel gibt es schon:";
+            compare.SetEntries(entries);
+        }
+
+        static CompareEntry Entry(string label, string path, string note)
+        {
+            CompareEntry e = new CompareEntry();
+            e.Label = label;
+            e.Path = path;
+            e.Note = note;
+            return e;
         }
 
         string Rel(string path)

@@ -3,8 +3,8 @@
   <defs>
     <!-- Band: oben hell, unten dunkel, fliessender Übergang in der Mitte des S -->
     <linearGradient id="band" gradientUnits="userSpaceOnUse" x1="0" y1="112" x2="0" y2="414">
-      <stop offset="0.30" stop-color="#e50914"/>
-      <stop offset="0.68" stop-color="#a30610"/>
+      <stop offset="0.30" stop-color="#e8261a"/>
+      <stop offset="0.68" stop-color="#a81a0f"/>
     </linearGradient>
   </defs>
   <rect x="8" y="8" width="496" height="496" rx="112" fill="#141417" stroke="#2a2a30" stroke-width="6"/>

@@ -135,6 +135,8 @@
     <!-- Von updateStefflix.exe bei jedem Start erstellt: installierte Versionen von Updater und ffmpeg
          (fehlt bei Updatern vor 3.2, wird dann ignoriert) -->
     <script src="sflix_sys/updater_info.js"></script>
+    <!-- Vom Updater erstellt: Lizenzschlüssel dieser Installation (fehlt ohne Lizenz, wird dann ignoriert) -->
+    <script src="sflix_sys/license.js"></script>
     <script src="sflix_sys/version.js"></script>
     <link rel="stylesheet" href="sflix_sys/sflix.css" type="text/css">
     <!-- Navigationsmenü -->
@@ -155,7 +157,7 @@
                 <!-- Symbole: Suche und Favoriten als Inline-SVG, die übrigen per CSS (SVG mit PNG-Fallback) -->
                 <a id="searchToggler" onclick="toggleContainer(['searchFieldContainer'], 'flex')"><span class="menuIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg></span><span class="menuLabel">Suche</span></a>
                 <a id="favoritesToggler" onclick="openFavorites()"><span class="menuIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.2l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg></span><span class="menuLabel">Favoriten</span></a>
-                <!-- Nur sichtbar mit gültigem Lizenzschlüssel (Eingabe unter Einstellungen › Lizenz) -->
+                <!-- Nur sichtbar mit bestätigtem Lizenzschlüssel (Eingabe im Updater, sflix_sys/license.js) -->
                 <a id="feedbackBoxToggler" onclick="toggleContainer(['feedbackWrapper'], 'flex')"><span class="menuIcon" id="supportIcon"></span><span class="menuLabel">Feedback</span></a>
                 <a id="settingsPageToggler" onclick="openSettings()"><span class="menuIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="menuLabel">Einstellungen</span></a>
                 <a id="helpToggler" onclick="openHelp()"><span class="menuIcon" id="helpIcon"></span><span class="menuLabel">Hilfe</span></a>
@@ -236,8 +238,9 @@
                 <li><b>Unbegrenzt</b>: spielt ohne feste Anzahl weiter, bis das Ende der Playliste erreicht ist.</li>
                 <li><b>Anzahl abzuspielender Medien</b>: wie viele Medien nacheinander abgespielt werden. Die Zahl wird mit jedem Medium heruntergezählt, bei 0 hält Autoplay an. Bei "Unbegrenzt" wird sie nicht verwendet.</li>
                 <li><b>Dauer bis Übergang (Sekunden)</b>: Bei Videos und Musik wechselt STEFFLIX so viele Sekunden vor dem Ende (plus etwa eine Sekunde) zum nächsten Medium, bei Musik höchstens 11 Sekunden vorher. Bei 0 also kurz vor Schluss. Bilder bleiben so viele Sekunden plus 11 Sekunden sichtbar.</li>
-                <li><b>Gilt für</b>: Die Dauer wird pro Ordner gespeichert und gilt auch für alle Unterordner, solange diese keinen eigenen Wert haben. So lässt sich z.B. für eine ganze Serie der Abspann überspringen und für eine einzelne Staffel ein anderer Wert festlegen. Ohne Eintrag gilt 0. Alle Einträge stehen unter <a onclick="openSettings('wiedergabe')">Einstellungen › Wiedergabe</a>.</li>
-                <li><b>Übergang festlegen</b> <span class="helpIcon" data-icon="transition"></span>: Der Knopf in der Player-Leiste übernimmt die verbleibende Zeit des Mediums als Dauer bis Übergang, z.B. beim Beginn des Abspanns. Er gilt für den Ordner, der unter "Gilt für" gewählt ist.</li>
+                <li><b>Intro überspringen (Sekunden)</b>: nur bei Videos. Beginnt ein Video von vorne, startet es so viele Sekunden später, z.B. nach dem Vorspann einer Serie. Wird ein Video an einer gespeicherten Stelle fortgesetzt, gilt diese Stelle.</li>
+                <li><b>Gilt für</b>: Intro und Dauer werden pro Ordner gespeichert und gelten auch für alle Unterordner, solange diese keinen eigenen Wert haben. So lässt sich z.B. für eine ganze Serie der Vor- und Abspann überspringen und für eine einzelne Staffel ein anderer Wert festlegen. Ohne Eintrag gilt 0. Alle Einträge stehen unter <a onclick="openSettings('wiedergabe')">Einstellungen › Wiedergabe</a>.</li>
+                <li><b>Intro bis hier / Abspann ab hier</b> <span class="helpIcon" data-icon="transition"></span>: Der Knopf in der Player-Leiste übernimmt die Zeit an der aktuellen Stelle. In der ersten Hälfte eines Videos gilt er für das Intro (abgelaufene Zeit), in der zweiten Hälfte und bei Musik für den Abspann (verbleibende Zeit als Dauer bis Übergang). Er gilt für den Ordner, der unter "Gilt für" gewählt ist.</li>
             </ul>
 
             <h3>Player</h3>
@@ -248,8 +251,8 @@
                         <span><span class="helpIcon" data-icon="skipPrev"></span><span class="helpIcon" data-icon="skipNext"></span> vorheriges / nächstes Medium</span>
                         <span><span class="helpIcon" data-icon="play"></span><span class="helpIcon" data-icon="pause"></span> Abspielen / Pause</span>
                         <span><span class="helpIcon" data-icon="back10"></span><span class="helpIcon" data-icon="forward10"></span> 10 Sekunden zurück / vor</span>
-                        <span><span class="helpIcon" data-icon="volumeHigh"></span> Lautstärke, Klick schaltet den Ton aus</span>
-                        <span><span class="helpIcon" data-icon="transition"></span> Übergang festlegen (verbleibende Zeit)</span>
+                        <span><span class="helpIcon" data-icon="volumeHigh"></span> Lautstärke, Klick schaltet den Ton aus. Sie wird je Ordner gemerkt (Album, Staffel) und gilt für Ordner darunter ohne eigenen Wert.</span>
+                        <span><span class="helpIcon" data-icon="transition"></span> Intro bis hier (erste Hälfte eines Videos) bzw. Abspann ab hier</span>
                         <span><span class="helpIcon" data-icon="autoplay"></span> Autoplay-Menü</span>
                         <span><span class="helpIcon" data-icon="gear"></span> Zahnradmenü</span>
                         <span><span class="helpIcon" data-icon="pip"></span> Bild im Bild (nur Video)</span>
@@ -333,18 +336,20 @@
                 <p>Die ausgewählten Aufgaben laufen immer in dieser Reihenfolge ab:</p>
                 <ul class="helpOptions">
                     <li><b>Update</b>: STEFFLIX-Dateien und den Updater selbst von GitHub aktualisieren. Installiert wird nur, wenn alle Dateien vollständig und gültig heruntergeladen wurden.</li>
-                    <li><b>Ablagen leeren</b>: Die Ablageordner der Werkzeuge (Ordner, deren Name mit __ beginnt, z.B. __teile, __konvertiert, __gelöscht, __original und __ersetzt) endgültig löschen. Vorher wird angezeigt, was gelöscht wird. Nur innerhalb des STEFFLIX-Ordners möglich.</li>
-                    <li><b>Folgen umbenennen</b>: Die Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen, z.B. "Serie - S01E02 - Titel" im Ordner "Staffel 01". Erkannt werden Namen mit S01E02 oder 1x02. Doppelfolgen behalten alle Nummern, z.B. "Serie - S01E02E03 - Titel". Vor dem Umbenennen werden alle Änderungen angezeigt, danach lässt sich der letzte Lauf rückgängig machen.</li>
+                    <li><b>Ablagen leeren</b>: Die Ablageordner der Werkzeuge (Ordner, deren Name mit __ beginnt, z.B. __teile, __konvertiert, __gelöscht, __original, __ersetzt und __duplikate) endgültig löschen. Vorher wird angezeigt, was gelöscht wird. Nur innerhalb des STEFFLIX-Ordners möglich.</li>
+                    <li><b>Folgen umbenennen</b>: Die Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen, z.B. "Serie - S01E02 - Titel" im Ordner "Staffel 01". Erkannt werden Namen mit S01E02 oder 1x02. Doppelfolgen behalten alle Nummern, z.B. "Serie - S01E02E03 - Titel". Vor dem Umbenennen werden alle Änderungen angezeigt, mehrere Dateien für eine Folge lassen sich vergleichen. Danach lässt sich der letzte Lauf rückgängig machen.</li>
+                    <li><b>Duplikate finden</b>: Identische Dateien, gleiche Folgen einer Serie (S01E01 = 1x01 = S1E1) und gleiche Dateinamen finden, mit Vergleich von Grösse, Auflösung und Dauer. Aussortierte Dateien kommen nach __duplikate.</li>
                     <li><b>Gesplittete Medien zusammenführen</b>: Videos wie "Titel pt1" und "Titel pt2" zu einer Datei zusammenfügen. Die Teile werden vorher in einer Liste ausgewählt, auf Wunsch wird neu kodiert. Die Teile können danach nach __teile verschoben werden.</li>
                     <li><b>Videos für SFLIX konvertieren</b>: Videos in browserkompatible MP4 (H.264/AAC) umwandeln. Die MP4 ersetzt das Original im selben Ordner, das Original kommt nach __konvertiert (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.</li>
+                    <li><b>Medien prüfen</b>: Medien finden, die der Browser nicht abspielen kann, dazu defekte und leere Dateien sowie Medien ohne Vorschaubild. Im Ergebnis lassen sie sich gleich konvertieren bzw. mit Vorschaubild versehen.</li>
                     <li><b>Vorschaubilder erstellen</b>: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach Preview\__gelöscht.</li>
                     <li><b>Daten einlesen</b>: Medien neu einlesen, ungültige Zeichen in Datei- und Ordnernamen korrigieren und zu grosse Vorschaubilder verkleinern. Ordner, deren Name mit __ beginnt, sowie System- und versteckte Ordner werden ignoriert.</li>
                 </ul>
-                <p>Zusammenführen, Konvertieren, Vorschaubilder und Ablagen leeren durchsuchen mit "Alles" den ganzen STEFFLIX-Ordner, sonst nur die gewählten Ordner. Danach werden nur die betroffenen Ordner neu eingelesen. Das dafür nötige Programm ffmpeg lädt der Updater beim ersten Bedarf selbst herunter. Unter "Details" zeigt der Updater rechts ein Protokoll mit Suche und Filter.</p>
+                <p>Die Tools durchsuchen mit "Alles" den ganzen STEFFLIX-Ordner, sonst nur die gewählten Ordner. Danach werden nur die betroffenen Ordner neu eingelesen. Das dafür nötige Programm ffmpeg installiert das Setup auf Wunsch gleich mit, sonst lädt es der Updater beim ersten Bedarf. Unter "Details" zeigt der Updater rechts ein Protokoll mit Suche und Filter. Alles Weitere, auch die Befehle für die Kommandozeile, erklärt der Reiter "Hilfe" im Updater.</p>
             </details>
             <details class="helpDetails">
                 <summary>STEFFLIX neu installieren</summary>
-                <p>Wird <span class="highlighted">updateStefflix.exe</span> ausserhalb eines STEFFLIX-Ordners gestartet, bietet sie die Installation von STEFFLIX in einen neuen Ordner an. Sie lädt alle Dateien herunter und kopiert sich selbst in den neuen Ordner.</p>
+                <p>Wird <span class="highlighted">updateStefflix.exe</span> ausserhalb eines STEFFLIX-Ordners gestartet, bietet sie die Installation von STEFFLIX in einen neuen Ordner an. Sie lädt alle Dateien herunter und kopiert sich selbst in den neuen Ordner. Auf Wunsch installiert sie ffmpeg gleich mit (empfohlen) und hinterlegt den Lizenzschlüssel.</p>
             </details>
             <table class="versionInfo">
                 <thead><tr><th></th><th>Installiert</th><th>Neueste</th></tr></thead>
@@ -356,11 +361,11 @@
             </table>
             <p class="versionNote">Die installierten Versionen von Updater und ffmpeg trägt <span class="highlighted">updateStefflix.exe</span> bei jedem Start ein. ffmpeg lädt der Updater erst, wenn ein Werkzeug es braucht.</p>
             <h3 id="einstellungenHilfe">Einstellungen</h3>
-            <p>Unter <a onclick="openSettings()">Einstellungen</a> im Menü lassen sich die Kachelgrösse, die Anzahl Kacheln pro Zeile (fest oder automatisch nach Fensterbreite), die Markierungen auf den Kacheln, Animationen, der Startbildschirm, alphabetische Gruppen, das Sortieren ohne Artikel, getrennte Ordner, die Anzahl Einträge bei "Weiterschauen", die Update-Hinweise, die Browser-Steuerung und die Dauer bis Übergang je Ordner festlegen. Änderungen gelten sofort und nur in diesem Browser.</p>
+            <p>Unter <a onclick="openSettings()">Einstellungen</a> im Menü lassen sich die Kachelgrösse, die Anzahl Kacheln pro Zeile (fest oder automatisch nach Fensterbreite), die Markierungen auf den Kacheln, Animationen, der Startbildschirm, alphabetische Gruppen, das Sortieren ohne Artikel, getrennte Ordner, die Anzahl Einträge bei "Weiterschauen", die Update-Hinweise, die Browser-Steuerung sowie Intro und Abspann je Ordner festlegen. Änderungen gelten sofort und nur in diesem Browser.</p>
             <ul class="helpOptions">
                 <li><b>Datensicherung</b>: Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen und die Sortierung der Startseite werden nur in diesem Browser gespeichert. Unter <a onclick="openSettings('datensicherung')">Einstellungen › Datensicherung</a> lassen sie sich exportieren und auf einem anderen Browser oder PC oder nach dem Löschen der Browserdaten wieder importieren.</li>
                 <li><b>Fehlerbehebung</b>: Lädt STEFFLIX nicht richtig, stimmen die Vor- und Zurück-Buttons nicht oder setzen Videos an der falschen Stelle fort, lassen sich unter <a onclick="openSettings('fehlerbehebung')">Einstellungen › Fehlerbehebung</a> die gespeicherten Daten prüfen, verwaiste Einträge entfernen oder Daten gezielt zurücksetzen. Dort steht auch eine Diagnose zum Kopieren.</li>
-                <li><b>Lizenz</b>: Den Lizenzschlüssel für das Feedbackformular unter <a onclick="openSettings('lizenz')">Einstellungen › Lizenz</a> eingeben.</li>
+                <li><b>Lizenz</b>: Den Lizenzschlüssel für das Feedbackformular im Updater (updateStefflix.exe) unter "Lizenz" eingeben. Der Stand ist unter <a onclick="openSettings('lizenz')">Einstellungen › Lizenz</a> zu sehen.</li>
             </ul>
             <h3>Versionsvorschau</h3>
             <img id="sflixPreview" alt="Vorschau der STEFFLIX-Oberfläche">
@@ -380,7 +385,7 @@
             <label class="settingRow" data-hides="rowAuto"><span>Kacheln pro Zeile<small>Nach so vielen Kacheln beginnt in einem Band eine neue Zeile (4 bis 30)</small></span><input type="number" data-setting="rowSize" min="4" max="30"></label>
             <label class="settingRow"><span>Markierungen auf Kacheln anzeigen<small>"Gesehen", "Letzte Folge" und "Letzter Titel". Gesehen wird trotzdem gespeichert.</small></span><input type="checkbox" data-setting="showMarkers"></label>
             <label class="settingRow"><span>Animationen reduzieren<small>Keine Übergänge und kein Vergrössern beim Überfahren der Kacheln</small></span><input type="checkbox" data-setting="reduceMotion"></label>
-            <label class="settingRow"><span>Startbildschirm überspringen<small>Das STEFFLIX-Logo beim ersten Start des Tages nicht anzeigen</small></span><input type="checkbox" data-setting="skipSplash"></label>
+            <label class="settingRow"><span>Startbildschirm überspringen<small>Das STEFFLIX-Logo beim ersten Start des Tages nicht anzeigen. Nach einem Update auf eine neue Version erscheint es trotzdem einmal.</small></span><input type="checkbox" data-setting="skipSplash"></label>
             <div class="settingsPreview">
                 <p class="settingsPreviewLabel">Vorschau</p>
                 <div id="settingsPreviewRow"></div>
@@ -400,22 +405,23 @@
 
             <h3 id="wiedergabe">Wiedergabe</h3>
             <label class="settingRow"><span>Browser-Steuerung verwenden<small>Statt der STEFFLIX-Steuerung für Videos und Musik</small></span><input type="checkbox" id="nativeControlsCheckBox"></label>
-            <h4 class="settingSubheading">Dauer bis Übergang je Ordner</h4>
-            <p>Mit Autoplay wechselt STEFFLIX so viele Sekunden vor dem Ende zum nächsten Medium, z.B. um den Abspann einer Serie zu überspringen. Ein Wert gilt für den Ordner und alle Unterordner, solange diese keinen eigenen haben. Ohne Eintrag gilt 0. Festlegen lässt er sich auch im Player: im Autoplay-Menü oder mit dem Knopf <span class="helpIcon" data-icon="transition"></span>, der die verbleibende Zeit übernimmt.</p>
+            <h4 class="settingSubheading">Intro und Abspann je Ordner</h4>
+            <p><b>Intro</b>: Videos, die von vorne beginnen, starten so viele Sekunden später, z.B. nach dem Vorspann einer Serie. <b>Abspann</b> (Dauer bis Übergang): Mit Autoplay wechselt STEFFLIX so viele Sekunden vor dem Ende zum nächsten Medium. Ein Wert gilt für den Ordner und alle Unterordner, solange diese keinen eigenen haben, ein leeres Feld übernimmt den Wert des Ordners darüber. Ohne Eintrag gilt 0. Festlegen lassen sich beide auch im Player: im Autoplay-Menü oder mit dem Knopf <span class="helpIcon" data-icon="transition"></span> (erste Hälfte eines Videos: Intro, zweite Hälfte: Abspann).</p>
             <details class="repairDetails" id="transitionDetails">
                 <summary><span class="whenClosed">Einträge anzeigen (<span id="transitionCount">0</span>)</span><span class="whenOpen">Einträge ausblenden</span></summary>
                 <div id="transitionList"></div>
                 <div class="transitionAdd">
                     <input type="text" id="transitionAddFolder" list="transitionFolderList" placeholder="Ordner wählen, z.B. Serien › Meine Serie" aria-label="Ordner">
                     <datalist id="transitionFolderList"></datalist>
-                    <input type="number" id="transitionAddSeconds" min="0" max="3600" value="0" aria-label="Sekunden">
+                    <input type="number" id="transitionAddIntro" min="0" max="3600" placeholder="Intro" aria-label="Intro in Sekunden" title="Intro überspringen (Sekunden)">
+                    <input type="number" id="transitionAddSeconds" min="0" max="3600" placeholder="Abspann" aria-label="Abspann in Sekunden" title="Dauer bis Übergang (Sekunden)">
                     <button type="button" id="transitionAddButton" class="sflixButton ghost small">Hinzufügen</button>
                 </div>
                 <div id="transitionStatus" role="status"></div>
             </details>
 
             <h3 id="datensicherung">Datensicherung</h3>
-            <p>Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen, die Dauer bis Übergang je Ordner und die Sortierung der Startseite werden nur in diesem Browser gespeichert. Mit einer Sicherung lassen sie sich auf einen anderen Browser oder PC übertragen oder nach dem Löschen der Browserdaten wiederherstellen.</p>
+            <p>Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen, Intro, Abspann und Lautstärke je Ordner sowie die Sortierung der Startseite werden nur in diesem Browser gespeichert. Mit einer Sicherung lassen sie sich auf einen anderen Browser oder PC übertragen oder nach dem Löschen der Browserdaten wiederherstellen.</p>
             <div class="backupActions">
                 <button type="button" id="exportDataButton" class="sflixButton primary">Daten exportieren</button>
                 <button type="button" id="importDataButton" class="sflixButton ghost">Sicherung importieren</button>
@@ -461,32 +467,18 @@
                 </div>
                 <div class="repairItem">
                     <h5>Alle Daten löschen</h5>
-                    <p>Löscht alle gespeicherten Daten inklusive Einstellungen und Lizenzschlüssel. Nur ausführen, wenn keine andere Massnahme geholfen hat. Vorher wird angeboten, eine Sicherung zu erstellen.</p>
+                    <p>Löscht alle gespeicherten Daten inklusive Einstellungen. Der Lizenzschlüssel bleibt erhalten, er ist im Updater hinterlegt. Nur ausführen, wenn keine andere Massnahme geholfen hat. Vorher wird angeboten, eine Sicherung zu erstellen.</p>
                     <a onclick="confirmDeleteAllData()" class="button danger">Alles löschen</a>
                 </div>
                 <div id="repairStatus" role="status"></div>
             </details>
 
             <h3 id="lizenz">Lizenz</h3>
-            <p>Der Lizenzschlüssel schaltet das Feedbackformular frei. Mit gültigem Schlüssel erscheint im Menü der Eintrag "Feedback".</p>
-            <form id="licenseInputs" autocomplete="off">
-                <input type="text" id="lic1" maxlength="4" placeholder="ABCD" aria-label="Lizenzschlüssel, Teil 1"><span>-</span>
-                <input type="text" id="lic2" maxlength="4" placeholder="EFGH" aria-label="Lizenzschlüssel, Teil 2"><span>-</span>
-                <input type="text" id="lic3" maxlength="4" placeholder="IJKL" aria-label="Lizenzschlüssel, Teil 3"><span>-</span>
-                <input type="text" id="lic4" maxlength="4" placeholder="MNOP" aria-label="Lizenzschlüssel, Teil 4"><span>-</span>
-                <input type="text" id="lic5" maxlength="4" placeholder="QRST" aria-label="Lizenzschlüssel, Teil 5"><span>-</span>
-                <input type="text" id="lic6" maxlength="4" placeholder="UVWX" aria-label="Lizenzschlüssel, Teil 6"><span>-</span>
-                <input type="text" id="lic7" maxlength="4" placeholder="YZ12" aria-label="Lizenzschlüssel, Teil 7"><span>-</span>
-                <input type="text" id="lic8" maxlength="4" placeholder="3456" aria-label="Lizenzschlüssel, Teil 8">
-            </form>
+            <p>Der Lizenzschlüssel schaltet das Feedbackformular frei. Er wird im Updater (updateStefflix.exe) unter "Lizenz" eingegeben oder bei der Installation angegeben und gilt dann für diese STEFFLIX-Installation in allen Browsern. Mit gültigem Schlüssel erscheint im Menü der Eintrag "Feedback".</p>
             <p id="licenseMsg" role="status"></p>
-            <div class="backupActions">
-                <button type="button" id="saveSerialButton" class="sflixButton primary">Speichern</button>
-                <button type="button" id="removeSerialButton" class="sflixButton ghost">Entfernen</button>
-            </div>
 
             <h3>Zurücksetzen</h3>
-            <p>Setzt alle Einstellungen auf dieser Seite auf den Standard zurück. Favoriten, Fortschritt, Gesehen, "Weiterschauen", Autoplay, die Dauer bis Übergang je Ordner, der Lizenzschlüssel und die Sortierung der Startseite bleiben erhalten.</p>
+            <p>Setzt alle Einstellungen auf dieser Seite auf den Standard zurück. Favoriten, Fortschritt, Gesehen, "Weiterschauen", Autoplay, Intro, Abspann und Lautstärke je Ordner, der Lizenzschlüssel und die Sortierung der Startseite bleiben erhalten.</p>
             <div class="backupActions">
                 <button type="button" id="resetSettingsButton" class="sflixButton ghost">Auf Standard zurücksetzen</button>
             </div>

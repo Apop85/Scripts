@@ -5,6 +5,7 @@ import re
 import sys
 
 from sflix_update import FILES, OBSOLETE_FILES, RELEASE_DIR, SCRIPT_FILES
+from versioning import legacy_number, read_version_js, version_name
 
 base_dir = RELEASE_DIR
 errors = []
@@ -15,15 +16,18 @@ def read(path):
         return reader.read()
 
 
-# 1. Version in version.js muss die oberste Version im Changelog sein
-version_match = re.search(r"version\s*=\s*([\d.]+)", read("sflix_sys/version.js"))
+# 1. Version in version.js muss die oberste Version im Changelog sein. Ab 2.5.0 steht dort
+#    zusätzlich die alte Zahl für Installationen bis 2.04 (siehe versioning.py).
+web_name, web_legacy = read_version_js(read("sflix_sys/version.js"))
 news_match = re.search(r"<b>Version ([\d.]+)</b>", read("sflix_sys/news.txt"))
-if not version_match or not news_match:
+if not web_name or not news_match:
     errors.append("Version in version.js oder news.txt nicht gefunden")
-elif float(version_match.group(1)) != float(news_match.group(1)):
-    errors.append(f"version.js ({version_match.group(1)}) passt nicht zum Changelog (oberste Version {news_match.group(1)})")
+elif web_name != version_name(news_match.group(1)):
+    errors.append(f"version.js ({web_name}) passt nicht zum Changelog (oberste Version {news_match.group(1)})")
+elif web_legacy is None or float(web_legacy) != float(legacy_number(web_name)):
+    errors.append(f"version.js: alte Zahl {web_legacy} passt nicht zu {web_name} (erwartet {legacy_number(web_name)})")
 else:
-    print(f"Version {version_match.group(1)}")
+    print(f"Version {web_name} (alte Zahl {web_legacy})")
 
 # 2. Alle Dateien vorhanden, auch die eingefrorenen Übergangsprogramme (updater.exe,
 #    updateData.exe; werden nicht mehr gebaut, aber von alten Installationen geladen)

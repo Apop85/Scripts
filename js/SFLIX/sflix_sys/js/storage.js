@@ -125,10 +125,12 @@ function analyzeStoredData() {
         }).length);
     });
 
-    var transitions = Object.keys(getTransitionMap());
-    add("transitions", "Dauer bis Übergang je Ordner", transitions.length, transitions.filter(function (folder) {
-        return !folderExists(folder);
-    }).length);
+    [["transition", "transitions", "Dauer bis Übergang je Ordner"], ["intro", "intros", "Intro je Ordner"], ["volume", "volumes", "Lautstärke je Ordner"]].forEach(function (kind) {
+        var folders = Object.keys(getFolderValueMap(kind[0]));
+        add(kind[1], kind[2], folders.length, folders.filter(function (folder) {
+            return !folderExists(folder);
+        }).length);
+    });
 
     var playlists = getAllDataKeys().filter(function (key) {
         return key.startsWith("playlist-");
@@ -181,14 +183,16 @@ function removeOrphanedData() {
         }
     });
 
-    var transitions = getTransitionMap();
-    Object.keys(transitions).forEach(function (folder) {
-        if (!folderExists(folder)) {
-            delete transitions[folder];
-            removed += 1;
-        }
+    Object.keys(folderValueKinds).forEach(function (kindName) {
+        var values = getFolderValueMap(kindName);
+        Object.keys(values).forEach(function (folder) {
+            if (!folderExists(folder)) {
+                delete values[folder];
+                removed += 1;
+            }
+        });
+        saveFolderValueMap(kindName, values);
     });
-    saveTransitionMap(transitions);
     return removed;
 }
 
@@ -461,23 +465,25 @@ function applyRenamedPaths() {
         setData("playlast", lastPlayed.join(listSeperator));
     }
 
-    // Dauer bis Übergang je Ordner (Schlüssel ohne "./", z.B. "Serien/Show/Staffel 01")
-    var transitions = getTransitionMap();
-    var mappedTransitions = {};
-    var transitionsChanged = false;
-    Object.keys(transitions).forEach(function (folder) {
-        var newFolder = folder === "" ? "" : mapRenamedPath("./" + folder, pairs).replace(/^\.\//, "");
-        if (newFolder !== folder) {
-            transitionsChanged = true;
-        }
-        // Zwei alte Ordner im selben neuen (Staffeln zusammengeführt): der bestehende Wert bleibt
-        if (!mappedTransitions.hasOwnProperty(newFolder) || newFolder === folder) {
-            mappedTransitions[newFolder] = transitions[folder];
+    // Werte je Ordner: Übergang, Intro, Lautstärke (Schlüssel ohne "./", z.B. "Serien/Show/Staffel 01")
+    Object.keys(folderValueKinds).forEach(function (kindName) {
+        var values = getFolderValueMap(kindName);
+        var mapped = {};
+        var changed = false;
+        Object.keys(values).forEach(function (folder) {
+            var newFolder = folder === "" ? "" : mapRenamedPath("./" + folder, pairs).replace(/^\.\//, "");
+            if (newFolder !== folder) {
+                changed = true;
+            }
+            // Zwei alte Ordner im selben neuen (Staffeln zusammengeführt): der bestehende Wert bleibt
+            if (!mapped.hasOwnProperty(newFolder) || newFolder === folder) {
+                mapped[newFolder] = values[folder];
+            }
+        });
+        if (changed) {
+            saveFolderValueMap(kindName, mapped);
         }
     });
-    if (transitionsChanged) {
-        saveTransitionMap(mappedTransitions);
-    }
 
     removePlaylists();
     setData("renamedPathsApplied", String(renamedPaths.id));
@@ -809,8 +815,8 @@ var backupFormat = 1;
 
 // Anpassungen für Sicherungen aus älteren Versionen. Jede Funktion bekommt die Daten
 // (Schlüssel -> Text) und gibt sie angepasst zurück. Sie läuft nur für Sicherungen,
-// deren Version kleiner ist als "version". Neue Einträge in aufsteigender Reihenfolge
-// hinten anfügen, z.B. { version: 2.01, migrate: function (data) { ...; return data; } }
+// deren Version kleiner ist als "version" (x.y.z). Neue Einträge in aufsteigender Reihenfolge
+// hinten anfügen, z.B. { version: "2.6.0", migrate: function (data) { ...; return data; } }
 // Sicherungen gibt es erst ab 2.00, darum ist die Liste noch leer.
 var backupMigrations = [];
 
@@ -820,11 +826,17 @@ function migrateBackupData(data, backupVersion) {
         result[key] = data[key];
     });
     backupMigrations.forEach(function (step) {
-        if (backupVersion < step.version) {
+        if (compareVersions(backupVersion, step.version) < 0) {
             result = step.migrate(result) || result;
         }
     });
     return result;
+}
+
+// Nicht in die Sicherung: der alte Lizenzschlüssel (bis 2.04 im Browser gespeichert) und die
+// Version, für die der Startbildschirm zuletzt kam (gehört zur installierten Version)
+function isExcludedFromBackup(key) {
+    return key === "serial" || key === "lastSplashVersion";
 }
 
 // Markierungen erledigter Migrationen ("v2.00") und umbenannter Pfade
@@ -842,12 +854,16 @@ function showBackupStatus(text, isError) {
 function exportUserData() {
     var entries = {};
     getAllDataKeys().forEach(function (key) {
-        entries[key] = getData(key);
+        if (!isExcludedFromBackup(key)) {
+            entries[key] = getData(key);
+        }
     });
     var backup = {
         app: "STEFFLIX",
         format: backupFormat,
+        // alte Zahl für STEFFLIX bis 2.04, ab 2.5.0 zählt versionName
         version: version,
+        versionName: getVersionName(),
         exportedAt: new Date().toISOString(),
         data: entries
     };
@@ -879,20 +895,22 @@ function readBackupFile(file) {
             showBackupStatus("Diese Datei ist keine gültige STEFFLIX-Sicherung.", true);
             return;
         }
-        // Sicherungen aus einer neueren STEFFLIX-Version kennt diese Version nicht
-        var backupVersion = parseFloat(backup.version);
-        if (!isNaN(backupVersion) && backupVersion > version) {
-            showBackupStatus("Diese Sicherung stammt aus STEFFLIX " + formatVersion(backupVersion) + ". Installiert ist " + formatVersion(version) + ". Bitte zuerst STEFFLIX aktualisieren.", true);
+        // Sicherungen aus einer neueren STEFFLIX-Version kennt diese Version nicht.
+        // Ab 2.5.0 steht die Version als x.y.z in "versionName", "version" bleibt die alte Zahl.
+        var backupVersion = toVersionName(backup.versionName != null ? backup.versionName : backup.version);
+        if (backupVersion != null && compareVersions(backupVersion, getVersionName()) > 0) {
+            showBackupStatus("Diese Sicherung stammt aus STEFFLIX " + backupVersion + ". Installiert ist " + getVersionName() + ". Bitte zuerst STEFFLIX aktualisieren.", true);
             return;
         }
-        var data = migrateBackupData(backup.data, isNaN(backupVersion) ? 0 : backupVersion);
-        // Migrationsmarkierungen gehören zur installierten Version und werden nicht übernommen
+        var data = migrateBackupData(backup.data, backupVersion || "0.0.0");
+        // Migrationsmarkierungen gehören zur installierten Version und werden nicht übernommen,
+        // ebenso ein alter Lizenzschlüssel (der Schlüssel steht seit 2.5.0 in sflix_sys/license.js)
         var keys = Object.keys(data).filter(function (key) {
-            return typeof data[key] === "string" && !isMigrationFlag(key);
+            return typeof data[key] === "string" && !isMigrationFlag(key) && !isExcludedFromBackup(key);
         });
         var date = backup.exportedAt ? new Date(backup.exportedAt) : null;
         var dateText = date && !isNaN(date) ? date.toLocaleString("de-CH") : "unbekannt";
-        var versionText = isNaN(backupVersion) ? "unbekannt" : formatVersion(backupVersion);
+        var versionText = backupVersion == null ? "unbekannt" : backupVersion;
 
         var status = showBackupStatus("Sicherung vom " + dateText + " (STEFFLIX " + versionText + ") mit " + keys.length + " Einträgen. Vorhandene Einträge mit gleichem Namen werden überschrieben, alle anderen bleiben erhalten.", false);
         var actions = document.createElement("div");

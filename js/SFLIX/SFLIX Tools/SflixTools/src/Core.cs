@@ -345,7 +345,10 @@ namespace Sflix
         public Action<double, string> ProgressSink;   // Anteil 0..1 (negativ = unbestimmt), Statustext
         public Func<List<MergeGroup>, List<MergeGroup>> ChooseMerge;
         public Func<List<CleanupFolder>, List<CleanupFolder>> ChooseCleanup;   // null = alle löschen
-        public Func<string, ConflictAnswer> AskConflict;                       // null = überspringen
+        // Zieldatei vorhanden: (neue Datei bzw. Quelle, vorhandene Zieldatei) -> Antwort; null = überspringen
+        public Func<string, string, ConflictAnswer> AskConflict;
+        public Func<List<MediaCheckItem>, MediaCheckChoice> ChooseMediaCheck;  // Medien prüfen: null = nur protokollieren
+        public Func<List<DupeGroup>, DupeChoice> ChooseDuplicates;             // Duplikate: null = nur protokollieren
         public Func<string, EpisodeList> ChooseEpisodeList;   // Folgen umbenennen: Suchbegriff -> Liste, null = abgebrochen
         // Gespeicherte Folgenliste gefunden (zweiter Wert: Neuladen ist eben fehlgeschlagen):
         // "use", "reload", "search" oder null = abbrechen

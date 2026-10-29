@@ -27,7 +27,7 @@
         },
         {
           "type": "BUGFIX",
-          "text": "Der Startbildschirm richtet sich nach dem lokalen Datum. Bisher galt kurz nach Mitternacht noch der Vortag, und die Widmung an den Gedenktagen erschien erst nach 1 Uhr."
+          "text": "Der Startbildschirm richtet sich nach dem lokalen Datum. Bisher galt kurz nach Mitternacht noch der Vortag."
         },
         {
           "type": "OPTIMIERUNG",

@@ -9,7 +9,7 @@
     <li>[<span style="color: red">FEATURE</span>] Die Lautstärke wird je Ordner gemerkt (Album, Staffel). Ohne eigenen Wert gilt die des Ordners darüber, sonst die zuletzt eingestellte. Gehört zur Datensicherung, umbenannte Ordner ziehen mit.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Neuer, wärmerer Rotton. Der Startbildschirm zeigt das Logo im Lichtkegel.</li>
     <li>[<span style="color: red">FEATURE</span>] Nach einem Update auf eine neue Version erscheint der Startbildschirm beim ersten Start einmal, auch wenn "Startbildschirm überspringen" eingeschaltet ist oder er heute schon kam.</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Der Startbildschirm richtet sich nach dem lokalen Datum. Bisher galt kurz nach Mitternacht noch der Vortag, und die Widmung an den Gedenktagen erschien erst nach 1 Uhr.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Der Startbildschirm richtet sich nach dem lokalen Datum. Bisher galt kurz nach Mitternacht noch der Vortag.</li>
     <li>[OPTIMIERUNG] Versionen haben jetzt das Format x.y.z (2.5.0 statt 2.05), wie beim Updater. Ältere Installationen erkennen die neue Version weiterhin. Die Überschriften im Changelog sind umgeschrieben (2.04 = 2.4.0).</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Neuer Reiter "Lizenz": Lizenzschlüssel eingeben (gilt auch für STEFFLIX). Nach der Bestätigung heisst er "Feedback" und schickt Nachrichten an den Entwickler, auf Wunsch mit Diagnose und Protokoll. Der Schlüssel lässt sich dort auch entfernen.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Neuer Reiter "Hilfe" (auch mit F1) erklärt alle Funktionen, Tools und Befehle für die Kommandozeile, mit Suche.</li>

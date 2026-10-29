@@ -24,6 +24,10 @@
         {
           "type": "OPTIMIERUNG",
           "text": "Der Ladebildschirm bleibt stehen, bis die Seite aufgebaut und die Vorschaubilder im sichtbaren Bereich geladen sind (höchstens 10 Sekunden). Danach erscheinen keine Bilder mehr nachträglich."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Die Kachelgrösse (Einstellungen › Darstellung) wirkt jetzt auch auf Tablet und Handy. Bisher blieben die Kacheln dort gleich gross, und auf dem Tablet waren \"Klein\" und \"Mittel\" identisch."
         }
       ]
     },

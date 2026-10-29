@@ -242,6 +242,13 @@ public class BrowserActivity extends Activity {
     }
 
     private final class Chrome extends WebChromeClient {
+        // Ohne eigenes Bild zeigt die WebView vor dem Start ein graues Bild mit Play-Symbol,
+        // das über dem STEFFLIX-Player liegt. Ein durchsichtiges Bild blendet es aus.
+        @Override
+        public android.graphics.Bitmap getDefaultVideoPoster() {
+            return android.graphics.Bitmap.createBitmap(1, 1, android.graphics.Bitmap.Config.ARGB_8888);
+        }
+
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
             if (customView != null) {

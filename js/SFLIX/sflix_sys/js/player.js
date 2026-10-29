@@ -1864,7 +1864,8 @@ function bindSurfaceEvents(ui) {
         }, 220);
     });
 
-    // Touch: Tipp = Leiste ein/aus, Doppeltipp links/rechts = 10 Sekunden, Mitte = Vollbild
+    // Touch: Tipp = Abspielen/Pause (Leiste wird dabei eingeblendet),
+    // Doppeltipp links/rechts = 10 Sekunden, Mitte = Vollbild
     surface.addEventListener("pointerup", function (event) {
         if (event.pointerType == "mouse") {
             return;
@@ -1895,11 +1896,8 @@ function bindSurfaceEvents(ui) {
         ui.lastTap = { time: now, zone: zone };
         clearTimeout(ui.tapTimer);
         ui.tapTimer = setTimeout(function () {
-            if (ui.shell.classList.contains("controlsVisible")) {
-                hidePlayerControls(ui);
-            } else {
-                showPlayerControls(ui);
-            }
+            togglePlayback(ui);
+            showPlayerControls(ui);
         }, doubleTapDelay);
     });
 }

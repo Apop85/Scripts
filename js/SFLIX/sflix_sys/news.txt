@@ -5,6 +5,7 @@
 <b>Version 2.5.1</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Neue Android-App: STEFFLIX auf Handy und Tablet, bildschirmfüllend und ohne Adresszeile. Die App verbindet sich direkt mit dem STEFFLIX-Ordner auf einer Netzwerkfreigabe (z.B. NAS), auch mit mehreren Freigaben. Download und Anleitung in den Einstellungen unter "Android-App". Ein Hinweis auf der Startseite stellt die App einmalig vor.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Handy und Tablet: Tippen auf das Video spielt ab oder pausiert und blendet die Leiste ein (bisher nur Leiste ein/aus).</li>
     <li>[<span style="color: blue">INTERFACE</span>] Der Ladebildschirm passt auch auf schmale Bildschirme wie Handys, und seine Animation läuft jetzt auch, während die Seite aufgebaut wird.</li>
     <li>[OPTIMIERUNG] Die Neuerungen sind je Version nach Art geordnet: zuerst neue Funktionen, dann Oberfläche, Optimierungen und Fehlerbehebungen. Gleiche Arten stehen beieinander, in STEFFLIX wie in den Patchnotes des Updaters.</li>
     <li>[OPTIMIERUNG] Der Ladebildschirm bleibt stehen, bis die Seite aufgebaut und die Vorschaubilder im sichtbaren Bereich geladen sind (höchstens 10 Sekunden). Danach erscheinen keine Bilder mehr nachträglich.</li>

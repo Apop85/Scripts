@@ -11,6 +11,10 @@
         },
         {
           "type": "INTERFACE",
+          "text": "Handy und Tablet: Tippen auf das Video spielt ab oder pausiert und blendet die Leiste ein (bisher nur Leiste ein/aus)."
+        },
+        {
+          "type": "INTERFACE",
           "text": "Der Ladebildschirm passt auch auf schmale Bildschirme wie Handys, und seine Animation läuft jetzt auch, während die Seite aufgebaut wird."
         },
         {

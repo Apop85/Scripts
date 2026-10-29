@@ -76,6 +76,8 @@ namespace Sflix
             t.Add(new HelpTopic("Folgen umbenennen",
                 "Holt die Folgenliste einer Serie von fernsehserien.de (deutsche Titel, sonst TVmaze) und benennt die Dateien einheitlich um, " +
                 "z.B. „Serie - S01E02 - Titel.mp4“ im Ordner „Staffel 01“. Erkannt werden S01E02, 1x02 und Doppelfolgen (S01E02E03).\n" +
+                "- Staffelordner wie „Staffel 1“, „staffel1“, „Season 1“, „S01“ oder „Staffel 01 (Blu-ray)“ werden zu „Staffel 01“; gibt es beide, werden sie zusammengeführt. " +
+                "Ordner mit mehreren Staffeln („Staffel 1-3“) bleiben unverändert.\n" +
                 "- Vorher zeigt eine Vorschau alle Änderungen, fehlende Folgen und nicht zugeordnete Dateien. Nur angehakte Zeilen werden ausgeführt.\n" +
                 "- Gibt es mehrere Dateien für eine Folge oder das Ziel schon, zeigt die Vorschau beim Anklicken einen Vergleich mit Grösse, Auflösung und Dauer.\n" +
                 "- Vorschaubilder ziehen mit, Favoriten und Fortschritt bleiben erhalten.\n" +
@@ -85,9 +87,13 @@ namespace Sflix
             t.Add(new HelpTopic("Duplikate finden",
                 "Sucht doppelte Medien in den gewählten Ordnern:\n" +
                 "- Identische Dateien: gleiche Grösse und gleicher Inhalt (Prüfsumme), auch mit anderem Namen.\n" +
-                "- Gleiche Folge: dieselbe Staffel und Folge innerhalb einer Serie, egal ob S01E01, 1x01, S1E1 oder S01E1. Meist verschiedene Fassungen, z.B. SD und HD.\n" +
-                "- Gleicher Name: gleicher Dateiname ohne Endung, z.B. in zwei Ordnern oder „Film.mp4“ neben „Film.mkv“. Preview- und Ablage-Ordner zählen nicht.\n" +
-                "Ein Fenster zeigt jede Gruppe mit Grösse, Auflösung, Dauer, Video/Ton und Datum. Vorausgewählt bleibt die Datei mit der höheren Auflösung, " +
+                "- Gleiche Folge: dieselbe Staffel und Folge innerhalb einer Serie, egal ob S01E01, 1x01, S1E1 oder S01E1. Meist verschiedene Fassungen, z.B. SD und HD. " +
+                "Als Serie gilt der Ordner über dem Staffelordner („Staffel 1“, „Season 01 HD“ …), sonst der Ordner der Folge. Serien in Unterordnern " +
+                "(z.B. Serien\\Star Trek\\TOS und Serien\\Star Trek\\TNG) bleiben so getrennt.\n" +
+                "- Gleicher Name: gleicher Dateiname ohne Endung, z.B. in zwei Ordnern oder „Film.mp4“ neben „Film.mkv“. Folgen werden dabei nur innerhalb derselben Serie verglichen. " +
+                "Preview- und Ablage-Ordner zählen nicht.\n" +
+                "Ein Fenster zeigt jede Gruppe mit dem Grund (Datei, Folge oder Dateiname), Grösse, Auflösung, Dauer, Video/Ton und Datum. " +
+                "Steht eine Datei in mehreren Gruppen, gilt ihr Häkchen überall. Vorausgewählt bleibt die Datei mit der höheren Auflösung, " +
                 "bei gleicher Auflösung die grössere (bei identischen Dateien die mit dem kürzesten Pfad). Überschneiden sich Doppelfolgen, ist nichts vorausgewählt. " +
                 "Die übrigen Dateien kommen samt Vorschaubild nach „__duplikate“; „Ablagen leeren“ löscht sie später endgültig."));
 

@@ -25,5 +25,8 @@
   "data.all": true,
   "data.folders": "",
   "task.rename": false,
-  "log.width": 1150
+  "log.width": 1150,
+  "log.legacyRemoved": true,
+  "task.dupes": false,
+  "task.check": false
 }

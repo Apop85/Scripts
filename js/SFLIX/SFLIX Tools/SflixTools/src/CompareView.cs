@@ -112,6 +112,7 @@ namespace Sflix
         public string Label;          // z.B. "vorhanden", "neu", "behalten"
         public string Path;
         public string Note;           // zusätzlicher Hinweis
+        public string Reason;         // Spalte "Grund" (falls vorhanden)
         public bool ConvertNote;      // "nicht abspielbar" mit "wird konvertiert" ergänzen
         public MediaFacts Facts;
         public object Tag;
@@ -133,8 +134,12 @@ namespace Sflix
         // Häkchen je Zeile (z.B. Duplikate: aussortieren)
         public bool CheckBoxes { get { return List.CheckBoxes; } set { List.CheckBoxes = value; } }
 
-        public CompareView(FfmpegTools ffmpeg, bool withLabelColumn)
+        public CompareView(FfmpegTools ffmpeg, bool withLabelColumn) : this(ffmpeg, withLabelColumn, false) { }
+
+        // withReasonColumn: Spalte "Grund" (Duplikate: Datei, Folge, Dateiname)
+        public CompareView(FfmpegTools ffmpeg, bool withLabelColumn, bool withReasonColumn)
         {
+            reasonColumn = withReasonColumn;
             ff = ffmpeg;
             ColumnCount = 1;
             ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -155,6 +160,7 @@ namespace Sflix
             List.ShowItemToolTips = true;
             DarkList.Apply(List);
             if (withLabelColumn) List.Columns.Add("", Theme.S(90));
+            if (withReasonColumn) List.Columns.Add("Grund", Theme.S(80));
             List.Columns.Add("Datei", Theme.S(300));
             List.Columns.Add("Grösse", Theme.S(80));
             List.Columns.Add("Auflösung", Theme.S(130));
@@ -188,8 +194,9 @@ namespace Sflix
             };
         }
 
-        readonly bool labelColumn;
-        int Col(int i) { return labelColumn ? i + 1 : i; }
+        readonly bool labelColumn, reasonColumn;
+        // Spaltenindex ab "Datei" (0), verschoben um die Spalten davor
+        int Col(int i) { return i + (labelColumn ? 1 : 0) + (reasonColumn ? 1 : 0); }
 
         // Zeigt eine Gruppe (z.B. vorhanden/neu)
         public void SetEntries(List<CompareEntry> list)
@@ -309,8 +316,10 @@ namespace Sflix
                 List<CompareEntry> group = groups[g];
                 if (GroupTitles != null && g < GroupTitles.Count)
                 {
-                    ListViewItem head = new ListViewItem(labelColumn ? "" : GroupTitles[g]);
-                    if (labelColumn) head.SubItems.Add(GroupTitles[g]);
+                    // Gruppenüberschrift in der Spalte "Datei"
+                    int fileCol = Col(0);
+                    ListViewItem head = new ListViewItem(fileCol == 0 ? GroupTitles[g] : "");
+                    for (int hc = 1; hc <= fileCol; hc++) head.SubItems.Add(hc == fileCol ? GroupTitles[g] : "");
                     head.ForeColor = Theme.Muted;
                     head.Font = new Font(List.Font, FontStyle.Bold);
                     head.BackColor = Theme.Input;
@@ -335,9 +344,14 @@ namespace Sflix
                 foreach (CompareEntry e in group)
                 {
                     MediaFacts f = e.Facts;
-                    ListViewItem it = new ListViewItem(labelColumn ? (e.Label ?? "") : FileLabel(e));
+                    // Spalten vor "Datei": Bezeichnung (z.B. behalten) und Grund (z.B. Folge)
+                    List<string> lead = new List<string>();
+                    if (labelColumn) lead.Add(e.Label ?? "");
+                    if (reasonColumn) lead.Add(e.Reason ?? "");
+                    lead.Add(FileLabel(e));
+                    ListViewItem it = new ListViewItem(lead[0]);
                     it.UseItemStyleForSubItems = false;
-                    if (labelColumn) it.SubItems.Add(FileLabel(e));
+                    for (int lc = 1; lc < lead.Count; lc++) it.SubItems.Add(lead[lc]);
                     it.SubItems.Add(f.Size < 0 ? "fehlt" : Fmt.Size(f.Size));
                     it.SubItems.Add(f.ResolutionText);
                     it.SubItems.Add(f.Probed && f.Duration > 0 ? FormatDuration(f.Duration) : "–");

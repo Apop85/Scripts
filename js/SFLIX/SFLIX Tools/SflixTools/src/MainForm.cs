@@ -317,13 +317,13 @@ namespace Sflix
             undoRow.Controls.Add(renameUndoInfo);
 
             Control toolsSection = TileSection(new TileSpec[] {
-                Spec("preview", Glyph.Photo, "Vorschaubilder", "Fehlende Bilder erstellen",
+                Spec("preview", Glyph.Photo, "Vorschaubilder", "Fehlende erstellen",
                      "Fehlende Vorschaubilder (480×270) im Preview-Ordner erstellen.", previewRow, pickPreview.Root),
                 Spec("rename", Glyph.Rename, "Folgen umbenennen", "Titel aus dem Internet",
                      "Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen: „Serie - S01E02 - Titel“ " +
                      "im Ordner „Staffel 01“. Erkannt werden S01E02 und 1x02. Du wählst die Serie und siehst vorher alle Änderungen.",
                      renameRow, undoRow),
-                Spec("dupes", Glyph.Duplicate, "Duplikate finden", "Doppelte Dateien und Folgen",
+                Spec("dupes", Glyph.Duplicate, "Duplikate finden", "Dateien, Folgen, Namen",
                      "Identische Dateien (gleicher Inhalt), gleiche Folgen einer Serie (S01E01 = 1x01 = S1E1) und gleiche Dateinamen finden. Du vergleichst Grösse, Auflösung " +
                      "und Dauer und wählst, was nach „" + DuplicateTask.FolderName + "“ kommt. Favoriten und Fortschritt gehen auf die behaltene Datei über.",
                      pickDupes.Root),
@@ -332,11 +332,11 @@ namespace Sflix
                 Spec("convert", Glyph.Convert, "Konvertieren", "Videos in MP4 umwandeln",
                      "Videos in browserkompatible MP4 (H.264/AAC) umwandeln. Das Original kommt nach „" + ConvertTask.OriginalsFolderName + "“.",
                      parallelRow, optDeleteOriginal, pickConvert.Root),
-                Spec("check", Glyph.Inspect, "Medien prüfen", "Nicht abspielbar, defekt, leer",
+                Spec("check", Glyph.Inspect, "Medien prüfen", "Nicht abspielbar, defekt",
                      "Findet Medien, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), defekte und leere Dateien sowie Medien ohne Vorschaubild " +
                      "(gemäss „Vorschaubilder“: Videos und/oder Bilder). Im Ergebnis wählst du, was konvertiert bzw. mit Vorschaubild versehen wird.",
                      pickCheck.Root),
-                Spec("cleanup", Glyph.Trash, "Ablagen leeren", "__-Ordner endgültig löschen",
+                Spec("cleanup", Glyph.Trash, "Ablagen leeren", "__-Ordner löschen",
                      "„__teile“, „__konvertiert“, „__gelöscht“, „__original“, „" + EpisodeTask.ReplacedFolderName + "“ und „" + DuplicateTask.FolderName + "“ endgültig löschen. " +
                      "Du siehst vorher, was gelöscht wird. Nur innerhalb des Installationsordners möglich.", pickCleanup.Root),
             }, Spec("settings", Glyph.Settings, "Einstellungen", null, null, FolderRow(installFolderBox, "Installationsordner:", false), folderHint, BuildFfmpegRow()));
@@ -697,16 +697,51 @@ namespace Sflix
         void ShowPage(int index)
         {
             if (tabs.Selected != index) { tabs.Selected = index; return; }   // ruft ShowPage erneut auf
-            SuspendLayout();
-            for (int i = 0; i < pages.Length; i++) pages[i].Visible = i == index;
-            tasksScroller.AutoScrollPosition = new Point(0, 0);
-            // Lizenz/Feedback und Hilfe haben keinen Start-Knopf
-            buttonsRow.Visible = index <= PageTools;
-            ResumeLayout(true);
-            banner.Subtitle = index == PageLicense && feedbackPage.Status == LicenseStatus.Active ? "FEEDBACK" : PageSubtitles[index];
-            banner.Invalidate();
-            UpdateStartText();
-            Relayout();
+            // Zeichnen anhalten, bis Seite, Layout und Fensterhöhe fertig sind: sonst sieht man den Aufbau
+            FreezePainting(true);
+            try
+            {
+                SuspendLayout();
+                for (int i = 0; i < pages.Length; i++) pages[i].Visible = i == index;
+                tasksScroller.AutoScrollPosition = new Point(0, 0);
+                // Lizenz/Feedback und Hilfe haben keinen Start-Knopf
+                buttonsRow.Visible = index <= PageTools;
+                ResumeLayout(true);
+                banner.Subtitle = index == PageLicense && feedbackPage.Status == LicenseStatus.Active ? "FEEDBACK" : PageSubtitles[index];
+                banner.Invalidate();
+                UpdateStartText();
+                Relayout();
+            }
+            finally { FreezePainting(false); }
+        }
+
+        // Zeichnen des Fensters anhalten und danach alles auf einmal neu zeichnen (WM_SETREDRAW).
+        // Verschachtelt aufrufbar.
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern bool RedrawWindow(IntPtr hWnd, IntPtr rect, IntPtr region, uint flags);
+        const int WM_SETREDRAW = 0x000B;
+        const uint RDW_INVALIDATE = 0x0001, RDW_ERASE = 0x0004, RDW_ALLCHILDREN = 0x0080, RDW_UPDATENOW = 0x0100, RDW_FRAME = 0x0400;
+        int freezeDepth;
+
+        void FreezePainting(bool freeze)
+        {
+            if (!IsHandleCreated) return;
+            if (freeze)
+            {
+                if (freezeDepth++ == 0)
+                {
+                    // Drehender Warte-Mauszeiger: Windows bewegt ihn auch, während der Wechsel das Fenster blockiert
+                    Cursor.Current = Cursors.WaitCursor;
+                    SendMessage(Handle, WM_SETREDRAW, IntPtr.Zero, IntPtr.Zero);
+                }
+                return;
+            }
+            if (freezeDepth == 0 || --freezeDepth > 0) return;
+            SendMessage(Handle, WM_SETREDRAW, (IntPtr)1, IntPtr.Zero);
+            RedrawWindow(Handle, IntPtr.Zero, IntPtr.Zero, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW | RDW_FRAME);
+            Cursor.Current = Cursors.Default;
         }
 
         // Karte ohne Häkchen mit Überschrift (für den Importer)
@@ -803,6 +838,8 @@ namespace Sflix
                 tile.Icon = spec.Icon;
                 tile.Title = spec.Title;
                 tile.Subtitle = spec.Subtitle;
+                // Mehrere Reihen (Tools): kompakte Kacheln mit Symbol neben dem Text
+                tile.Compact = rows > 1;
                 tile.Dock = DockStyle.Fill;
                 tile.Margin = new Padding(tc == 0 ? 0 : Theme.S(5), tr == 0 ? 0 : Theme.S(10), tc == perRow - 1 ? 0 : Theme.S(5), 0);
                 tile.CheckedChanged += delegate
@@ -902,15 +939,20 @@ namespace Sflix
 
         void ShowOptionPanel(TileSectionState sec, string id)
         {
-            sec.Host.SuspendLayout();
-            foreach (KeyValuePair<string, Control> p in sec.Panels) p.Value.Visible = p.Key == id;
-            // Hinweis nur, wenn noch nichts gewählt ist
-            bool anyTile = false;
-            foreach (TileSpec s in sec.Specs) if (checks[s.Id].Checked) anyTile = true;
-            sec.Empty.Visible = !anyTile && id == null;
-            if (!anyTile && id != null && sec.Fixed != null && id == sec.Fixed.Id) sec.Empty.Visible = false;
-            sec.Host.ResumeLayout(true);
-            Relayout();
+            FreezePainting(true);
+            try
+            {
+                sec.Host.SuspendLayout();
+                foreach (KeyValuePair<string, Control> p in sec.Panels) p.Value.Visible = p.Key == id;
+                // Hinweis nur, wenn noch nichts gewählt ist
+                bool anyTile = false;
+                foreach (TileSpec s in sec.Specs) if (checks[s.Id].Checked) anyTile = true;
+                sec.Empty.Visible = !anyTile && id == null;
+                if (!anyTile && id != null && sec.Fixed != null && id == sec.Fixed.Id) sec.Empty.Visible = false;
+                sec.Host.ResumeLayout(true);
+                Relayout();
+            }
+            finally { FreezePainting(false); }
         }
 
         // Reiter einer Kachel (oder des festen Reiters) nach vorne holen, z.B. bei einer Rückfrage

@@ -40,6 +40,7 @@ public class BrowserActivity extends Activity {
     private static final String HOST = "appassets.androidplatform.net";
 
     private SmbSource smb;
+    private MediaServer media;
     private String prefix;
     private FrameLayout root;
     private WebView web;
@@ -57,6 +58,11 @@ public class BrowserActivity extends Activity {
         }
         smb = new SmbSource(share);
         prefix = "/" + share.id + "/";
+        try {
+            media = new MediaServer(smb);
+        } catch (IOException e) {
+            media = null; // Medien laufen dann über die abgefangenen Anfragen
+        }
 
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
@@ -72,6 +78,8 @@ public class BrowserActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
+        // Medien kommen von http://127.0.0.1 (MediaServer), die Seite von https
+        s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         s.setSupportMultipleWindows(false);
         s.setUseWideViewPort(true);
         s.setLoadWithOverviewMode(true);
@@ -116,6 +124,7 @@ public class BrowserActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (web != null) web.destroy();
+        if (media != null) media.close();
         if (smb != null) {
             final SmbSource s = smb;
             new Thread(s::close).start();
@@ -187,11 +196,34 @@ public class BrowserActivity extends Activity {
             + "showSplashscreen=function(){if(typeof getSplashDedication=='function'&&getSplashDedication(new Date())!=null){"
             + "o();if(window.StefflixApp)StefflixApp.webSplash();}};})();</script>\n";
 
-    private static byte[] injectIntoStart(byte[] html) {
+    /** Leitet Videos und Musik (src von audio/video) auf MediaServer um. Für STEFFLIX sehen src und
+     *  getAttribute("src") aus wie ohne Umleitung (wichtig für Zeitstempel und Vergleiche). */
+    private static String mediaHook(String base) {
+        return "<script>(function(){var base=" + org.json.JSONObject.quote(base) + ";"
+                + "var P=HTMLMediaElement.prototype,d=Object.getOwnPropertyDescriptor(P,'src'),"
+                + "c=Object.getOwnPropertyDescriptor(P,'currentSrc'),g=Element.prototype.getAttribute,"
+                + "sa=Element.prototype.setAttribute;"
+                + "function map(v){v=String(v);return(/^[a-z][a-z0-9+.-]*:/i.test(v)||v.indexOf('/')===0)?v:base+v;}"
+                + "function abs(v){try{return new URL(v,location.href).href;}catch(e){return v;}}"
+                + "Object.defineProperty(P,'src',{configurable:true,enumerable:true,"
+                + "get:function(){return this.__sflixSrc!==undefined?abs(this.__sflixSrc):d.get.call(this);},"
+                + "set:function(v){this.__sflixSrc=String(v);d.set.call(this,map(v));}});"
+                + "Object.defineProperty(P,'currentSrc',{configurable:true,enumerable:true,"
+                + "get:function(){return this.__sflixSrc!==undefined?abs(this.__sflixSrc):c.get.call(this);}});"
+                + "Element.prototype.getAttribute=function(n){if(this instanceof HTMLMediaElement&&"
+                + "this.__sflixSrc!==undefined&&String(n).toLowerCase()==='src')return this.__sflixSrc;"
+                + "return g.call(this,n);};"
+                + "Element.prototype.setAttribute=function(n,v){if(this instanceof HTMLMediaElement&&"
+                + "String(n).toLowerCase()==='src'){this.src=v;return;}return sa.call(this,n,v);};"
+                + "})();</script>\n";
+    }
+
+    private byte[] injectIntoStart(byte[] html) {
         String s = new String(html, StandardCharsets.UTF_8);
         int i = s.indexOf("<script src=\"sflix_sys/js/main.js\"");
         if (i < 0) return html;
-        return (s.substring(0, i) + INJECT + s.substring(i)).getBytes(StandardCharsets.UTF_8);
+        String hook = media != null ? mediaHook(media.base()) : "";
+        return (s.substring(0, i) + hook + INJECT + s.substring(i)).getBytes(StandardCharsets.UTF_8);
     }
 
     private final class Bridge {
@@ -319,43 +351,28 @@ public class BrowserActivity extends Activity {
                 return new WebResourceResponse(mime, charset, 200, "OK", h,
                         new ByteArrayInputStream(injectIntoStart(html)));
             }
-            long start = 0, end = size - 1;
             int code = 200;
             String reason = "OK";
             Map<String, String> headers = new HashMap<>();
             headers.put("Accept-Ranges", "bytes");
             headers.put("Cache-Control", "no-cache");
             headers.put("Access-Control-Allow-Origin", "*");
-            if (range != null && range.startsWith("bytes=") && size > 0) {
-                try {
-                    String r = range.substring(6).split(",")[0].trim();
-                    int dash = r.indexOf('-');
-                    String a = r.substring(0, dash).trim(), b = r.substring(dash + 1).trim();
-                    if (a.isEmpty()) {
-                        start = Math.max(0, size - Long.parseLong(b));
-                    } else {
-                        start = Long.parseLong(a);
-                        if (!b.isEmpty()) end = Math.min(Long.parseLong(b), size - 1);
-                    }
-                } catch (RuntimeException e) {
-                    start = 0;
-                    end = size - 1;
-                }
-                if (start >= size || start > end) {
-                    f.close();
-                    headers.put("Content-Range", "bytes */" + size);
-                    return new WebResourceResponse(mime, charset, 416, "Range Not Satisfiable", headers, new ByteArrayInputStream(new byte[0]));
-                }
+            long[] r = parseRange(range, size);
+            if (r == null) {
+                f.close();
+                headers.put("Content-Range", "bytes */" + size);
+                return new WebResourceResponse(mime, charset, 416, "Range Not Satisfiable", headers, new ByteArrayInputStream(new byte[0]));
+            }
+            long start = r[0], end = r[1];
+            if (range != null && size > 0) {
                 code = 206;
                 reason = "Partial Content";
                 headers.put("Content-Range", "bytes " + start + "-" + end + "/" + size);
             }
             headers.put("Content-Length", String.valueOf(Math.max(0, end - start + 1)));
-            // Der Strom beginnt immer am Dateianfang: Die WebView überspringt bei Range-Anfragen
-            // selbst bis zum Start (InputStream.skip). Begänne er schon bei "start", würde doppelt
-            // gesprungen (Spulen falsch, MP4 mit Inhaltsverzeichnis am Ende startet gar nicht).
+            // Videos und Musik laufen über MediaServer; hier nur noch Reste (z.B. Untertitel)
             return new WebResourceResponse(mime, charset, code, reason, headers,
-                    new SmbSource.RangeStream(f, 0, end + 1));
+                    new SmbSource.RangeStream(f, start, end + 1));
         } catch (FileNotFoundException e) {
             if (mainFrame) return errorPage("STEFFLIX wurde in dieser Freigabe nicht gefunden.", "Es fehlt: " + rel);
             return status(404, "Not Found");
@@ -380,7 +397,30 @@ public class BrowserActivity extends Activity {
                 new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)));
     }
 
-    private static String mimeType(String name) {
+    /** Liest "bytes=a-b", "bytes=a-" oder "bytes=-n". Ohne Range: ganze Datei. null = nicht erfüllbar. */
+    static long[] parseRange(String range, long size) {
+        long start = 0, end = size - 1;
+        if (range != null && range.startsWith("bytes=") && size > 0) {
+            try {
+                String r = range.substring(6).split(",")[0].trim();
+                int dash = r.indexOf('-');
+                String a = r.substring(0, dash).trim(), b = r.substring(dash + 1).trim();
+                if (a.isEmpty()) {
+                    start = Math.max(0, size - Long.parseLong(b));
+                } else {
+                    start = Long.parseLong(a);
+                    if (!b.isEmpty()) end = Math.min(Long.parseLong(b), size - 1);
+                }
+            } catch (RuntimeException e) {
+                start = 0;
+                end = size - 1;
+            }
+            if (start >= size || start > end) return null;
+        }
+        return new long[]{start, end};
+    }
+
+    static String mimeType(String name) {
         int dot = name.lastIndexOf('.');
         String ext = dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
         switch (ext) {

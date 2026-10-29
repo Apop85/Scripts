@@ -6,6 +6,10 @@ gepflegt). STEFFLIX ab 2.00 liest news.json. Nach jeder Änderung an news.txt au
 
 Jede Version erhält "name" (x.y.z, ab 2.5.0 das Format von STEFFLIX) und "version" (die alte
 Zahl, z.B. "2.05"). STEFFLIX bis 2.04 und der Updater bis 3.2 lesen nur "version".
+
+Die Einträge jeder Version werden nach Typ gruppiert (TYPE_ORDER, innerhalb eines Typs bleibt die
+Reihenfolge). Das gilt für news.json und wird auch in news.txt zurückgeschrieben, damit neu angehängte
+Einträge zu ihrem Typ wandern.
 """
 import html
 import json
@@ -21,10 +25,57 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__
 source =sys.argv[1] if len(sys.argv) > 1 else os.path.join(base_dir, "sflix_sys", "news.txt")
 target = sys.argv[2] if len(sys.argv) > 2 else os.path.join(base_dir, "sflix_sys", "news.json")
 
+TYPE_ORDER = ["FEATURE", "INTERFACE", "OPTIMIERUNG", "BUGFIX", "HOTFIX", "BUG"]
+
+
+def item_type_of(line):
+    """Typ eines Eintrags "<li>[...TYP...] Text</li>", sonst None."""
+    match = re.match(r"\s*<li>\[(.*?)\]", line)
+    return re.sub(r"<[^>]+>", "", match.group(1)).strip().upper() if match else None
+
+
+def type_rank(item_type):
+    return TYPE_ORDER.index(item_type) if item_type in TYPE_ORDER else len(TYPE_ORDER)
+
+
+def group_by_type(text):
+    """Sortiert in jedem Versionsblock die zusammenhängenden <li>-Zeilen nach Typ (stabil).
+    Der auskommentierte Block "Bekannte Fehler" bleibt unverändert."""
+    lines = text.splitlines(keepends=True)
+    out, run, in_version = [], [], False
+
+    def flush():
+        run.sort(key=lambda l: type_rank(item_type_of(l)))   # sort ist stabil
+        out.extend(run)
+        run.clear()
+
+    for line in lines:
+        if re.match(r"\s*<b>Version ", line):
+            in_version = True
+        elif line.lstrip().startswith("<!--") or line.lstrip().startswith("<b>Bekannte Fehler"):
+            in_version = False
+        if in_version and item_type_of(line) is not None:
+            run.append(line)
+            continue
+        flush()
+        out.append(line)
+    flush()
+    return "".join(out)
+
+
+# news.txt gruppieren (Zeilenenden bleiben erhalten)
+with open(source, encoding="utf-8", newline="") as reader:
+    original = reader.read()
+grouped = group_by_type(original)
+if grouped != original:
+    with open(source, "w", encoding="utf-8", newline="") as writer:
+        writer.write(grouped)
+    print("news.txt nach Typ gruppiert")
+
 result = {"knownBugs": [], "versions": []}
 current = None
 
-for line in open(source, encoding="utf-8"):
+for line in grouped.splitlines():
     line = line.strip()
     if line.startswith("<b>Bekannte Fehler"):
         current = result["knownBugs"]

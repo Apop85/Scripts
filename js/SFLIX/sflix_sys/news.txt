@@ -2,38 +2,41 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.5.1</b>:<br>
+<ul>
+    <li>[OPTIMIERUNG] Die Neuerungen sind je Version nach Art geordnet: zuerst neue Funktionen, dann Oberfläche, Optimierungen und Fehlerbehebungen. Gleiche Arten stehen beieinander, in STEFFLIX wie in den Patchnotes des Updaters.</li>
+</ul>
 <b>Version 2.5.0</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Neue Lizenzierung: Bisherige Lizenzschlüssel sind nicht mehr gültig. Bitte einen neuen Schlüssel anfordern und im Updater (updateStefflix.exe) unter "Lizenz" eingeben. Er gilt dann für diese Installation in allen Browsern. Wer bisher einen Schlüssel hatte, sieht beim ersten Start einen Hinweis auf der Startseite. Unter Einstellungen › Lizenz steht nur noch der Stand.</li>
     <li>[<span style="color: red">FEATURE</span>] Intro überspringen: Videos, die von vorne beginnen, starten je Ordner einige Sekunden später, z.B. nach dem Vorspann einer Serie. Der Knopf in der Player-Leiste legt in der ersten Hälfte eines Videos das Intro fest ("Intro bis hier"), in der zweiten wie bisher den Abspann ("Abspann ab hier"). Beides steht auch im Autoplay-Menü und unter Einstellungen › Wiedergabe. Wird ein Video an einer gespeicherten Stelle fortgesetzt, gilt diese Stelle.</li>
     <li>[<span style="color: red">FEATURE</span>] Die Lautstärke wird je Ordner gemerkt (Album, Staffel). Ohne eigenen Wert gilt die des Ordners darüber, sonst die zuletzt eingestellte. Gehört zur Datensicherung, umbenannte Ordner ziehen mit.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Hinweise auf das alte updateData.exe verweisen jetzt auf den Updater (updateStefflix.exe) mit "Daten einlesen", bei nicht abspielbaren Dateien auch auf das Tool "Medien prüfen".</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Neuer, wärmerer Rotton. Der Startbildschirm zeigt das Logo im Lichtkegel.</li>
     <li>[<span style="color: red">FEATURE</span>] Nach einem Update auf eine neue Version erscheint der Startbildschirm beim ersten Start einmal, auch wenn "Startbildschirm überspringen" eingeschaltet ist oder er heute schon kam.</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Der Startbildschirm richtet sich nach dem lokalen Datum. Bisher galt kurz nach Mitternacht noch der Vortag.</li>
-    <li>[OPTIMIERUNG] Versionen haben jetzt das Format x.y.z (2.5.0 statt 2.05), wie beim Updater. Ältere Installationen erkennen die neue Version weiterhin. Die Überschriften im Changelog sind umgeschrieben (2.04 = 2.4.0).</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Neuer Reiter "Lizenz": Lizenzschlüssel eingeben (gilt auch für STEFFLIX). Nach der Bestätigung heisst er "Feedback" und schickt Nachrichten an den Entwickler, auf Wunsch mit Diagnose und Protokoll. Der Schlüssel lässt sich dort auch entfernen.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Neuer Reiter "Hilfe" (auch mit F1) erklärt alle Funktionen, Tools und Befehle für die Kommandozeile, mit Suche.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Neues Tool "Medien prüfen" findet Medien, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), defekte und leere Dateien sowie Medien ohne Vorschaubild. Im Ergebnis lassen sie sich gleich konvertieren bzw. mit Vorschaubild versehen.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Neues Tool "Duplikate finden" findet identische Dateien, gleiche Folgen einer Serie, auch bei unterschiedlicher Schreibweise (S01E01 = 1x01 = S1E1), und gleiche Dateinamen (ohne Preview- und Ablage-Ordner). Als Serie gilt der Ordner über dem Staffelordner, so bleiben Serien in Unterordnern (z.B. mehrere Serien unter einem Ordner) getrennt. Ein Vergleich zeigt den Grund (Datei, Folge oder Dateiname), Grösse, Auflösung, Dauer und Codecs, vorausgewählt bleibt die bessere Fassung. Steht eine Datei in mehreren Gruppen, gilt ihr Häkchen überall. Aussortierte Dateien kommen nach "__duplikate", Favoriten und Fortschritt gehen auf die behaltene Datei über. Nicht abspielbare behaltene Videos lassen sich gleich konvertieren.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Updater: Gibt es eine Datei schon (Importer, Folgen umbenennen) oder mehrere Dateien für dieselbe Folge, zeigt ein Vergleich beide mit Grösse, Auflösung, Dauer, Video/Ton und Datum, die besseren Werte hervorgehoben. Fehlt ffmpeg, lässt es sich dort für genauere Angaben installieren.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Das Setup bietet an, ffmpeg gleich mitzuinstallieren (empfohlen), und nimmt optional den Lizenzschlüssel entgegen. ffmpeg liegt jetzt standardmässig je Benutzer in AppData (auch wenn STEFFLIX auf einem NAS liegt), der Ordner lässt sich unter Tools › Einstellungen ändern. Ein bisheriges ffmpeg wird dorthin verschoben.</li>
-    <li>[OPTIMIERUNG] Updater: Die Protokolldatei wird nur noch auf Wunsch geschrieben (Schalter "In Datei speichern" im Protokoll, beim Start aus) und ist auf 1 MB begrenzt. Sonst speichert "Speichern unter …" das Protokoll der Sitzung. Ohne Oberfläche wird weiterhin immer protokolliert. Die bisherige Datei wird einmalig gelöscht.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Updater: Neuer, wärmerer Rotton. Die Tools stehen in zwei Reihen mit niedrigeren Kacheln (Symbol neben dem Text). Beim Wechseln der Reiter flackert das Fenster nicht mehr, während des Aufbaus erscheint der Warte-Mauszeiger.</li>
-    <li>[OPTIMIERUNG] Updater: "Folgen umbenennen" erkennt mehr Staffelordner, z.B. "staffel1", "Season 1 HD" oder "Staffel 01 (Blu-ray)", und benennt sie in "Staffel 01" um. Ordner mit mehreren Staffeln ("Staffel 1-3") bleiben unverändert.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: "Konvertieren" wandelt auf Wunsch auch Musik, die der Browser nicht abspielt (z.B. WMA, AIFF, ALAC in M4A), in MP3 um. Titel und Interpret bleiben erhalten, das Original kommt nach "__konvertiert". "Medien prüfen" erkennt solche Musik und konvertiert sie gleich mit, der Importer wandelt ALAC ebenfalls um.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Updater: Alle Tabellen lassen sich mit einem Klick auf den Spaltenkopf sortieren, ein zweiter Klick kehrt die Reihenfolge um.</li>
-    <li>[OPTIMIERUNG] Updater: "Medien prüfen" und "Duplikate finden" bleiben auch mit Tausenden Einträgen schnell: Die Ergebnisliste erscheint in Sekunden statt Minuten. Das Ergebnis von "Medien prüfen" lässt sich nach Art filtern und durchsuchen, das Protokoll zeigt nur noch die ersten Einträge.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Im Ergebnis von "Medien prüfen" steht jede Datei einmal, mit drei Kästchen: Löschen, Konvertieren und Vorschaubild erstellen. Defekte und leere Dateien sind zum Löschen vorgemerkt (sie kommen samt Vorschaubild nach "__gelöscht"), sonst Konvertieren und Vorschaubild, beides geht zusammen. "Ausführen" erledigt alle gewählten Dateioperationen in einem Durchgang.</li>
+    <li>[<span style="color: red">FEATURE</span>] Updater: Neue Befehle für die Kommandozeile: --license, --license-remove, --ffmpeg (beim Installieren) und --log.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hinweise auf das alte updateData.exe verweisen jetzt auf den Updater (updateStefflix.exe) mit "Daten einlesen", bei nicht abspielbaren Dateien auch auf das Tool "Medien prüfen".</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Neuer, wärmerer Rotton. Der Startbildschirm zeigt das Logo im Lichtkegel.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Updater: Gibt es eine Datei schon (Importer, Folgen umbenennen) oder mehrere Dateien für dieselbe Folge, zeigt ein Vergleich beide mit Grösse, Auflösung, Dauer, Video/Ton und Datum, die besseren Werte hervorgehoben. Fehlt ffmpeg, lässt es sich dort für genauere Angaben installieren.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Updater: Neuer, wärmerer Rotton. Die Tools stehen in zwei Reihen mit niedrigeren Kacheln (Symbol neben dem Text). Beim Wechseln der Reiter flackert das Fenster nicht mehr, während des Aufbaus erscheint der Warte-Mauszeiger.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Updater: Alle Tabellen lassen sich mit einem Klick auf den Spaltenkopf sortieren, ein zweiter Klick kehrt die Reihenfolge um.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Updater: "Ablagen leeren" zeigt schon vor dem Start, wie viel Speicher die Ablagen belegen. Die Berechnung läuft im Hintergrund, das Fenster bleibt bedienbar.</li>
+    <li>[OPTIMIERUNG] Versionen haben jetzt das Format x.y.z (2.5.0 statt 2.05), wie beim Updater. Ältere Installationen erkennen die neue Version weiterhin. Die Überschriften im Changelog sind umgeschrieben (2.04 = 2.4.0).</li>
+    <li>[OPTIMIERUNG] Updater: Die Protokolldatei wird nur noch auf Wunsch geschrieben (Schalter "In Datei speichern" im Protokoll, beim Start aus) und ist auf 1 MB begrenzt. Sonst speichert "Speichern unter …" das Protokoll der Sitzung. Ohne Oberfläche wird weiterhin immer protokolliert. Die bisherige Datei wird einmalig gelöscht.</li>
+    <li>[OPTIMIERUNG] Updater: "Folgen umbenennen" erkennt mehr Staffelordner, z.B. "staffel1", "Season 1 HD" oder "Staffel 01 (Blu-ray)", und benennt sie in "Staffel 01" um. Ordner mit mehreren Staffeln ("Staffel 1-3") bleiben unverändert.</li>
+    <li>[OPTIMIERUNG] Updater: "Medien prüfen" und "Duplikate finden" bleiben auch mit Tausenden Einträgen schnell: Die Ergebnisliste erscheint in Sekunden statt Minuten. Das Ergebnis von "Medien prüfen" lässt sich nach Art filtern und durchsuchen, das Protokoll zeigt nur noch die ersten Einträge.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Der Startbildschirm richtet sich nach dem lokalen Datum. Bisher galt kurz nach Mitternacht noch der Vortag.</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Updater: Auf einem NAS meldeten die Tools beim Verschieben, Umbenennen und Löschen teilweise "Zugriff verweigert", obwohl der Benutzer die Rechte hat. Schreibgeschützte Dateien werden jetzt trotzdem verarbeitet (der Schreibschutz bleibt erhalten), kurz geöffnete Dateien werden nach einer kurzen Pause erneut versucht, und wo das NAS es erlaubt, ergänzt der Updater ein fehlendes Recht "Löschen" (steht im Protokoll). Scheitert es trotzdem, nennt das Protokoll die wahrscheinliche Ursache.</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Updater: "Duplikate finden" stürzte beim Schliessen der Auswahl ab. Ausserdem wurden Auflösung und Dauer in der Vergleichstabelle teilweise nicht nachgeladen.</li>
-    <li>[<span style="color: red">FEATURE</span>] Updater: Neue Befehle für die Kommandozeile: --license, --license-remove, --ffmpeg (beim Installieren) und --log.</li>
 </ul>
 <b>Version 2.4.0</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Neuer Menüpunkt "Einstellungen". Alle Änderungen gelten sofort, eine Vorschau zeigt die Kacheln direkt mit den gewählten Einstellungen. Die Einstellungen gehören zur Datensicherung und lassen sich mit "Auf Standard zurücksetzen" zurücksetzen (Favoriten, Gesehen, "Weiterschauen", Autoplay, die Dauer bis Übergang je Ordner, der Lizenzschlüssel und die Sortierung der Startseite bleiben dabei erhalten). Die Abschnitte heissen Darstellung, Sortierung, Startseite, Wiedergabe, Datensicherung, Fehlerbehebung und Lizenz.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Die Kacheln sind auf dem Computer etwas grösser (5 statt 6 nebeneinander), die Vorschaubilder wirken dadurch ruhiger. In den Einstellungen lässt sich die Kachelgrösse auf "Klein", "Mittel" oder "Gross" stellen. Auf dem Handy bleibt sie gleich.</li>
     <li>[<span style="color: red">FEATURE</span>] Einstellungen: "Kacheln pro Zeile" legt fest, nach wie vielen Kacheln ein Band auf eine neue Zeile umbricht (Standard 12). Mit "Kacheln pro Zeile automatisch" kommen genau so viele Kacheln in eine Zeile, wie nebeneinander Platz haben, auch auf dem Handy. Ändert sich die Fenstergrösse, werden die Zeilen neu verteilt.</li>
     <li>[<span style="color: red">FEATURE</span>] Einstellungen: Alphabetische Gruppen teilen Ordnerseiten in Bänder A–D, E–H, I–L, M–P, Q–T, U–Z und 0–9 / # ein, jedes mit eigener Rasteransicht. Eine Sprungleiste oben auf der Seite führt direkt zu einer Gruppe. Gruppiert wird nur, wenn es mehr als eine Gruppe gibt, Serienfolgen bleiben in ihrer Reihenfolge, Bilder und Musik lassen sich ausnehmen.</li>
     <li>[<span style="color: red">FEATURE</span>] Einstellungen: Artikel werden beim Sortieren ignoriert ("Der Pate" steht unter P, "The Office" unter O). Das gilt für Ordnerseiten, Gruppen und die Reihenfolge von Vor/Zurück und Autoplay. Lässt sich ausschalten.</li>
@@ -41,38 +44,32 @@
     <li>[<span style="color: red">FEATURE</span>] Einstellungen: Markierungen auf Kacheln ("Gesehen", "Letzte Folge", "Letzter Titel") lassen sich ausblenden. "Gesehen" wird weiterhin gespeichert.</li>
     <li>[<span style="color: red">FEATURE</span>] Einstellungen: "Animationen reduzieren" schaltet Übergänge und das Vergrössern der Kacheln beim Überfahren aus. "Startbildschirm überspringen" blendet das Logo beim ersten Start des Tages aus.</li>
     <li>[<span style="color: red">FEATURE</span>] Einstellungen: Die Anzahl Einträge in "Weiterschauen" ist einstellbar (5 bis 50, Standard 20).</li>
-    <li>[<span style="color: blue">INTERFACE</span>] "Browser-Steuerung verwenden" ist vom Autoplay-Fenster in die Einstellungen umgezogen. Der Menüpunkt "Autoplay" entfällt, Autoplay wird über das Autoplay-Symbol im Player bzw. den Knopf "Autoplay" unter Bildern eingestellt.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Datensicherung (exportieren und importieren), Fehlerbehebung und die Eingabe des Lizenzschlüssels befinden sich jetzt in den Einstellungen. Der Menüpunkt "Lizenz" entfällt, "Feedback" erscheint wie bisher nur mit gültigem Schlüssel. Ein gespeicherter Schlüssel wird nur als **** angezeigt. Die Hilfe verweist darauf.</li>
     <li>[<span style="color: red">FEATURE</span>] Fehlerbehebung: "Gespeicherte Daten prüfen" zeigt, wie viele Favoriten, Einträge in "Weiterschauen", Abspielpositionen und weitere Daten gespeichert sind und wie viele davon auf Medien oder Ordner zeigen, die es nicht mehr gibt. Nur diese verwaisten Einträge lassen sich gezielt entfernen. Eine Diagnose (Versionen, Browser, Speicher, Anzahl Medien) lässt sich kopieren und mit Lizenz im Feedback mitschicken. Vor "Alle Daten löschen" wird angeboten, eine Sicherung zu erstellen.</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Playlisten werden automatisch neu erstellt, sobald sich die eingelesenen Medien ändern. Vor und Zurück berücksichtigen so neue oder entfernte Medien, ohne dass die Playlisten von Hand gelöscht werden müssen.</li>
     <li>[<span style="color: red">FEATURE</span>] Musik: Neben dem Player steht eine Playliste mit allen Titeln, ihrer Dauer und der Gesamtdauer, wie man sie von Musikplayern kennt. Der laufende Titel ist hervorgehoben, ein Klick spielt einen Titel ab. Auf dem Handy steht die Liste unter dem Player. Hat ein Titel kein Vorschaubild, steht die Steuerleiste direkt über den Knöpfen Vor/Zurück/Merken/Zufall. Die Dauer wird beim ersten Anzeigen aus den Dateien gelesen und gespeichert.</li>
     <li>[<span style="color: red">FEATURE</span>] Dauer bis Übergang gilt jetzt je Ordner: Ein Wert gilt für den Ordner und alle Unterordner ohne eigenen Wert, z.B. für eine ganze Serie und abweichend für eine Staffel. Ohne Eintrag gilt 0. Im Autoplay-Menü wählt "Gilt für" den Ordner. Der neue Knopf "Übergang hier" in der Player-Leiste übernimmt die verbleibende Zeit des Mediums. Unter Einstellungen › Wiedergabe stehen alle Einträge zum Bearbeiten (einklappbar). Die Werte gehören zur Datensicherung, umbenannte Ordner ziehen mit. Hinweis: Ein bisher eingestellter Wert für alles wird nicht übernommen und muss einmal neu gesetzt werden.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Player: Bei aktivem Autoplay zeigt das Autoplay-Symbol, wie viele Medien noch folgen, bei "Unbegrenzt" das Zeichen ∞.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Hilfe: Bei Autoplay und Player stehen die Symbole der Player-Leiste neben den Erklärungen. Unter "STEFFLIX aktualisieren" stehen die installierten und neuesten Versionen von STEFFLIX, Updater und ffmpeg.</li>
     <li>[<span style="color: red">FEATURE</span>] Startseite: Ist ein neuer Updater verfügbar, erscheint ein Hinweis wie bei STEFFLIX-Updates. Unter Einstellungen › Startseite lassen sich die Update-Hinweise ausblenden.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Das Band "Meine Favoriten" auf der Startseite heisst jetzt "Favoriten". Wie "Weiterschauen" erscheint es unter "Startseite anpassen" auch ohne Einträge, damit sich seine Position jederzeit festlegen lässt.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Neues Tool "Folgen umbenennen". Es holt die Folgenliste einer Serie von fernsehserien.de (deutsche Titel, sonst TVmaze) und benennt die Dateien um, z.B. "Serie - S01E02 - Titel.mp4" im Ordner "Staffel 01". Erkannt werden S01E02 und 1x02. Doppelfolgen (S01E02E03, S01E02-03, 1x02-03) behalten alle Nummern im neuen Namen, z.B. "Serie - S01E02E03 - Pilot (1+2).mp4", und gelten in der Liste der fehlenden Folgen als beide Folgen. Gibt es eine Folge zusätzlich als eigene Datei, wählst du in der Vorschau, welche umbenannt wird. Staffelordner werden angeglichen ("Staffel 1" wird "Staffel 01", gibt es beide, werden sie zusammengeführt), Folgen in der falschen Staffel oder direkt im Serienordner kommen in den richtigen Staffelordner. Vorher zeigt eine Vorschau alle Änderungen, fehlende Folgen und nicht zugeordnete Dateien. Bei mehreren Dateien für dieselbe Folge wählst du, welche umbenannt wird. Vorschaubilder ziehen mit, Favoriten, Fortschritt und "Weiterschauen" bleiben erhalten, und der letzte Lauf lässt sich rückgängig machen. Geladene Folgenlisten werden gespeichert: Beim nächsten Lauf für dieselbe Serie fragt das Tool, ob die gespeicherte Liste verwendet, neu geladen oder eine andere Serie gesucht werden soll. Schlägt das Neuladen fehl, bleibt die gespeicherte Liste erhalten.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Vorschaubilder, Zusammenführen, Konvertieren und Ablagen leeren haben je ein eigenes Ordnerfeld. Mit "Alles" durchsuchen sie den ganzen Installationsordner, sonst nur die gewählten Ordner (mehrere möglich, auch ausserhalb von STEFFLIX). Danach werden nur die betroffenen Ordner neu eingelesen statt der ganzen Mediathek.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Die Kacheln sind auf dem Computer etwas grösser (5 statt 6 nebeneinander), die Vorschaubilder wirken dadurch ruhiger. In den Einstellungen lässt sich die Kachelgrösse auf "Klein", "Mittel" oder "Gross" stellen. Auf dem Handy bleibt sie gleich.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] "Browser-Steuerung verwenden" ist vom Autoplay-Fenster in die Einstellungen umgezogen. Der Menüpunkt "Autoplay" entfällt, Autoplay wird über das Autoplay-Symbol im Player bzw. den Knopf "Autoplay" unter Bildern eingestellt.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Datensicherung (exportieren und importieren), Fehlerbehebung und die Eingabe des Lizenzschlüssels befinden sich jetzt in den Einstellungen. Der Menüpunkt "Lizenz" entfällt, "Feedback" erscheint wie bisher nur mit gültigem Schlüssel. Ein gespeicherter Schlüssel wird nur als **** angezeigt. Die Hilfe verweist darauf.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Player: Bei aktivem Autoplay zeigt das Autoplay-Symbol, wie viele Medien noch folgen, bei "Unbegrenzt" das Zeichen ∞.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hilfe: Bei Autoplay und Player stehen die Symbole der Player-Leiste neben den Erklärungen. Unter "STEFFLIX aktualisieren" stehen die installierten und neuesten Versionen von STEFFLIX, Updater und ffmpeg.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Das Band "Meine Favoriten" auf der Startseite heisst jetzt "Favoriten". Wie "Weiterschauen" erscheint es unter "Startseite anpassen" auch ohne Einträge, damit sich seine Position jederzeit festlegen lässt.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Updater: Der frühere "Medienordner" heisst "Installationsordner" und wird nur noch angezeigt. Festgelegt wird er bei der Installation.</li>
-    <li>[OPTIMIERUNG] Updater: "Ablagen leeren" löscht nur noch innerhalb des Installationsordners, damit nicht versehentlich Daten auf der Festplatte verschwinden. Verknüpfte Ordner, die nach aussen zeigen, werden nie geleert.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Updater: Das Protokoll ("Details") erscheint rechts neben dem Inhalt, seine Breite lässt sich mit einem Schieber anpassen. Zeilen sind nach Fehler, Hinweis und Erfolg eingefärbt und haben eine Uhrzeit. Neu sind eine Suche, der Filter "Nur Fehler und Warnungen" sowie die Knöpfe Kopieren, Leeren und "Datei öffnen". Bei einem Fehler öffnet sich das Protokoll von selbst.</li>
-    <li>[OPTIMIERUNG] Updater: Schreibt bei jedem Start seine Version und die installierte ffmpeg-Version in sflix_sys\updater_info.js, damit STEFFLIX sie in der Hilfe anzeigen und auf einen neuen Updater hinweisen kann.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Updater: Die Zusammenfassung am Ende nennt für jede Aufgabe das Ergebnis und die Dauer (z.B. "3 konvertiert, 10 bereits kompatibel"). Nach "Daten einlesen" zeigt eine Übersicht je Kategorie, wie viele Videos, Titel, Bilder und Ordner gefunden wurden und wie vielen Videos ein Vorschaubild fehlt.</li>
+    <li>[OPTIMIERUNG] Updater: "Ablagen leeren" löscht nur noch innerhalb des Installationsordners, damit nicht versehentlich Daten auf der Festplatte verschwinden. Verknüpfte Ordner, die nach aussen zeigen, werden nie geleert.</li>
+    <li>[OPTIMIERUNG] Updater: Schreibt bei jedem Start seine Version und die installierte ffmpeg-Version in sflix_sys\updater_info.js, damit STEFFLIX sie in der Hilfe anzeigen und auf einen neuen Updater hinweisen kann.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Playlisten werden automatisch neu erstellt, sobald sich die eingelesenen Medien ändern. Vor und Zurück berücksichtigen so neue oder entfernte Medien, ohne dass die Playlisten von Hand gelöscht werden müssen.</li>
 </ul>
 <b>Version 2.3.0</b>:<br>
 <ul>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Die eigene Reihenfolge der Menübänder auf der Startseite ging teilweise verloren: Wurde sortiert, während ein Band fehlte (z.B. "Weiterschauen" oder "Meine Favoriten" ohne Einträge), fiel es aus der gespeicherten Reihenfolge und erschien später wieder ganz oben. Fehlende Bänder behalten jetzt ihre Position.</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Einträge in "Weiterschauen" wurden endgültig gelöscht, wenn ein Medium beim Öffnen vorübergehend nicht in den Daten stand (z.B. während "Daten einlesen" lief). Sie bleiben jetzt erhalten und erscheinen wieder, sobald die Datei gefunden wird.</li>
-    <li>[OPTIMIERUNG] STEFFLIX bittet den Browser, die gespeicherten Daten (Sortierung, Weiterschauen, Favoriten, Fortschritt) dauerhaft zu behalten und nicht bei knappem Speicherplatz zu löschen.</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Mehrere STEFFLIX-Installationen auf einem PC (in verschiedenen Ordnern) teilten sich im Browser denselben Speicher und veränderten gegenseitig Sortierung, Weiterschauen, Favoriten und Fortschritt. Jede Installation speichert ihre Daten jetzt getrennt. Beim ersten Start werden die bisherigen Daten einmalig übernommen, damit nichts verloren geht.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Jede Installation erhält eine eigene, zufällige Kennung (sflix_sys\install.js). Wird ein STEFFLIX-Ordner kopiert, bekommt die Kopie beim nächsten Start des Updaters automatisch eine neue Kennung. Beim Verschieben oder Umbenennen des Ordners bleibt sie erhalten.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: "Daten einlesen" hat den Schalter "Alle Ordner einlesen". Ist er aus, lassen sich einzelne Ordner wählen, die neu eingelesen werden. Nur deren Einträge in data.js werden ersetzt, der Rest bleibt unverändert. Die Ordnerwahl wird gespeichert. Ohne Oberfläche geht das mit --data-folder.</li>
-    <li>[OPTIMIERUNG] Updater: Nach einem Import wird nur der Zielordner neu eingelesen und nach fehlenden Vorschaubildern durchsucht, statt die ganze Mediathek. Nach den Tools wird nur der Medienordner eingelesen, wenn er in STEFFLIX liegt.</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Updater: Lag STEFFLIX direkt in einem Laufwerk (z.B. D:\), schrieb das Einlesen einzelner Ordner (z.B. nach einem Import) falsche Pfade in data.js ("./ilme/..." statt "./Filme/..."). Medien und Vorschaubilder des Ordners wurden dann nicht mehr angezeigt. Ein vollständiges Einlesen repariert eine betroffene data.js. Auch die Kennung der Installation wird in diesem Fall jetzt mit dem richtigen Pfad gespeichert.</li>
-    <li>[OPTIMIERUNG] Updater: System- und versteckte Ordner werden beim Einlesen, beim Import und von den Tools ignoriert.</li>
     <li>[<span style="color: red">FEATURE</span>] Ordner (z.B. eine Serie oder Staffel), deren Videos alle gesehen sind, werden ebenfalls mit "Gesehen" markiert. Musik und Bilder zählen dabei nicht mit.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Ordnerseiten (z.B. Filme): Unterordner stehen jetzt zusammen mit den Medien alphabetisch in einem Band (ein Ordner "Harry Potter" bei H) statt in einem eigenen Band. Das Band bricht auf mehrere Zeilen um: bis 9 Einträge eine Zeile, bis 36 Einträge gleichmässig auf drei Zeilen (z.B. 14 Einträge: 5 + 5 + 4), darüber jeweils nach 12 Einträgen eine neue Zeile.</li>
     <li>[<span style="color: red">FEATURE</span>] Jedes Menüband hat "Alle anzeigen". Gibt es keine eigene Seite dazu, zeigt eine Rasteransicht alle Kacheln des Bandes auf einen Blick (schliessen mit Esc oder dem Kreuz).</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Ordnerseiten (z.B. Filme): Unterordner stehen jetzt zusammen mit den Medien alphabetisch in einem Band (ein Ordner "Harry Potter" bei H) statt in einem eigenen Band. Das Band bricht auf mehrere Zeilen um: bis 9 Einträge eine Zeile, bis 36 Einträge gleichmässig auf drei Zeilen (z.B. 14 Einträge: 5 + 5 + 4), darüber jeweils nach 12 Einträgen eine neue Zeile.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Bei der Wiedergabe steht die Pfadleiste (Start › Serien › …) jetzt unter den Knöpfen Zurück/Weiter. Das Medium steht damit ganz oben.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Bei Bildern gibt es zwischen "Merken" und "Zufall" einen Knopf "Autoplay", der direkt die Autoplay-Einstellungen öffnet. Ist Autoplay an, ist er hervorgehoben.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Die Menübänder stehen etwas näher beieinander, damit mehr auf den Bildschirm passt.</li>
@@ -80,27 +77,34 @@
     <li>[<span style="color: blue">INTERFACE</span>] "Startseite anpassen" zeigt "Weiterschauen" auch ohne Einträge an (als "zurzeit leer"), damit sich seine Position jederzeit festlegen lässt.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Hilfe › Browsereinstellungen: Neue Anleitung für Firefox, Chrome und Edge, wie STEFFLIX als Ausnahme eingetragen wird, wenn der Browser beim Schliessen Chronik oder Website-Daten löscht. Sonst gehen dabei Favoriten, Weiterschauen, Gesehen und die Sortierung verloren. Ein Klick auf eine Adresse kopiert sie zum Einfügen in die Adresszeile.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Hilfe › Neue Medien hinzufügen: Empfohlen wird jetzt der Importer des Updaters (kopiert oder verschiebt in den richtigen Ordner, konvertiert auf Wunsch und liest nur den Zielordner ein). Das Kopieren von Hand mit "Daten einlesen" steht als Alternative darunter.</li>
+    <li>[OPTIMIERUNG] STEFFLIX bittet den Browser, die gespeicherten Daten (Sortierung, Weiterschauen, Favoriten, Fortschritt) dauerhaft zu behalten und nicht bei knappem Speicherplatz zu löschen.</li>
+    <li>[OPTIMIERUNG] Updater: Nach einem Import wird nur der Zielordner neu eingelesen und nach fehlenden Vorschaubildern durchsucht, statt die ganze Mediathek. Nach den Tools wird nur der Medienordner eingelesen, wenn er in STEFFLIX liegt.</li>
+    <li>[OPTIMIERUNG] Updater: System- und versteckte Ordner werden beim Einlesen, beim Import und von den Tools ignoriert.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Die eigene Reihenfolge der Menübänder auf der Startseite ging teilweise verloren: Wurde sortiert, während ein Band fehlte (z.B. "Weiterschauen" oder "Meine Favoriten" ohne Einträge), fiel es aus der gespeicherten Reihenfolge und erschien später wieder ganz oben. Fehlende Bänder behalten jetzt ihre Position.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Einträge in "Weiterschauen" wurden endgültig gelöscht, wenn ein Medium beim Öffnen vorübergehend nicht in den Daten stand (z.B. während "Daten einlesen" lief). Sie bleiben jetzt erhalten und erscheinen wieder, sobald die Datei gefunden wird.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Mehrere STEFFLIX-Installationen auf einem PC (in verschiedenen Ordnern) teilten sich im Browser denselben Speicher und veränderten gegenseitig Sortierung, Weiterschauen, Favoriten und Fortschritt. Jede Installation speichert ihre Daten jetzt getrennt. Beim ersten Start werden die bisherigen Daten einmalig übernommen, damit nichts verloren geht.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Updater: Lag STEFFLIX direkt in einem Laufwerk (z.B. D:\), schrieb das Einlesen einzelner Ordner (z.B. nach einem Import) falsche Pfade in data.js ("./ilme/..." statt "./Filme/..."). Medien und Vorschaubilder des Ordners wurden dann nicht mehr angezeigt. Ein vollständiges Einlesen repariert eine betroffene data.js. Auch die Kennung der Installation wird in diesem Fall jetzt mit dem richtigen Pfad gespeichert.</li>
 </ul>
 <b>Version 2.2.0</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Neuer Updater: updateStefflix.exe ist jetzt ein Programm mit eigener Oberfläche im STEFFLIX-Design und ersetzt updateStefflix.exe, updater.exe, updateData.exe und setup.exe. Die nicht mehr benötigten updater.exe und updateData.exe werden beim Update automatisch entfernt.</li>
-    <li>[OPTIMIERUNG] Durch den neuen Updater wurde die Performance deutlich verbessert.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Drei Registerkarten oben im Fenster: "Updates" mit den Kernaufgaben "Update" und "Daten einlesen", "Importer" zum Übernehmen neuer Medien und "Tools" mit "Vorschaubilder erstellen", "Gesplittete Medien zusammenführen", "Videos für STEFFLIX konvertieren", "Ablagen leeren" und den Einstellungen. Angezeigt wird nur der Bereich der gewählten Karte, der Titel im Kopfbild wechselt passend (STEFFLIX UPDATES, IMPORTER, TOOLS).</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Updater: Updates und Tools werden als Kacheln mit Symbol ausgewählt. Für jede gewählte Kachel erscheint darunter ein eigener Reiter mit ihren Optionen. Optionen werden mit Schaltern ein- und ausgeschaltet, der Start-Knopf zeigt, was ausgeführt wird (z.B. "2 Tools starten").</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Beim Start wird geprüft, ob es neue Versionen von STEFFLIX, dem Updater oder ffmpeg gibt. Falls ja, erscheint ein Hinweis mit den Versionsnummern (z.B. STEFFLIX 2.02 → 2.03), und das Update kann mit "Jetzt aktualisieren" direkt ausgeführt werden. Nach "Später" bleibt oben ein Hinweisbalken mit demselben Knopf.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Auf der Seite "Updates" zeigt eine Übersicht rechts die installierten und die verfügbaren Versionen von STEFFLIX, Updater und ffmpeg. "Neu prüfen" wiederholt die Prüfung, nach einem Update geschieht das automatisch.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Über "Patchnotes" (im Update-Hinweis und in der Versionsübersicht) lassen sich die Neuerungen aller Versionen anzeigen, die neuer sind als die installierte.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Wurde der Updater bei einem Update selbst erneuert, startet er automatisch neu und erledigt die restlichen Aufgaben.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Updater: In allen Texten heisst es jetzt STEFFLIX statt SFLIX.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Nach dem Importer und nach den Tools wird automatisch "Daten einlesen" ausgeführt, damit die Änderungen gleich in STEFFLIX sichtbar sind.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Der Importer übernimmt Videos, Musik und Bilder in eine Kategorie und einen Unterordner von STEFFLIX. Dateien und Ordner werden über Buttons oder per Drag &amp; Drop ins Fenster gewählt (das Fenster wechselt dabei automatisch zum Importer), die Ordnerstruktur kann übernommen werden. Fehlende Vorschaubilder werden auf Wunsch gleich erstellt. Nicht kompatible Dateien werden konvertiert (Video MP4, Musik MP3, Bild JPG). Standardmässig wird kopiert, auf Wunsch verschoben (konvertierte Originale kommen dann nach __konvertiert). Bei bereits vorhandenen Dateien wird nachgefragt, ob sie ersetzt oder übersprungen werden sollen.</li>
-    <li>[OPTIMIERUNG] Updater: Zurückgebliebene Sicherungsdateien (*.old) früherer Updates im STEFFLIX-Ordner und in sflix_sys werden automatisch entfernt.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Wird updateStefflix.exe ausserhalb eines STEFFLIX-Ordners gestartet, bietet sie die Installation von STEFFLIX in einen neuen Ordner an.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: "Vorschaubilder erstellen" erzeugt fehlende Vorschaubilder (480x270) im Preview-Ordner, wahlweise für Videos (Bild aus der Mitte des Videos) und/oder für Bilder. Vorhandene Vorschaubilder bleiben unverändert, Vorschaubilder ohne zugehörige Mediendatei oder Ordner werden nach Preview\__gelöscht verschoben.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: "Gesplittete Medien zusammenführen" fügt aufgeteilte Videos zu einer Datei zusammen. Die Teile werden in einer Liste ausgewählt, auf Wunsch wird passend zum Dateiformat neu kodiert.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: "Videos für STEFFLIX konvertieren" wandelt Videos in browserkompatible MP4 (H.264/AAC) um. Die MP4 ersetzt das Original im selben Ordner, das Original wird nach __konvertiert verschoben (oder auf Wunsch gelöscht). Die Grafikkarte wird automatisch erkannt und genutzt, bei Problemen wird mit dem Prozessor konvertiert.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: "Ablagen leeren" löscht die Ablageordner der Werkzeuge (Ordner, deren Name mit __ beginnt, z.B. __konvertiert oder Preview\__original) nach einer Bestätigung endgültig. Diese Ordner werden auch beim Einlesen der Daten ignoriert.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Der Medienordner für Vorschaubilder, Zusammenführen, Konvertieren und Ablagen leeren ist unter "Tools" &gt; "Einstellungen" einstellbar. Das für die Videobearbeitung benötigte ffmpeg wird beim ersten Bedarf automatisch heruntergeladen und geprüft.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Updater: Updates und Tools werden als Kacheln mit Symbol ausgewählt. Für jede gewählte Kachel erscheint darunter ein eigener Reiter mit ihren Optionen. Optionen werden mit Schaltern ein- und ausgeschaltet, der Start-Knopf zeigt, was ausgeführt wird (z.B. "2 Tools starten").</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Updater: In allen Texten heisst es jetzt STEFFLIX statt SFLIX.</li>
+    <li>[OPTIMIERUNG] Durch den neuen Updater wurde die Performance deutlich verbessert.</li>
+    <li>[OPTIMIERUNG] Updater: Zurückgebliebene Sicherungsdateien (*.old) früherer Updates im STEFFLIX-Ordner und in sflix_sys werden automatisch entfernt.</li>
     <li>[OPTIMIERUNG] "Daten einlesen" verkleinert zu grosse Vorschaubilder direkt im Preview-Ordner auf 480x270. Das Original wird mit gleichem Namen im Unterordner Preview\__original aufbewahrt, WebP-Bilder bleiben unverändert. "Ablagen leeren" löscht diese Originale bei Bedarf. Der Ordner sflix_sys\thumbs wird nicht mehr benötigt und automatisch entfernt.</li>
     <li>[OPTIMIERUNG] Schnellerer Bildwechsel: Das nächste und das vorherige Bild werden im Hintergrund vorgeladen, sobald das aktuelle Bild angezeigt wird. Das gilt auch für die Zufallswiedergabe, deren nächstes Bild bereits feststeht.</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] "Zufällig abspielen" nahm auch die Vorschaubilder der Ordner (Preview-Ordner) in die Playliste auf.</li>
@@ -108,18 +112,18 @@
 <b>Version 2.1.0</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Eigene Player-Steuerung im STEFFLIX-Design für Videos und Musik, mit Knöpfen für das vorherige/nächste Medium und 10 Sekunden zurück/vor.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Musik-Player in derselben Grösse wie Videos: Über der Leiste wird das Vorschaubild des Titels angezeigt (sonst das des Albums bzw. Ordners), in Originalauflösung aus dem Preview-Ordner.</li>
     <li>[<span style="color: red">FEATURE</span>] Autoplay-Symbol in der Player-Leiste: ausgegraut, wenn Autoplay aus ist. Ein Klick öffnet das Autoplay-Menü (Automatisch vorwärts, Unbegrenzt, Anzahl, Dauer bis Übergang).</li>
     <li>[<span style="color: red">FEATURE</span>] Autoplay-Countdown im Player ("Nächstes in 5 s") mit Namen des nächsten Mediums. Ein Klick darauf startet es sofort, das X schaltet Autoplay aus.</li>
     <li>[<span style="color: red">FEATURE</span>] Neues Video-Vollbild: Das Video füllt den Bildschirm, darunter kann weitergescrollt und ein anderes Medium gewählt werden. Kopfzeile und Pfadleiste werden ausgeblendet, im Video wird der Titel angezeigt.</li>
+    <li>[<span style="color: red">FEATURE</span>] Die bisherige Browser-Steuerung lässt sich im Menü unter "Autoplay" oder im Zahnradmenü wieder einschalten.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Musik-Player in derselben Grösse wie Videos: Über der Leiste wird das Vorschaubild des Titels angezeigt (sonst das des Albums bzw. Ordners), in Originalauflösung aus dem Preview-Ordner.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Bilder im Vollbild: Der Browser wechselt ebenfalls in den Vollbildmodus, das Bild nutzt die ganze Fläche auf schwarzem Hintergrund. Wechselt eine Diashow im Vollbild zwischen Bild und Video, bleibt der Vollbildmodus erhalten.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Smartphones: kompaktere Player-Leiste, die Player-Menüs öffnen sich als Leiste vom unteren Bildschirmrand.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Der Titel im Player lässt den vorangestellten Seriennamen weg (z.B. "S01E01 - Folgentitel" statt "Die Simpsons - S01E01 - Folgentitel"). Kacheln, Suche und Favoriten zeigen weiterhin den vollen Namen.</li>
-    <li>[<span style="color: red">FEATURE</span>] Die bisherige Browser-Steuerung lässt sich im Menü unter "Autoplay" oder im Zahnradmenü wieder einschalten.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Das Fenster "Autoplay" im Menü enthält zusätzlich die Player-Einstellungen. Neuer Abschnitt "Player" in der Hilfe.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Kacheln von Folgen, Filmen und Musiktiteln ohne eigenes Vorschaubild zeigen das Bild des Ordners darüber: zuerst das der Staffel, dann das der Serie (bzw. des Albums). Das Bild der ganzen Kategorie (z.B. "Serien") wird dafür nicht verwendet.</li>
     <li>[OPTIMIERUNG] Die Lautstärke wird sofort gespeichert (bisher nur alle 10 Sekunden während der Wiedergabe).</li>
     <li>[OPTIMIERUNG] Grosse Ordner (z.B. 2000 Bilder mit Zufallswiedergabe): Das Menüband unter dem Player springt bei weiten Wechseln direkt zum aktuellen Medium, statt animiert über alle Kacheln zu scrollen. Beim Wechsel wird zuerst das neue Medium geladen und angezeigt, erst danach werden die Menübänder aufgebaut und ihre Vorschaubilder geladen.</li>
-    <li>[<span style="color: blue">INTERFACE</span>] Kacheln von Folgen, Filmen und Musiktiteln ohne eigenes Vorschaubild zeigen das Bild des Ordners darüber: zuerst das der Staffel, dann das der Serie (bzw. des Albums). Das Bild der ganzen Kategorie (z.B. "Serien") wird dafür nicht verwendet.</li>
 </ul>
 <b>Version 2.0.0</b>:<br>
 <ul>
@@ -132,6 +136,15 @@
     <li>[<span style="color: red">FEATURE</span>] updateData.exe benennt Dateien und Ordner mit nicht unterstützten Sonderzeichen (z.B. "–") automatisch um und zeigt die Änderungen an.</li>
     <li>[<span style="color: red">FEATURE</span>] Die Updater prüfen heruntergeladene Dateien (Prüfsumme, gültige Programmdatei). Installiert wird nur, wenn alle Dateien gültig sind. Schlägt die Installation fehl, wird der alte Stand wiederhergestellt. Zum Anwenden updateStefflix.exe und anschliessend updateData.exe ausführen.</li>
     <li>[<span style="color: red">FEATURE</span>] updateStefflix.exe startet nach dem Update automatisch updateData.exe.</li>
+    <li>[<span style="color: red">FEATURE</span>] Suche zeigt schon während der Eingabe passende Ordner und Titel an. Auf der Ergebnisseite lässt sich die Suche verfeinern.</li>
+    <li>[<span style="color: red">FEATURE</span>] Die Reihenfolge der Menübänder auf der Startseite lässt sich über "Startseite anpassen" frei sortieren (ziehen oder mit Pfeilen). Das Hauptmenü übernimmt diese Reihenfolge.</li>
+    <li>[<span style="color: red">FEATURE</span>] Zufallswiedergabe: Schalter "Zufall" in der Player-Leiste und Button "Zufällig abspielen" auf Ordnerseiten (alle Medien inkl. Unterordner). Jedes Medium wird nur einmal abgespielt, danach ist die Playliste zu Ende. "Zurück" und "Weiter" bewegen sich im bisherigen Verlauf, der auch ein Neuladen der Seite übersteht.</li>
+    <li>[<span style="color: red">FEATURE</span>] Gesehene Videos (ab 95 % oder bis zum Ende) werden mit einem Haken markiert. "Weiterschauen" zeigt nach einer fertigen Folge direkt die nächste an, die letzte Folge einer Serie wird markiert.</li>
+    <li>[<span style="color: red">FEATURE</span>] Datensicherung in der Hilfe: Favoriten, Fortschritt und Einstellungen lassen sich als Datei exportieren und wieder importieren.</li>
+    <li>[<span style="color: red">FEATURE</span>] Sicherungen enthalten die STEFFLIX-Version. Beim Import werden Sicherungen älterer Versionen automatisch angepasst; Sicherungen aus einer neueren Version werden abgelehnt (zuerst STEFFLIX aktualisieren).</li>
+    <li>[<span style="color: red">FEATURE</span>] Autoplay: neuer Schalter "Unbegrenzt", spielt ohne feste Anzahl bis zum Ende der Playliste.</li>
+    <li>[<span style="color: red">FEATURE</span>] Weitere Dateiformate: Video m4v, webm, ogv; Musik oga, opus, aac, flac, wav; Bilder webp, avif, bmp. Gross-/Kleinschreibung der Dateiendung spielt keine Rolle.</li>
+    <li>[<span style="color: red">FEATURE</span>] Menüband "Meine Favoriten" auf der Startseite. Die Favoriten-Seite ist nach Kategorien (Serien, Filme, Musik, ...) gegliedert.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Neue Startseite im Dark-Mode: Update-Hinweis, "Weiterschauen" mit Fortschrittsbalken und pro Kategorie ein Menüband mit 20 zufälligen Einträgen. Die Menübänder lassen sich mit Pfeilen, Ziehen, Wischen oder den Pfeiltasten durchblättern.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Update-Hinweis zeigt die Neuerungen und lässt sich für 1 Tag, 1 Woche, 1 Monat oder bis zur nächsten Version ausblenden.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Einheitliche Kacheln für Startseite, Suchresultate und Favoriten, immer gleich gross, auch ohne Vorschaubild.</li>
@@ -144,39 +157,30 @@
     <li>[<span style="color: blue">INTERFACE</span>] Fenster aus dem Menü schliessen sich bei einem Klick daneben.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Hilfeseite mit Titel, einzelnen Abschnitten und einer Übersicht zum schnellen Springen.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Die Fehlerbehebung ist aus dem Menü in die Hilfe umgezogen. Die Optionen werden erst nach dem Aufklappen angezeigt.</li>
-    <li>[<span style="color: red">FEATURE</span>] Suche zeigt schon während der Eingabe passende Ordner und Titel an. Auf der Ergebnisseite lässt sich die Suche verfeinern.</li>
-    <li>[<span style="color: red">FEATURE</span>] Die Reihenfolge der Menübänder auf der Startseite lässt sich über "Startseite anpassen" frei sortieren (ziehen oder mit Pfeilen). Das Hauptmenü übernimmt diese Reihenfolge.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Bilder im Vollbild: Pfeile links und rechts werden beim Überfahren eingeblendet (statt senkrechter Leisten). Auf Touch-Geräten wird per Wischen gewechselt.</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Nach dem Klick auf eine Kachel unter dem Player wechselten die Pfeiltasten nicht mehr das Bild.</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Auf Smartphones blieb das Menü nach der Auswahl offen und verdeckte das Suchfeld.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Tastenkürzel in der Hilfe werden als Tastatur-Tasten dargestellt.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Kategorieseiten (z.B. Serien) zeigen zuerst nur die Ordner, alphabetisch in Gruppen (0 – 9, A – D, ...). Die Staffeln erscheinen erst beim Öffnen einer Serie.</li>
-    <li>[<span style="color: red">FEATURE</span>] Zufallswiedergabe: Schalter "Zufall" in der Player-Leiste und Button "Zufällig abspielen" auf Ordnerseiten (alle Medien inkl. Unterordner). Jedes Medium wird nur einmal abgespielt, danach ist die Playliste zu Ende. "Zurück" und "Weiter" bewegen sich im bisherigen Verlauf, der auch ein Neuladen der Seite übersteht.</li>
-    <li>[<span style="color: red">FEATURE</span>] Gesehene Videos (ab 95 % oder bis zum Ende) werden mit einem Haken markiert. "Weiterschauen" zeigt nach einer fertigen Folge direkt die nächste an, die letzte Folge einer Serie wird markiert.</li>
-    <li>[<span style="color: red">FEATURE</span>] Datensicherung in der Hilfe: Favoriten, Fortschritt und Einstellungen lassen sich als Datei exportieren und wieder importieren.</li>
-    <li>[<span style="color: red">FEATURE</span>] Sicherungen enthalten die STEFFLIX-Version. Beim Import werden Sicherungen älterer Versionen automatisch angepasst; Sicherungen aus einer neueren Version werden abgelehnt (zuerst STEFFLIX aktualisieren).</li>
     <li>[<span style="color: blue">INTERFACE</span>] Neues Logo (rotes Band-S mit Farbverlauf) in der Kopfzeile und im Browser-Tab, daneben der Schriftzug STEFFLIX.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Neuer animierter Splashscreen im Stil des neuen Logos. Kürzer als bisher, auf jedem Bildschirmformat scharf und vollständig sichtbar.</li>
-    <li>[<span style="color: red">FEATURE</span>] Autoplay: neuer Schalter "Unbegrenzt", spielt ohne feste Anzahl bis zum Ende der Playliste.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Einheitliche Symbole im Menü. Die Hilfe ist inhaltlich überarbeitet, Zusatzinfos lassen sich aufklappen.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Fehlerbehebung zeigt eine kurze Statusmeldung statt eines Protokolls. Der rote Rahmen bei fast fertigen Videos entfällt (ersetzt durch die Markierung "Gesehen"), ebenso die alten Hinweisfenster der Updates 1.33 und 1.38.</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Updates von STEFFLIX auf einem Netzwerkpfad (\\server\freigabe) schlugen fehl, weil die Programme im falschen Ordner (C:\Windows) arbeiteten. Die Programme verwenden jetzt immer ihren eigenen Ordner und brechen ab, wenn dieser kein STEFFLIX-Ordner ist.</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Feedback: Nachrichten mit Sonderzeichen wie &amp;, # oder + wurden abgeschnitten oder nicht verschickt.</li>
-    <li>[OPTIMIERUNG] Umstieg von älteren Versionen mit einem einzigen Aufruf von updateStefflix.exe: Der neue Updater lädt fehlende Dateien nach und liest die Medien danach direkt neu ein.</li>
-    <li>[OPTIMIERUNG] Der Programmcode ist in mehrere Dateien im Ordner sflix_sys/js aufgeteilt (bisher sflix_sys/sflix.js). Fehlen nach einem unvollständigen Update Dateien, zeigt STEFFLIX einen Hinweis an.</li>
-    <li>[<span style="color: red">FEATURE</span>] Weitere Dateiformate: Video m4v, webm, ogv; Musik oga, opus, aac, flac, wav; Bilder webp, avif, bmp. Gross-/Kleinschreibung der Dateiendung spielt keine Rolle.</li>
-    <li>[OPTIMIERUNG] Die Updater laden nur noch Dateien herunter, die sich geändert haben.</li>
-    <li>[<span style="color: red">FEATURE</span>] Menüband "Meine Favoriten" auf der Startseite. Die Favoriten-Seite ist nach Kategorien (Serien, Filme, Musik, ...) gegliedert.</li>
-    <li>[OPTIMIERUNG] "Weiterschauen" merkt sich bis zu 20 Einträge.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Optimierung für Smartphones und kleine Bildschirme. Kopfzeile zweizeilig, die Suche befindet sich im Einstellungsmenü.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Kopfzeile auf grossen Bildschirmen einzeilig (Logo, Menü, Suche, Einstellungen), Logo in korrekter Grösse.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Feedback wird nur noch angezeigt, wenn ein gültiger Lizenzschlüssel hinterlegt ist. Ungültige Schlüssel werden beim Speichern erkannt.</li>
+    <li>[OPTIMIERUNG] Umstieg von älteren Versionen mit einem einzigen Aufruf von updateStefflix.exe: Der neue Updater lädt fehlende Dateien nach und liest die Medien danach direkt neu ein.</li>
+    <li>[OPTIMIERUNG] Der Programmcode ist in mehrere Dateien im Ordner sflix_sys/js aufgeteilt (bisher sflix_sys/sflix.js). Fehlen nach einem unvollständigen Update Dateien, zeigt STEFFLIX einen Hinweis an.</li>
+    <li>[OPTIMIERUNG] Die Updater laden nur noch Dateien herunter, die sich geändert haben.</li>
+    <li>[OPTIMIERUNG] "Weiterschauen" merkt sich bis zu 20 Einträge.</li>
     <li>[OPTIMIERUNG] Versionsprüfung und Changelog werden im Hintergrund geladen. Ohne Internetverbindung startet STEFFLIX ohne Verzögerung.</li>
     <li>[OPTIMIERUNG] Natürliche Sortierung von Medien und Ordnern ("Folge 2" vor "Folge 10").</li>
     <li>[OPTIMIERUNG] Zeitstempel werden pro Pfad gespeichert. Gleichnamige Dateien in verschiedenen Ordnern teilen sich keine Wiedergabeposition mehr. Bestehende Zeitstempel werden übernommen.</li>
     <li>[OPTIMIERUNG] Bestehende Favoriten, Zeitstempel und "Weiterschauen"-Einträge werden beim ersten Start automatisch übernommen, auch für Dateien, die von updateData.exe umbenannt wurden.</li>
     <li>[OPTIMIERUNG] Der Changelog wird als news.json geladen und als reiner Text dargestellt.</li>
     <li>[OPTIMIERUNG] Überarbeitung des Programmcodes: Zusammenführen der Medienlogik, eigener Player-Container, Entfernen von nicht genutztem Code.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Nach dem Klick auf eine Kachel unter dem Player wechselten die Pfeiltasten nicht mehr das Bild.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Auf Smartphones blieb das Menü nach der Auswahl offen und verdeckte das Suchfeld.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Updates von STEFFLIX auf einem Netzwerkpfad (\\server\freigabe) schlugen fehl, weil die Programme im falschen Ordner (C:\Windows) arbeiteten. Die Programme verwenden jetzt immer ihren eigenen Ordner und brechen ab, wenn dieser kein STEFFLIX-Ordner ist.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Feedback: Nachrichten mit Sonderzeichen wie &amp;, # oder + wurden abgeschnitten oder nicht verschickt.</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Sonderzeichen wie "–" in Datei- oder Ordnernamen liessen das Menü abstürzen.</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Apostrophe in Dateinamen machten die Vor- und Zurück-Buttons unbrauchbar.</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Dateinamen mit "None" wurden von updateData.exe fehlerhaft übernommen.</li>
@@ -193,15 +197,15 @@
 </ul>
 <b>Version 1.42.0</b>:<br>
 <ul>
-    <li>[OPTIMIERUNG] Umstellung auf Indexed DB für bessere Datenkonsistenz und Performance. Bei Browserupdates werden die Stefflixdaten nicht mehr gelöscht.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Splashscreen wird nur noch einmal pro Tag angezeigt.</li>
+    <li>[OPTIMIERUNG] Umstellung auf Indexed DB für bessere Datenkonsistenz und Performance. Bei Browserupdates werden die Stefflixdaten nicht mehr gelöscht.</li>
 </ul>
 <b>Version 1.41.0</b>:<br>
 <ul>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Ordnerübergreifendes Autoplay funktioniert noch nicht, sofern Ordner und Medieninhalt im selben Elternordner sind</li>
     <li>[<span style="color: red">FEATURE</span>] Nahtloser Medienwechsel zwischen Ordnern/Staffeln ohne kompletten Seitenreload implementiert.</li>
     <li>[<span style="color: red">FEATURE</span>] Autoplay funktioniert nun auch über Staffel- und Ordnergrenzen hinweg ohne Unterbrechung.</li>
     <li>[OPTIMIERUNG] Anzahl vollständiger Seitenaufbauten beim Navigieren durch Playlists deutlich reduziert.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Ordnerübergreifendes Autoplay funktioniert noch nicht, sofern Ordner und Medieninhalt im selben Elternordner sind</li>
 </ul>
 <b>Version 1.40.0</b>:<br>
 <ul>
@@ -265,11 +269,11 @@
 </ul>
 <b>Version 1.31.0</b>:<br>
 <ul>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Wenn bei betrachtung eines Bildes Autoplay aktiviert wurde, musste man erst das Bild wechseln, bevor die Autoplayfunktion gegriffen hat.</li>
+    <li>[<span style="color: red">FEATURE</span>] Vollbildmodus hinzugefügt.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Höhe des Mediencontainers angepasst, damit das Untermenü überdeckt wird.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Ob Autoplay aktiviert ist, wird nun unterhalb des Mediums mittels des Autoplay-Icons angezeigt.</li>
-    <li>[<span style="color: red">FEATURE</span>] Vollbildmodus hinzugefügt.</li>
     <li>[OPTIMIERUNG] Hinzufügen und Entfernen von Klassen.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Wenn bei betrachtung eines Bildes Autoplay aktiviert wurde, musste man erst das Bild wechseln, bevor die Autoplayfunktion gegriffen hat.</li>
 </ul>
 <b>Version 1.30.0</b>:<br>
 <ul>
@@ -283,14 +287,14 @@
 </ul>
 <b>Version 1.29.0</b>:<br>
 <ul>
-    <li>[<span style="color: blue">INTERFACE</span>] Untermenü bei Einstellungsbutton hinzugefügt mit Autoplayeinstellungen, Feedbackformular, Fehlerbehebung, Lizenzschlüssel und Hilfe</li>
     <li>[<span style="color: red">FEATURE</span>] Lizenzschlüssel zur Verwendung des Feedbackformulars hinzugefügt.</li>
     <li>[<span style="color: red">FEATURE</span>] Feedbackformular hinzugefügt.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Untermenü bei Einstellungsbutton hinzugefügt mit Autoplayeinstellungen, Feedbackformular, Fehlerbehebung, Lizenzschlüssel und Hilfe</li>
 </ul>
 <b>Version 1.28.5</b>:<br>
 <ul>
-    <li>[<span style="color: red"><b>HOTFIX</b></span>] Leerer Vor-/Zurück-Button führte zu Fehler beim Wechseln des Mediums mittels der beiden Buttons.</li>
     <li>[OPTIMIERUNG] "Dauer bis Übergang" in Autoplayeinstellungen springt nun auf 11 zurück, wenn der Wert unter 11 fällt.</li>
+    <li>[<span style="color: red"><b>HOTFIX</b></span>] Leerer Vor-/Zurück-Button führte zu Fehler beim Wechseln des Mediums mittels der beiden Buttons.</li>
 </ul>
 <b>Version 1.28.4</b>:<br>
 <ul>
@@ -311,14 +315,14 @@
 </ul>
 <b>Version 1.28.0</b>:<br>
 <ul>
-    <li>[<span style="color: #e21af3">BUG</span>] <s>Erstes Element eines Ordners kann nicht mittels Autoplay gestartet werden.</s></li>
     <li>[<span style="color: red">FEATURE</span>] Einstellungsmenü hinzugefügt zum Manipulieren der Autoplay-Werte und zur Fehlerbehebung.</li>
     <li>[<span style="color: red">FEATURE</span>] Autoplayfunktion eingefügt zum automatischen Abspielen von Medieninhalten (z.B. Diashow)</li>
     <li>[<span style="color: red">FEATURE</span>] Vor- und Zurück-Buttons benötigen kein neues Laden sofern die Medien im selben Ordner sind</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Kommas in Ordner oder Dateinamen konnten zu fehlerhaftem Laden führen.</li>
     <li>[OPTIMIERUNG] Einführen von Listenseperator-Stringketten</li>
     <li>[OPTIMIERUNG] Überarbeitung Ein- und Ausblenden von Containern</li>
     <li>[OPTIMIERUNG] Überarbeitung Ordnerübergreifender links</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Kommas in Ordner oder Dateinamen konnten zu fehlerhaftem Laden führen.</li>
+    <li>[<span style="color: #e21af3">BUG</span>] <s>Erstes Element eines Ordners kann nicht mittels Autoplay gestartet werden.</s></li>
 </ul>
 <b>Version 1.27.1</b>:<br>
 <ul>
@@ -374,8 +378,8 @@
 </ul>
 <b>Version 1.22.0</b>:<br>
 <ul>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Audiokontrollen werden nun konstant angezeigt</li>
     <li>[OPTIMIERUNG] Favoriten können nun ohne Unterbruch des Mediums hinzugefügt werden</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Audiokontrollen werden nun konstant angezeigt</li>
 </ul>
 <b>Version 1.21.0</b>:<br>
 <ul>
@@ -386,9 +390,9 @@
 <b>Version 1.20.0</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Speichern der Lautstärkeeinstellung zwischen den Videos/Musikdateien (Mindestlautstärke: 20%)</li>
-    <li>[<span style="color: darkgreen">BUGFIX</span>] Anzeigefehler bei 0 Suchresultaten</li>
     <li>[<span style="color: blue">INTERFACE</span>] Anpassung Standardlinkfarbe</li>
     <li>[<span style="color: blue">INTERFACE</span>] Hilfe um unterstützte Dateiformate ergänzt</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Anzeigefehler bei 0 Suchresultaten</li>
 </ul>
 <b>Version 1.19.0</b>:<br>
 <ul>
@@ -400,13 +404,13 @@
 </ul>
 <b>Version 1.17.0</b>:<br>
 <ul>
-    <li>[<span style="color: #e21af3">BUG</span>] <s>Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden</s></li>
     <li>[<span style="color: blue">INTERFACE</span>] Hilfe-Button hinzugefügt</li>
+    <li>[<span style="color: #e21af3">BUG</span>] <s>Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden</s></li>
 </ul>
 <b>Version 1.16.0</b>:<br>
 <ul>
-    <li>[<span style="color: blue">INTERFACE</span>] Abstand zu Mediennavigation verringert</li>
     <li>[<span style="color: red">FEATURE</span>] Zurück- und Vorwärts-Knopf können nun auch zwischen Unterordner/Staffeln wechseln</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Abstand zu Mediennavigation verringert</li>
 </ul>
 <b>Version 1.15.0</b>:<br>
 <ul>

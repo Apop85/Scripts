@@ -2,6 +2,16 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0501",
+      "name": "2.5.1",
+      "items": [
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Die Neuerungen sind je Version nach Art geordnet: zuerst neue Funktionen, dann Oberfläche, Optimierungen und Fehlerbehebungen. Gleiche Arten stehen beieinander, in STEFFLIX wie in den Patchnotes des Updaters."
+        }
+      ]
+    },
+    {
       "version": "2.05",
       "name": "2.5.0",
       "items": [
@@ -18,24 +28,8 @@
           "text": "Die Lautstärke wird je Ordner gemerkt (Album, Staffel). Ohne eigenen Wert gilt die des Ordners darüber, sonst die zuletzt eingestellte. Gehört zur Datensicherung, umbenannte Ordner ziehen mit."
         },
         {
-          "type": "INTERFACE",
-          "text": "Hinweise auf das alte updateData.exe verweisen jetzt auf den Updater (updateStefflix.exe) mit \"Daten einlesen\", bei nicht abspielbaren Dateien auch auf das Tool \"Medien prüfen\"."
-        },
-        {
-          "type": "INTERFACE",
-          "text": "Neuer, wärmerer Rotton. Der Startbildschirm zeigt das Logo im Lichtkegel."
-        },
-        {
           "type": "FEATURE",
           "text": "Nach einem Update auf eine neue Version erscheint der Startbildschirm beim ersten Start einmal, auch wenn \"Startbildschirm überspringen\" eingeschaltet ist oder er heute schon kam."
-        },
-        {
-          "type": "BUGFIX",
-          "text": "Der Startbildschirm richtet sich nach dem lokalen Datum. Bisher galt kurz nach Mitternacht noch der Vortag."
-        },
-        {
-          "type": "OPTIMIERUNG",
-          "text": "Versionen haben jetzt das Format x.y.z (2.5.0 statt 2.05), wie beim Updater. Ältere Installationen erkennen die neue Version weiterhin. Die Überschriften im Changelog sind umgeschrieben (2.04 = 2.4.0)."
         },
         {
           "type": "FEATURE",
@@ -54,44 +48,64 @@
           "text": "Updater: Neues Tool \"Duplikate finden\" findet identische Dateien, gleiche Folgen einer Serie, auch bei unterschiedlicher Schreibweise (S01E01 = 1x01 = S1E1), und gleiche Dateinamen (ohne Preview- und Ablage-Ordner). Als Serie gilt der Ordner über dem Staffelordner, so bleiben Serien in Unterordnern (z.B. mehrere Serien unter einem Ordner) getrennt. Ein Vergleich zeigt den Grund (Datei, Folge oder Dateiname), Grösse, Auflösung, Dauer und Codecs, vorausgewählt bleibt die bessere Fassung. Steht eine Datei in mehreren Gruppen, gilt ihr Häkchen überall. Aussortierte Dateien kommen nach \"__duplikate\", Favoriten und Fortschritt gehen auf die behaltene Datei über. Nicht abspielbare behaltene Videos lassen sich gleich konvertieren."
         },
         {
-          "type": "INTERFACE",
-          "text": "Updater: Gibt es eine Datei schon (Importer, Folgen umbenennen) oder mehrere Dateien für dieselbe Folge, zeigt ein Vergleich beide mit Grösse, Auflösung, Dauer, Video/Ton und Datum, die besseren Werte hervorgehoben. Fehlt ffmpeg, lässt es sich dort für genauere Angaben installieren."
-        },
-        {
           "type": "FEATURE",
           "text": "Updater: Das Setup bietet an, ffmpeg gleich mitzuinstallieren (empfohlen), und nimmt optional den Lizenzschlüssel entgegen. ffmpeg liegt jetzt standardmässig je Benutzer in AppData (auch wenn STEFFLIX auf einem NAS liegt), der Ordner lässt sich unter Tools › Einstellungen ändern. Ein bisheriges ffmpeg wird dorthin verschoben."
-        },
-        {
-          "type": "OPTIMIERUNG",
-          "text": "Updater: Die Protokolldatei wird nur noch auf Wunsch geschrieben (Schalter \"In Datei speichern\" im Protokoll, beim Start aus) und ist auf 1 MB begrenzt. Sonst speichert \"Speichern unter …\" das Protokoll der Sitzung. Ohne Oberfläche wird weiterhin immer protokolliert. Die bisherige Datei wird einmalig gelöscht."
-        },
-        {
-          "type": "INTERFACE",
-          "text": "Updater: Neuer, wärmerer Rotton. Die Tools stehen in zwei Reihen mit niedrigeren Kacheln (Symbol neben dem Text). Beim Wechseln der Reiter flackert das Fenster nicht mehr, während des Aufbaus erscheint der Warte-Mauszeiger."
-        },
-        {
-          "type": "OPTIMIERUNG",
-          "text": "Updater: \"Folgen umbenennen\" erkennt mehr Staffelordner, z.B. \"staffel1\", \"Season 1 HD\" oder \"Staffel 01 (Blu-ray)\", und benennt sie in \"Staffel 01\" um. Ordner mit mehreren Staffeln (\"Staffel 1-3\") bleiben unverändert."
         },
         {
           "type": "FEATURE",
           "text": "Updater: \"Konvertieren\" wandelt auf Wunsch auch Musik, die der Browser nicht abspielt (z.B. WMA, AIFF, ALAC in M4A), in MP3 um. Titel und Interpret bleiben erhalten, das Original kommt nach \"__konvertiert\". \"Medien prüfen\" erkennt solche Musik und konvertiert sie gleich mit, der Importer wandelt ALAC ebenfalls um."
         },
         {
+          "type": "FEATURE",
+          "text": "Updater: Im Ergebnis von \"Medien prüfen\" steht jede Datei einmal, mit drei Kästchen: Löschen, Konvertieren und Vorschaubild erstellen. Defekte und leere Dateien sind zum Löschen vorgemerkt (sie kommen samt Vorschaubild nach \"__gelöscht\"), sonst Konvertieren und Vorschaubild, beides geht zusammen. \"Ausführen\" erledigt alle gewählten Dateioperationen in einem Durchgang."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Neue Befehle für die Kommandozeile: --license, --license-remove, --ffmpeg (beim Installieren) und --log."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Hinweise auf das alte updateData.exe verweisen jetzt auf den Updater (updateStefflix.exe) mit \"Daten einlesen\", bei nicht abspielbaren Dateien auch auf das Tool \"Medien prüfen\"."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Neuer, wärmerer Rotton. Der Startbildschirm zeigt das Logo im Lichtkegel."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Updater: Gibt es eine Datei schon (Importer, Folgen umbenennen) oder mehrere Dateien für dieselbe Folge, zeigt ein Vergleich beide mit Grösse, Auflösung, Dauer, Video/Ton und Datum, die besseren Werte hervorgehoben. Fehlt ffmpeg, lässt es sich dort für genauere Angaben installieren."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Updater: Neuer, wärmerer Rotton. Die Tools stehen in zwei Reihen mit niedrigeren Kacheln (Symbol neben dem Text). Beim Wechseln der Reiter flackert das Fenster nicht mehr, während des Aufbaus erscheint der Warte-Mauszeiger."
+        },
+        {
           "type": "INTERFACE",
           "text": "Updater: Alle Tabellen lassen sich mit einem Klick auf den Spaltenkopf sortieren, ein zweiter Klick kehrt die Reihenfolge um."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Updater: \"Ablagen leeren\" zeigt schon vor dem Start, wie viel Speicher die Ablagen belegen. Die Berechnung läuft im Hintergrund, das Fenster bleibt bedienbar."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Versionen haben jetzt das Format x.y.z (2.5.0 statt 2.05), wie beim Updater. Ältere Installationen erkennen die neue Version weiterhin. Die Überschriften im Changelog sind umgeschrieben (2.04 = 2.4.0)."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: Die Protokolldatei wird nur noch auf Wunsch geschrieben (Schalter \"In Datei speichern\" im Protokoll, beim Start aus) und ist auf 1 MB begrenzt. Sonst speichert \"Speichern unter …\" das Protokoll der Sitzung. Ohne Oberfläche wird weiterhin immer protokolliert. Die bisherige Datei wird einmalig gelöscht."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: \"Folgen umbenennen\" erkennt mehr Staffelordner, z.B. \"staffel1\", \"Season 1 HD\" oder \"Staffel 01 (Blu-ray)\", und benennt sie in \"Staffel 01\" um. Ordner mit mehreren Staffeln (\"Staffel 1-3\") bleiben unverändert."
         },
         {
           "type": "OPTIMIERUNG",
           "text": "Updater: \"Medien prüfen\" und \"Duplikate finden\" bleiben auch mit Tausenden Einträgen schnell: Die Ergebnisliste erscheint in Sekunden statt Minuten. Das Ergebnis von \"Medien prüfen\" lässt sich nach Art filtern und durchsuchen, das Protokoll zeigt nur noch die ersten Einträge."
         },
         {
-          "type": "FEATURE",
-          "text": "Updater: Im Ergebnis von \"Medien prüfen\" steht jede Datei einmal, mit drei Kästchen: Löschen, Konvertieren und Vorschaubild erstellen. Defekte und leere Dateien sind zum Löschen vorgemerkt (sie kommen samt Vorschaubild nach \"__gelöscht\"), sonst Konvertieren und Vorschaubild, beides geht zusammen. \"Ausführen\" erledigt alle gewählten Dateioperationen in einem Durchgang."
-        },
-        {
-          "type": "INTERFACE",
-          "text": "Updater: \"Ablagen leeren\" zeigt schon vor dem Start, wie viel Speicher die Ablagen belegen. Die Berechnung läuft im Hintergrund, das Fenster bleibt bedienbar."
+          "type": "BUGFIX",
+          "text": "Der Startbildschirm richtet sich nach dem lokalen Datum. Bisher galt kurz nach Mitternacht noch der Vortag."
         },
         {
           "type": "BUGFIX",
@@ -100,10 +114,6 @@
         {
           "type": "BUGFIX",
           "text": "Updater: \"Duplikate finden\" stürzte beim Schliessen der Auswahl ab. Ausserdem wurden Auflösung und Dauer in der Vergleichstabelle teilweise nicht nachgeladen."
-        },
-        {
-          "type": "FEATURE",
-          "text": "Updater: Neue Befehle für die Kommandozeile: --license, --license-remove, --ffmpeg (beim Installieren) und --log."
         }
       ]
     },
@@ -114,10 +124,6 @@
         {
           "type": "FEATURE",
           "text": "Neuer Menüpunkt \"Einstellungen\". Alle Änderungen gelten sofort, eine Vorschau zeigt die Kacheln direkt mit den gewählten Einstellungen. Die Einstellungen gehören zur Datensicherung und lassen sich mit \"Auf Standard zurücksetzen\" zurücksetzen (Favoriten, Gesehen, \"Weiterschauen\", Autoplay, die Dauer bis Übergang je Ordner, der Lizenzschlüssel und die Sortierung der Startseite bleiben dabei erhalten). Die Abschnitte heissen Darstellung, Sortierung, Startseite, Wiedergabe, Datensicherung, Fehlerbehebung und Lizenz."
-        },
-        {
-          "type": "INTERFACE",
-          "text": "Die Kacheln sind auf dem Computer etwas grösser (5 statt 6 nebeneinander), die Vorschaubilder wirken dadurch ruhiger. In den Einstellungen lässt sich die Kachelgrösse auf \"Klein\", \"Mittel\" oder \"Gross\" stellen. Auf dem Handy bleibt sie gleich."
         },
         {
           "type": "FEATURE",
@@ -148,20 +154,8 @@
           "text": "Einstellungen: Die Anzahl Einträge in \"Weiterschauen\" ist einstellbar (5 bis 50, Standard 20)."
         },
         {
-          "type": "INTERFACE",
-          "text": "\"Browser-Steuerung verwenden\" ist vom Autoplay-Fenster in die Einstellungen umgezogen. Der Menüpunkt \"Autoplay\" entfällt, Autoplay wird über das Autoplay-Symbol im Player bzw. den Knopf \"Autoplay\" unter Bildern eingestellt."
-        },
-        {
-          "type": "INTERFACE",
-          "text": "Datensicherung (exportieren und importieren), Fehlerbehebung und die Eingabe des Lizenzschlüssels befinden sich jetzt in den Einstellungen. Der Menüpunkt \"Lizenz\" entfällt, \"Feedback\" erscheint wie bisher nur mit gültigem Schlüssel. Ein gespeicherter Schlüssel wird nur als **** angezeigt. Die Hilfe verweist darauf."
-        },
-        {
           "type": "FEATURE",
           "text": "Fehlerbehebung: \"Gespeicherte Daten prüfen\" zeigt, wie viele Favoriten, Einträge in \"Weiterschauen\", Abspielpositionen und weitere Daten gespeichert sind und wie viele davon auf Medien oder Ordner zeigen, die es nicht mehr gibt. Nur diese verwaisten Einträge lassen sich gezielt entfernen. Eine Diagnose (Versionen, Browser, Speicher, Anzahl Medien) lässt sich kopieren und mit Lizenz im Feedback mitschicken. Vor \"Alle Daten löschen\" wird angeboten, eine Sicherung zu erstellen."
-        },
-        {
-          "type": "BUGFIX",
-          "text": "Playlisten werden automatisch neu erstellt, sobald sich die eingelesenen Medien ändern. Vor und Zurück berücksichtigen so neue oder entfernte Medien, ohne dass die Playlisten von Hand gelöscht werden müssen."
         },
         {
           "type": "FEATURE",
@@ -172,20 +166,8 @@
           "text": "Dauer bis Übergang gilt jetzt je Ordner: Ein Wert gilt für den Ordner und alle Unterordner ohne eigenen Wert, z.B. für eine ganze Serie und abweichend für eine Staffel. Ohne Eintrag gilt 0. Im Autoplay-Menü wählt \"Gilt für\" den Ordner. Der neue Knopf \"Übergang hier\" in der Player-Leiste übernimmt die verbleibende Zeit des Mediums. Unter Einstellungen › Wiedergabe stehen alle Einträge zum Bearbeiten (einklappbar). Die Werte gehören zur Datensicherung, umbenannte Ordner ziehen mit. Hinweis: Ein bisher eingestellter Wert für alles wird nicht übernommen und muss einmal neu gesetzt werden."
         },
         {
-          "type": "INTERFACE",
-          "text": "Player: Bei aktivem Autoplay zeigt das Autoplay-Symbol, wie viele Medien noch folgen, bei \"Unbegrenzt\" das Zeichen ∞."
-        },
-        {
-          "type": "INTERFACE",
-          "text": "Hilfe: Bei Autoplay und Player stehen die Symbole der Player-Leiste neben den Erklärungen. Unter \"STEFFLIX aktualisieren\" stehen die installierten und neuesten Versionen von STEFFLIX, Updater und ffmpeg."
-        },
-        {
           "type": "FEATURE",
           "text": "Startseite: Ist ein neuer Updater verfügbar, erscheint ein Hinweis wie bei STEFFLIX-Updates. Unter Einstellungen › Startseite lassen sich die Update-Hinweise ausblenden."
-        },
-        {
-          "type": "INTERFACE",
-          "text": "Das Band \"Meine Favoriten\" auf der Startseite heisst jetzt \"Favoriten\". Wie \"Weiterschauen\" erscheint es unter \"Startseite anpassen\" auch ohne Einträge, damit sich seine Position jederzeit festlegen lässt."
         },
         {
           "type": "FEATURE",
@@ -197,23 +179,51 @@
         },
         {
           "type": "INTERFACE",
-          "text": "Updater: Der frühere \"Medienordner\" heisst \"Installationsordner\" und wird nur noch angezeigt. Festgelegt wird er bei der Installation."
+          "text": "Die Kacheln sind auf dem Computer etwas grösser (5 statt 6 nebeneinander), die Vorschaubilder wirken dadurch ruhiger. In den Einstellungen lässt sich die Kachelgrösse auf \"Klein\", \"Mittel\" oder \"Gross\" stellen. Auf dem Handy bleibt sie gleich."
         },
         {
-          "type": "OPTIMIERUNG",
-          "text": "Updater: \"Ablagen leeren\" löscht nur noch innerhalb des Installationsordners, damit nicht versehentlich Daten auf der Festplatte verschwinden. Verknüpfte Ordner, die nach aussen zeigen, werden nie geleert."
+          "type": "INTERFACE",
+          "text": "\"Browser-Steuerung verwenden\" ist vom Autoplay-Fenster in die Einstellungen umgezogen. Der Menüpunkt \"Autoplay\" entfällt, Autoplay wird über das Autoplay-Symbol im Player bzw. den Knopf \"Autoplay\" unter Bildern eingestellt."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Datensicherung (exportieren und importieren), Fehlerbehebung und die Eingabe des Lizenzschlüssels befinden sich jetzt in den Einstellungen. Der Menüpunkt \"Lizenz\" entfällt, \"Feedback\" erscheint wie bisher nur mit gültigem Schlüssel. Ein gespeicherter Schlüssel wird nur als **** angezeigt. Die Hilfe verweist darauf."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Player: Bei aktivem Autoplay zeigt das Autoplay-Symbol, wie viele Medien noch folgen, bei \"Unbegrenzt\" das Zeichen ∞."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Hilfe: Bei Autoplay und Player stehen die Symbole der Player-Leiste neben den Erklärungen. Unter \"STEFFLIX aktualisieren\" stehen die installierten und neuesten Versionen von STEFFLIX, Updater und ffmpeg."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Das Band \"Meine Favoriten\" auf der Startseite heisst jetzt \"Favoriten\". Wie \"Weiterschauen\" erscheint es unter \"Startseite anpassen\" auch ohne Einträge, damit sich seine Position jederzeit festlegen lässt."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Updater: Der frühere \"Medienordner\" heisst \"Installationsordner\" und wird nur noch angezeigt. Festgelegt wird er bei der Installation."
         },
         {
           "type": "INTERFACE",
           "text": "Updater: Das Protokoll (\"Details\") erscheint rechts neben dem Inhalt, seine Breite lässt sich mit einem Schieber anpassen. Zeilen sind nach Fehler, Hinweis und Erfolg eingefärbt und haben eine Uhrzeit. Neu sind eine Suche, der Filter \"Nur Fehler und Warnungen\" sowie die Knöpfe Kopieren, Leeren und \"Datei öffnen\". Bei einem Fehler öffnet sich das Protokoll von selbst."
         },
         {
+          "type": "INTERFACE",
+          "text": "Updater: Die Zusammenfassung am Ende nennt für jede Aufgabe das Ergebnis und die Dauer (z.B. \"3 konvertiert, 10 bereits kompatibel\"). Nach \"Daten einlesen\" zeigt eine Übersicht je Kategorie, wie viele Videos, Titel, Bilder und Ordner gefunden wurden und wie vielen Videos ein Vorschaubild fehlt."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: \"Ablagen leeren\" löscht nur noch innerhalb des Installationsordners, damit nicht versehentlich Daten auf der Festplatte verschwinden. Verknüpfte Ordner, die nach aussen zeigen, werden nie geleert."
+        },
+        {
           "type": "OPTIMIERUNG",
           "text": "Updater: Schreibt bei jedem Start seine Version und die installierte ffmpeg-Version in sflix_sys\\updater_info.js, damit STEFFLIX sie in der Hilfe anzeigen und auf einen neuen Updater hinweisen kann."
         },
         {
-          "type": "INTERFACE",
-          "text": "Updater: Die Zusammenfassung am Ende nennt für jede Aufgabe das Ergebnis und die Dauer (z.B. \"3 konvertiert, 10 bereits kompatibel\"). Nach \"Daten einlesen\" zeigt eine Übersicht je Kategorie, wie viele Videos, Titel, Bilder und Ordner gefunden wurden und wie vielen Videos ein Vorschaubild fehlt."
+          "type": "BUGFIX",
+          "text": "Playlisten werden automatisch neu erstellt, sobald sich die eingelesenen Medien ändern. Vor und Zurück berücksichtigen so neue oder entfernte Medien, ohne dass die Playlisten von Hand gelöscht werden müssen."
         }
       ]
     },
@@ -221,22 +231,6 @@
       "version": "2.03",
       "name": "2.3.0",
       "items": [
-        {
-          "type": "BUGFIX",
-          "text": "Die eigene Reihenfolge der Menübänder auf der Startseite ging teilweise verloren: Wurde sortiert, während ein Band fehlte (z.B. \"Weiterschauen\" oder \"Meine Favoriten\" ohne Einträge), fiel es aus der gespeicherten Reihenfolge und erschien später wieder ganz oben. Fehlende Bänder behalten jetzt ihre Position."
-        },
-        {
-          "type": "BUGFIX",
-          "text": "Einträge in \"Weiterschauen\" wurden endgültig gelöscht, wenn ein Medium beim Öffnen vorübergehend nicht in den Daten stand (z.B. während \"Daten einlesen\" lief). Sie bleiben jetzt erhalten und erscheinen wieder, sobald die Datei gefunden wird."
-        },
-        {
-          "type": "OPTIMIERUNG",
-          "text": "STEFFLIX bittet den Browser, die gespeicherten Daten (Sortierung, Weiterschauen, Favoriten, Fortschritt) dauerhaft zu behalten und nicht bei knappem Speicherplatz zu löschen."
-        },
-        {
-          "type": "BUGFIX",
-          "text": "Mehrere STEFFLIX-Installationen auf einem PC (in verschiedenen Ordnern) teilten sich im Browser denselben Speicher und veränderten gegenseitig Sortierung, Weiterschauen, Favoriten und Fortschritt. Jede Installation speichert ihre Daten jetzt getrennt. Beim ersten Start werden die bisherigen Daten einmalig übernommen, damit nichts verloren geht."
-        },
         {
           "type": "FEATURE",
           "text": "Updater: Jede Installation erhält eine eigene, zufällige Kennung (sflix_sys\\install.js). Wird ein STEFFLIX-Ordner kopiert, bekommt die Kopie beim nächsten Start des Updaters automatisch eine neue Kennung. Beim Verschieben oder Umbenennen des Ordners bleibt sie erhalten."
@@ -246,28 +240,16 @@
           "text": "Updater: \"Daten einlesen\" hat den Schalter \"Alle Ordner einlesen\". Ist er aus, lassen sich einzelne Ordner wählen, die neu eingelesen werden. Nur deren Einträge in data.js werden ersetzt, der Rest bleibt unverändert. Die Ordnerwahl wird gespeichert. Ohne Oberfläche geht das mit --data-folder."
         },
         {
-          "type": "OPTIMIERUNG",
-          "text": "Updater: Nach einem Import wird nur der Zielordner neu eingelesen und nach fehlenden Vorschaubildern durchsucht, statt die ganze Mediathek. Nach den Tools wird nur der Medienordner eingelesen, wenn er in STEFFLIX liegt."
-        },
-        {
-          "type": "BUGFIX",
-          "text": "Updater: Lag STEFFLIX direkt in einem Laufwerk (z.B. D:\\), schrieb das Einlesen einzelner Ordner (z.B. nach einem Import) falsche Pfade in data.js (\"./ilme/...\" statt \"./Filme/...\"). Medien und Vorschaubilder des Ordners wurden dann nicht mehr angezeigt. Ein vollständiges Einlesen repariert eine betroffene data.js. Auch die Kennung der Installation wird in diesem Fall jetzt mit dem richtigen Pfad gespeichert."
-        },
-        {
-          "type": "OPTIMIERUNG",
-          "text": "Updater: System- und versteckte Ordner werden beim Einlesen, beim Import und von den Tools ignoriert."
-        },
-        {
           "type": "FEATURE",
           "text": "Ordner (z.B. eine Serie oder Staffel), deren Videos alle gesehen sind, werden ebenfalls mit \"Gesehen\" markiert. Musik und Bilder zählen dabei nicht mit."
         },
         {
-          "type": "INTERFACE",
-          "text": "Ordnerseiten (z.B. Filme): Unterordner stehen jetzt zusammen mit den Medien alphabetisch in einem Band (ein Ordner \"Harry Potter\" bei H) statt in einem eigenen Band. Das Band bricht auf mehrere Zeilen um: bis 9 Einträge eine Zeile, bis 36 Einträge gleichmässig auf drei Zeilen (z.B. 14 Einträge: 5 + 5 + 4), darüber jeweils nach 12 Einträgen eine neue Zeile."
-        },
-        {
           "type": "FEATURE",
           "text": "Jedes Menüband hat \"Alle anzeigen\". Gibt es keine eigene Seite dazu, zeigt eine Rasteransicht alle Kacheln des Bandes auf einen Blick (schliessen mit Esc oder dem Kreuz)."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Ordnerseiten (z.B. Filme): Unterordner stehen jetzt zusammen mit den Medien alphabetisch in einem Band (ein Ordner \"Harry Potter\" bei H) statt in einem eigenen Band. Das Band bricht auf mehrere Zeilen um: bis 9 Einträge eine Zeile, bis 36 Einträge gleichmässig auf drei Zeilen (z.B. 14 Einträge: 5 + 5 + 4), darüber jeweils nach 12 Einträgen eine neue Zeile."
         },
         {
           "type": "INTERFACE",
@@ -296,6 +278,34 @@
         {
           "type": "INTERFACE",
           "text": "Hilfe › Neue Medien hinzufügen: Empfohlen wird jetzt der Importer des Updaters (kopiert oder verschiebt in den richtigen Ordner, konvertiert auf Wunsch und liest nur den Zielordner ein). Das Kopieren von Hand mit \"Daten einlesen\" steht als Alternative darunter."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "STEFFLIX bittet den Browser, die gespeicherten Daten (Sortierung, Weiterschauen, Favoriten, Fortschritt) dauerhaft zu behalten und nicht bei knappem Speicherplatz zu löschen."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: Nach einem Import wird nur der Zielordner neu eingelesen und nach fehlenden Vorschaubildern durchsucht, statt die ganze Mediathek. Nach den Tools wird nur der Medienordner eingelesen, wenn er in STEFFLIX liegt."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: System- und versteckte Ordner werden beim Einlesen, beim Import und von den Tools ignoriert."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Die eigene Reihenfolge der Menübänder auf der Startseite ging teilweise verloren: Wurde sortiert, während ein Band fehlte (z.B. \"Weiterschauen\" oder \"Meine Favoriten\" ohne Einträge), fiel es aus der gespeicherten Reihenfolge und erschien später wieder ganz oben. Fehlende Bänder behalten jetzt ihre Position."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Einträge in \"Weiterschauen\" wurden endgültig gelöscht, wenn ein Medium beim Öffnen vorübergehend nicht in den Daten stand (z.B. während \"Daten einlesen\" lief). Sie bleiben jetzt erhalten und erscheinen wieder, sobald die Datei gefunden wird."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Mehrere STEFFLIX-Installationen auf einem PC (in verschiedenen Ordnern) teilten sich im Browser denselben Speicher und veränderten gegenseitig Sortierung, Weiterschauen, Favoriten und Fortschritt. Jede Installation speichert ihre Daten jetzt getrennt. Beim ersten Start werden die bisherigen Daten einmalig übernommen, damit nichts verloren geht."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Updater: Lag STEFFLIX direkt in einem Laufwerk (z.B. D:\\), schrieb das Einlesen einzelner Ordner (z.B. nach einem Import) falsche Pfade in data.js (\"./ilme/...\" statt \"./Filme/...\"). Medien und Vorschaubilder des Ordners wurden dann nicht mehr angezeigt. Ein vollständiges Einlesen repariert eine betroffene data.js. Auch die Kennung der Installation wird in diesem Fall jetzt mit dem richtigen Pfad gespeichert."
         }
       ]
     },
@@ -308,16 +318,8 @@
           "text": "Neuer Updater: updateStefflix.exe ist jetzt ein Programm mit eigener Oberfläche im STEFFLIX-Design und ersetzt updateStefflix.exe, updater.exe, updateData.exe und setup.exe. Die nicht mehr benötigten updater.exe und updateData.exe werden beim Update automatisch entfernt."
         },
         {
-          "type": "OPTIMIERUNG",
-          "text": "Durch den neuen Updater wurde die Performance deutlich verbessert."
-        },
-        {
           "type": "FEATURE",
           "text": "Updater: Drei Registerkarten oben im Fenster: \"Updates\" mit den Kernaufgaben \"Update\" und \"Daten einlesen\", \"Importer\" zum Übernehmen neuer Medien und \"Tools\" mit \"Vorschaubilder erstellen\", \"Gesplittete Medien zusammenführen\", \"Videos für STEFFLIX konvertieren\", \"Ablagen leeren\" und den Einstellungen. Angezeigt wird nur der Bereich der gewählten Karte, der Titel im Kopfbild wechselt passend (STEFFLIX UPDATES, IMPORTER, TOOLS)."
-        },
-        {
-          "type": "INTERFACE",
-          "text": "Updater: Updates und Tools werden als Kacheln mit Symbol ausgewählt. Für jede gewählte Kachel erscheint darunter ein eigener Reiter mit ihren Optionen. Optionen werden mit Schaltern ein- und ausgeschaltet, der Start-Knopf zeigt, was ausgeführt wird (z.B. \"2 Tools starten\")."
         },
         {
           "type": "FEATURE",
@@ -336,20 +338,12 @@
           "text": "Updater: Wurde der Updater bei einem Update selbst erneuert, startet er automatisch neu und erledigt die restlichen Aufgaben."
         },
         {
-          "type": "INTERFACE",
-          "text": "Updater: In allen Texten heisst es jetzt STEFFLIX statt SFLIX."
-        },
-        {
           "type": "FEATURE",
           "text": "Updater: Nach dem Importer und nach den Tools wird automatisch \"Daten einlesen\" ausgeführt, damit die Änderungen gleich in STEFFLIX sichtbar sind."
         },
         {
           "type": "FEATURE",
           "text": "Updater: Der Importer übernimmt Videos, Musik und Bilder in eine Kategorie und einen Unterordner von STEFFLIX. Dateien und Ordner werden über Buttons oder per Drag & Drop ins Fenster gewählt (das Fenster wechselt dabei automatisch zum Importer), die Ordnerstruktur kann übernommen werden. Fehlende Vorschaubilder werden auf Wunsch gleich erstellt. Nicht kompatible Dateien werden konvertiert (Video MP4, Musik MP3, Bild JPG). Standardmässig wird kopiert, auf Wunsch verschoben (konvertierte Originale kommen dann nach __konvertiert). Bei bereits vorhandenen Dateien wird nachgefragt, ob sie ersetzt oder übersprungen werden sollen."
-        },
-        {
-          "type": "OPTIMIERUNG",
-          "text": "Updater: Zurückgebliebene Sicherungsdateien (*.old) früherer Updates im STEFFLIX-Ordner und in sflix_sys werden automatisch entfernt."
         },
         {
           "type": "FEATURE",
@@ -376,6 +370,22 @@
           "text": "Updater: Der Medienordner für Vorschaubilder, Zusammenführen, Konvertieren und Ablagen leeren ist unter \"Tools\" > \"Einstellungen\" einstellbar. Das für die Videobearbeitung benötigte ffmpeg wird beim ersten Bedarf automatisch heruntergeladen und geprüft."
         },
         {
+          "type": "INTERFACE",
+          "text": "Updater: Updates und Tools werden als Kacheln mit Symbol ausgewählt. Für jede gewählte Kachel erscheint darunter ein eigener Reiter mit ihren Optionen. Optionen werden mit Schaltern ein- und ausgeschaltet, der Start-Knopf zeigt, was ausgeführt wird (z.B. \"2 Tools starten\")."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Updater: In allen Texten heisst es jetzt STEFFLIX statt SFLIX."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Durch den neuen Updater wurde die Performance deutlich verbessert."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: Zurückgebliebene Sicherungsdateien (*.old) früherer Updates im STEFFLIX-Ordner und in sflix_sys werden automatisch entfernt."
+        },
+        {
           "type": "OPTIMIERUNG",
           "text": "\"Daten einlesen\" verkleinert zu grosse Vorschaubilder direkt im Preview-Ordner auf 480x270. Das Original wird mit gleichem Namen im Unterordner Preview\\__original aufbewahrt, WebP-Bilder bleiben unverändert. \"Ablagen leeren\" löscht diese Originale bei Bedarf. Der Ordner sflix_sys\\thumbs wird nicht mehr benötigt und automatisch entfernt."
         },
@@ -398,10 +408,6 @@
           "text": "Eigene Player-Steuerung im STEFFLIX-Design für Videos und Musik, mit Knöpfen für das vorherige/nächste Medium und 10 Sekunden zurück/vor."
         },
         {
-          "type": "INTERFACE",
-          "text": "Musik-Player in derselben Grösse wie Videos: Über der Leiste wird das Vorschaubild des Titels angezeigt (sonst das des Albums bzw. Ordners), in Originalauflösung aus dem Preview-Ordner."
-        },
-        {
           "type": "FEATURE",
           "text": "Autoplay-Symbol in der Player-Leiste: ausgegraut, wenn Autoplay aus ist. Ein Klick öffnet das Autoplay-Menü (Automatisch vorwärts, Unbegrenzt, Anzahl, Dauer bis Übergang)."
         },
@@ -412,6 +418,14 @@
         {
           "type": "FEATURE",
           "text": "Neues Video-Vollbild: Das Video füllt den Bildschirm, darunter kann weitergescrollt und ein anderes Medium gewählt werden. Kopfzeile und Pfadleiste werden ausgeblendet, im Video wird der Titel angezeigt."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Die bisherige Browser-Steuerung lässt sich im Menü unter \"Autoplay\" oder im Zahnradmenü wieder einschalten."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Musik-Player in derselben Grösse wie Videos: Über der Leiste wird das Vorschaubild des Titels angezeigt (sonst das des Albums bzw. Ordners), in Originalauflösung aus dem Preview-Ordner."
         },
         {
           "type": "INTERFACE",
@@ -426,12 +440,12 @@
           "text": "Der Titel im Player lässt den vorangestellten Seriennamen weg (z.B. \"S01E01 - Folgentitel\" statt \"Die Simpsons - S01E01 - Folgentitel\"). Kacheln, Suche und Favoriten zeigen weiterhin den vollen Namen."
         },
         {
-          "type": "FEATURE",
-          "text": "Die bisherige Browser-Steuerung lässt sich im Menü unter \"Autoplay\" oder im Zahnradmenü wieder einschalten."
+          "type": "INTERFACE",
+          "text": "Das Fenster \"Autoplay\" im Menü enthält zusätzlich die Player-Einstellungen. Neuer Abschnitt \"Player\" in der Hilfe."
         },
         {
           "type": "INTERFACE",
-          "text": "Das Fenster \"Autoplay\" im Menü enthält zusätzlich die Player-Einstellungen. Neuer Abschnitt \"Player\" in der Hilfe."
+          "text": "Kacheln von Folgen, Filmen und Musiktiteln ohne eigenes Vorschaubild zeigen das Bild des Ordners darüber: zuerst das der Staffel, dann das der Serie (bzw. des Albums). Das Bild der ganzen Kategorie (z.B. \"Serien\") wird dafür nicht verwendet."
         },
         {
           "type": "OPTIMIERUNG",
@@ -440,10 +454,6 @@
         {
           "type": "OPTIMIERUNG",
           "text": "Grosse Ordner (z.B. 2000 Bilder mit Zufallswiedergabe): Das Menüband unter dem Player springt bei weiten Wechseln direkt zum aktuellen Medium, statt animiert über alle Kacheln zu scrollen. Beim Wechsel wird zuerst das neue Medium geladen und angezeigt, erst danach werden die Menübänder aufgebaut und ihre Vorschaubilder geladen."
-        },
-        {
-          "type": "INTERFACE",
-          "text": "Kacheln von Folgen, Filmen und Musiktiteln ohne eigenes Vorschaubild zeigen das Bild des Ordners darüber: zuerst das der Staffel, dann das der Serie (bzw. des Albums). Das Bild der ganzen Kategorie (z.B. \"Serien\") wird dafür nicht verwendet."
         }
       ]
     },
@@ -486,6 +496,42 @@
         {
           "type": "FEATURE",
           "text": "updateStefflix.exe startet nach dem Update automatisch updateData.exe."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Suche zeigt schon während der Eingabe passende Ordner und Titel an. Auf der Ergebnisseite lässt sich die Suche verfeinern."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Die Reihenfolge der Menübänder auf der Startseite lässt sich über \"Startseite anpassen\" frei sortieren (ziehen oder mit Pfeilen). Das Hauptmenü übernimmt diese Reihenfolge."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Zufallswiedergabe: Schalter \"Zufall\" in der Player-Leiste und Button \"Zufällig abspielen\" auf Ordnerseiten (alle Medien inkl. Unterordner). Jedes Medium wird nur einmal abgespielt, danach ist die Playliste zu Ende. \"Zurück\" und \"Weiter\" bewegen sich im bisherigen Verlauf, der auch ein Neuladen der Seite übersteht."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Gesehene Videos (ab 95 % oder bis zum Ende) werden mit einem Haken markiert. \"Weiterschauen\" zeigt nach einer fertigen Folge direkt die nächste an, die letzte Folge einer Serie wird markiert."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Datensicherung in der Hilfe: Favoriten, Fortschritt und Einstellungen lassen sich als Datei exportieren und wieder importieren."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Sicherungen enthalten die STEFFLIX-Version. Beim Import werden Sicherungen älterer Versionen automatisch angepasst; Sicherungen aus einer neueren Version werden abgelehnt (zuerst STEFFLIX aktualisieren)."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Autoplay: neuer Schalter \"Unbegrenzt\", spielt ohne feste Anzahl bis zum Ende der Playliste."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Weitere Dateiformate: Video m4v, webm, ogv; Musik oga, opus, aac, flac, wav; Bilder webp, avif, bmp. Gross-/Kleinschreibung der Dateiendung spielt keine Rolle."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Menüband \"Meine Favoriten\" auf der Startseite. Die Favoriten-Seite ist nach Kategorien (Serien, Filme, Musik, ...) gegliedert."
         },
         {
           "type": "INTERFACE",
@@ -536,24 +582,8 @@
           "text": "Die Fehlerbehebung ist aus dem Menü in die Hilfe umgezogen. Die Optionen werden erst nach dem Aufklappen angezeigt."
         },
         {
-          "type": "FEATURE",
-          "text": "Suche zeigt schon während der Eingabe passende Ordner und Titel an. Auf der Ergebnisseite lässt sich die Suche verfeinern."
-        },
-        {
-          "type": "FEATURE",
-          "text": "Die Reihenfolge der Menübänder auf der Startseite lässt sich über \"Startseite anpassen\" frei sortieren (ziehen oder mit Pfeilen). Das Hauptmenü übernimmt diese Reihenfolge."
-        },
-        {
           "type": "INTERFACE",
           "text": "Bilder im Vollbild: Pfeile links und rechts werden beim Überfahren eingeblendet (statt senkrechter Leisten). Auf Touch-Geräten wird per Wischen gewechselt."
-        },
-        {
-          "type": "BUGFIX",
-          "text": "Nach dem Klick auf eine Kachel unter dem Player wechselten die Pfeiltasten nicht mehr das Bild."
-        },
-        {
-          "type": "BUGFIX",
-          "text": "Auf Smartphones blieb das Menü nach der Auswahl offen und verdeckte das Suchfeld."
         },
         {
           "type": "INTERFACE",
@@ -564,22 +594,6 @@
           "text": "Kategorieseiten (z.B. Serien) zeigen zuerst nur die Ordner, alphabetisch in Gruppen (0 – 9, A – D, ...). Die Staffeln erscheinen erst beim Öffnen einer Serie."
         },
         {
-          "type": "FEATURE",
-          "text": "Zufallswiedergabe: Schalter \"Zufall\" in der Player-Leiste und Button \"Zufällig abspielen\" auf Ordnerseiten (alle Medien inkl. Unterordner). Jedes Medium wird nur einmal abgespielt, danach ist die Playliste zu Ende. \"Zurück\" und \"Weiter\" bewegen sich im bisherigen Verlauf, der auch ein Neuladen der Seite übersteht."
-        },
-        {
-          "type": "FEATURE",
-          "text": "Gesehene Videos (ab 95 % oder bis zum Ende) werden mit einem Haken markiert. \"Weiterschauen\" zeigt nach einer fertigen Folge direkt die nächste an, die letzte Folge einer Serie wird markiert."
-        },
-        {
-          "type": "FEATURE",
-          "text": "Datensicherung in der Hilfe: Favoriten, Fortschritt und Einstellungen lassen sich als Datei exportieren und wieder importieren."
-        },
-        {
-          "type": "FEATURE",
-          "text": "Sicherungen enthalten die STEFFLIX-Version. Beim Import werden Sicherungen älterer Versionen automatisch angepasst; Sicherungen aus einer neueren Version werden abgelehnt (zuerst STEFFLIX aktualisieren)."
-        },
-        {
           "type": "INTERFACE",
           "text": "Neues Logo (rotes Band-S mit Farbverlauf) in der Kopfzeile und im Browser-Tab, daneben der Schriftzug STEFFLIX."
         },
@@ -588,48 +602,12 @@
           "text": "Neuer animierter Splashscreen im Stil des neuen Logos. Kürzer als bisher, auf jedem Bildschirmformat scharf und vollständig sichtbar."
         },
         {
-          "type": "FEATURE",
-          "text": "Autoplay: neuer Schalter \"Unbegrenzt\", spielt ohne feste Anzahl bis zum Ende der Playliste."
-        },
-        {
           "type": "INTERFACE",
           "text": "Einheitliche Symbole im Menü. Die Hilfe ist inhaltlich überarbeitet, Zusatzinfos lassen sich aufklappen."
         },
         {
           "type": "INTERFACE",
           "text": "Fehlerbehebung zeigt eine kurze Statusmeldung statt eines Protokolls. Der rote Rahmen bei fast fertigen Videos entfällt (ersetzt durch die Markierung \"Gesehen\"), ebenso die alten Hinweisfenster der Updates 1.33 und 1.38."
-        },
-        {
-          "type": "BUGFIX",
-          "text": "Updates von STEFFLIX auf einem Netzwerkpfad (\\\\server\\freigabe) schlugen fehl, weil die Programme im falschen Ordner (C:\\Windows) arbeiteten. Die Programme verwenden jetzt immer ihren eigenen Ordner und brechen ab, wenn dieser kein STEFFLIX-Ordner ist."
-        },
-        {
-          "type": "BUGFIX",
-          "text": "Feedback: Nachrichten mit Sonderzeichen wie &, # oder + wurden abgeschnitten oder nicht verschickt."
-        },
-        {
-          "type": "OPTIMIERUNG",
-          "text": "Umstieg von älteren Versionen mit einem einzigen Aufruf von updateStefflix.exe: Der neue Updater lädt fehlende Dateien nach und liest die Medien danach direkt neu ein."
-        },
-        {
-          "type": "OPTIMIERUNG",
-          "text": "Der Programmcode ist in mehrere Dateien im Ordner sflix_sys/js aufgeteilt (bisher sflix_sys/sflix.js). Fehlen nach einem unvollständigen Update Dateien, zeigt STEFFLIX einen Hinweis an."
-        },
-        {
-          "type": "FEATURE",
-          "text": "Weitere Dateiformate: Video m4v, webm, ogv; Musik oga, opus, aac, flac, wav; Bilder webp, avif, bmp. Gross-/Kleinschreibung der Dateiendung spielt keine Rolle."
-        },
-        {
-          "type": "OPTIMIERUNG",
-          "text": "Die Updater laden nur noch Dateien herunter, die sich geändert haben."
-        },
-        {
-          "type": "FEATURE",
-          "text": "Menüband \"Meine Favoriten\" auf der Startseite. Die Favoriten-Seite ist nach Kategorien (Serien, Filme, Musik, ...) gegliedert."
-        },
-        {
-          "type": "OPTIMIERUNG",
-          "text": "\"Weiterschauen\" merkt sich bis zu 20 Einträge."
         },
         {
           "type": "INTERFACE",
@@ -642,6 +620,22 @@
         {
           "type": "INTERFACE",
           "text": "Feedback wird nur noch angezeigt, wenn ein gültiger Lizenzschlüssel hinterlegt ist. Ungültige Schlüssel werden beim Speichern erkannt."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Umstieg von älteren Versionen mit einem einzigen Aufruf von updateStefflix.exe: Der neue Updater lädt fehlende Dateien nach und liest die Medien danach direkt neu ein."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Der Programmcode ist in mehrere Dateien im Ordner sflix_sys/js aufgeteilt (bisher sflix_sys/sflix.js). Fehlen nach einem unvollständigen Update Dateien, zeigt STEFFLIX einen Hinweis an."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Die Updater laden nur noch Dateien herunter, die sich geändert haben."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "\"Weiterschauen\" merkt sich bis zu 20 Einträge."
         },
         {
           "type": "OPTIMIERUNG",
@@ -666,6 +660,22 @@
         {
           "type": "OPTIMIERUNG",
           "text": "Überarbeitung des Programmcodes: Zusammenführen der Medienlogik, eigener Player-Container, Entfernen von nicht genutztem Code."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Nach dem Klick auf eine Kachel unter dem Player wechselten die Pfeiltasten nicht mehr das Bild."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Auf Smartphones blieb das Menü nach der Auswahl offen und verdeckte das Suchfeld."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Updates von STEFFLIX auf einem Netzwerkpfad (\\\\server\\freigabe) schlugen fehl, weil die Programme im falschen Ordner (C:\\Windows) arbeiteten. Die Programme verwenden jetzt immer ihren eigenen Ordner und brechen ab, wenn dieser kein STEFFLIX-Ordner ist."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Feedback: Nachrichten mit Sonderzeichen wie &, # oder + wurden abgeschnitten oder nicht verschickt."
         },
         {
           "type": "BUGFIX",
@@ -726,12 +736,12 @@
       "name": "1.42.0",
       "items": [
         {
-          "type": "OPTIMIERUNG",
-          "text": "Umstellung auf Indexed DB für bessere Datenkonsistenz und Performance. Bei Browserupdates werden die Stefflixdaten nicht mehr gelöscht."
-        },
-        {
           "type": "INTERFACE",
           "text": "Splashscreen wird nur noch einmal pro Tag angezeigt."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Umstellung auf Indexed DB für bessere Datenkonsistenz und Performance. Bei Browserupdates werden die Stefflixdaten nicht mehr gelöscht."
         }
       ]
     },
@@ -739,10 +749,6 @@
       "version": "1.41",
       "name": "1.41.0",
       "items": [
-        {
-          "type": "BUGFIX",
-          "text": "Ordnerübergreifendes Autoplay funktioniert noch nicht, sofern Ordner und Medieninhalt im selben Elternordner sind"
-        },
         {
           "type": "FEATURE",
           "text": "Nahtloser Medienwechsel zwischen Ordnern/Staffeln ohne kompletten Seitenreload implementiert."
@@ -754,6 +760,10 @@
         {
           "type": "OPTIMIERUNG",
           "text": "Anzahl vollständiger Seitenaufbauten beim Navigieren durch Playlists deutlich reduziert."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Ordnerübergreifendes Autoplay funktioniert noch nicht, sofern Ordner und Medieninhalt im selben Elternordner sind"
         }
       ]
     },
@@ -924,8 +934,8 @@
       "name": "1.31.0",
       "items": [
         {
-          "type": "BUGFIX",
-          "text": "Wenn bei betrachtung eines Bildes Autoplay aktiviert wurde, musste man erst das Bild wechseln, bevor die Autoplayfunktion gegriffen hat."
+          "type": "FEATURE",
+          "text": "Vollbildmodus hinzugefügt."
         },
         {
           "type": "INTERFACE",
@@ -936,12 +946,12 @@
           "text": "Ob Autoplay aktiviert ist, wird nun unterhalb des Mediums mittels des Autoplay-Icons angezeigt."
         },
         {
-          "type": "FEATURE",
-          "text": "Vollbildmodus hinzugefügt."
-        },
-        {
           "type": "OPTIMIERUNG",
           "text": "Hinzufügen und Entfernen von Klassen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Wenn bei betrachtung eines Bildes Autoplay aktiviert wurde, musste man erst das Bild wechseln, bevor die Autoplayfunktion gegriffen hat."
         }
       ]
     },
@@ -978,16 +988,16 @@
       "name": "1.29.0",
       "items": [
         {
-          "type": "INTERFACE",
-          "text": "Untermenü bei Einstellungsbutton hinzugefügt mit Autoplayeinstellungen, Feedbackformular, Fehlerbehebung, Lizenzschlüssel und Hilfe"
-        },
-        {
           "type": "FEATURE",
           "text": "Lizenzschlüssel zur Verwendung des Feedbackformulars hinzugefügt."
         },
         {
           "type": "FEATURE",
           "text": "Feedbackformular hinzugefügt."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Untermenü bei Einstellungsbutton hinzugefügt mit Autoplayeinstellungen, Feedbackformular, Fehlerbehebung, Lizenzschlüssel und Hilfe"
         }
       ]
     },
@@ -996,12 +1006,12 @@
       "name": "1.28.5",
       "items": [
         {
-          "type": "HOTFIX",
-          "text": "Leerer Vor-/Zurück-Button führte zu Fehler beim Wechseln des Mediums mittels der beiden Buttons."
-        },
-        {
           "type": "OPTIMIERUNG",
           "text": "\"Dauer bis Übergang\" in Autoplayeinstellungen springt nun auf 11 zurück, wenn der Wert unter 11 fällt."
+        },
+        {
+          "type": "HOTFIX",
+          "text": "Leerer Vor-/Zurück-Button führte zu Fehler beim Wechseln des Mediums mittels der beiden Buttons."
         }
       ]
     },
@@ -1054,11 +1064,6 @@
       "name": "1.28.0",
       "items": [
         {
-          "type": "BUG",
-          "text": "Erstes Element eines Ordners kann nicht mittels Autoplay gestartet werden.",
-          "resolved": true
-        },
-        {
           "type": "FEATURE",
           "text": "Einstellungsmenü hinzugefügt zum Manipulieren der Autoplay-Werte und zur Fehlerbehebung."
         },
@@ -1071,10 +1076,6 @@
           "text": "Vor- und Zurück-Buttons benötigen kein neues Laden sofern die Medien im selben Ordner sind"
         },
         {
-          "type": "BUGFIX",
-          "text": "Kommas in Ordner oder Dateinamen konnten zu fehlerhaftem Laden führen."
-        },
-        {
           "type": "OPTIMIERUNG",
           "text": "Einführen von Listenseperator-Stringketten"
         },
@@ -1085,6 +1086,15 @@
         {
           "type": "OPTIMIERUNG",
           "text": "Überarbeitung Ordnerübergreifender links"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Kommas in Ordner oder Dateinamen konnten zu fehlerhaftem Laden führen."
+        },
+        {
+          "type": "BUG",
+          "text": "Erstes Element eines Ordners kann nicht mittels Autoplay gestartet werden.",
+          "resolved": true
         }
       ]
     },
@@ -1241,12 +1251,12 @@
       "name": "1.22.0",
       "items": [
         {
-          "type": "BUGFIX",
-          "text": "Audiokontrollen werden nun konstant angezeigt"
-        },
-        {
           "type": "OPTIMIERUNG",
           "text": "Favoriten können nun ohne Unterbruch des Mediums hinzugefügt werden"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Audiokontrollen werden nun konstant angezeigt"
         }
       ]
     },
@@ -1277,16 +1287,16 @@
           "text": "Speichern der Lautstärkeeinstellung zwischen den Videos/Musikdateien (Mindestlautstärke: 20%)"
         },
         {
-          "type": "BUGFIX",
-          "text": "Anzeigefehler bei 0 Suchresultaten"
-        },
-        {
           "type": "INTERFACE",
           "text": "Anpassung Standardlinkfarbe"
         },
         {
           "type": "INTERFACE",
           "text": "Hilfe um unterstützte Dateiformate ergänzt"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Anzeigefehler bei 0 Suchresultaten"
         }
       ]
     },
@@ -1315,13 +1325,13 @@
       "name": "1.17.0",
       "items": [
         {
+          "type": "INTERFACE",
+          "text": "Hilfe-Button hinzugefügt"
+        },
+        {
           "type": "BUG",
           "text": "Bei Episode 1 jeder Staffel ist der Button für die nächste Folge falsch verlinkt. Episode 2 muss von Hand aus dem Menü ausgewählt werden",
           "resolved": true
-        },
-        {
-          "type": "INTERFACE",
-          "text": "Hilfe-Button hinzugefügt"
         }
       ]
     },
@@ -1330,12 +1340,12 @@
       "name": "1.16.0",
       "items": [
         {
-          "type": "INTERFACE",
-          "text": "Abstand zu Mediennavigation verringert"
-        },
-        {
           "type": "FEATURE",
           "text": "Zurück- und Vorwärts-Knopf können nun auch zwischen Unterordner/Staffeln wechseln"
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Abstand zu Mediennavigation verringert"
         }
       ]
     },

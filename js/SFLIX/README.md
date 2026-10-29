@@ -155,6 +155,20 @@ Die Tastenkürzel funktionieren auf Medienseiten, solange nicht in ein Eingabefe
 | Esc                   | Fenster schliessen / Vollbild beenden                         |
 | Tab / Enter           | Mit der Tastatur durch Menüs und Buttons springen, mit Enter auswählen |
 
+## Android-App
+
+Mit der App `STEFFLIX.apk` lässt sich STEFFLIX auf dem Handy oder Tablet nutzen (ab Android 8). Der STEFFLIX-Ordner muss dafür auf einer Netzwerkfreigabe liegen, z.B. auf einem NAS.
+
+1. `STEFFLIX.apk` aufs Gerät laden und installieren (Installation aus unbekannten Quellen erlauben).
+2. In der App „Freigabe hinzufügen“ wählen und den STEFFLIX-Ordner angeben, z.B. `\\NAS\Medien\STEFFLIX`, dazu Benutzer und Passwort der Freigabe.
+3. Mit „Verbinden“ prüft die App den Zugang und öffnet STEFFLIX.
+
+- Es lassen sich mehrere Freigaben einrichten. Beim Start öffnet die App die zuletzt genutzte, mit der Zurück-Taste gelangt man zur Liste. Lange drücken auf eine Freigabe: bearbeiten oder löschen.
+- Das Passwort wird verschlüsselt auf dem Gerät gespeichert.
+- Favoriten, Fortschritte und „Weiterschauen“ speichert die App auf dem Gerät, getrennt für jede Installation.
+- Die App funktioniert im Heimnetz. Unterwegs nur über eine VPN-Verbindung ins Heimnetz.
+- Die Freigabe muss SMB2 oder SMB3 unterstützen (Standard bei aktuellen NAS und Windows).
+
 ## Browsereinstellungen
 
 Damit Videos und Musik von selbst starten (z.B. bei Autoplay), muss der Browser die automatische Wiedergabe mit Ton für STEFFLIX erlauben.

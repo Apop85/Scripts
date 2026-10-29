@@ -163,7 +163,7 @@ function renderFolderPage(levels) {
 
     var node = getDataNode(levels);
     if (node == null || typeof node !== "object") {
-        info.textContent = "Dieser Ordner wurde nicht gefunden. Falls er noch existiert, bitte updateData.exe ausführen.";
+        info.textContent = "Dieser Ordner wurde nicht gefunden. Falls er noch existiert, im Updater (updateStefflix.exe) unter \"Updates\" die Aufgabe \"Daten einlesen\" ausführen.";
         return;
     }
     info.textContent = describeFolder(node);
@@ -1058,7 +1058,7 @@ function showEmptyState(container) {
     var heading = document.createElement("h2");
     heading.textContent = "Willkommen bei STEFFLIX";
     var text = document.createElement("p");
-    text.textContent = "Es wurden noch keine Medien gefunden. Kopiere Videos, Musik oder Bilder in einen Unterordner von STEFFLIX und führe anschliessend updateData.exe aus.";
+    text.textContent = "Es wurden noch keine Medien gefunden. Kopiere Videos, Musik oder Bilder in einen Unterordner von STEFFLIX und führe anschliessend im Updater (updateStefflix.exe) unter \"Updates\" die Aufgabe \"Daten einlesen\" aus.";
     var link = document.createElement("a");
     link.className = "sflixButton primary";
     link.href = buildStartUrl("HELP", false);

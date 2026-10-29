@@ -19,6 +19,10 @@
         },
         {
           "type": "INTERFACE",
+          "text": "Hinweise auf das alte updateData.exe verweisen jetzt auf den Updater (updateStefflix.exe) mit \"Daten einlesen\", bei nicht abspielbaren Dateien auch auf das Tool \"Medien prüfen\"."
+        },
+        {
+          "type": "INTERFACE",
           "text": "Neuer, wärmerer Rotton. Der Startbildschirm zeigt das Logo im Lichtkegel."
         },
         {

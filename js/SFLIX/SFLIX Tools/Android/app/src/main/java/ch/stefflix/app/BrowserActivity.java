@@ -74,6 +74,9 @@ public class BrowserActivity extends Activity {
         s.setSupportMultipleWindows(false);
         s.setUseWideViewPort(true);
         s.setLoadWithOverviewMode(true);
+        // Systemschriftgroesse ignorieren: sie vergroessert nur die Schrift, nicht die festen
+        // Zeilenhoehen in STEFFLIX, und schneidet so z.B. Kacheltitel ab
+        s.setTextZoom(100);
 
         // Keine Linkvorschau und kein Kontextmenue bei langem Druck
         web.setLongClickable(false);

@@ -214,6 +214,22 @@ function showSettingsStatus(text) {
     status.textContent = text;
 }
 
+// Einstellungen › Android-App: In der App selbst (window.stefflixApp, gesetzt von der App)
+// dient der Knopf zum Aktualisieren; die APK öffnet sich dort im System-Browser.
+function initAndroidSection() {
+    if (!window.stefflixApp) {
+        return;
+    }
+    var text = document.getElementById("androidDownloadText");
+    var hint = document.getElementById("androidHint");
+    if (text != null) {
+        text.textContent = "Neueste Version herunterladen";
+    }
+    if (hint != null) {
+        hint.textContent = "Du nutzt STEFFLIX bereits in der App. Für ein Update die neueste APK herunterladen und über die bestehende App installieren. Freigaben und gespeicherte Daten bleiben erhalten.";
+    }
+}
+
 function initSettingsPage() {
     var page = document.getElementById("settingsPage");
     var afterChange = function (name) {
@@ -260,6 +276,7 @@ function initSettingsPage() {
     renderSettingsPreview();
     initTransitionOverview();
     initLicenseSection();
+    initAndroidSection();
     initDataCheck();
     initDiagnosis();
 }
@@ -826,6 +843,53 @@ function showLicenseChangeNotice(container) {
     container.insertBefore(banner, container.firstChild);
 }
 
+var androidIconPath = "M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24c-2.86-1.21-6.08-1.21-8.94 0L5.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L6.4 9.48C3.3 11.25 1.28 14.44 1 18h22c-.28-3.56-2.3-6.75-5.4-8.52zM7 15.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm10 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z";
+
+// Ankündigung der Android-App (seit 2.5.1): erscheint einmal auf der Startseite und ist
+// ab dann als gesehen markiert ("androidAppAnnounced"). In der App selbst nicht nötig.
+function showAndroidAppNotice(container) {
+    if (getData("androidAppAnnounced") != null) {
+        return;
+    }
+    setData("androidAppAnnounced", getVersionName());
+    if (window.stefflixApp) {
+        return;
+    }
+    var banner = document.createElement("section");
+    banner.className = "updateBanner appNotice";
+    banner.setAttribute("aria-label", "Neu: Android-App");
+    var icon = document.createElement("div");
+    icon.className = "updateIcon";
+    icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + androidIconPath + '"/></svg>';
+    var content = document.createElement("div");
+    content.className = "updateContent";
+    var heading = document.createElement("h2");
+    heading.textContent = "Neu: STEFFLIX für Android";
+    var meta = document.createElement("p");
+    meta.className = "updateMeta";
+    meta.textContent = "STEFFLIX gibt es jetzt auch als App für Handy und Tablet: bildschirmfüllend, ohne Adresszeile und direkt mit dem STEFFLIX-Ordner auf einer Netzwerkfreigabe (z.B. NAS) verbunden.";
+    var actions = document.createElement("div");
+    actions.className = "updateActions";
+    var more = document.createElement("a");
+    more.className = "sflixButton primary";
+    more.href = buildStartUrl("SETTINGS", false) + "#android";
+    more.textContent = "App ansehen";
+    var dismiss = document.createElement("button");
+    dismiss.type = "button";
+    dismiss.className = "sflixButton ghost";
+    dismiss.textContent = "Ausblenden";
+    dismiss.addEventListener("click", function () {
+        banner.classList.add("hiding");
+        setTimeout(function () {
+            banner.remove();
+        }, 300);
+    });
+    actions.append(more, dismiss);
+    content.append(heading, meta, actions);
+    banner.append(icon, content);
+    container.appendChild(banner);
+}
+
 // Funktion, um den verwendeten Browser auszulesen
 function detectBrowser() {
     var test = function (regexp) { return regexp.test(window.navigator.userAgent); };
@@ -872,9 +936,54 @@ function copyAddress(button) {
     }
 }
 
-// Funktion zum Setzen der Höhe des body-Elements (blendet den Ladescreen aus)
+// Blendet den Ladescreen aus (onload von body). Vorschaubilder laden "lazy" und zählen
+// nicht zum onload: darum warten, bis die Bilder im sichtbaren Bereich da sind (höchstens 8 s).
 function setHeight() {
-    document.getElementById("loadingScreen").style.display = "none";
+    var screenNode = document.getElementById("loadingScreen");
+    var finished = false;
+    var hide = function () {
+        if (!finished) {
+            finished = true;
+            screenNode.style.display = "none";
+        }
+    };
+    var pending = getVisibleLoadingImages();
+    if (pending.length === 0) {
+        hide();
+        return;
+    }
+    var open = pending.length;
+    pending.forEach(function (image) {
+        var one = function () {
+            image.removeEventListener("load", one);
+            image.removeEventListener("error", one);
+            open--;
+            if (open <= 0) {
+                hide();
+            }
+        };
+        image.addEventListener("load", one);
+        image.addEventListener("error", one);
+        // sichtbare Bilder sofort laden, nicht erst nach dem Ausblenden
+        if (image.loading === "lazy") {
+            image.loading = "eager";
+        }
+    });
+    setTimeout(hide, 8000);
+}
+
+// Noch nicht geladene Bilder, die im Fenster sichtbar sind (auch in Bändern nur der sichtbare Teil)
+function getVisibleLoadingImages() {
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+    return Array.prototype.filter.call(document.images, function (image) {
+        if (image.complete || !image.getAttribute("src")) {
+            return false;
+        }
+        var rect = image.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.right > 0
+            && rect.top < height && rect.left < width;
+    });
 }
 
 // ===================================================================

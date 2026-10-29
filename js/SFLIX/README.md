@@ -159,7 +159,7 @@ Die Tastenkürzel funktionieren auf Medienseiten, solange nicht in ein Eingabefe
 
 Mit der App `STEFFLIX.apk` lässt sich STEFFLIX auf dem Handy oder Tablet nutzen (ab Android 8). Der STEFFLIX-Ordner muss dafür auf einer Netzwerkfreigabe liegen, z.B. auf einem NAS.
 
-1. `STEFFLIX.apk` aufs Gerät laden und installieren (Installation aus unbekannten Quellen erlauben).
+1. `STEFFLIX.apk` aufs Gerät laden (in STEFFLIX unter Einstellungen › Android-App oder direkt hier im Repo) und installieren (Installation aus unbekannten Quellen erlauben).
 2. In der App „Freigabe hinzufügen“ wählen und den STEFFLIX-Ordner angeben, z.B. `\\NAS\Medien\STEFFLIX`, dazu Benutzer und Passwort der Freigabe.
 3. Mit „Verbinden“ prüft die App den Zugang und öffnet STEFFLIX.
 

@@ -2599,6 +2599,24 @@ html.reduceMotion a.card:hover img.cardImage {
     transform: translateY(-10px);
 }
 
+/* Ankündigung der Android-App: grün wie das Android-Symbol */
+.updateBanner.appNotice {
+    border-color: rgba(61, 220, 132, 0.4);
+    background: linear-gradient(135deg, rgba(61, 220, 132, 0.16), rgba(34, 34, 39, 0.96) 60%);
+}
+
+#media .appNotice .updateIcon {
+    background-color: #1f2a22;
+    border: 1px solid rgba(61, 220, 132, 0.45);
+    color: #3ddc84;
+}
+
+#media .appNotice .updateIcon svg {
+    width: 28px;
+    height: 28px;
+    fill: currentColor;
+}
+
 #media .updateIcon {
     flex-shrink: 0;
     width: 46px;
@@ -3921,6 +3939,76 @@ table.versionInfo td.versionNewer {
 .sflixButton:disabled {
     opacity: 0.5;
     cursor: default;
+}
+
+/* Einstellungen › Android-App */
+.appPromo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.appPromoIcon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(145deg, #1f2a22, #121614);
+    border: 1px solid rgba(61, 220, 132, 0.35);
+    color: #3ddc84;
+}
+
+.appPromoIcon svg {
+    width: 40px;
+    height: 40px;
+    fill: currentColor;
+}
+
+#settingsPage .appPromo p {
+    margin: 0;
+}
+
+#settingsPage .appPromoTitle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--sflix-text);
+}
+
+#settingsPage .appPromoSub {
+    font-size: 0.85rem;
+    color: var(--sflix-text-muted);
+}
+
+.appFeatures {
+    margin: 10px 0 14px 0;
+    padding-left: 20px;
+}
+
+.appFeatures li {
+    margin: 4px 0;
+}
+
+.sflixButton.appDownload {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.sflixButton.appDownload svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+#settingsPage .appHint {
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: var(--sflix-text-muted);
 }
 
 /* Einstellungen › Lizenz */

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 namespace Sflix
 {
@@ -45,7 +46,7 @@ namespace Sflix
                     continue;
                 }
                 searched.Add(root);
-                Find(root, found, ctx);
+                Find(root, found, ctx.Log, ctx.Token);
             }
             if (searched.Count == 0) throw new TaskFailedException("Kein gültiger Ordner im Installationsordner gewählt");
             if (found.Count == 0)
@@ -96,10 +97,23 @@ namespace Sflix
             if (failed > 0) throw new TaskFailedException(failed + " Ablage(n) konnten nicht (vollständig) gelöscht werden");
         }
 
-        // Sucht Ablagen, ohne in sie hineinzugehen
-        static void Find(string dir, List<CleanupFolder> result, TaskContext ctx)
+        // Nur zählen (für die Anzeige im Reiter, läuft im Hintergrund): Ablagen in den Ordnern im Installationsordner
+        public static List<CleanupFolder> Scan(IList<string> roots, CancellationToken token)
         {
-            ctx.Check();
+            List<CleanupFolder> found = new List<CleanupFolder>();
+            foreach (string root in Folders.WithoutNested(roots))
+            {
+                string reason;
+                if (!Directory.Exists(root) || !Folders.IsInsideRoot(root, out reason)) continue;
+                Find(root, found, delegate { }, token);
+            }
+            return found;
+        }
+
+        // Sucht Ablagen, ohne in sie hineinzugehen
+        static void Find(string dir, List<CleanupFolder> result, Action<string> log, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
             string[] dirs;
             try { dirs = Directory.GetDirectories(dir); }
             catch (UnauthorizedAccessException) { return; }
@@ -115,7 +129,7 @@ namespace Sflix
                 catch { continue; }
                 if (link)
                 {
-                    if (IsStorageFolder(name)) ctx.Log("Hinweis: " + d + " ist eine Verknüpfung und wird nicht geleert.");
+                    if (IsStorageFolder(name)) log("Hinweis: " + d + " ist eine Verknüpfung und wird nicht geleert.");
                     continue;
                 }
                 if (IsStorageFolder(name))
@@ -128,7 +142,7 @@ namespace Sflix
                     continue;
                 }
                 if (Folders.Ignore(d)) continue;   // sflix_sys, Papierkorb, System- und versteckte Ordner
-                Find(d, result, ctx);
+                Find(d, result, log, token);
             }
         }
 
@@ -155,13 +169,9 @@ namespace Sflix
                 if ((File.GetAttributes(sub) & FileAttributes.ReparsePoint) != 0) Directory.Delete(sub, false);
                 else DeleteTree(sub);
             }
-            foreach (string file in Directory.GetFiles(dir))
-            {
-                File.SetAttributes(file, FileAttributes.Normal);
-                File.Delete(file);
-            }
-            File.SetAttributes(dir, FileAttributes.Directory);
-            Directory.Delete(dir, false);
+            // FileOps.Delete entfernt den Schreibschutz und wiederholt bei kurz geöffneten Dateien (NAS)
+            foreach (string file in Directory.GetFiles(dir)) FileOps.Delete(file);
+            FileOps.DeleteEmptyDirectory(dir);
         }
     }
 }

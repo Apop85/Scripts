@@ -31,7 +31,11 @@ Das Fenster hat fünf Registerkarten. Sichtbar ist nur der Bereich der gewählte
 
 **Vergleich** (`CompareView.cs`): Tabelle mit Grösse, Auflösung, Dauer, Video/Ton, Datum und Hinweis (nicht abspielbar, defekt), bessere Werte grün. ffprobe läuft im Hintergrund; fehlt ffmpeg, bietet die Tabelle „ffmpeg installieren“ an. Genutzt von `ConflictDialog` (Importer, Folgen umbenennen; `TaskContext.AskConflict(quelle, ziel)`), der Vorschau von Folgen umbenennen (Konfliktzeile anklicken) und `DuplicateDialog`.
 
-**Medien prüfen** (`MediaCheckTask.cs`): nicht abspielbar (`MediaCheck.IsPlayable`: MP4 nur H.264 8 Bit mit AAC/MP3, WebM VP8/VP9/AV1 mit Opus/Vorbis), defekt (ffprobe-Fehler), leer, ohne Vorschaubild (gemäss den Schaltern bei Vorschaubilder). `MediaCheckDialog` → `ConvertTask` mit `ConvertOptions.OnlyFiles` bzw. `PreviewTask.MakeFor`.
+**Medien prüfen** (`MediaCheckTask.cs`): nicht abspielbar (`MediaCheck.IsPlayable`: MP4 nur H.264 8 Bit mit AAC/MP3, WebM VP8/VP9/AV1 mit Opus/Vorbis), defekt (ffprobe-Fehler), leer, ohne Vorschaubild (gemäss den Schaltern bei Vorschaubilder). `MediaCheckDialog`: eine Zeile je Datei (`MediaCheckFile`), Aktionsspalten Löschen/Konvertieren/Vorschaubild (selbst gezeichnete Kästchen, Symbole im Spaltenkopf, Löschen schliesst die anderen aus, Vorschlag `Suggest`), Filter nach Art, Suche. `MediaCheckChoice` → `MediaCheckTask.Execute`: zuerst nach `__gelöscht` verschieben (Vorschaubild nach `Preview\__gelöscht`, ausser ein anderes Medium hat denselben Namen), dann `ConvertTask` mit `OnlyFiles` und `Results`, dann `PreviewTask.MakeFor` für die Ergebnisse.
+
+**Ablagen leeren**: Der Reiter zeigt den belegten Speicher (`CleanupTask.Scan` im Hintergrund, `RefreshCleanupInfo` beim Anzeigen, bei geänderter Ordnerwahl und nach jedem Lauf; ältere Berechnungen werden abgebrochen). M4A wird untersucht (ALAC ist nicht abspielbar). Mit Oberfläche protokolliert es nur die ersten 100 Einträge, „Duplikate finden“ die ersten 50 Gruppen.
+
+**Tabellen** (`Lists.cs`): `DarkList.Apply` zeichnet die Spaltenköpfe dunkel und schaltet `ListSort` ein (Klick auf den Kopf sortiert, nochmals = absteigend, Dreieck in der Spalte). Sortiert wird nach dem `Tag` einer Zelle (z.B. Bytes, Sekunden, mit `ListSort.Add`), sonst natürlich nach Text. `CompareView` sortiert selbst (`ListSort.Custom`): innerhalb der Gruppen, die Gruppen nach ihrem ersten Eintrag. Grosse Listen immer mit `BeginUpdate` und `AddRange` füllen und Häkchen-Meldungen bei Sammelaktionen unterdrücken.
 
 **Duplikate finden** (`DuplicateTask.cs`): identische Dateien (Grösse, dann SHA256), gleiche Folgen je Serie (Kategorie\Serie, `EpisodeTask.ParseEpisodes`, Union-Find über gemeinsame Folgen, Überschneidungen ohne Vorauswahl) und gleicher Dateiname ohne Endung (`FindSameName`; keine Gruppe, die schon identisch ist oder dieselben Dateien hat). Eine Datei in zwei Gruppen wird nur einmal verschoben. Aussortiert wird nach `<Ordner>\__duplikate` (Vorschaubild nach `__duplikate\Preview`), `renamed.js` führt Favoriten und Fortschritt zur behaltenen Datei. Optional werden nicht abspielbare behaltene Videos konvertiert.
 
@@ -126,6 +130,10 @@ Ordner, deren Name `__` enthält, sind Ablagen der Werkzeuge. Keine Aufgabe durc
 - `__ersetzt`: beim Umbenennen ersetzte Dateien
 - `__duplikate`: aussortierte Duplikate
 
+## Dateioperationen (NAS)
+
+Verschieben, Umbenennen und Löschen laufen über `FileOps` in `Util.cs`. Bei „Zugriff verweigert“ entfernt es den Schreibschutz (oft per SMB gesetzt) und setzt ihn am Ziel wieder. Danach ergänzt `TryGrantDelete` das Recht „Löschen“ für alle Regeln mit Schreibrecht (per SID, nachgeprüft; NAS mit Linux-Rechten wie QNAP speichern es nicht, dann bleibt es beim Fehler). Meldungen gehen über `FileOps.Notice` ins Protokoll. Bei gesperrten Dateien wird bis zu dreimal mit Pause wiederholt. Die Fehlermeldung nennt die wahrscheinliche Ursache. Neue Codestellen nicht direkt `File.Delete`/`File.Move` verwenden.
+
 ## Konvertieren
 
 - Das Ergebnis (MP4, H.264, AAC) ersetzt das Original im selben Ordner. Das Original kommt nach `__konvertiert`, oder wird gelöscht, falls so eingestellt.
@@ -133,6 +141,7 @@ Ordner, deren Name `__` enthält, sind Ablagen der Werkzeuge. Keine Aufgabe durc
 - Passende Spuren werden nur kopiert, zum Beispiel H.264 aus MKV. Das geht schnell und ist verlustfrei.
 - Encoder: NVIDIA, Intel oder AMD werden mit einem Testbild geprüft, sonst wird die CPU verwendet. Scheitert die Grafikkarte an einem Video, wird es mit der CPU wiederholt.
 - Bereits kompatible Videos merkt sich das Programm in `sflix_sys\konvertieren_kompatibel.json`. Sie werden beim nächsten Lauf nicht erneut untersucht.
+- Musik (`ConvertOptions.Audio`, Schalter „Auch Musik in MP3 umwandeln“, Einstellung `convert.audio`, Standard ein): Endungen aus `MediaTypes.ConvertAudio` (WMA, AIFF, APE …) und M4A mit anderem Codec als AAC/MP3 (z.B. ALAC, `ConvertTask.IsAudioReady`) werden mit `libmp3lame -q:a 2` zu MP3, Tags bleiben. Geprüft wird Codec und Länge. „Medien prüfen“ wandelt gewählte Musik immer um, der Importer ALAC ebenfalls.
 - Qualität und Preset lassen sich in `sflix_sys\updater_settings.json` einstellen: `convert.qualitySD`, `convert.qualityHD`, `convert.qualityFullHD`, `convert.quality4K` und `convert.preset`.
 
 ## Ohne Oberfläche (z.B. Aufgabenplanung)

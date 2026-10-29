@@ -34,8 +34,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX Updater")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX Updater: Update, Daten einlesen, Vorschaubilder, Zusammenführen, Konvertieren")]
-[assembly: AssemblyVersion("3.3.2.0")]
-[assembly: AssemblyFileVersion("3.3.2.0")]
+[assembly: AssemblyVersion("3.3.3.0")]
+[assembly: AssemblyFileVersion("3.3.3.0")]
 
 namespace Sflix
 {
@@ -208,6 +208,7 @@ namespace Sflix
             ctx.Token = CancellationToken.None;
             ctx.Settings = settings;
             ctx.LogLine = delegate(string line) { LogFile.Append(LogFile.Stamp(line)); };
+            FileOps.Notice = ctx.Log;
             ctx.ChooseMerge = MergeTask.DefaultSelection;
             ctx.Ffmpeg = new FfmpegTools(App.Root, FfmpegLocation.Folder(settings));
             // Lizenz: ausstehende Bestätigung nachholen
@@ -218,6 +219,7 @@ namespace Sflix
             conv.Folder = App.Root;
             conv.Parallel = settings.GetInt("convert.parallel", 0);
             conv.DeleteOriginal = settings.GetBool("convert.deleteOriginal", false);
+            conv.Audio = settings.GetBool("convert.audio", true);
             conv.Preset = settings.GetString("convert.preset", "medium");
             conv.QualitySD = settings.GetInt("convert.qualitySD", 21);
             conv.QualityHD = settings.GetInt("convert.qualityHD", 19);

@@ -74,15 +74,19 @@ namespace Sflix
                 Preselect(g);
             }
 
-            int identical = 0, episodes = 0, names = 0;
+            int identical = 0, episodes = 0, names = 0, logged = 0;
+            // Mit Oberfläche steht alles in der Auswahl: im Protokoll nur die ersten Gruppen
+            int maxLogged = ctx.ChooseDuplicates != null ? 50 : int.MaxValue;
             foreach (DupeGroup g in groups)
             {
                 if (g.Identical) identical++; else if (g.SameName) names++; else episodes++;
+                if (logged++ >= maxLogged) continue;
                 ctx.Log("  " + g.Title);
                 for (int i = 0; i < g.Files.Count; i++)
                     ctx.Log("     " + (g.Remove.Contains(g.Files[i]) ? "aussortieren  " : "behalten      ") + g.Files[i] +
                             "  (" + Fmt.Size(g.Facts[i].Size) + ", " + g.Facts[i].ResolutionText + ")");
             }
+            if (groups.Count > maxLogged) ctx.Log("  … und " + (groups.Count - maxLogged) + " weitere Gruppen (alle stehen in der Auswahl)");
             ctx.Log("Gruppen: " + identical + " mit identischen Dateien, " + episodes + " mit gleicher Folge, " + names + " mit gleichem Namen");
             ctx.Summary = identical + " identisch, " + episodes + " gleiche Folge, " + names + " gleicher Name";
             if (groups.Count == 0 || ctx.ChooseDuplicates == null) return;
@@ -464,34 +468,31 @@ namespace Sflix
                 }
                 entries.Add(list);
             }
+            view.Rendered = delegate { IndexRows(); UpdateInfo(); };
             view.SetGroups(entries);
-            view.Rendered = UpdateInfo;
             view.List.ItemChecked += delegate(object s, ItemCheckedEventArgs e)
             {
-                // Während die Tabelle neu aufgebaut wird, sind die Einträge noch unvollständig
-                if (view.Rendering || e.Item == null) return;
+                // Während die Tabelle neu aufgebaut oder erstmals angezeigt wird, meldet die Liste jedes
+                // Häkchen einzeln: das sind keine Änderungen des Benutzers
+                if (!ready || view.Rendering || e.Item == null) return;
                 CompareEntry ce = e.Item.Tag as CompareEntry;
                 if (ce == null) return;
                 ce.Label = e.Item.Checked ? "aussortieren" : "behalten";
-                e.Item.Text = ce.Label;
+                ce.Tag = e.Item.Checked;
+                if (e.Item.Text != ce.Label) e.Item.Text = ce.Label;
                 // Dieselbe Datei in anderen Gruppen gleich anhaken (sonst behalten und aussortieren zugleich)
-                if (!syncing)
+                List<ListViewItem> same;
+                if (!syncing && rowsByPath.TryGetValue(ce.Path, out same) && same.Count > 1)
                 {
                     syncing = true;
                     try
                     {
-                        for (int i = 0; i < view.List.Items.Count; i++)
-                        {
-                            ListViewItem other = view.List.Items[i];
-                            CompareEntry oe = other != null ? other.Tag as CompareEntry : null;
-                            if (oe != null && other != e.Item && string.Equals(oe.Path, ce.Path, StringComparison.OrdinalIgnoreCase)
-                                && other.Checked != e.Item.Checked)
-                                other.Checked = e.Item.Checked;
-                        }
+                        foreach (ListViewItem other in same)
+                            if (other != e.Item && other.Checked != e.Item.Checked) other.Checked = e.Item.Checked;
                     }
                     finally { syncing = false; }
                 }
-                UpdateInfo();
+                if (!bulk) UpdateInfo();
             };
 
             Panel host = new Panel();
@@ -517,7 +518,14 @@ namespace Sflix
             Button ok = Theme.MakeButton("Aussortieren", true);
             ok.Click += delegate { Finish(); };
             Button none = Theme.MakeButton("Keine", false);
-            none.Click += delegate { foreach (ListViewItem it in view.List.Items) it.Checked = false; };
+            none.Click += delegate
+            {
+                bulk = true;
+                view.List.BeginUpdate();
+                try { foreach (ListViewItem it in view.List.Items) if (it.Checked) it.Checked = false; }
+                finally { view.List.EndUpdate(); bulk = false; }
+                UpdateInfo();
+            };
             info = Theme.MakeLabel("", true);
             info.Margin = new Padding(0, Theme.S(8), Theme.S(12), 0);
             buttons.Controls.Add(cancel);
@@ -530,7 +538,25 @@ namespace Sflix
             Controls.Add(buttons);
             Controls.Add(intro);
             CancelButton = cancel;
-            UpdateInfo();
+            Shown += delegate { ready = true; UpdateInfo(); };
+        }
+
+        // Zeilen je Datei (eine Datei kann in mehreren Gruppen stehen), nach jedem Neuaufbau
+        Dictionary<string, List<ListViewItem>> rowsByPath = new Dictionary<string, List<ListViewItem>>(StringComparer.OrdinalIgnoreCase);
+        bool bulk, ready;
+
+        void IndexRows()
+        {
+            rowsByPath = new Dictionary<string, List<ListViewItem>>(StringComparer.OrdinalIgnoreCase);
+            if (view == null) return;
+            foreach (ListViewItem it in view.List.Items)
+            {
+                CompareEntry ce = it.Tag as CompareEntry;
+                if (ce == null) continue;
+                List<ListViewItem> l;
+                if (!rowsByPath.TryGetValue(ce.Path, out l)) rowsByPath[ce.Path] = l = new List<ListViewItem>();
+                l.Add(it);
+            }
         }
 
         void UpdateInfo()
@@ -539,9 +565,12 @@ namespace Sflix
             if (info == null || view == null || IsDisposed || Disposing || !Visible) return;
             try
             {
-                List<CompareEntry> chosen = view.CheckedEntries();
+                // Aus den Einträgen zählen (Tag = angehakt), nicht aus der Liste: das ginge bei tausenden Zeilen langsam.
+                // Eine Datei in mehreren Gruppen zählt einmal.
+                HashSet<string> chosen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 long bytes = 0;
-                foreach (CompareEntry e in chosen) bytes += Math.Max(0, e.Facts.Size);
+                foreach (CompareEntry e in view.Entries)
+                    if (e.Tag is bool && (bool)e.Tag && chosen.Add(e.Path)) bytes += Math.Max(0, e.Facts.Size);
                 info.Text = chosen.Count + " Datei(en) aussortieren (" + Fmt.Size(bytes) + ")";
             }
             catch (Exception) { }

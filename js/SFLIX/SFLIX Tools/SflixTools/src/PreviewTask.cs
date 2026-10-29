@@ -190,7 +190,7 @@ namespace Sflix
                         string dest = Path.Combine(trash, Path.GetFileName(jpg));
                         if (File.Exists(dest))
                             dest = Path.Combine(trash, baseName + "_" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".jpg");
-                        File.Move(jpg, dest);
+                        FileOps.Rename(jpg, dest);
                         deleted++;
                         ctx.Log("  VERSCHOBEN  " + jpg + "  ->  " + TrashDirName);
                     }

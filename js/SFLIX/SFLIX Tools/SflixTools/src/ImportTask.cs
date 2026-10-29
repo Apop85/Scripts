@@ -257,8 +257,10 @@ namespace Sflix
                     return;
                 }
             }
-            else if (kind == "audio" && mustConvert)
+            else if (kind == "audio" && (mustConvert || (opt.Convert && ext == ".m4a" &&
+                     !ConvertTask.IsAudioReady(ctx.Ffmpeg.Probe(src, ctx.Token), ext))))
             {
+                // Nicht abspielbare Musik (z.B. WMA, oder ALAC in M4A) als MP3
                 ConvertSingle(src, targetDir, stem + ".mp3", new string[] {
                     "-map", "0:a:0", "-c:a", "libmp3lame", "-q:a", "2", "-map_metadata", "0", "-id3v2_version", "3" });
                 return;
@@ -393,7 +395,7 @@ namespace Sflix
                 foreach (string d in Directory.GetDirectories(dir))
                     if (!RemoveIfEmpty(d)) empty = false;
                 if (Directory.GetFiles(dir).Length > 0) empty = false;
-                if (empty) Directory.Delete(dir, false);
+                if (empty) FileOps.DeleteEmptyDirectory(dir);
             }
             catch { return false; }
             return empty;

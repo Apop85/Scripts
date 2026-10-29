@@ -159,6 +159,9 @@ namespace Sflix
             List.HeaderStyle = ColumnHeaderStyle.Nonclickable;
             List.ShowItemToolTips = true;
             DarkList.Apply(List);
+            // Sortieren innerhalb der Gruppen, die Gruppen nach ihrem ersten Eintrag
+            sort = ListSort.Of(List);
+            sort.Custom = delegate { if (groups != null) Render(); };
             if (withLabelColumn) List.Columns.Add("", Theme.S(90));
             if (withReasonColumn) List.Columns.Add("Grund", Theme.S(80));
             List.Columns.Add("Datei", Theme.S(300));
@@ -195,6 +198,75 @@ namespace Sflix
         }
 
         readonly bool labelColumn, reasonColumn;
+        readonly ListSort sort;
+        Font boldFont;
+
+        // Für sehr viele Zeilen nur eine fette Schrift (jede Schrift belegt ein GDI-Handle)
+        Font Bold
+        {
+            get
+            {
+                if (boldFont == null) { boldFont = new Font(List.Font, FontStyle.Bold); Disposed += delegate { boldFont.Dispose(); }; }
+                return boldFont;
+            }
+        }
+
+        // Sortierschlüssel einer Spalte
+        object KeyOf(CompareEntry e, int col)
+        {
+            int c = col;
+            if (labelColumn) { if (c == 0) return e.Label ?? ""; c--; }
+            if (reasonColumn) { if (c == 0) return e.Reason ?? ""; c--; }
+            MediaFacts f = e.Facts;
+            switch (c)
+            {
+                case 0: return FileLabel(e);
+                case 1: return f.Size < 0 ? null : (object)f.Size;
+                case 2: return f.Probed && f.Pixels > 0 ? (object)f.Pixels : null;
+                case 3: return f.Probed && f.Duration > 0 ? (object)f.Duration : null;
+                case 4: return f.CodecText;
+                case 5: return f.Size < 0 ? null : (object)f.Modified;
+                default: return NoteOf(e);
+            }
+        }
+
+        int CompareEntries(CompareEntry a, CompareEntry b)
+        {
+            int r = ListSort.CompareKeys(KeyOf(a, sort.Column), KeyOf(b, sort.Column));
+            if (r == 0) r = ListSort.Natural(FileLabel(a), FileLabel(b));
+            return sort.Descending ? -r : r;
+        }
+
+        // Gruppen in Anzeigereihenfolge (Index der Gruppe) und ihre Einträge sortiert
+        List<KeyValuePair<int, List<CompareEntry>>> SortedGroups()
+        {
+            List<KeyValuePair<int, List<CompareEntry>>> result = new List<KeyValuePair<int, List<CompareEntry>>>();
+            for (int g = 0; g < groups.Count; g++)
+            {
+                List<CompareEntry> copy = new List<CompareEntry>(groups[g]);
+                if (sort.Column >= 0) StableSort(copy, CompareEntries);
+                result.Add(new KeyValuePair<int, List<CompareEntry>>(g, copy));
+            }
+            if (sort.Column >= 0 && result.Count > 1)
+                StableSort(result, delegate(KeyValuePair<int, List<CompareEntry>> a, KeyValuePair<int, List<CompareEntry>> b)
+                {
+                    if (a.Value.Count == 0 || b.Value.Count == 0) return b.Value.Count.CompareTo(a.Value.Count);
+                    return CompareEntries(a.Value[0], b.Value[0]);
+                });
+            return result;
+        }
+
+        static void StableSort<T>(List<T> list, Comparison<T> cmp)
+        {
+            List<KeyValuePair<int, T>> indexed = new List<KeyValuePair<int, T>>();
+            for (int i = 0; i < list.Count; i++) indexed.Add(new KeyValuePair<int, T>(i, list[i]));
+            indexed.Sort(delegate(KeyValuePair<int, T> a, KeyValuePair<int, T> b)
+            {
+                int r = cmp(a.Value, b.Value);
+                return r != 0 ? r : a.Key.CompareTo(b.Key);
+            });
+            for (int i = 0; i < list.Count; i++) list[i] = indexed[i].Value;
+        }
         // Spaltenindex ab "Datei" (0), verschoben um die Spalten davor
         int Col(int i) { return i + (labelColumn ? 1 : 0) + (reasonColumn ? 1 : 0); }
 
@@ -311,9 +383,11 @@ namespace Sflix
             int top = List.TopItem != null ? List.TopItem.Index : 0;
             List.BeginUpdate();
             List.Items.Clear();
-            for (int g = 0; g < groups.Count; g++)
+            List<ListViewItem> rows = new List<ListViewItem>();
+            foreach (KeyValuePair<int, List<CompareEntry>> sortedGroup in SortedGroups())
             {
-                List<CompareEntry> group = groups[g];
+                int g = sortedGroup.Key;
+                List<CompareEntry> group = sortedGroup.Value;
                 if (GroupTitles != null && g < GroupTitles.Count)
                 {
                     // Gruppenüberschrift in der Spalte "Datei"
@@ -321,9 +395,9 @@ namespace Sflix
                     ListViewItem head = new ListViewItem(fileCol == 0 ? GroupTitles[g] : "");
                     for (int hc = 1; hc <= fileCol; hc++) head.SubItems.Add(hc == fileCol ? GroupTitles[g] : "");
                     head.ForeColor = Theme.Muted;
-                    head.Font = new Font(List.Font, FontStyle.Bold);
+                    head.Font = Bold;
                     head.BackColor = Theme.Input;
-                    List.Items.Add(head);
+                    rows.Add(head);
                 }
                 // Beste Werte der Gruppe
                 long maxPixels = 0, maxSize = 0;
@@ -362,26 +436,28 @@ namespace Sflix
                     it.Tag = e;
                     if (group.Count > 1)
                     {
-                        if (differentSize && f.Size == maxSize) Mark(it, Col(1));
-                        if (differentPixels && f.Probed && f.Pixels == maxPixels && maxPixels > 0) Mark(it, Col(2));
-                        if (differentDuration && f.Probed && Math.Abs(f.Duration - maxDuration) <= 2) Mark(it, Col(3));
+                        if (differentSize && f.Size == maxSize) Mark(it, Col(1), Bold);
+                        if (differentPixels && f.Probed && f.Pixels == maxPixels && maxPixels > 0) Mark(it, Col(2), Bold);
+                        if (differentDuration && f.Probed && Math.Abs(f.Duration - maxDuration) <= 2) Mark(it, Col(3), Bold);
                     }
                     bool? playable = f.Playable;
                     if (playable == false) it.SubItems[Col(6)].ForeColor = Warn;
                     bool c;
                     if (checks.TryGetValue(e, out c)) it.Checked = c;
                     else if (e.Tag is bool) it.Checked = (bool)e.Tag;
-                    List.Items.Add(it);
+                    rows.Add(it);
                 }
             }
+            // Alle Zeilen auf einmal einfügen: bei tausenden Zeilen viel schneller als einzeln
+            List.Items.AddRange(rows.ToArray());
             List.EndUpdate();
             if (top > 0 && top < List.Items.Count) List.TopItem = List.Items[top];
         }
 
-        static void Mark(ListViewItem it, int col)
+        static void Mark(ListViewItem it, int col, Font bold)
         {
             it.SubItems[col].ForeColor = Better;
-            it.SubItems[col].Font = new Font(it.ListView != null ? it.ListView.Font : SystemFonts.DefaultFont, FontStyle.Bold);
+            it.SubItems[col].Font = bold;
         }
 
         static string FileLabel(CompareEntry e)

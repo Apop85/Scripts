@@ -44,10 +44,7 @@ namespace Sflix
             list.ForeColor = Theme.Text;
             list.BorderStyle = BorderStyle.None;
             list.HeaderStyle = ColumnHeaderStyle.Nonclickable;
-            list.OwnerDraw = true;
-            list.DrawColumnHeader += DrawHeader;
-            list.DrawItem += delegate(object s, DrawListViewItemEventArgs e) { e.DrawDefault = true; };
-            list.DrawSubItem += delegate(object s, DrawListViewSubItemEventArgs e) { e.DrawDefault = true; };
+            DarkList.Apply(list);
             list.Columns.Add("Ergebnis", Theme.S(300));
             list.Columns.Add("Teile", Theme.S(60), HorizontalAlignment.Right);
             list.Columns.Add("Länge", Theme.S(80), HorizontalAlignment.Right);
@@ -57,9 +54,9 @@ namespace Sflix
             foreach (MergeGroup g in groups)
             {
                 ListViewItem item = new ListViewItem(Path.GetFileName(g.Target));
-                item.SubItems.Add(g.Parts.Count.ToString());
-                item.SubItems.Add(g.Problem == null ? Fmt.Time(g.TotalDuration) : "");
-                item.SubItems.Add(g.Problem == null ? Fmt.Size(g.TotalSize) : "");
+                ListSort.Add(item, g.Parts.Count.ToString(), g.Parts.Count);
+                ListSort.Add(item, g.Problem == null ? Fmt.Time(g.TotalDuration) : "", g.Problem == null ? (object)g.TotalDuration : null);
+                ListSort.Add(item, g.Problem == null ? Fmt.Size(g.TotalSize) : "", g.Problem == null ? (object)g.TotalSize : null);
                 string hint = g.Problem ?? (g.NeedsReencode ? "Formate unterschiedlich – wird neu kodiert (dauert länger)" : "");
                 item.SubItems.Add(hint + (hint.Length > 0 ? "   " : "") + Path.GetDirectoryName(g.Target));
                 item.ToolTipText = string.Join("\n", g.Parts.ConvertAll(Path.GetFileName));
@@ -103,16 +100,6 @@ namespace Sflix
             Controls.Add(buttons);
             AcceptButton = ok;
             CancelButton = cancel;
-        }
-
-        void DrawHeader(object sender, DrawListViewColumnHeaderEventArgs e)
-        {
-            using (SolidBrush b = new SolidBrush(Theme.Input)) e.Graphics.FillRectangle(b, e.Bounds);
-            using (Pen p = new Pen(Theme.Line)) e.Graphics.DrawLine(p, e.Bounds.Right - 1, e.Bounds.Top, e.Bounds.Right - 1, e.Bounds.Bottom);
-            TextFormatFlags flags = TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis |
-                (e.Header.TextAlign == HorizontalAlignment.Right ? TextFormatFlags.Right : TextFormatFlags.Left);
-            Rectangle r = new Rectangle(e.Bounds.X + Theme.S(6), e.Bounds.Y, e.Bounds.Width - Theme.S(12), e.Bounds.Height);
-            TextRenderer.DrawText(e.Graphics, e.Header.Text, list.Font, r, Theme.Muted, flags);
         }
 
         public List<MergeGroup> Choose(Form owner)

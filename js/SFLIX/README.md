@@ -134,7 +134,7 @@ Videos und Musik haben eine eigene Steuerleiste. Bei Videos blendet sie sich wä
 - **Leiste**: vorheriges / nächstes Medium, Abspielen / Pause, 10 Sekunden zurück / vor, Lautstärke, Zeitleiste, Übergang hier, Autoplay-Menü, Zahnradmenü, Bild im Bild und Vollbild.
 - **Musik**: Neben dem Player steht die Playliste mit allen Titeln und ihrer Dauer, der laufende Titel ist hervorgehoben. Ein Klick spielt einen Titel ab. Auf dem Handy steht die Liste unter dem Player.
 - **Maus**: Klick auf das Video startet oder pausiert, Doppelklick schaltet das Vollbild ein oder aus.
-- **Touch**: Tippen blendet die Leiste ein oder aus. Doppeltipp links oder rechts spult 10 Sekunden zurück bzw. vor, Doppeltipp in der Mitte schaltet das Vollbild um.
+- **Touch**: Tippen spielt ab oder pausiert und blendet die Leiste ein. Doppeltipp links oder rechts spult 10 Sekunden zurück bzw. vor, Doppeltipp in der Mitte schaltet das Vollbild um.
 - **Zahnradmenü**: Geschwindigkeit (0,5x bis 1,75x), Herunterladen und Browser-Steuerung.
 - **Vollbild**: Das Video füllt den Bildschirm. Darunter kann weiterhin gescrollt und ein anderes Medium gewählt werden.
 - **Browser-Steuerung**: Wer die Steuerung des Browsers bevorzugt, schaltet sie im Zahnradmenü oder im Menü unter "Einstellungen" ein.

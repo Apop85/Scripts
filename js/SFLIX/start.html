@@ -54,15 +54,29 @@
             flex: none;
             width: min(40px, 9vw);
             height: min(40px, 9vw);
-            background-color: #1b1b1f;
-            animation: loading 3.0s ease-in-out;
-            animation-iteration-count: infinite;
-            border-radius: 20px;
-            color: #1b1b1f;
+            position: relative;
+            overflow: hidden;
+            background-color: #4a2a30;
+            animation: loadingPulse 3.0s ease-in-out infinite;
+            border-radius: 50%;
+            color: #f0d4d7;
             font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             font-weight: 700;
             text-align: center;
-            font-size: 33px;
+            font-size: min(24px, 5.5vw);
+            will-change: transform;
+        }
+
+        /* Nur transform und opacity: läuft auch, während die Seite im Hintergrund aufgebaut wird.
+           Die Abdeckung verbirgt Buchstabe und Farbe und wird in der Mitte der Animation durchsichtig. */
+        .loadingSquare::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-color: #1b1b1f;
+            animation: loadingCover 3.0s ease-in-out infinite;
+            animation-delay: inherit;
+            will-change: opacity;
         }
 
         .loadingSquare:nth-child(2) {
@@ -93,26 +107,21 @@
             animation-delay: 1.75s;
         }
 
-        @keyframes loading {
-            20% {
-                background-color: #1b1b1f;
-                color: #1b1b1f;
-                font-size: 15px;
+        @keyframes loadingPulse {
+            0%, 20%, 80%, 100% {
+                transform: scale(0.8);
             }
-            40% {
-                background-color: #4a2a30;
-                color: #f0d4d7;
-                font-size: 26px;
+            40%, 60% {
+                transform: scale(1);
             }
-            60% {
-                background-color: #4a2a30;
-                color: #f0d4d7;
-                font-size: 26px;
+        }
+
+        @keyframes loadingCover {
+            0%, 20%, 80%, 100% {
+                opacity: 1;
             }
-            80% {
-                background-color: #1b1b1f;
-                color: #1b1b1f;
-                font-size: 15px;
+            40%, 60% {
+                opacity: 0;
             }
         }
     </style>

@@ -936,9 +936,34 @@ function copyAddress(button) {
     }
 }
 
-// Blendet den Ladescreen aus (onload von body). Vorschaubilder laden "lazy" und zählen
-// nicht zum onload: darum warten, bis die Bilder im sichtbaren Bereich da sind (höchstens 8 s).
+// Ladescreen: verschwindet erst, wenn die Seite geladen (onload von body, ruft setHeight)
+// UND aufgebaut ist (markApplicationStarted nach startApplication). Danach wird noch auf die
+// Bilder im sichtbaren Bereich gewartet. Die Reihenfolge der beiden Ereignisse ist beliebig.
+var loadingState = { loaded: false, started: false };
+
+function markApplicationStarted() {
+    loadingState.started = true;
+    hideLoadingScreenWhenReady();
+}
+
 function setHeight() {
+    loadingState.loaded = true;
+    hideLoadingScreenWhenReady();
+}
+
+function hideLoadingScreenWhenReady() {
+    if (!loadingState.loaded || !loadingState.started) {
+        return;
+    }
+    // Einige Bänder werden erst im nächsten Frame verteilt: danach messen
+    requestAnimationFrame(function () {
+        requestAnimationFrame(waitForVisibleImages);
+    });
+}
+
+// Vorschaubilder laden "lazy" und zählen nicht zum onload: darum warten, bis die Bilder
+// im sichtbaren Bereich da sind (höchstens 10 s).
+function waitForVisibleImages() {
     var screenNode = document.getElementById("loadingScreen");
     var finished = false;
     var hide = function () {
@@ -969,7 +994,7 @@ function setHeight() {
             image.loading = "eager";
         }
     });
-    setTimeout(hide, 8000);
+    setTimeout(hide, 10000);
 }
 
 // Noch nicht geladene Bilder, die im Fenster sichtbar sind (auch in Bändern nur der sichtbare Teil)

@@ -19,6 +19,7 @@
     <li>[<span style="color: red">FEATURE</span>] Updater: Das Setup bietet an, ffmpeg gleich mitzuinstallieren (empfohlen), und nimmt optional den Lizenzschlüssel entgegen. ffmpeg liegt jetzt standardmässig je Benutzer in AppData (auch wenn STEFFLIX auf einem NAS liegt), der Ordner lässt sich unter Tools › Einstellungen ändern. Ein bisheriges ffmpeg wird dorthin verschoben.</li>
     <li>[OPTIMIERUNG] Updater: Die Protokolldatei wird nur noch auf Wunsch geschrieben (Schalter "In Datei speichern" im Protokoll, beim Start aus) und ist auf 1 MB begrenzt. Sonst speichert "Speichern unter …" das Protokoll der Sitzung. Ohne Oberfläche wird weiterhin immer protokolliert. Die bisherige Datei wird einmalig gelöscht.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Updater: Neuer, wärmerer Rotton. Die Tools stehen in zwei Reihen.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Updater: "Duplikate finden" stürzte beim Schliessen der Auswahl ab. Ausserdem wurden Auflösung und Dauer in der Vergleichstabelle teilweise nicht nachgeladen.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Neue Befehle für die Kommandozeile: --license, --license-remove, --ffmpeg (beim Installieren) und --log.</li>
 </ul>
 <b>Version 2.4.0</b>:<br>

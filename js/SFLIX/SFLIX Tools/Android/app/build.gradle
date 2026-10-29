@@ -1,0 +1,55 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Signaturschluessel (erzeugt von build.ps1, nie pushen)
+def signProps = new Properties()
+def signFile = rootProject.file('signing/keystore.properties')
+if (signFile.exists()) signFile.withInputStream { signProps.load(it) }
+
+android {
+    namespace 'ch.stefflix.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'ch.stefflix.app'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    signingConfigs {
+        release {
+            if (signFile.exists()) {
+                storeFile rootProject.file(signProps['storeFile'])
+                storePassword signProps['password']
+                keyAlias signProps['alias']
+                keyPassword signProps['password']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signFile.exists() ? signingConfigs.release : null
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    packaging {
+        resources {
+            excludes += ['META-INF/versions/9/OSGI-INF/MANIFEST.MF', 'META-INF/DEPENDENCIES',
+                         'META-INF/LICENSE*', 'META-INF/NOTICE*']
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.hierynomus:smbj:0.13.0'
+}

@@ -186,8 +186,12 @@ public class ShareListActivity extends Activity {
         EditText e = new EditText(this);
         e.setHint(hint);
         e.setText(value);
-        e.setInputType(type);
+        // Zuerst einzeilig, dann der Typ: setSingleLine danach würde die Passwort-Verdeckung aufheben
         e.setSingleLine(true);
+        e.setInputType(type);
+        if ((type & InputType.TYPE_TEXT_VARIATION_PASSWORD) != 0) {
+            e.setTransformationMethod(android.text.method.PasswordTransformationMethod.getInstance());
+        }
         form.addView(e);
         return e;
     }

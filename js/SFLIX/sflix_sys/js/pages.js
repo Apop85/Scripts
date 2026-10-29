@@ -1373,6 +1373,7 @@ function showStartPage() {
 
     checkForUpdate(dashboard);
     showLicenseChangeNotice(dashboard);
+    showAndroidAppNotice(dashboard);
 
     var hasContinue = showContinueWatching(dashboard);
     var hasFavorites = showFavoritesRow(dashboard);

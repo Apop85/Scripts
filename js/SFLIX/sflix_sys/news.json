@@ -11,7 +11,7 @@
         },
         {
           "type": "INTERFACE",
-          "text": "Der Ladebildschirm passt auch auf schmale Bildschirme wie Handys."
+          "text": "Der Ladebildschirm passt auch auf schmale Bildschirme wie Handys, und seine Animation läuft jetzt auch, während die Seite aufgebaut wird."
         },
         {
           "type": "OPTIMIERUNG",
@@ -19,7 +19,7 @@
         },
         {
           "type": "OPTIMIERUNG",
-          "text": "Der Ladebildschirm bleibt stehen, bis die Vorschaubilder im sichtbaren Bereich geladen sind (höchstens 8 Sekunden). Danach erscheinen keine Bilder mehr nachträglich."
+          "text": "Der Ladebildschirm bleibt stehen, bis die Seite aufgebaut und die Vorschaubilder im sichtbaren Bereich geladen sind (höchstens 10 Sekunden). Danach erscheinen keine Bilder mehr nachträglich."
         }
       ]
     },

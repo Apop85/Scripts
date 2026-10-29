@@ -102,4 +102,6 @@ function startApplication() {
 
 initDatabase(function () {
     startApplication();
+    // Der Ladescreen wartet auf den Aufbau der Seite (IndexedDB öffnet asynchron, oft erst nach onload)
+    markApplicationStarted();
 });

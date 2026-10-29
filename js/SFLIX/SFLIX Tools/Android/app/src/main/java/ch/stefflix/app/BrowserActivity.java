@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.LruCache;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
@@ -266,19 +267,53 @@ public class BrowserActivity extends Activity {
         }
     }
 
+    // Bilder (v.a. Vorschaubilder) bleiben im Speicher, solange die App läuft. Die WebView speichert
+    // abgefangene Antworten nicht und würde sonst bei jedem Seitenwechsel alles neu von der Freigabe lesen.
+    private static final int IMAGE_CACHE_MAX_FILE = 2 * 1024 * 1024;
+    private static final LruCache<String, byte[]> imageCache = new LruCache<String, byte[]>(48 * 1024 * 1024) {
+        @Override
+        protected int sizeOf(String key, byte[] value) {
+            return value.length;
+        }
+    };
+
+    private WebResourceResponse imageResponse(String mime, byte[] data) {
+        Map<String, String> h = new HashMap<>();
+        h.put("Access-Control-Allow-Origin", "*");
+        h.put("Content-Length", String.valueOf(data.length));
+        return new WebResourceResponse(mime, null, 200, "OK", h, new ByteArrayInputStream(data));
+    }
+
+    private static byte[] readAll(File f, long size) throws IOException {
+        byte[] data = new byte[(int) size];
+        int read = 0;
+        try (SmbSource.RangeStream in = new SmbSource.RangeStream(f, 0, size)) {
+            int n;
+            while (read < data.length && (n = in.read(data, read, data.length - read)) > 0) read += n;
+        }
+        if (read < data.length) throw new IOException("Datei unvollständig gelesen");
+        return data;
+    }
+
     private WebResourceResponse serve(String rel, String range, boolean mainFrame) {
         String mime = mimeType(rel);
         String charset = mime.startsWith("text/") || mime.endsWith("javascript") || mime.endsWith("json") ? "UTF-8" : null;
+        boolean image = mime.startsWith("image/") && range == null;
+        String cacheKey = prefix + rel;
+        if (image) {
+            byte[] cached = imageCache.get(cacheKey);
+            if (cached != null) return imageResponse(mime, cached);
+        }
         try {
             File f = smb.open(rel);
             long size = SmbSource.size(f);
+            if (image && size <= IMAGE_CACHE_MAX_FILE) {
+                byte[] data = readAll(f, size);
+                imageCache.put(cacheKey, data);
+                return imageResponse(mime, data);
+            }
             if (rel.equalsIgnoreCase("start.html")) {
-                byte[] html = new byte[(int) size];
-                int read = 0;
-                try (SmbSource.RangeStream in = new SmbSource.RangeStream(f, 0, size)) {
-                    int n;
-                    while (read < html.length && (n = in.read(html, read, html.length - read)) > 0) read += n;
-                }
+                byte[] html = readAll(f, size);
                 Map<String, String> h = new HashMap<>();
                 h.put("Cache-Control", "no-cache");
                 return new WebResourceResponse(mime, charset, 200, "OK", h,

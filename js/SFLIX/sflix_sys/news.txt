@@ -9,6 +9,7 @@
     <li>[<span style="color: blue">INTERFACE</span>] Der Ladebildschirm passt auch auf schmale Bildschirme wie Handys, und seine Animation läuft jetzt auch, während die Seite aufgebaut wird.</li>
     <li>[OPTIMIERUNG] Die Neuerungen sind je Version nach Art geordnet: zuerst neue Funktionen, dann Oberfläche, Optimierungen und Fehlerbehebungen. Gleiche Arten stehen beieinander, in STEFFLIX wie in den Patchnotes des Updaters.</li>
     <li>[OPTIMIERUNG] Der Ladebildschirm bleibt stehen, bis die Seite aufgebaut und die Vorschaubilder im sichtbaren Bereich geladen sind (höchstens 10 Sekunden). Danach erscheinen keine Bilder mehr nachträglich.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Die Kachelgrösse (Einstellungen › Darstellung) wirkt jetzt auch auf Tablet und Handy. Bisher blieben die Kacheln dort gleich gross, und auf dem Tablet waren "Klein" und "Mittel" identisch.</li>
 </ul>
 <b>Version 2.5.0</b>:<br>
 <ul>

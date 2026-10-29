@@ -3181,7 +3181,8 @@ body.rowSorting {
 }
 
 /* Anzahl Kacheln pro Band je nach Bildschirmbreite und Kachelgrösse (Einstellungen).
-   Mittel: 5 / 4 / 4, Klein: 6 / 5 / 4, Gross: 4 / 3 / 3. Ab 800 px abwärts für alle gleich. */
+   Mittel: 5 / 4 / 4, Klein: 6 / 5 / 4, Gross: 4 / 3 / 3. Abweichungen für Tablet und Handy
+   stehen am Ende der Datei ("Kachelgrösse auf Tablet und Handy"). */
 html.cardsSmall {
     --cards-per-view: 6;
     --grid-card-min: 200px;
@@ -4023,4 +4024,43 @@ table.versionInfo td.versionNewer {
 /* Feedback: Diagnose mitsenden */
 .feedbackDiagnosis {
     padding: 0;
+}
+
+/* Kachelgrösse auf Tablet und Handy (steht am Ende, damit es die Regeln oben überschreibt).
+   Breite:  ≤1100 / ≤800 / ≤600 (angeschnittene Kachel zeigt das Wischen)
+   Klein:      5  /  4   /  3.3
+   Mittel:     4  /  3   /  2.3
+   Gross:      3  /  2.3 /  1.6 */
+@media (max-width: 1100px) {
+    html.cardsSmall {
+        --cards-per-view: 5;
+    }
+}
+
+@media (max-width: 800px) {
+    html.cardsSmall {
+        --cards-per-view: 4;
+    }
+
+    html.cardsLarge {
+        --cards-per-view: 2.3;
+    }
+
+    html.cardsSmall .cardGrid {
+        grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+    }
+
+    html.cardsLarge .cardGrid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    html.cardsSmall {
+        --cards-per-view: 3.3;
+    }
+
+    html.cardsLarge {
+        --cards-per-view: 1.6;
+    }
 }

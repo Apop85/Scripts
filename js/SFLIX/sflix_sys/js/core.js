@@ -18,7 +18,7 @@
 var listSeperator = "$=$";
 
 // Dateiformate, die der Browser direkt abspielen bzw. anzeigen kann.
-// Gross-/Kleinschreibung spielt keine Rolle (JPG = jpg). Muss mit allowedFileTypes in getfilepath.py übereinstimmen.
+// Gross-/Kleinschreibung spielt keine Rolle (JPG = jpg). Muss mit den Endungen in DataTask.cs des Updaters übereinstimmen.
 var mediaTypes = [".mp4", ".m4v", ".webm", ".ogv"];
 
 var musicTypes = [".mp3", ".m4a", ".ogg", ".oga", ".opus", ".aac", ".flac", ".wav"];
@@ -611,12 +611,12 @@ function normalizeMediaLocation(mediaUrl) {
 // ===================================================================
 
 // Kodiert die Daten für die URL. Gibt null zurück, wenn ein Name Zeichen ausserhalb
-// von Latin-1 enthält (updateData.exe ersetzt solche Zeichen).
+// von Latin-1 enthält ("Daten einlesen" im Updater ersetzt solche Zeichen).
 function encodeUrlData(decodedData) {
     try {
         return btoa(decodedData);
     } catch (error) {
-        console.warn("Ungültige Zeichen - bitte updateData.exe ausführen:", decodedData);
+        console.warn("Ungültige Zeichen - bitte im Updater (updateStefflix.exe) \"Daten einlesen\" ausführen:", decodedData);
         return null;
     }
 }

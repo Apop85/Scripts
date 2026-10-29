@@ -18,10 +18,15 @@ namespace Sflix
         // und Konvertieren, damit frisch gesicherte Originale nicht im selben Lauf gelöscht werden.
         // Folgen umbenennen vor Zusammenführen, Konvertieren und Vorschaubildern: diese arbeiten
         // dann schon mit den neuen Namen.
-        public static readonly string[] TaskIds = { "update", "cleanup", "import", "rename", "renameundo", "merge", "convert", "preview", "data" };
+        // Duplikate vor Zusammenführen und Konvertieren (keine Arbeit an Dateien, die gleich aussortiert
+        // werden), Medien prüfen nach dem Konvertieren (prüft dann schon die neuen Dateien).
+        public static readonly string[] TaskIds = { "update", "ffmpeg", "cleanup", "import", "rename", "renameundo", "dupes", "merge", "convert", "check", "preview", "data" };
 
         static readonly Dictionary<string, string> TaskTitles = new Dictionary<string, string> {
             { "update", "Update" },
+            { "ffmpeg", "ffmpeg installieren" },
+            { "dupes", "Duplikate finden" },
+            { "check", "Medien prüfen" },
             { "cleanup", "Ablagen leeren" },
             { "import", "Medien importieren" },
             { "rename", "Folgen umbenennen" },
@@ -44,7 +49,7 @@ namespace Sflix
         ListBox dataFolders;
         Control dataFoldersRow;
         TextBox installFolderBox, importSub, renameFolder;
-        FolderPick pickPreview, pickMerge, pickConvert, pickCleanup;
+        FolderPick pickPreview, pickMerge, pickConvert, pickCleanup, pickDupes, pickCheck;
         Label renameUndoInfo;
         Button renameUndoButton;
         NumericUpDown convertParallel;
@@ -53,9 +58,13 @@ namespace Sflix
         Label importHint;
 
         // Registerkarten: nur der Bereich der gewählten Karte ist sichtbar
-        const int PageUpdates = 0, PageImport = 1, PageTools = 2;
-        static readonly string[] PageSubtitles = { "UPDATES", "IMPORTER", "TOOLS" };
-        static readonly string[] ToolIds = { "cleanup", "rename", "merge", "convert", "preview" };
+        const int PageUpdates = 0, PageImport = 1, PageTools = 2, PageLicense = 3, PageHelp = 4;
+        static readonly string[] PageSubtitles = { "UPDATES", "IMPORTER", "TOOLS", "LIZENZ", "HILFE" };
+        FeedbackPage feedbackPage;
+        HelpPage helpPage;
+        FlowLayoutPanel buttonsRow;
+        Label ffmpegInfo;
+        static readonly string[] ToolIds = { "cleanup", "rename", "dupes", "merge", "convert", "check", "preview" };
         TabStrip tabs;
         Control[] pages;
         TableLayoutPanel rootLayout;
@@ -86,14 +95,17 @@ namespace Sflix
         double latestFraction = -2;
         string latestStatus;
         readonly object progressGate = new object();
-        string logFile;
+        // Protokolldatei nur auf Wunsch (Schalter im Protokoll, nicht gespeichert). Nach einem
+        // Selbst-Update bleibt sie für den Rest des Laufs eingeschaltet (--log).
+        bool logToFile;
+        readonly StringBuilder sessionLog = new StringBuilder();
 
-        public MainForm(Settings settings, List<string> autoRun, string startNotice)
+        public MainForm(Settings settings, List<string> autoRun, string startNotice, bool logToFile)
         {
             this.settings = settings;
             this.autoRun = autoRun;
             this.startNotice = startNotice;
-            logFile = Path.Combine(App.SysDir, "updater.log");
+            this.logToFile = logToFile;
 
             Text = App.Title;
             BackColor = Theme.Back;
@@ -156,6 +168,8 @@ namespace Sflix
             tabs.Add("Updates", Glyph.Up);
             tabs.Add("Importer", Glyph.Import);
             tabs.Add("Tools", Glyph.Tools);
+            tabs.Add("Lizenz", Glyph.Key);
+            tabs.Add("Hilfe", Glyph.Help);
             tabs.Changed = ShowPage;
             root.Controls.Add(tabs, 0, 1);
 
@@ -212,8 +226,11 @@ namespace Sflix
             logPanel.Dock = DockStyle.Fill;
             logPanel.Margin = new Padding(0, Theme.S(12), Theme.S(16), 0);
             logPanel.Visible = false;
-            logPanel.LogFile = logFile;
+            logPanel.LogFile = LogFile.FilePath;
             logPanel.BeforeOpenFile = WriteLogFile;
+            logPanel.SaveToFile = logToFile;
+            logPanel.SaveToFileChanged = SetLogToFile;
+            logPanel.SessionText = delegate { return sessionLog.ToString(); };
             // Bei einem Fehler das Protokoll von selbst zeigen
             logPanel.ErrorAdded = delegate { if (!logExpanded) SetLogExpanded(true); };
             body.Controls.Add(scroller, 0, 0);
@@ -281,6 +298,8 @@ namespace Sflix
             pickMerge = MakeFolderPick("Zusammenführen", false);
             pickConvert = MakeFolderPick("Konvertieren", false);
             pickCleanup = MakeFolderPick("Ablagen leeren", true);
+            pickDupes = MakeFolderPick("Duplikate finden", false);
+            pickCheck = MakeFolderPick("Medien prüfen", false);
 
             // Folgen umbenennen: ein Serienordner, darunter "Rückgängig"
             renameFolder = Theme.MakeTextBox();
@@ -304,15 +323,23 @@ namespace Sflix
                      "Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen: „Serie - S01E02 - Titel“ " +
                      "im Ordner „Staffel 01“. Erkannt werden S01E02 und 1x02. Du wählst die Serie und siehst vorher alle Änderungen.",
                      renameRow, undoRow),
+                Spec("dupes", Glyph.Duplicate, "Duplikate finden", "Doppelte Dateien und Folgen",
+                     "Identische Dateien (gleicher Inhalt), gleiche Folgen einer Serie (S01E01 = 1x01 = S1E1) und gleiche Dateinamen finden. Du vergleichst Grösse, Auflösung " +
+                     "und Dauer und wählst, was nach „" + DuplicateTask.FolderName + "“ kommt. Favoriten und Fortschritt gehen auf die behaltene Datei über.",
+                     pickDupes.Root),
                 Spec("merge", Glyph.Merge, "Zusammenführen", "pt1, pt2 … zu einer Datei",
                      "Gesplittete Videos wie „Titel pt1“, „Titel pt2“ zu einer Datei zusammenfügen. Du wählst vorher aus, welche.", optMoveParts, pickMerge.Root),
                 Spec("convert", Glyph.Convert, "Konvertieren", "Videos in MP4 umwandeln",
                      "Videos in browserkompatible MP4 (H.264/AAC) umwandeln. Das Original kommt nach „" + ConvertTask.OriginalsFolderName + "“.",
                      parallelRow, optDeleteOriginal, pickConvert.Root),
+                Spec("check", Glyph.Inspect, "Medien prüfen", "Nicht abspielbar, defekt, leer",
+                     "Findet Medien, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), defekte und leere Dateien sowie Medien ohne Vorschaubild " +
+                     "(gemäss „Vorschaubilder“: Videos und/oder Bilder). Im Ergebnis wählst du, was konvertiert bzw. mit Vorschaubild versehen wird.",
+                     pickCheck.Root),
                 Spec("cleanup", Glyph.Trash, "Ablagen leeren", "__-Ordner endgültig löschen",
-                     "„__teile“, „__konvertiert“, „__gelöscht“, „__original“ und „" + EpisodeTask.ReplacedFolderName + "“ endgültig löschen. " +
+                     "„__teile“, „__konvertiert“, „__gelöscht“, „__original“, „" + EpisodeTask.ReplacedFolderName + "“ und „" + DuplicateTask.FolderName + "“ endgültig löschen. " +
                      "Du siehst vorher, was gelöscht wird. Nur innerhalb des Installationsordners möglich.", pickCleanup.Root),
-            }, Spec("settings", Glyph.Settings, "Einstellungen", null, null, FolderRow(installFolderBox, "Installationsordner:", false), folderHint));
+            }, Spec("settings", Glyph.Settings, "Einstellungen", null, null, FolderRow(installFolderBox, "Installationsordner:", false), folderHint, BuildFfmpegRow()));
 
             Label toolsNote = Theme.MakeLabel("Die gewählten Tools laufen nacheinander. Danach werden die betroffenen Ordner automatisch neu " +
                                               "eingelesen („Daten einlesen“), sofern sie im Installationsordner liegen.", true);
@@ -332,10 +359,18 @@ namespace Sflix
             updatesRow.Controls.Add(updatesSection, 0, 0);
             updatesRow.Controls.Add(BuildVersionsCard(), 1, 0);
 
+            feedbackPage = new FeedbackPage();
+            feedbackPage.SessionLog = SessionLogText;
+            feedbackPage.Diagnosis = BuildDiagnosis;
+            feedbackPage.StatusChanged = UpdateLicenseTab;
+            helpPage = new HelpPage();
+
             pages = new Control[] {
                 Page(new Control[] { updatesRow }),
                 Page(BuildImportPage()),
                 Page(new Control[] { toolsNote, toolsSection }),
+                Page(new Control[] { feedbackPage }),
+                Page(new Control[] { helpPage }),
             };
             // Dock Top: in umgekehrter Reihenfolge einfügen, sichtbar ist ohnehin nur eine
             for (int i = pages.Length - 1; i >= 0; i--) scroller.Controls.Add(pages[i]);
@@ -358,6 +393,7 @@ namespace Sflix
             buttons.Controls.Add(startButton);
             buttons.Controls.Add(cancelButton);
             root.Controls.Add(buttons, 0, 4);
+            buttonsRow = buttons;
 
             // Fortschritt
             TableLayoutPanel prog = new TableLayoutPanel();
@@ -615,6 +651,8 @@ namespace Sflix
                 case "merge": return pickMerge;
                 case "convert": return pickConvert;
                 case "cleanup": return pickCleanup;
+                case "dupes": return pickDupes;
+                case "check": return pickCheck;
             }
             return null;
         }
@@ -662,8 +700,10 @@ namespace Sflix
             SuspendLayout();
             for (int i = 0; i < pages.Length; i++) pages[i].Visible = i == index;
             tasksScroller.AutoScrollPosition = new Point(0, 0);
+            // Lizenz/Feedback und Hilfe haben keinen Start-Knopf
+            buttonsRow.Visible = index <= PageTools;
             ResumeLayout(true);
-            banner.Subtitle = PageSubtitles[index];
+            banner.Subtitle = index == PageLicense && feedbackPage.Status == LicenseStatus.Active ? "FEEDBACK" : PageSubtitles[index];
             banner.Invalidate();
             UpdateStartText();
             Relayout();
@@ -697,6 +737,7 @@ namespace Sflix
             base.OnLoad(e);
             EqualizeOptionHosts();
             UpdateStartText();
+            UpdateLicenseTab();
             SetLogExpanded(false);
         }
 
@@ -743,31 +784,34 @@ namespace Sflix
             TableLayoutPanel col = Column();
             col.Margin = new Padding(0);
 
-            // Kacheln nebeneinander, gleich breit
+            // Kacheln gleich breit, höchstens vier nebeneinander (sonst weitere Reihen)
+            int perRow = Math.Min(4, specs.Length);
+            int rows = (specs.Length + perRow - 1) / perRow;
             TableLayoutPanel grid = new TableLayoutPanel();
             grid.AutoSize = true;
             grid.Dock = DockStyle.Fill;
-            grid.ColumnCount = specs.Length;
-            grid.RowCount = 1;
+            grid.ColumnCount = perRow;
+            grid.RowCount = rows;
             grid.Margin = new Padding(0, 0, 0, Theme.S(14));
             grid.BackColor = Theme.Back;
+            for (int c = 0; c < perRow; c++) grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / perRow));
             for (int i = 0; i < specs.Length; i++)
             {
-                grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / specs.Length));
+                int tc = i % perRow, tr = i / perRow;
                 TileSpec spec = specs[i];
                 TileButton tile = new TileButton();
                 tile.Icon = spec.Icon;
                 tile.Title = spec.Title;
                 tile.Subtitle = spec.Subtitle;
                 tile.Dock = DockStyle.Fill;
-                tile.Margin = new Padding(i == 0 ? 0 : Theme.S(5), 0, i == specs.Length - 1 ? 0 : Theme.S(5), 0);
+                tile.Margin = new Padding(tc == 0 ? 0 : Theme.S(5), tr == 0 ? 0 : Theme.S(10), tc == perRow - 1 ? 0 : Theme.S(5), 0);
                 tile.CheckedChanged += delegate
                 {
                     RefreshOptionTabs(sec, tile.Checked && !loading ? spec.Id : null);
                     UpdateStartText();
                 };
                 checks[spec.Id] = tile;
-                grid.Controls.Add(tile, i, 0);
+                grid.Controls.Add(tile, tc, tr);
             }
 
             // Reiter für die Optionen
@@ -1054,7 +1098,7 @@ namespace Sflix
         void ShowInstalledVersions()
         {
             string web = UpdateCheck.LocalWebVersion();
-            FfmpegTools ff = new FfmpegTools(App.Root, settings.GetString("ffmpeg.folder", ""));
+            FfmpegTools ff = new FfmpegTools(App.Root, FfmpegLocation.Folder(settings));
             verInstalled[0].Text = web ?? "unbekannt";
             verInstalled[1].Text = App.VersionText;
             verInstalled[2].Text = ff.Installed ? (ff.InstalledVersionName() ?? "unbekannt") : "nicht installiert";
@@ -1073,7 +1117,7 @@ namespace Sflix
         {
             Label l = verAvailable[row];
             l.Text = text;
-            l.ForeColor = newer ? Color.FromArgb(0xff, 0x4d, 0x57) : Theme.Muted;
+            l.ForeColor = newer ? Color.FromArgb(0xff, 0x5a, 0x45) : Theme.Muted;
             l.Font = newer ? new Font("Segoe UI Semibold", 9.5f) : Font;
         }
 
@@ -1096,6 +1140,178 @@ namespace Sflix
                 text = n == 2 ? "Aktualisieren und einlesen" : checks["update"].Checked ? "Aktualisieren" : checks["data"].Checked ? "Daten einlesen" : "Start";
             }
             startButton.Text = text;
+        }
+
+        // ---------------------------------------------------------------
+        // ffmpeg: Ordner und Version (Tools › Einstellungen)
+        // ---------------------------------------------------------------
+
+        Control BuildFfmpegRow()
+        {
+            TableLayoutPanel box = new TableLayoutPanel();
+            box.AutoSize = true;
+            box.ColumnCount = 1;
+            box.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            box.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            box.Margin = new Padding(0, Theme.S(14), 0, 0);
+            box.BackColor = Color.Transparent;
+            Label title = Theme.MakeLabel("ffmpeg", false);
+            title.Margin = new Padding(0, 0, 0, Theme.S(2));
+            ffmpegInfo = Theme.MakeLabel("", true);
+            ffmpegInfo.MaximumSize = new Size(TextWidth, 0);
+            ffmpegInfo.Margin = new Padding(0, 0, 0, Theme.S(6));
+            FlowLayoutPanel buttons = new FlowLayoutPanel();
+            buttons.AutoSize = true;
+            buttons.WrapContents = false;
+            buttons.Margin = new Padding(0);
+            buttons.BackColor = Color.Transparent;
+            Button change = SmallButton("Ändern …");
+            Button install = SmallButton("Installieren");
+            change.Click += delegate { ChangeFfmpegFolder(); };
+            install.Click += delegate { InstallFfmpeg(); };
+            buttons.Controls.Add(change);
+            buttons.Controls.Add(install);
+            box.Controls.Add(title);
+            box.Controls.Add(ffmpegInfo);
+            box.Controls.Add(buttons);
+            ShowFfmpegInfo();
+            return box;
+        }
+
+        void ShowFfmpegInfo()
+        {
+            if (ffmpegInfo == null) return;
+            FfmpegTools ff = new FfmpegTools(App.Root, FfmpegLocation.Folder(settings));
+            string chosen = FfmpegLocation.Chosen(settings);
+            string text = ff.Installed
+                ? "Version " + (ff.InstalledVersionName() ?? "unbekannt") + " in " + ff.Dir
+                : "Nicht installiert. Wird beim ersten Bedarf (oder mit „Installieren“) nach " + ff.Dir + " geladen (ca. 100 MB).";
+            if (chosen.Length > 0 && !string.Equals(chosen.TrimEnd('\\'), ff.Dir.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
+                text += "\nDer gewählte Ordner " + chosen + " ist auf diesem PC nicht verfügbar.";
+            ffmpegInfo.Text = text;
+        }
+
+        void ChangeFfmpegFolder()
+        {
+            if (running) return;
+            FfmpegTools current = new FfmpegTools(App.Root, FfmpegLocation.Folder(settings));
+            using (FolderBrowserDialog dlg = new FolderBrowserDialog())
+            {
+                dlg.Description = "Ordner für ffmpeg wählen (Standard: " + FfmpegLocation.DefaultFolder + ")";
+                dlg.ShowNewFolderButton = true;
+                dlg.SelectedPath = Directory.Exists(current.Dir) ? current.Dir : "";
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                string folder = Path.GetFullPath(dlg.SelectedPath).TrimEnd('\\');
+                bool isDefault = string.Equals(folder, FfmpegLocation.DefaultFolder.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);
+                // Vorhandenes ffmpeg mitnehmen, damit es nicht erneut geladen werden muss
+                if (current.Installed && !FfmpegLocation.IsInstalledIn(folder) &&
+                    !string.Equals(folder, current.Dir.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(folder);
+                        foreach (string name in new string[] { "ffmpeg.exe", "ffprobe.exe", "version.json" })
+                        {
+                            string src = Path.Combine(current.Dir, name);
+                            if (File.Exists(src)) File.Copy(src, Path.Combine(folder, name), true);
+                        }
+                        AppendLog("ffmpeg nach " + folder + " kopiert.");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(this, "ffmpeg konnte nicht in den Ordner kopiert werden:\n" + ex.Message + "\n\nEs wird dort bei Bedarf neu geladen.",
+                                        App.Title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                settings.SetString("ffmpeg.folder", isDefault ? "" : folder);
+                settings.Save();
+                UpdaterInfo.Write(App.Root, FfmpegLocation.Folder(settings));
+                ShowFfmpegInfo();
+                ShowInstalledVersions();
+                Relayout();
+            }
+        }
+
+        void InstallFfmpeg()
+        {
+            if (running) return;
+            if (FfmpegLocation.IsInstalledIn(FfmpegLocation.Folder(settings)))
+            {
+                MessageBox.Show(this, "ffmpeg ist bereits installiert. Neuere Versionen kommen mit „Update“ (Schalter „ffmpeg ebenfalls aktualisieren“).",
+                                App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            StartTasks(new List<string> { "ffmpeg" });
+        }
+
+        // Reiter "Lizenz" heisst nach der Bestätigung "Feedback"
+        void UpdateLicenseTab()
+        {
+            if (tabs == null || feedbackPage == null) return;
+            bool active = feedbackPage.Status == LicenseStatus.Active;
+            tabs.SetTab(PageLicense, active ? "Feedback" : "Lizenz", active ? Glyph.Feedback : Glyph.Key);
+            if (tabs.Selected == PageLicense)
+            {
+                banner.Subtitle = active ? "FEEDBACK" : "LIZENZ";
+                banner.Invalidate();
+                Relayout();
+            }
+        }
+
+        // Diagnose für das Feedback (läuft im Hintergrund)
+        string BuildDiagnosis()
+        {
+            StringBuilder sb = new StringBuilder();
+            string folder;
+            sb.Append("Updater: ").Append(App.VersionText).Append("\r\n");
+            sb.Append("STEFFLIX: ").Append(UpdateCheck.LocalWebVersion() ?? "unbekannt").Append("\r\n");
+            sb.Append("STEFFLIX-ID: ").Append(InstallId.Read(App.Root, out folder) ?? "ohne Kennung").Append("\r\n");
+            sb.Append("Installationsordner: ").Append(App.Root).Append("\r\n");
+            sb.Append("Windows: ").Append(Environment.OSVersion.VersionString).Append(Environment.Is64BitOperatingSystem ? " (64 Bit)" : " (32 Bit)").Append("\r\n");
+            sb.Append(".NET: ").Append(Environment.Version).Append("\r\n");
+            sb.Append("Bildschirm: ").Append(Screen.PrimaryScreen.Bounds.Width).Append("x").Append(Screen.PrimaryScreen.Bounds.Height)
+              .Append(", Skalierung ").Append((int)Math.Round(Theme.Scale * 100)).Append(" %\r\n");
+            FfmpegTools ff = new FfmpegTools(App.Root, FfmpegLocation.Folder(settings));
+            sb.Append("ffmpeg: ").Append(ff.Installed ? (ff.InstalledVersionName() ?? "Version unbekannt") : "nicht installiert")
+              .Append(" (").Append(ff.Dir).Append(")\r\n");
+            if (ff.Installed)
+            {
+                try { sb.Append("Encoder: ").Append(FfmpegTools.EncoderName(ff.DetectEncoder(CancellationToken.None))).Append("\r\n"); }
+                catch (Exception e) { sb.Append("Encoder: Prüfung nicht möglich (").Append(e.Message).Append(")\r\n"); }
+            }
+            sb.Append("Lizenz: ").Append(feedbackPage != null ? feedbackPage.Status.ToString() : "?").Append("\r\n");
+            sb.Append("Protokolldatei: ").Append(logToFile ? "ein" : "aus").Append("\r\n");
+            try
+            {
+                DriveInfo drive = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(App.Root)));
+                if (drive.IsReady) sb.Append("Laufwerk: ").Append(drive.DriveType).Append(", frei ").Append(Fmt.Size(drive.AvailableFreeSpace)).Append("\r\n");
+            }
+            catch { }
+            return sb.ToString();
+        }
+
+        // F1 öffnet die Hilfe
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.F1)
+            {
+                ShowPage(PageHelp);
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        // Ausstehende Lizenzbestätigung im Hintergrund nachholen (neue Kopie, früher offline)
+        void ConfirmLicenseInBackground()
+        {
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                string note = LicenseStore.ConfirmPending();
+                if (note == null || IsDisposed) return;
+                pendingLog.Enqueue(note);
+                try { BeginInvoke((Action)delegate { feedbackPage.RefreshState(); }); }
+                catch { }
+            });
         }
 
         // Nach einer Änderung der Inhalte: Fensterhöhe an den Inhalt anpassen
@@ -1659,6 +1875,7 @@ namespace Sflix
             base.OnShown(e);
             AppendLog(App.Title + " " + App.VersionText + "  –  " + App.Root);
             if (startNotice != null) AppendLog(startNotice);
+            ConfirmLicenseInBackground();
             if (autoRun != null && autoRun.Count > 0)
             {
                 StartTasks(autoRun);
@@ -1672,7 +1889,7 @@ namespace Sflix
         // showDialog: beim Start das Hinweisfenster zeigen; sonst nur Übersicht und Balken aktualisieren
         void CheckForUpdateInBackground(bool showDialog)
         {
-            string ffmpegFolder = settings.GetString("ffmpeg.folder", "");
+            string ffmpegFolder = FfmpegLocation.Folder(settings);
             verStatus.Text = "Wird geprüft …";
             verRecheck.Enabled = false;
             ThreadPool.QueueUserWorkItem(delegate
@@ -1754,7 +1971,7 @@ namespace Sflix
             if (selected.Contains("import") && !previewVideos && !previewImages) previewVideos = true;
             // Ordner der Tools (Standard "Alles" = Installationsordner)
             Dictionary<string, List<string>> toolFolders = new Dictionary<string, List<string>>();
-            foreach (string id in new string[] { "preview", "merge", "convert", "cleanup" })
+            foreach (string id in new string[] { "preview", "merge", "convert", "cleanup", "dupes", "check" })
             {
                 List<string> list = PickOf(id).Folders();
                 if (selected.Contains(id) && preset == null && page == PageTools)
@@ -1850,7 +2067,7 @@ namespace Sflix
                 // Tools: nur die Ordner, in denen sich etwas geändert haben kann und die im
                 // Installationsordner liegen. "Alles" liest alles ein. Ablagen leeren ändert data.js nicht.
                 List<string> touched = new List<string>();
-                foreach (string id in new string[] { "preview", "merge", "convert" })
+                foreach (string id in new string[] { "preview", "merge", "convert", "dupes", "check" })
                     if (selected.Contains(id)) touched.AddRange(toolFolders[id]);
                 if (renameDir != null) touched.Add(renameDir);
                 bool all = false;
@@ -1917,6 +2134,8 @@ namespace Sflix
             runner.PreviewVideos = previewVideos;
             runner.PreviewImages = previewImages;
             runner.CleanupFolders = toolFolders["cleanup"];
+            runner.DupeFolders = toolFolders["dupes"];
+            runner.CheckFolders = toolFolders["check"];
             runner.RenameFolder = renameDir;
             runner.DataFolders = dataScope;
             if (import != null) import.Video = conv;
@@ -1961,17 +2180,31 @@ namespace Sflix
             {
                 return (bool)Invoke((Func<bool>)delegate
                 {
-                    using (EpisodePlanDialog dlg = new EpisodePlanDialog(plan)) return dlg.Confirm(this);
+                    using (EpisodePlanDialog dlg = new EpisodePlanDialog(plan, ctx.Ffmpeg)) return dlg.Confirm(this);
                 });
             };
-            ctx.AskConflict = delegate(string target)
+            ctx.Ffmpeg = new FfmpegTools(App.Root, FfmpegLocation.Folder(settings));
+            ctx.AskConflict = delegate(string source, string target)
             {
                 return (ConflictAnswer)Invoke((Func<ConflictAnswer>)delegate
                 {
-                    using (ConflictDialog dlg = new ConflictDialog(target)) return dlg.Ask(this);
+                    using (ConflictDialog dlg = new ConflictDialog(source, target, ctx.Ffmpeg)) return dlg.Ask(this);
                 });
             };
-            ctx.Ffmpeg = new FfmpegTools(App.Root, settings.GetString("ffmpeg.folder", ""));
+            ctx.ChooseMediaCheck = delegate(List<MediaCheckItem> items)
+            {
+                return (MediaCheckChoice)Invoke((Func<MediaCheckChoice>)delegate
+                {
+                    using (MediaCheckDialog dlg = new MediaCheckDialog(items)) return dlg.Choose(this);
+                });
+            };
+            ctx.ChooseDuplicates = delegate(List<DupeGroup> groups)
+            {
+                return (DupeChoice)Invoke((Func<DupeChoice>)delegate
+                {
+                    using (DuplicateDialog dlg = new DuplicateDialog(groups, ctx.Ffmpeg)) return dlg.Choose(this);
+                });
+            };
 
             SetRunning(true);
             worker = new Thread(delegate()
@@ -2010,6 +2243,8 @@ namespace Sflix
             FlushUi();
             SetRunning(false);
             UpdateUndoInfo();
+            ShowFfmpegInfo();
+            ShowInstalledVersions();
             progress.Value = result.Success ? 1 : 0;
             // Erfolgreicher Import: Auswahl leeren, damit beim nächsten Start nicht nochmal importiert wird
             // Update erledigt: Versionen neu prüfen (blendet den Hinweis aus, wenn alles aktuell ist)
@@ -2028,6 +2263,7 @@ namespace Sflix
             {
                 string args = "--updated";
                 if (result.Remaining.Count > 0) args += " --run " + string.Join(",", result.Remaining);
+                if (logToFile) args += " --log";
                 try
                 {
                     SelfUpdate.Restart(args);
@@ -2081,8 +2317,12 @@ namespace Sflix
             while (pendingLog.TryDequeue(out line))
             {
                 lines.Add(line);
-                unsavedLog.Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")).Append("  ").Append(line).Append("\r\n");
+                string stamped = LogFile.Stamp(line);
+                sessionLog.Append(stamped);
+                if (logToFile) unsavedLog.Append(stamped);
             }
+            // Das Protokoll der Sitzung (für "Speichern unter …" und das Feedback) begrenzen
+            if (sessionLog.Length > 4 * 1024 * 1024) sessionLog.Remove(0, sessionLog.Length - 2 * 1024 * 1024);
             if (lines.Count > 0) logPanel.Add(lines);
 
             double f;
@@ -2096,18 +2336,33 @@ namespace Sflix
         void WriteLogFile()
         {
             if (unsavedLog.Length == 0) return;
-            try
+            if (logToFile) LogFile.Append(unsavedLog.ToString());
+            unsavedLog.Length = 0;
+        }
+
+        // Schalter "In Datei speichern": beim Einschalten kommt alles seit dem Start in die Datei
+        void SetLogToFile(bool on)
+        {
+            if (on == logToFile) return;
+            FlushUi();
+            if (on)
             {
-                // Alte Protokolle kürzen (die letzten ~1 MB bleiben)
-                if (File.Exists(logFile) && new FileInfo(logFile).Length > 4 * 1024 * 1024)
-                {
-                    string old = File.ReadAllText(logFile, Encoding.UTF8);
-                    File.WriteAllText(logFile, old.Substring(old.Length - 1024 * 1024), FileOps.Utf8NoBom);
-                }
-                File.AppendAllText(logFile, unsavedLog.ToString(), FileOps.Utf8NoBom);
+                logToFile = true;
                 unsavedLog.Length = 0;
+                LogFile.Append(sessionLog.ToString());
             }
-            catch { }
+            else
+            {
+                WriteLogFile();
+                logToFile = false;
+            }
+        }
+
+        // Protokoll dieser Sitzung (für den Anhang im Feedback)
+        public string SessionLogText()
+        {
+            FlushUi();
+            return sessionLog.ToString();
         }
 
         protected override void Dispose(bool disposing)
@@ -2134,7 +2389,7 @@ namespace Sflix
         public List<string> Tasks;
         public bool UpdateFfmpeg = true;
         // Ordner je Tool; null = ganzer Installationsordner. Mehrere Ordner laufen nacheinander.
-        public List<string> MergeFolders, ConvertFolders, PreviewFolders, CleanupFolders;
+        public List<string> MergeFolders, ConvertFolders, PreviewFolders, CleanupFolders, DupeFolders, CheckFolders;
         public bool MoveParts = true;
         public ConvertOptions Convert;
         public bool PreviewVideos = true;
@@ -2148,6 +2403,9 @@ namespace Sflix
             switch (id)
             {
                 case "update": return "Update";
+                case "ffmpeg": return "ffmpeg installieren";
+                case "dupes": return "Duplikate finden";
+                case "check": return "Medien prüfen";
                 case "cleanup": return "Ablagen leeren";
                 case "import": return "Medien importieren";
                 case "rename": return "Folgen umbenennen";
@@ -2241,6 +2499,13 @@ namespace Sflix
             switch (id)
             {
                 case "update": UpdateTask.Run(ctx, UpdateFfmpeg); break;
+                case "ffmpeg":
+                    if (ctx.Ffmpeg.Installed) ctx.Log("ffmpeg ist bereits installiert (" + ctx.Ffmpeg.Dir + ").");
+                    else ctx.Ffmpeg.InstallNow(ctx);
+                    ctx.Summary = "in " + ctx.Ffmpeg.Dir;
+                    break;
+                case "dupes": ForEachFolder(ctx, DupeFolders, delegate(string f) { DuplicateTask.Run(ctx, f); }); break;
+                case "check": MediaCheckTask.Run(ctx, CheckFolders, Convert, PreviewVideos, PreviewImages); break;
                 case "merge": ForEachFolder(ctx, MergeFolders, delegate(string f) { MergeTask.Run(ctx, f, MoveParts); }); break;
                 case "convert": ForEachFolder(ctx, ConvertFolders, delegate(string f) { Convert.Folder = f; ConvertTask.Run(ctx, Convert); }); break;
                 case "preview":

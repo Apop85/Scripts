@@ -11,35 +11,46 @@ Ein Programm mit Oberfläche, das die bisherigen Werkzeuge ersetzt:
 | Daten einlesen | `getfilepath.py` (`updateData.exe`) |
 | Folgen umbenennen | `folgenliste.py`, `serien_umbenennen.py` |
 
-Dazu kommt „Ablagen leeren“: Es löscht `__teile`, `__konvertiert`, `__gelöscht`, `__original` und `__ersetzt` (alle Ordner, deren Name mit `__` beginnt) endgültig, nachdem eine Liste zur Bestätigung angezeigt wurde. **Nur innerhalb des Installationsordners:** Ordner ausserhalb werden bei der Wahl abgelehnt und beim Start nochmals geprüft (`Folders.IsInsideRoot`), Verknüpfungen (Junctions, symbolische Links) werden nie verfolgt und nie gelöscht. Das gilt auch ohne Oberfläche.
+Dazu kommen „Duplikate finden“, „Medien prüfen“ und „Ablagen leeren“. Letzteres löscht `__teile`, `__konvertiert`, `__gelöscht`, `__original`, `__ersetzt` und `__duplikate` (alle Ordner, deren Name mit `__` beginnt) endgültig, nachdem eine Liste zur Bestätigung angezeigt wurde. **Nur innerhalb des Installationsordners:** Ordner ausserhalb werden bei der Wahl abgelehnt und beim Start nochmals geprüft (`Folders.IsInsideRoot`), Verknüpfungen (Junctions, symbolische Links) werden nie verfolgt und nie gelöscht. Das gilt auch ohne Oberfläche.
 
 **Folgen umbenennen** (`EpisodeTask.cs`, Dialoge in `EpisodeDialogs.cs`): Serienordner wählen, im Dialog die Serie suchen (fernsehserien.de mit deutschen Titeln, ohne Treffer oder mit „Nicht dabei“ TVmaze mit englischen Titeln), Folgen laden. Folgennummern werden aus `S01E02`, `S01 E02`, `1x02` erkannt; Doppelfolgen (`S01E01E02`, `S01E0102`, `S02E03-E04`, `S02E03-04`, `1x02-03`; eine Nummer ohne „E“ nur, wenn sie höchstens 3 über der letzten liegt) behalten alle Nummern: `Serie - S01E02E03 - Titel.ext`, Titel über `CombineTitles` („Pilot (1)“ + „Pilot (2)“ → „Pilot (1+2)“, sonst „A + B“). Sie gelten bei den fehlenden Folgen als alle Teile; steckt eine Folge zusätzlich in einer anderen Datei, bilden beide eine Wahlgruppe. Zielname sonst `Serie - S01E02 - Titel.ext` (ß → ss, Zeichen wie beim Einlesen bereinigt) im Ordner `Staffel 01`. Staffelordner werden angeglichen (`Staffel 1`, `Season 1`, `S01` → `Staffel 01`), gibt es beide, wird zusammengeführt. Folgen in der falschen Staffel oder direkt im Serienordner werden verschoben. Die Vorschau zeigt alle Änderungen, mehrere Dateien für dieselbe Folge sind nicht angehakt (nur eine wählbar), dazu fehlende Folgen und nicht zugeordnete Dateien. Vorschaubilder ziehen mit, ersetzte Dateien kommen nach `<Serie>\__ersetzt`, `renamed.js` wird ergänzt (`DataTask.AppendRenamedPairs`). Jeder Lauf steht in `sflix_sys\folgen_rueckgaengig.json`; „Letztes Umbenennen rückgängig“ (Aufgabe `renameundo`) spielt ihn rückwärts ab. Geladene Folgenlisten speichert `EpisodeCache` in `sflix_sys\folgen_cache.json` (nicht pushen), gefunden über den Seriennamen (Ordnername oder gefundener Titel, ohne Gross-/Kleinschreibung, Jahr und Satzzeichen). Gibt es eine, fragt `EpisodeCacheDialog`: „Gespeicherte verwenden“ (ohne Suche), „Neu laden“ (dieselbe Serie über `SeriesId`), „Andere Serie suchen“ oder „Abbrechen“. Gespeichert wird nur eine Liste mit Folgen; schlägt das Neuladen fehl, bleibt die alte Liste und der Dialog bietet sie erneut an.
 
 „Daten einlesen“ verkleinert zu große Vorschaubilder auf 480×270. Das Original kommt nach `Preview\__original\<Dateiname>`. Bis Version 3.0.3 lag es als `<Dateiname>.original` direkt im Preview-Ordner; solche Dateien zieht „Daten einlesen“ automatisch um.
 
-Das Fenster hat drei Registerkarten. Sichtbar ist nur der Bereich der gewählten Karte, der Untertitel im Kopfbild wechselt mit (UPDATES, IMPORTER, TOOLS). „Start“ führt aus, was auf der sichtbaren Karte gewählt ist:
+Das Fenster hat fünf Registerkarten. Sichtbar ist nur der Bereich der gewählten Karte, der Untertitel im Kopfbild wechselt mit (UPDATES, IMPORTER, TOOLS, LIZENZ bzw. FEEDBACK, HILFE). „Start“ führt aus, was auf der sichtbaren Karte gewählt ist:
 
 | Karte | Inhalt | beim Start |
 |---|---|---|
 | Updates | Update, Daten einlesen | die angehakten |
 | Importer | Medien importieren | Import, auf Wunsch Vorschaubilder (nur im Zielordner), danach Daten einlesen für den Zielordner |
-| Tools | Vorschaubilder, Folgen umbenennen, Zusammenführen, Konvertieren, Ablagen leeren, Einstellungen | die angehakten, danach Daten einlesen nur für die betroffenen Ordner im Installationsordner (mit „Alles“ alles, nach „Ablagen leeren“ allein nichts) |
+| Tools | Vorschaubilder, Folgen umbenennen, Duplikate finden, Zusammenführen, Konvertieren, Medien prüfen, Ablagen leeren (höchstens vier Kacheln je Reihe), Einstellungen | die angehakten, danach Daten einlesen nur für die betroffenen Ordner im Installationsordner (mit „Alles“ alles, nach „Ablagen leeren“ allein nichts) |
+| Lizenz / Feedback | `FeedbackPage.cs` | kein Start-Knopf |
+| Hilfe | `HelpPage.cs`, Texte in `HelpContent.cs` (auch F1) | kein Start-Knopf |
+
+**Lizenz und Feedback** (`License.cs`, `FeedbackPage.cs`): Der Schlüssel `SFX2-…` enthält einen Discord-Webhook (ID und Token, verschleiert, mit Prüfsumme; Format siehe `License.cs` und `SFLIX Tools\Lizenz\create_license.py`). Er steht in `sflix_sys\license.js` (`licenseFile = { key, confirmedFor }`, nie pushen) und gilt auch für STEFFLIX, das ihn nur liest. Beim Speichern schickt `LicenseStore.Save` „Lizenz eingelöst“ mit STEFFLIX-ID; erst danach (`confirmedFor` = `installId`) heisst der Reiter „Feedback“ und STEFFLIX zeigt das Feedback. Ohne Verbindung bleibt die Bestätigung ausstehend und wird beim Start nachgeholt (`ConfirmPending`, auch für eine Kopie des Ordners mit neuer ID). „Lizenzschlüssel entfernen“ schickt „Lizenz entfernt“ (ohne Verbindung mit Rückfrage). Feedback geht mit Diagnose (`MainForm.BuildDiagnosis`) und Protokoll der Sitzung als Anhang an den Webhook (`Discord.Send`, multipart, keine Erwähnungen). Lizenzen erzeugt `create_license.py`.
+
+**Vergleich** (`CompareView.cs`): Tabelle mit Grösse, Auflösung, Dauer, Video/Ton, Datum und Hinweis (nicht abspielbar, defekt), bessere Werte grün. ffprobe läuft im Hintergrund; fehlt ffmpeg, bietet die Tabelle „ffmpeg installieren“ an. Genutzt von `ConflictDialog` (Importer, Folgen umbenennen; `TaskContext.AskConflict(quelle, ziel)`), der Vorschau von Folgen umbenennen (Konfliktzeile anklicken) und `DuplicateDialog`.
+
+**Medien prüfen** (`MediaCheckTask.cs`): nicht abspielbar (`MediaCheck.IsPlayable`: MP4 nur H.264 8 Bit mit AAC/MP3, WebM VP8/VP9/AV1 mit Opus/Vorbis), defekt (ffprobe-Fehler), leer, ohne Vorschaubild (gemäss den Schaltern bei Vorschaubilder). `MediaCheckDialog` → `ConvertTask` mit `ConvertOptions.OnlyFiles` bzw. `PreviewTask.MakeFor`.
+
+**Duplikate finden** (`DuplicateTask.cs`): identische Dateien (Grösse, dann SHA256), gleiche Folgen je Serie (Kategorie\Serie, `EpisodeTask.ParseEpisodes`, Union-Find über gemeinsame Folgen, Überschneidungen ohne Vorauswahl) und gleicher Dateiname ohne Endung (`FindSameName`; keine Gruppe, die schon identisch ist oder dieselben Dateien hat). Eine Datei in zwei Gruppen wird nur einmal verschoben. Aussortiert wird nach `<Ordner>\__duplikate` (Vorschaubild nach `__duplikate\Preview`), `renamed.js` führt Favoriten und Fortschritt zur behaltenen Datei. Optional werden nicht abspielbare behaltene Videos konvertiert.
 
 **Teil-Einlesen:** Bei „Daten einlesen“ schaltet „Alle Ordner einlesen“ zwischen dem ganzen STEFFLIX-Ordner und einer Liste gewählter Ordner um. Die Liste wird gespeichert (`data.all`, `data.folders` relativ zum STEFFLIX-Ordner, getrennt mit `|`). Für jeden gewählten Ordner ersetzt `DataTask.UpdateBranch` dessen Zweig in der bestehenden `data.js`. Fehlende Zwischenordner werden angelegt, ein gelöschter Ordner wird entfernt, und der `Preview`-Ordner eine Ebene darüber wird mit eingelesen. Neue Einträge kommen in die Reihenfolge des Ordners, das Ergebnis entspricht also dem vollständigen Einlesen. Fehlt `data.js` oder ist sie nicht lesbar, wird alles eingelesen.
 
 Updates und Tools werden als Kacheln gewählt (Klick wählt aus oder ab). Unter den Kacheln gibt es für jede gewählte Kachel einen Reiter mit Beschreibung und Optionen, bei Tools zusätzlich immer den Reiter „Einstellungen“. Optionen sind Schalter. Der Start-Knopf beschreibt, was passiert („2 Tools starten“, „Importieren“ …). Dateien und Ordner, die ins Fenster gezogen werden, landen immer im Importer.
 
-Die Aufgaben laufen immer in dieser Reihenfolge: Update, Ablagen leeren, Import, Folgen umbenennen (bzw. rückgängig), Zusammenführen, Konvertieren, Vorschaubilder, Daten einlesen. „Ablagen leeren“ läuft vor Zusammenführen und Konvertieren, damit frisch gesicherte Originale nicht im selben Lauf gelöscht werden. „Folgen umbenennen“ läuft vor den anderen Tools, die dann schon mit den neuen Namen arbeiten. „Daten einlesen“ kommt zuletzt, weil die anderen Aufgaben Dateien verändern.
+Die Aufgaben laufen immer in dieser Reihenfolge: Update, ffmpeg installieren, Ablagen leeren, Import, Folgen umbenennen (bzw. rückgängig), Duplikate finden, Zusammenführen, Konvertieren, Medien prüfen, Vorschaubilder, Daten einlesen. „Ablagen leeren“ läuft vor Zusammenführen und Konvertieren, damit frisch gesicherte Originale nicht im selben Lauf gelöscht werden. „Folgen umbenennen“ läuft vor den anderen Tools, die dann schon mit den neuen Namen arbeiten. „Daten einlesen“ kommt zuletzt, weil die anderen Aufgaben Dateien verändern.
 
 **Ordner der Tools:** Vorschaubilder, Zusammenführen, Konvertieren und Ablagen leeren haben je ein eigenes Ordnerfeld mit dem Schalter „Alles“ (ganzer Installationsordner, Standard) oder einer Liste mehrerer Ordner (`FolderPick` in `MainForm`). Die Wahl wird nicht gespeichert. Ordner ausserhalb von STEFFLIX sind erlaubt (ausser bei Ablagen leeren), für sie wird `data.js` nicht angepasst. Mehrere Ordner laufen nacheinander (`TaskRunner.ForEachFolder`, doppelte und verschachtelte fallen weg). Der **Installationsordner** steht unter Tools → Einstellungen nur zur Ansicht; er wird bei der Installation festgelegt. Der frühere `media.folder` wird nicht mehr verwendet.
 
-**Protokoll** (`LogView.cs`): „Details“ blendet es rechts neben dem Inhalt ein, das Fenster wird dabei breiter. Die Breite lässt sich am Splitter ziehen und wird gespeichert (`log.width`). Zeilen sind nach Art gefärbt (Fehler, Hinweis, Erfolg, Überschrift) und haben eine Uhrzeit. Oben: Kopieren, Leeren, Protokolldatei öffnen, Suche und „Nur Fehler und Warnungen“. Bei einer Fehlerzeile klappt das Protokoll von selbst auf. Die Zusammenfassung am Ende nennt je Aufgabe das Ergebnis (`TaskContext.Summary`) und die Dauer; „Daten einlesen“ zeigt zusätzlich eine Übersicht je Kategorie (Videos, Musik, Bilder, Ordner, Videos ohne Vorschaubild). Am Ende jedes Laufs steht deutlich „VORGANG BEENDET“ mit Ergebnis und Dauer.
+**Protokoll** (`LogView.cs`): „Details“ blendet es rechts neben dem Inhalt ein, das Fenster wird dabei breiter. Die Breite lässt sich am Splitter ziehen und wird gespeichert (`log.width`). Zeilen sind nach Art gefärbt (Fehler, Hinweis, Erfolg, Überschrift) und haben eine Uhrzeit. Oben: Kopieren, Leeren, Suche, „Nur Fehler und Warnungen“ und „In Datei speichern“. Die Datei `sflix_sys\updater.log` (`LogFile.cs`) wird nur mit diesem Schalter geschrieben; er wird nicht gespeichert und ist beim Start aus (`--log` schaltet ihn ein, nach einem Selbst-Update wird er so weitergegeben). Beim Einschalten kommt alles seit dem Start in die Datei. Ausgeschaltet heisst der Knopf „Speichern unter …“ und speichert das Protokoll der Sitzung. Die Datei wird über 1 MB auf die letzten 256 KB gekürzt; die Datei aus Versionen bis 3.2 wird einmal gelöscht (`log.legacyRemoved`). Bei einer Fehlerzeile klappt das Protokoll von selbst auf. Die Zusammenfassung am Ende nennt je Aufgabe das Ergebnis (`TaskContext.Summary`) und die Dauer; „Daten einlesen“ zeigt zusätzlich eine Übersicht je Kategorie (Videos, Musik, Bilder, Ordner, Videos ohne Vorschaubild). Am Ende jedes Laufs steht deutlich „VORGANG BEENDET“ mit Ergebnis und Dauer.
 
 Der Updater arbeitet nur in einem STEFFLIX-Ordner, also dort, wo `start.html` und `sflix_sys` sind. **Liegt er woanders, bietet er stattdessen die Installation an** (wie `setup.exe`):
 1. Ordner wählen.
 2. Die Dateien der Weboberfläche und `data.js` werden geladen und geprüft.
 3. `renamed.js` und `install.js` (eigene Kennung) werden angelegt.
 4. Der Updater kopiert sich selbst in den neuen Ordner.
+5. Auf Wunsch (Standard: ein) wird ffmpeg installiert, standardmässig nach `%LOCALAPPDATA%\STEFFLIX\ffmpeg`; ein anderer Ordner kommt als `ffmpeg.folder` in `updater_settings.json`. Ein optionaler Lizenzschlüssel wird gespeichert und bestätigt (`InstallOptions`).
 
 **Kennung der Installation** (`sflix_sys\install.js`, Klasse `InstallId` in `Core.cs`): Der Browser speichert die Daten aller `file://`-Seiten gemeinsam. Mit der zufälligen Kennung nutzt jede Installation eine eigene IndexedDB (`STEFFLIX-<Kennung>`). Der Updater prüft die Datei bei jedem Start. Fehlt sie, legt er sie an. Ist der Ordner kopiert, enthält der alte Ordner also noch dieselbe Kennung, bekommt die Kopie eine neue. Ist der Ordner verschoben, bleibt die Kennung und nur der gespeicherte Ordner ändert sich.
 
@@ -101,7 +112,8 @@ Welcher Quellcode-Stand zuletzt bereitgestellt wurde, steht in `release_state.js
 
 ## ffmpeg
 
-- Liegt in `sflix_sys\ffmpeg\` und wird beim ersten Bedarf automatisch geladen. Quelle ist der offizielle Build von gyan.dev über GitHub-Releases, mit Prüfsumme.
+- Liegt seit 3.3 je Benutzer in `%LOCALAPPDATA%\STEFFLIX\ffmpeg` (`FfmpegLocation`) oder im gewählten Ordner (`ffmpeg.folder`, Tools › Einstellungen „Ändern …“). Gesucht wird: gewählter Ordner, Standardordner, alter Ort `sflix_sys\ffmpeg`. Gibt es den gewählten Ordner auf einem PC nicht, gilt der Standardordner. Ein ffmpeg am alten Ort wird beim Start in den Standardordner verschoben (ohne eigenen Ordner; klappt es nicht, bleibt es dort in Gebrauch).
+- Wird im Setup, mit „Installieren“ (Aufgabe `ffmpeg`) oder beim ersten Bedarf geladen. Quelle ist der offizielle Build von gyan.dev über GitHub-Releases, mit Prüfsumme. Ein selbst hineinkopiertes ffmpeg ohne `version.json` wird nicht aktualisiert.
 - Welche Version geladen wird, bestimmt `ffmpeg.json` im Repository. Fehlt sie, gilt die eingebaute Version 9.0.2.
 - Mit „ffmpeg ebenfalls aktualisieren“ holt die Aufgabe „Update“ die Version aus `ffmpeg.json`.
 
@@ -111,6 +123,8 @@ Ordner, deren Name `__` enthält, sind Ablagen der Werkzeuge. Keine Aufgabe durc
 - `__teile`: Teile nach dem Zusammenführen
 - `__konvertiert`: Originale nach dem Konvertieren
 - `Preview\__gelöscht`: Vorschaubilder ohne zugehöriges Video
+- `__ersetzt`: beim Umbenennen ersetzte Dateien
+- `__duplikate`: aussortierte Duplikate
 
 ## Konvertieren
 
@@ -127,12 +141,13 @@ Ordner, deren Name `__` enthält, sind Ablagen der Werkzeuge. Keine Aufgabe durc
 updateStefflix.exe --headless update,data
 ```
 
-- Aufgaben: `update`, `cleanup`, `merge`, `convert`, `preview`, `data`, `renameundo`. `rename` braucht die Oberfläche (Auswahl der Serie).
+- Aufgaben: `update`, `ffmpeg`, `cleanup`, `dupes`, `merge`, `convert`, `check`, `preview`, `data`, `renameundo`. `rename` braucht die Oberfläche (Auswahl der Serie); `dupes` und `check` protokollieren ohne Oberfläche nur.
+- Lizenz: `--license <Schlüssel>` speichert und bestätigt, `--license-remove` meldet ab und entfernt. Setup: `--install <Ordner> [--ffmpeg [Ordner]] [--license <Schlüssel>]`.
 - `data` liest ohne Oberfläche alles ein. Mit `--data-folder "Serien\Meine Serie"` (mehrfach möglich, relativ oder absolut) nur diese Ordner.
 - `cleanup` löscht ohne Oberfläche **alle** Ablagen im Installationsordner, ohne nachzufragen.
 - Die Tools arbeiten ohne Oberfläche im ganzen Installationsordner, Optionen stammen aus `sflix_sys\updater_settings.json`.
 - Beim Zusammenführen wird ohne Oberfläche nur verarbeitet, was ohne Neukodieren geht.
-- Das Protokoll steht in `sflix_sys\updater.log`. Exit-Code 0 bedeutet, dass alles in Ordnung war.
+- Das Protokoll steht immer in `sflix_sys\updater.log` (begrenzt auf 1 MB). Exit-Code 0 bedeutet, dass alles in Ordnung war.
 
 Mit `--run update,data` startet die Oberfläche und beginnt sofort mit diesen Aufgaben.
 

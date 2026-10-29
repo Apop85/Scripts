@@ -18,7 +18,7 @@ namespace Sflix
         public static readonly Color Muted = Color.FromArgb(0x9c, 0x9c, 0xa6);
         public static readonly Color LogBack = Color.FromArgb(0x10, 0x10, 0x13);
         public static readonly Color Red = Branding.Red;
-        public static readonly Color RedHover = Color.FromArgb(0xf0, 0x2a, 0x34);
+        public static readonly Color RedHover = Color.FromArgb(0xf2, 0x44, 0x30);
         public static readonly Color Notice = Color.FromArgb(0x3a, 0x2a, 0x08);
 
         public static float Scale = 1f;
@@ -229,6 +229,15 @@ namespace Sflix
 
         public int Count { get { return titles.Count; } }
 
+        // Titel und Symbol eines Reiters ändern (z.B. "Lizenz" -> "Feedback")
+        public void SetTab(int index, string title, Glyph icon)
+        {
+            if (index < 0 || index >= titles.Count) return;
+            titles[index] = title;
+            icons[index] = icon;
+            Measure();
+        }
+
         // Alle Reiter ersetzen, ohne Changed auszulösen
         public void SetTabs(IList<string> newTitles, IList<Glyph> newIcons, int select)
         {
@@ -369,7 +378,7 @@ namespace Sflix
 
     }
 
-    public enum Glyph { Up, Import, Tools, Data, Photo, Merge, Convert, Trash, Settings, Rename }
+    public enum Glyph { Up, Import, Tools, Data, Photo, Merge, Convert, Trash, Settings, Rename, Feedback, Key, Help, Inspect, Duplicate }
 
     // Einfache Strichsymbole im Stil der Registerkarten
     public static class Glyphs
@@ -473,6 +482,43 @@ namespace Sflix
                         g.FillEllipse(brush, -s * 0.33f, -s * 0.33f, s * 0.66f, s * 0.66f);
                         g.FillEllipse(bg, -s * 0.13f, -s * 0.13f, s * 0.26f, s * 0.26f);
                         break;
+                    case Glyph.Feedback:
+                        // Sprechblase mit drei Punkten
+                        using (GraphicsPath bubble = RoundRect(new RectangleF(-s * 0.44f, -s * 0.38f, s * 0.88f, s * 0.62f), s * 0.14f))
+                            g.DrawPath(pen, bubble);
+                        g.DrawLines(pen, new PointF[] { P(s, -0.20f, 0.24f), P(s, -0.28f, 0.44f), P(s, 0.02f, 0.24f) });
+                        for (int i = -1; i <= 1; i++) g.FillEllipse(brush, s * (i * 0.2f - 0.05f), -s * 0.12f, s * 0.1f, s * 0.1f);
+                        break;
+                    case Glyph.Key:
+                        // Schlüssel: Ring links, Bart rechts
+                        g.DrawEllipse(pen, -s * 0.44f, -s * 0.20f, s * 0.36f, s * 0.36f);
+                        g.DrawLine(pen, -s * 0.08f, -s * 0.02f, s * 0.44f, -s * 0.02f);
+                        g.DrawLine(pen, s * 0.24f, -s * 0.02f, s * 0.24f, s * 0.20f);
+                        g.DrawLine(pen, s * 0.38f, -s * 0.02f, s * 0.38f, s * 0.16f);
+                        break;
+                    case Glyph.Help:
+                        // Fragezeichen im Kreis
+                        g.DrawEllipse(pen, -s * 0.44f, -s * 0.44f, s * 0.88f, s * 0.88f);
+                        g.DrawArc(pen, -s * 0.15f, -s * 0.28f, s * 0.30f, s * 0.26f, 180, 230);
+                        g.DrawLine(pen, s * 0.02f, s * 0.0f, 0, s * 0.10f);
+                        g.FillEllipse(brush, -s * 0.06f, s * 0.20f, s * 0.12f, s * 0.12f);
+                        break;
+                    case Glyph.Inspect:
+                        // Lupe mit Haken
+                        g.DrawEllipse(pen, -s * 0.42f, -s * 0.42f, s * 0.62f, s * 0.62f);
+                        g.DrawLine(pen, s * 0.14f, s * 0.14f, s * 0.42f, s * 0.42f);
+                        g.DrawLines(pen, new PointF[] { P(s, -0.25f, -0.11f), P(s, -0.13f, 0.01f), P(s, 0.05f, -0.21f) });
+                        break;
+                    case Glyph.Duplicate:
+                        // Zwei überlappende Blätter
+                        using (GraphicsPath back1 = RoundRect(new RectangleF(-s * 0.42f, -s * 0.42f, s * 0.56f, s * 0.62f), s * 0.08f))
+                            g.DrawPath(pen, back1);
+                        using (GraphicsPath front = RoundRect(new RectangleF(-s * 0.14f, -s * 0.20f, s * 0.56f, s * 0.62f), s * 0.08f))
+                        {
+                            g.FillPath(bg, front);
+                            g.DrawPath(pen, front);
+                        }
+                        break;
                 }
             }
             g.Restore(state);
@@ -569,7 +615,7 @@ namespace Sflix
             using (GraphicsPath p = Glyphs.RoundRect(ib, Theme.S(8)))
             using (SolidBrush b = new SolidBrush(iconBack)) g.FillPath(b, p);
             int gs = Theme.S(20);
-            Color iconColor = !Enabled ? Theme.Line : (isChecked ? Color.FromArgb(0xff, 0x4d, 0x57) : Theme.Muted);
+            Color iconColor = !Enabled ? Theme.Line : (isChecked ? Color.FromArgb(0xff, 0x5a, 0x45) : Theme.Muted);
             Glyphs.Draw(g, Icon, new Rectangle(ib.Left + (box - gs) / 2, ib.Top + (box - gs) / 2, gs, gs), iconColor, iconBack);
 
             // Haken oben rechts

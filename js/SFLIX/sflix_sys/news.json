@@ -2,7 +2,78 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.05",
+      "name": "2.5.0",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Neue Lizenzierung: Bisherige Lizenzschlüssel sind nicht mehr gültig. Bitte einen neuen Schlüssel anfordern und im Updater (updateStefflix.exe) unter \"Lizenz\" eingeben. Er gilt dann für diese Installation in allen Browsern. Wer bisher einen Schlüssel hatte, sieht beim ersten Start einen Hinweis auf der Startseite. Unter Einstellungen › Lizenz steht nur noch der Stand."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Intro überspringen: Videos, die von vorne beginnen, starten je Ordner einige Sekunden später, z.B. nach dem Vorspann einer Serie. Der Knopf in der Player-Leiste legt in der ersten Hälfte eines Videos das Intro fest (\"Intro bis hier\"), in der zweiten wie bisher den Abspann (\"Abspann ab hier\"). Beides steht auch im Autoplay-Menü und unter Einstellungen › Wiedergabe. Wird ein Video an einer gespeicherten Stelle fortgesetzt, gilt diese Stelle."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Die Lautstärke wird je Ordner gemerkt (Album, Staffel). Ohne eigenen Wert gilt die des Ordners darüber, sonst die zuletzt eingestellte. Gehört zur Datensicherung, umbenannte Ordner ziehen mit."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Neuer, wärmerer Rotton. Der Startbildschirm zeigt das Logo im Lichtkegel."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Nach einem Update auf eine neue Version erscheint der Startbildschirm beim ersten Start einmal, auch wenn \"Startbildschirm überspringen\" eingeschaltet ist oder er heute schon kam."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Der Startbildschirm richtet sich nach dem lokalen Datum. Bisher galt kurz nach Mitternacht noch der Vortag, und die Widmung an den Gedenktagen erschien erst nach 1 Uhr."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Versionen haben jetzt das Format x.y.z (2.5.0 statt 2.05), wie beim Updater. Ältere Installationen erkennen die neue Version weiterhin. Die Überschriften im Changelog sind umgeschrieben (2.04 = 2.4.0)."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Neuer Reiter \"Lizenz\": Lizenzschlüssel eingeben (gilt auch für STEFFLIX). Nach der Bestätigung heisst er \"Feedback\" und schickt Nachrichten an den Entwickler, auf Wunsch mit Diagnose und Protokoll. Der Schlüssel lässt sich dort auch entfernen."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Neuer Reiter \"Hilfe\" (auch mit F1) erklärt alle Funktionen, Tools und Befehle für die Kommandozeile, mit Suche."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Neues Tool \"Medien prüfen\" findet Medien, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), defekte und leere Dateien sowie Medien ohne Vorschaubild. Im Ergebnis lassen sie sich gleich konvertieren bzw. mit Vorschaubild versehen."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Neues Tool \"Duplikate finden\" findet identische Dateien, gleiche Folgen einer Serie, auch bei unterschiedlicher Schreibweise (S01E01 = 1x01 = S1E1), und gleiche Dateinamen (ohne Preview- und Ablage-Ordner). Ein Vergleich zeigt Grösse, Auflösung, Dauer und Codecs, vorausgewählt bleibt die bessere Fassung. Aussortierte Dateien kommen nach \"__duplikate\", Favoriten und Fortschritt gehen auf die behaltene Datei über. Nicht abspielbare behaltene Videos lassen sich gleich konvertieren."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Updater: Gibt es eine Datei schon (Importer, Folgen umbenennen) oder mehrere Dateien für dieselbe Folge, zeigt ein Vergleich beide mit Grösse, Auflösung, Dauer, Video/Ton und Datum, die besseren Werte hervorgehoben. Fehlt ffmpeg, lässt es sich dort für genauere Angaben installieren."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Das Setup bietet an, ffmpeg gleich mitzuinstallieren (empfohlen), und nimmt optional den Lizenzschlüssel entgegen. ffmpeg liegt jetzt standardmässig je Benutzer in AppData (auch wenn STEFFLIX auf einem NAS liegt), der Ordner lässt sich unter Tools › Einstellungen ändern. Ein bisheriges ffmpeg wird dorthin verschoben."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: Die Protokolldatei wird nur noch auf Wunsch geschrieben (Schalter \"In Datei speichern\" im Protokoll, beim Start aus) und ist auf 1 MB begrenzt. Sonst speichert \"Speichern unter …\" das Protokoll der Sitzung. Ohne Oberfläche wird weiterhin immer protokolliert. Die bisherige Datei wird einmalig gelöscht."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Updater: Neuer, wärmerer Rotton. Die Tools stehen in zwei Reihen."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Neue Befehle für die Kommandozeile: --license, --license-remove, --ffmpeg (beim Installieren) und --log."
+        }
+      ]
+    },
+    {
       "version": "2.04",
+      "name": "2.4.0",
       "items": [
         {
           "type": "FEATURE",
@@ -112,6 +183,7 @@
     },
     {
       "version": "2.03",
+      "name": "2.3.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -193,6 +265,7 @@
     },
     {
       "version": "2.02",
+      "name": "2.2.0",
       "items": [
         {
           "type": "FEATURE",
@@ -282,6 +355,7 @@
     },
     {
       "version": "2.01",
+      "name": "2.1.0",
       "items": [
         {
           "type": "FEATURE",
@@ -339,6 +413,7 @@
     },
     {
       "version": "2.00",
+      "name": "2.0.0",
       "items": [
         {
           "type": "FEATURE",
@@ -612,6 +687,7 @@
     },
     {
       "version": "1.42",
+      "name": "1.42.0",
       "items": [
         {
           "type": "OPTIMIERUNG",
@@ -625,6 +701,7 @@
     },
     {
       "version": "1.41",
+      "name": "1.41.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -646,6 +723,7 @@
     },
     {
       "version": "1.40",
+      "name": "1.40.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -659,6 +737,7 @@
     },
     {
       "version": "1.39",
+      "name": "1.39.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -668,6 +747,7 @@
     },
     {
       "version": "1.38",
+      "name": "1.38.0",
       "items": [
         {
           "type": "FEATURE",
@@ -677,6 +757,7 @@
     },
     {
       "version": "1.37",
+      "name": "1.37.0",
       "items": [
         {
           "type": "FEATURE",
@@ -694,6 +775,7 @@
     },
     {
       "version": "1.36",
+      "name": "1.36.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -703,6 +785,7 @@
     },
     {
       "version": "1.35",
+      "name": "1.35.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -712,6 +795,7 @@
     },
     {
       "version": "1.34",
+      "name": "1.34.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -721,6 +805,7 @@
     },
     {
       "version": "1.33",
+      "name": "1.33.0",
       "items": [
         {
           "type": "FEATURE",
@@ -737,7 +822,8 @@
       ]
     },
     {
-      "version": "1.323",
+      "version": "1.3203",
+      "name": "1.32.3",
       "items": [
         {
           "type": "HOTFIX",
@@ -746,7 +832,8 @@
       ]
     },
     {
-      "version": "1.322",
+      "version": "1.3202",
+      "name": "1.32.2",
       "items": [
         {
           "type": "INTERFACE",
@@ -759,7 +846,8 @@
       ]
     },
     {
-      "version": "1.321",
+      "version": "1.3201",
+      "name": "1.32.1",
       "items": [
         {
           "type": "HOTFIX",
@@ -769,6 +857,7 @@
     },
     {
       "version": "1.32",
+      "name": "1.32.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -785,7 +874,8 @@
       ]
     },
     {
-      "version": "1.311",
+      "version": "1.3101",
+      "name": "1.31.1",
       "items": [
         {
           "type": "HOTFIX",
@@ -795,6 +885,7 @@
     },
     {
       "version": "1.31",
+      "name": "1.31.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -820,6 +911,7 @@
     },
     {
       "version": "1.30",
+      "name": "1.30.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -828,7 +920,8 @@
       ]
     },
     {
-      "version": "1.291",
+      "version": "1.2901",
+      "name": "1.29.1",
       "items": [
         {
           "type": "HOTFIX",
@@ -846,6 +939,7 @@
     },
     {
       "version": "1.29",
+      "name": "1.29.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -862,7 +956,8 @@
       ]
     },
     {
-      "version": "1.285",
+      "version": "1.2805",
+      "name": "1.28.5",
       "items": [
         {
           "type": "HOTFIX",
@@ -875,7 +970,8 @@
       ]
     },
     {
-      "version": "1.284",
+      "version": "1.2804",
+      "name": "1.28.4",
       "items": [
         {
           "type": "HOTFIX",
@@ -884,7 +980,8 @@
       ]
     },
     {
-      "version": "1.283",
+      "version": "1.2803",
+      "name": "1.28.3",
       "items": [
         {
           "type": "HOTFIX",
@@ -893,7 +990,8 @@
       ]
     },
     {
-      "version": "1.282",
+      "version": "1.2802",
+      "name": "1.28.2",
       "items": [
         {
           "type": "HOTFIX",
@@ -902,7 +1000,8 @@
       ]
     },
     {
-      "version": "1.281",
+      "version": "1.2801",
+      "name": "1.28.1",
       "items": [
         {
           "type": "HOTFIX",
@@ -916,6 +1015,7 @@
     },
     {
       "version": "1.28",
+      "name": "1.28.0",
       "items": [
         {
           "type": "BUG",
@@ -953,7 +1053,8 @@
       ]
     },
     {
-      "version": "1.271",
+      "version": "1.2701",
+      "name": "1.27.1",
       "items": [
         {
           "type": "HOTFIX",
@@ -963,6 +1064,7 @@
     },
     {
       "version": "1.27",
+      "name": "1.27.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -983,7 +1085,8 @@
       ]
     },
     {
-      "version": "1.261",
+      "version": "1.2601",
+      "name": "1.26.1",
       "items": [
         {
           "type": "HOTFIX",
@@ -993,6 +1096,7 @@
     },
     {
       "version": "1.26",
+      "name": "1.26.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -1005,7 +1109,8 @@
       ]
     },
     {
-      "version": "1.251",
+      "version": "1.2501",
+      "name": "1.25.1",
       "items": [
         {
           "type": "HOTFIX",
@@ -1015,6 +1120,7 @@
     },
     {
       "version": "1.25",
+      "name": "1.25.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -1031,7 +1137,8 @@
       ]
     },
     {
-      "version": "1.242",
+      "version": "1.2402",
+      "name": "1.24.2",
       "items": [
         {
           "type": "HOTFIX",
@@ -1044,7 +1151,8 @@
       ]
     },
     {
-      "version": "1.241",
+      "version": "1.2401",
+      "name": "1.24.1",
       "items": [
         {
           "type": "HOTFIX",
@@ -1054,6 +1162,7 @@
     },
     {
       "version": "1.24",
+      "name": "1.24.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -1075,6 +1184,7 @@
     },
     {
       "version": "1.23",
+      "name": "1.23.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -1092,6 +1202,7 @@
     },
     {
       "version": "1.22",
+      "name": "1.22.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -1105,6 +1216,7 @@
     },
     {
       "version": "1.21",
+      "name": "1.21.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -1122,6 +1234,7 @@
     },
     {
       "version": "1.20",
+      "name": "1.20.0",
       "items": [
         {
           "type": "FEATURE",
@@ -1143,6 +1256,7 @@
     },
     {
       "version": "1.19",
+      "name": "1.19.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -1152,6 +1266,7 @@
     },
     {
       "version": "1.18",
+      "name": "1.18.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -1161,6 +1276,7 @@
     },
     {
       "version": "1.17",
+      "name": "1.17.0",
       "items": [
         {
           "type": "BUG",
@@ -1175,6 +1291,7 @@
     },
     {
       "version": "1.16",
+      "name": "1.16.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -1188,6 +1305,7 @@
     },
     {
       "version": "1.15",
+      "name": "1.15.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -1205,6 +1323,7 @@
     },
     {
       "version": "1.14",
+      "name": "1.14.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -1214,6 +1333,7 @@
     },
     {
       "version": "1.13",
+      "name": "1.13.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -1223,6 +1343,7 @@
     },
     {
       "version": "1.12",
+      "name": "1.12.0",
       "items": [
         {
           "type": "FEATURE",
@@ -1232,6 +1353,7 @@
     },
     {
       "version": "1.11",
+      "name": "1.11.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -1248,7 +1370,8 @@
       ]
     },
     {
-      "version": "1.101",
+      "version": "1.1001",
+      "name": "1.10.1",
       "items": [
         {
           "type": "HOTFIX",
@@ -1258,6 +1381,7 @@
     },
     {
       "version": "1.10",
+      "name": "1.10.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -1267,6 +1391,7 @@
     },
     {
       "version": "1.09",
+      "name": "1.9.0",
       "items": [
         {
           "type": "INTERFACE",
@@ -1280,6 +1405,7 @@
     },
     {
       "version": "1.08",
+      "name": "1.8.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -1289,6 +1415,7 @@
     },
     {
       "version": "1.07",
+      "name": "1.7.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -1298,6 +1425,7 @@
     },
     {
       "version": "1.06",
+      "name": "1.6.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -1307,6 +1435,7 @@
     },
     {
       "version": "1.05",
+      "name": "1.5.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -1316,6 +1445,7 @@
     },
     {
       "version": "1.04",
+      "name": "1.4.0",
       "items": [
         {
           "type": "FEATURE",
@@ -1333,6 +1463,7 @@
     },
     {
       "version": "1.03",
+      "name": "1.3.0",
       "items": [
         {
           "type": "BUGFIX",
@@ -1342,6 +1473,7 @@
     },
     {
       "version": "1.02",
+      "name": "1.2.0",
       "items": [
         {
           "type": "INTERFACE",

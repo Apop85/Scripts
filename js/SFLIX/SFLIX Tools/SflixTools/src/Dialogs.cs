@@ -7,13 +7,16 @@ using System.Windows.Forms;
 
 namespace Sflix
 {
-    // "Datei gibt es schon": ersetzen oder überspringen, auf Wunsch für alle weiteren merken
+    // "Datei gibt es schon": ersetzen oder überspringen, auf Wunsch für alle weiteren merken.
+    // Seit 3.3 mit Vergleich der beiden Dateien (Grösse, Auflösung, Dauer, Video/Ton, Datum).
     public class ConflictDialog : Form
     {
         readonly DarkCheckBox remember;
         bool replace;
 
-        public ConflictDialog(string target)
+        public ConflictDialog(string target) : this(null, target, null) { }
+
+        public ConflictDialog(string source, string target, FfmpegTools ff)
         {
             Text = "Datei schon vorhanden";
             Setup(this);
@@ -24,14 +27,35 @@ namespace Sflix
             root.ColumnCount = 1;
             root.Padding = new Padding(Theme.S(16), Theme.S(14), Theme.S(16), Theme.S(12));
 
+            int width = source != null ? Theme.S(1000) : Theme.S(560);
             Label title = Theme.MakeLabel("„" + Path.GetFileName(target) + "“ gibt es im Ziel schon.", false);
             title.Font = new Font("Segoe UI Semibold", 10.5f);
-            title.MaximumSize = new Size(Theme.S(560), 0);
+            title.MaximumSize = new Size(width, 0);
             Label path = Theme.MakeLabel(Path.GetDirectoryName(target), true);
-            path.MaximumSize = new Size(Theme.S(560), 0);
+            path.MaximumSize = new Size(width, 0);
             path.Margin = new Padding(0, Theme.S(4), 0, Theme.S(10));
             Label question = Theme.MakeLabel("Soll die vorhandene Datei durch die neue ersetzt werden?", false);
-            question.MaximumSize = new Size(Theme.S(560), 0);
+            question.MaximumSize = new Size(width, 0);
+
+            CompareView view = null;
+            if (source != null)
+            {
+                view = new CompareView(ff, true);
+                view.Size = new Size(width, Theme.S(150));
+                view.Margin = new Padding(0, 0, 0, Theme.S(10));
+                CompareEntry existing = new CompareEntry();
+                existing.Label = "vorhanden";
+                existing.Path = target;
+                CompareEntry incoming = new CompareEntry();
+                incoming.Label = "neu";
+                incoming.Path = source;
+                // Nicht abspielbare Dateien wandelt der Importer beim Übernehmen um
+                incoming.ConvertNote = MediaTypes.NeedsConversion(Path.GetExtension(source).ToLowerInvariant()) &&
+                                       !string.Equals(Path.GetExtension(source), Path.GetExtension(target), StringComparison.OrdinalIgnoreCase);
+                if (!string.Equals(Path.GetFileName(source), Path.GetFileName(target), StringComparison.OrdinalIgnoreCase))
+                    incoming.Note = "aus " + Path.GetDirectoryName(source);
+                view.SetEntries(new System.Collections.Generic.List<CompareEntry> { existing, incoming });
+            }
 
             remember = new DarkCheckBox();
             remember.Text = "Für alle weiteren Dateien merken";
@@ -53,6 +77,7 @@ namespace Sflix
 
             root.Controls.Add(title);
             root.Controls.Add(path);
+            if (view != null) root.Controls.Add(view);
             root.Controls.Add(question);
             root.Controls.Add(remember);
             root.Controls.Add(buttons);
@@ -333,7 +358,7 @@ namespace Sflix
             using (System.Drawing.Drawing2D.GraphicsPath p = Glyphs.RoundRect(new RectangleF(0, 0, Width - 1, Height - 1), Theme.S(9)))
             using (SolidBrush b = new SolidBrush(back)) g.FillPath(b, p);
             int s = Width * 11 / 20;
-            Glyphs.Draw(g, Icon, new Rectangle((Width - s) / 2, (Height - s) / 2, s, s), Color.FromArgb(0xff, 0x4d, 0x57), back);
+            Glyphs.Draw(g, Icon, new Rectangle((Width - s) / 2, (Height - s) / 2, s, s), Color.FromArgb(0xff, 0x5a, 0x45), back);
         }
     }
 

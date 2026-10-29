@@ -964,7 +964,7 @@ namespace Sflix
                             EnsureDir(targetDir, journal);
                             if (File.Exists(op.Target) && !string.Equals(current, op.Target, StringComparison.OrdinalIgnoreCase))
                             {
-                                if (!AskReplace(ctx, op.Target, ref remembered)) { ctx.Log("  ÜBERSPRUNGEN  " + Path.GetFileName(current) + " (Ziel vorhanden)"); skipped++; continue; }
+                                if (!AskReplace(ctx, current, op.Target, ref remembered)) { ctx.Log("  ÜBERSPRUNGEN  " + Path.GetFileName(current) + " (Ziel vorhanden)"); skipped++; continue; }
                                 SetAside(op.Target, plan.SeriesDir, journal);
                             }
                             FileOps.Rename(current, op.Target);
@@ -1003,10 +1003,10 @@ namespace Sflix
             return path.StartsWith(baseDir + "\\", StringComparison.OrdinalIgnoreCase) ? path.Substring(baseDir.Length + 1) : path;
         }
 
-        static bool AskReplace(TaskContext ctx, string target, ref bool? remembered)
+        static bool AskReplace(TaskContext ctx, string source, string target, ref bool? remembered)
         {
             if (remembered.HasValue) return remembered.Value;
-            ConflictAnswer a = ctx.AskConflict != null ? ctx.AskConflict(target) : null;
+            ConflictAnswer a = ctx.AskConflict != null ? ctx.AskConflict(source, target) : null;
             if (a == null) return false;
             if (a.Remember) remembered = a.Replace;
             return a.Replace;
@@ -1078,7 +1078,7 @@ namespace Sflix
                 string dest = Path.Combine(target, Path.GetFileName(file));
                 if (File.Exists(dest))
                 {
-                    if (!AskReplace(ctx, dest, ref remembered)) { ctx.Log("  ÜBERSPRUNGEN  " + Path.GetFileName(file) + " (in „" + Path.GetFileName(target) + "“ vorhanden)"); continue; }
+                    if (!AskReplace(ctx, file, dest, ref remembered)) { ctx.Log("  ÜBERSPRUNGEN  " + Path.GetFileName(file) + " (in „" + Path.GetFileName(target) + "“ vorhanden)"); continue; }
                     SetAside(dest, seriesDir, journal);
                 }
                 FileOps.Rename(file, dest);

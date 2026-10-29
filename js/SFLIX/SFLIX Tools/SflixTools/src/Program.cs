@@ -9,6 +9,12 @@
 //                                            nur diesen Ordner einlesen (mehrfach angeben möglich,
 //                                            relativ zum STEFFLIX-Ordner oder absolut)
 //   updateStefflix.exe --install <Ordner>    STEFFLIX ohne Oberfläche in <Ordner> installieren
+//       --ffmpeg [Ordner]                    dazu ffmpeg installieren (ohne Ordner: Standard in AppData)
+//       --license <Schlüssel>                dazu den Lizenzschlüssel hinterlegen
+//   updateStefflix.exe --license <Schlüssel> Lizenzschlüssel hinterlegen (ohne Oberfläche)
+//   updateStefflix.exe --license-remove      Lizenzschlüssel entfernen (ohne Oberfläche)
+//   --log                                    Oberfläche: Protokoll von Anfang an in die Datei schreiben
+//                                            (intern nach einem Selbst-Update, wenn es eingeschaltet war)
 //   --updated                                (intern) Start nach einem Selbst-Update
 // Liegt das Programm nicht in einem STEFFLIX-Ordner, bietet es die Installation an.
 // Aufgaben: update, cleanup, merge, convert, preview, data, renameundo (letztes "Folgen umbenennen"
@@ -28,8 +34,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX Updater")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX Updater: Update, Daten einlesen, Vorschaubilder, Zusammenführen, Konvertieren")]
-[assembly: AssemblyVersion("3.2.2.0")]
-[assembly: AssemblyFileVersion("3.2.2.0")]
+[assembly: AssemblyVersion("3.3.0.0")]
+[assembly: AssemblyFileVersion("3.3.0.0")]
 
 namespace Sflix
 {
@@ -43,21 +49,36 @@ namespace Sflix
         {
             bool updated = false;
             bool headless = false;
+            bool logToFile = false;
             string installTo = null;
+            string licenseKey = null;
+            bool licenseRemove = false;
+            bool withFfmpeg = false;
+            string ffmpegFolder = null;
             List<string> run = null;
             List<string> dataFolders = new List<string>();
             for (int i = 0; i < args.Length; i++)
             {
                 string a = args[i].ToLowerInvariant();
                 if (a == "--updated") updated = true;
+                else if (a == "--log") logToFile = true;
                 else if (a == "--data-folder" && i + 1 < args.Length) dataFolders.Add(args[++i]);
                 else if (a == "--install" && i + 1 < args.Length) installTo = args[++i];
+                else if (a == "--license" && i + 1 < args.Length) licenseKey = args[++i];
+                else if (a == "--license-remove") licenseRemove = true;
+                else if (a == "--ffmpeg")
+                {
+                    withFfmpeg = true;
+                    if (i + 1 < args.Length && !args[i + 1].StartsWith("--")) ffmpegFolder = args[++i];
+                }
                 else if ((a == "--run" || a == "--headless") && i + 1 < args.Length)
                 {
                     headless = a == "--headless";
                     run = ParseTasks(args[++i]);
                 }
             }
+            // Lizenz ohne Aufgaben: ebenfalls ohne Oberfläche
+            if ((licenseKey != null || licenseRemove) && installTo == null) headless = true;
 
             string dir = Environment.GetEnvironmentVariable("SFLIX_DIR");
             App.Root = string.IsNullOrEmpty(dir) ? Path.GetDirectoryName(Path.GetFullPath(App.ExePath)) : Path.GetFullPath(dir);
@@ -70,7 +91,7 @@ namespace Sflix
             }
 
             // Installation ohne Oberfläche (für Skripte und Tests)
-            if (installTo != null) return RunHeadlessInstall(installTo);
+            if (installTo != null) return RunHeadlessInstall(installTo, withFfmpeg, ffmpegFolder, licenseKey);
 
             // Kein STEFFLIX-Ordner: statt des Updaters die Installation anbieten. Der Updater selbst
             // läuft nur in einem STEFFLIX-Ordner (Schutz davor, in einem fremden Ordner Dateien
@@ -105,12 +126,21 @@ namespace Sflix
                 try
                 {
                     Settings settings = Settings.Load(Path.Combine(App.SysDir, "updater_settings.json"));
-                    UpdaterInfo.Write(App.Root, settings.GetString("ffmpeg.folder", ""));
-                    if (headless) return RunHeadless(settings, run, idNote, dataFolders);
+                    // Bis 3.2 wurde das Protokoll immer geschrieben: alte Datei einmal löschen
+                    LogFile.RemoveLegacyOnce(settings);
+                    // ffmpeg vom alten Ort (sflix_sys\ffmpeg) in den Standardordner verschieben
+                    string ffmpegNote = FfmpegLocation.MigrateLegacy(settings);
+                    UpdaterInfo.Write(App.Root, FfmpegLocation.Folder(settings));
+                    if (headless)
+                    {
+                        if (licenseKey != null || licenseRemove) return RunHeadlessLicense(licenseKey, licenseRemove);
+                        return RunHeadless(settings, run, idNote, dataFolders);
+                    }
 
                     string notice = updated ? "Programm wurde auf Version " + App.VersionText + " aktualisiert." : null;
                     if (idNote != null) notice = notice == null ? idNote : notice + " " + idNote;
-                    Application.Run(new MainForm(settings, run, notice));
+                    if (ffmpegNote != null) notice = notice == null ? ffmpegNote : notice + " " + ffmpegNote;
+                    Application.Run(new MainForm(settings, run, notice, logToFile));
                     return 0;
                 }
                 finally
@@ -135,7 +165,7 @@ namespace Sflix
                 return FileOps.Hex(sha.ComputeHash(Encoding.UTF8.GetBytes(s))).Substring(0, 16);
         }
 
-        static int RunHeadlessInstall(string target)
+        static int RunHeadlessInstall(string target, bool withFfmpeg, string ffmpegFolder, string licenseKey)
         {
             try { Console.OutputEncoding = new UTF8Encoding(false); } catch { }
             TaskContext ctx = new TaskContext();
@@ -144,7 +174,11 @@ namespace Sflix
             try
             {
                 Directory.CreateDirectory(target);
-                InstallTask.Run(ctx, target);
+                InstallOptions options = new InstallOptions();
+                options.Ffmpeg = withFfmpeg;
+                options.FfmpegFolder = withFfmpeg ? (ffmpegFolder ?? FfmpegLocation.DefaultFolder) : null;
+                options.LicenseKey = licenseKey;
+                InstallTask.Run(ctx, target, options);
                 Console.WriteLine("INSTALLATION ABGESCHLOSSEN");
                 return 0;
             }
@@ -155,23 +189,30 @@ namespace Sflix
             }
         }
 
+        // Lizenzschlüssel ohne Oberfläche hinterlegen bzw. entfernen (mit Nachricht an den Empfänger)
+        static int RunHeadlessLicense(string key, bool remove)
+        {
+            try { Console.OutputEncoding = new UTF8Encoding(false); } catch { }
+            string message;
+            bool ok = remove ? LicenseStore.Remove(true, out message) : LicenseStore.Save(key, out message);
+            Console.WriteLine(message);
+            LogFile.Append(LogFile.Stamp(message));
+            return ok ? 0 : 1;
+        }
+
         static int RunHeadless(Settings settings, List<string> tasks, string idNote, List<string> dataFolders)
         {
-            string logFile = Path.Combine(App.SysDir, "updater.log");
-            object gate = new object();
+            // Ohne Oberfläche ist die Protokolldatei die einzige Rückmeldung: immer schreiben
+            // (begrenzt, siehe LogFile)
             TaskContext ctx = new TaskContext();
             ctx.Token = CancellationToken.None;
             ctx.Settings = settings;
-            ctx.LogLine = delegate(string line)
-            {
-                lock (gate)
-                {
-                    try { File.AppendAllText(logFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "  " + line + "\r\n", FileOps.Utf8NoBom); }
-                    catch { }
-                }
-            };
+            ctx.LogLine = delegate(string line) { LogFile.Append(LogFile.Stamp(line)); };
             ctx.ChooseMerge = MergeTask.DefaultSelection;
-            ctx.Ffmpeg = new FfmpegTools(App.Root, settings.GetString("ffmpeg.folder", ""));
+            ctx.Ffmpeg = new FfmpegTools(App.Root, FfmpegLocation.Folder(settings));
+            // Lizenz: ausstehende Bestätigung nachholen
+            string licenseNote = LicenseStore.ConfirmPending();
+            if (licenseNote != null) ctx.LogLine(licenseNote);
 
             ConvertOptions conv = new ConvertOptions();
             conv.Folder = App.Root;

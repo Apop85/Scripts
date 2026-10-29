@@ -294,9 +294,36 @@ function showTransitionStatus(text) {
     status.textContent = text || "";
 }
 
+// Feld für Intro bzw. Abspann eines Ordners. Leer = kein eigener Wert (der Ordner erbt).
+function createFolderValueInput(kindName, folder, map, title) {
+    var input = document.createElement("input");
+    input.type = "number";
+    input.min = "0";
+    input.max = String(transitionMax);
+    input.placeholder = "–";
+    input.value = map.hasOwnProperty(folder) ? map[folder] : "";
+    input.setAttribute("aria-label", title + " in Sekunden für " + getTransitionLabel(folder));
+    input.title = title + " (leer = vom Ordner darüber übernehmen)";
+    input.addEventListener("change", function () {
+        if (input.value.trim() === "") {
+            setFolderValue(kindName, folder, null);
+            showTransitionStatus(getTransitionLabel(folder) + ": " + title + " entfernt.");
+            return;
+        }
+        setFolderValue(kindName, folder, input.value);
+        input.value = getFolderValueMap(kindName)[folder];
+        showTransitionStatus(getTransitionLabel(folder) + ": " + title + " " + input.value + " Sekunden gespeichert.");
+    });
+    return input;
+}
+
+// Übersicht je Ordner: Intro überspringen (nur Videos) und Dauer bis Übergang (Abspann)
 function renderTransitionOverview() {
-    var map = getTransitionMap();
-    var folders = Object.keys(map).sort(function (a, b) {
+    var transitions = getTransitionMap();
+    var intros = getFolderValueMap("intro");
+    var folders = Object.keys(transitions).concat(Object.keys(intros).filter(function (folder) {
+        return !transitions.hasOwnProperty(folder);
+    })).sort(function (a, b) {
         return a === "" ? -1 : (b === "" ? 1 : compareSortNames(a, b));
     });
     document.getElementById("transitionCount").textContent = folders.length;
@@ -309,6 +336,14 @@ function renderTransitionOverview() {
         list.appendChild(empty);
         return;
     }
+    var header = document.createElement("div");
+    header.className = "transitionRow transitionHeader";
+    ["Ordner", "Intro", "Abspann", ""].forEach(function (text) {
+        var cell = document.createElement("span");
+        cell.textContent = text;
+        header.appendChild(cell);
+    });
+    list.appendChild(header);
     folders.forEach(function (folder) {
         var row = document.createElement("div");
         row.className = "transitionRow";
@@ -321,32 +356,21 @@ function renderTransitionOverview() {
             hint.textContent = "Ordner nicht gefunden";
             name.appendChild(hint);
         }
-        var input = document.createElement("input");
-        input.type = "number";
-        input.min = "0";
-        input.max = String(transitionMax);
-        input.value = map[folder];
-        input.setAttribute("aria-label", "Sekunden für " + getTransitionLabel(folder));
-        input.addEventListener("change", function () {
-            setTransition(folder, input.value);
-            input.value = getTransitionMap()[folder];
-            showTransitionStatus(getTransitionLabel(folder) + ": " + input.value + " Sekunden gespeichert.");
-        });
-        var unit = document.createElement("span");
-        unit.className = "transitionUnit";
-        unit.textContent = "s";
+        var introInput = createFolderValueInput("intro", folder, intros, "Intro überspringen");
+        var transitionInput = createFolderValueInput("transition", folder, transitions, "Dauer bis Übergang");
         var remove = document.createElement("button");
         remove.type = "button";
         remove.className = "sflixButton ghost small transitionRemove";
-        remove.setAttribute("aria-label", "Eintrag für " + getTransitionLabel(folder) + " entfernen");
+        remove.setAttribute("aria-label", "Einträge für " + getTransitionLabel(folder) + " entfernen");
         remove.title = "Entfernen (der Ordner erbt dann wieder)";
         remove.appendChild(createIcon("trash"));
         remove.addEventListener("click", function () {
             setTransition(folder, null);
+            setFolderValue("intro", folder, null);
             renderTransitionOverview();
             showTransitionStatus(getTransitionLabel(folder) + " entfernt.");
         });
-        row.append(name, input, unit, remove);
+        row.append(name, introInput, transitionInput, remove);
         list.appendChild(row);
     });
 }
@@ -366,6 +390,7 @@ function initTransitionOverview() {
     });
 
     var folderInput = document.getElementById("transitionAddFolder");
+    var introInput = document.getElementById("transitionAddIntro");
     var secondsInput = document.getElementById("transitionAddSeconds");
     document.getElementById("transitionAddButton").addEventListener("click", function () {
         var label = folderInput.value.trim().replace(/\s*[›>\/\\]\s*/g, " › ");
@@ -374,10 +399,19 @@ function initTransitionOverview() {
             folderInput.focus();
             return;
         }
-        setTransition(labels[label], secondsInput.value);
+        var parts = [];
+        if (introInput.value.trim() !== "") {
+            setFolderValue("intro", labels[label], introInput.value);
+            parts.push("Intro " + getFolderValueMap("intro")[labels[label]] + " s");
+        }
+        if (secondsInput.value.trim() !== "" || parts.length == 0) {
+            setTransition(labels[label], secondsInput.value || 0);
+            parts.push("Abspann " + getTransitionMap()[labels[label]] + " s");
+        }
         folderInput.value = "";
+        introInput.value = "";
         renderTransitionOverview();
-        showTransitionStatus(label + ": " + getTransitionMap()[labels[label]] + " Sekunden gespeichert.");
+        showTransitionStatus(label + ": " + parts.join(", ") + " gespeichert.");
     });
     renderTransitionOverview();
 }
@@ -386,66 +420,12 @@ function initTransitionOverview() {
 // Einstellungen › Lizenz
 // ===================================================================
 
-// Gespeicherter Schlüssel: Felder zeigen ****. Ein Klick leert alle Felder für eine neue Eingabe.
-function fillLicenseFields() {
-    var hasLicense = isValidLicense(getData("serial"));
-    licenseFields.forEach(function (fieldId) {
-        var field = document.getElementById(fieldId);
-        field.value = hasLicense ? "****" : "";
-        field.dataset.masked = hasLicense ? "true" : "";
-    });
-    var message = document.getElementById("licenseMsg");
-    message.className = hasLicense ? "licenseActive" : "";
-    message.textContent = hasLicense
-        ? "Lizenz aktiv. Das Feedbackformular ist im Menü verfügbar."
-        : "Kein Lizenzschlüssel hinterlegt.";
-    document.getElementById("removeSerialButton").hidden = !hasLicense;
-}
-
-function isLicenseMasked() {
-    return document.getElementById(licenseFields[0]).dataset.masked === "true";
-}
-
-function clearLicenseMask() {
-    if (!isLicenseMasked()) {
-        return;
-    }
-    licenseFields.forEach(function (fieldId) {
-        var field = document.getElementById(fieldId);
-        field.value = "";
-        field.dataset.masked = "";
-    });
-}
-
+// Seit 2.5.0 nur Anzeige: Der Schlüssel wird im Updater eingegeben (sflix_sys/license.js).
 function initLicenseSection() {
-    licenseFields.forEach(function (fieldId, index) {
-        var field = document.getElementById(fieldId);
-        field.addEventListener("focus", clearLicenseMask);
-        field.addEventListener("input", function () {
-            // Eingefügter ganzer Schlüssel (mit oder ohne Bindestriche) auf die Felder verteilen
-            var compact = field.value.replace(/[\s-]/g, "");
-            if (compact.length > 4) {
-                for (var part = 0; part + index < licenseFields.length; part++) {
-                    document.getElementById(licenseFields[index + part]).value = compact.slice(part * 4, part * 4 + 4);
-                }
-                document.getElementById("saveSerialButton").focus();
-                return;
-            }
-            if (field.value.length == 4 && index + 1 < licenseFields.length) {
-                document.getElementById(licenseFields[index + 1]).focus();
-            } else if (field.value.length == 4) {
-                document.getElementById("saveSerialButton").focus();
-            }
-        });
-    });
-    document.getElementById("saveSerialButton").addEventListener("click", saveLicenseKey);
-    document.getElementById("removeSerialButton").addEventListener("click", function () {
-        removeData("serial");
-        updateFeedbackVisibility();
-        fillLicenseFields();
-        document.getElementById("licenseMsg").textContent = "Lizenzschlüssel entfernt. Der Menüpunkt \"Feedback\" ist ausgeblendet.";
-    });
-    fillLicenseFields();
+    var message = document.getElementById("licenseMsg");
+    var state = getLicenseState();
+    message.className = state.status === "active" ? "licenseActive" : (state.status === "invalid" ? "licenseError" : "");
+    message.textContent = getLicenseStatusText();
 }
 
 // ===================================================================
@@ -459,7 +439,9 @@ function buildDiagnosisText() {
         return paths.filter(test).length;
     };
     var lines = [
-        "STEFFLIX " + formatVersion(version),
+        "STEFFLIX " + getVersionName(),
+        "STEFFLIX-ID: " + getInstallIdText(),
+        "Lizenz: " + getLicenseStatusText(),
         "Updater: " + (info && info.updater ? info.updater : "unbekannt"),
         "ffmpeg: " + (info ? (info.ffmpeg || "nicht installiert") : "unbekannt"),
         "Browser: " + detectBrowser() + " (" + navigator.userAgent + ")",
@@ -605,75 +587,115 @@ function cancelTimeouts() {
 
 // ===================================================================
 // Feedback und Lizenz
+// Seit 2.5.0: Der Lizenzschlüssel (SFX2-…) wird im Updater eingegeben und steht in
+// sflix_sys/license.js: var licenseFile = { key: "SFX2-…", confirmedFor: "<installId>" };
+// Gleiches Format wie "SFLIX Tools\Lizenz\create_license.py" und License in Core.cs des Updaters.
 // ===================================================================
 
-// Funktion zum Umwandeln von Base64-Strings in Ganzzahlen
-function b64toInt(b64string) {
-    try {
-        var binaryString = window.atob(b64string);
-        var value = BigInt(0);
-        for (var index = 0; index < binaryString.length; index++) {
-            value = (value * BigInt(256)) + BigInt(binaryString.charCodeAt(index));
-        }
-        return value;
-    } catch (error) {
-        return null;
+var licensePrefix = "SFX2";
+
+// Fester Schlüsselstrom (xorshift32) zum Verschleiern des Inhalts
+function getLicenseKeystream(length) {
+    var state = 0x5f3759df;
+    var bytes = [];
+    for (var index = 0; index < length; index++) {
+        state ^= state << 13;
+        state >>>= 0;
+        state ^= state >>> 17;
+        state ^= state << 5;
+        state >>>= 0;
+        bytes.push(state & 0xff);
     }
+    return bytes;
 }
 
-// Funktion zum Entschlüsseln des Lizenzkeys
-function decodeSerial(serial) {
-    try {
-        // Öffentlicher Schlüssel
-        var publicKey = "A45KXDyaWbXfUSyIxXKG8JBXwX+IxqDl";
-        // Umwandlungstabelle
-        var conversionMatrix = {
-            0: {0: '9', 1: ' ', 2: '8', 3: 'i', 4: '{', 5: 'G', 6: 'L', 7: '/', 8: 'Ä', 9: 'P'},
-            1: {0: '+', 1: 'C', 2: '5', 3: 'ü', 4: '$', 5: '4', 6: ',', 7: 'H', 8: 'h', 9: '!'},
-            2: {0: '-', 1: '.', 2: 'z', 3: 'F', 4: 'p', 5: 'Y', 6: 'E', 7: 'g', 8: 'f', 9: 'Z'},
-            3: {0: ')', 1: 'y', 2: 'o', 3: 'b', 4: 'd', 5: '~', 6: 's', 7: 'T', 8: '3', 9: 'W'},
-            4: {0: ':', 1: '[', 2: 'N', 3: '7', 4: 'U', 5: '1', 6: '_', 7: ']', 8: 'S', 9: 'D'},
-            5: {0: 'A', 1: '}', 2: 'k', 3: 'ä', 4: 'I', 5: 'Ü', 6: 'u', 7: '2', 8: '=', 9: 'M'},
-            6: {0: 'B', 1: 'K', 2: 'R', 3: 'm', 4: '?', 5: 'v', 6: ';', 7: 'x', 8: 'Q', 9: 'ö'},
-            7: {0: '6', 1: 't', 2: 'q', 3: 'X', 4: 'j', 5: 'a', 6: '0', 7: 'V', 8: 'O', 9: 'r'},
-            8: {0: 'w', 1: 'n', 2: 'c', 3: 'Ö', 4: 'J', 5: '%', 6: '}', 7: '*', 8: 'e', 9: '('},
-            9: {0: '&', 1: 'l'}
-        };
-
-        var publicValue = b64toInt(publicKey);
-        var secretValue = b64toInt(serial);
-
-        // Wandle Nummer in Bitstring um und fülle die Bitlänge auf
-        var secretBits = secretValue.toString(2);
-        var publicBits = publicValue.toString(2);
-        while (secretBits.length < publicBits.length) {
-            secretBits = "0" + secretBits;
+// CRC-16/CCITT-FALSE über die Bytes
+function getLicenseCrc(bytes) {
+    var crc = 0xffff;
+    bytes.forEach(function (value) {
+        crc ^= value << 8;
+        for (var bit = 0; bit < 8; bit++) {
+            crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
         }
-        while (publicBits.length < secretBits.length) {
-            publicBits = "0" + publicBits;
-        }
+    });
+    return crc;
+}
 
-        // XOR bitweise
-        var privateBits = "";
-        for (var bitIndex = 0; bitIndex < publicBits.length; bitIndex++) {
-            privateBits += secretBits[bitIndex] == publicBits[bitIndex] ? "0" : "1";
-        }
-
-        // Berechne Ganzzahl des privaten Schlüssels
-        var privateKey = BigInt("0b" + privateBits);
-
-        // Setze Nachricht zusammen und entschlüssle sie
-        var lookupString = privateKey + "" + secretValue;
-        var result = "";
-        for (var index = 0; index < lookupString.length; index += 2) {
-            result += conversionMatrix[lookupString[index]][lookupString[index + 1]];
-        }
-
-        // Lese Telegram-Informationen aus
-        return [result.split(listSeperator)[0], result.split(listSeperator)[1]];
-    } catch (error) {
-        return null;
+// Entschlüsselt einen Schlüssel. Ergebnis: { ok: true, webhookId, webhookToken } oder
+// { ok: false, reason: "empty" | "old" | "format" | "checksum" }
+function decodeLicenseKey(key) {
+    var text = String(key || "").replace(/\s+/g, "");
+    if (text === "") {
+        return { ok: false, reason: "empty" };
     }
+    if (text.toUpperCase().indexOf(licensePrefix) !== 0) {
+        return { ok: false, reason: "old" };
+    }
+    var body = text.slice(licensePrefix.length).replace(/-/g, "");
+    if (!/^[A-Za-z0-9+\/]+$/.test(body)) {
+        return { ok: false, reason: "format" };
+    }
+    var binary;
+    try {
+        binary = atob(body + "===".slice((body.length + 3) % 4));
+    } catch (error) {
+        return { ok: false, reason: "format" };
+    }
+    if (binary.length !== 61) {
+        return { ok: false, reason: "format" };
+    }
+    var stream = getLicenseKeystream(binary.length);
+    var bytes = [];
+    for (var index = 0; index < binary.length; index++) {
+        bytes.push(binary.charCodeAt(index) ^ stream[index]);
+    }
+    var crc = (bytes[59] << 8) | bytes[60];
+    if (getLicenseCrc(bytes.slice(0, 59)) !== crc) {
+        return { ok: false, reason: "checksum" };
+    }
+    // Webhook-ID: 8 Bytes (big endian) als Dezimalzahl
+    var id = BigInt(0);
+    for (index = 0; index < 8; index++) {
+        id = id * BigInt(256) + BigInt(bytes[index]);
+    }
+    // Token: 51 Bytes als Base64url ohne Auffüllzeichen (68 Zeichen)
+    var tokenBinary = String.fromCharCode.apply(null, bytes.slice(8, 59));
+    var token = btoa(tokenBinary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return { ok: true, webhookId: id.toString(), webhookToken: token };
+}
+
+function getInstallIdText() {
+    return typeof installId === "string" && /^[0-9a-f]{32}$/.test(installId) ? installId : "ohne Kennung";
+}
+
+// Zustand der Lizenz aus license.js:
+//   status "none" (kein Schlüssel), "invalid" (Schlüssel unlesbar), "pending" (noch nicht bestätigt),
+//   "active" (bestätigt, Feedback möglich). Bei "active"/"pending" zusätzlich webhookUrl.
+function getLicenseState() {
+    var file = typeof licenseFile !== "undefined" && licenseFile != null && typeof licenseFile === "object" ? licenseFile : null;
+    if (file == null || !file.key) {
+        return { status: "none" };
+    }
+    var decoded = decodeLicenseKey(file.key);
+    if (!decoded.ok) {
+        return { status: "invalid" };
+    }
+    var url = "https://discord.com/api/webhooks/" + decoded.webhookId + "/" + decoded.webhookToken;
+    // Bestätigt für genau diese Installation (eine Kopie des Ordners braucht eine eigene Bestätigung)
+    var confirmed = file.confirmedFor != null && file.confirmedFor === getInstallIdText();
+    return { status: confirmed ? "active" : "pending", webhookUrl: url };
+}
+
+function getLicenseStatusText() {
+    var status = getLicenseState().status;
+    if (status === "active") {
+        return "Lizenz aktiv (im Updater hinterlegt). Das Feedbackformular ist im Menü verfügbar.";
+    } else if (status === "pending") {
+        return "Lizenzschlüssel hinterlegt, die Bestätigung steht noch aus. Den Updater mit Internetverbindung starten.";
+    } else if (status === "invalid") {
+        return "Der hinterlegte Lizenzschlüssel ist ungültig. Im Updater unter \"Lizenz\" einen gültigen Schlüssel eingeben.";
+    }
+    return "Kein Lizenzschlüssel hinterlegt. Den Schlüssel im Updater unter \"Lizenz\" eingeben.";
 }
 
 // Meldung im Feedback-Fenster (type: "error", "success" oder "info")
@@ -683,7 +705,19 @@ function showFeedbackStatus(text, type) {
     statusNode.className = type;
 }
 
-// Funktion zum Senden von Telegramnachrichten
+// Verständliche Meldung zu einer Antwort von Discord
+function describeFeedbackError(status) {
+    if (status === 401 || status === 403 || status === 404) {
+        return "Der Lizenzschlüssel ist nicht mehr gültig. Bitte einen neuen Schlüssel anfordern und im Updater eingeben.";
+    } else if (status === 429) {
+        return "Es wurden gerade zu viele Nachrichten verschickt. Bitte in einer Minute erneut versuchen.";
+    } else if (status === 400 || status === 413) {
+        return "Die Nachricht wurde abgelehnt (zu lang oder ungültig). Bitte kürzen und erneut versuchen.";
+    }
+    return "Die Nachricht konnte nicht verschickt werden (Fehler " + status + "). Bitte später erneut versuchen.";
+}
+
+// Feedback senden: Text als Nachricht, Diagnose (und überlange Nachrichten) als Anhang
 function sendMessage() {
     var sender = document.getElementById("feedbackName").value.trim();
     var message = document.getElementById("feedbackText").value.trim();
@@ -700,28 +734,33 @@ function sendMessage() {
         return;
     }
 
-    var serial = getData("serial");
-    var telegramConf = serial ? decodeSerial(serial) : null;
-    if (telegramConf == null) {
-        showFeedbackStatus("Kein gültiger Lizenzschlüssel gespeichert. Die Nachricht wurde nicht verschickt.", "error");
+    var license = getLicenseState();
+    if (license.status !== "active") {
+        showFeedbackStatus(getLicenseStatusText() + " Die Nachricht wurde nicht verschickt.", "error");
         return;
     }
 
-    // Als Formulardaten senden: Sonderzeichen wie & # + und Zeilenumbrüche bleiben erhalten
-    var body = new URLSearchParams();
-    body.append("chat_id", telegramConf[1]);
-    var text = "ABSENDER: " + sender + "\nNACHRICHT:\n" + message;
-    if (document.getElementById("feedbackDiagnosis").checked) {
-        text += "\n\nDIAGNOSE:\n" + buildDiagnosisText();
+    var header = "STEFFLIX-ID: " + getInstallIdText() + " · STEFFLIX " + getVersionName() + " · " + detectBrowser() + "\n";
+    var text = header + "**Absender:** " + sender + "\n**Nachricht:**\n" + message;
+    var form = new FormData();
+    var fileIndex = 0;
+    // Discord nimmt höchstens 2000 Zeichen, längere Nachrichten zusätzlich als Datei
+    if (text.length > 1900) {
+        form.append("files[" + fileIndex++ + "]", new Blob([sender + ":\n" + message], { type: "text/plain;charset=utf-8" }), "nachricht.txt");
+        text = text.slice(0, 1800) + "\n… (vollständig in nachricht.txt)";
     }
-    // Telegram nimmt höchstens 4096 Zeichen
-    body.append("text", text.slice(0, 4000));
+    if (document.getElementById("feedbackDiagnosis").checked) {
+        form.append("files[" + fileIndex++ + "]", new Blob([buildDiagnosisText()], { type: "text/plain;charset=utf-8" }), "diagnose.txt");
+    }
+    // Keine Erwähnungen (@everyone, @Name) auslösen
+    form.append("payload_json", JSON.stringify({ content: text, allowed_mentions: { parse: [] } }));
 
     showFeedbackStatus("Nachricht wird gesendet...", "info");
-    fetch("https://api.telegram.org/bot" + telegramConf[0] + "/sendMessage", { method: "POST", body: body })
+    fetch(license.webhookUrl + "?wait=true", { method: "POST", body: form })
         .then(function (response) {
             if (!response.ok) {
-                throw new Error(response.status);
+                showFeedbackStatus(describeFeedbackError(response.status), "error");
+                return;
             }
             showFeedbackStatus("Danke! Die Nachricht wurde verschickt.", "success");
             document.getElementById("feedbackText").value = "";
@@ -731,52 +770,60 @@ function sendMessage() {
         });
 }
 
-// Prüft, ob sich der Lizenzschlüssel zu Bot-Token und Chat-ID entschlüsseln lässt
-function isValidLicense(serial) {
-    if (serial == null || serial == "") {
-        return false;
-    }
-    var telegramConf = decodeSerial(serial);
-    return telegramConf != null && /^\d+:\S+$/.test(telegramConf[0] || "") && /^-?\d+$/.test(telegramConf[1] || "");
-}
-
-// Feedback wird nur angeboten, wenn ein gültiger Lizenzschlüssel gespeichert ist
+// Feedback wird nur angeboten, wenn ein bestätigter Lizenzschlüssel hinterlegt ist
 function updateFeedbackVisibility() {
-    var hasLicense = isValidLicense(getData("serial"));
+    var hasLicense = getLicenseState().status === "active";
     document.getElementById("feedbackBoxToggler").style.display = hasLicense ? "" : "none";
     if (!hasLicense) {
         document.getElementById("feedbackWrapper").style.display = "none";
     }
+    // Ein alter Schlüssel (bis 2.04 im Browser gespeichert) wird mit einem neuen nicht mehr gebraucht
+    if (hasLicense && getData("serial") != null) {
+        removeData("serial");
+    }
 }
 
-// Funktion zum Abspeichern des Lizenzschlüssels
-// (Einstellungen › Lizenz). Unveränderte Sternchen behalten den gespeicherten Schlüssel.
-function saveLicenseKey() {
-    var messageNode = document.getElementById("licenseMsg");
-    if (isLicenseMasked()) {
-        messageNode.className = "licenseActive";
-        messageNode.textContent = "Lizenz unverändert. Für einen neuen Schlüssel in ein Feld klicken und neu eingeben.";
+// Hinweis für bisherige Lizenznehmer: Bis 2.04 stand der Schlüssel im Browser ("serial").
+// Er gilt nicht mehr. Der Hinweis erscheint, bis er ausgeblendet oder ein neuer Schlüssel hinterlegt wird.
+function showLicenseChangeNotice(container) {
+    if (getData("serial") == null || getLicenseState().status === "active") {
         return;
     }
-    var licenseKey = "";
-    for (var index = 0; index < licenseFields.length; index++) {
-        licenseKey += document.getElementById(licenseFields[index]).value.trim();
-    }
-
-    if (licenseKey == "") {
-        messageNode.className = "licenseError";
-        messageNode.textContent = "Bitte den Lizenzschlüssel eingeben. Zum Entfernen \"Entfernen\" wählen.";
-        return;
-    }
-    if (!isValidLicense(licenseKey)) {
-        messageNode.className = "licenseError";
-        messageNode.textContent = "Lizenzschlüssel ungültig. Bitte Eingabe prüfen.";
-        return;
-    }
-    setData("serial", licenseKey);
-    updateFeedbackVisibility();
-    fillLicenseFields();
-    messageNode.textContent = "Lizenz gespeichert. Das Feedbackformular ist im Menü verfügbar.";
+    var banner = document.createElement("section");
+    banner.className = "updateBanner";
+    banner.setAttribute("aria-label", "Hinweis zur Lizenz");
+    var icon = document.createElement("div");
+    icon.className = "updateIcon";
+    icon.appendChild(createIcon("sliders"));
+    var content = document.createElement("div");
+    content.className = "updateContent";
+    var heading = document.createElement("h2");
+    heading.textContent = "Die Lizenzierung wurde geändert";
+    var meta = document.createElement("p");
+    meta.className = "updateMeta";
+    meta.textContent = "Dein bisheriger Lizenzschlüssel ist nicht mehr gültig. Bitte einen neuen Schlüssel anfordern und im Updater (updateStefflix.exe) unter \"Lizenz\" eingeben, damit das Feedback wieder verfügbar ist.";
+    var actions = document.createElement("div");
+    actions.className = "updateActions";
+    var more = document.createElement("a");
+    more.className = "sflixButton primary";
+    more.href = buildStartUrl("SETTINGS", false) + "#lizenz";
+    more.textContent = "Mehr erfahren";
+    var dismiss = document.createElement("button");
+    dismiss.type = "button";
+    dismiss.className = "sflixButton ghost";
+    dismiss.textContent = "Ausblenden";
+    dismiss.addEventListener("click", function () {
+        // Der alte Schlüssel ist ohne Nutzen: mit dem Hinweis löschen
+        removeData("serial");
+        banner.classList.add("hiding");
+        setTimeout(function () {
+            banner.remove();
+        }, 300);
+    });
+    actions.append(more, dismiss);
+    content.append(heading, meta, actions);
+    banner.append(icon, content);
+    container.insertBefore(banner, container.firstChild);
 }
 
 // Funktion, um den verwendeten Browser auszulesen

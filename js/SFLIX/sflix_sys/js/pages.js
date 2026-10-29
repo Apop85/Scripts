@@ -1081,17 +1081,30 @@ function getSplashDedication(date) {
     return null;
 }
 
-// Splashscreen einmal pro Tag, immer bildschirmfüllend. Klick überspringt ihn.
+// Lokales Datum als JJJJ-MM-TT (toISOString wäre UTC: kurz nach Mitternacht noch der Vortag)
+function getLocalDateKey(date) {
+    return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0");
+}
+
+// Splashscreen einmal pro Tag (lokales Datum), immer bildschirmfüllend. Klick überspringt ihn.
+// Immer, egal was eingestellt ist:
+//   - an den zwei Gedenktagen (13. Januar, 22. Oktober) beim ersten Start des Tages, mit Widmung
+//   - beim ersten Start nach einem Update auf eine neue STEFFLIX-Version (lastSplashVersion)
 function showSplashscreen() {
-    // Einstellung "Startbildschirm überspringen" (die Widmungen an den zwei Gedenktagen bleiben)
-    if (getSetting("skipSplash") && getSplashDedication(new Date()) == null) {
-        return;
-    }
+    var now = new Date();
     var lastSplashscreen = getData("lastSplashscreen");
-    var currentDate = new Date().toISOString().split("T")[0];
-    if (lastSplashscreen != null && lastSplashscreen >= currentDate) {
-        return;
+    var currentDate = getLocalDateKey(now);
+    var lastVersion = getData("lastSplashVersion");
+    var newVersion = lastVersion == null || compareVersions(getVersionName(), lastVersion) > 0;
+    if (!newVersion) {
+        if (getSetting("skipSplash") && getSplashDedication(now) == null) {
+            return;
+        }
+        if (lastSplashscreen != null && lastSplashscreen >= currentDate) {
+            return;
+        }
     }
+    setData("lastSplashVersion", getVersionName());
 
     var splashNode = document.getElementById("splashscreen");
     var image = document.createElement("img");
@@ -1126,7 +1139,8 @@ function showSplashscreen() {
 // Update-Hinweis
 // ===================================================================
 
-// Ausgeblendet für eine Version: { version: 2.1, until: Zeitpunkt in ms, 0 = bis zur nächsten Version }
+// Ausgeblendet für eine Version: { version: "2.5.0", until: Zeitpunkt in ms, 0 = bis zur nächsten Version }
+// (bis 2.04 stand dort die Zahl, z.B. 2.04)
 function isUpdateBannerDismissed(newestVersion) {
     var dismissed = null;
     try {
@@ -1134,7 +1148,8 @@ function isUpdateBannerDismissed(newestVersion) {
     } catch (error) {
         dismissed = null;
     }
-    if (dismissed == null || typeof dismissed.version !== "number" || newestVersion > dismissed.version) {
+    var dismissedVersion = dismissed != null ? toVersionName(dismissed.version) : null;
+    if (dismissedVersion == null || compareVersions(newestVersion, dismissedVersion) > 0) {
         return false;
     }
     if (dismissed.until === 0) {
@@ -1182,10 +1197,10 @@ function createUpdateBanner(newestVersion, options) {
     var content = document.createElement("div");
     content.className = "updateContent";
     var heading = document.createElement("h2");
-    heading.textContent = options.heading || "STEFFLIX " + formatVersion(newestVersion) + " ist verfügbar";
+    heading.textContent = options.heading || "STEFFLIX " + newestVersion + " ist verfügbar";
     var meta = document.createElement("p");
     meta.className = "updateMeta";
-    meta.textContent = options.meta || "Installiert ist Version " + formatVersion(version) + ".";
+    meta.textContent = options.meta || "Installiert ist Version " + getVersionName() + ".";
     var newsList = document.createElement("ul");
     newsList.className = "updateNews";
     newsList.style.display = "none";
@@ -1237,9 +1252,11 @@ function fillUpdateNews(banner, newestVersion) {
             return;
         }
         var items = [];
+        var installed = getVersionName();
         news.versions.forEach(function (entry) {
-            var entryVersion = entry != null ? parseFloat(entry.version) : NaN;
-            if (entryVersion > version && entryVersion <= newestVersion && Array.isArray(entry.items)) {
+            var entryVersion = getNewsVersionName(entry);
+            if (entryVersion != null && compareVersions(entryVersion, installed) > 0
+                && compareVersions(entryVersion, newestVersion) <= 0 && Array.isArray(entry.items)) {
                 items = items.concat(entry.items);
             }
         });
@@ -1265,8 +1282,8 @@ function checkForUpdate(container) {
         return;
     }
     fetchText(versionUrl).then(function (text) {
-        var newestVersion = parseVersion(text);
-        if (newestVersion != null && newestVersion > version) {
+        var newestVersion = parseVersionJs(text);
+        if (newestVersion != null && compareVersions(newestVersion, getVersionName()) > 0) {
             // Das STEFFLIX-Update bringt auch den neuen Updater mit
             if (!isUpdateBannerDismissed(newestVersion)) {
                 var banner = createUpdateBanner(newestVersion);
@@ -1334,19 +1351,12 @@ function fetchText(url) {
     });
 }
 
-// 2.00 wird als Zahl 2 gespeichert, daher mit mindestens zwei Nachkommastellen anzeigen (1.323 bleibt 1.323)
-function formatVersion(value) {
-    var text = String(value);
-    var decimals = text.includes(".") ? text.split(".")[1].length : 0;
-    return Number(value).toFixed(Math.max(2, decimals));
-}
-
-function parseVersion(text) {
-    if (text == null || !text.includes("var version = ")) {
+// Version eines Eintrags in news.json als x.y.z ("name" ab 2.5.0, sonst die alte Zahl "version")
+function getNewsVersionName(entry) {
+    if (entry == null) {
         return null;
     }
-    var parsed = parseFloat(text.split("var version = ")[1]);
-    return isNaN(parsed) ? null : parsed;
+    return toVersionName(entry.name != null ? entry.name : entry.version);
 }
 
 // Startseite: Update-Hinweis, Weiterschauen, pro Kategorie ein Menüband
@@ -1362,6 +1372,7 @@ function showStartPage() {
     mediaNode.appendChild(dashboard);
 
     checkForUpdate(dashboard);
+    showLicenseChangeNotice(dashboard);
 
     var hasContinue = showContinueWatching(dashboard);
     var hasFavorites = showFavoritesRow(dashboard);
@@ -1668,7 +1679,7 @@ function showHelpPage() {
     var helpIds = { "firefox": "firefoxBrowserHelp", "chrome": "chromeBrowserHelp", "edge": "edgeBrowserHelp" };
     document.getElementById(helpIds[browserName] || "otherBrowserHelp").style.display = "block";
 
-    document.getElementById("versionNow").textContent = formatVersion(version);
+    document.getElementById("versionNow").textContent = getVersionName();
     var versionNewNode = document.getElementById("versionNew");
     versionNewNode.textContent = "wird geprüft...";
 
@@ -1678,9 +1689,9 @@ function showHelpPage() {
     document.getElementById("help").appendChild(changelogNode);
 
     fetchText(versionUrl).then(function (text) {
-        var newestVersion = parseVersion(text);
-        versionNewNode.textContent = newestVersion != null ? formatVersion(newestVersion) : "unbekannt (keine Internetverbindung?)";
-        markVersionCell(versionNewNode, newestVersion != null && newestVersion > version);
+        var newestVersion = parseVersionJs(text);
+        versionNewNode.textContent = newestVersion != null ? newestVersion : "unbekannt (keine Internetverbindung?)";
+        markVersionCell(versionNewNode, newestVersion != null && compareVersions(newestVersion, getVersionName()) > 0);
     });
     fillToolVersions();
 
@@ -1924,7 +1935,7 @@ function renderNews(container, news) {
             return;
         }
         var heading = document.createElement("b");
-        heading.textContent = "Version " + String(versionEntry.version);
+        heading.textContent = "Version " + (getNewsVersionName(versionEntry) || String(versionEntry.version));
         container.appendChild(heading);
         container.appendChild(document.createTextNode(":"));
         container.appendChild(document.createElement("br"));

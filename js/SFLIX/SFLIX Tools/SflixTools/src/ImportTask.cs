@@ -231,6 +231,7 @@ namespace Sflix
         void ImportOne(ImportItem it, string targetDir, Action<double> progress)
         {
             string src = it.Source;
+            currentSource = src;
             string ext = Path.GetExtension(src).ToLowerInvariant();
             string kind = MediaTypes.Kind(ext);
             string stem = Path.GetFileNameWithoutExtension(src);
@@ -366,10 +367,12 @@ namespace Sflix
         }
 
         // Zieldatei vorhanden: nachfragen (oder die gemerkte Antwort verwenden)
+        string currentSource;   // Quelle der Datei, die gerade importiert wird (für den Vergleich)
+
         bool AskReplace(string target)
         {
             if (remembered.HasValue) return remembered.Value;
-            ConflictAnswer a = ctx.AskConflict != null ? ctx.AskConflict(target) : null;
+            ConflictAnswer a = ctx.AskConflict != null ? ctx.AskConflict(currentSource, target) : null;
             if (a == null) return false;
             if (a.Remember) remembered = a.Replace;
             return a.Replace;

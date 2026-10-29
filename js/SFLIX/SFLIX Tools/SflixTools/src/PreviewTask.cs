@@ -97,6 +97,49 @@ namespace Sflix
             if (failed > 0) throw new TaskFailedException(failed + " Vorschaubild(er) konnten nicht erstellt werden");
         }
 
+        // Vorschaubilder für bestimmte Dateien (z.B. aus "Medien prüfen"). Vorhandene bleiben.
+        public static void MakeFor(TaskContext ctx, List<string> files)
+        {
+            ctx.Ffmpeg.EnsureInstalled(ctx);
+            ImageCodecInfo jpeg = null;
+            foreach (ImageCodecInfo c in ImageCodecInfo.GetImageEncoders())
+                if (c.MimeType == "image/jpeg") jpeg = c;
+            EncoderParameters enc = new EncoderParameters(1);
+            enc.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, JpegQuality);
+            string tmpBmp = Path.Combine(Path.GetTempPath(), "sflix-preview-" + Process.GetCurrentProcess().Id + ".bmp");
+            int created = 0, failed = 0;
+            try
+            {
+                for (int i = 0; i < files.Count; i++)
+                {
+                    ctx.Check();
+                    string file = files[i];
+                    string previewDir = Path.Combine(Path.GetDirectoryName(file), "Preview");
+                    string target = Path.Combine(previewDir, Path.GetFileNameWithoutExtension(file) + ".jpg");
+                    ctx.Progress((double)i / Math.Max(1, files.Count), "Vorschaubild " + (i + 1) + " / " + files.Count);
+                    if (File.Exists(target)) continue;
+                    try
+                    {
+                        MakePreview(file, previewDir, target, tmpBmp, jpeg, enc, ctx);
+                        created++;
+                        ctx.Log("  OK      " + file);
+                    }
+                    catch (OperationCanceledException) { throw; }
+                    catch (Exception ex)
+                    {
+                        failed++;
+                        ctx.Log("  FEHLER  " + file + " :: " + ex.Message);
+                    }
+                }
+            }
+            finally
+            {
+                FileOps.TryDelete(tmpBmp);
+            }
+            ctx.Log("Vorschaubilder erstellt: " + created + "   Fehler: " + failed);
+            if (failed > 0) throw new TaskFailedException(failed + " Vorschaubild(er) konnten nicht erstellt werden");
+        }
+
         static void Collect(string dir, HashSet<string> wanted, List<string> result, List<string> previewDirs, TaskContext ctx)
         {
             ctx.Check();

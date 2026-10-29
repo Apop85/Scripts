@@ -30,7 +30,7 @@ def createPath(installPath):
 print("==============================================================")
 print("        Willkommen beim Setup von STEFFLIX")
 print("==============================================================")
-print("STEFFLIX ist eine Browserapplikation angelehnt an Netflix, um")
+print("STEFFLIX ist eine Browserapplikation im Stil bekannter Streamingdienste, um")
 print("lokal oder im Netzwerk gespeicherte Mediendateien abzuspielen.")
 print("")
 print("Ausser einem installierten Browser hat STEFFLIX keine weiteren")

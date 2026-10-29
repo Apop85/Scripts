@@ -13,8 +13,8 @@ namespace Sflix
     {
         public static readonly Color Background = Color.FromArgb(0x14, 0x14, 0x17);
         public static readonly Color Border = Color.FromArgb(0x2a, 0x2a, 0x30);
-        public static readonly Color Red = Color.FromArgb(0xe5, 0x09, 0x14);
-        public static readonly Color DarkRed = Color.FromArgb(0xa3, 0x06, 0x10);
+        public static readonly Color Red = Color.FromArgb(0xe8, 0x26, 0x1a);
+        public static readonly Color DarkRed = Color.FromArgb(0xa8, 0x1a, 0x0f);
 
         // Verlauf wie im SVG: bis 30 % hellrot, ab 68 % dunkelrot (bezogen auf top..bottom).
         // Der Pinsel reicht weit über den Bereich hinaus, sonst wiederholt GDI+ den Verlauf

@@ -36,6 +36,8 @@ namespace Sflix
         readonly RichTextBox box;
         readonly TextBox search;
         readonly DarkCheckBox onlyProblems;
+        readonly DarkCheckBox saveToFile;
+        readonly Button openButton;
         readonly Label countLabel;
         readonly Timer searchTimer = new Timer();
 
@@ -44,6 +46,16 @@ namespace Sflix
         // Pfad der Protokolldatei; vor dem Öffnen wird BeforeOpenFile aufgerufen (Datei schreiben)
         public string LogFile;
         public Action BeforeOpenFile;
+        // Schalter "In Datei speichern" geändert (true = ab jetzt in die Datei schreiben)
+        public Action<bool> SaveToFileChanged;
+        // Protokoll dieser Sitzung als Text (für "Speichern unter …" bei ausgeschalteter Datei)
+        public Func<string> SessionText;
+
+        public bool SaveToFile
+        {
+            get { return saveToFile.Checked; }
+            set { saveToFile.Checked = value; }
+        }
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, string lParam);
@@ -53,7 +65,8 @@ namespace Sflix
         {
             ColumnCount = 1;
             ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            RowCount = 3;
+            RowCount = 4;
+            RowStyles.Add(new RowStyle(SizeType.AutoSize));
             RowStyles.Add(new RowStyle(SizeType.AutoSize));
             RowStyles.Add(new RowStyle(SizeType.AutoSize));
             RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -84,13 +97,13 @@ namespace Sflix
             tools.BackColor = Color.Transparent;
             Button copy = ToolButton("Kopieren");
             Button clear = ToolButton("Leeren");
-            Button open = ToolButton("Datei öffnen");
+            openButton = ToolButton("Speichern unter …");
             copy.Click += delegate { CopyVisible(); };
             clear.Click += delegate { Clear(); };
-            open.Click += delegate { OpenFile(); };
+            openButton.Click += delegate { if (saveToFile.Checked) OpenFile(); else SaveAs(); };
             tools.Controls.Add(copy);
             tools.Controls.Add(clear);
-            tools.Controls.Add(open);
+            tools.Controls.Add(openButton);
             head.Controls.Add(title, 0, 0);
             head.Controls.Add(countLabel, 1, 0);
             head.Controls.Add(tools, 2, 0);
@@ -118,6 +131,18 @@ namespace Sflix
             onlyProblems.Margin = new Padding(0);
             onlyProblems.FitText();
             onlyProblems.CheckedChanged += delegate { Render(); };
+            // Protokolldatei nur auf Wunsch (wird nicht gespeichert, beim Start immer aus)
+            saveToFile = new DarkCheckBox();
+            saveToFile.Text = "In Datei speichern";
+            saveToFile.ForeColor = Theme.Text;
+            saveToFile.Switch = true;
+            saveToFile.Margin = new Padding(0, 0, 0, Theme.S(6));
+            saveToFile.FitText();
+            saveToFile.CheckedChanged += delegate
+            {
+                openButton.Text = saveToFile.Checked ? "Datei öffnen" : "Speichern unter …";
+                if (SaveToFileChanged != null) SaveToFileChanged(saveToFile.Checked);
+            };
             filter.Controls.Add(search, 0, 0);
             filter.Controls.Add(onlyProblems, 1, 0);
 
@@ -136,7 +161,8 @@ namespace Sflix
 
             Controls.Add(head, 0, 0);
             Controls.Add(filter, 0, 1);
-            Controls.Add(box, 0, 2);
+            Controls.Add(saveToFile, 0, 2);
+            Controls.Add(box, 0, 3);
             UpdateCount();
         }
 
@@ -336,6 +362,30 @@ namespace Sflix
             {
                 MessageBox.Show(FindForm(), "Die Protokolldatei konnte nicht geöffnet werden:\n" + e.Message, App.Title,
                                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        // Protokoll dieser Sitzung in eine selbst gewählte Datei speichern
+        void SaveAs()
+        {
+            string text = SessionText != null ? SessionText() : null;
+            if (string.IsNullOrEmpty(text))
+            {
+                MessageBox.Show(FindForm(), "Das Protokoll ist noch leer.", App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            using (SaveFileDialog dlg = new SaveFileDialog())
+            {
+                dlg.Title = "Protokoll speichern";
+                dlg.Filter = "Textdatei|*.txt|Alle Dateien|*.*";
+                dlg.FileName = "updater-protokoll-" + DateTime.Now.ToString("yyyy-MM-dd-HHmm") + ".txt";
+                if (dlg.ShowDialog(FindForm()) != DialogResult.OK) return;
+                try { File.WriteAllText(dlg.FileName, text, new UTF8Encoding(true)); }
+                catch (Exception e)
+                {
+                    MessageBox.Show(FindForm(), "Das Protokoll konnte nicht gespeichert werden:\n" + e.Message, App.Title,
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
         }
 

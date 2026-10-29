@@ -1,9 +1,12 @@
 // ffmpeg/ffprobe: Installation, Update, Untersuchen von Videos, Wahl des Encoders.
 //
-// ffmpeg liegt in sflix_sys\ffmpeg\ und wird beim ersten Bedarf von einem offiziellen Build
-// (gyan.dev, über GitHub-Releases) geladen. Welche Version, steht in ffmpeg.json im
-// STEFFLIX-Repository (selbst über checksums.json abgesichert). Ist die Datei dort nicht
-// vorhanden, gilt die hier eingebaute Version.
+// ffmpeg liegt seit 3.3 standardmässig in %LOCALAPPDATA%\STEFFLIX\ffmpeg (je Benutzer und PC,
+// lokal auch bei STEFFLIX auf einem NAS) oder in einem im Setup bzw. unter Tools › Einstellungen
+// gewählten Ordner (ffmpeg.folder). Bis 3.2 lag es in sflix_sys\ffmpeg, von dort wird es beim
+// Start verschoben (FfmpegLocation). Es wird beim Setup oder beim ersten Bedarf von einem
+// offiziellen Build (gyan.dev, über GitHub-Releases) geladen. Welche Version, steht in
+// ffmpeg.json im STEFFLIX-Repository (selbst über checksums.json abgesichert). Ist die Datei
+// dort nicht vorhanden, gilt die hier eingebaute Version.
 
 using System;
 using System.Collections.Concurrent;
@@ -75,6 +78,78 @@ namespace Sflix
         public string Language;
     }
 
+    // Wo ffmpeg liegt bzw. hin installiert wird
+    public static class FfmpegLocation
+    {
+        // Standard: %LOCALAPPDATA%\STEFFLIX\ffmpeg
+        public static string DefaultFolder
+        {
+            get
+            {
+                string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                return Path.Combine(Path.Combine(local, "STEFFLIX"), "ffmpeg");
+            }
+        }
+
+        // Bis 3.2: im STEFFLIX-Ordner
+        public static string LegacyFolder { get { return Path.Combine(App.SysDir, "ffmpeg"); } }
+
+        public static bool IsInstalledIn(string folder)
+        {
+            return !string.IsNullOrEmpty(folder) && File.Exists(Path.Combine(folder, "ffmpeg.exe")) && File.Exists(Path.Combine(folder, "ffprobe.exe"));
+        }
+
+        // Gewählter Ordner aus den Einstellungen (leer = keiner)
+        public static string Chosen(Settings settings)
+        {
+            return settings == null ? "" : settings.GetString("ffmpeg.folder", "");
+        }
+
+        // Verwendeter Ordner: gewählter Ordner, Standardordner, alter Ort (wo ffmpeg installiert ist).
+        // Ist es nirgends installiert: der gewählte Ordner, falls es ihn auf diesem PC gibt, sonst
+        // der Standardordner (dort wird es bei Bedarf installiert).
+        public static string Folder(Settings settings)
+        {
+            string chosen = Chosen(settings);
+            if (IsInstalledIn(chosen)) return chosen;
+            if (IsInstalledIn(DefaultFolder)) return DefaultFolder;
+            if (IsInstalledIn(LegacyFolder)) return LegacyFolder;
+            if (chosen.Length > 0 && Directory.Exists(chosen)) return chosen;
+            return DefaultFolder;
+        }
+
+        // Ein ffmpeg am alten Ort gilt als installiert und wird in den Standardordner verschoben
+        // (nur wenn kein eigener Ordner gewählt ist und dort noch keines liegt). Klappt das nicht,
+        // bleibt es am alten Ort und wird von dort verwendet. Gibt eine Meldung zurück oder null.
+        public static string MigrateLegacy(Settings settings)
+        {
+            string legacy = LegacyFolder;
+            if (!IsInstalledIn(legacy) || Chosen(settings).Length > 0 || IsInstalledIn(DefaultFolder)) return null;
+            string target = DefaultFolder;
+            try
+            {
+                Directory.CreateDirectory(target);
+                foreach (string file in Directory.GetFiles(legacy))
+                    File.Copy(file, Path.Combine(target, Path.GetFileName(file)), true);
+                if (!IsInstalledIn(target)) throw new IOException("Kopie unvollständig");
+                // Erst nach der vollständigen Kopie am alten Ort löschen
+                try { Directory.Delete(legacy, true); }
+                catch { }
+                return "ffmpeg wurde nach " + target + " verschoben.";
+            }
+            catch (Exception e)
+            {
+                try
+                {
+                    foreach (string name in new string[] { "ffmpeg.exe", "ffprobe.exe", "version.json" })
+                        FileOps.TryDelete(Path.Combine(target, name));
+                }
+                catch { }
+                return "Hinweis: ffmpeg konnte nicht nach " + target + " verschoben werden (" + e.Message + "), es wird weiter aus sflix_sys\\ffmpeg verwendet.";
+            }
+        }
+    }
+
     public class FfmpegTools
     {
         public string Dir;
@@ -85,14 +160,10 @@ namespace Sflix
         readonly ConcurrentDictionary<string, MediaInfo> probeCache = new ConcurrentDictionary<string, MediaInfo>();
         string encoder;
 
-        public FfmpegTools(string root, string overrideDir)
+        // folder: Ordner von ffmpeg (FfmpegLocation.Folder); leer = alter Ort im STEFFLIX-Ordner
+        public FfmpegTools(string root, string folder)
         {
-            // Eigener ffmpeg-Ordner aus den Einstellungen (falls gesetzt und vorhanden)
-            if (!string.IsNullOrEmpty(overrideDir) && File.Exists(Path.Combine(overrideDir, "ffmpeg.exe"))
-                && File.Exists(Path.Combine(overrideDir, "ffprobe.exe")))
-                Dir = overrideDir;
-            else
-                Dir = Path.Combine(root, "sflix_sys", "ffmpeg");
+            Dir = !string.IsNullOrEmpty(folder) ? folder : Path.Combine(root, "sflix_sys", "ffmpeg");
         }
 
         public bool Installed
@@ -162,12 +233,22 @@ namespace Sflix
                 ctx.Log("  ffmpeg " + m.Version + " ist aktuell");
                 return;
             }
-            if (!Dir.StartsWith(Path.Combine(App.Root, "sflix_sys"), StringComparison.OrdinalIgnoreCase))
+            // Ein selbst hineinkopiertes ffmpeg (ohne version.json des Updaters) bleibt unverändert
+            if (Installed && !File.Exists(VersionFile))
             {
                 ctx.Log("  ffmpeg wird aus einem eigenen Ordner verwendet (" + Dir + ") und nicht aktualisiert");
                 return;
             }
             Install(m, ctx);
+        }
+
+        // Installiert ffmpeg (Setup, Knopf "Installieren"). Lädt die Version aus ffmpeg.json.
+        public void InstallNow(TaskContext ctx)
+        {
+            FfmpegManifest m = null;
+            try { m = LoadManifest(Net.LoadChecksums(ctx.Token), ctx); }
+            catch (DownloadException) { }
+            Install(m ?? FfmpegManifest.BuiltIn(), ctx);
         }
 
         void Install(FfmpegManifest m, TaskContext ctx)

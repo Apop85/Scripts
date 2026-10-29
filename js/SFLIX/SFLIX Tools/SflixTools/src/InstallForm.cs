@@ -13,7 +13,9 @@ namespace Sflix
 {
     public class InstallForm : Form
     {
-        TextBox folderBox;
+        TextBox folderBox, ffmpegBox, licenseBox;
+        DarkCheckBox ffmpegCheck;
+        Control ffmpegRow;
         Button installButton, openButton, startButton, closeButton;
         DarkProgress progress;
         Label statusLabel;
@@ -87,8 +89,8 @@ namespace Sflix
             card.Controls.Add(title);
 
             Label intro = Theme.MakeLabel(
-                "In diesem Ordner ist STEFFLIX noch nicht installiert. STEFFLIX ist eine Browserapplikation angelehnt an " +
-                "Netflix, um lokal oder im Netzwerk gespeicherte Mediendateien abzuspielen. Ausser einem Browser braucht " +
+                "In diesem Ordner ist STEFFLIX noch nicht installiert. STEFFLIX ist eine Browserapplikation im Stil " +
+                "bekannter Streamingdienste, um lokal oder im Netzwerk gespeicherte Mediendateien abzuspielen. Ausser einem Browser braucht " +
                 "es nichts weiter.\n\nWähle den Ordner, in dem STEFFLIX installiert werden soll, am besten den Hauptordner " +
                 "deiner Medien (z.B. M:\\ oder C:\\Medien). Fehlende Ordner werden angelegt, vorhandene Dateien bleiben unverändert.", true);
             intro.MaximumSize = new Size(Theme.S(840), 0);
@@ -126,6 +128,41 @@ namespace Sflix
             row.Controls.Add(folderBox, 1, 0);
             row.Controls.Add(browse, 2, 0);
             card.Controls.Add(row);
+
+            // ffmpeg mitinstallieren (empfohlen), Ordner wählbar, Standard je Benutzer in AppData
+            ffmpegCheck = new DarkCheckBox();
+            ffmpegCheck.Text = "ffmpeg mitinstallieren (empfohlen)";
+            ffmpegCheck.ForeColor = Theme.Text;
+            ffmpegCheck.Switch = true;
+            ffmpegCheck.Checked = true;
+            ffmpegCheck.Margin = new Padding(0, Theme.S(14), 0, Theme.S(2));
+            ffmpegCheck.FitText();
+            card.Controls.Add(ffmpegCheck);
+            Label ffmpegHint = Theme.MakeLabel("ffmpeg wird für Vorschaubilder, Konvertieren, den Importer, „Medien prüfen“ und „Duplikate finden“ " +
+                                               "gebraucht (Download ca. 100 MB). Ohne wird es beim ersten Bedarf geladen.", true);
+            ffmpegHint.MaximumSize = new Size(Theme.S(840), 0);
+            ffmpegHint.Margin = new Padding(0, 0, 0, Theme.S(4));
+            card.Controls.Add(ffmpegHint);
+            ffmpegBox = Theme.MakeTextBox();
+            ffmpegBox.Text = FfmpegLocation.DefaultFolder;
+            ffmpegRow = FolderRow(ffmpegBox, "ffmpeg-Ordner:", "Ordner für ffmpeg wählen");
+            card.Controls.Add(ffmpegRow);
+            ffmpegCheck.CheckedChanged += delegate { ffmpegRow.Enabled = ffmpegCheck.Checked; };
+
+            // Lizenzschlüssel (optional)
+            Label licenseTitle = Theme.MakeLabel("Lizenzschlüssel (optional)", false);
+            licenseTitle.Margin = new Padding(0, Theme.S(14), 0, Theme.S(2));
+            card.Controls.Add(licenseTitle);
+            Label licenseHint = Theme.MakeLabel("Schaltet das Feedback in STEFFLIX und im Updater frei. Lässt sich auch später im Updater unter „Lizenz“ eingeben. " +
+                                                "Beim Speichern wird eine Bestätigung mit der Kennung dieser Installation verschickt.", true);
+            licenseHint.MaximumSize = new Size(Theme.S(840), 0);
+            licenseHint.Margin = new Padding(0, 0, 0, Theme.S(4));
+            card.Controls.Add(licenseHint);
+            licenseBox = Theme.MakeTextBox();
+            licenseBox.Dock = DockStyle.Fill;
+            licenseBox.Font = new Font("Consolas", 9.5f);
+            licenseBox.Margin = new Padding(0, Theme.S(2), 0, 0);
+            card.Controls.Add(licenseBox);
             root.Controls.Add(card, 0, 1);
 
             // Knöpfe
@@ -207,6 +244,39 @@ namespace Sflix
 
         LogToggle logToggle;
 
+        Control FolderRow(TextBox box, string label, string description)
+        {
+            TableLayoutPanel row = new TableLayoutPanel();
+            row.Dock = DockStyle.Fill;
+            row.AutoSize = true;
+            row.ColumnCount = 3;
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            row.Margin = new Padding(0);
+            Label l = Theme.MakeLabel(label, false);
+            l.Margin = new Padding(0, Theme.S(5), Theme.S(6), 0);
+            box.Dock = DockStyle.Fill;
+            box.Margin = new Padding(0, Theme.S(2), Theme.S(6), 0);
+            Button browse = Theme.MakeButton("Durchsuchen …", false);
+            browse.Padding = new Padding(Theme.S(8), 0, Theme.S(8), 0);
+            browse.Margin = new Padding(0);
+            browse.Click += delegate
+            {
+                using (FolderBrowserDialog dlg = new FolderBrowserDialog())
+                {
+                    dlg.Description = description;
+                    dlg.ShowNewFolderButton = true;
+                    if (Directory.Exists(box.Text)) dlg.SelectedPath = box.Text;
+                    if (dlg.ShowDialog(this) == DialogResult.OK) box.Text = dlg.SelectedPath;
+                }
+            };
+            row.Controls.Add(l, 0, 0);
+            row.Controls.Add(box, 1, 0);
+            row.Controls.Add(browse, 2, 0);
+            return row;
+        }
+
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
@@ -235,6 +305,30 @@ namespace Sflix
                 }
             }
 
+            InstallOptions options = new InstallOptions();
+            options.Ffmpeg = ffmpegCheck.Checked;
+            if (options.Ffmpeg)
+            {
+                string ff = ffmpegBox.Text.Trim().Trim('"');
+                try { options.FfmpegFolder = Path.GetFullPath(ff.Length > 0 ? ff : FfmpegLocation.DefaultFolder); }
+                catch (Exception)
+                {
+                    MessageBox.Show(this, "Ungültiger ffmpeg-Ordner:\n" + ff, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+            string key = licenseBox.Text.Trim();
+            if (key.Length > 0)
+            {
+                string error;
+                if (LicenseKey.Decode(key, out error) == null)
+                {
+                    MessageBox.Show(this, error, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                options.LicenseKey = key;
+            }
+
             running = true;
             installButton.Enabled = false;
             closeButton.Enabled = false;
@@ -250,7 +344,7 @@ namespace Sflix
             Thread t = new Thread(delegate()
             {
                 string error = null;
-                try { InstallTask.Run(ctx, target); }
+                try { InstallTask.Run(ctx, target, options); }
                 catch (Exception ex) { error = ex.Message; }
                 BeginInvoke((Action)delegate { Finished(target, error); });
             });

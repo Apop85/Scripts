@@ -293,7 +293,7 @@ function getMediaTypeLabel(path) {
 }
 
 // ===================================================================
-// Menübänder (horizontal scrollbar wie bei Netflix)
+// Menübänder (horizontal scrollbar wie bei Streamingdiensten)
 // ===================================================================
 
 // Erstellt ein Menüband und gibt den Container für die Kacheln zurück

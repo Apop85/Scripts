@@ -30,6 +30,8 @@ namespace Sflix
         public bool DeleteOriginal;
         public string Preset = "medium";
         public int QualitySD = 21, QualityHD = 19, QualityFullHD = 18, Quality4K = 17;
+        // Nur diese Dateien (z.B. aus "Medien prüfen" oder "Duplikate finden"), null = alle im Ordner
+        public HashSet<string> OnlyFiles;
     }
 
     public class ConvertTask
@@ -78,6 +80,7 @@ namespace Sflix
                 string name = Path.GetFileName(f);
                 return name.StartsWith("._") || name.Contains(".__temp__");
             });
+            if (opt.OnlyFiles != null) files.RemoveAll(delegate(string f) { return !opt.OnlyFiles.Contains(f); });
             files.Sort(StringComparer.OrdinalIgnoreCase);
             total = files.Count;
             ctx.Log(total + " Videos gefunden in " + opt.Folder);

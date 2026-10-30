@@ -101,6 +101,12 @@ Welcher Quellcode-Stand zuletzt bereitgestellt wurde, steht in `release_state.js
 
 **Umstieg bestehender Installationen:** `updateData.exe` und `updater.exe` samt ihren Einträgen in `checksums.json` noch eine Weile im Repository lassen. Die alte Python-Version lädt diese Dateien beim Update, holt dann über `updater.exe` die neue `updateStefflix.exe` und ist damit umgestellt. Die neue Version löscht die beiden alten Programme danach selbst.
 
+## Parallele Tools und gemerkte Prüfergebnisse (seit 3.4.2)
+
+- `Workers.ForEach` (Util.cs) verteilt Dateien auf mehrere Threads, `Workers.Degree(ctx, automatisch)` liest die Einstellung `tools.parallel` (0 = automatisch, sonst 1/2/4/8, Reiter Tools › Einstellungen › Gleichzeitig). Ergebnisse je Index ablegen und danach in fester Reihenfolge auswerten; Protokoll und Ergebnisliste bleiben so unverändert.
+- Medien prüfen: `CheckFile` parallel (automatisch 4). Duplikate finden: `QuickFingerprint` (SHA256 über je 1 MB Anfang, Mitte, Ende; kleine Dateien ganz) parallel (4), volle Prüfsumme nur bei gleichem Schnelltest und immer einzeln; Videodaten parallel (4). Vorschaubilder: `MakeMany` parallel (2), eigene BMP-Zwischendatei je Thread, Protokoll in der Reihenfolge der Dateien.
+- `MediaCache` (MediaCache.cs): ffprobe-Ergebnisse und echte ffprobe-Fehler je Datei (Schlüssel relativer Pfad, Grösse, Änderungszeit als Text) in `sflix_sys\medien_cache.json`, gilt nur für die ffmpeg-Version (SHA256 aus `version.json`), 180 Tage ohne Gebrauch fallen weg. `FfmpegTools.Probe` nutzt ihn automatisch; vorübergehende Lesefehler (`IsTransientError`) werden nicht gemerkt. `Save()` am Ende der Tools, `Clear()` über den Knopf in den Einstellungen. Steht in `Net.ProtectedFiles` und `.gitignore`.
+
 ## Dateilisten aus dem Release (seit 3.4.1)
 
 `create_checksums.py` schreibt zusätzlich `_webFiles` (aus `WEB_FILES` in `sflix_update.py`) und `_obsoleteFiles` (`OBSOLETE_FILES`) in `checksums.json`. Der Updater nimmt diese Listen (`Net.WebFilesFor`, `Net.ObsoleteFilesFor`), ohne sie seine eingebauten `Net.WebFiles`/`Net.ObsoleteFiles`. Eine neue oder entfallene Datei der Weboberfläche braucht damit nur einen Eintrag in `sflix_update.py`, keinen neuen Updater.

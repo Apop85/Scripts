@@ -72,7 +72,22 @@ namespace Sflix
             t.Add(new HelpTopic("Vorschaubilder",
                 "Erstellt fehlende Vorschaubilder (480×270) im Ordner Preview neben den Medien: für Videos ein Bild aus der Mitte, für Bilder eine verkleinerte Kopie. " +
                 "Vorschaubilder ohne zugehöriges Medium kommen nach Preview\\__gelöscht.\n" +
-                "- Ordner: „Alles“ oder eine Liste von Ordnern (auch ausserhalb von STEFFLIX)."));
+                "- Ordner: „Alles“ oder eine Liste von Ordnern (auch ausserhalb von STEFFLIX).\n" +
+                "- Mehrere Vorschaubilder entstehen gleichzeitig (siehe „Schneller prüfen“)."));
+
+            t.Add(new HelpTopic("Schneller prüfen",
+                "„Medien prüfen“, „Duplikate finden“ und „Vorschaubilder“ bearbeiten mehrere Dateien gleichzeitig und merken sich, was sie über eine Datei herausgefunden haben.\n" +
+                "# Gleichzeitig\n" +
+                "Einstellbar unter Tools › Einstellungen › Gleichzeitig. Automatisch: 4 Dateien beim Prüfen, 2 bei Vorschaubildern. " +
+                "Bei einer langsamen externen USB-Festplatte 1 wählen, dann arbeiten die Tools wie früher eine Datei nach der anderen. " +
+                "Die volle Prüfsumme bei „Duplikate finden“ liest immer eine Datei nach der anderen.\n" +
+                "# Gemerkte Prüfergebnisse\n" +
+                "Dauer, Auflösung, Video und Ton jeder untersuchten Datei stehen in sflix_sys\\medien_cache.json. Ist eine Datei unverändert (gleiche Grösse und Änderungszeit), " +
+                "wird sie beim nächsten Mal nicht neu untersucht. Ein zweiter Lauf von „Medien prüfen“ ist dadurch fast sofort fertig. " +
+                "Eine neue ffmpeg-Version verwirft die gemerkten Ergebnisse, ebenso der Knopf „Gemerkte Prüfergebnisse löschen“ in den Einstellungen.\n" +
+                "# Duplikate: Schnelltest\n" +
+                "Bei gleich grossen Dateien vergleicht „Duplikate finden“ zuerst je 1 MB vom Anfang, aus der Mitte und vom Ende. " +
+                "Nur wenn das übereinstimmt, liest es die ganzen Dateien für die Prüfsumme. Das spart bei Filmen auf dem NAS viel Zeit."));
 
             t.Add(new HelpTopic("Folgen umbenennen",
                 "Holt die Folgenliste einer Serie von fernsehserien.de (deutsche Titel, sonst TVmaze) und benennt die Dateien einheitlich um, " +
@@ -205,7 +220,8 @@ namespace Sflix
                 "- updater_info.js: installierte Versionen für STEFFLIX\n" +
                 "- updater_settings.json: Einstellungen des Updaters\n" +
                 "- updater.log: Protokoll (nur auf Wunsch bzw. ohne Oberfläche)\n" +
-                "- folgen_cache.json, folgen_rueckgaengig.json: Folgen umbenennen"));
+                "- folgen_cache.json, folgen_rueckgaengig.json: Folgen umbenennen\n" +
+                "- medien_cache.json: gemerkte Prüfergebnisse der Tools (siehe „Schneller prüfen“)"));
 
             return t;
         }

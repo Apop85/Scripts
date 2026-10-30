@@ -188,45 +188,20 @@ namespace Sflix
             files.RemoveAll(delegate(string f) { string n = Path.GetFileName(f); return n.StartsWith("._") || n.Contains(".__temp__"); });
             ctx.Log(files.Count + " Mediendateien gefunden in " + string.Join(", ", roots.ToArray()));
 
-            List<MediaCheckItem> items = new List<MediaCheckItem>();
-            for (int i = 0; i < files.Count; i++)
+            // Parallel prüfen (ffprobe wartet vor allem aufs Lesen), Ergebnisse je Datei in fester Reihenfolge
+            List<MediaCheckItem>[] perFile = new List<MediaCheckItem>[files.Count];
+            int checkedCount = 0;
+            Workers.ForEach(files, Workers.Degree(ctx, 4), ctx.Token, delegate(int i, string file)
             {
-                ctx.Check();
-                string file = files[i];
-                if (i % 5 == 0) ctx.Progress((double)i / Math.Max(1, files.Count), "Prüfe " + (i + 1) + " / " + files.Count + ": " + Path.GetFileName(file));
-                string ext = Path.GetExtension(file).ToLowerInvariant();
-                string kind = MediaTypes.Kind(ext);
-                MediaFacts facts = MediaFacts.Basic(file);
-                if (facts.Size == 0) { items.Add(Item(file, "empty", "leere Datei (0 Byte)", facts)); continue; }
-                if (MediaTypes.NeedsConversion(ext))
-                {
-                    if (kind == "video") facts.Probe(ctx.Ffmpeg, ctx.Token);
-                    items.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
-                    // Das Vorschaubild gilt auch nach dem Konvertieren (gleicher Name, andere Endung)
-                    if (((kind == "video" && previewVideos) || (kind == "image" && previewImages)) && !HasPreview(file))
-                        items.Add(Item(file, "preview", "kein Vorschaubild", facts));
-                    continue;
-                }
-                if (kind == "video")
-                {
-                    facts.Probe(ctx.Ffmpeg, ctx.Token);
-                    if (facts.ProbeError != null) { items.Add(Item(file, "broken", "defekt: " + facts.ProbeError, facts)); continue; }
-                    if (!MediaCheck.IsPlayable(facts, ext)) items.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
-                    if (previewVideos && !HasPreview(file)) items.Add(Item(file, "preview", "kein Vorschaubild", facts));
-                }
-                else if (kind == "audio" && ext == ".m4a")
-                {
-                    // M4A kann ALAC enthalten, das der Browser nicht abspielt
-                    facts.Probe(ctx.Ffmpeg, ctx.Token);
-                    if (facts.ProbeError != null) { items.Add(Item(file, "broken", "defekt: " + facts.ProbeError, facts)); continue; }
-                    if (!MediaCheck.IsPlayable(facts, ext)) items.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
-                }
-                else if (kind == "image" && previewImages && !HasPreview(file))
-                {
-                    items.Add(Item(file, "preview", "kein Vorschaubild", facts));
-                }
-            }
-
+                List<MediaCheckItem> found = new List<MediaCheckItem>();
+                CheckFile(ctx, file, previewVideos, previewImages, found);
+                perFile[i] = found;
+                int n = System.Threading.Interlocked.Increment(ref checkedCount);
+                if (n % 5 == 0 || n == files.Count) ctx.Progress((double)n / Math.Max(1, files.Count), "Prüfe " + n + " / " + files.Count);
+            });
+            MediaCache.Save();
+            List<MediaCheckItem> items = new List<MediaCheckItem>();
+            foreach (List<MediaCheckItem> found in perFile) if (found != null) items.AddRange(found);
             ctx.Progress(-1, "Suche leere Ordner ...");
             foreach (string root in roots) FindEmptyFolders(ctx, root, extensions, items);
 
@@ -318,6 +293,43 @@ namespace Sflix
                 PreviewTask.MakeFor(ctx, targets);
             }
             if (failed > 0) throw new TaskFailedException("Nicht alle Dateioperationen waren erfolgreich");
+        }
+
+        // Prüft eine Datei (läuft parallel in mehreren Threads, nur lokale Ergebnisse in "found")
+        static void CheckFile(TaskContext ctx, string file, bool previewVideos, bool previewImages, List<MediaCheckItem> found)
+        {
+            ctx.Check();
+            string ext = Path.GetExtension(file).ToLowerInvariant();
+            string kind = MediaTypes.Kind(ext);
+            MediaFacts facts = MediaFacts.Basic(file);
+            if (facts.Size == 0) { found.Add(Item(file, "empty", "leere Datei (0 Byte)", facts)); return; }
+            if (MediaTypes.NeedsConversion(ext))
+            {
+                if (kind == "video") facts.Probe(ctx.Ffmpeg, ctx.Token);
+                found.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
+                // Das Vorschaubild gilt auch nach dem Konvertieren (gleicher Name, andere Endung)
+                if (((kind == "video" && previewVideos) || (kind == "image" && previewImages)) && !HasPreview(file))
+                    found.Add(Item(file, "preview", "kein Vorschaubild", facts));
+                return;
+            }
+            if (kind == "video")
+            {
+                facts.Probe(ctx.Ffmpeg, ctx.Token);
+                if (facts.ProbeError != null) { found.Add(Item(file, "broken", "defekt: " + facts.ProbeError, facts)); return; }
+                if (!MediaCheck.IsPlayable(facts, ext)) found.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
+                if (previewVideos && !HasPreview(file)) found.Add(Item(file, "preview", "kein Vorschaubild", facts));
+            }
+            else if (kind == "audio" && ext == ".m4a")
+            {
+                // M4A kann ALAC enthalten, das der Browser nicht abspielt
+                facts.Probe(ctx.Ffmpeg, ctx.Token);
+                if (facts.ProbeError != null) { found.Add(Item(file, "broken", "defekt: " + facts.ProbeError, facts)); return; }
+                if (!MediaCheck.IsPlayable(facts, ext)) found.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
+            }
+            else if (kind == "image" && previewImages && !HasPreview(file))
+            {
+                found.Add(Item(file, "preview", "kein Vorschaubild", facts));
+            }
         }
 
         // ---------------------------------------------------------------

@@ -317,24 +317,40 @@ namespace Sflix
         // ffprobe
         // ---------------------------------------------------------------
 
-        // Untersucht eine Datei. Pro Datei (Pfad, Grösse, Änderungszeit) nur einmal.
+        // Untersucht eine Datei. Pro Datei (Pfad, Grösse, Änderungszeit) nur einmal: im Arbeitsspeicher
+        // und seit 3.4.2 auch über Programmstarts hinweg (MediaCache, sflix_sys\medien_cache.json).
         public MediaInfo Probe(string path, CancellationToken token)
         {
             FileInfo fi = new FileInfo(path);
-            string key = path + "|" + fi.Length + "|" + fi.LastWriteTimeUtc.Ticks;
+            long size = fi.Length, ticks = fi.LastWriteTimeUtc.Ticks;
+            string key = path + "|" + size + "|" + ticks;
             MediaInfo cached;
             if (probeCache.TryGetValue(key, out cached)) return cached;
+            string storedError;
+            if (MediaCache.TryGet(this, path, size, ticks, out cached, out storedError))
+            {
+                if (storedError != null) throw new Exception(storedError);
+                probeCache[key] = cached;
+                return cached;
+            }
 
             ProcResult r = Proc.Run(FfprobePath, new string[] {
                 "-v", "error", "-print_format", "json", "-show_format", "-show_streams", path }, token, null);
             if (r.ExitCode != 0)
             {
                 string err = r.StdErr.Trim();
-                throw new Exception("ffprobe: " + (err.Length > 0 ? LastLine(err) : "Fehler " + r.ExitCode));
+                string message = "ffprobe: " + (err.Length > 0 ? LastLine(err) : "Fehler " + r.ExitCode);
+                // Nur echte Dateifehler merken, keine vorübergehenden Lesefehler (NAS kurz weg, Datei gesperrt)
+                if (!IsTransientError(err)) MediaCache.PutError(this, path, size, ticks, message);
+                throw new Exception(message);
             }
             JsonObject data = null;
             try { data = Json.Parse(r.StdOut) as JsonObject; } catch (FormatException) { }
-            if (data == null || data.Obj("format") == null) throw new Exception("ffprobe liefert keine Daten");
+            if (data == null || data.Obj("format") == null)
+            {
+                MediaCache.PutError(this, path, size, ticks, "ffprobe liefert keine Daten");
+                throw new Exception("ffprobe liefert keine Daten");
+            }
 
             MediaInfo info = new MediaInfo();
             info.Path = path;
@@ -374,7 +390,17 @@ namespace Sflix
             }
             info.Signature = sig.ToString();
             probeCache[key] = info;
+            MediaCache.Put(this, path, size, ticks, info);
             return info;
+        }
+
+        // Lesefehler, die beim nächsten Mal weg sein können: nicht als "defekt" merken
+        static bool IsTransientError(string err)
+        {
+            string e = err.ToLowerInvariant();
+            return e.Contains("permission denied") || e.Contains("no such file") || e.Contains("input/output error")
+                || e.Contains("resource temporarily unavailable") || e.Contains("i/o error") || e.Contains("network")
+                || e.Contains("invalid argument") || e.Length == 0;
         }
 
         static string LastLine(string s)

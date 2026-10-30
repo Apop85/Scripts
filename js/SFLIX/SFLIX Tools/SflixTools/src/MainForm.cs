@@ -345,7 +345,8 @@ namespace Sflix
                 Spec("cleanup", Glyph.Trash, "Ablagen leeren", "__-Ordner löschen",
                      "„__teile“, „__konvertiert“, „__gelöscht“, „__original“, „" + EpisodeTask.ReplacedFolderName + "“ und „" + DuplicateTask.FolderName + "“ endgültig löschen. " +
                      "Du siehst vorher, was gelöscht wird. Nur innerhalb des Installationsordners möglich.", cleanupInfo, pickCleanup.Root),
-            }, Spec("settings", Glyph.Settings, "Einstellungen", null, null, FolderRow(installFolderBox, "Installationsordner:", false), folderHint, BuildFfmpegRow()));
+            }, Spec("settings", Glyph.Settings, "Einstellungen", null, null, FolderRow(installFolderBox, "Installationsordner:", false), folderHint, BuildFfmpegRow(),
+                    BuildParallelRow(), BuildMediaCacheRow()));
 
             Label toolsNote = Theme.MakeLabel("Die gewählten Tools laufen nacheinander. Danach werden die betroffenen Ordner automatisch neu " +
                                               "eingelesen („Daten einlesen“), sofern sie im Installationsordner liegen.", true);
@@ -1273,6 +1274,90 @@ namespace Sflix
             box.Controls.Add(ffmpegInfo);
             box.Controls.Add(buttons);
             ShowFfmpegInfo();
+            return box;
+        }
+
+        // Einstellungen › Gleichzeitig (seit 3.4.2): wie viele Dateien "Medien prüfen", "Duplikate finden"
+        // und "Vorschaubilder" gleichzeitig bearbeiten (Workers.SettingKey, 0 = automatisch)
+        ComboBox toolsParallel;
+
+        Control BuildParallelRow()
+        {
+            TableLayoutPanel box = SettingsBox("Gleichzeitig");
+            FlowLayoutPanel row = new FlowLayoutPanel();
+            row.AutoSize = true;
+            row.WrapContents = false;
+            row.Margin = new Padding(0, 0, 0, Theme.S(4));
+            row.BackColor = Color.Transparent;
+            toolsParallel = new ComboBox();
+            toolsParallel.DropDownStyle = ComboBoxStyle.DropDownList;
+            toolsParallel.FlatStyle = FlatStyle.Flat;
+            toolsParallel.BackColor = Theme.Input;
+            toolsParallel.ForeColor = Theme.Text;
+            toolsParallel.Width = Theme.S(130);
+            foreach (int n in Workers.Choices) toolsParallel.Items.Add(n == 0 ? "Automatisch" : n.ToString());
+            int current = settings.GetInt(Workers.SettingKey, 0);
+            int index = Array.IndexOf(Workers.Choices, current);
+            toolsParallel.SelectedIndex = index < 0 ? 0 : index;
+            toolsParallel.SelectedIndexChanged += delegate
+            {
+                settings.SetInt(Workers.SettingKey, Workers.Choices[Math.Max(0, toolsParallel.SelectedIndex)]);
+                settings.Save();
+            };
+            row.Controls.Add(toolsParallel);
+            Label hint = Theme.MakeLabel("Wie viele Dateien „Medien prüfen“, „Duplikate finden“ und „Vorschaubilder“ gleichzeitig bearbeiten. " +
+                                         "Automatisch: 4 beim Prüfen, 2 bei Vorschaubildern. Bei einer langsamen externen Festplatte 1 wählen. " +
+                                         "Die volle Prüfsumme bei Duplikaten liest immer eine Datei nach der anderen.", true);
+            hint.MaximumSize = new Size(TextWidth, 0);
+            box.Controls.Add(row);
+            box.Controls.Add(hint);
+            return box;
+        }
+
+        // Einstellungen › Gemerkte Prüfergebnisse (seit 3.4.2, MediaCache)
+        Label mediaCacheInfo;
+
+        Control BuildMediaCacheRow()
+        {
+            TableLayoutPanel box = SettingsBox("Gemerkte Prüfergebnisse");
+            mediaCacheInfo = Theme.MakeLabel("", true);
+            mediaCacheInfo.MaximumSize = new Size(TextWidth, 0);
+            mediaCacheInfo.Margin = new Padding(0, 0, 0, Theme.S(6));
+            Button clear = SmallButton("Gemerkte Prüfergebnisse löschen");
+            clear.Click += delegate
+            {
+                if (running) return;
+                MediaCache.Clear();
+                ShowMediaCacheInfo();
+                AppendLog("Gemerkte Prüfergebnisse gelöscht. Beim nächsten Prüfen werden alle Dateien neu untersucht.");
+            };
+            box.Controls.Add(mediaCacheInfo);
+            box.Controls.Add(clear);
+            ShowMediaCacheInfo();
+            return box;
+        }
+
+        void ShowMediaCacheInfo()
+        {
+            if (mediaCacheInfo == null) return;
+            long size = MediaCache.FileSize();
+            mediaCacheInfo.Text = "Die Tools merken sich die Angaben jeder untersuchten Datei (" +
+                (size > 0 ? Fmt.Size(size) + " in sflix_sys\\" + MediaCache.FileName : "noch nichts gemerkt") +
+                "). Unveränderte Dateien werden beim nächsten Mal nicht neu untersucht. Eine neue ffmpeg-Version verwirft alles.";
+        }
+
+        TableLayoutPanel SettingsBox(string titleText)
+        {
+            TableLayoutPanel box = new TableLayoutPanel();
+            box.AutoSize = true;
+            box.ColumnCount = 1;
+            box.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            box.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            box.Margin = new Padding(0, Theme.S(14), 0, 0);
+            box.BackColor = Color.Transparent;
+            Label title = Theme.MakeLabel(titleText, false);
+            title.Margin = new Padding(0, 0, 0, Theme.S(4));
+            box.Controls.Add(title);
             return box;
         }
 
@@ -2348,6 +2433,7 @@ namespace Sflix
             SetRunning(false);
             UpdateUndoInfo();
             ShowFfmpegInfo();
+            ShowMediaCacheInfo();
             ShowInstalledVersions();
             // Tools können Ablagen gefüllt oder geleert haben
             if (cleanupInfo != null && cleanupInfo.Visible) RefreshCleanupInfo();

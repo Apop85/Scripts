@@ -697,6 +697,70 @@ namespace Sflix
     // Formatierung
     // ------------------------------------------------------------------
 
+    // Parallele Arbeit der Tools (seit 3.4.2). "Gleichzeitig" in den Tool-Einstellungen (tools.parallel):
+    // 0 = automatisch (je nach Arbeit, siehe Aufrufer), sonst fest 1, 2, 4 oder 8.
+    public static class Workers
+    {
+        public const string SettingKey = "tools.parallel";
+        public static readonly int[] Choices = { 0, 1, 2, 4, 8 };
+
+        public static int Degree(TaskContext ctx, int automatic)
+        {
+            int fixedValue = ctx != null && ctx.Settings != null ? ctx.Settings.GetInt(SettingKey, 0) : 0;
+            return Math.Max(1, Math.Min(16, fixedValue > 0 ? fixedValue : automatic));
+        }
+
+        // Ruft action(index, item) für alle Einträge auf, höchstens degree gleichzeitig. Die Reihenfolge der
+        // Aufrufe ist offen: Ergebnisse je Index ablegen und danach in fester Reihenfolge auswerten.
+        // Abbruch über token; der erste andere Fehler bricht ab und wird weitergegeben.
+        public static void ForEach<T>(IList<T> items, int degree, CancellationToken token, Action<int, T> action)
+        {
+            if (items.Count == 0) return;
+            if (degree <= 1 || items.Count == 1)
+            {
+                for (int i = 0; i < items.Count; i++)
+                {
+                    token.ThrowIfCancellationRequested();
+                    action(i, items[i]);
+                }
+                return;
+            }
+            int next = -1;
+            Exception failure = null;
+            CancellationTokenSource stop = CancellationTokenSource.CreateLinkedTokenSource(token);
+            List<Thread> threads = new List<Thread>();
+            for (int w = 0; w < Math.Min(degree, items.Count); w++)
+            {
+                Thread t = new Thread(delegate()
+                {
+                    try
+                    {
+                        while (!stop.IsCancellationRequested)
+                        {
+                            int i = Interlocked.Increment(ref next);
+                            if (i >= items.Count) return;
+                            action(i, items[i]);
+                        }
+                    }
+                    catch (OperationCanceledException) { }
+                    catch (Exception e)
+                    {
+                        Interlocked.CompareExchange(ref failure, e, null);
+                        stop.Cancel();
+                    }
+                });
+                t.IsBackground = true;
+                t.Name = "sflix-worker-" + w;
+                threads.Add(t);
+                t.Start();
+            }
+            foreach (Thread t in threads) t.Join();
+            stop.Dispose();
+            token.ThrowIfCancellationRequested();
+            if (failure != null) throw failure;
+        }
+    }
+
     public static class Fmt
     {
         public static string Size(long bytes)

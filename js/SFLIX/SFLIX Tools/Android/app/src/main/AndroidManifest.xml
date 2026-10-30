@@ -2,17 +2,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Updates der App direkt installieren (App-Einstellungen › Über die App) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- largeHeap: Videopuffer bis 128 MB im Arbeitsspeicher -->
     <application
         android:allowBackup="false"
         android:icon="@drawable/ic_launcher"
         android:label="STEFFLIX"
+        android:largeHeap="true"
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Sflix">
 
         <activity
             android:name=".ShareListActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -22,6 +27,15 @@
         <activity
             android:name=".BrowserActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode"
+            android:exported="false" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode"
+            android:exported="false" />
+
+        <receiver
+            android:name=".AppUpdate$InstallReceiver"
             android:exported="false" />
     </application>
 </manifest>

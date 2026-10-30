@@ -103,7 +103,7 @@ Die ausgewählten Aufgaben laufen immer in dieser Reihenfolge ab:
 - **Duplikate finden**: Identische Dateien, gleiche Folgen einer Serie (`S01E01` = `1x01` = `S1E1`) und gleiche Dateinamen finden (Preview- und Ablage-Ordner zählen nicht). Ein Vergleich zeigt Grösse, Auflösung, Dauer und Codecs, vorausgewählt bleibt die bessere Fassung. Aussortierte Dateien kommen nach `__duplikate`, Favoriten und Fortschritt gehen auf die behaltene Datei über.
 - **Gesplittete Medien zusammenführen**: Videos wie "Titel pt1" und "Titel pt2" zu einer Datei zusammenfügen. Die Teile werden vorher in einer Liste ausgewählt, auf Wunsch wird neu kodiert. Die Teile können danach nach `__teile` verschoben werden.
 - **Konvertieren**: Videos in browserkompatible MP4 (H.264/AAC) umwandeln, auf Wunsch auch nicht abspielbare Musik (z.B. WMA, AIFF, ALAC) in MP3. Das Ergebnis ersetzt das Original im selben Ordner, das Original kommt nach `__konvertiert` (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.
-- **Medien prüfen**: Medien finden, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton, WMA), dazu defekte und leere Dateien sowie Medien ohne Vorschaubild. Im Ergebnis wählst du je Datei Löschen (nach `__gelöscht`), Konvertieren und/oder Vorschaubild erstellen; defekte und leere Dateien sind zum Löschen vorgemerkt. „Ausführen“ erledigt alles in einem Durchgang.
+- **Medien prüfen**: Medien finden, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton, WMA), dazu defekte und leere Dateien, Medien ohne Vorschaubild sowie leere Ordner (ohne Medien). Im Ergebnis wählst du je Datei Löschen (nach `__gelöscht`), Konvertieren und/oder Vorschaubild erstellen; leere Ordner lassen sich löschen (als Ganzes nach `__gelöscht` im Ordner darüber). Defekte und leere Dateien sowie leere Ordner sind zum Löschen vorgemerkt. „Ausführen“ erledigt alles in einem Durchgang.
 
 Alle Tabellen im Updater lassen sich mit einem Klick auf den Spaltenkopf sortieren.
 - **Vorschaubilder erstellen**: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach `Preview\__gelöscht`.
@@ -138,6 +138,7 @@ Videos und Musik haben eine eigene Steuerleiste. Bei Videos blendet sie sich wä
 - **Zahnradmenü**: Geschwindigkeit (0,5x bis 1,75x), Herunterladen und Browser-Steuerung.
 - **Vollbild**: Das Video füllt den Bildschirm. Darunter kann weiterhin gescrollt und ein anderes Medium gewählt werden.
 - **Browser-Steuerung**: Wer die Steuerung des Browsers bevorzugt, schaltet sie im Zahnradmenü oder im Menü unter "Einstellungen" ein.
+- **Verbindungsabbruch**: Bricht die Verbindung zu einem laufenden Video oder Musikstück ab (z.B. NAS oder WLAN kurz weg), lädt der Player die Datei neu und spielt an derselben Stelle weiter. Gelingt das 30 Sekunden lang nicht, erscheint ein Hinweis.
 
 ## Tastenkürzel
 
@@ -160,10 +161,14 @@ Die Tastenkürzel funktionieren auf Medienseiten, solange nicht in ein Eingabefe
 Mit der App `STEFFLIX.apk` lässt sich STEFFLIX auf dem Handy oder Tablet nutzen (ab Android 8). Der STEFFLIX-Ordner muss dafür auf einer Netzwerkfreigabe liegen, z.B. auf einem NAS.
 
 1. `STEFFLIX.apk` aufs Gerät laden (in STEFFLIX unter Einstellungen › Android-App oder direkt hier im Repo) und installieren (Installation aus unbekannten Quellen erlauben).
-2. In der App „Freigabe hinzufügen“ wählen und den STEFFLIX-Ordner angeben, z.B. `\\NAS\Medien\STEFFLIX`, dazu Benutzer und Passwort der Freigabe.
-3. Mit „Verbinden“ prüft die App den Zugang und öffnet STEFFLIX.
+2. In der App „Quelle hinzufügen“ wählen und den STEFFLIX-Ordner angeben, z.B. `\\NAS\Medien\STEFFLIX`, dazu Benutzer und Passwort der Freigabe.
+3. Mit „Verbinden“ prüft die App den Zugang und öffnet STEFFLIX. Klappt es nicht, nennt sie den Grund (Server nicht erreichbar, Anmeldung abgelehnt, Freigabe oder Ordner nicht gefunden, kein STEFFLIX im Ordner).
 
-- Es lassen sich mehrere Freigaben einrichten. Beim Start öffnet die App die zuletzt genutzte, mit der Zurück-Taste gelangt man zur Liste. Lange drücken auf eine Freigabe: bearbeiten oder löschen.
+- Es lassen sich mehrere Quellen einrichten. Beim Start öffnet die App die zuletzt genutzte. Ist sie nicht erreichbar, erscheint die Auswahl mit einem Hinweis und „Erneut versuchen“. Im Menü von STEFFLIX wechselt „Quelle wechseln“ jederzeit zu einer anderen.
+- **App-Einstellungen** (im Menü): Quellen verwalten, „Display nicht ausschalten“ während der Wiedergabe, Videos im Vollbild quer, Zwischenspeicher (Standard 250 MB) und Videopuffer (Standard 64 MB) einstellen, Verbindung testen, Updates und Diagnose.
+- **Zwischenspeicher**: Programmdateien und Vorschaubilder bleiben auf dem Gerät gespeichert. Seiten laden dadurch viel schneller, besonders unterwegs über VPN. Geänderte Dateien (z.B. nach „Daten einlesen“) erkennt die App selbst. Die Verbindung zum NAS hält die App offen, solange sie sichtbar ist, und baut sie nach einer Pause sofort neu auf.
+- **Videopuffer**: Videos und Musik werden im Voraus geladen. Kurze Verbindungsabbrüche überbrückt die App und spielt danach an derselben Stelle weiter.
+- **Updates**: Die App meldet neue Versionen selbst und installiert sie auf Wunsch direkt (beim ersten Mal „Aus dieser Quelle zulassen“ erlauben).
 - Das Passwort wird verschlüsselt auf dem Gerät gespeichert.
 - Favoriten, Fortschritte und „Weiterschauen“ speichert die App auf dem Gerät, getrennt für jede Installation.
 - Die App funktioniert im Heimnetz. Unterwegs nur über eine VPN-Verbindung ins Heimnetz.

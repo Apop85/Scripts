@@ -773,10 +773,105 @@ function handleMediaError(event) {
     if (player.dataset.mediaPath !== currentMediaLocation) {
         return;
     }
+    // Lief die Datei schon, ist eher die Verbindung weg (NAS, WLAN): neu laden statt überspringen
+    if (canRecoverConnection(player)) {
+        recoverConnection(player);
+        return;
+    }
     showMediaMessage("«" + stripExtension(getBaseName(currentMediaLocation)) + "» konnte nicht geladen werden. " +
         "Die Datei wurde eventuell verschoben, umbenannt oder gelöscht, oder das Format wird vom Browser nicht unterstützt. " +
         "Bitte im Updater (updateStefflix.exe) \"Daten einlesen\" ausführen. Nicht abspielbare Dateien findet und konvertiert dort das Tool \"Medien prüfen\".");
     skipAfterError();
+}
+
+// ===================================================================
+// Automatisch weiterspielen nach einem Verbindungsabbruch
+// ===================================================================
+
+// Bricht die Verbindung zu einer Datei ab, die schon lief (Fehler oder lange Hänger), lädt der
+// Player sie neu und spielt an derselben Stelle weiter. Nach connectionRetryMs ohne Erfolg
+// erscheint ein Hinweis.
+var connectionRetryMs = 30000;
+var connectionRetryDelayMs = 4000;
+var connectionStallMs = 15000;
+
+function initConnectionRecovery(node) {
+    node.addEventListener("loadedmetadata", function () {
+        node.sflixLoadedPath = node.dataset.mediaPath;
+    });
+    node.addEventListener("timeupdate", function () {
+        if (node.sflixLoadedPath === node.dataset.mediaPath && node.currentTime > 0) {
+            node.sflixLastTime = node.currentTime;
+        }
+    });
+    node.addEventListener("playing", function () {
+        clearTimeout(node.sflixStallTimer);
+        var state = node.sflixRecovery;
+        if (state != null && state.path === node.dataset.mediaPath && state.timer == null) {
+            node.sflixRecovery = null;
+            hideMediaMessage();
+        }
+    });
+    // Hängt die Wiedergabe lange ohne Fehler (z.B. Verbindung weg, aber kein Abbruch gemeldet)
+    ["waiting", "stalled"].forEach(function (type) {
+        node.addEventListener(type, function () {
+            clearTimeout(node.sflixStallTimer);
+            var path = node.dataset.mediaPath;
+            node.sflixStallTimer = setTimeout(function () {
+                if (!node.paused && node.readyState < 3 && node.dataset.mediaPath === path && canRecoverConnection(node)) {
+                    recoverConnection(node);
+                }
+            }, connectionStallMs);
+        });
+    });
+    ["playing", "pause", "seeked", "canplay"].forEach(function (type) {
+        node.addEventListener(type, function () {
+            clearTimeout(node.sflixStallTimer);
+        });
+    });
+}
+
+function canRecoverConnection(node) {
+    if (node.tagName == "IMG") {
+        return false;
+    }
+    var path = node.dataset.mediaPath;
+    var state = node.sflixRecovery;
+    return (state != null && state.path === path) || node.sflixLoadedPath === path;
+}
+
+function recoverConnection(node) {
+    var path = node.dataset.mediaPath;
+    var state = node.sflixRecovery;
+    if (state == null || state.path !== path) {
+        state = {
+            path: path,
+            started: Date.now(),
+            time: node.sflixLastTime || 0,
+            src: node.getAttribute("src"),
+            timer: null
+        };
+        node.sflixRecovery = state;
+        showMediaMessage("Die Verbindung zur Datei ist unterbrochen. STEFFLIX versucht weiterzuspielen …");
+    }
+    if (state.timer != null) {
+        return;
+    }
+    if (Date.now() - state.started > connectionRetryMs) {
+        node.sflixRecovery = null;
+        showMediaMessage("Die Verbindung zu «" + stripExtension(getBaseName(path)) + "» ist unterbrochen. " +
+            "Bitte Netzwerk und NAS prüfen. Die Position ist gespeichert.", window.location.href, "Erneut versuchen");
+        return;
+    }
+    state.timer = setTimeout(function () {
+        state.timer = null;
+        if (node.dataset.mediaPath !== path || node.sflixRecovery !== state) {
+            return;
+        }
+        node.sflixResume = { path: path, time: state.time };
+        // Gleiche Adresse neu setzen: der Browser lädt die Datei neu
+        node.src = state.src;
+    }, connectionRetryDelayMs);
 }
 
 // ===================================================================
@@ -1184,7 +1279,21 @@ function loadNextDuration() {
 
 // Funktion, um Subroutinen an das Medienelement anzuhängen
 function appendMediafunctions(node) {
+    initConnectionRecovery(node);
     node.onloadedmetadata = function () {
+        // Nach einem Verbindungsabbruch neu geladen: an der alten Stelle weiter, sonst nichts ändern
+        var resume = node.sflixResume;
+        node.sflixResume = null;
+        if (resume != null && resume.path === node.dataset.mediaPath) {
+            if (resume.time > 0 && resume.time < this.duration) {
+                node.currentTime = resume.time;
+            }
+            var resumeRequest = node.play();
+            if (resumeRequest && resumeRequest.catch) {
+                resumeRequest.catch(function () {});
+            }
+            return;
+        }
         node.autoplay = true;
         var playRequest = node.play();
         if (playRequest && playRequest.catch) {

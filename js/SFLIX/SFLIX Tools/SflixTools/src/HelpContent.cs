@@ -115,11 +115,12 @@ namespace Sflix
                 "- Defekt: ffprobe kann die Datei nicht lesen.\n" +
                 "- Leer: Datei mit 0 Byte.\n" +
                 "- Ohne Vorschaubild.\n" +
-                "Im Ergebnis steht jede Datei einmal. In den ersten drei Spalten wählst du die Aktionen:\n" +
-                "- Papierkorb: löschen. Die Datei kommt samt Vorschaubild nach „__gelöscht“, endgültig löscht sie „Ablagen leeren“. Schliesst die anderen Aktionen aus.\n" +
+                "- Leere Ordner: Ordner ohne Medien, auch nicht in Unterordnern (Vorschaubilder und Ablagen zählen nicht). Gemeldet wird nur der oberste solche Ordner, nie der gewählte Ordner selbst und nie eine Kategorie wie „Filme“.\n" +
+                "Im Ergebnis steht jede Datei bzw. jeder Ordner einmal. In den ersten drei Spalten wählst du die Aktionen:\n" +
+                "- Papierkorb: löschen. Die Datei kommt samt Vorschaubild nach „__gelöscht“, ein Ordner als Ganzes nach „__gelöscht“ im Ordner darüber. Endgültig löscht sie „Ablagen leeren“. Schliesst die anderen Aktionen aus.\n" +
                 "- Pfeile: konvertieren (Videos zu MP4, Musik zu MP3).\n" +
                 "- Bild: Vorschaubild erstellen (nach dem Konvertieren für die neue Datei). Geht zusammen mit Konvertieren.\n" +
-                "Vorausgewählt: defekte und leere Dateien löschen, sonst konvertieren und Vorschaubilder erstellen. " +
+                "Vorausgewählt: defekte und leere Dateien sowie leere Ordner löschen (Ordner mit anderen Dateien wie Dokumenten nicht), sonst konvertieren und Vorschaubilder erstellen. " +
                 "Ein Klick auf ein Kästchen schaltet um; für markierte Zeilen geht das auch mit Entf, K und V. Du kannst nach Art filtern und nach " +
                 "Datei oder Ordner suchen, die Auswahl bleibt erhalten. „Vorschlag“ und „Keine“ gelten für die angezeigten Zeilen. " +
                 "„Ausführen“ startet alle gewählten Dateioperationen, danach wird neu eingelesen."));

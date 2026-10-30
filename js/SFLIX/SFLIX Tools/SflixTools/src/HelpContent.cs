@@ -43,6 +43,7 @@ namespace Sflix
                 "Falls ja, erscheint ein Fenster mit „Jetzt aktualisieren“ oder „Später“. Nach „Später“ bleibt ein gelber Balken stehen.\n\n" +
                 "# Update\n" +
                 "Lädt geänderte Dateien von GitHub, prüft jede über ihre Prüfsumme und ersetzt sie erst danach. Schlägt etwas fehl, bleibt der alte Stand. " +
+                "Welche Dateien zu STEFFLIX gehören und welche alten Dateien entfernt werden, kommt mit dem Update. Persönliche Dateien wie Medienliste, Lizenz und Einstellungen bleiben immer unberührt. " +
                 "Ist ein neuer Updater verfügbar, ersetzt er sich selbst, startet neu und macht mit den restlichen Aufgaben weiter.\n" +
                 "- ffmpeg ebenfalls aktualisieren: bringt ein installiertes ffmpeg auf die vorgegebene Version.\n\n" +
                 "# Versionen\n" +

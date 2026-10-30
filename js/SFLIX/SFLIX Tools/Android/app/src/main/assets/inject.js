@@ -1,8 +1,9 @@
 // Wird von der App in start.html eingefügt (vor main.js, nach den übrigen Skripten).
 // Funktioniert mit jeder STEFFLIX-Version auf der Freigabe. Nutzt aus STEFFLIX nur:
 // showSplashscreen, getSplashDedication, checkForUpdate, checkForUpdaterUpdate, initAndroidSection,
-// die IDs #settings, #settingsDD, #settingsPageToggler, #androidDownloadButton, #androidHint
-// und die Klassen menuIcon/menuLabel. Werden sie in STEFFLIX umbenannt, hier nachführen.
+// die IDs #settings, #settingsDD, #settingsPageToggler, #androidDownloadButton, #androidHint,
+// #loadingScreen (wird beim Ausblenden auf display none gesetzt) und die Klassen menuIcon/menuLabel.
+// STEFFLIX ab 2.6.1 meldet zudem StefflixApp.loadingProgress(geladen, alle) aus ui.js. Werden sie in STEFFLIX umbenannt, hier nachführen.
 (function () {
     window.stefflixApp = true;
     var app = window.StefflixApp;
@@ -144,9 +145,31 @@
         "html.inApp.appUpdate #appSettingsToggler .menuLabel::after { content: ''; display: inline-block; width: 10px; height: 10px; margin-left: 8px; border-radius: 50%; background: #e8261a; vertical-align: middle; }"
     ].join("\n");
 
+    // Meldet der App, wenn STEFFLIX seinen Ladescreen (#loadingScreen) ausblendet, also die Seite und
+    // die sichtbaren Vorschaubilder da sind. Erst dann verschwindet der Startbildschirm der App.
+    function watchLoadingScreen() {
+        var screen = document.getElementById("loadingScreen");
+        if (!screen) {
+            if (app && app.webReady) app.webReady();
+            return;
+        }
+        var reported = false;
+        var observer = new MutationObserver(check);
+        function check() {
+            if (!reported && getComputedStyle(screen).display === "none") {
+                reported = true;
+                observer.disconnect();
+                if (app && app.webReady) app.webReady();
+            }
+        }
+        observer.observe(screen, { attributes: true, attributeFilter: ["style", "class"] });
+        check();
+    }
+
     function start() {
         document.head.appendChild(style);
         addMenuItems();
+        watchLoadingScreen();
     }
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", start);

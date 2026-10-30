@@ -1,4 +1,23 @@
 {
+  "_obsoleteFiles": [
+    "sflix_sys/sflix.js",
+    "sflix_sys/sflix_bg.jpg"
+  ],
+  "_webFiles": [
+    "sflix_sys/js/cards.js",
+    "sflix_sys/js/core.js",
+    "sflix_sys/js/main.js",
+    "sflix_sys/js/pages.js",
+    "sflix_sys/js/player.js",
+    "sflix_sys/js/storage.js",
+    "sflix_sys/js/ui.js",
+    "sflix_sys/sflix.css",
+    "sflix_sys/sflixLogo.png",
+    "sflix_sys/sflixLogo.svg",
+    "sflix_sys/splash.svg",
+    "sflix_sys/version.js",
+    "start.html"
+  ],
   "ffmpeg.json": "abba8ec1962a0f78f2a8eb75120b4a4436311fb5339e954dbc2ad01f67ebc229",
   "sflix_sys/data.js": "b7a3c43132b75a4bd426da860939f00950a2da688f8139db4ea5193d9f4fb700",
   "sflix_sys/js/cards.js": "2fa39435acb12fde5aae74552064f6d890768aa2c0f6ac84d76e81ba3db07553",
@@ -7,14 +26,14 @@
   "sflix_sys/js/pages.js": "ed5f1274b17f8a2dffaac210335a070555082d902f3a689bb69e015748189422",
   "sflix_sys/js/player.js": "19154b76c3481742728e2b8310ddcbad578a86c2feeb6e3fa7a303e5c877849d",
   "sflix_sys/js/storage.js": "0424c2722555adb96cfea0a1041d0c5cd4c744c05767a311095b85efcd3fc2f0",
-  "sflix_sys/js/ui.js": "1f6de25e7f182109d9162968e8f3bf8fa4680a1c68634f319e6adeca05bb3336",
+  "sflix_sys/js/ui.js": "56220d83e7f89f0e7322effa910c3b84e38fe669622559a91c96600cc32ca5f2",
   "sflix_sys/sflix.css": "562f4fc3e0af3be4b9031231829a2c3c7ae7f1ddb378257dbca81e643d03dbaa",
   "sflix_sys/sflixLogo.png": "fc1b02036258918ab7ada672613ddfc992ac38bdd99bc7611c1a5feca503c0b5",
   "sflix_sys/sflixLogo.svg": "87e9de4e2aa7c6c078a8e5d2ec789654691a32fd14e6ed30b5d289e596ad3286",
   "sflix_sys/splash.svg": "03b4592f93aebe12ec7e7dee800823aa5046bee4027b7ce77a80e32886f98c9d",
-  "sflix_sys/version.js": "34dae73c1613c7fd96dce8cf307ee523e9171e49e9aaefb26b0c6222e289d1d0",
-  "start.html": "96853bf71086a0b7a3fd9b936465ea4a06e2ef42671beb549ae28092deac4ae0",
+  "sflix_sys/version.js": "9e6e6d2bb057d0818089a11c677884b42f1ad4cf2c2598488bda02cdd5678c2e",
+  "start.html": "45dcbd37313bb6849fbac6b8774f368390a50e128ce43e77f15a44486a7860a8",
   "updateData.exe": "0224e1b26854a2a80715122adaf42edbe3de494127d7955fe65f281a2a8eac15",
-  "updateStefflix.exe": "e1182680ff5e51818bc874c5045c215af5f5cf160b64241c7624e6498a266ef9",
+  "updateStefflix.exe": "6fb86144dff1e6055de479ec4aa154f4677cec2990fb3f07b4a2d392ec4ca9a2",
   "updater.exe": "bbe88b952de3e6976a971132cb0ba3035b554eb47c770f681cc63dc59509ab7d"
 }

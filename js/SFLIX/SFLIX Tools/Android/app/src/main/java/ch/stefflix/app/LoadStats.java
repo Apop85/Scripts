@@ -23,6 +23,9 @@ final class LoadStats {
 
     static synchronized void listing() { listings++; }
 
+    /** Dateien, die beim laufenden Seitenaufruf von der Freigabe kamen (nicht aus dem Zwischenspeicher). */
+    static synchronized int networkFiles() { return networkFiles; }
+
     static synchronized void hit() { hits++; }
 
     static synchronized void network(long bytes) {

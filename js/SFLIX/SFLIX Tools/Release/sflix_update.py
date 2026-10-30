@@ -100,7 +100,10 @@ SCRIPT_FILES = [name for name in FILES if name.startswith("sflix_sys/js/")]
 # (data.js erzeugt "Daten einlesen" bzw. updateData.exe, die Programme aktualisieren sich selbst)
 WEB_FILES = [name for name in INSTALL_FILES if not name.endswith(".exe") and name != "sflix_sys/data.js"]
 
-# Dateien früherer Versionen, die nach einem erfolgreichen Update gelöscht werden
+# Dateien früherer Versionen, die nach einem erfolgreichen Update gelöscht werden.
+# Seit Updater 3.4.1 stehen WEB_FILES und OBSOLETE_FILES auch in checksums.json: Eine neue oder
+# entfallene Datei hier eintragen genügt, ein neuer Updater ist dafür nicht nötig.
+# Erlaubt sind nur start.html und Dateien in sflix_sys (siehe Net.IsAllowedWebPath).
 OBSOLETE_FILES = ["sflix_sys/sflix.js", "sflix_sys/sflix_bg.jpg"]
 
 

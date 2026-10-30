@@ -977,11 +977,13 @@ function waitForVisibleImages() {
         return;
     }
     var open = pending.length;
+    showLoadingProgress(0, pending.length);
     pending.forEach(function (image) {
         var one = function () {
             image.removeEventListener("load", one);
             image.removeEventListener("error", one);
             open--;
+            showLoadingProgress(pending.length - open, pending.length);
             if (open <= 0) {
                 hide();
             }
@@ -994,6 +996,35 @@ function waitForVisibleImages() {
         }
     });
     setTimeout(hide, 10000);
+}
+
+// Ladescreen: Zähler "geladen / alle" der sichtbaren Vorschaubilder, der Ring füllt sich dazu.
+// Die Android-App (ab 1.1.2) zeigt den Stand auch in ihrem Startbildschirm.
+var loadingRingLength = 289.03;   // Umfang des Kreises (r = 46) in start.html
+
+function showLoadingProgress(done, total) {
+    var count = document.getElementById("loadingCount");
+    var label = document.getElementById("loadingLabel");
+    var ring = document.getElementById("loadingRing");
+    var fill = document.getElementById("loadingRingFill");
+    if (count != null) {
+        count.textContent = done + " / " + total;
+    }
+    if (label != null) {
+        label.textContent = "Vorschaubilder";
+    }
+    if (ring != null && fill != null && total > 0) {
+        ring.classList.add("determinate");
+        var part = Math.max(0.02, Math.min(1, done / total)) * loadingRingLength;
+        fill.style.strokeDasharray = part + " " + loadingRingLength;
+    }
+    if (window.StefflixApp && typeof window.StefflixApp.loadingProgress === "function") {
+        try {
+            window.StefflixApp.loadingProgress(done, total);
+        } catch (error) {
+            // ältere App
+        }
+    }
 }
 
 // Noch nicht geladene Bilder, die im Fenster sichtbar sind (auch in Bändern nur der sichtbare Teil)

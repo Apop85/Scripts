@@ -187,16 +187,32 @@ final class SmbSource implements Closeable {
         return f.getFileInformation(FileStandardInformation.class).getEndOfFile();
     }
 
+    /** Verbindung steht gerade (für die Anzeige im Startbildschirm). */
+    synchronized boolean isConnected() {
+        return disk != null && disk.isConnected();
+    }
+
+    /** Meldet beim Lesen grosser Dateien den Fortschritt (z.B. data.js im Startbildschirm). */
+    interface Progress {
+        void onRead(long done, long total);
+    }
+
     /** Liest size Bytes ab Anfang (Grösse aus der Ordnerliste, ohne eigene Abfrage). */
     static byte[] readAll(File f, long size) throws IOException {
+        return readAll(f, size, null);
+    }
+
+    static byte[] readAll(File f, long size, Progress progress) throws IOException {
         if (size > Integer.MAX_VALUE - 16) throw new IOException("Datei zu gross");
         byte[] data = new byte[(int) size];
         int read = 0;
         try {
             while (read < data.length) {
-                int n = f.read(data, read, read, Math.min(1024 * 1024, data.length - read));
+                // In 512-KB-Schritten, damit der Fortschritt flüssig ist (eine Anfrage je Schritt)
+                int n = f.read(data, read, read, Math.min(512 * 1024, data.length - read));
                 if (n <= 0) break;
                 read += n;
+                if (progress != null) progress.onRead(read, data.length);
             }
         } catch (RuntimeException e) {
             throw new IOException(e.getMessage(), e);

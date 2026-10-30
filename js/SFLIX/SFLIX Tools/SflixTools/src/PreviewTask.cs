@@ -50,46 +50,9 @@ namespace Sflix
             int failed = 0;
             int deleted = CleanOrphans(previewDirs, ctx, ref failed);
 
-            ImageCodecInfo jpeg = null;
-            foreach (ImageCodecInfo c in ImageCodecInfo.GetImageEncoders())
-                if (c.MimeType == "image/jpeg") jpeg = c;
-            EncoderParameters enc = new EncoderParameters(1);
-            enc.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, JpegQuality);
-
-            string tmpBmp = Path.Combine(Path.GetTempPath(), "sflix-preview-" + Process.GetCurrentProcess().Id + ".bmp");
-            int created = 0, skipped = 0;
-            try
-            {
-                for (int i = 0; i < videos.Count; i++)
-                {
-                    ctx.Check();
-                    string video = videos[i];
-                    string previewDir = Path.Combine(Path.GetDirectoryName(video), "Preview");
-                    string target = Path.Combine(previewDir, Path.GetFileNameWithoutExtension(video) + ".jpg");
-                    ctx.Progress((double)i / Math.Max(1, videos.Count), "Vorschaubild " + (i + 1) + " / " + videos.Count);
-
-                    // Gibt es schon ein Vorschaubild gleichen Namens (z.B. von einem Video neben
-                    // einem gleichnamigen Bild), bleibt es unverändert
-                    if (File.Exists(target)) { skipped++; continue; }
-
-                    try
-                    {
-                        MakePreview(video, previewDir, target, tmpBmp, jpeg, enc, ctx);
-                        created++;
-                        ctx.Log("  OK      " + video);
-                    }
-                    catch (OperationCanceledException) { throw; }
-                    catch (Exception ex)
-                    {
-                        failed++;
-                        ctx.Log("  FEHLER  " + video + " :: " + ex.Message);
-                    }
-                }
-            }
-            finally
-            {
-                FileOps.TryDelete(tmpBmp);
-            }
+            int created, skipped, makeFailed;
+            MakeMany(ctx, videos, out created, out skipped, out makeFailed);
+            failed += makeFailed;
 
             ctx.Log("Erstellt: " + created + "   Schon vorhanden: " + skipped +
                     "   Nach " + TrashDirName + " verschoben: " + deleted + "   Fehler: " + failed);
@@ -101,43 +64,84 @@ namespace Sflix
         public static void MakeFor(TaskContext ctx, List<string> files)
         {
             ctx.Ffmpeg.EnsureInstalled(ctx);
+            int created, skipped, failed;
+            MakeMany(ctx, files, out created, out skipped, out failed);
+            ctx.Log("Vorschaubilder erstellt: " + created + "   Fehler: " + failed);
+            if (failed > 0) throw new TaskFailedException(failed + " Vorschaubild(er) konnten nicht erstellt werden");
+        }
+
+        // Erstellt fehlende Vorschaubilder, seit 3.4.2 parallel (automatisch 2: ffmpeg dekodiert je ein Bild).
+        // Vorhandene bleiben unverändert (z.B. von einem Video neben einem gleichnamigen Bild).
+        // Das Protokoll erscheint in der Reihenfolge der Dateien, auch wenn sie anders fertig werden.
+        static void MakeMany(TaskContext ctx, List<string> files, out int created, out int skipped, out int failed)
+        {
             ImageCodecInfo jpeg = null;
             foreach (ImageCodecInfo c in ImageCodecInfo.GetImageEncoders())
                 if (c.MimeType == "image/jpeg") jpeg = c;
             EncoderParameters enc = new EncoderParameters(1);
             enc.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, JpegQuality);
-            string tmpBmp = Path.Combine(Path.GetTempPath(), "sflix-preview-" + Process.GetCurrentProcess().Id + ".bmp");
-            int created = 0, failed = 0;
+
+            string tmpBase = Path.Combine(Path.GetTempPath(), "sflix-preview-" + Process.GetCurrentProcess().Id + "-");
+            string[] logLines = new string[files.Count];
+            int[] result = new int[files.Count];          // 1 erstellt, 2 vorhanden, 3 Fehler
+            object logSync = new object();
+            int nextLog = 0, done = 0;
             try
             {
-                for (int i = 0; i < files.Count; i++)
+                Workers.ForEach(files, Workers.Degree(ctx, 2), ctx.Token, delegate(int i, string file)
                 {
-                    ctx.Check();
-                    string file = files[i];
                     string previewDir = Path.Combine(Path.GetDirectoryName(file), "Preview");
                     string target = Path.Combine(previewDir, Path.GetFileNameWithoutExtension(file) + ".jpg");
-                    ctx.Progress((double)i / Math.Max(1, files.Count), "Vorschaubild " + (i + 1) + " / " + files.Count);
-                    if (File.Exists(target)) continue;
-                    try
+                    string line = "";
+                    if (File.Exists(target))
                     {
-                        MakePreview(file, previewDir, target, tmpBmp, jpeg, enc, ctx);
-                        created++;
-                        ctx.Log("  OK      " + file);
+                        result[i] = 2;
                     }
-                    catch (OperationCanceledException) { throw; }
-                    catch (Exception ex)
+                    else
                     {
-                        failed++;
-                        ctx.Log("  FEHLER  " + file + " :: " + ex.Message);
+                        // Eigene Zwischendatei je Thread
+                        string tmpBmp = tmpBase + System.Threading.Thread.CurrentThread.ManagedThreadId + ".bmp";
+                        try
+                        {
+                            MakePreview(file, previewDir, target, tmpBmp, jpeg, enc, ctx);
+                            result[i] = 1;
+                            line = "  OK      " + file;
+                        }
+                        catch (OperationCanceledException) { throw; }
+                        catch (Exception ex)
+                        {
+                            result[i] = 3;
+                            line = "  FEHLER  " + file + " :: " + ex.Message;
+                        }
+                        finally
+                        {
+                            FileOps.TryDelete(tmpBmp);
+                        }
                     }
-                }
+                    lock (logSync)
+                    {
+                        logLines[i] = line;
+                        while (nextLog < files.Count && logLines[nextLog] != null)
+                        {
+                            if (logLines[nextLog].Length > 0) ctx.Log(logLines[nextLog]);
+                            nextLog++;
+                        }
+                        done++;
+                        ctx.Progress((double)done / Math.Max(1, files.Count), "Vorschaubild " + done + " / " + files.Count);
+                    }
+                });
             }
             finally
             {
-                FileOps.TryDelete(tmpBmp);
+                MediaCache.Save();
             }
-            ctx.Log("Vorschaubilder erstellt: " + created + "   Fehler: " + failed);
-            if (failed > 0) throw new TaskFailedException(failed + " Vorschaubild(er) konnten nicht erstellt werden");
+            created = 0; skipped = 0; failed = 0;
+            foreach (int r in result)
+            {
+                if (r == 1) created++;
+                else if (r == 2) skipped++;
+                else if (r == 3) failed++;
+            }
         }
 
         static void Collect(string dir, HashSet<string> wanted, List<string> result, List<string> previewDirs, TaskContext ctx)

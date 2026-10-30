@@ -15,6 +15,10 @@
         },
         {
           "type": "OPTIMIERUNG",
+          "text": "Updater: \"Medien prüfen\", \"Duplikate finden\" und \"Vorschaubilder\" bearbeiten mehrere Dateien gleichzeitig (einstellbar unter Tools › Einstellungen › Gleichzeitig) und merken sich die Angaben jeder untersuchten Datei. Ein zweiter Lauf ist dadurch fast sofort fertig. \"Duplikate finden\" vergleicht gleich grosse Dateien zuerst an drei Stellen und liest nur bei Übereinstimmung die ganzen Dateien."
+        },
+        {
+          "type": "OPTIMIERUNG",
           "text": "Updater: Welche Programmdateien zu STEFFLIX gehören und welche alten Dateien entfernt werden, kommt neu mit dem Update. Neue Dateien der Weboberfläche brauchen dadurch keinen neuen Updater mehr."
         }
       ]

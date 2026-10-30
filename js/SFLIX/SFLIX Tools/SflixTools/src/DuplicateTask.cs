@@ -58,19 +58,27 @@ namespace Sflix
             FindEpisodes(ctx, folder, files, groups, inIdentical);
             FindSameName(folder, files, groups, inIdentical);
 
-            // Angaben für den Vergleich und die Vorauswahl
-            int done = 0, total = 0;
-            foreach (DupeGroup g in groups) total += g.Files.Count;
+            // Angaben für den Vergleich und die Vorauswahl: parallel untersuchen (gemerkte Ergebnisse
+            // aus MediaCache brauchen kein ffprobe), danach in fester Reihenfolge den Gruppen zuordnen
+            List<string> toProbe = new List<string>();
+            HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (DupeGroup g in groups) foreach (string f in g.Files) if (seen.Add(f)) toProbe.Add(f);
+            MediaFacts[] probed = new MediaFacts[toProbe.Count];
+            int probedCount = 0;
+            Workers.ForEach(toProbe, Workers.Degree(ctx, 4), ctx.Token, delegate(int i, string f)
+            {
+                MediaFacts facts = MediaFacts.Basic(f);
+                facts.Probe(ctx.Ffmpeg, ctx.Token);
+                probed[i] = facts;
+                int n = System.Threading.Interlocked.Increment(ref probedCount);
+                if (n % 5 == 0 || n == toProbe.Count) ctx.Progress((double)n / Math.Max(1, toProbe.Count), "Untersuche " + n + " / " + toProbe.Count);
+            });
+            MediaCache.Save();
+            Dictionary<string, MediaFacts> factsOf = new Dictionary<string, MediaFacts>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < toProbe.Count; i++) factsOf[toProbe[i]] = probed[i];
             foreach (DupeGroup g in groups)
             {
-                foreach (string f in g.Files)
-                {
-                    ctx.Check();
-                    ctx.Progress((double)done++ / Math.Max(1, total), "Untersuche " + Path.GetFileName(f));
-                    MediaFacts facts = MediaFacts.Basic(f);
-                    facts.Probe(ctx.Ffmpeg, ctx.Token);
-                    g.Facts.Add(facts);
-                }
+                foreach (string f in g.Files) g.Facts.Add(factsOf[f]);
                 Preselect(g);
             }
 
@@ -186,6 +194,29 @@ namespace Sflix
         }
 
         // Gleiche Grösse, dann gleiche Prüfsumme
+        const int QuickBlock = 1024 * 1024;
+
+        // SHA256 über je 1 MB vom Anfang, aus der Mitte und vom Ende (kleine Dateien: die ganze Datei)
+        static string QuickFingerprint(string path)
+        {
+            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 64 * 1024))
+            using (System.Security.Cryptography.SHA256 sha = System.Security.Cryptography.SHA256.Create())
+            {
+                long size = fs.Length;
+                if (size <= QuickBlock * 3) return FileOps.Hex(sha.ComputeHash(fs));
+                byte[] buf = new byte[QuickBlock];
+                foreach (long offset in new long[] { 0, size / 2 - QuickBlock / 2, size - QuickBlock })
+                {
+                    fs.Position = offset;
+                    int read = 0, n;
+                    while (read < buf.Length && (n = fs.Read(buf, read, buf.Length - read)) > 0) read += n;
+                    sha.TransformBlock(buf, 0, read, null, 0);
+                }
+                sha.TransformFinalBlock(new byte[0], 0, 0);
+                return FileOps.Hex(sha.Hash);
+            }
+        }
+
         static void FindIdentical(TaskContext ctx, List<string> files, List<DupeGroup> groups, Dictionary<string, int> inIdentical)
         {
             Dictionary<long, List<string>> bySize = new Dictionary<long, List<string>>();
@@ -200,9 +231,41 @@ namespace Sflix
             }
             List<List<string>> candidates = new List<List<string>>();
             foreach (List<string> l in bySize.Values) if (l.Count > 1) candidates.Add(l);
-            int done = 0, total = 0;
-            foreach (List<string> l in candidates) total += l.Count;
+
+            // 1. Schnelltest (seit 3.4.2): je 1 MB vom Anfang, aus der Mitte und vom Ende, parallel.
+            //    Dateien gleicher Grösse unterscheiden sich fast immer schon dort.
+            List<string> quickFiles = new List<string>();
+            foreach (List<string> l in candidates) quickFiles.AddRange(l);
+            string[] quick = new string[quickFiles.Count];
+            int quickDone = 0;
+            Workers.ForEach(quickFiles, Workers.Degree(ctx, 4), ctx.Token, delegate(int i, string f)
+            {
+                try { quick[i] = QuickFingerprint(f); }
+                catch (Exception e) { ctx.Log("Hinweis: " + f + " nicht lesbar (" + e.Message + ")"); }
+                int n = System.Threading.Interlocked.Increment(ref quickDone);
+                if (n % 5 == 0 || n == quickFiles.Count) ctx.Progress((double)n / Math.Max(1, quickFiles.Count), "Schnelltest " + n + " / " + quickFiles.Count);
+            });
+            Dictionary<string, string> quickOf = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < quickFiles.Count; i++) if (quick[i] != null) quickOf[quickFiles[i]] = quick[i];
+
+            // 2. Volle Prüfsumme nur bei gleichem Schnelltest, eine Datei nach der anderen (liest ganze Dateien)
+            List<List<string>> fullCandidates = new List<List<string>>();
             foreach (List<string> l in candidates)
+            {
+                Dictionary<string, List<string>> byQuick = new Dictionary<string, List<string>>();
+                foreach (string f in l)
+                {
+                    string q;
+                    if (!quickOf.TryGetValue(f, out q)) continue;
+                    List<string> same;
+                    if (!byQuick.TryGetValue(q, out same)) { same = new List<string>(); byQuick[q] = same; }
+                    same.Add(f);
+                }
+                foreach (List<string> same in byQuick.Values) if (same.Count > 1) fullCandidates.Add(same);
+            }
+            int done = 0, total = 0;
+            foreach (List<string> l in fullCandidates) total += l.Count;
+            foreach (List<string> l in fullCandidates)
             {
                 Dictionary<string, List<string>> byHash = new Dictionary<string, List<string>>();
                 foreach (string f in l)
@@ -210,7 +273,12 @@ namespace Sflix
                     ctx.Check();
                     ctx.Progress((double)done++ / Math.Max(1, total), "Prüfsumme " + done + " / " + total + ": " + Path.GetFileName(f));
                     string hash;
-                    try { hash = FileOps.Sha256File(f); } catch (Exception e) { ctx.Log("Hinweis: " + f + " nicht lesbar (" + e.Message + ")"); continue; }
+                    // Kleine Dateien hat der Schnelltest schon ganz gelesen
+                    if (new FileInfo(f).Length <= QuickBlock * 3) hash = quickOf[f];
+                    else
+                    {
+                        try { hash = FileOps.Sha256File(f); } catch (Exception e) { ctx.Log("Hinweis: " + f + " nicht lesbar (" + e.Message + ")"); continue; }
+                    }
                     List<string> same;
                     if (!byHash.TryGetValue(hash, out same)) { same = new List<string>(); byHash[hash] = same; }
                     same.Add(f);

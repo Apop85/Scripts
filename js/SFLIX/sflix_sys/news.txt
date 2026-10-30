@@ -6,6 +6,7 @@
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Android-App 1.1.2: Dauert der erste Start länger, weil Dateien vom NAS geladen werden (z.B. über VPN), zeigt der Startbildschirm, was gerade geladen wird und wie weit es ist. Nach 15 Sekunden erscheint "Quelle wechseln". Der Startbildschirm bleibt, bis auch die Vorschaubilder da sind.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Neuer Ladebildschirm: STEFFLIX-Logo mit rotem Ring und Zähler der Vorschaubilder, dahinter eine unscharfe Plakatwand, die langsam gleitet. Er erscheint erst, wenn das Laden länger als einen Augenblick dauert. Mit "Animationen reduzieren" steht alles still.</li>
+    <li>[OPTIMIERUNG] Updater: "Medien prüfen", "Duplikate finden" und "Vorschaubilder" bearbeiten mehrere Dateien gleichzeitig (einstellbar unter Tools › Einstellungen › Gleichzeitig) und merken sich die Angaben jeder untersuchten Datei. Ein zweiter Lauf ist dadurch fast sofort fertig. "Duplikate finden" vergleicht gleich grosse Dateien zuerst an drei Stellen und liest nur bei Übereinstimmung die ganzen Dateien.</li>
     <li>[OPTIMIERUNG] Updater: Welche Programmdateien zu STEFFLIX gehören und welche alten Dateien entfernt werden, kommt neu mit dem Update. Neue Dateien der Weboberfläche brauchen dadurch keinen neuen Updater mehr.</li>
 </ul>
 <b>Version 2.6.0</b>:<br>

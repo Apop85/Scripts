@@ -214,20 +214,11 @@ function showSettingsStatus(text) {
     status.textContent = text;
 }
 
-// Einstellungen › Android-App: In der App selbst (window.stefflixApp, gesetzt von der App)
-// dient der Knopf zum Aktualisieren; die APK öffnet sich dort im System-Browser.
+// Einstellungen › Android-App. Im Browser bleibt der Abschnitt wie im Markup. Die Android-App
+// ersetzt diese Funktion (ab App 1.1.0) und zeigt dort einen Verweis auf ihre App-Einstellungen.
+// Der Aufruf in initSettingsPage muss deshalb bleiben, ebenso die IDs #android,
+// #androidDownloadText und #androidHint.
 function initAndroidSection() {
-    if (!window.stefflixApp) {
-        return;
-    }
-    var text = document.getElementById("androidDownloadText");
-    var hint = document.getElementById("androidHint");
-    if (text != null) {
-        text.textContent = "Neueste Version herunterladen";
-    }
-    if (hint != null) {
-        hint.textContent = "Du nutzt STEFFLIX bereits in der App. Für ein Update die neueste APK herunterladen und über die bestehende App installieren. Freigaben und gespeicherte Daten bleiben erhalten.";
-    }
 }
 
 function initSettingsPage() {
@@ -468,6 +459,14 @@ function buildDiagnosisText() {
         "Bildschirm: " + window.innerWidth + "x" + window.innerHeight + ", Pixelverhältnis " + (window.devicePixelRatio || 1),
         "Einstellungen: " + JSON.stringify(getDisplaySettings())
     ];
+    // In der Android-App (ab 1.1.0): Angaben der App, z.B. Version, Gerät und Ladezeiten
+    if (window.StefflixApp && typeof window.StefflixApp.diagnosis === "function") {
+        try {
+            lines.push("", "Android-App:", String(window.StefflixApp.diagnosis()));
+        } catch (error) {
+            lines.push("", "Android-App: keine Angaben (" + error + ")");
+        }
+    }
     return lines.join("\n");
 }
 

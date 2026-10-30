@@ -2819,6 +2819,16 @@ body.gridOpen {
     scroll-snap-align: start;
 }
 
+/* "Kacheln pro Zeile automatisch": Auf Handy und Tablet passen nur ganze Kacheln in die Zeile,
+   ihre Breite ist aber für eine angeschnittene Kachel berechnet (z.B. 2.3). Der freie Platz wird
+   links und rechts gleich verteilt. Die letzte, kürzere Zeile beginnt bündig mit den anderen. */
+.cardRow.autoRows .rowTrack {
+    --auto-free: calc(100% - var(--auto-cards) * var(--card-width) - (var(--auto-cards) - 1) * var(--sflix-gap));
+    padding-left: max(0px, calc(var(--auto-free) / 2));
+    padding-right: max(0px, calc(var(--auto-free) / 2));
+    scroll-padding: 0 max(0px, calc(var(--auto-free) / 2));
+}
+
 .rowArrow {
     position: absolute;
     top: 8px;

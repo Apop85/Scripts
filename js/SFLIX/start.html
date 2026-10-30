@@ -281,6 +281,7 @@
                 <li><b>Zahnradmenü</b>: Geschwindigkeit (0,5x bis 1,75x, jedes Medium startet wieder mit 1x), Herunterladen und Browser-Steuerung.</li>
                 <li><b>Vollbild</b>: Das Video füllt den Bildschirm. Darunter kann weiterhin gescrollt und ein anderes Medium gewählt werden. Auf dem iPhone bleibt die Browserleiste sichtbar.</li>
                 <li><b>Browser-Steuerung</b>: Wer die bisherige Steuerung des Browsers bevorzugt, schaltet sie im Zahnradmenü oder unter <a onclick="openSettings()">Einstellungen</a> ein.</li>
+                <li><b>Verbindungsabbruch</b>: Bricht die Verbindung zu einem laufenden Video oder Musikstück ab (z.B. NAS oder WLAN kurz weg), lädt der Player die Datei neu und spielt an derselben Stelle weiter. Gelingt das 30 Sekunden lang nicht, erscheint ein Hinweis.</li>
             </ul>
 
             <h3>Tastenkürzel</h3>
@@ -344,6 +345,17 @@
                 <p>Für diesen Browser gibt es keine Anleitung. STEFFLIX ist für Google Chrome, Microsoft Edge und Mozilla Firefox optimiert.</p>
             </div>
 
+            <h3 id="androidHilfe">Android-App</h3>
+            <p>Mit der Android-App läuft STEFFLIX auf Handy und Tablet ohne Browser. Die App verbindet sich direkt mit dem STEFFLIX-Ordner auf einer Netzwerkfreigabe, z.B. auf einem NAS. Download und Installation stehen unter <a onclick="openSettings('android')">Einstellungen › Android-App</a>.</p>
+            <ul class="helpOptions">
+                <li><b>Quellen</b>: Eine Quelle ist ein STEFFLIX-Ordner, z.B. \\NAS\Medien\STEFFLIX, mit Benutzer und Passwort. Beim Einrichten prüft die App die Verbindung und nennt bei einem Fehler den Grund (Server nicht erreichbar, Anmeldung abgelehnt, Freigabe oder Ordner nicht gefunden, kein STEFFLIX im Ordner). Beim Start öffnet die App die zuletzt genutzte Quelle. Ist sie nicht erreichbar, erscheint die Auswahl der Quellen mit einem Hinweis. Im Menü wechselt "Quelle wechseln" jederzeit zu einer anderen.</li>
+                <li><b>App-Einstellungen</b>: Im Menü der App. Dort lassen sich die Quellen verwalten, das Display während der Wiedergabe eingeschaltet lassen, Videos im Vollbild quer anzeigen, der Zwischenspeicher und der Videopuffer einstellen, die Verbindung testen und die App aktualisieren.</li>
+                <li><b>Zwischenspeicher</b>: Die App speichert die Programmdateien von STEFFLIX und die Vorschaubilder auf dem Gerät (je Quelle getrennt, Standard 250 MB). Seiten laden dadurch viel schneller, besonders unterwegs über VPN. Geänderte Dateien, z.B. nach "Daten einlesen", erkennt die App selbst. Die Verbindung zum NAS hält die App offen, solange sie sichtbar ist, und baut sie nach einer Pause sofort neu auf.</li>
+                <li><b>Videopuffer</b>: Videos und Musik werden im Voraus geladen (Standard 64 MB). Kurze Verbindungsabbrüche überbrückt die App, danach verbindet sie sich neu und spielt an derselben Stelle weiter.</li>
+                <li><b>Updates</b>: Die App meldet neue Versionen selbst und installiert sie auf Wunsch direkt. Quellen und gespeicherte Daten bleiben erhalten.</li>
+                <li><b>Diagnose</b>: In der App ergänzt die Diagnose unter <a onclick="openSettings('fehlerbehebung')">Einstellungen › Fehlerbehebung</a> auch Angaben zur App wie Version, Gerät und Ladezeiten. Sie wird beim Feedback mitgeschickt.</li>
+            </ul>
+
             <h3 id="stefflixUpdate">STEFFLIX aktualisieren</h3>
             <p>Für ein Update <span class="highlighted">updateStefflix.exe</span> im STEFFLIX-Ordner starten, die Aufgaben "Update" und "Daten einlesen" auswählen und ausführen. Der Updater lädt die neue Version herunter und liest danach die Medien neu ein. Er hält sich auch selbst aktuell und meldet beim Start, wenn eine neue Version bereitsteht.</p>
             <details class="helpDetails">
@@ -356,7 +368,7 @@
                     <li><b>Duplikate finden</b>: Identische Dateien, gleiche Folgen einer Serie (S01E01 = 1x01 = S1E1) und gleiche Dateinamen finden, mit Vergleich von Grösse, Auflösung und Dauer. Aussortierte Dateien kommen nach __duplikate.</li>
                     <li><b>Gesplittete Medien zusammenführen</b>: Videos wie "Titel pt1" und "Titel pt2" zu einer Datei zusammenfügen. Die Teile werden vorher in einer Liste ausgewählt, auf Wunsch wird neu kodiert. Die Teile können danach nach __teile verschoben werden.</li>
                     <li><b>Konvertieren</b>: Videos in browserkompatible MP4 (H.264/AAC) umwandeln, auf Wunsch auch nicht abspielbare Musik (z.B. WMA, AIFF, ALAC) in MP3. Das Ergebnis ersetzt das Original im selben Ordner, das Original kommt nach __konvertiert (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.</li>
-                    <li><b>Medien prüfen</b>: Medien finden, die der Browser nicht abspielen kann, dazu defekte und leere Dateien sowie Medien ohne Vorschaubild. Im Ergebnis wählst du je Datei Löschen (nach __gelöscht), Konvertieren und/oder Vorschaubild erstellen; defekte und leere Dateien sind zum Löschen vorgemerkt. "Ausführen" erledigt alles in einem Durchgang.</li>
+                    <li><b>Medien prüfen</b>: Medien finden, die der Browser nicht abspielen kann, dazu defekte und leere Dateien, Medien ohne Vorschaubild sowie leere Ordner (ohne Medien). Im Ergebnis wählst du je Datei Löschen (nach __gelöscht), Konvertieren und/oder Vorschaubild erstellen; leere Ordner lassen sich löschen (als Ganzes nach __gelöscht im Ordner darüber). Defekte und leere Dateien sowie leere Ordner sind zum Löschen vorgemerkt. "Ausführen" erledigt alles in einem Durchgang.</li>
                     <li><b>Vorschaubilder erstellen</b>: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach Preview\__gelöscht.</li>
                     <li><b>Daten einlesen</b>: Medien neu einlesen, ungültige Zeichen in Datei- und Ordnernamen korrigieren und zu grosse Vorschaubilder verkleinern. Ordner, deren Name mit __ beginnt, sowie System- und versteckte Ordner werden ignoriert.</li>
                 </ul>
@@ -504,6 +516,8 @@
                 <li>Öffnet beim Start direkt die zuletzt genutzte Freigabe</li>
                 <li>Videos im Vollbild abspielen und darin springen</li>
                 <li>Favoriten, Fortschritt und "Weiterschauen" bleiben auf dem Gerät gespeichert</li>
+                <li>Schnelle Seitenwechsel dank Zwischenspeicher, auch unterwegs über VPN</li>
+                <li>Updates direkt in der App</li>
             </ul>
             <div class="backupActions">
                 <a id="androidDownloadButton" class="sflixButton primary appDownload" href="https://github.com/Apop85/Scripts/raw/master/js/SFLIX/STEFFLIX.apk" download="STEFFLIX.apk" target="_blank" rel="noopener">
@@ -511,7 +525,7 @@
                     <span id="androidDownloadText">App herunterladen (APK)</span>
                 </a>
             </div>
-            <p class="appHint" id="androidHint">Installation: Die APK auf dem Gerät öffnen und die Installation aus unbekannten Quellen erlauben. Danach in der App "Freigabe hinzufügen" wählen und den STEFFLIX-Ordner angeben, z.B. \\NAS\Medien\STEFFLIX. Die App funktioniert im Heimnetz, unterwegs nur über eine VPN-Verbindung.</p>
+            <p class="appHint" id="androidHint">Installation: Die APK auf dem Gerät öffnen und die Installation aus unbekannten Quellen erlauben. Danach in der App "Quelle hinzufügen" wählen und den STEFFLIX-Ordner angeben, z.B. \\NAS\Medien\STEFFLIX. Die App funktioniert im Heimnetz, unterwegs nur über eine VPN-Verbindung.</p>
 
             <h3 id="lizenz">Lizenz</h3>
             <p>Der Lizenzschlüssel schaltet das Feedbackformular frei. Er wird im Updater (updateStefflix.exe) unter "Lizenz" eingegeben oder bei der Installation angegeben und gilt dann für diese STEFFLIX-Installation in allen Browsern. Mit gültigem Schlüssel erscheint im Menü der Eintrag "Feedback".</p>

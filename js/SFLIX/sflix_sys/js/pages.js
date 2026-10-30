@@ -309,6 +309,11 @@ function renderGroupedBands(container, items, title, renderItem, showTitle) {
         section.classList.add("untitledRow");
         section.querySelector(".rowHeader h2").textContent = "";
     }
+    // "Kacheln pro Zeile automatisch": Zeilen mittig, gleicher Rand links und rechts (siehe .autoRows)
+    if (getSetting("rowAuto")) {
+        section.classList.add("autoRows");
+        section.style.setProperty("--auto-cards", getCardsPerRow());
+    }
     rows.forEach(function (row, index) {
         var rowTrack = index == 0 ? track : addRowTrack(section);
         row.forEach(function (item) {

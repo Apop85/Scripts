@@ -1,6 +1,7 @@
 // Tool "Medien prüfen" (seit 3.3): findet Medien, die der Browser nicht abspielen kann, defekte und
-// leere Dateien sowie Videos ohne Vorschaubild. Im Ergebnis lassen sich Einträge anhaken und gleich
-// konvertieren bzw. Vorschaubilder erstellen. Ohne Oberfläche wird nur das Ergebnis protokolliert.
+// leere Dateien, Videos ohne Vorschaubild und (seit 3.4) Ordner ohne Medien. Im Ergebnis lassen sich
+// Einträge anhaken und gleich löschen, konvertieren bzw. Vorschaubilder erstellen. Ohne Oberfläche wird
+// nur das Ergebnis protokolliert.
 
 using System;
 using System.Collections.Concurrent;
@@ -60,9 +61,10 @@ namespace Sflix
     public class MediaCheckItem
     {
         public string Path;
-        public string Kind;     // "format", "broken", "empty", "preview"
+        public string Kind;     // "format", "broken", "empty", "preview", "folder" (Ordner ohne Medien)
         public string Problem;
         public MediaFacts Facts;
+        public bool SuggestDelete;  // Ordner: zum Löschen vorschlagen (nichts ausser Vorschaubildern darin)
         public bool CanConvert
         {
             get
@@ -99,10 +101,12 @@ namespace Sflix
 
         public bool CanPreview { get { return Has("preview"); } }
 
-        // Vorschlag: defekte und leere Dateien löschen, sonst konvertieren und/oder Vorschaubild erstellen
+        // Vorschlag: defekte und leere Dateien sowie leere Ordner löschen, sonst konvertieren und/oder Vorschaubild erstellen
         public void Suggest()
         {
-            Delete = Has("broken") || Has("empty");
+            bool folder = false;
+            foreach (MediaCheckItem p in Problems) if (p.Kind == "folder" && p.SuggestDelete) folder = true;
+            Delete = Has("broken") || Has("empty") || folder;
             Convert = !Delete && CanConvert;
             Preview = !Delete && CanPreview;
         }
@@ -223,7 +227,10 @@ namespace Sflix
                 }
             }
 
-            int format = 0, broken = 0, empty = 0, preview = 0, logged = 0;
+            ctx.Progress(-1, "Suche leere Ordner ...");
+            foreach (string root in roots) FindEmptyFolders(ctx, root, extensions, items);
+
+            int format = 0, broken = 0, empty = 0, preview = 0, emptyFolders = 0, logged = 0;
             // Mit Oberfläche steht alles in der Ergebnisliste: im Protokoll nur die ersten Einträge
             int maxLogged = ctx.ChooseMediaCheck != null ? 100 : int.MaxValue;
             foreach (MediaCheckItem it in items)
@@ -231,12 +238,13 @@ namespace Sflix
                 if (it.Kind == "format") format++;
                 else if (it.Kind == "broken") broken++;
                 else if (it.Kind == "empty") empty++;
+                else if (it.Kind == "folder") emptyFolders++;
                 else preview++;
-                if (logged++ < maxLogged) ctx.Log("  " + (it.Kind == "preview" ? "Hinweis: " : it.Kind == "format" ? "WARNUNG " : "FEHLER ") + it.Problem + "  –  " + it.Path);
+                if (logged++ < maxLogged) ctx.Log("  " + (it.Kind == "preview" || it.Kind == "folder" ? "Hinweis: " : it.Kind == "format" ? "WARNUNG " : "FEHLER ") + it.Problem + "  –  " + it.Path);
             }
             if (items.Count > maxLogged) ctx.Log("  … und " + (items.Count - maxLogged) + " weitere (alle stehen in der Ergebnisliste)");
-            ctx.Log("Nicht abspielbar: " + format + "   Defekt: " + broken + "   Leer: " + empty + "   Ohne Vorschaubild: " + preview);
-            ctx.Summary = files.Count + " geprüft, " + format + " nicht abspielbar, " + broken + " defekt, " + empty + " leer, " + preview + " ohne Vorschaubild";
+            ctx.Log("Nicht abspielbar: " + format + "   Defekt: " + broken + "   Leer: " + empty + "   Ohne Vorschaubild: " + preview + "   Leere Ordner: " + emptyFolders);
+            ctx.Summary = files.Count + " geprüft, " + format + " nicht abspielbar, " + broken + " defekt, " + empty + " leer, " + preview + " ohne Vorschaubild, " + emptyFolders + " leere Ordner";
             if (items.Count == 0 || ctx.ChooseMediaCheck == null) return;
 
             MediaCheckChoice choice = ctx.ChooseMediaCheck(items);
@@ -312,9 +320,120 @@ namespace Sflix
             if (failed > 0) throw new TaskFailedException("Nicht alle Dateioperationen waren erfolgreich");
         }
 
+        // ---------------------------------------------------------------
+        // Leere Ordner (seit 3.4)
+        // ---------------------------------------------------------------
+
+        // Ordner ohne Medien, auch nicht in Unterordnern (Preview-, Ablage-, System- und versteckte Ordner
+        // zählen nicht). Gemeldet wird nur der oberste solche Ordner, nie der gewählte Ordner selbst und
+        // nie eine Kategorie direkt im STEFFLIX-Ordner (z.B. "Filme").
+        static void FindEmptyFolders(TaskContext ctx, string root, HashSet<string> extensions, List<MediaCheckItem> items)
+        {
+            List<string> found = new List<string>();
+            ScanFolder(ctx, root, extensions, found, true);
+            foreach (string dir in found)
+            {
+                int previews, others;
+                long size;
+                CountLeftovers(dir, out previews, out others, out size);
+                MediaFacts facts = new MediaFacts();
+                facts.Path = dir;
+                facts.Size = size;
+                string problem = others > 0 ? "Ordner ohne Medien, " + others + " andere Datei" + (others == 1 ? "" : "en")
+                               : previews > 0 ? "Ordner ohne Medien, nur Vorschaubilder"
+                               : "leerer Ordner";
+                MediaCheckItem it = Item(dir, "folder", problem, facts);
+                // Andere Dateien (z.B. Dokumente, Untertitel) könnten noch gebraucht werden: nicht vorschlagen
+                it.SuggestDelete = others == 0;
+                items.Add(it);
+            }
+        }
+
+        static bool IsAppRoot(string dir)
+        {
+            return string.Equals(Path.GetFullPath(dir).TrimEnd('\\'), Path.GetFullPath(App.Root).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);
+        }
+
+        // true: Der Ordner enthält Medien (direkt oder darunter). Unterordner ohne Medien werden gemeldet,
+        // wenn dieser Ordner Medien hat oder ganz oben steht; sonst meldet ihn der Ordner darüber als Ganzes.
+        static bool ScanFolder(TaskContext ctx, string dir, HashSet<string> extensions, List<string> found, bool top)
+        {
+            ctx.Check();
+            string[] files, dirs;
+            try
+            {
+                files = Directory.GetFiles(dir);
+                dirs = Directory.GetDirectories(dir);
+            }
+            catch (UnauthorizedAccessException) { return true; }   // nicht lesbar: lieber nicht melden
+            catch (IOException) { return true; }
+
+            bool hasMedia = false;
+            foreach (string f in files)
+            {
+                string n = Path.GetFileName(f);
+                if (n.StartsWith("._") || n.Contains(".__temp__")) continue;
+                if (extensions.Contains(Path.GetExtension(f).ToLowerInvariant())) { hasMedia = true; break; }
+            }
+            // Die Kategorien direkt im STEFFLIX-Ordner gelten selbst als "oben"
+            bool appRoot = IsAppRoot(dir);
+            List<string> empty = new List<string>();
+            foreach (string d in dirs)
+            {
+                if (Folders.Ignore(d)) continue;
+                if (string.Equals(Path.GetFileName(d), "Preview", StringComparison.OrdinalIgnoreCase)) continue;
+                if (ScanFolder(ctx, d, extensions, found, appRoot)) hasMedia = true;
+                else empty.Add(d);
+            }
+            if ((hasMedia || top) && !appRoot) found.AddRange(empty);
+            return hasMedia;
+        }
+
+        // Was liegt noch im Ordner? Vorschaubilder, Ablagen (__) und Systemdateien zählen nicht als "andere".
+        static void CountLeftovers(string dir, out int previews, out int others, out long size)
+        {
+            previews = 0; others = 0; size = 0;
+            string[] all;
+            try { all = Directory.GetFiles(dir, "*", SearchOption.AllDirectories); }
+            catch { return; }
+            foreach (string f in all)
+            {
+                try { size += new FileInfo(f).Length; } catch { }
+                string rel = f.Substring(dir.Length).TrimStart('\\');
+                string name = Path.GetFileName(f);
+                if (name.StartsWith(".") || string.Equals(name, "Thumbs.db", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(name, "desktop.ini", StringComparison.OrdinalIgnoreCase)) continue;
+                bool preview = false, storage = false;
+                foreach (string seg in rel.Split('\\'))
+                {
+                    if (string.Equals(seg, "Preview", StringComparison.OrdinalIgnoreCase)) preview = true;
+                    if (Folders.IsToolFolder(seg)) storage = true;
+                }
+                if (storage) continue;
+                if (preview) previews++; else others++;
+            }
+        }
+
+        // Ordner als Ganzes nach <übergeordneter Ordner>\__gelöscht ("Ablagen leeren" löscht endgültig)
+        static void MoveFolderToDeleted(string dir)
+        {
+            string full = Path.GetFullPath(dir).TrimEnd('\\');
+            string reason;
+            if (IsAppRoot(full) || !Folders.IsInsideRoot(full, out reason))
+                throw new IOException("Ordner liegt nicht im Installationsordner: " + full);
+            string storage = Path.Combine(Path.GetDirectoryName(full), DeletedFolderName);
+            Directory.CreateDirectory(storage);
+            FileOps.Rename(full, FileOps.UniquePath(storage, Path.GetFileName(full)));
+        }
+
         // Datei nach <Ordner>\__gelöscht, ihr Vorschaubild nach Preview\__gelöscht ("Ablagen leeren" löscht endgültig)
         static void MoveToDeleted(string file)
         {
+            if (Directory.Exists(file))
+            {
+                MoveFolderToDeleted(file);
+                return;
+            }
             string dir = Path.GetDirectoryName(file);
             string storage = Path.Combine(dir, DeletedFolderName);
             Directory.CreateDirectory(storage);
@@ -371,16 +490,17 @@ namespace Sflix
         string filterKind;      // null = alle
         MediaCheckChoice result;
 
-        static readonly string[] Kinds = { "broken", "empty", "format", "preview" };
+        static readonly string[] Kinds = { "broken", "empty", "format", "preview", "folder" };
 
         static string KindName(string kind)
         {
-            return kind == "broken" ? "Defekt" : kind == "empty" ? "Leer" : kind == "format" ? "Nicht abspielbar" : "Ohne Vorschaubild";
+            return kind == "broken" ? "Defekt" : kind == "empty" ? "Leer" : kind == "format" ? "Nicht abspielbar"
+                 : kind == "folder" ? "Leere Ordner" : "Ohne Vorschaubild";
         }
 
         public static int Order(string kind)
         {
-            return kind == "broken" ? 0 : kind == "empty" ? 1 : kind == "format" ? 2 : 3;
+            return kind == "broken" ? 0 : kind == "empty" ? 1 : kind == "format" ? 2 : kind == "preview" ? 3 : 4;
         }
 
         public MediaCheckDialog(List<MediaCheckItem> items)
@@ -396,11 +516,12 @@ namespace Sflix
             MinimizeBox = false;
             ShowInTaskbar = false;
 
-            Label intro = Theme.MakeLabel(files.Count + " Dateien mit Auffälligkeiten. Je Datei wählst du in den ersten drei Spalten: " +
+            Label intro = Theme.MakeLabel(files.Count + " Einträge mit Auffälligkeiten. Je Datei wählst du in den ersten drei Spalten: " +
                                           "Löschen (Papierkorb, die Datei kommt nach „" + MediaCheckTask.DeletedFolderName + "“), " +
                                           "Konvertieren (Videos zu MP4, Musik zu MP3, das Original kommt nach „" + ConvertTask.OriginalsFolderName + "“) " +
-                                          "und Vorschaubild erstellen (Bildsymbol). Löschen schliesst die anderen aus. " +
-                                          "Vorausgewählt: defekte und leere Dateien löschen, sonst konvertieren und Vorschaubilder erstellen.", true);
+                                          "und Vorschaubild erstellen (Bildsymbol). Löschen schliesst die anderen aus. Leere Ordner (ohne Medien) " +
+                                          "lassen sich nur löschen, sie kommen als Ganzes nach „" + MediaCheckTask.DeletedFolderName + "“ im Ordner darüber. " +
+                                          "Vorausgewählt: defekte und leere Dateien sowie Ordner ohne andere Dateien löschen, sonst konvertieren und Vorschaubilder erstellen.", true);
             intro.Dock = DockStyle.Top;
             intro.AutoSize = true;
             intro.MaximumSize = new Size(ClientSize.Width - Theme.S(24), 0);
@@ -457,7 +578,8 @@ namespace Sflix
                 // Farbe je Zelle setzen: beim Zeichnen Zelle für Zelle gilt die Farbe der Zeile nicht
                 row.UseItemStyleForSubItems = false;
                 Color color = f.Has("broken") || f.Has("empty") ? Color.FromArgb(0xff, 0x6b, 0x6b)
-                            : f.Has("format") ? Color.FromArgb(0xf0, 0xc4, 0x6c) : Theme.Text;
+                            : f.Has("format") ? Color.FromArgb(0xf0, 0xc4, 0x6c)
+                            : f.Has("folder") ? Theme.Muted : Theme.Text;
                 foreach (ListViewItem.ListViewSubItem sub in row.SubItems) sub.ForeColor = color;
                 UpdateKeys(row);
                 allRows.Add(row);
@@ -739,7 +861,7 @@ namespace Sflix
             MediaCheckChoice c = BuildChoice();
             if (c.Count == 0) return;
             if (c.Delete.Count > 0 &&
-                MessageBox.Show(this, c.Delete.Count + " Datei(en) kommen samt Vorschaubild nach „" + MediaCheckTask.DeletedFolderName +
+                MessageBox.Show(this, c.Delete.Count + " Datei(en) bzw. Ordner kommen (Dateien samt Vorschaubild) nach „" + MediaCheckTask.DeletedFolderName +
                                 "“. Endgültig löscht sie erst „Ablagen leeren“. Fortfahren?",
                                 App.Title, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
             result = c;

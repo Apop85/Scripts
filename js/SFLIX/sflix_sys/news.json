@@ -2,6 +2,56 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.06",
+      "name": "2.6.0",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Android-App 1.1.0: Im Menü gibt es neu \"Quelle wechseln\" und \"App-Einstellungen\". Dort lassen sich die Quellen verwalten, das Display während der Wiedergabe eingeschaltet lassen, Videos im Vollbild quer anzeigen, Zwischenspeicher und Videopuffer einstellen, die Verbindung testen und die App aktualisieren."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Android-App: Neue Versionen der App werden gemeldet und auf Wunsch direkt in der App heruntergeladen, geprüft und installiert."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Bricht die Verbindung zu einem laufenden Video oder Musikstück ab (z.B. NAS oder WLAN kurz weg), lädt der Player die Datei neu und spielt an derselben Stelle weiter. Gelingt das 30 Sekunden lang nicht, erscheint ein Hinweis."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: \"Medien prüfen\" findet auch leere Ordner, also Ordner ohne Medien (Vorschaubilder zählen nicht). Im Ergebnis lassen sie sich löschen: Sie kommen als Ganzes nach \"__gelöscht\" im Ordner darüber. Ordner, die noch andere Dateien enthalten, sind nicht zum Löschen vorgemerkt."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Bei \"Kacheln pro Zeile automatisch\" stehen die Kacheln mittig, mit gleichem Abstand links und rechts. Auf Handy und Tablet blieb rechts bisher eine Lücke."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Android-App: Menüleiste und Menü sind grösser und leichter zu treffen. Hinweise auf neue Versionen von STEFFLIX und Updater erscheinen in der App nicht mehr, sie lassen sich dort ohnehin nicht installieren."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Neuer Abschnitt \"Android-App\" in der Hilfe."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Android-App: Seiten laden deutlich schneller, besonders unterwegs über VPN. Programmdateien, Medienverzeichnis und Vorschaubilder bleiben auf dem Gerät gespeichert (je Quelle, Standard 250 MB) und werden nur neu geladen, wenn sie sich geändert haben. Die Verbindung zum NAS wird schon während der Startanimation aufgebaut und offen gehalten, solange die App sichtbar ist. Nach einer Pause verbindet sich die App sofort im Hintergrund neu."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Android-App: Videos und Musik werden im Voraus geladen (Standard 64 MB). Kurze Verbindungsabbrüche überbrückt die App und verbindet sich danach selbst neu."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Android-App: Beim Einrichten einer Quelle nennt die Verbindungsprüfung den genauen Grund eines Fehlers. Ist eine Quelle beim Start nicht erreichbar oder bricht die Verbindung ab, führt ein Hinweis zurück zur Auswahl der Quellen."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Die Diagnose (Einstellungen › Fehlerbehebung) enthält in der Android-App auch Angaben zur App, z.B. Version, Gerät und Ladezeiten. Sie wird beim Feedback mitgeschickt."
+        }
+      ]
+    },
+    {
       "version": "2.0501",
       "name": "2.5.1",
       "items": [

@@ -339,8 +339,8 @@ namespace Sflix
                      "Das Original kommt nach „" + ConvertTask.OriginalsFolderName + "“.",
                      parallelRow, optConvertAudio, optDeleteOriginal, pickConvert.Root),
                 Spec("check", Glyph.Inspect, "Medien prüfen", "Nicht abspielbar, defekt",
-                     "Findet Medien, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), defekte und leere Dateien sowie Medien ohne Vorschaubild " +
-                     "(gemäss „Vorschaubilder“: Videos und/oder Bilder). Im Ergebnis wählst du, was konvertiert bzw. mit Vorschaubild versehen wird.",
+                     "Findet Medien, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), defekte und leere Dateien, Medien ohne Vorschaubild " +
+                     "(gemäss „Vorschaubilder“: Videos und/oder Bilder) sowie leere Ordner. Im Ergebnis wählst du, was gelöscht, konvertiert bzw. mit Vorschaubild versehen wird.",
                      pickCheck.Root),
                 Spec("cleanup", Glyph.Trash, "Ablagen leeren", "__-Ordner löschen",
                      "„__teile“, „__konvertiert“, „__gelöscht“, „__original“, „" + EpisodeTask.ReplacedFolderName + "“ und „" + DuplicateTask.FolderName + "“ endgültig löschen. " +

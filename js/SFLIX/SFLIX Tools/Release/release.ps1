@@ -11,16 +11,19 @@
 #   1. Updater    Hat sich der Quellcode im Unterordner "SFLIX Tools\SflixTools" seit dem letzten Release
 #                 geändert, wird die Versionsnummer erhöht (Vorschlag: nächste Patch-Version,
 #                 änderbar), updateStefflix.exe gebaut und hierher kopiert.
-#   2. ffmpeg     Gibt es eine neuere stabile ffmpeg-Version, kann ffmpeg.json aktualisiert werden.
-#   3. STEFFLIX   Wurden Dateien der Weboberfläche geändert, kann die Version in version.js
+#   2. Android    Hat sich der Quellcode der App ("SFLIX Tools\Android") oder sflix_sys\splash.svg
+#                 seit dem letzten Release geändert, wird die App-Version erhöht (versionName x.y.z
+#                 und versionCode in app\build.gradle), STEFFLIX.apk gebaut und hierher kopiert.
+#   3. ffmpeg     Gibt es eine neuere stabile ffmpeg-Version, kann ffmpeg.json aktualisiert werden.
+#   4. STEFFLIX   Wurden Dateien der Weboberfläche geändert, kann die Version in version.js
 #                 erhöht und ein Changelog-Eintrag in news.txt ergänzt werden. Format x.y.z
 #                 (ab 2.5.0), version.js erhält zusätzlich die alte Zahl (siehe versioning.py).
-#   4. Prüfen     check_release.py, create_news.py, create_checksums.py
-#   5. Übersicht  welche Dateien sich geändert haben und gepusht werden müssen
+#   5. Prüfen     check_release.py, create_news.py, create_checksums.py
+#   6. Übersicht  welche Dateien sich geändert haben und gepusht werden müssen
 #
 #  Optionen:
 #   -Auto           alle Vorschläge ohne Rückfrage übernehmen (STEFFLIX-Version bleibt unverändert)
-#   -MarkReleased   nur merken, dass der aktuelle Updater-Quellcode bereitgestellt ist (ohne Bauen)
+#   -MarkReleased   nur merken, dass der aktuelle Quellcode von Updater und App bereitgestellt ist (ohne Bauen)
 #   -SflixTools P   anderer Pfad zum Updater-Projekt
 # ===================================================================
 
@@ -139,6 +142,56 @@ function Set-ProgramVersion([string]$programCs, [version]$v) {
 
 function Short([version]$v) { "$($v.Major).$($v.Minor).$($v.Build)" }
 
+# Android-App: Version steht in app\build.gradle (versionName 'x.y.z', versionCode = x*10000 + y*100 + z)
+$AndroidDir = Join-Path $Root 'SFLIX Tools\Android'
+$androidGradle = Join-Path $AndroidDir 'app\build.gradle'
+$androidStateFile = Join-Path $AndroidDir 'release_state.json'
+
+# Fingerabdruck des App-Quellcodes inkl. splash.svg (wird beim Bauen in die App kopiert).
+# Die Versionszeilen zählen nicht, die Kopie von splash.svg in assets auch nicht (zählt über das Original).
+function Get-AndroidFingerprint {
+    $files = @(Get-ChildItem (Join-Path $AndroidDir 'app\src') -Recurse -File |
+        Where-Object { $_.FullName -notlike '*\assets\splash.svg' })
+    foreach ($n in 'build.gradle', 'settings.gradle', 'gradle.properties', 'build.ps1', 'app\build.gradle') {
+        $p = Join-Path $AndroidDir $n
+        if (Test-Path $p) { $files += Get-Item $p }
+    }
+    $files += Get-Item (Join-Path $Root 'sflix_sys\splash.svg')
+    $files = $files | Sort-Object FullName
+    $sha = [Security.Cryptography.SHA256]::Create()
+    $sb = New-Object Text.StringBuilder
+    foreach ($f in $files) {
+        $bytes = [IO.File]::ReadAllBytes($f.FullName)
+        if ($f.FullName -eq $androidGradle) {
+            $text = ([IO.File]::ReadAllText($f.FullName) -replace "`r`n", "`n" -split "`n" |
+                Where-Object { $_ -notmatch '^\s*version(Code|Name)\b' }) -join "`n"
+            $bytes = $Utf8.GetBytes($text)
+        }
+        $hash = ($sha.ComputeHash($bytes) | ForEach-Object { $_.ToString('x2') }) -join ''
+        [void]$sb.Append($f.Name).Append("`0").Append($hash).Append("`0")
+    }
+    return (($sha.ComputeHash($Utf8.GetBytes($sb.ToString())) | ForEach-Object { $_.ToString('x2') }) -join '')
+}
+
+function Get-AndroidVersion {
+    $m = [regex]::Match([IO.File]::ReadAllText($androidGradle), "versionName\s+'(\d+)\.(\d+)\.(\d+)'")
+    if (-not $m.Success) { Fail "Kein versionName 'x.y.z' in $androidGradle gefunden" }
+    return [version]"$($m.Groups[1].Value).$($m.Groups[2].Value).$($m.Groups[3].Value)"
+}
+
+function Set-AndroidVersion([version]$v) {
+    $text = [IO.File]::ReadAllText($androidGradle)
+    $code = $v.Major * 10000 + $v.Minor * 100 + $v.Build
+    $text = [regex]::Replace($text, "versionName\s+'[\d.]+'", "versionName '$(Short $v)'")
+    $text = [regex]::Replace($text, 'versionCode\s+\d+', "versionCode $code")
+    [IO.File]::WriteAllText($androidGradle, $text, $Utf8)
+}
+
+function Save-AndroidState([string]$version, [string]$fingerprint) {
+    @{ version = $version; sourceHash = $fingerprint; built = (Get-Date).ToString('s') } |
+        ConvertTo-Json | Set-Content $androidStateFile -Encoding UTF8
+}
+
 # STEFFLIX-Versionen (gleiche Regeln wie versioning.py): ab 2.5.0 x.y.z, dazu die alte Zahl
 # x + y/100 + z/10000 für Installationen bis 2.04 ("2.5.0" -> "2.05", "2.5.1" -> "2.0501")
 function Convert-LegacyVersion([string]$text) {
@@ -191,9 +244,15 @@ if ($MarkReleased) {
     $v = Short (Get-ProgramVersion $programCs)
     Save-State $v (Get-SourceFingerprint)
     Write-Host "Gemerkt: Quellcode von Version $v gilt als bereitgestellt ($stateFile)."
+    if (Test-Path $androidGradle) {
+        $av = Short (Get-AndroidVersion)
+        Save-AndroidState $av (Get-AndroidFingerprint)
+        Write-Host "Gemerkt: Android-App $av gilt als bereitgestellt ($androidStateFile)."
+    }
     exit 0
 }
 $programCsBackup = $null
+$androidGradleBackup = $null
 $released = @()   # Beschreibung der Änderungen für die Übersicht
 
 try {
@@ -213,7 +272,7 @@ try {
     }
 
     # --------------------------------------------------------------
-    Step '[1/5] Updater (updateStefflix.exe)'
+    Step '[1/6] Updater (updateStefflix.exe)'
     # --------------------------------------------------------------
     $releaseExe = Join-Path $Root 'updateStefflix.exe'
     if (-not (Test-Path $programCs)) {
@@ -233,10 +292,15 @@ try {
         else { Info 'Der Quellcode ist seit dem letzten Release unverändert.' }
 
         if (Ask-YesNo 'Updater neu bauen und bereitstellen?' $changed) {
-            # Vorschlag: nächste Patch-Version nach der höheren der beiden Versionen
-            $base = $sourceVersion
-            if ($releaseVersion -and $releaseVersion -gt $base) { $base = $releaseVersion }
-            $suggest = [version]"$($base.Major).$($base.Minor).$($base.Build + 1)"
+            # Vorschlag: Wurde die Version im Quellcode schon erhöht (höher als die bereitgestellte),
+            # gilt sie. Sonst die nächste Patch-Version nach der höheren der beiden.
+            if (-not $releaseVersion -or $sourceVersion -gt $releaseVersion) {
+                $suggest = $sourceVersion
+                Info "Vorschlag aus dem Quellcode: $(Short $sourceVersion)."
+            } else {
+                $suggest = [version]"$($releaseVersion.Major).$($releaseVersion.Minor).$($releaseVersion.Build + 1)"
+            }
+            Info 'Enter übernimmt den Vorschlag, eine andere Nummer kann eingegeben werden.'
             Info 'Tipp: 3.0.5 = kleine Änderung, 3.1.0 = neue Funktionen, 4.0.0 = grosser Umbau.'
             $newVersion = [version](Ask-Text 'Neue Versionsnummer' (Short $suggest) '^\d+\.\d+\.\d+$' 'z.B. 3.0.5')
             if ($releaseVersion -and $newVersion -le $releaseVersion) {
@@ -264,7 +328,68 @@ try {
     }
 
     # --------------------------------------------------------------
-    Step '[2/5] ffmpeg (ffmpeg.json)'
+    Step '[2/6] Android-App (STEFFLIX.apk)'
+    # --------------------------------------------------------------
+    $releaseApk = Join-Path $Root 'STEFFLIX.apk'
+    $androidReleased = $false
+    if (-not (Test-Path $androidGradle)) {
+        Warn "App-Projekt nicht gefunden: $AndroidDir"
+        Warn 'STEFFLIX.apk bleibt unverändert.'
+    } else {
+        $appSourceVersion = Get-AndroidVersion
+        $appFingerprint = Get-AndroidFingerprint
+        $appState = $null
+        if (Test-Path $androidStateFile) { $appState = Get-Content $androidStateFile -Raw -Encoding UTF8 | ConvertFrom-Json }
+        $appReleased = if ($appState) { [version]$appState.version } else { $null }
+        # Vor diesem Schritt von Hand gebaute APK (ohne release_state.json): gilt als Version im Quellcode
+        if (-not $appReleased -and (Test-Path $releaseApk)) { $appReleased = $appSourceVersion }
+        $appChanged = ($appState -eq $null) -or ($appState.sourceHash -ne $appFingerprint)
+
+        Info ("Zuletzt bereitgestellt: " + $(if ($appReleased) { Short $appReleased } else { 'keine' }) +
+              "   im Quellcode: " + (Short $appSourceVersion))
+        if ($appChanged) { Info 'Der Quellcode der App wurde seit dem letzten Release geändert.' }
+        else { Info 'Der Quellcode der App ist seit dem letzten Release unverändert.' }
+
+        if (Ask-YesNo 'Android-App neu bauen und bereitstellen?' $appChanged) {
+            # Vorschlag: Version aus dem Quellcode, wenn sie höher als die bereitgestellte ist (schon
+            # erhöht oder allererstes Release). Sonst die nächste Patch-Version.
+            if (-not $appReleased -or $appSourceVersion -gt $appReleased) {
+                $appSuggest = $appSourceVersion
+                Info "Vorschlag aus dem Quellcode: $(Short $appSourceVersion)."
+            } else {
+                $appSuggest = [version]"$($appReleased.Major).$($appReleased.Minor).$($appReleased.Build + 1)"
+            }
+            Info 'Enter übernimmt den Vorschlag, eine andere Nummer kann eingegeben werden.'
+            Info 'Tipp: 1.0.1 = kleine Änderung, 1.1.0 = neue Funktionen (y und z unter 100).'
+            $newApp = [version](Ask-Text 'Neue App-Version' (Short $appSuggest) '^\d+\.\d{1,2}\.\d{1,2}$' 'z.B. 1.0.1')
+            if ($appReleased -and $newApp -le $appReleased) {
+                Warn "$(Short $newApp) ist nicht höher als die bereitgestellte Version $(Short $appReleased)."
+                Warn 'Android würde die neue APK nicht als Update über die alte installieren.'
+                if (-not (Ask-YesNo 'Trotzdem fortfahren?' $false)) { Fail 'Abgebrochen.' }
+            }
+
+            $androidGradleBackup = [IO.File]::ReadAllText($androidGradle)
+            Set-AndroidVersion $newApp
+            Info "Baue Android-App $(Short $newApp) (beim ersten Mal wird nach dem Passwort des Signaturschlüssels gefragt) ..."
+            $apkBefore = if (Test-Path $releaseApk) { (Get-Item $releaseApk).LastWriteTimeUtc } else { [datetime]::MinValue }
+            & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $AndroidDir 'build.ps1')
+            if ($LASTEXITCODE -ne 0) { Fail 'Build der Android-App fehlgeschlagen.' }
+            if (-not (Test-Path $releaseApk) -or (Get-Item $releaseApk).LastWriteTimeUtc -le $apkBefore) {
+                Fail 'STEFFLIX.apk wurde nicht neu erstellt.'
+            }
+            $androidGradleBackup = $null   # Build erfolgreich, Version bleibt
+
+            Save-AndroidState (Short $newApp) (Get-AndroidFingerprint)
+            Good "STEFFLIX.apk $(Short $newApp) bereitgestellt."
+            $released += "Android-App $(Short $newApp)"
+            $androidReleased = $true
+        } else {
+            Info 'STEFFLIX.apk bleibt unverändert.'
+        }
+    }
+
+    # --------------------------------------------------------------
+    Step '[3/6] ffmpeg (ffmpeg.json)'
     # --------------------------------------------------------------
     $ffmpegJson = Join-Path $Root 'ffmpeg.json'
     $current = $null
@@ -296,7 +421,7 @@ try {
     }
 
     # --------------------------------------------------------------
-    Step '[3/5] STEFFLIX-Version (version.js und Changelog)'
+    Step '[4/6] STEFFLIX-Version (version.js und Changelog)'
     # --------------------------------------------------------------
     $versionJs = Join-Path $Root 'sflix_sys\version.js'
     $newsTxt = Join-Path $Root 'sflix_sys\news.txt'
@@ -391,7 +516,7 @@ try {
     }
 
     # --------------------------------------------------------------
-    Step '[4/5] Prüfen, news.json und checksums.json erzeugen'
+    Step '[5/6] Prüfen, news.json und checksums.json erzeugen'
     # --------------------------------------------------------------
     Run-Python 'check_release.py'
     # Ändert sich news.json beim Erzeugen, wurde der Changelog (news.txt) bearbeitet
@@ -410,15 +535,32 @@ try {
     $ffmpegVersion = ''
     $ffmpegManifest = Join-Path $Root 'ffmpeg.json'
     if (Test-Path $ffmpegManifest) { $ffmpegVersion = [string](Get-Content $ffmpegManifest -Raw -Encoding UTF8 | ConvertFrom-Json).version }
-    $versionsText = "{`n  `"updater`": `"$updaterVersion`",`n  `"ffmpeg`": `"$ffmpegVersion`"`n}`n"
+    # Android-App (ab 1.1.0): Version und SHA256 der STEFFLIX.apk. Die App prüft damit selbst auf
+    # Updates und kontrolliert die heruntergeladene Datei vor der Installation.
+    $appVersion = ''
+    $appSha = ''
+    $apkFile = Join-Path $Root 'STEFFLIX.apk'
+    if (Test-Path $apkFile) {
+        # Version der zuletzt gebauten APK (release_state.json), sonst die im Quellcode
+        if (Test-Path $androidStateFile) {
+            $appVersion = [string](Get-Content $androidStateFile -Raw -Encoding UTF8 | ConvertFrom-Json).version
+        }
+        if (-not $appVersion -and (Test-Path $androidGradle)) { $appVersion = Short (Get-AndroidVersion) }
+        $appSha = (Get-FileHash $apkFile -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+    $versionsText = "{`n  `"updater`": `"$updaterVersion`",`n  `"ffmpeg`": `"$ffmpegVersion`""
+    if ($appVersion) {
+        $versionsText += ",`n  `"android`": {`n    `"version`": `"$appVersion`",`n    `"sha256`": `"$appSha`"`n  }"
+    }
+    $versionsText += "`n}`n"
     if ($versionsText -ne $versionsBefore) {
         [IO.File]::WriteAllText($versionsJson, $versionsText, $Utf8)
-        Good "versions.json: Updater $updaterVersion, ffmpeg $ffmpegVersion"
+        Good "versions.json: Updater $updaterVersion, ffmpeg $ffmpegVersion$(if ($appVersion) { ", Android-App $appVersion" })"
     }
     $versionsChanged = $versionsText -ne $versionsBefore
 
     # --------------------------------------------------------------
-    Step '[5/5] Übersicht'
+    Step '[6/6] Übersicht'
     # --------------------------------------------------------------
     $after = Get-Content (Join-Path $Root 'checksums.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     $toPush = @()
@@ -431,6 +573,11 @@ try {
         $toPush += 'sflix_sys/news.json'
     }
     if ($versionsChanged) { $toPush += 'versions.json' }
+    if ($androidReleased) {
+        # Nicht in checksums.json (der Updater lädt die App nicht), darum hier ergänzen
+        $toPush += 'STEFFLIX.apk'
+        $toPush += 'SFLIX Tools/Android/ (Quellcode der App, inkl. release_state.json)'
+    }
     $toPush = $toPush | Select-Object -Unique
 
     Write-Host ''
@@ -450,6 +597,10 @@ catch {
     if ($programCsBackup) {
         [IO.File]::WriteAllText($programCs, $programCsBackup, $Utf8)
         Warn 'Versionsnummer im Quellcode wurde zurückgesetzt.'
+    }
+    if ($androidGradleBackup) {
+        [IO.File]::WriteAllText($androidGradle, $androidGradleBackup, $Utf8)
+        Warn 'Versionsnummer der Android-App wurde zurückgesetzt.'
     }
     Write-Host ''
     Write-Host '===================================================================' -ForegroundColor Red

@@ -118,7 +118,7 @@ namespace Sflix
 
             // STEFFLIX: sind alle Dateien der Weboberfläche auf dem Stand der Prüfsummen?
             u.WebLocal = LocalWebVersion();
-            foreach (string f in Net.WebFiles)
+            foreach (string f in Net.WebFilesFor(checksums))
             {
                 if (checksums.Str(f) == null) continue;
                 if (!Net.IsUpToDate(f, Path.Combine(App.Root, f.Replace('/', '\\')), checksums)) { u.WebChanged = true; break; }
@@ -296,10 +296,10 @@ namespace Sflix
             }
 
             ctx.Log("STEFFLIX-Dateien:");
-            int failed = Net.UpdateFiles(Net.WebFiles, App.Root, checksums, ctx);
+            int failed = Net.UpdateFiles(Net.WebFilesFor(checksums), App.Root, checksums, ctx);
             if (failed > 0)
                 throw new TaskFailedException("Das Update wurde nicht installiert. Bitte später erneut versuchen.");
-            Net.RemoveObsoleteFiles(App.Root, ctx);
+            Net.RemoveObsoleteFiles(App.Root, checksums, ctx);
             int oldRemoved = Net.RemoveOldBackups(App.Root);
             if (oldRemoved > 0) ctx.Log("  Sicherungen (*.old) entfernt: " + oldRemoved);
 

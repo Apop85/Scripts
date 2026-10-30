@@ -61,6 +61,17 @@ final class FileCache {
     }
 
     private final SmbSource smb;
+
+    /** Wird beim Lesen von der Freigabe benachrichtigt (Startbildschirm der App). */
+    interface Listener {
+        void onNetworkRead(String rel, long done, long total);
+    }
+
+    private volatile Listener listener;
+
+    void setListener(Listener l) {
+        listener = l;
+    }
     private final String shareId;
     private final java.io.File dir;
     private volatile long maxDiskBytes;
@@ -211,7 +222,8 @@ final class FileCache {
         File f = smb.open(rel);
         byte[] data;
         try {
-            data = SmbSource.readAll(f, meta.size);
+            final Listener l = listener;
+            data = SmbSource.readAll(f, meta.size, l == null ? null : (done, total) -> l.onNetworkRead(rel, done, total));
         } finally {
             SmbSource.closeLater(f);
         }
@@ -226,7 +238,8 @@ final class FileCache {
         try {
             long size = SmbSource.size(f);
             if (size > MAX_FILE) return null;
-            byte[] data = SmbSource.readAll(f, size);
+            final Listener l = listener;
+            byte[] data = SmbSource.readAll(f, size, l == null ? null : (done, total) -> l.onNetworkRead(rel, done, total));
             LoadStats.network(data.length);
             return data;
         } finally {

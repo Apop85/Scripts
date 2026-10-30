@@ -51,7 +51,7 @@ namespace Sflix
             // Wie setup.py: alles ausser den Programmen, vorhandene Dateien überspringen
             List<string> files = new List<string>();
             files.Add("sflix_sys/data.js");
-            files.AddRange(Net.WebFiles);
+            files.AddRange(Net.WebFilesFor(checksums));
 
             int failed = 0, loaded = 0, existing = 0;
             for (int i = 0; i < files.Count; i++)

@@ -168,6 +168,7 @@ Mit der App `STEFFLIX.apk` lässt sich STEFFLIX auf dem Handy oder Tablet nutzen
 - **App-Einstellungen** (im Menü): Quellen verwalten, „Display nicht ausschalten“ während der Wiedergabe, Videos im Vollbild quer, Zwischenspeicher (Standard 250 MB) und Videopuffer (Standard 64 MB) einstellen, Verbindung testen, Updates und Diagnose.
 - **Zwischenspeicher**: Programmdateien und Vorschaubilder bleiben auf dem Gerät gespeichert. Seiten laden dadurch viel schneller, besonders unterwegs über VPN. Geänderte Dateien (z.B. nach „Daten einlesen“) erkennt die App selbst. Die Verbindung zum NAS hält die App offen, solange sie sichtbar ist, und baut sie nach einer Pause sofort neu auf.
 - **Videopuffer**: Videos und Musik werden im Voraus geladen. Kurze Verbindungsabbrüche überbrückt die App und spielt danach an derselben Stelle weiter.
+- **Startbildschirm**: Dauert der Start länger, weil Dateien vom NAS geladen werden (z.B. beim ersten Start über VPN), zeigt er, was gerade geladen wird und wie weit es ist. Nach 15 Sekunden erscheint „Quelle wechseln“.
 - **Updates**: Die App meldet neue Versionen selbst und installiert sie auf Wunsch direkt (beim ersten Mal „Aus dieser Quelle zulassen“ erlauben).
 - Das Passwort wird verschlüsselt auf dem Gerät gespeichert.
 - Favoriten, Fortschritte und „Weiterschauen“ speichert die App auf dem Gerät, getrennt für jede Installation.

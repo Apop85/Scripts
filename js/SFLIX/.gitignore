@@ -22,5 +22,9 @@ SFLIX Tools/Android/build/
 SFLIX Tools/Android/dist/
 SFLIX Tools/Android/local.properties
 
+# Vorschaubilder von ladehintergrund.py (das Ergebnis steckt in start.html und den App-Assets)
+SFLIX Tools/Bilder/ladehintergrund.jpg
+SFLIX Tools/Bilder/ladehintergrund_scharf.jpg
+
 # Build des Updaters (Zwischenprodukte)
 SFLIX Tools/SflixTools/obj/

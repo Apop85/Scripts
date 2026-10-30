@@ -227,18 +227,32 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
     }
 
-    // ---- Splashscreen: sofort aus den App-Dateien, bleibt bis Animation und start.html fertig sind ----
+    // ---- Splashscreen: sofort aus den App-Dateien ----
+    // Bleibt, bis die Animation vorbei ist, start.html geladen ist und STEFFLIX seinen Ladescreen
+    // ausgeblendet hat (Vorschaubilder im sichtbaren Bereich da, Meldung webReady aus inject.js).
+    // Kommen dabei Dateien vom NAS und ist die Animation schon vorbei, zeigt er statt der Animation
+    // Logo, Ring und Status (showLoader/setStatus in splash.html), nach 15 s auch "Quelle wechseln".
 
     private static final long SPLASH_MS = 2900; // wie splash-out in sflix.css (72 % von 4 s)
+    private static final long SOURCE_BUTTON_MS = 15_000;
+    private static final long WEB_READY_TIMEOUT_MS = 25_000; // höchstens so lange nach onPageFinished
     private WebView splash;
-    private boolean pageReady, splashDone;
+    private android.widget.Button sourceButton;
+    private boolean pageReady, splashDone, webReady, loaderShown;
+    private long splashStart;
+    private volatile String readingRel;
+    private volatile long readDone, readTotal;
+    private volatile int imagesDone, imagesTotal;
 
     @SuppressLint("SetJavaScriptEnabled")
     private void showSplash() {
+        splashStart = System.currentTimeMillis();
         splash = new WebView(this);
         splash.setBackgroundColor(0xff0b0b0d);
         splash.getSettings().setAllowFileAccess(true); // nur fuer file:///android_asset
+        splash.getSettings().setJavaScriptEnabled(true);
         splash.setOnTouchListener((v, e) -> {
+            // Tippen überspringt nur die Animation, nicht das Laden
             if (e.getAction() == android.view.MotionEvent.ACTION_UP) {
                 splashDone = true;
                 hideSplash(false);
@@ -247,21 +261,101 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
         });
         root.addView(splash, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         splash.loadUrl("file:///android_asset/splash.html");
+        cache.setListener((rel, done, total) -> {
+            readingRel = rel;
+            readDone = done;
+            readTotal = total;
+        });
         root.postDelayed(() -> {
             splashDone = true;
             hideSplash(false);
         }, SPLASH_MS);
+        root.postDelayed(splashTick, 250);
+    }
+
+    private final Runnable splashTick = new Runnable() {
+        @Override
+        public void run() {
+            if (splash == null) return;
+            updateSplashStatus();
+            root.postDelayed(this, 250);
+        }
+    };
+
+    /** Nach der Animation: Ladeansicht zeigen, sobald vom NAS geladen wird, und den Status nachführen. */
+    private void updateSplashStatus() {
+        boolean fromNas = LoadStats.networkFiles() > 0 || readingRel != null || !smb.isConnected();
+        if (splashDone && !loaderShown && fromNas) {
+            loaderShown = true;
+            splash.evaluateJavascript("showLoader()", null);
+        }
+        if (!loaderShown) return;
+        String title, sub = "";
+        double progress = -1;
+        if (!smb.isConnected() && readingRel == null && LoadStats.networkFiles() == 0) {
+            title = "Verbinde mit " + share.label() + " …";
+        } else if (!pageReady) {
+            String rel = readingRel;
+            if (rel != null && rel.toLowerCase(Locale.ROOT).endsWith("data.js") && readTotal > 0) {
+                title = "Lade Medienverzeichnis";
+                progress = readDone / (double) readTotal;
+                sub = Math.round(progress * 100) + " %";
+            } else {
+                title = "Lade Programmdateien";
+            }
+        } else {
+            title = "Lade Vorschaubilder";
+            if (imagesTotal > 0) {
+                sub = imagesDone + " / " + imagesTotal;
+                progress = imagesDone / (double) imagesTotal;
+            }
+        }
+        splash.evaluateJavascript("setStatus(" + org.json.JSONObject.quote(title) + ","
+                + org.json.JSONObject.quote(sub) + "," + progress + ")", null);
+        if (sourceButton == null && System.currentTimeMillis() - splashStart > SOURCE_BUTTON_MS) showSourceButton();
+    }
+
+    /** "Quelle wechseln" unten im Startbildschirm, falls das Laden lange dauert (falsches Netz, VPN aus). */
+    private void showSourceButton() {
+        sourceButton = new android.widget.Button(this);
+        sourceButton.setText("Quelle wechseln");
+        sourceButton.setAllCaps(false);
+        sourceButton.setTextColor(Color.WHITE);
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        float dp = getResources().getDisplayMetrics().density;
+        bg.setCornerRadius(8 * dp);
+        bg.setColor(0xcc1c1c21);
+        bg.setStroke((int) dp, 0xff3a3a42);
+        sourceButton.setBackground(bg);
+        sourceButton.setPadding((int) (20 * dp), 0, (int) (20 * dp), 0);
+        sourceButton.setOnClickListener(v -> new Bridge().switchSource());
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (int) (48 * dp),
+                android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL);
+        lp.bottomMargin = (int) (48 * dp);
+        root.addView(sourceButton, lp);
     }
 
     private void hideSplash(boolean force) {
-        if (splash == null || (!force && !(pageReady && splashDone))) return;
+        if (splash == null || (!force && !(pageReady && splashDone && webReady))) return;
         final WebView s = splash;
         splash = null;
+        cache.setListener(null);
+        root.removeCallbacks(splashTick);
+        if (sourceButton != null) {
+            root.removeView(sourceButton);
+            sourceButton = null;
+        }
         s.animate().alpha(0f).setDuration(300).withEndAction(() -> {
             root.removeView(s);
             s.destroy();
         });
         checkForAppUpdate();
+    }
+
+    /** STEFFLIX hat seinen Ladescreen ausgeblendet (oder es gibt keinen, z.B. Fehlerseite). */
+    private void onWebReady() {
+        webReady = true;
+        hideSplash(false);
     }
 
     // ---- In start.html eingefügte Skripte ----
@@ -320,6 +414,19 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
         @JavascriptInterface
         public void webSplash() {
             runOnUiThread(() -> hideSplash(true));
+        }
+
+        /** Ladescreen von STEFFLIX ist weg (aus inject.js). */
+        @JavascriptInterface
+        public void webReady() {
+            runOnUiThread(BrowserActivity.this::onWebReady);
+        }
+
+        /** Vorschaubilder im sichtbaren Bereich: geladen / alle (STEFFLIX ab 2.6.1, ui.js). */
+        @JavascriptInterface
+        public void loadingProgress(int done, int total) {
+            imagesDone = done;
+            imagesTotal = total;
         }
 
         @JavascriptInterface
@@ -474,6 +581,11 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
             pageReady = true;
             if (!mainLoadFailed) everLoaded = true;
             LoadStats.finish(url != null && url.contains("?") ? "Seite" : "Startseite");
+            if (splash != null) {
+                // Fehlerseite hat keinen Ladescreen; sonst höchstens WEB_READY_TIMEOUT_MS auf ihn warten
+                if (mainLoadFailed) webReady = true;
+                else root.postDelayed(BrowserActivity.this::onWebReady, WEB_READY_TIMEOUT_MS);
+            }
             hideSplash(false);
             // Ohne Startanimation (z.B. nach dem Wiederherstellen) hier auf ein App-Update prüfen
             if (splash == null && everLoaded) checkForAppUpdate();

@@ -101,6 +101,12 @@ Welcher Quellcode-Stand zuletzt bereitgestellt wurde, steht in `release_state.js
 
 **Umstieg bestehender Installationen:** `updateData.exe` und `updater.exe` samt ihren Einträgen in `checksums.json` noch eine Weile im Repository lassen. Die alte Python-Version lädt diese Dateien beim Update, holt dann über `updater.exe` die neue `updateStefflix.exe` und ist damit umgestellt. Die neue Version löscht die beiden alten Programme danach selbst.
 
+## Dateilisten aus dem Release (seit 3.4.1)
+
+`create_checksums.py` schreibt zusätzlich `_webFiles` (aus `WEB_FILES` in `sflix_update.py`) und `_obsoleteFiles` (`OBSOLETE_FILES`) in `checksums.json`. Der Updater nimmt diese Listen (`Net.WebFilesFor`, `Net.ObsoleteFilesFor`), ohne sie seine eingebauten `Net.WebFiles`/`Net.ObsoleteFiles`. Eine neue oder entfallene Datei der Weboberfläche braucht damit nur einen Eintrag in `sflix_update.py`, keinen neuen Updater.
+
+Schutzregeln (`Net.IsAllowedWebPath`): nur `start.html` und Dateien in `sflix_sys` (nicht `sflix_sys/ffmpeg`), keine `..`, Laufwerke, Backslashes oder Steuerzeichen, nur Endungen der Weboberfläche (HTML, JS, CSS, Bilder, JSON, TXT, Schriften), nie persönliche Dateien (`data.js`, `install.js`, `license.js`, `renamed.js`, `updater_info.js`, `updater_settings.json`, Folgenlisten, `updater.log`). Programmdateien ohne Prüfsumme werden übersprungen, eine aktuelle Programmdatei wird nie als veraltet gelöscht. Ältere Updater lesen nur die Prüfsummen und übergehen die Listen.
+
 ## Selbst-Update
 
 - Beim Start prüft das Programm im Hintergrund, ob es Neues gibt: STEFFLIX-Dateien (Vergleich mit `checksums.json`, Versionsnummer aus `version.js` auf GitHub), dieses Programm und ein bereits installiertes ffmpeg. Falls ja, erscheint ein Fenster mit den Versionen und „Jetzt aktualisieren“ / „Später“. Nach „Später“ bleibt ein Hinweisbalken mit demselben Knopf stehen.

@@ -66,6 +66,79 @@ namespace Sflix
             "sflix_sys/sflix.js", "sflix_sys/sflix_bg.jpg", "updateData.exe", "updater.exe",
         };
 
+        // ---------------------------------------------------------------
+        // Dateilisten aus dem Release (seit 3.4.1)
+        // ---------------------------------------------------------------
+        // create_checksums.py schreibt beide Listen zusätzlich in checksums.json. So kommen neue oder
+        // entfallene Dateien der Weboberfläche ohne neuen Updater zu den Nutzern. Fehlt eine Liste
+        // (älteres Release), gelten WebFiles bzw. ObsoleteFiles oben.
+        public const string WebFilesKey = "_webFiles", ObsoleteFilesKey = "_obsoleteFiles";
+
+        // Persönliche Dateien einer Installation: werden nie heruntergeladen, ersetzt oder gelöscht
+        static readonly string[] ProtectedFiles = {
+            "sflix_sys/data.js", "sflix_sys/install.js", "sflix_sys/license.js", "sflix_sys/renamed.js",
+            "sflix_sys/updater_info.js", "sflix_sys/updater_settings.json", "sflix_sys/folgen_cache.json",
+            "sflix_sys/folgen_rueckgaengig.json", "sflix_sys/updater.log",
+        };
+
+        // Endungen, die zur Weboberfläche gehören dürfen (keine Programme, keine Medien)
+        static readonly string[] WebExtensions = {
+            ".html", ".js", ".css", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".ico", ".json", ".txt", ".woff", ".woff2",
+        };
+
+        // Darf ein Pfad aus der Liste des Release angefasst werden? Nur start.html und Dateien in sflix_sys
+        // (nicht im ffmpeg-Ordner), keine "..", Laufwerke oder Backslashes, keine persönlichen Dateien.
+        public static bool IsAllowedWebPath(string path)
+        {
+            if (string.IsNullOrEmpty(path) || path.Length > 200) return false;
+            if (path.IndexOf('\\') >= 0 || path.IndexOf(':') >= 0 || path.StartsWith("/")) return false;
+            foreach (string seg in path.Split('/'))
+                if (seg.Length == 0 || seg == "." || seg == ".." || seg.Trim() != seg) return false;
+            foreach (char c in path)
+                if (c < 32 || "<>\"|?*".IndexOf(c) >= 0) return false;
+            string lower = path.ToLowerInvariant();
+            foreach (string p in ProtectedFiles) if (lower == p) return false;
+            if (lower == "start.html") return true;
+            if (!lower.StartsWith("sflix_sys/") || lower.StartsWith("sflix_sys/ffmpeg/")) return false;
+            foreach (string ext in WebExtensions) if (lower.EndsWith(ext)) return true;
+            return false;
+        }
+
+        // Liste aus checksums.json, nur erlaubte Pfade; null, wenn sie fehlt oder leer ist
+        static List<string> ListFrom(JsonObject checksums, string key)
+        {
+            List<object> raw = checksums == null ? null : checksums.Arr(key);
+            if (raw == null) return null;
+            List<string> list = new List<string>();
+            foreach (object o in raw)
+            {
+                string p = o as string;
+                if (p != null && IsAllowedWebPath(p) && !list.Contains(p)) list.Add(p);
+            }
+            return list.Count > 0 ? list : null;
+        }
+
+        // Dateien der Weboberfläche: aus dem Release (nur mit Prüfsumme), sonst die eingebaute Liste
+        public static List<string> WebFilesFor(JsonObject checksums)
+        {
+            List<string> remote = ListFrom(checksums, WebFilesKey);
+            if (remote == null) return new List<string>(WebFiles);
+            remote.RemoveAll(delegate(string p) { return checksums.Str(p) == null; });
+            return remote.Count > 0 ? remote : new List<string>(WebFiles);
+        }
+
+        // Veraltete Dateien: eingebaute Liste plus die des Release (nie eine aktuelle Datei)
+        public static List<string> ObsoleteFilesFor(JsonObject checksums)
+        {
+            List<string> list = new List<string>(ObsoleteFiles);
+            List<string> remote = ListFrom(checksums, ObsoleteFilesKey);
+            if (remote != null)
+                foreach (string p in remote) if (!list.Contains(p)) list.Add(p);
+            List<string> current = WebFilesFor(checksums);
+            list.RemoveAll(delegate(string p) { return current.Contains(p); });
+            return list;
+        }
+
         static readonly string[] TextExtensions = { ".js", ".css", ".html", ".txt", ".json", ".svg" };
 
         public static string UrlFor(string path)
@@ -393,9 +466,9 @@ namespace Sflix
             return removed;
         }
 
-        public static void RemoveObsoleteFiles(string baseDir, TaskContext ctx)
+        public static void RemoveObsoleteFiles(string baseDir, JsonObject checksums, TaskContext ctx)
         {
-            foreach (string name in ObsoleteFiles)
+            foreach (string name in ObsoleteFilesFor(checksums))
             {
                 string path = Path.Combine(baseDir, name.Replace('/', '\\'));
                 try

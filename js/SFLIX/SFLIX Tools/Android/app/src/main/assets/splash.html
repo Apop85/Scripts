@@ -3,10 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Startbildschirm der App: zuerst die Animation (splash.svg). Dauert das Laden vom NAS länger,
+     ruft die App showLoader() und setStatus() auf: Logo mit Ring wie im Ladescreen von STEFFLIX
+     (ab 2.6.1), dahinter die unscharfe Plakatwand (loading_backdrop.jpg, aus ladehintergrund.py). -->
 <style>
-html, body { margin: 0; height: 100%; background: #0b0b0d; overflow: hidden; }
-img { display: block; width: 100vw; height: 100vh; object-fit: contain; }
+html, body { margin: 0; height: 100%; background: #0b0b0d; overflow: hidden; font-family: system-ui, Roboto, sans-serif; }
+#intro { display: block; width: 100vw; height: 100vh; object-fit: contain; transition: opacity 0.4s; }
+#loader { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.4s; pointer-events: none; }
+body.loading #loader { opacity: 1; }
+body.loading #intro { opacity: 0; }
+#backdrop { position: absolute; inset: -12%; background: #0f0f11 url("loading_backdrop.jpg") center / cover; animation: drift 60s ease-in-out infinite alternate; }
+#loader::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(15,15,17,0.5) 0%, rgba(15,15,17,0.2) 75%); }
+#content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding: 0 24px; text-align: center; }
+#ring { position: relative; width: 108px; height: 108px; display: flex; align-items: center; justify-content: center; }
+#ring svg.track { position: absolute; inset: 0; width: 100%; height: 100%; animation: spin 1s linear infinite; }
+#ring.determinate svg.track { animation: none; }
+#ring circle { fill: none; stroke-width: 3.5; }
+#ring .bg { stroke: rgba(255,255,255,0.14); }
+#ring .fill { stroke: #e8261a; stroke-linecap: round; stroke-dasharray: 72 289.03; transform: rotate(-90deg); transform-box: fill-box; transform-origin: 50% 50%; transition: stroke-dasharray 0.3s ease-out; }
+#logo { width: 66px; height: 66px; }
+#title { margin: 18px 0 0 0; color: #e6e6eb; font-size: 1.1rem; font-weight: 600; }
+#sub { margin: 4px 0 0 0; min-height: 1.2em; color: #9c9ca5; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes drift { from { transform: translate3d(-3%, 3%, 0) scale(1.02); } to { transform: translate3d(3%, -3%, 0) scale(1.06); } }
 </style>
 </head>
-<body><img src="splash.svg" alt=""></body>
+<body>
+<img id="intro" src="splash.svg" alt="">
+<div id="loader">
+  <div id="backdrop"></div>
+  <div id="content">
+    <div id="ring">
+      <svg class="track" viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="46"/><circle class="fill" id="fill" cx="50" cy="50" r="46"/></svg>
+      <svg id="logo" viewBox="0 0 512 512"><defs><linearGradient id="band" gradientUnits="userSpaceOnUse" x1="0" y1="112" x2="0" y2="414"><stop offset="0.30" stop-color="#e8261a"/><stop offset="0.68" stop-color="#a81a0f"/></linearGradient></defs><rect x="8" y="8" width="496" height="496" rx="112" fill="#141417" stroke="#2a2a30" stroke-width="6"/><path d="M362 170C334 120 176 112 166 196C158 244 214 252 258 262C304 272 354 284 350 334C344 414 186 414 150 346" fill="none" stroke="url(#band)" stroke-width="84"/></svg>
+    </div>
+    <p id="title"></p>
+    <p id="sub"></p>
+  </div>
+</div>
+<script>
+var RING = 289.03;
+function showLoader() { document.body.classList.add("loading"); }
+// progress: Anteil 0..1, oder < 0, solange er unbekannt ist (dann dreht sich der Ring)
+function setStatus(title, sub, progress) {
+  document.getElementById("title").textContent = title || "";
+  document.getElementById("sub").textContent = sub || "";
+  var ring = document.getElementById("ring"), fill = document.getElementById("fill");
+  if (progress >= 0) {
+    ring.classList.add("determinate");
+    fill.style.strokeDasharray = (Math.max(0.02, Math.min(1, progress)) * RING) + " " + RING;
+  } else {
+    ring.classList.remove("determinate");
+    fill.style.strokeDasharray = "72 " + RING;
+  }
+}
+</script>
+</body>
 </html>

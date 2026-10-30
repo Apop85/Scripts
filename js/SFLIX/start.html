@@ -13,115 +13,145 @@
             background-color: #0f0f11;
         }
 
-        /* Liegt über der Seite (unter dem Splashscreen), damit die Bilder darunter schon an ihrem Platz laden */
+        /* Ladescreen (seit 2.6.1): STEFFLIX-Logo mit Ring und Zähler der Vorschaubilder, dahinter eine
+           unscharfe Plakatwand. Liegt über der Seite (unter dem Splashscreen), damit die Bilder darunter
+           schon an ihrem Platz laden. Der dunkle Grund deckt sofort ab, Inhalt und Bild erscheinen erst
+           nach 0,4 s: schnelle Seitenwechsel zeigen so keinen Ladescreen. Animationen nur mit transform
+           und opacity, damit sie auch laufen, während die Seite im Hintergrund aufgebaut wird.
+           Das Bild erzeugt "SFLIX Tools\Bilder\ladehintergrund.py" (ersetzt es zwischen den Markierungen). */
         #loadingScreen {
             position: fixed;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
+            inset: 0;
             background-color: #0f0f11;
             z-index: 9999;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-        }
-
-        #loadingScreen h1 {
-            color: #9c9ca5;
-            margin: 20px;
-            padding: 0 16px;
-            text-align: center;
-            font-size: clamp(1.3rem, 5vw, 2rem);
-            font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            font-weight: 600;
-        }
-
-        #loadingBar {
-            display: flex;
-            align-items: center;
-            justify-content: space-evenly;
-            width: min(90vw, 50vw + 200px);
-            min-height: 40px;
-        }
-
-        /* min(): passt auch auf schmalen Bildschirmen in eine Zeile */
-        .loadingSquare {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex: none;
-            width: min(40px, 9vw);
-            height: min(40px, 9vw);
-            position: relative;
             overflow: hidden;
-            background-color: #4a2a30;
-            animation: loadingPulse 3.0s ease-in-out infinite;
-            border-radius: 50%;
-            color: #f0d4d7;
             font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            font-weight: 700;
-            text-align: center;
-            font-size: min(24px, 5.5vw);
-            will-change: transform;
         }
 
-        /* Nur transform und opacity: läuft auch, während die Seite im Hintergrund aufgebaut wird.
-           Die Abdeckung verbirgt Buchstabe und Farbe und wird in der Mitte der Animation durchsichtig. */
-        .loadingSquare::before {
+        #loadingBackdrop {
+            position: absolute;
+            inset: -12%;
+            background-color: #0f0f11;
+            background-image: /* ladehintergrund:start */url("data:image/jpeg;base64,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")/* ladehintergrund:ende */;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            animation: loadingAppear 0.6s ease-out 0.4s forwards, loadingDrift 60s ease-in-out 0.4s infinite alternate;
+            will-change: transform, opacity;
+        }
+
+        /* Abdunkeln zur Mitte hin, damit Logo und Zähler gut lesbar sind */
+        #loadingScreen::after {
             content: "";
             position: absolute;
             inset: 0;
-            background-color: #1b1b1f;
-            animation: loadingCover 3.0s ease-in-out infinite;
-            animation-delay: inherit;
-            will-change: opacity;
+            background: radial-gradient(ellipse at center, rgba(15, 15, 17, 0.5) 0%, rgba(15, 15, 17, 0.2) 75%);
         }
 
-        .loadingSquare:nth-child(2) {
-            animation-delay: 0.25s;
-        }
-        
-        .loadingSquare:nth-child(3) {
-            animation-delay: 0.5s;
-        }
-
-        .loadingSquare:nth-child(4) {
-            animation-delay: 0.75s;
+        #loadingContent {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            animation: loadingAppear 0.3s ease-out 0.4s forwards;
         }
 
-        .loadingSquare:nth-child(5) {
-            animation-delay: 1s;
+        #loadingRing {
+            position: relative;
+            width: 108px;
+            height: 108px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .loadingSquare:nth-child(6) {
-            animation-delay: 1.25s;
+        #loadingRing svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            animation: loadingSpin 1s linear infinite;
+            will-change: transform;
         }
 
-        .loadingSquare:nth-child(7) {
-            animation-delay: 1.5s;
+        #loadingRing circle {
+            fill: none;
+            stroke-width: 3.5;
         }
 
-        .loadingSquare:nth-child(8) {
-            animation-delay: 1.75s;
+        #loadingRing .ringTrack {
+            stroke: rgba(255, 255, 255, 0.14);
         }
 
-        @keyframes loadingPulse {
-            0%, 20%, 80%, 100% {
-                transform: scale(0.8);
-            }
-            40%, 60% {
-                transform: scale(1);
-            }
+        /* Drehender Bogen; mit bekanntem Fortschritt (Klasse "determinate") füllt er sich von oben */
+        #loadingRing .ringFill {
+            stroke: #e8261a;
+            stroke-linecap: round;
+            stroke-dasharray: 72 289.03;
+            transform: rotate(-90deg);
+            transform-box: fill-box;
+            transform-origin: 50% 50%;
+            transition: stroke-dasharray 0.3s ease-out;
         }
 
-        @keyframes loadingCover {
-            0%, 20%, 80%, 100% {
+        #loadingRing.determinate svg {
+            animation: none;
+        }
+
+        #loadingLogo {
+            width: 66px;
+            height: 66px;
+        }
+
+        #loadingCount {
+            margin: 18px 0 0 0;
+            min-height: 1.3em;
+            color: #e6e6eb;
+            font-size: 1.15rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #loadingLabel {
+            margin: 4px 0 0 0;
+            color: #9c9ca5;
+            font-size: 0.95rem;
+        }
+
+        @keyframes loadingAppear {
+            to {
                 opacity: 1;
             }
-            40%, 60% {
-                opacity: 0;
+        }
+
+        @keyframes loadingSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes loadingDrift {
+            from {
+                transform: translate3d(-3%, 3%, 0) scale(1.02);
+            }
+            to {
+                transform: translate3d(3%, -3%, 0) scale(1.06);
+            }
+        }
+
+        /* Animationen reduzieren (Einstellung bzw. System): Ring und Hintergrund stehen still */
+        html.reduceMotion #loadingRing svg, html.reduceMotion #loadingBackdrop {
+            animation: loadingAppear 0.01s linear 0.4s forwards;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #loadingRing svg, #loadingBackdrop {
+                animation: loadingAppear 0.01s linear 0.4s forwards;
             }
         }
     </style>
@@ -129,16 +159,14 @@
 <body onload="setHeight()" id="mainBody">
     <!-- Ladescreen -->
     <div id="loadingScreen">
-        <h1>Inhalte werden geladen</h1>
-        <div id="loadingBar">
-            <div class="loadingSquare">S</div>
-            <div class="loadingSquare">T</div>
-            <div class="loadingSquare">E</div>
-            <div class="loadingSquare">F</div>
-            <div class="loadingSquare">F</div>
-            <div class="loadingSquare">L</div>
-            <div class="loadingSquare">I</div>
-            <div class="loadingSquare">X</div>
+        <div id="loadingBackdrop"></div>
+        <div id="loadingContent">
+            <div id="loadingRing">
+                <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="ringTrack" cx="50" cy="50" r="46"/><circle class="ringFill" id="loadingRingFill" cx="50" cy="50" r="46"/></svg>
+                <img id="loadingLogo" src="sflix_sys/sflixLogo.svg" alt="">
+            </div>
+            <p id="loadingCount" aria-live="polite"></p>
+            <p id="loadingLabel">Inhalte werden geladen</p>
         </div>
     </div>
     <script src="sflix_sys/data.js"></script>
@@ -352,6 +380,7 @@
                 <li><b>App-Einstellungen</b>: Im Menü der App. Dort lassen sich die Quellen verwalten, das Display während der Wiedergabe eingeschaltet lassen, Videos im Vollbild quer anzeigen, der Zwischenspeicher und der Videopuffer einstellen, die Verbindung testen und die App aktualisieren.</li>
                 <li><b>Zwischenspeicher</b>: Die App speichert die Programmdateien von STEFFLIX und die Vorschaubilder auf dem Gerät (je Quelle getrennt, Standard 250 MB). Seiten laden dadurch viel schneller, besonders unterwegs über VPN. Geänderte Dateien, z.B. nach "Daten einlesen", erkennt die App selbst. Die Verbindung zum NAS hält die App offen, solange sie sichtbar ist, und baut sie nach einer Pause sofort neu auf.</li>
                 <li><b>Videopuffer</b>: Videos und Musik werden im Voraus geladen (Standard 64 MB). Kurze Verbindungsabbrüche überbrückt die App, danach verbindet sie sich neu und spielt an derselben Stelle weiter.</li>
+                <li><b>Startbildschirm</b>: Dauert der Start länger, weil Dateien vom NAS geladen werden (z.B. beim ersten Start über VPN), zeigt er, was gerade geladen wird und wie weit es ist. Nach 15 Sekunden erscheint "Quelle wechseln", falls man im falschen Netz ist oder das VPN fehlt.</li>
                 <li><b>Updates</b>: Die App meldet neue Versionen selbst und installiert sie auf Wunsch direkt. Quellen und gespeicherte Daten bleiben erhalten.</li>
                 <li><b>Diagnose</b>: In der App ergänzt die Diagnose unter <a onclick="openSettings('fehlerbehebung')">Einstellungen › Fehlerbehebung</a> auch Angaben zur App wie Version, Gerät und Ladezeiten. Sie wird beim Feedback mitgeschickt.</li>
             </ul>

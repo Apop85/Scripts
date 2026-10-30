@@ -2,12 +2,30 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0601",
+      "name": "2.6.1",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Android-App 1.1.2: Dauert der erste Start länger, weil Dateien vom NAS geladen werden (z.B. über VPN), zeigt der Startbildschirm, was gerade geladen wird und wie weit es ist. Nach 15 Sekunden erscheint \"Quelle wechseln\". Der Startbildschirm bleibt, bis auch die Vorschaubilder da sind."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Neuer Ladebildschirm: STEFFLIX-Logo mit rotem Ring und Zähler der Vorschaubilder, dahinter eine unscharfe Plakatwand, die langsam gleitet. Er erscheint erst, wenn das Laden länger als einen Augenblick dauert. Mit \"Animationen reduzieren\" steht alles still."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: Welche Programmdateien zu STEFFLIX gehören und welche alten Dateien entfernt werden, kommt neu mit dem Update. Neue Dateien der Weboberfläche brauchen dadurch keinen neuen Updater mehr."
+        }
+      ]
+    },
+    {
       "version": "2.06",
       "name": "2.6.0",
       "items": [
         {
           "type": "FEATURE",
-          "text": "Android-App 1.1.0: Im Menü gibt es neu \"Quelle wechseln\" und \"App-Einstellungen\". Dort lassen sich die Quellen verwalten, das Display während der Wiedergabe eingeschaltet lassen, Videos im Vollbild quer anzeigen, Zwischenspeicher und Videopuffer einstellen, die Verbindung testen und die App aktualisieren."
+          "text": "Android-App 1.1.1: Im Menü gibt es neu \"Quelle wechseln\" und \"App-Einstellungen\". Dort lassen sich die Quellen verwalten, das Display während der Wiedergabe eingeschaltet lassen, Videos im Vollbild quer anzeigen, Zwischenspeicher und Videopuffer einstellen, die Verbindung testen und die App aktualisieren."
         },
         {
           "type": "FEATURE",

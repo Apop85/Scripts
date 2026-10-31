@@ -995,6 +995,14 @@ function showContinueWatching(container) {
         if (mediaPath == null || !mediaExists(mediaPath)) {
             return;
         }
+        // Bildergalerie (seit 2.6.2): das zuletzt angesehene Bild, Fortschritt nach Bildnummer
+        if (isImage(mediaPath)) {
+            var position = getGalleryPosition(mediaPath);
+            if (position.total > 0 && position.index < position.total) {
+                entries.push({ path: mediaPath, url: url, gallery: position });
+            }
+            return;
+        }
         var nextPath = getNextMediaPath(mediaPath);
         // Fertig geschaut und es gibt eine nächste Folge: stattdessen diese anbieten
         if (isSeen(mediaPath) && nextPath != null) {
@@ -1015,6 +1023,14 @@ function showContinueWatching(container) {
     entries.slice(0, getSetting("continueMax")).forEach(function (entry) {
         var folders = getMediaFolders(entry.path);
         var location = folders.length > 1 ? folders.slice(1).join(" › ") : folders.join(" › ");
+        if (entry.gallery) {
+            createMediaCard(track, entry.path, entry.url, {
+                title: folders[folders.length - 1] || getDisplayName(entry.path),
+                subtitle: "Bild " + entry.gallery.index + " von " + entry.gallery.total,
+                progress: entry.gallery.index / entry.gallery.total
+            });
+            return;
+        }
         createMediaCard(track, entry.path, entry.url, {
             subtitle: entry.isNext ? "Nächste Folge · " + location : location,
             progress: getMediaProgress(entry.path),

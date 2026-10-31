@@ -216,8 +216,8 @@ function createFolderCard(container, folderLevels, options) {
         href: href,
         title: folderLevels[folderLevels.length - 1],
         subtitle: options.subtitle != null ? options.subtitle : describeFolder(node),
-        // Ohne eigenes Vorschaubild: bei Bilderordnern das erste Bild
-        previewSrc: resolvePreviewSrc(levelPath, "normal") || getFirstImageInFolder(node),
+        // Ohne eigenes Vorschaubild: bei Bilderordnern das erste Bild, sonst ein Vorschaubild von weiter unten
+        previewSrc: resolvePreviewSrc(levelPath, "normal") || getFirstImageInFolder(node) || getPreviewFromSubfolders(node, levelPath),
         placeholderIcon: getFolderIconName(node),
         seed: levelPath
     });
@@ -257,6 +257,41 @@ function getFirstImageInFolder(node) {
         if (found != null) {
             return found;
         }
+    }
+    return null;
+}
+
+// Ordner ohne eigenes Vorschaubild (seit 2.6.2): sucht die Preview-Ordner darunter ohne Tiefenbegrenzung,
+// die nächstgelegenen zuerst (Ebene für Ebene, beginnend mit dem eigenen Preview-Ordner). Aus der ersten
+// Ebene mit Bildern wird eines gewählt, das für diesen Ordner immer dasselbe ist (aus seinem Pfad berechnet).
+function getPreviewFromSubfolders(node, seed) {
+    if (node == null || typeof node !== "object") {
+        return null;
+    }
+    var level = [node];
+    while (level.length > 0) {
+        var found = [];
+        var next = [];
+        level.forEach(function (folder) {
+            var preview = folder["Preview"];
+            if (preview != null && typeof preview === "object") {
+                Object.keys(preview).forEach(function (path) {
+                    if (isImage(path)) {
+                        found.push(getOriginalPreviewPath(path));
+                    }
+                });
+            }
+            Object.keys(folder).forEach(function (key) {
+                if (key != "Preview" && folder[key] != null && typeof folder[key] === "object") {
+                    next.push(folder[key]);
+                }
+            });
+        });
+        if (found.length > 0) {
+            var pick = sortNatural(found)[hashString(seed) % found.length];
+            return pick.startsWith(".") ? pick : "." + pick;
+        }
+        level = next;
     }
     return null;
 }

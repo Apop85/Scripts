@@ -43,7 +43,7 @@ namespace Sflix
         readonly string startNotice;
 
         // Optionen
-        DarkCheckBox optFfmpeg, optMoveParts, optDeleteOriginal, optConvertAudio, optPreviewVideos, optPreviewImages;
+        DarkCheckBox optFfmpeg, optMoveParts, optDeleteOriginal, optConvertAudio, optPreviewVideos, optPreviewImages, optPreviewMusic;
         DarkCheckBox optImportStructure, optImportConvert, optImportMove, optImportPreview;
         DarkCheckBox optDataAll;
         ListBox dataFolders;
@@ -253,6 +253,7 @@ namespace Sflix
             // --- Tools: Kacheln, darunter je gewähltem Tool ein Reiter mit seinen Optionen ---
             optPreviewVideos = SmallCheck("für Videos (Bild aus der Mitte)");
             optPreviewImages = SmallCheck("für Bilder");
+            optPreviewMusic = SmallCheck("für Musik (Albumbilder)");
             FlowLayoutPanel previewRow = new FlowLayoutPanel();
             previewRow.AutoSize = true;
             previewRow.WrapContents = true;
@@ -260,6 +261,8 @@ namespace Sflix
             optPreviewImages.Margin = new Padding(Theme.S(20), Theme.S(2), 0, Theme.S(2));
             previewRow.Controls.Add(optPreviewVideos);
             previewRow.Controls.Add(optPreviewImages);
+            optPreviewMusic.Margin = new Padding(Theme.S(20), Theme.S(2), 0, Theme.S(2));
+            previewRow.Controls.Add(optPreviewMusic);
 
             optMoveParts = SmallCheck("Teile danach nach „" + MergeTask.PartsFolderName + "“ verschieben");
 
@@ -323,9 +326,10 @@ namespace Sflix
 
             Control toolsSection = TileSection(new TileSpec[] {
                 Spec("preview", Glyph.Photo, "Vorschaubilder", "Fehlende erstellen",
-                     "Fehlende Vorschaubilder (480×270) im Preview-Ordner erstellen.", previewRow, pickPreview.Root),
+                     "Fehlende Vorschaubilder (480×270) im Preview-Ordner erstellen. „für Musik“: Albumbilder aus Bildern im Album oder dem Cover " +
+                     "der Musikdateien, du wählst je Album das Bild.", previewRow, pickPreview.Root),
                 Spec("rename", Glyph.Rename, "Folgen umbenennen", "Titel aus dem Internet",
-                     "Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen: „Serie - S01E02 - Titel“ " +
+                     "Folgen einer Serie anhand der Folgenliste von serienjunkies.de (sonst fernsehserien.de oder TVmaze) umbenennen: „Serie - S01E02 - Titel“ " +
                      "im Ordner „Staffel 01“. Erkannt werden S01E02 und 1x02. Du wählst die Serie und siehst vorher alle Änderungen.",
                      renameRow, undoRow),
                 Spec("dupes", Glyph.Duplicate, "Duplikate finden", "Dateien, Folgen, Namen",
@@ -2010,6 +2014,7 @@ namespace Sflix
             optConvertAudio.Checked = settings.GetBool("convert.audio", true);
             optPreviewVideos.Checked = settings.GetBool("preview.videos", true);
             optPreviewImages.Checked = settings.GetBool("preview.images", false);
+            optPreviewMusic.Checked = settings.GetBool("preview.music", false);
             optImportStructure.Checked = settings.GetBool("import.structure", true);
             optImportConvert.Checked = settings.GetBool("import.convert", false);
             optImportMove.Checked = settings.GetBool("import.move", false);
@@ -2038,6 +2043,7 @@ namespace Sflix
             settings.SetBool("convert.audio", optConvertAudio.Checked);
             settings.SetBool("preview.videos", optPreviewVideos.Checked);
             settings.SetBool("preview.images", optPreviewImages.Checked);
+            settings.SetBool("preview.music", optPreviewMusic.Checked);
             settings.SetBool("import.structure", optImportStructure.Checked);
             // Nur die eigene Wahl merken, nicht das erzwungene Häkchen bei nicht kompatiblen Dateien
             if (optImportConvert.Enabled) settings.SetBool("import.convert", optImportConvert.Checked);
@@ -2151,7 +2157,7 @@ namespace Sflix
                                 App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            bool previewVideos = optPreviewVideos.Checked, previewImages = optPreviewImages.Checked;
+            bool previewVideos = optPreviewVideos.Checked, previewImages = optPreviewImages.Checked, previewMusic = optPreviewMusic.Checked;
             // Nach einem Import: Einstellung der Vorschaubilder aus den Tools, mindestens für Videos
             if (selected.Contains("import") && !previewVideos && !previewImages) previewVideos = true;
             // Ordner der Tools (Standard "Alles" = Installationsordner)
@@ -2201,10 +2207,10 @@ namespace Sflix
                 }
                 renameDir = Path.GetFullPath(renameDir).TrimEnd('\\');
             }
-            if (selected.Contains("preview") && !previewVideos && !previewImages)
+            if (selected.Contains("preview") && !previewVideos && !previewImages && !previewMusic)
             {
                 ShowOption("preview");
-                MessageBox.Show(this, "Bitte bei „Vorschaubilder“ „für Videos“ und/oder „für Bilder“ einschalten.",
+                MessageBox.Show(this, "Bitte bei „Vorschaubilder“ „für Videos“, „für Bilder“ und/oder „für Musik“ einschalten.",
                                 App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -2319,6 +2325,8 @@ namespace Sflix
             runner.PreviewFolders = import != null ? new List<string> { dataScope[0] } : toolFolders["preview"];
             runner.PreviewVideos = previewVideos;
             runner.PreviewImages = previewImages;
+            // Albumbilder nur im Tool Vorschaubilder (nicht nach einem Import)
+            runner.PreviewMusic = previewMusic && import == null;
             runner.CleanupFolders = toolFolders["cleanup"];
             runner.DupeFolders = toolFolders["dupes"];
             runner.CheckFolders = toolFolders["check"];
@@ -2344,9 +2352,9 @@ namespace Sflix
             };
             ctx.ChooseCleanup = delegate(List<CleanupFolder> folders)
             {
-                return (List<CleanupFolder>)Invoke((Func<List<CleanupFolder>>)delegate
+                return (CleanupChoice)Invoke((Func<CleanupChoice>)delegate
                 {
-                    using (CleanupDialog dlg = new CleanupDialog(folders, App.Root)) return dlg.Choose(this);
+                    using (CleanupDialog dlg = new CleanupDialog(folders, App.Root, new FfmpegTools(App.Root, FfmpegLocation.Folder(settings)))) return dlg.Choose(this);
                 });
             };
             ctx.ChooseEpisodeList = delegate(string term)
@@ -2376,6 +2384,13 @@ namespace Sflix
                 return (ConflictAnswer)Invoke((Func<ConflictAnswer>)delegate
                 {
                     using (ConflictDialog dlg = new ConflictDialog(source, target, ctx.Ffmpeg)) return dlg.Ask(this);
+                });
+            };
+            ctx.ChooseAlbumCovers = delegate(List<AlbumCandidate> albums)
+            {
+                return (bool)Invoke((Func<bool>)delegate
+                {
+                    using (AlbumCoverDialog dlg = new AlbumCoverDialog(albums, ctx.Ffmpeg)) return dlg.Choose(this);
                 });
             };
             ctx.ChooseMediaCheck = delegate(List<MediaCheckItem> items)
@@ -2598,6 +2613,7 @@ namespace Sflix
         public ConvertOptions Convert;
         public bool PreviewVideos = true;
         public bool PreviewImages;
+        public bool PreviewMusic;          // Albumbilder (seit 3.4.3)
         public string RenameFolder;        // Folgen umbenennen: Serienordner
         public ImportOptions Import;
         public List<string> DataFolders;   // null = alles einlesen, sonst nur diese Ordner
@@ -2719,13 +2735,26 @@ namespace Sflix
                         ctx.Log("Zielordner nicht vorhanden, nichts zu tun.");
                         break;
                     }
-                    ForEachFolder(ctx, PreviewFolders, delegate(string f) { PreviewTask.Run(ctx, f, PreviewVideos, PreviewImages); });
+                    ForEachFolder(ctx, PreviewFolders, delegate(string f) { PreviewTask.Run(ctx, f, PreviewVideos, PreviewImages, PreviewMusic); });
                     break;
                 case "import":
                     if (Import == null) throw new TaskFailedException("Medien importieren ist nur über die Oberfläche möglich.");
                     ImportTask.Run(ctx, Import);
                     break;
-                case "cleanup": CleanupTask.Run(ctx, CleanupFolders ?? new List<string> { App.Root }); break;
+                case "cleanup":
+                    List<string> restored = CleanupTask.Run(ctx, CleanupFolders ?? new List<string> { App.Root });
+                    // Wiederhergestellt: diese Ordner gleich neu einlesen (ausser "Daten einlesen" liest danach ohnehin alles)
+                    List<string> inside = restored.FindAll(delegate(string f) { return DataTask.ToRelative(f) != null; });
+                    if (inside.Count > 0 && !(Tasks.Contains("data") && DataFolders == null))
+                    {
+                        string summary = ctx.Summary;
+                        ctx.Log("");
+                        ctx.Log("Lese die wiederhergestellten Ordner neu ein ...");
+                        bool all = inside.Exists(delegate(string f) { return DataTask.ToRelative(f) == ""; });
+                        DataTask.Run(ctx, all ? null : Folders.WithoutNested(inside));
+                        ctx.Summary = summary;
+                    }
+                    break;
                 case "rename": EpisodeTask.Run(ctx, RenameFolder); break;
                 case "renameundo": EpisodeTask.Undo(ctx); break;
                 case "data": DataTask.Run(ctx, DataFolders); break;

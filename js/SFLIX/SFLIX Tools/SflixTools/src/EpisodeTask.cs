@@ -82,8 +82,8 @@ namespace Sflix
         public abstract List<SeriesHit> Search(string name, CancellationToken token);
         public abstract EpisodeList Load(SeriesHit hit, CancellationToken token);
 
-        // Reihenfolge der Suche: zuerst deutsche Titel
-        public static readonly EpisodeSource[] All = { new FernsehserienSource(), new TvmazeSource() };
+        // Reihenfolge der Suche: zuerst deutsche Titel (seit 3.4.3 serienjunkies.de vor fernsehserien.de)
+        public static readonly EpisodeSource[] All = { new SerienjunkiesSource(), new FernsehserienSource(), new TvmazeSource() };
 
         public static EpisodeSource ByName(string name)
         {
@@ -316,6 +316,96 @@ namespace Sflix
         {
             string text = WebUtility.HtmlDecode(Regex.Replace(html, "<[^>]+>", " "));
             return string.Join(" ", text.Split((char[])null, StringSplitOptions.RemoveEmptyEntries));
+        }
+    }
+
+    // serienjunkies.de (seit 3.4.3): deutsche Titel (sonst die englischen), ohne Schlüssel. Liest die
+    // HTML-Seiten: Suche über /tags/<name>/?filter=shows, Folgen aus /<serie>/alle-serien-staffeln.html.
+    // Ändert die Seite ihren Aufbau, findet die Quelle nichts mehr und die nächste wird gefragt.
+    public class SerienjunkiesSource : EpisodeSource
+    {
+        const string Base = "https://www.serienjunkies.de";
+        public override string Name { get { return "serienjunkies.de"; } }
+        public override string Language { get { return "deutsche Titel"; } }
+
+        public override List<SeriesHit> Search(string name, CancellationToken token)
+        {
+            Uri final;
+            List<SeriesHit> hits = new List<SeriesHit>();
+            // Die Stichwortsuche ist lückenhaft (z.B. "Dark"): zuerst die Adresse aus dem Namen versuchen
+            foreach (string slug in SlugsFor(name))
+            {
+                try
+                {
+                    string guide = EpisodeHttp.Get(Base + "/" + slug + "/alle-serien-staffeln.html", true, token, out final);
+                    if (guide.IndexOf("sjf-show-seasons-code", StringComparison.Ordinal) < 0) continue;
+                    Match h1 = Regex.Match(guide, "<h1[^>]*>(.*?)</h1>", RegexOptions.Singleline);
+                    SeriesHit direct = new SeriesHit();
+                    direct.Id = slug;
+                    direct.Title = h1.Success ? Regex.Replace(EpisodeHttp.StripTags(h1.Groups[1].Value), "\\s*Episodenguide\\s*$", "") : slug;
+                    direct.Year = "";
+                    direct.Info = "";
+                    hits.Add(direct);
+                    break;
+                }
+                catch (DownloadException) { }   // gibt es nicht
+            }
+            string page = EpisodeHttp.Get(Base + "/tags/" + Uri.EscapeDataString(name.Trim().ToLowerInvariant()) + "/?filter=shows", true, token, out final);
+            foreach (Match m in Regex.Matches(page,
+                "<a href=\"/([a-z0-9][a-z0-9\\-]*)/\" class=\"serp-show-card\">.*?<h4 class=\"serp-show-title\">(.*?)</h4>", RegexOptions.Singleline))
+            {
+                if (hits.Exists(delegate(SeriesHit h) { return h.Id == m.Groups[1].Value; })) continue;
+                SeriesHit hit = new SeriesHit();
+                hit.Id = m.Groups[1].Value;
+                hit.Title = EpisodeHttp.StripTags(m.Groups[2].Value);
+                hit.Year = "";
+                hit.Info = "";
+                hits.Add(hit);
+            }
+            return hits;
+        }
+
+        // Mögliche Adressen einer Serie: "How I Met Your Mother" -> how-i-met-your-mother, ohne
+        // führenden Artikel ("Die Simpsons" -> simpsons), ohne Jahr in Klammern
+        static List<string> SlugsFor(string name)
+        {
+            List<string> result = new List<string>();
+            string n = Regex.Replace(name.ToLowerInvariant(), @"\(\s*(19|20)\d\d\s*\)", " ");
+            n = n.Replace("ä", "ae").Replace("ö", "oe").Replace("ü", "ue").Replace("ß", "ss");
+            string slug = Regex.Replace(Regex.Replace(n, "[^a-z0-9]+", "-"), "-+", "-").Trim('-');
+            if (slug.Length > 0) result.Add(slug);
+            Match article = Regex.Match(slug, "^(die|der|das|the)-(.+)$");
+            if (article.Success) result.Add(article.Groups[2].Value);
+            return result;
+        }
+
+        public override EpisodeList Load(SeriesHit hit, CancellationToken token)
+        {
+            Uri final;
+            string page = EpisodeHttp.Get(Base + "/" + hit.Id + "/alle-serien-staffeln.html", true, token, out final);
+            EpisodeList list = new EpisodeList();
+            list.Source = Name;
+            list.SeriesTitle = hit.Title;
+            list.SeriesId = hit.Id;
+            // Je Folge ein Block mit Kürzel "1x01" und Titeln auf Englisch und Deutsch
+            string[] blocks = page.Split(new string[] { "class=\"sjf-show-seasons-episode\"" }, StringSplitOptions.None);
+            for (int i = 1; i < blocks.Length; i++)
+            {
+                string block = blocks[i];
+                Match code = Regex.Match(block, "sjf-show-seasons-code\">\\s*(\\d+)x(\\d+)");
+                if (!code.Success) continue;
+                string title = TitleIn(block, "sjf-show-seasons-title-de");
+                if (title.Length == 0) title = TitleIn(block, "sjf-show-seasons-title-en");
+                list.Add(int.Parse(code.Groups[1].Value), int.Parse(code.Groups[2].Value), title);
+            }
+            list.DropSpecials();
+            return list;
+        }
+
+        static string TitleIn(string block, string cssClass)
+        {
+            Match m = Regex.Match(block, cssClass + "\">(.*?)</div>", RegexOptions.Singleline);
+            return m.Success ? EpisodeHttp.StripTags(m.Groups[1].Value) : "";
         }
     }
 
@@ -941,7 +1031,7 @@ namespace Sflix
         {
             Journal journal = new Journal();
             Dictionary<string, string> folderMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            bool? remembered = null;
+            ConflictAnswer remembered = null;
             int done = 0, failed = 0, skipped = 0;
             List<EpisodeOp> selected = plan.Ops.FindAll(delegate(EpisodeOp o) { return o.Selected; });
             try
@@ -977,15 +1067,18 @@ namespace Sflix
                             if (!File.Exists(current)) { ctx.Log("  FEHLT   " + current + " (übersprungen)"); skipped++; continue; }
                             string targetDir = Path.GetDirectoryName(op.Target);
                             EnsureDir(targetDir, journal);
+                            string destination = op.Target;
                             if (File.Exists(op.Target) && !string.Equals(current, op.Target, StringComparison.OrdinalIgnoreCase))
                             {
-                                if (!AskReplace(ctx, current, op.Target, ref remembered)) { ctx.Log("  ÜBERSPRUNGEN  " + Path.GetFileName(current) + " (Ziel vorhanden)"); skipped++; continue; }
-                                SetAside(op.Target, plan.SeriesDir, journal);
+                                destination = ConflictAnswer.Resolve(ctx, current, op.Target, ref remembered);
+                                if (destination == null) { ctx.Log("  ÜBERSPRUNGEN  " + Path.GetFileName(current) + " (Ziel vorhanden)"); skipped++; continue; }
+                                // Ersetzen: die vorhandene Datei nach __ersetzt; als Kopie: neuer Name daneben
+                                if (string.Equals(destination, op.Target, StringComparison.OrdinalIgnoreCase)) SetAside(op.Target, plan.SeriesDir, journal);
                             }
-                            FileOps.Rename(current, op.Target);
-                            journal.Move(current, op.Target);
-                            MovePreview(current, op.Target, journal);
-                            ctx.Log("  OK      " + Path.GetFileName(current) + "  ->  " + RelativeTo(plan.SeriesDir, op.Target));
+                            FileOps.Rename(current, destination);
+                            journal.Move(current, destination);
+                            MovePreview(current, destination, journal);
+                            ctx.Log("  OK      " + Path.GetFileName(current) + "  ->  " + RelativeTo(plan.SeriesDir, destination));
                             done++;
                         }
                     }
@@ -1018,14 +1111,6 @@ namespace Sflix
             return path.StartsWith(baseDir + "\\", StringComparison.OrdinalIgnoreCase) ? path.Substring(baseDir.Length + 1) : path;
         }
 
-        static bool AskReplace(TaskContext ctx, string source, string target, ref bool? remembered)
-        {
-            if (remembered.HasValue) return remembered.Value;
-            ConflictAnswer a = ctx.AskConflict != null ? ctx.AskConflict(source, target) : null;
-            if (a == null) return false;
-            if (a.Remember) remembered = a.Replace;
-            return a.Replace;
-        }
 
         // Eine ersetzte Datei wird nicht gelöscht, sondern nach <Serie>\__ersetzt gelegt
         // ("Ablagen leeren" räumt sie auf, "Rückgängig" holt sie zurück)
@@ -1083,7 +1168,7 @@ namespace Sflix
 
         // Inhalt eines Ordners in einen anderen verschieben (Unterordner wie Preview werden
         // zusammengeführt). Der leere Ordner wird danach entfernt.
-        static int MergeFolder(TaskContext ctx, string source, string target, string seriesDir, Journal journal, ref bool? remembered)
+        static int MergeFolder(TaskContext ctx, string source, string target, string seriesDir, Journal journal, ref ConflictAnswer remembered)
         {
             int moved = 0;
             EnsureDir(target, journal);
@@ -1093,8 +1178,10 @@ namespace Sflix
                 string dest = Path.Combine(target, Path.GetFileName(file));
                 if (File.Exists(dest))
                 {
-                    if (!AskReplace(ctx, file, dest, ref remembered)) { ctx.Log("  ÜBERSPRUNGEN  " + Path.GetFileName(file) + " (in „" + Path.GetFileName(target) + "“ vorhanden)"); continue; }
-                    SetAside(dest, seriesDir, journal);
+                    string chosen = ConflictAnswer.Resolve(ctx, file, dest, ref remembered);
+                    if (chosen == null) { ctx.Log("  ÜBERSPRUNGEN  " + Path.GetFileName(file) + " (in „" + Path.GetFileName(target) + "“ vorhanden)"); continue; }
+                    if (string.Equals(chosen, dest, StringComparison.OrdinalIgnoreCase)) SetAside(dest, seriesDir, journal);
+                    dest = chosen;
                 }
                 FileOps.Rename(file, dest);
                 journal.Move(file, dest);

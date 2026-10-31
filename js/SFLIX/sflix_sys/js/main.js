@@ -28,6 +28,7 @@ function initEventListeners() {
     document.getElementById("autoplayDurationScope").addEventListener("change", function () {
         var scope = document.getElementById("autoplayDurationScope").value;
         document.getElementById("autoplayDuration").value = getTransitionValueAt(scope, currentMediaLocation);
+        updateSettingsBoxScopeHint();
     });
 
     // Tastatur

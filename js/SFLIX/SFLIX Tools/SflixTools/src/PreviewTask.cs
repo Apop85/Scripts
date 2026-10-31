@@ -32,9 +32,20 @@ namespace Sflix
 
         public static void Run(TaskContext ctx, string root, bool forVideos, bool forImages)
         {
+            Run(ctx, root, forVideos, forImages, false);
+        }
+
+        // forMusic (seit 3.4.3): Albumbilder für Musikordner (AlbumCovers)
+        public static void Run(TaskContext ctx, string root, bool forVideos, bool forImages, bool forMusic)
+        {
             if (!Directory.Exists(root)) throw new TaskFailedException("Ordner nicht gefunden: " + root);
-            if (!forVideos && !forImages) throw new TaskFailedException("Weder „für Videos“ noch „für Bilder“ ausgewählt");
+            if (!forVideos && !forImages && !forMusic) throw new TaskFailedException("Weder „für Videos“, „für Bilder“ noch „für Musik“ ausgewählt");
             ctx.Ffmpeg.EnsureInstalled(ctx);
+            if (!forVideos && !forImages)
+            {
+                AlbumCovers.Run(ctx, root);
+                return;
+            }
 
             ctx.Progress(-1, "Suche Medien ...");
             HashSet<string> wanted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -53,6 +64,12 @@ namespace Sflix
             int created, skipped, makeFailed;
             MakeMany(ctx, videos, out created, out skipped, out makeFailed);
             failed += makeFailed;
+            if (forMusic)
+            {
+                ctx.Log("");
+                try { AlbumCovers.Run(ctx, root); }
+                catch (TaskFailedException e) { failed++; ctx.Log("FEHLER: " + e.Message); }
+            }
 
             ctx.Log("Erstellt: " + created + "   Schon vorhanden: " + skipped +
                     "   Nach " + TrashDirName + " verschoben: " + deleted + "   Fehler: " + failed);

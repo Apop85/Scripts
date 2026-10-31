@@ -302,6 +302,38 @@ function getFolderValueFor(kindName, mediaPath, fallback) {
     return { value: fallback, folder: null };
 }
 
+// Ebene, in die ein neuer Wert für ein Medium gespeichert wird (seit 2.6.2 je Art getrennt):
+// der Ordner, aus dem der geltende Wert kommt, sonst die Ebene unter der Kategorie (Serie)
+function getDefaultScopeFor(kindName, mediaPath) {
+    var found = getFolderValueFor(kindName, mediaPath, 0);
+    if (found.folder != null) {
+        return found.folder;
+    }
+    var folders = mediaPath ? getMediaFolders(mediaPath) : [];
+    return folders.slice(0, Math.min(2, folders.length)).join("/");
+}
+
+// Eigener Wert eines Unterordners von scope, der für dieses Medium Vorrang hat: { value, folder } oder null.
+// Dann wirkt ein Wert, der für scope gespeichert wird, bei diesem Medium nicht.
+function getOverridingValue(kindName, scope, mediaPath) {
+    var found = getFolderValueFor(kindName, mediaPath, 0);
+    if (found.folder == null || found.folder === scope) {
+        return null;
+    }
+    return scope === "" || found.folder.indexOf(scope + "/") === 0 ? found : null;
+}
+
+// "Für Unterordner übernehmen": entfernt alle eigenen Werte unterhalb von scope
+function clearFolderValuesBelow(kindName, scope) {
+    var map = getFolderValueMap(kindName);
+    Object.keys(map).forEach(function (folder) {
+        if (folder !== scope && (scope === "" || folder.indexOf(scope + "/") === 0)) {
+            delete map[folder];
+        }
+    });
+    saveFolderValueMap(kindName, map);
+}
+
 // Wert, der auf einer Ebene gilt: der eigene, sonst der geerbte, sonst 0
 function getFolderValueAt(kindName, scope) {
     var map = getFolderValueMap(kindName);
@@ -376,12 +408,7 @@ function getTransitionScopes(mediaPath) {
 
 // Vorauswahl: der Ordner, von dem der Wert kommt, sonst die Ebene unter der Kategorie (Serie)
 function getDefaultTransitionScope(mediaPath) {
-    var current = getTransitionFor(mediaPath);
-    if (current.folder != null) {
-        return current.folder;
-    }
-    var folders = mediaPath ? getMediaFolders(mediaPath) : [];
-    return folders.slice(0, Math.min(2, folders.length)).join("/");
+    return getDefaultScopeFor("transition", mediaPath);
 }
 
 function getTransitionLabel(folder) {

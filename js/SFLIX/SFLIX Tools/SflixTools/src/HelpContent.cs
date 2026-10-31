@@ -67,13 +67,21 @@ namespace Sflix
                 "- Danach fehlende Vorschaubilder erstellen.\n\n" +
                 "# Datei vorhanden\n" +
                 "Gibt es eine Datei im Ziel schon, zeigt ein Fenster beide Dateien mit Grösse, Auflösung, Dauer, Video/Ton und Datum. " +
-                "Die besseren Werte sind hervorgehoben. Du wählst Ersetzen oder Überspringen, auf Wunsch für alle weiteren Fälle."));
+                "Die besseren Werte sind hervorgehoben. Du wählst Ersetzen, Überspringen oder „Als Kopie speichern“ (die neue Datei heisst dann z.B. „Film_1.mp4“), " +
+                "auf Wunsch für alle weiteren Fälle. Dasselbe Fenster erscheint auch bei „Folgen umbenennen“ und beim Wiederherstellen aus einer Ablage."));
 
             t.Add(new HelpTopic("Vorschaubilder",
                 "Erstellt fehlende Vorschaubilder (480×270) im Ordner Preview neben den Medien: für Videos ein Bild aus der Mitte, für Bilder eine verkleinerte Kopie. " +
                 "Vorschaubilder ohne zugehöriges Medium kommen nach Preview\\__gelöscht.\n" +
                 "- Ordner: „Alles“ oder eine Liste von Ordnern (auch ausserhalb von STEFFLIX).\n" +
-                "- Mehrere Vorschaubilder entstehen gleichzeitig (siehe „Schneller prüfen“)."));
+                "- Mehrere Vorschaubilder entstehen gleichzeitig (siehe „Schneller prüfen“).\n" +
+                "# Für Musik (Albumbilder)\n" +
+                "Sucht Alben ohne Vorschaubild: Ordner, die zu mindestens 90 % Musik enthalten (Bilder zählen nicht). Mögliche Bilder sind alle Bilder im Album " +
+                "und eine Ebene darunter (z.B. „Scans“), auch Formate wie WEBP oder HEIC, dazu das Cover aus der ersten Musikdatei (sonst aus zwei anderen).\n" +
+                "- Gibt es genau ein Bild, ist es vorgeschlagen. Sonst wählst du im Fenster links das Album, in der Mitte das Bild und siehst rechts das Vorschaubild.\n" +
+                "- Das Vorschaubild zeigt das ganze Cover, die Ränder füllt eine unscharfe Kopie. Das Original kommt nach Preview\\__original.\n" +
+                "- „Übrige Bilder löschen“ verschiebt die anderen Bilder nach „__gelöscht“ im Album, leere Bildordner werden entfernt.\n" +
+                "- Ohne Oberfläche (--headless) entstehen nur Albumbilder mit genau einem möglichen Bild, gelöscht wird nichts."));
 
             t.Add(new HelpTopic("Schneller prüfen",
                 "„Medien prüfen“, „Duplikate finden“ und „Vorschaubilder“ bearbeiten mehrere Dateien gleichzeitig und merken sich, was sie über eine Datei herausgefunden haben.\n" +
@@ -90,7 +98,7 @@ namespace Sflix
                 "Nur wenn das übereinstimmt, liest es die ganzen Dateien für die Prüfsumme. Das spart bei Filmen auf dem NAS viel Zeit."));
 
             t.Add(new HelpTopic("Folgen umbenennen",
-                "Holt die Folgenliste einer Serie von fernsehserien.de (deutsche Titel, sonst TVmaze) und benennt die Dateien einheitlich um, " +
+                "Holt die Folgenliste einer Serie von serienjunkies.de (deutsche Titel; findet sie die Serie nicht: fernsehserien.de, sonst TVmaze) und benennt die Dateien einheitlich um, " +
                 "z.B. „Serie - S01E02 - Titel.mp4“ im Ordner „Staffel 01“. Erkannt werden S01E02, 1x02 und Doppelfolgen (S01E02E03).\n" +
                 "- Staffelordner wie „Staffel 1“, „staffel1“, „Season 1“, „S01“ oder „Staffel 01 (Blu-ray)“ werden zu „Staffel 01“; gibt es beide, werden sie zusammengeführt. " +
                 "Ordner mit mehreren Staffeln („Staffel 1-3“) bleiben unverändert.\n" +
@@ -160,8 +168,13 @@ namespace Sflix
             t.Add(new HelpTopic("Ablagen leeren",
                 "Die Tools legen Originale und Teile in Ablagen ab, statt sie zu löschen: „__teile“, „__konvertiert“, „__gelöscht“, „__original“, „__ersetzt“ und „__duplikate“. " +
                 "Unter dem Tool steht, wie viel Speicher die Ablagen belegen (wird im Hintergrund berechnet). " +
-                "„Ablagen leeren“ zeigt sie mit Grösse an und löscht nach Bestätigung endgültig. Das geht nur innerhalb des Installationsordners, " +
-                "Verknüpfungen werden nie verfolgt oder gelöscht."));
+                "„Ablagen leeren“ zeigt sie mit Art, Anzahl Dateien und Grösse an. Das geht nur innerhalb des Installationsordners, " +
+                "Verknüpfungen werden nie verfolgt oder gelöscht.\n" +
+                "- Filtern nach Art (gelöscht, konvertiert, original, duplikate …) über die Knöpfe im Fenster, sortieren per Klick auf den Spaltenkopf.\n" +
+                "- „Endgültig löschen“ löscht die angehakten Ablagen nach Bestätigung.\n" +
+                "- „Wiederherstellen“ verschiebt die Dateien zurück an ihren Platz (Unterordner bleiben erhalten). Ist dort schon eine Datei, fragt das Vergleichsfenster: " +
+                "ersetzen, überspringen oder als Kopie speichern. Danach wird neu eingelesen.\n" +
+                "- Nur einzelne Dateien: Doppelklick auf eine Ablage oder „Dateien wählen …“. Die Vergleichstabelle zeigt die Datei in der Ablage neben einer vorhandenen am Ziel."));
 
             t.Add(new HelpTopic("ffmpeg",
                 "ffmpeg wird für Vorschaubilder, Konvertieren, den Importer, „Medien prüfen“, „Duplikate finden“ und die Vergleichstabellen gebraucht. " +
@@ -208,8 +221,8 @@ namespace Sflix
                 "# Ablagen der Tools (Ordner mit „__“)\n" +
                 "- __teile: Teile nach dem Zusammenführen\n" +
                 "- __konvertiert: Originale nach dem Konvertieren oder Importieren\n" +
-                "- __gelöscht: Vorschaubilder ohne Medium und bei „Medien prüfen“ gelöschte Dateien\n" +
-                "- __original: Originale verkleinerter Vorschaubilder\n" +
+                "- __gelöscht: Vorschaubilder ohne Medium, bei „Medien prüfen“ gelöschte Dateien und übrige Bilder von Alben\n" +
+                "- __original: Originale verkleinerter Vorschaubilder und gewählte Albumbilder\n" +
                 "- __ersetzt: beim Umbenennen ersetzte Dateien\n" +
                 "- __duplikate: aussortierte Duplikate\n\n" +
                 "# Dateien in sflix_sys\n" +

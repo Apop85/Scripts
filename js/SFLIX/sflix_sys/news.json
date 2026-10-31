@@ -2,6 +2,48 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0602",
+      "name": "2.6.2",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Bildergalerien erscheinen in \"Weiterschauen\", sobald man bis zum 5. Bild geblättert hat. Die Kachel zeigt das zuletzt angesehene Bild und wie weit man ist, ein Klick macht dort weiter. Nach dem letzten Bild verschwindet die Galerie wieder."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: \"Vorschaubilder\" erstellt auf Wunsch auch Albumbilder für Musik. Gefunden werden Bilder im Albumordner und in seinen Unterordnern sowie das Cover in den Musikdateien. In einem Fenster wählst du je Album das Bild, übrige Bilder lassen sich gleich löschen. Das ganze Cover bleibt sichtbar, links und rechts unscharf aufgefüllt."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: \"Ablagen leeren\" kann Inhalte auch wiederherstellen, ganze Ordner oder einzelne Dateien. Die Liste zeigt die Art der Ablage, lässt sich danach sortieren und filtern, und \"Alle\"/\"Keine\" reagieren sofort."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Updater: Ist eine Datei schon vorhanden, gibt es neu \"Als Kopie speichern\" (z.B. Film_1.mp4), beim Wiederherstellen, im Importer und bei \"Folgen umbenennen\"."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Der Ring im Ladebildschirm dreht sich immer, solange geladen wird, und sein Bogen wächst mit dem Fortschritt."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Ordner ohne eigenes Vorschaubild zeigen ein Bild aus ihren Unterordnern, egal wie tief es liegt, und zwar jedes Mal dasselbe."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Updater: \"Folgen umbenennen\" sucht die Folgennamen zuerst auf serienjunkies.de, danach auf fernsehserien.de und TVmaze."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Android-App 1.1.3: Nach dem Sperrbildschirm reagiert die App sofort, die Verbindung zum NAS wird im Hintergrund neu aufgebaut. Seitenwechsel kommen immer sofort aus dem Zwischenspeicher. Neu gibt es in den App-Einstellungen \"STEFFLIX-Dateien neu laden\"."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Intro überspringen: Das Menü zeigte bei Serien mit eigenem Wert für die Staffel den Wert der Serie an, und \"Intro bis hier\" konnte dort ohne Wirkung speichern. Jetzt zeigt das Menü den geltenden Wert samt Herkunft, speichert dort, wo er herkommt, und weist auf eigene Werte von Unterordnern hin. Dasselbe gilt für die Dauer bis Übergang."
+        }
+      ]
+    },
+    {
       "version": "2.0601",
       "name": "2.6.1",
       "items": [

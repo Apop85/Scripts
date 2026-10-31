@@ -32,6 +32,8 @@ public class SettingsActivity extends Activity {
     static final String EXTRA_CURRENT = "current";
     /** Ergebnis: STEFFLIX soll die Hilfe öffnen. */
     static final int RESULT_HELP = RESULT_FIRST_USER + 1;
+    /** Ergebnis: Programmdateien der aktuellen Quelle neu vom NAS laden. */
+    static final int RESULT_RELOAD = RESULT_FIRST_USER + 2;
 
     private static final int RED = 0xffe8261a;
     private static final int MUTED = 0xff9a9aa2;
@@ -91,6 +93,14 @@ public class SettingsActivity extends Activity {
             fillStorage();
             Toast.makeText(this, "Zwischenspeicher geleert", Toast.LENGTH_SHORT).show();
         }));
+        if (currentId != null) {
+            page.addView(button("STEFFLIX-Dateien neu laden", false, v -> {
+                setResult(RESULT_RELOAD);
+                finish();
+            }));
+            note(page, "Liest start.html, Skripte und das Medienverzeichnis der aktuellen Quelle neu vom NAS, "
+                    + "z.B. nach einem Update von STEFFLIX oder nach „Daten einlesen“.");
+        }
         bufferValue = choiceRow(page, "Videopuffer",
                 "Videos und Musik werden so weit im Voraus geladen. Überbrückt kurze Verbindungsabbrüche. Gilt ab dem nächsten Öffnen einer Quelle.",
                 v -> choose("Videopuffer", AppPrefs.BUFFER_CHOICES_MB, prefs.bufferMb(), mb -> {

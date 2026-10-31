@@ -61,15 +61,64 @@ function getNextMediaPath(mediaPath) {
 // Zuletzt gesehen und Favoriten
 // ===================================================================
 
+// Bildergalerien in "Weiterschauen" (seit 2.6.2): ab dem 5. Bild (höchste erreichte Bildnummer)
+// erscheint die Galerie, nach dem letzten Bild verschwindet sie. Gemerkt wird je Ordner die höchste
+// erreichte Nummer unter "galleryProgress" ({ "Bilder/Album": 34 }).
+var galleryMinImages = 5;
+
+// Stelle eines Bildes in seinem Ordner: { index (ab 1), total }
+function getGalleryPosition(imagePath) {
+    var images = buildFolderPlaylist(buildMediaData(imagePath)).filter(isImage);
+    return { index: images.indexOf(normalizeMediaLocation(imagePath)) + 1, total: images.length };
+}
+
+function getGalleryProgressMap() {
+    try {
+        var map = JSON.parse(getData("galleryProgress") || "{}");
+        return map != null && typeof map === "object" && !Array.isArray(map) ? map : {};
+    } catch (error) {
+        return {};
+    }
+}
+
+// Merkt die höchste erreichte Bildnummer. true: Die Galerie gehört (noch) in "Weiterschauen".
+function updateGalleryProgress(imagePath) {
+    var folder = getMediaFolders(imagePath).join("/");
+    var position = getGalleryPosition(imagePath);
+    var map = getGalleryProgressMap();
+    if (position.index <= 0) {
+        return false;
+    }
+    if (position.index >= position.total) {
+        // Letztes Bild angesehen: Galerie fertig
+        delete map[folder];
+        setData("galleryProgress", JSON.stringify(map));
+        return false;
+    }
+    map[folder] = Math.max(map[folder] || 0, position.index);
+    setData("galleryProgress", JSON.stringify(map));
+    return map[folder] >= galleryMinImages;
+}
+
 // Funktion zum Updaten der Liste der zuletzt gesehenen Medienelemente
 function setLastPlayed(title, url) {
     var mediaPath = getMediaLocationFromDecodedData(decodeUrlData(url));
-    if (mediaPath == null || isImage(mediaPath)) {
+    if (mediaPath == null) {
+        return;
+    }
+    var image = isImage(mediaPath);
+    var showGallery = image && updateGalleryProgress(mediaPath);
+    if (image && !showGallery && getGalleryProgressMap()[getMediaFolders(mediaPath).join("/")] == null) {
+        // Galerie fertig angesehen: Eintrag entfernen (sonst nichts ändern)
+        removeLastPlayedGroup("./" + getMediaFolders(mediaPath).join("/"));
+        return;
+    }
+    if (image && !showGallery) {
         return;
     }
 
-    // Pro Serie/Ordner nur einen Eintrag behalten (z.B. ./Serien/Show)
-    var groupPath = mediaPath.split("/").slice(0, 3).join("/");
+    // Pro Serie/Ordner nur einen Eintrag behalten (z.B. ./Serien/Show), bei Bildern je Galerie (Ordner)
+    var groupPath = image ? "./" + getMediaFolders(mediaPath).join("/") : mediaPath.split("/").slice(0, 3).join("/");
     var currentPlaylist = (getData("playlast") || "").split(listSeperator).filter(function (entry) {
         if (!entry.includes("|")) {
             return false;
@@ -85,6 +134,21 @@ function setLastPlayed(title, url) {
     // Maximal 50 Einträge (einer pro Serie/Ordner). Wie viele davon "Weiterschauen" zeigt,
     // legen die Einstellungen fest (Standard 20).
     setData("playlast", currentPlaylist.slice(0, displaySettingLimits.continueMax[1]).join(listSeperator));
+}
+
+// Entfernt den Eintrag einer Galerie (Bilder direkt in diesem Ordner) aus "Weiterschauen"
+function removeLastPlayedGroup(groupPath) {
+    var stored = getData("playlast") || "";
+    var kept = stored.split(listSeperator).filter(function (entry) {
+        if (!entry.includes("|")) {
+            return false;
+        }
+        var path = getMediaLocationFromDecodedData(decodeUrlData(entry.split("|")[1]));
+        return path == null || !(isImage(path) && "./" + getMediaFolders(path).join("/") === groupPath);
+    });
+    if (kept.join(listSeperator) !== stored) {
+        setData("playlast", kept.join(listSeperator));
+    }
 }
 
 function getFavorites() {
@@ -1688,11 +1752,14 @@ function setTransitionFromPlayer(ui) {
     if (!hasMediaDuration(media) || currentMediaLocation == null) {
         return;
     }
+    // Gespeichert wird dort, wo der geltende Wert herkommt, ausser im offenen Menü ist eine Ebene gewählt
+    var intro = isIntroPosition(ui);
+    var kind = intro ? "intro" : "transition";
     var scope = ui.menuScopeMedia === currentMediaLocation && ui.menuScope.options.length > 0
-        ? ui.menuScope.value
-        : getDefaultTransitionScope(currentMediaLocation);
+        ? getMenuSaveScope(ui, kind)
+        : getDefaultScopeFor(kind, currentMediaLocation);
     var text;
-    if (isIntroPosition(ui)) {
+    if (intro) {
         var introSeconds = Math.max(0, Math.floor(media.currentTime));
         setFolderValue("intro", scope, introSeconds);
         text = "Intro überspringen für «" + getTransitionLabel(scope) + "»: " + introSeconds + " s";
@@ -1722,8 +1789,12 @@ function buildAutoplayMenu(ui) {
     ui.menuDuration = addMenuNumber(menu, "Dauer bis Übergang (Sekunden)");
     // Intro überspringen gibt es nur bei Videos
     ui.menuIntro = ui.isAudio ? null : addMenuNumber(menu, "Intro überspringen (Sekunden)");
-    ui.menuScope = addMenuSelect(menu, "Gilt für", "Auch für Unterordner ohne eigenen Wert");
+    ui.menuScope = addMenuSelect(menu, "Gilt für", "Automatisch: jeder Wert dort, wo er herkommt");
     ui.menuScopeMedia = null;
+    // Hinweis auf eigene Werte von Unterordnern (bei einer von Hand gewählten Ebene)
+    ui.menuOverride = createPlayerElement("div", "scopeHint");
+    ui.menuOverride.hidden = true;
+    menu.appendChild(ui.menuOverride);
 
     ui.menuAutoplay.addEventListener("change", function () {
         document.getElementById("autoplayCheckBox").checked = ui.menuAutoplay.checked;
@@ -1745,22 +1816,79 @@ function buildAutoplayMenu(ui) {
         commitAutoplaySettings();
     });
     ui.menuDuration.addEventListener("change", function () {
-        saveTransitionFromFields(ui.menuDuration, ui.menuScope);
+        var seconds = Math.min(transitionMax, Math.max(0, parseInt(ui.menuDuration.value, 10) || 0));
+        setTransition(getMenuSaveScope(ui, "transition"), seconds);
+        refreshTransitionForMedia(currentMediaLocation);
+        restartImageAutoplay();
+        updateMenuValues(ui);
     });
     if (ui.menuIntro != null) {
         ui.menuIntro.addEventListener("change", function () {
             var seconds = Math.min(transitionMax, Math.max(0, parseInt(ui.menuIntro.value, 10) || 0));
-            ui.menuIntro.value = seconds;
-            setFolderValue("intro", ui.menuScope.value, seconds);
+            setFolderValue("intro", getMenuSaveScope(ui, "intro"), seconds);
+            updateMenuValues(ui);
         });
     }
     ui.menuScope.addEventListener("change", function () {
-        ui.menuDuration.value = getTransitionValueAt(ui.menuScope.value, currentMediaLocation);
-        if (ui.menuIntro != null) {
-            ui.menuIntro.value = getFolderValueAt("intro", ui.menuScope.value);
-        }
+        updateMenuValues(ui);
     });
     return menu;
+}
+
+// "Gilt für" im Autoplay-Menü (seit 2.6.2): "@auto" = jeder Wert in seinem Ordner (wo der geltende
+// Wert herkommt), sonst die gewählte Ebene für beide Werte
+var autoScope = "@auto";
+
+function getMenuSaveScope(ui, kindName) {
+    // Menü noch nie geöffnet (keine Auswahl) oder "Automatisch": dort, wo der geltende Wert herkommt
+    if (ui.menuScope.options.length === 0 || ui.menuScope.value === autoScope) {
+        return getDefaultScopeFor(kindName, currentMediaLocation);
+    }
+    return ui.menuScope.value;
+}
+
+// Zeigt in den Feldern den Wert, der gilt (Automatisch) bzw. den der gewählten Ebene, mit Herkunft
+function updateMenuValues(ui) {
+    var path = currentMediaLocation;
+    var scope = ui.menuScope.value;
+    var auto = scope === autoScope;
+    var fields = [{ kind: "transition", input: ui.menuDuration, label: "Dauer bis Übergang" }];
+    if (ui.menuIntro != null) {
+        fields.push({ kind: "intro", input: ui.menuIntro, label: "Intro" });
+    }
+    fields.forEach(function (field) {
+        var source;
+        if (auto) {
+            var found = getFolderValueFor(field.kind, path, 0);
+            field.input.value = found.value;
+            source = found.folder == null
+                ? "Noch kein Wert, wird für «" + getTransitionLabel(getDefaultScopeFor(field.kind, path)) + "» gespeichert"
+                : "Aus «" + getTransitionLabel(found.folder) + "»";
+        } else {
+            field.input.value = field.kind === "transition" ? getTransitionValueAt(scope, path) : getFolderValueAt(field.kind, scope);
+            source = "Für «" + getTransitionLabel(scope) + "»";
+        }
+        setMenuFieldSource(field.input, source);
+    });
+    if (auto) {
+        ui.menuOverride.hidden = true;
+        ui.menuOverride.replaceChildren();
+    } else {
+        renderScopeOverrideHint(ui.menuOverride, fields, scope, path, function () {
+            updateMenuValues(ui);
+        });
+    }
+}
+
+// Kleine Zeile unter der Beschriftung eines Feldes: woher der Wert kommt
+function setMenuFieldSource(input, text) {
+    var label = input.parentNode.querySelector("span");
+    var small = label.querySelector("small.valueSource");
+    if (small == null) {
+        small = createPlayerElement("small", "valueSource");
+        label.appendChild(small);
+    }
+    small.textContent = text;
 }
 
 // Zahnradmenü: Geschwindigkeit, Download, Browser-Steuerung
@@ -2228,12 +2356,24 @@ function refreshPlayerMenu(ui) {
     ui.menuAmount.value = document.getElementById("amountOfAutoplay").value;
     ui.menuAmount.disabled = isAutoplayInfinite();
     ui.menuAmount.closest(".settingRow").classList.toggle("disabled", ui.menuAmount.disabled);
-    // "Gilt für": beim Öffnen die Vorauswahl, bei offenem Menü die gewählte Ebene behalten
-    var keepScope = ui.menuScopeMedia === currentMediaLocation && isPlayerMenuOpen(ui) ? ui.menuScope.value : null;
-    fillTransitionFields(ui.menuDuration, ui.menuScope, keepScope);
-    if (ui.menuIntro != null) {
-        ui.menuIntro.value = getFolderValueAt("intro", ui.menuScope.value);
+    // "Gilt für": beim Öffnen "Automatisch", bei offenem Menü die gewählte Ebene behalten
+    var keepScope = ui.menuScopeMedia === currentMediaLocation && isPlayerMenuOpen(ui) ? ui.menuScope.value : autoScope;
+    ui.menuScope.replaceChildren();
+    var autoOption = document.createElement("option");
+    autoOption.value = autoScope;
+    autoOption.textContent = "Automatisch";
+    ui.menuScope.appendChild(autoOption);
+    getTransitionScopes(currentMediaLocation).forEach(function (entry) {
+        var option = document.createElement("option");
+        option.value = entry.folder;
+        option.textContent = entry.label;
+        ui.menuScope.appendChild(option);
+    });
+    ui.menuScope.value = keepScope;
+    if (ui.menuScope.value !== keepScope) {
+        ui.menuScope.value = autoScope;
     }
+    updateMenuValues(ui);
     ui.menuScopeMedia = currentMediaLocation;
     ui.menuNative.checked = useNativeControls();
     updateSpeedButtons(ui);

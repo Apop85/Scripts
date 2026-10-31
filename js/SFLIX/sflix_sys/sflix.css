@@ -2120,6 +2120,31 @@ kbd.wideKey {
     font-size: 0.8rem;
 }
 
+/* Herkunft eines Wertes (Intro, Dauer bis Übergang) im Autoplay-Menü */
+.settingRow small.valueSource {
+    color: #c9a45c;
+}
+
+/* Hinweis unter "Gilt für": ein Unterordner hat einen eigenen Wert (seit 2.6.2) */
+.scopeHint {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 4px 0 8px 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(240, 196, 108, 0.35);
+    border-radius: 8px;
+    background-color: rgba(240, 196, 108, 0.08);
+    color: #f0c46c;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.scopeHint[hidden] {
+    display: none;
+}
+
 .settingRow.disabled {
     opacity: 0.45;
     cursor: default;

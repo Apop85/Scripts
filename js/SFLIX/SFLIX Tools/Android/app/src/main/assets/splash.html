@@ -17,7 +17,6 @@ body.loading #intro { opacity: 0; }
 #content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding: 0 24px; text-align: center; }
 #ring { position: relative; width: 108px; height: 108px; display: flex; align-items: center; justify-content: center; }
 #ring svg.track { position: absolute; inset: 0; width: 100%; height: 100%; animation: spin 1s linear infinite; }
-#ring.determinate svg.track { animation: none; }
 #ring circle { fill: none; stroke-width: 3.5; }
 #ring .bg { stroke: rgba(255,255,255,0.14); }
 #ring .fill { stroke: #e8261a; stroke-linecap: round; stroke-dasharray: 72 289.03; transform: rotate(-90deg); transform-box: fill-box; transform-origin: 50% 50%; transition: stroke-dasharray 0.3s ease-out; }
@@ -51,7 +50,7 @@ function setStatus(title, sub, progress) {
   var ring = document.getElementById("ring"), fill = document.getElementById("fill");
   if (progress >= 0) {
     ring.classList.add("determinate");
-    fill.style.strokeDasharray = (Math.max(0.02, Math.min(1, progress)) * RING) + " " + RING;
+    fill.style.strokeDasharray = (Math.max(0.25, Math.min(1, progress)) * RING) + " " + RING;
   } else {
     ring.classList.remove("determinate");
     fill.style.strokeDasharray = "72 " + RING;

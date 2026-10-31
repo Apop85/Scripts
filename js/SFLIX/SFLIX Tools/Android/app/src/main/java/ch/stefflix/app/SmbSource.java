@@ -183,6 +183,39 @@ final class SmbSource implements Closeable {
         }
     }
 
+    /**
+     * Verwirft die Verbindung sofort, ohne auf das NAS zu warten (nach einer Pause ist sie oft tot,
+     * und ein normales Schliessen wartet bis zum Zeitlimit). Die nächste Anfrage verbindet neu,
+     * die alte Verbindung wird im Hintergrund geschlossen.
+     */
+    void dropConnection() {
+        final Connection c;
+        final SMBClient cl;
+        synchronized (this) {
+            c = connection;
+            cl = client;
+            disk = null;
+            connection = null;
+            client = null;
+        }
+        if (c == null && cl == null) return;
+        closer.execute(() -> {
+            try { if (c != null) c.close(true); } catch (Exception ignored) { }
+            try { if (cl != null) cl.close(); } catch (Exception ignored) { }
+        });
+    }
+
+    /** Nach einer Pause: alte Verbindung verwerfen und gleich neu verbinden. true: Verbindung steht. */
+    boolean reconnect() {
+        dropConnection();
+        try {
+            disk();
+            return true;
+        } catch (IOException | RuntimeException e) {
+            return false;
+        }
+    }
+
     static long size(File f) {
         return f.getFileInformation(FileStandardInformation.class).getEndOfFile();
     }

@@ -12,7 +12,7 @@ namespace Sflix
     public class ConflictDialog : Form
     {
         readonly DarkCheckBox remember;
-        bool replace;
+        bool replace, copy;
 
         public ConflictDialog(string target) : this(null, target, null) { }
 
@@ -34,7 +34,8 @@ namespace Sflix
             Label path = Theme.MakeLabel(Path.GetDirectoryName(target), true);
             path.MaximumSize = new Size(width, 0);
             path.Margin = new Padding(0, Theme.S(4), 0, Theme.S(10));
-            Label question = Theme.MakeLabel("Soll die vorhandene Datei durch die neue ersetzt werden?", false);
+            Label question = Theme.MakeLabel("Soll die vorhandene Datei durch die neue ersetzt werden? „Als Kopie speichern“ behält beide, " +
+                                             "die neue heisst dann „" + Path.GetFileName(ConflictAnswer.CopyPath(target)) + "“.", false);
             question.MaximumSize = new Size(width, 0);
 
             CompareView view = null;
@@ -70,10 +71,13 @@ namespace Sflix
             buttons.Margin = new Padding(0, Theme.S(14), 0, 0);
             Button skip = Theme.MakeButton("Überspringen", false);
             Button repl = Theme.MakeButton("Ersetzen", true);
-            skip.Click += delegate { replace = false; DialogResult = DialogResult.OK; };
-            repl.Click += delegate { replace = true; DialogResult = DialogResult.OK; };
+            Button keep = Theme.MakeButton("Als Kopie speichern", false);
+            skip.Click += delegate { replace = false; copy = false; DialogResult = DialogResult.OK; };
+            repl.Click += delegate { replace = true; copy = false; DialogResult = DialogResult.OK; };
+            keep.Click += delegate { replace = false; copy = true; DialogResult = DialogResult.OK; };
             buttons.Controls.Add(skip);
             buttons.Controls.Add(repl);
+            buttons.Controls.Add(keep);
 
             root.Controls.Add(title);
             root.Controls.Add(path);
@@ -92,6 +96,7 @@ namespace Sflix
             ShowDialog(owner);
             ConflictAnswer a = new ConflictAnswer();
             a.Replace = replace;
+            a.Copy = copy;
             a.Remember = remember.Checked;
             return a;
         }

@@ -20,6 +20,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import com.hierynomus.smbj.share.File;
 
@@ -91,6 +92,14 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
         if (background.isShutdown()) return;
         background.execute(() -> {
             if (smb.keepAlive()) cache.warmUp(background, LISTING_MAX_AGE_MS);
+        });
+    }
+
+    /** Nach einer Pause: alte Verbindung nicht erst prüfen (wartet bis zum Zeitlimit), sondern sofort neu. */
+    private void reconnectAfterPause() {
+        if (background.isShutdown()) return;
+        background.execute(() -> {
+            if (smb.reconnect()) cache.warmUp(background, LISTING_MAX_AGE_MS);
         });
     }
 
@@ -173,8 +182,9 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
         super.onResume();
         if (web != null) web.onResume();
         if (root == null) return;
-        // Nach einer Pause ist die Verbindung oft weg: gleich im Hintergrund neu aufbauen
-        if (pausedAt > 0 && System.currentTimeMillis() - pausedAt > LISTING_MAX_AGE_MS) refreshConnection();
+        // Nach einer Pause ist die Verbindung oft tot: sofort verwerfen und im Hintergrund neu aufbauen.
+        // Seiten und Skripte kommen derweil aus dem Zwischenspeicher (FileCache prüft im Hintergrund).
+        if (pausedAt > 0 && System.currentTimeMillis() - pausedAt > LISTING_MAX_AGE_MS) reconnectAfterPause();
         root.removeCallbacks(keepAlive);
         root.postDelayed(keepAlive, KEEP_ALIVE_MS);
     }
@@ -199,6 +209,19 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
         if (requestCode != REQUEST_SETTINGS || web == null) return;
         cache.setMaxDiskBytes(prefs.cacheMb() * 1024L * 1024L);
         if (!prefs.keepScreenOn()) getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (resultCode == SettingsActivity.RESULT_RELOAD) {
+            // Programmdateien vergessen und die Seite frisch von der Freigabe laden
+            background.execute(() -> {
+                cache.forgetProgramFiles();
+                runOnUiThread(() -> {
+                    if (web == null) return;
+                    web.clearCache(false);
+                    web.reload();
+                    Toast.makeText(this, "STEFFLIX-Dateien werden neu geladen", Toast.LENGTH_SHORT).show();
+                });
+            });
+            return;
+        }
         web.evaluateJavascript("window.sflixAppRefresh && sflixAppRefresh();", null);
         if (resultCode == SettingsActivity.RESULT_HELP) {
             web.evaluateJavascript("typeof openHelp == 'function' && openHelp();", null);

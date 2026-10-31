@@ -378,10 +378,11 @@ namespace Sflix
         }
 
         // Wandelt ein Video in browserkompatible MP4-Dateien im Zielordner um (pro Tonspur eine).
-        // replaceExisting(ziel): true = vorhandene Zieldatei ersetzen, false = Video überspringen.
+        // resolveExisting(ziel): Zielpfad bei vorhandener Datei (derselbe = ersetzen, ein anderer = als
+        // Kopie speichern, null = Video überspringen).
         // Gibt die erzeugten Dateien zurück, oder null, wenn das Video übersprungen wurde.
         public List<string> ConvertInto(MediaInfo info, string targetDir, string stem,
-                                        Func<string, bool> replaceExisting, Action<double> progress)
+                                        Func<string, string> resolveExisting, Action<double> progress)
         {
             if (info.VideoIndex < 0) throw new Exception("keine Videospur gefunden");
             if (encoder == null)
@@ -398,7 +399,11 @@ namespace Sflix
             foreach (string name in names)
             {
                 string final = Path.Combine(targetDir, name + ".mp4");
-                if (FileOps.Exists(final) && !replaceExisting(final)) return null;
+                if (FileOps.Exists(final))
+                {
+                    final = resolveExisting(final);
+                    if (final == null) return null;
+                }
                 finals.Add(final);
                 temps.Add(Path.Combine(targetDir, name + ".__temp__.mp4"));
             }

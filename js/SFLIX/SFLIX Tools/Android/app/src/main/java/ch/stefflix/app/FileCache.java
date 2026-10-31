@@ -127,6 +127,33 @@ final class FileCache {
         }
     }
 
+    /**
+     * "STEFFLIX-Dateien neu laden": vergisst die Programmdateien dieser Quelle (Arbeitsspeicher und
+     * Gerät) und ihre Ordnerlisten. Der nächste Seitenaufruf liest alles neu von der Freigabe.
+     */
+    void forgetProgramFiles() {
+        List<Listing> old = new ArrayList<>();
+        List<String> folders = new ArrayList<>();
+        synchronized (listings) {
+            for (Map.Entry<String, Listing> e : listings.entrySet()) {
+                if (isProgramFolder(e.getKey())) {
+                    folders.add(e.getKey());
+                    old.add(e.getValue());
+                }
+            }
+            listings.clear();
+        }
+        for (int i = 0; i < old.size(); i++) {
+            String folder = folders.get(i);
+            for (Map.Entry<String, SmbSource.Meta> f : old.get(i).files.entrySet()) {
+                String rel = folder.isEmpty() ? f.getKey() : folder + "/" + f.getKey();
+                memory.remove(shareId + "/" + rel.toLowerCase(Locale.ROOT));
+                //noinspection ResultOfMethodCallIgnored
+                new java.io.File(dir, fileName(rel, f.getValue())).delete();
+            }
+        }
+    }
+
     private static boolean isProgramFolder(String folder) {
         String f = folder.toLowerCase(Locale.ROOT);
         return f.isEmpty() || f.equals("sflix_sys") || f.startsWith("sflix_sys/");
@@ -143,13 +170,66 @@ final class FileCache {
         }
     }
 
-    /** Grösse und Änderungszeit aus der Ordnerliste, null wenn die Datei dort nicht steht. */
-    private SmbSource.Meta lookup(String rel) throws IOException {
+    /** Hintergrund-Prüfung der Programmordner (stale-while-revalidate), gemeinsam für alle Quellen. */
+    private static final java.util.concurrent.ExecutorService revalidator =
+            java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+                Thread t = new Thread(r, "stefflix-revalidate");
+                t.setDaemon(true);
+                return t;
+            });
+    private final java.util.Set<String> revalidating = new java.util.HashSet<>();
+
+    /** Ergebnis von lookup: Eintrag der Ordnerliste und ob die Liste schon veraltet war. */
+    private static final class Found {
+        final SmbSource.Meta meta;
+        final boolean stale;
+
+        Found(SmbSource.Meta meta, boolean stale) {
+            this.meta = meta;
+            this.stale = stale;
+        }
+    }
+
+    /**
+     * Grösse und Änderungszeit aus der Ordnerliste (meta null, wenn die Datei dort nicht steht).
+     * Programmordner: Gibt es schon eine Liste, wird sie sofort verwendet, auch wenn sie älter als
+     * 30 s ist; die neue Liste kommt im Hintergrund (nach einer Pause wartet so keine Seite auf das NAS).
+     */
+    private Found lookup(String rel) throws IOException {
         int slash = rel.lastIndexOf('/');
         String folder = slash < 0 ? "" : rel.substring(0, slash);
         String name = rel.substring(slash + 1);
-        long maxAge = isProgramFolder(folder) ? PROGRAM_TTL_MS : Long.MAX_VALUE;
-        return listing(folder, maxAge, true).files.get(name);
+        if (isProgramFolder(folder)) {
+            Listing l;
+            synchronized (listings) {
+                l = listings.get(folder.toLowerCase(Locale.ROOT));
+            }
+            if (l != null) {
+                boolean stale = System.currentTimeMillis() - l.fetched > PROGRAM_TTL_MS;
+                if (stale) revalidate(folder);
+                return new Found(l.files.get(name), stale);
+            }
+            return new Found(listing(folder, PROGRAM_TTL_MS, true).files.get(name), false);
+        }
+        return new Found(listing(folder, Long.MAX_VALUE, true).files.get(name), false);
+    }
+
+    private void revalidate(String folder) {
+        final String key = folder.toLowerCase(Locale.ROOT);
+        synchronized (revalidating) {
+            if (!revalidating.add(key)) return;
+        }
+        revalidator.execute(() -> {
+            try {
+                listing(folder, PROGRAM_TTL_MS, false);
+            } catch (IOException | RuntimeException ignored) {
+                // Keine Verbindung: die alte Liste bleibt, der nächste Aufruf versucht es wieder
+            } finally {
+                synchronized (revalidating) {
+                    revalidating.remove(key);
+                }
+            }
+        });
     }
 
     /** Ordnerliste, neu geholt wenn sie älter als maxAgeMs ist. Gleichzeitige Anfragen warten aufeinander. */
@@ -196,7 +276,8 @@ final class FileCache {
      * null: zu gross zum Zwischenspeichern (dann direkt lesen). FileNotFoundException: fehlt.
      */
     byte[] read(String rel) throws IOException {
-        SmbSource.Meta meta = lookup(rel);
+        Found found = lookup(rel);
+        SmbSource.Meta meta = found.meta;
         if (meta == null) {
             // Nicht in der Liste (z.B. andere Unicode-Schreibweise eines Umlauts): direkt versuchen
             return readDirect(rel);
@@ -218,6 +299,11 @@ final class FileCache {
                 LoadStats.hit();
                 return data;
             }
+        }
+        if (found.stale) {
+            // Nicht zwischengespeichert und die Liste ist veraltet: die Datei kann sich geändert
+            // haben, darum mit der echten Grösse lesen
+            return readDirect(rel);
         }
         File f = smb.open(rel);
         byte[] data;

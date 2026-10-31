@@ -20,6 +20,7 @@ function toggleContainer(idArray, displayMode) {
                 document.getElementById("searchField").focus();
             } else if (idArray[key] == "settingsBox") {
                 fillTransitionFields(document.getElementById("autoplayDuration"), document.getElementById("autoplayDurationScope"));
+                updateSettingsBoxScopeHint();
             }
             // Video-Interaktion einschränken (Chrome Bug Workaround)
             if (needsVideoWorkaround) {
@@ -102,6 +103,58 @@ function getTransitionValueAt(scope, mediaPath) {
         }
     }
     return 0;
+}
+
+// Hinweis unter "Gilt für" (seit 2.6.2): Hat ein Unterordner der gewählten Ebene für das laufende
+// Medium einen eigenen Wert, wirkt ein Wert für die Ebene hier nicht. Knopf "Für Unterordner
+// übernehmen" entfernt die eigenen Werte darunter. kinds: [{ kind: "intro", label: "Intro" }, ...]
+function renderScopeOverrideHint(container, kinds, scope, mediaPath, onChange) {
+    container.replaceChildren();
+    var parts = [];
+    var affected = [];
+    kinds.forEach(function (entry) {
+        var over = getOverridingValue(entry.kind, scope, mediaPath);
+        if (over != null) {
+            parts.push(entry.label + " " + over.value + " s aus «" + getTransitionLabel(over.folder) + "»");
+            affected.push(entry.kind);
+        }
+    });
+    container.hidden = parts.length === 0;
+    if (parts.length === 0) {
+        return;
+    }
+    var text = document.createElement("span");
+    text.textContent = "Hier gilt ein eigener Wert eines Unterordners (" + parts.join(", ") + "). Ein Wert für «" +
+        getTransitionLabel(scope) + "» wirkt bei diesem Medium deshalb nicht.";
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "sflixButton small";
+    button.textContent = "Für Unterordner übernehmen";
+    button.title = "Entfernt die eigenen Werte aller Unterordner von «" + getTransitionLabel(scope) + "», damit der Wert dieser Ebene darunter überall gilt";
+    button.addEventListener("click", function (event) {
+        event.preventDefault();
+        affected.forEach(function (kind) {
+            clearFolderValuesBelow(kind, scope);
+        });
+        refreshTransitionForMedia(mediaPath);
+        if (onChange) {
+            onChange();
+        }
+    });
+    container.append(text, button);
+}
+
+// Autoplay-Fenster: Hinweis unter "Gilt für" (nur Dauer bis Übergang)
+function updateSettingsBoxScopeHint() {
+    var hint = document.getElementById("autoplayScopeHint");
+    var select = document.getElementById("autoplayDurationScope");
+    if (hint == null || select == null) {
+        return;
+    }
+    renderScopeOverrideHint(hint, [{ kind: "transition", label: "Dauer bis Übergang" }], select.value, currentMediaLocation, function () {
+        document.getElementById("autoplayDuration").value = getTransitionValueAt(select.value, currentMediaLocation);
+        updateSettingsBoxScopeHint();
+    });
 }
 
 // Speichert die Eingabe für die gewählte Ebene und übernimmt sie für das laufende Medium
@@ -1015,7 +1068,8 @@ function showLoadingProgress(done, total) {
     }
     if (ring != null && fill != null && total > 0) {
         ring.classList.add("determinate");
-        var part = Math.max(0.02, Math.min(1, done / total)) * loadingRingLength;
+        // Mindestens ein Viertel: der Ring dreht sich weiter und wirkt nie eingefroren
+        var part = Math.max(0.25, Math.min(1, done / total)) * loadingRingLength;
         fill.style.strokeDasharray = part + " " + loadingRingLength;
     }
     if (window.StefflixApp && typeof window.StefflixApp.loadingProgress === "function") {

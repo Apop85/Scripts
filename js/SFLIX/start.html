@@ -88,7 +88,8 @@
             stroke: rgba(255, 255, 255, 0.14);
         }
 
-        /* Drehender Bogen; mit bekanntem Fortschritt (Klasse "determinate") füllt er sich von oben */
+        /* Drehender Bogen; dreht sich immer, solange geladen wird. Mit bekanntem Fortschritt
+           (Klasse "determinate") wird er länger, ist aber nie kürzer als ein Viertel (seit 2.6.2) */
         #loadingRing .ringFill {
             stroke: #e8261a;
             stroke-linecap: round;
@@ -97,10 +98,6 @@
             transform-box: fill-box;
             transform-origin: 50% 50%;
             transition: stroke-dasharray 0.3s ease-out;
-        }
-
-        #loadingRing.determinate svg {
-            animation: none;
         }
 
         #loadingLogo {
@@ -214,6 +211,7 @@
             <label class="settingRow"><span>Anzahl abzuspielender Medien</span><input type="number" id="amountOfAutoplay" value="0" min="0"></label>
             <label class="settingRow"><span>Dauer bis Übergang (Sekunden)</span><input type="number" id="autoplayDuration" value="0" min="0"></label>
             <label class="settingRow"><span>Gilt für<small>Der Wert gilt auch für alle Unterordner, solange diese keinen eigenen haben</small></span><select id="autoplayDurationScope"></select></label>
+            <div id="autoplayScopeHint" class="scopeHint" hidden></div>
             <a class="button" onclick="applySettings()">Speichern</a>
         </div>
         <div id="feedbackWrapper" class="sflixModal" style="display: none;">
@@ -263,7 +261,7 @@
             </details>
             <details class="helpDetails">
                 <summary>Vorschaubilder (Preview-Ordner)</summary>
-                <p>Vorschaubilder liegen in einem Ordner namens <span class="highlighted">Preview</span>, und zwar im selben Verzeichnis wie das Medium oder der Ordner, zu dem sie gehören. Das Bild heisst gleich wie das Medium bzw. der Ordner (Endung jpg, png oder webp). Beim Einlesen der Daten schneidet <span class="highlighted">updateStefflix.exe</span> zu grosse Bilder auf 480x270 zu, damit sie schneller laden (webp-Bilder bleiben unverändert). Das Original wird mit gleichem Namen im Unterordner <span class="highlighted">Preview\__original</span> aufbewahrt. Ohne Vorschaubild zeigt STEFFLIX eine farbige Kachel.</p>
+                <p>Vorschaubilder liegen in einem Ordner namens <span class="highlighted">Preview</span>, und zwar im selben Verzeichnis wie das Medium oder der Ordner, zu dem sie gehören. Das Bild heisst gleich wie das Medium bzw. der Ordner (Endung jpg, png oder webp). Beim Einlesen der Daten schneidet <span class="highlighted">updateStefflix.exe</span> zu grosse Bilder auf 480x270 zu, damit sie schneller laden (webp-Bilder bleiben unverändert). Das Original wird mit gleichem Namen im Unterordner <span class="highlighted">Preview\__original</span> aufbewahrt. Hat ein Ordner kein eigenes Vorschaubild, nimmt STEFFLIX eines aus den Preview-Ordnern darunter (beliebig tief, der nächste zuerst, für jeden Ordner immer dasselbe Bild). Ohne Vorschaubild zeigt STEFFLIX eine farbige Kachel.</p>
                 <pre class="folderTree">D:\sflix\Bilder
 ├── Buddy
 ├── Natur
@@ -282,8 +280,8 @@
                 <li><b>Anzahl abzuspielender Medien</b>: wie viele Medien nacheinander abgespielt werden. Die Zahl wird mit jedem Medium heruntergezählt, bei 0 hält Autoplay an. Bei "Unbegrenzt" wird sie nicht verwendet.</li>
                 <li><b>Dauer bis Übergang (Sekunden)</b>: Bei Videos und Musik wechselt STEFFLIX so viele Sekunden vor dem Ende (plus etwa eine Sekunde) zum nächsten Medium, bei Musik höchstens 11 Sekunden vorher. Bei 0 also kurz vor Schluss. Bilder bleiben so viele Sekunden plus 11 Sekunden sichtbar.</li>
                 <li><b>Intro überspringen (Sekunden)</b>: nur bei Videos. Beginnt ein Video von vorne, startet es so viele Sekunden später, z.B. nach dem Vorspann einer Serie. Wird ein Video an einer gespeicherten Stelle fortgesetzt, gilt diese Stelle.</li>
-                <li><b>Gilt für</b>: Intro und Dauer werden pro Ordner gespeichert und gelten auch für alle Unterordner, solange diese keinen eigenen Wert haben. So lässt sich z.B. für eine ganze Serie der Vor- und Abspann überspringen und für eine einzelne Staffel ein anderer Wert festlegen. Ohne Eintrag gilt 0. Alle Einträge stehen unter <a onclick="openSettings('wiedergabe')">Einstellungen › Wiedergabe</a>.</li>
-                <li><b>Intro bis hier / Abspann ab hier</b> <span class="helpIcon" data-icon="transition"></span>: Der Knopf in der Player-Leiste übernimmt die Zeit an der aktuellen Stelle. In der ersten Hälfte eines Videos gilt er für das Intro (abgelaufene Zeit), in der zweiten Hälfte und bei Musik für den Abspann (verbleibende Zeit als Dauer bis Übergang). Er gilt für den Ordner, der unter "Gilt für" gewählt ist.</li>
+                <li><b>Gilt für</b>: Intro und Dauer werden pro Ordner gespeichert und gelten auch für alle Unterordner, solange diese keinen eigenen Wert haben. So lässt sich z.B. für eine ganze Serie der Vor- und Abspann überspringen und für eine einzelne Staffel ein anderer Wert festlegen. Ohne Eintrag gilt 0. Alle Einträge stehen unter <a onclick="openSettings('wiedergabe')">Einstellungen › Wiedergabe</a>. Mit "Automatisch" zeigt das Menü im Player bei jedem Wert, welcher gerade gilt und aus welchem Ordner er stammt, und speichert Änderungen dort. Verdeckt ein Unterordner mit eigenem Wert den gewählten, erscheint ein Hinweis; "Für Unterordner übernehmen" entfernt die abweichenden Werte darunter.</li>
+                <li><b>Intro bis hier / Abspann ab hier</b> <span class="helpIcon" data-icon="transition"></span>: Der Knopf in der Player-Leiste übernimmt die Zeit an der aktuellen Stelle. In der ersten Hälfte eines Videos gilt er für das Intro (abgelaufene Zeit), in der zweiten Hälfte und bei Musik für den Abspann (verbleibende Zeit als Dauer bis Übergang). Er speichert beim Ordner, von dem der geltende Wert stammt (bzw. beim Ordner, der unter "Gilt für" gewählt ist).</li>
             </ul>
 
             <h3>Player</h3>
@@ -378,7 +376,7 @@
             <ul class="helpOptions">
                 <li><b>Quellen</b>: Eine Quelle ist ein STEFFLIX-Ordner, z.B. \\NAS\Medien\STEFFLIX, mit Benutzer und Passwort. Beim Einrichten prüft die App die Verbindung und nennt bei einem Fehler den Grund (Server nicht erreichbar, Anmeldung abgelehnt, Freigabe oder Ordner nicht gefunden, kein STEFFLIX im Ordner). Beim Start öffnet die App die zuletzt genutzte Quelle. Ist sie nicht erreichbar, erscheint die Auswahl der Quellen mit einem Hinweis. Im Menü wechselt "Quelle wechseln" jederzeit zu einer anderen.</li>
                 <li><b>App-Einstellungen</b>: Im Menü der App. Dort lassen sich die Quellen verwalten, das Display während der Wiedergabe eingeschaltet lassen, Videos im Vollbild quer anzeigen, der Zwischenspeicher und der Videopuffer einstellen, die Verbindung testen und die App aktualisieren.</li>
-                <li><b>Zwischenspeicher</b>: Die App speichert die Programmdateien von STEFFLIX und die Vorschaubilder auf dem Gerät (je Quelle getrennt, Standard 250 MB). Seiten laden dadurch viel schneller, besonders unterwegs über VPN. Geänderte Dateien, z.B. nach "Daten einlesen", erkennt die App selbst. Die Verbindung zum NAS hält die App offen, solange sie sichtbar ist, und baut sie nach einer Pause sofort neu auf.</li>
+                <li><b>Zwischenspeicher</b>: Die App speichert die Programmdateien von STEFFLIX und die Vorschaubilder auf dem Gerät (je Quelle getrennt, Standard 250 MB). Seiten laden dadurch viel schneller, besonders unterwegs über VPN. Geänderte Dateien, z.B. nach "Daten einlesen", erkennt die App selbst. Die Verbindung zum NAS hält die App offen, solange sie sichtbar ist, und baut sie nach einer Pause sofort neu auf; Seiten kommen derweil aus dem Zwischenspeicher. "STEFFLIX-Dateien neu laden" in den App-Einstellungen liest die Programmdateien sofort neu vom NAS, z.B. direkt nach einem Update von STEFFLIX.</li>
                 <li><b>Videopuffer</b>: Videos und Musik werden im Voraus geladen (Standard 64 MB). Kurze Verbindungsabbrüche überbrückt die App, danach verbindet sie sich neu und spielt an derselben Stelle weiter.</li>
                 <li><b>Startbildschirm</b>: Dauert der Start länger, weil Dateien vom NAS geladen werden (z.B. beim ersten Start über VPN), zeigt er, was gerade geladen wird und wie weit es ist. Nach 15 Sekunden erscheint "Quelle wechseln", falls man im falschen Netz ist oder das VPN fehlt.</li>
                 <li><b>Updates</b>: Die App meldet neue Versionen selbst und installiert sie auf Wunsch direkt. Quellen und gespeicherte Daten bleiben erhalten.</li>
@@ -392,13 +390,13 @@
                 <p>Die ausgewählten Aufgaben laufen immer in dieser Reihenfolge ab:</p>
                 <ul class="helpOptions">
                     <li><b>Update</b>: STEFFLIX-Dateien und den Updater selbst von GitHub aktualisieren. Installiert wird nur, wenn alle Dateien vollständig und gültig heruntergeladen wurden.</li>
-                    <li><b>Ablagen leeren</b>: Die Ablageordner der Werkzeuge (Ordner, deren Name mit __ beginnt, z.B. __teile, __konvertiert, __gelöscht, __original, __ersetzt und __duplikate) endgültig löschen. Vorher wird angezeigt, was gelöscht wird. Nur innerhalb des STEFFLIX-Ordners möglich.</li>
-                    <li><b>Folgen umbenennen</b>: Die Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen, z.B. "Serie - S01E02 - Titel" im Ordner "Staffel 01". Erkannt werden Namen mit S01E02 oder 1x02. Doppelfolgen behalten alle Nummern, z.B. "Serie - S01E02E03 - Titel". Vor dem Umbenennen werden alle Änderungen angezeigt, mehrere Dateien für eine Folge lassen sich vergleichen. Danach lässt sich der letzte Lauf rückgängig machen.</li>
+                    <li><b>Ablagen leeren</b>: Die Ablageordner der Werkzeuge (Ordner, deren Name mit __ beginnt, z.B. __teile, __konvertiert, __gelöscht, __original, __ersetzt und __duplikate) endgültig löschen oder wiederherstellen, ganz oder nur einzelne Dateien. Die Liste lässt sich nach Art filtern. Ist beim Wiederherstellen am Ziel schon eine Datei, kannst du ersetzen, überspringen oder als Kopie speichern. Nur innerhalb des STEFFLIX-Ordners möglich.</li>
+                    <li><b>Folgen umbenennen</b>: Die Folgen einer Serie anhand der Folgenliste von serienjunkies.de (sonst fernsehserien.de oder TVmaze) umbenennen, z.B. "Serie - S01E02 - Titel" im Ordner "Staffel 01". Erkannt werden Namen mit S01E02 oder 1x02. Doppelfolgen behalten alle Nummern, z.B. "Serie - S01E02E03 - Titel". Vor dem Umbenennen werden alle Änderungen angezeigt, mehrere Dateien für eine Folge lassen sich vergleichen. Danach lässt sich der letzte Lauf rückgängig machen.</li>
                     <li><b>Duplikate finden</b>: Identische Dateien, gleiche Folgen einer Serie (S01E01 = 1x01 = S1E1) und gleiche Dateinamen finden, mit Vergleich von Grösse, Auflösung und Dauer. Aussortierte Dateien kommen nach __duplikate.</li>
                     <li><b>Gesplittete Medien zusammenführen</b>: Videos wie "Titel pt1" und "Titel pt2" zu einer Datei zusammenfügen. Die Teile werden vorher in einer Liste ausgewählt, auf Wunsch wird neu kodiert. Die Teile können danach nach __teile verschoben werden.</li>
                     <li><b>Konvertieren</b>: Videos in browserkompatible MP4 (H.264/AAC) umwandeln, auf Wunsch auch nicht abspielbare Musik (z.B. WMA, AIFF, ALAC) in MP3. Das Ergebnis ersetzt das Original im selben Ordner, das Original kommt nach __konvertiert (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.</li>
                     <li><b>Medien prüfen</b>: Medien finden, die der Browser nicht abspielen kann, dazu defekte und leere Dateien, Medien ohne Vorschaubild sowie leere Ordner (ohne Medien). Im Ergebnis wählst du je Datei Löschen (nach __gelöscht), Konvertieren und/oder Vorschaubild erstellen; leere Ordner lassen sich löschen (als Ganzes nach __gelöscht im Ordner darüber). Defekte und leere Dateien sowie leere Ordner sind zum Löschen vorgemerkt. "Ausführen" erledigt alles in einem Durchgang.</li>
-                    <li><b>Vorschaubilder erstellen</b>: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach Preview\__gelöscht.</li>
+                    <li><b>Vorschaubilder erstellen</b>: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach Preview\__gelöscht. Mit "für Musik" erhalten Alben ohne Vorschaubild ein Albumbild aus einem Bild im Album oder dem Cover der Musikdateien; bei mehreren Bildern wählst du eines mit Vorschau aus.</li>
                     <li><b>Daten einlesen</b>: Medien neu einlesen, ungültige Zeichen in Datei- und Ordnernamen korrigieren und zu grosse Vorschaubilder verkleinern. Ordner, deren Name mit __ beginnt, sowie System- und versteckte Ordner werden ignoriert.</li>
                 </ul>
                 <p>Die Tools durchsuchen mit "Alles" den ganzen STEFFLIX-Ordner, sonst nur die gewählten Ordner. "Medien prüfen", "Duplikate finden" und "Vorschaubilder" bearbeiten mehrere Dateien gleichzeitig und merken sich ihre Ergebnisse, ein zweiter Lauf ist dadurch viel schneller. Danach werden nur die betroffenen Ordner neu eingelesen. Das dafür nötige Programm ffmpeg installiert das Setup auf Wunsch gleich mit, sonst lädt es der Updater beim ersten Bedarf. Unter "Details" zeigt der Updater rechts ein Protokoll mit Suche und Filter. Alles Weitere, auch die Befehle für die Kommandozeile, erklärt der Reiter "Hilfe" im Updater.</p>

@@ -28,10 +28,40 @@ namespace Sflix
         public ConvertOptions Video = new ConvertOptions();
     }
 
+    // Antwort auf "Datei gibt es schon": ersetzen, überspringen oder (seit 3.4.3) als Kopie speichern
     public class ConflictAnswer
     {
         public bool Replace;
+        public bool Copy;
         public bool Remember;
+
+        // Freier Name für "Als Kopie speichern": <Name>_1.<Endung>, <Name>_2.<Endung> …
+        public static string CopyPath(string target)
+        {
+            string dir = Path.GetDirectoryName(target);
+            string stem = Path.GetFileNameWithoutExtension(target);
+            string ext = Path.GetExtension(target);
+            for (int n = 1; ; n++)
+            {
+                string candidate = Path.Combine(dir, stem + "_" + n + ext);
+                if (!File.Exists(candidate) && !Directory.Exists(candidate)) return candidate;
+            }
+        }
+
+        // Fragt nach (oder nimmt die gemerkte Antwort) und gibt den Zielpfad zurück:
+        // target = ersetzen, ein neuer Name = als Kopie speichern, null = überspringen
+        public static string Resolve(TaskContext ctx, string source, string target, ref ConflictAnswer remembered)
+        {
+            ConflictAnswer a = remembered;
+            if (a == null)
+            {
+                a = ctx.AskConflict != null ? ctx.AskConflict(source, target) : null;
+                if (a == null) return null;
+                if (a.Remember) remembered = a;
+            }
+            if (a.Copy) return CopyPath(target);
+            return a.Replace ? target : null;
+        }
     }
 
     // Dateitypen: was STEFFLIX direkt abspielt und was erst konvertiert werden muss
@@ -77,7 +107,7 @@ namespace Sflix
         readonly TaskContext ctx;
         readonly ImportOptions opt;
         ConvertTask converter;
-        bool? remembered;   // gemerkte Antwort bei vorhandenen Zieldateien: true = ersetzen
+        ConflictAnswer remembered;   // gemerkte Antwort bei vorhandenen Zieldateien (null = jedes Mal fragen)
         int imported, converted, skipped, failed;
 
         ImportTask(TaskContext ctx, ImportOptions opt)
@@ -251,7 +281,7 @@ namespace Sflix
                 if (!ready)
                 {
                     if (converter == null) converter = ConvertTask.ForImport(ctx, opt.Video);
-                    List<string> results = converter.ConvertInto(info, targetDir, stem, AskReplace, progress);
+                    List<string> results = converter.ConvertInto(info, targetDir, stem, ResolveTarget, progress);
                     if (results == null) { skipped++; ctx.Log("  ÜBERSPRUNGEN  " + src + " :: Zieldatei vorhanden"); return; }
                     FinishConverted(src, targetDir, results);
                     return;
@@ -278,11 +308,16 @@ namespace Sflix
         void ConvertSingle(string src, string targetDir, string targetName, string[] codecArgs)
         {
             string target = Path.Combine(targetDir, targetName);
-            if (FileOps.Exists(target) && !AskReplace(target))
+            if (FileOps.Exists(target))
             {
-                skipped++;
-                ctx.Log("  ÜBERSPRUNGEN  " + src + " :: " + targetName + " ist schon vorhanden");
-                return;
+                string chosen = ResolveTarget(target);
+                if (chosen == null)
+                {
+                    skipped++;
+                    ctx.Log("  ÜBERSPRUNGEN  " + src + " :: " + targetName + " ist schon vorhanden");
+                    return;
+                }
+                target = chosen;
             }
             Directory.CreateDirectory(targetDir);
             string temp = Path.Combine(targetDir, Path.GetFileNameWithoutExtension(targetName) + ".__temp__" + Path.GetExtension(targetName));
@@ -336,13 +371,15 @@ namespace Sflix
             bool replace = false;
             if (FileOps.Exists(target))
             {
-                if (!AskReplace(target))
+                string chosen = ResolveTarget(target);
+                if (chosen == null)
                 {
                     skipped++;
                     ctx.Log("  ÜBERSPRUNGEN  " + src + " :: " + Path.GetFileName(target) + " ist schon vorhanden");
                     return;
                 }
-                replace = true;
+                replace = string.Equals(chosen, target, StringComparison.OrdinalIgnoreCase);
+                target = chosen;
             }
             Directory.CreateDirectory(Path.GetDirectoryName(target));
             if (opt.Move)
@@ -371,13 +408,10 @@ namespace Sflix
         // Zieldatei vorhanden: nachfragen (oder die gemerkte Antwort verwenden)
         string currentSource;   // Quelle der Datei, die gerade importiert wird (für den Vergleich)
 
-        bool AskReplace(string target)
+        // Zielpfad: target (ersetzen), ein freier Name (als Kopie) oder null (überspringen)
+        string ResolveTarget(string target)
         {
-            if (remembered.HasValue) return remembered.Value;
-            ConflictAnswer a = ctx.AskConflict != null ? ctx.AskConflict(currentSource, target) : null;
-            if (a == null) return false;
-            if (a.Remember) remembered = a.Replace;
-            return a.Replace;
+            return ConflictAnswer.Resolve(ctx, currentSource, target, ref remembered);
         }
 
         // Beim Verschieben: leer gewordene Ordner der Auswahl entfernen (nur wirklich leere)

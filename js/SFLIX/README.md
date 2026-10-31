@@ -2,7 +2,7 @@
 
 STEFFLIX ist eine lokale Mediathek für Filme, Serien, Musik und Bilder im Stil eines Streamingdienstes. Sie läuft vollständig im Browser: `start.html` per Doppelklick öffnen, fertig. Es wird kein Server und keine Internetverbindung benötigt (ausser für Updates).
 
-- Startseite mit "Weiterschauen" und Menübändern pro Kategorie
+- Startseite mit "Weiterschauen" (auch für Bildergalerien ab dem 5. Bild) und Menübändern pro Kategorie
 - Eigener Player für Videos und Musik, Bildbetrachter mit Vollbild und Diashow
 - Autoplay, Zufallswiedergabe, Favoriten und Suche
 - Markierung gesehener Videos, Fortsetzen an der letzten Stelle
@@ -74,7 +74,7 @@ Gross- und Kleinschreibung der Dateiendung spielt keine Rolle (JPG = jpg). Video
 
 ### Vorschaubilder (Preview-Ordner)
 
-Vorschaubilder liegen in einem Ordner namens `Preview`, und zwar im selben Verzeichnis wie das Medium oder der Ordner, zu dem sie gehören. Das Bild heisst gleich wie das Medium bzw. der Ordner (Endung jpg, png oder webp). Ohne Vorschaubild zeigt STEFFLIX eine farbige Kachel.
+Vorschaubilder liegen in einem Ordner namens `Preview`, und zwar im selben Verzeichnis wie das Medium oder der Ordner, zu dem sie gehören. Das Bild heisst gleich wie das Medium bzw. der Ordner (Endung jpg, png oder webp). Hat ein Ordner kein eigenes Vorschaubild, nimmt STEFFLIX eines aus den Preview-Ordnern darunter (beliebig tief, der nächste zuerst, für jeden Ordner immer dasselbe Bild). Ohne Vorschaubild zeigt STEFFLIX eine farbige Kachel.
 
 ```
 D:\sflix\Bilder
@@ -98,15 +98,15 @@ Beim Einlesen der Daten schneidet `updateStefflix.exe` zu grosse Bilder auf 480x
 Die ausgewählten Aufgaben laufen immer in dieser Reihenfolge ab:
 
 - **Update**: STEFFLIX-Dateien und den Updater selbst von GitHub aktualisieren. Installiert wird nur, wenn alle Dateien vollständig und gültig heruntergeladen wurden.
-- **Ablagen leeren**: Die Ablageordner der Werkzeuge (Ordner, deren Name mit `__` beginnt, z.B. `__teile`, `__konvertiert`, `__gelöscht`, `__original` und `__duplikate`) endgültig löschen. Vorher wird angezeigt, was gelöscht wird. Nur innerhalb des STEFFLIX-Ordners möglich.
-- **Folgen umbenennen**: Die Folgen einer Serie anhand der Folgenliste von fernsehserien.de (sonst TVmaze) umbenennen, z.B. `Serie - S01E02 - Titel.mp4` im Ordner `Staffel 01`. Erkannt werden Namen mit `S01E02` oder `1x02`. Doppelfolgen behalten alle Nummern, z.B. `Serie - S01E02E03 - Titel.mp4`. Vorher werden alle Änderungen angezeigt; bei mehreren Dateien für eine Folge oder einem vorhandenen Ziel vergleicht die Vorschau Grösse, Auflösung und Dauer. Danach lässt sich der letzte Lauf rückgängig machen. Geladene Folgenlisten werden gespeichert, beim nächsten Lauf lässt sich die gespeicherte Liste verwenden oder neu laden.
+- **Ablagen leeren**: Die Ablageordner der Werkzeuge (Ordner, deren Name mit `__` beginnt, z.B. `__teile`, `__konvertiert`, `__gelöscht`, `__original` und `__duplikate`) endgültig löschen oder wiederherstellen. Die Liste lässt sich nach Art filtern und sortieren. Wiederherstellen geht für ganze Ablagen oder einzelne Dateien (Doppelklick); ist am Ziel schon eine Datei, kannst du ersetzen, überspringen oder als Kopie speichern. Nur innerhalb des STEFFLIX-Ordners möglich.
+- **Folgen umbenennen**: Die Folgen einer Serie anhand der Folgenliste von serienjunkies.de (sonst fernsehserien.de oder TVmaze) umbenennen, z.B. `Serie - S01E02 - Titel.mp4` im Ordner `Staffel 01`. Erkannt werden Namen mit `S01E02` oder `1x02`. Doppelfolgen behalten alle Nummern, z.B. `Serie - S01E02E03 - Titel.mp4`. Vorher werden alle Änderungen angezeigt; bei mehreren Dateien für eine Folge oder einem vorhandenen Ziel vergleicht die Vorschau Grösse, Auflösung und Dauer. Danach lässt sich der letzte Lauf rückgängig machen. Geladene Folgenlisten werden gespeichert, beim nächsten Lauf lässt sich die gespeicherte Liste verwenden oder neu laden.
 - **Duplikate finden**: Identische Dateien, gleiche Folgen einer Serie (`S01E01` = `1x01` = `S1E1`) und gleiche Dateinamen finden (Preview- und Ablage-Ordner zählen nicht). Ein Vergleich zeigt Grösse, Auflösung, Dauer und Codecs, vorausgewählt bleibt die bessere Fassung. Aussortierte Dateien kommen nach `__duplikate`, Favoriten und Fortschritt gehen auf die behaltene Datei über.
 - **Gesplittete Medien zusammenführen**: Videos wie "Titel pt1" und "Titel pt2" zu einer Datei zusammenfügen. Die Teile werden vorher in einer Liste ausgewählt, auf Wunsch wird neu kodiert. Die Teile können danach nach `__teile` verschoben werden.
 - **Konvertieren**: Videos in browserkompatible MP4 (H.264/AAC) umwandeln, auf Wunsch auch nicht abspielbare Musik (z.B. WMA, AIFF, ALAC) in MP3. Das Ergebnis ersetzt das Original im selben Ordner, das Original kommt nach `__konvertiert` (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.
 - **Medien prüfen**: Medien finden, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton, WMA), dazu defekte und leere Dateien, Medien ohne Vorschaubild sowie leere Ordner (ohne Medien). Im Ergebnis wählst du je Datei Löschen (nach `__gelöscht`), Konvertieren und/oder Vorschaubild erstellen; leere Ordner lassen sich löschen (als Ganzes nach `__gelöscht` im Ordner darüber). Defekte und leere Dateien sowie leere Ordner sind zum Löschen vorgemerkt. „Ausführen“ erledigt alles in einem Durchgang.
 
 Alle Tabellen im Updater lassen sich mit einem Klick auf den Spaltenkopf sortieren.
-- **Vorschaubilder erstellen**: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach `Preview\__gelöscht`.
+- **Vorschaubilder erstellen**: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach `Preview\__gelöscht`. Mit „für Musik“ erhalten Alben ohne Vorschaubild ein Albumbild: aus einem Bild im Album (auch in einem Unterordner wie „Scans“) oder dem Cover der Musikdateien. Gibt es mehrere Bilder, wählst du eines mit Vorschau aus, die übrigen lassen sich nach `__gelöscht` verschieben.
 - **Daten einlesen**: Medien neu einlesen, ungültige Zeichen in Datei- und Ordnernamen korrigieren und zu grosse Vorschaubilder verkleinern. Ordner, deren Name mit `__` beginnt, sowie System- und versteckte Ordner werden ignoriert. Mit dem Schalter "Alle Ordner einlesen" wird alles eingelesen. Ist er aus, lassen sich einzelne Ordner wählen, und nur diese werden aktualisiert. Das geht deutlich schneller bei grossen Mediatheken. Nach einem Import liest der Updater automatisch nur den Zielordner ein.
 
 Die Tools durchsuchen mit "Alles" den ganzen STEFFLIX-Ordner, sonst nur die gewählten Ordner. "Medien prüfen", "Duplikate finden" und "Vorschaubilder" bearbeiten mehrere Dateien gleichzeitig und merken sich ihre Ergebnisse, ein zweiter Lauf ist dadurch viel schneller. Danach werden nur die betroffenen Ordner neu eingelesen. Das dafür nötige Programm ffmpeg installiert das Setup auf Wunsch gleich mit, sonst lädt es der Updater beim ersten Bedarf. Es liegt je Benutzer in `%LOCALAPPDATA%\STEFFLIX\ffmpeg`, der Ordner lässt sich unter Tools › Einstellungen ändern.
@@ -124,8 +124,8 @@ Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste 
 - **Anzahl abzuspielender Medien**: wie viele Medien nacheinander abgespielt werden. Die Zahl wird mit jedem Medium heruntergezählt, bei 0 hält Autoplay an. Bei "Unbegrenzt" wird sie nicht verwendet.
 - **Dauer bis Übergang (Sekunden)**: Bei Videos und Musik wechselt STEFFLIX so viele Sekunden vor dem Ende (plus etwa eine Sekunde) zum nächsten Medium, bei Musik höchstens 11 Sekunden vorher. Bilder bleiben so viele Sekunden plus 11 Sekunden sichtbar.
 - **Intro überspringen (Sekunden)**: nur Videos. Beginnt ein Video von vorne, startet es so viele Sekunden später, z.B. nach dem Vorspann. Wird es an einer gespeicherten Stelle fortgesetzt, gilt diese.
-- **Gilt für**: Intro und Dauer werden pro Ordner gespeichert und gelten auch für alle Unterordner ohne eigenen Wert, z.B. für eine ganze Serie und abweichend für eine Staffel. Ohne Eintrag gilt 0. Alle Einträge stehen unter Einstellungen › Wiedergabe.
-- **Intro bis hier / Abspann ab hier** (Stoppuhr in der Player-Leiste): In der ersten Hälfte eines Videos übernimmt der Knopf die abgelaufene Zeit als Intro, in der zweiten Hälfte (und bei Musik) die verbleibende Zeit als Dauer bis Übergang, z.B. beim Beginn des Abspanns.
+- **Gilt für**: Intro und Dauer werden pro Ordner gespeichert und gelten auch für alle Unterordner ohne eigenen Wert, z.B. für eine ganze Serie und abweichend für eine Staffel. Ohne Eintrag gilt 0. Alle Einträge stehen unter Einstellungen › Wiedergabe. Mit „Automatisch“ zeigt das Menü bei jedem Wert, welcher gerade gilt und aus welchem Ordner er stammt, und speichert Änderungen dort. Hat ein Unterordner einen eigenen Wert, der den gewählten verdeckt, weist ein Hinweis darauf hin; „Für Unterordner übernehmen“ entfernt die abweichenden Werte darunter.
+- **Intro bis hier / Abspann ab hier** (Stoppuhr in der Player-Leiste): In der ersten Hälfte eines Videos übernimmt der Knopf die abgelaufene Zeit als Intro, in der zweiten Hälfte (und bei Musik) die verbleibende Zeit als Dauer bis Übergang, z.B. beim Beginn des Abspanns. Gespeichert wird beim Ordner, von dem der geltende Wert stammt.
 
 ## Player
 
@@ -166,7 +166,7 @@ Mit der App `STEFFLIX.apk` lässt sich STEFFLIX auf dem Handy oder Tablet nutzen
 
 - Es lassen sich mehrere Quellen einrichten. Beim Start öffnet die App die zuletzt genutzte. Ist sie nicht erreichbar, erscheint die Auswahl mit einem Hinweis und „Erneut versuchen“. Im Menü von STEFFLIX wechselt „Quelle wechseln“ jederzeit zu einer anderen.
 - **App-Einstellungen** (im Menü): Quellen verwalten, „Display nicht ausschalten“ während der Wiedergabe, Videos im Vollbild quer, Zwischenspeicher (Standard 250 MB) und Videopuffer (Standard 64 MB) einstellen, Verbindung testen, Updates und Diagnose.
-- **Zwischenspeicher**: Programmdateien und Vorschaubilder bleiben auf dem Gerät gespeichert. Seiten laden dadurch viel schneller, besonders unterwegs über VPN. Geänderte Dateien (z.B. nach „Daten einlesen“) erkennt die App selbst. Die Verbindung zum NAS hält die App offen, solange sie sichtbar ist, und baut sie nach einer Pause sofort neu auf.
+- **Zwischenspeicher**: Programmdateien und Vorschaubilder bleiben auf dem Gerät gespeichert. Seiten laden dadurch viel schneller, besonders unterwegs über VPN. Geänderte Dateien (z.B. nach „Daten einlesen“) erkennt die App selbst. Die Verbindung zum NAS hält die App offen, solange sie sichtbar ist, und baut sie nach einer Pause sofort neu auf; Seiten kommen derweil aus dem Zwischenspeicher. „STEFFLIX-Dateien neu laden“ in den App-Einstellungen liest die Programmdateien sofort neu vom NAS.
 - **Videopuffer**: Videos und Musik werden im Voraus geladen. Kurze Verbindungsabbrüche überbrückt die App und spielt danach an derselben Stelle weiter.
 - **Startbildschirm**: Dauert der Start länger, weil Dateien vom NAS geladen werden (z.B. beim ersten Start über VPN), zeigt er, was gerade geladen wird und wie weit es ist. Nach 15 Sekunden erscheint „Quelle wechseln“.
 - **Updates**: Die App meldet neue Versionen selbst und installiert sie auf Wunsch direkt (beim ersten Mal „Aus dieser Quelle zulassen“ erlauben).

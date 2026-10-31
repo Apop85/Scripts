@@ -33,7 +33,9 @@ function modifyLocalData(dataType) {
         }
         // "Zeitstempel löschen" entfernt auch die Gesehen-Markierungen
         var isSeenMarker = dataType == "timestamp" && key.startsWith("seen-");
-        if (dataType == "all" || key.includes(dataType) || isSeenMarker) {
+        // "Weiterschauen löschen" entfernt auch den Stand der Bildergalerien
+        var isGallery = dataType == "playlast" && key === "galleryProgress";
+        if (dataType == "all" || key.includes(dataType) || isSeenMarker || isGallery) {
             removeData(key);
             counter += 1;
         }

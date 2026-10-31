@@ -21,6 +21,8 @@ namespace Sflix
         readonly FfmpegTools ff;
         string filterKind;          // null = alle
         bool bulk;                  // "Alle"/"Keine" laufen: Summe erst am Ende
+        bool shown;                 // Fenster angezeigt: vorher meldet die Liste beim Aufbau jedes Häkchen,
+                                    // und Items darf dann nicht gelesen werden (NullReferenceException)
         CleanupChoice result;
 
         public CleanupDialog(List<CleanupFolder> folders, string root) : this(folders, root, null) { }
@@ -85,7 +87,7 @@ namespace Sflix
                 kinds.TryGetValue(kind, out n);
                 kinds[kind] = n + 1;
             }
-            list.ItemChecked += delegate { if (!bulk) UpdateTotal(); };
+            list.ItemChecked += delegate { if (!bulk && shown) UpdateTotal(); };
             list.DoubleClick += delegate { ChooseFiles(); };
 
             // Filter nach Art
@@ -268,7 +270,12 @@ namespace Sflix
         public CleanupChoice Choose(Form owner)
         {
             Icon = owner.Icon;
-            Shown += delegate { list.Columns[list.Columns.Count - 1].Width = -2; };
+            Shown += delegate
+            {
+                list.Columns[list.Columns.Count - 1].Width = -2;
+                shown = true;
+                UpdateTotal();
+            };
             ShowDialog(owner);
             return result;
         }

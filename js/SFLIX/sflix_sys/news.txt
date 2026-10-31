@@ -8,10 +8,12 @@
     <li>[<span style="color: red">FEATURE</span>] Updater: "Vorschaubilder" erstellt auf Wunsch auch Albumbilder für Musik. Gefunden werden Bilder im Albumordner und in seinen Unterordnern sowie das Cover in den Musikdateien. In einem Fenster wählst du je Album das Bild, übrige Bilder lassen sich gleich löschen. Das ganze Cover bleibt sichtbar, links und rechts unscharf aufgefüllt.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: "Ablagen leeren" kann Inhalte auch wiederherstellen, ganze Ordner oder einzelne Dateien. Die Liste zeigt die Art der Ablage, lässt sich danach sortieren und filtern, und "Alle"/"Keine" reagieren sofort.</li>
     <li>[<span style="color: red">FEATURE</span>] Updater: Ist eine Datei schon vorhanden, gibt es neu "Als Kopie speichern" (z.B. Film_1.mp4), beim Wiederherstellen, im Importer und bei "Folgen umbenennen".</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Updater 3.4.4: Bei einer gespeicherten Folgenliste heissen die Knöpfe neu "Liste aktualisieren" (lädt sie nochmals von derselben Webseite) und "Neu suchen" (sucht wieder zuerst auf serienjunkies.de).</li>
     <li>[<span style="color: blue">INTERFACE</span>] Der Ring im Ladebildschirm dreht sich immer, solange geladen wird, und sein Bogen wächst mit dem Fortschritt.</li>
     <li>[<span style="color: blue">INTERFACE</span>] Ordner ohne eigenes Vorschaubild zeigen ein Bild aus ihren Unterordnern, egal wie tief es liegt, und zwar jedes Mal dasselbe.</li>
     <li>[OPTIMIERUNG] Updater: "Folgen umbenennen" sucht die Folgennamen zuerst auf serienjunkies.de, danach auf fernsehserien.de und TVmaze.</li>
     <li>[OPTIMIERUNG] Android-App 1.1.3: Nach dem Sperrbildschirm reagiert die App sofort, die Verbindung zum NAS wird im Hintergrund neu aufgebaut. Seitenwechsel kommen immer sofort aus dem Zwischenspeicher. Neu gibt es in den App-Einstellungen "STEFFLIX-Dateien neu laden".</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Updater 3.4.4: "Ablagen leeren" stürzte beim Öffnen des Auswahlfensters mit einer Fehlermeldung ab.</li>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Intro überspringen: Das Menü zeigte bei Serien mit eigenem Wert für die Staffel den Wert der Serie an, und "Intro bis hier" konnte dort ohne Wirkung speichern. Jetzt zeigt das Menü den geltenden Wert samt Herkunft, speichert dort, wo er herkommt, und weist auf eigene Werte von Unterordnern hin. Dasselbe gilt für die Dauer bis Übergang.</li>
 </ul>
 <b>Version 2.6.1</b>:<br>

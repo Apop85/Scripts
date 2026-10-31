@@ -221,7 +221,7 @@ namespace Sflix
         }
     }
 
-    // Gespeicherte Folgenliste gefunden: verwenden, neu laden, andere Serie suchen oder abbrechen
+    // Gespeicherte Folgenliste gefunden: verwenden, aktualisieren (gleiche Quelle), neu suchen oder abbrechen
     public class EpisodeCacheDialog : Form
     {
         string choice;
@@ -245,8 +245,8 @@ namespace Sflix
             info.MaximumSize = new Size(Theme.S(560), 0);
             info.Margin = new Padding(0, Theme.S(4), 0, Theme.S(10));
             Label question = Theme.MakeLabel(failure == null
-                ? "Soll die gespeicherte Liste verwendet oder neu von der Webseite geladen werden?"
-                : "Neu laden ist fehlgeschlagen (" + failure + "). Die gespeicherte Liste bleibt erhalten und kann verwendet werden.", false);
+                ? "Gespeicherte Liste verwenden, von " + cached.Source + " aktualisieren oder neu suchen (zuerst auf " + EpisodeSource.All[0].Name + ")?"
+                : "Aktualisieren ist fehlgeschlagen (" + failure + "). Die gespeicherte Liste bleibt erhalten und kann verwendet werden.", false);
             question.MaximumSize = new Size(Theme.S(560), 0);
             if (failure != null) question.ForeColor = Color.FromArgb(0xfa, 0xcc, 0x15);
 
@@ -256,8 +256,8 @@ namespace Sflix
             buttons.Dock = DockStyle.Fill;
             buttons.Margin = new Padding(0, Theme.S(14), 0, 0);
             Button cancel = Theme.MakeButton("Abbrechen", false);
-            Button search = Theme.MakeButton("Andere Serie suchen", false);
-            Button reload = Theme.MakeButton(failure == null ? "Neu laden" : "Nochmals laden", false);
+            Button search = Theme.MakeButton("Neu suchen", false);
+            Button reload = Theme.MakeButton(failure == null ? "Liste aktualisieren" : "Erneut aktualisieren", false);
             Button use = Theme.MakeButton("Gespeicherte verwenden", true);
             cancel.Click += delegate { choice = null; DialogResult = DialogResult.Cancel; };
             search.Click += delegate { choice = "search"; DialogResult = DialogResult.OK; };

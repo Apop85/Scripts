@@ -106,7 +106,8 @@ namespace Sflix
                 "- Gibt es mehrere Dateien für eine Folge oder das Ziel schon, zeigt die Vorschau beim Anklicken einen Vergleich mit Grösse, Auflösung und Dauer.\n" +
                 "- Vorschaubilder ziehen mit, Favoriten und Fortschritt bleiben erhalten.\n" +
                 "- „Letztes Umbenennen rückgängig“ stellt den vorherigen Zustand wieder her.\n" +
-                "Geladene Folgenlisten werden gespeichert (sflix_sys\\folgen_cache.json) und beim nächsten Mal angeboten."));
+                "Geladene Folgenlisten werden gespeichert (sflix_sys\\folgen_cache.json) und beim nächsten Mal angeboten: " +
+                "„Gespeicherte verwenden“, „Liste aktualisieren“ (lädt sie nochmals von derselben Webseite) oder „Neu suchen“ (Suche wieder ab serienjunkies.de)."));
 
             t.Add(new HelpTopic("Duplikate finden",
                 "Sucht doppelte Medien in den gewählten Ordnern:\n" +

@@ -23,6 +23,10 @@
         },
         {
           "type": "INTERFACE",
+          "text": "Updater 3.4.4: Bei einer gespeicherten Folgenliste heissen die Knöpfe neu \"Liste aktualisieren\" (lädt sie nochmals von derselben Webseite) und \"Neu suchen\" (sucht wieder zuerst auf serienjunkies.de)."
+        },
+        {
+          "type": "INTERFACE",
           "text": "Der Ring im Ladebildschirm dreht sich immer, solange geladen wird, und sein Bogen wächst mit dem Fortschritt."
         },
         {
@@ -36,6 +40,10 @@
         {
           "type": "OPTIMIERUNG",
           "text": "Android-App 1.1.3: Nach dem Sperrbildschirm reagiert die App sofort, die Verbindung zum NAS wird im Hintergrund neu aufgebaut. Seitenwechsel kommen immer sofort aus dem Zwischenspeicher. Neu gibt es in den App-Einstellungen \"STEFFLIX-Dateien neu laden\"."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Updater 3.4.4: \"Ablagen leeren\" stürzte beim Öffnen des Auswahlfensters mit einer Fehlermeldung ab."
         },
         {
           "type": "BUGFIX",

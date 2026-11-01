@@ -1117,7 +1117,20 @@ function showSplashscreen() {
     var currentDate = getLocalDateKey(now);
     var lastVersion = getData("lastSplashVersion");
     var newVersion = lastVersion == null || compareVersions(getVersionName(), lastVersion) > 0;
-    if (!newVersion) {
+    if (isDesktopApp()) {
+        // Fenster von STEFFLIX.exe (seit 2.8.2): bei jedem Start des Programms, wie in der App.
+        // sessionStorage lebt so lange wie das Fenster, ein Neuladen zeigt ihn also nicht nochmals.
+        var shown = false;
+        try {
+            shown = sessionStorage.getItem("sflixSplashShown") != null;
+            sessionStorage.setItem("sflixSplashShown", "1");
+        } catch (error) {
+            shown = false;
+        }
+        if (shown) {
+            return;
+        }
+    } else if (!newVersion) {
         if (getSetting("skipSplash") && getSplashDedication(now) == null) {
             return;
         }

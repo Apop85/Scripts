@@ -2,6 +2,15 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.8.2</b>:<br>
+<ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Im Fenster von STEFFLIX.exe erscheint "Tools werden geöffnet …", wenn das Öffnen der Tools einen Moment dauert.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Im Fenster von STEFFLIX.exe erscheint der Startbildschirm bei jedem Start des Programms, der Schalter "Startbildschirm überspringen" entfällt dort. Das Logo oben links ist beim Öffnen nicht mehr umrahmt.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Im Querformat füllt ein Video zusammen mit seinem Titel die sichtbare Höhe, auch breiter als bisher. Zurück und Weiter erscheinen erst beim Scrollen.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hellerer Hintergrund mit einem feinen Lichtkegel unter der Menüleiste, damit sich Menüleiste und Inhalt besser unterscheiden. Fenster und Menüs sind etwas heller.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Touch-Bedienung: Ist die Leiste des Players ausgeblendet, zeigt ein Tipp aufs Video zuerst nur die Leiste, erst der nächste Tipp pausiert. So lassen sich z.B. Bild-im-Bild oder Vollbild wählen, ohne das Video anzuhalten.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Desktop 4.0.2: Das Fenster der Tools erscheint erst, wenn es fertig aufgebaut ist, ohne Flackern.</li>
+</ul>
 <b>Version 2.8.1</b>:<br>
 <ul>
     <li>[<span style="color: blue">INTERFACE</span>] Im Fenster von STEFFLIX.exe gibt es im Menü nur noch einen Eintrag "Tools". Er öffnet das Fenster mit Updates, Importer, Tools, Lizenz und Hilfe, immer beim Reiter "Updates".</li>

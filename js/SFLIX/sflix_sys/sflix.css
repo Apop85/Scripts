@@ -30,8 +30,11 @@
 */
 /* Farben und Masse (Dark Mode) */
 :root {
-    --sflix-bg: #0f0f11;
-    --sflix-bg-elevated: #1a1a1e;
+    --sflix-bg: #101013;
+    /* seit 2.8.2 heller, damit sich Fenster und Menüs vom helleren Hintergrund abheben */
+    --sflix-bg-elevated: #26262c;
+    /* Hintergrund der Seite (seit 2.8.2): Lichtkegel unter der Menüleiste, läuft zu den Rändern dunkel aus */
+    --sflix-bg-gradient: radial-gradient(ellipse 90% 70% at 50% 0%, #25252c 0%, #16161a 55%, #101013 100%);
     --sflix-surface: #26262c;
     --sflix-surface-hover: #313138;
     --sflix-input-bg: #3a3a42;
@@ -66,7 +69,11 @@
 
 body, body.darkPage {
     background-color: var(--sflix-bg);
-    background-image: none;
+    /* Verlauf über die Fensterhöhe, bleibt beim Scrollen stehen */
+    background-image: var(--sflix-bg-gradient);
+    background-repeat: no-repeat;
+    background-size: 100% 100vh;
+    background-attachment: fixed;
     color: var(--sflix-text);
 }
 
@@ -445,6 +452,11 @@ input::placeholder, textarea::placeholder {
     color: var(--sflix-text-muted);
 }
 
+/* Fenster von STEFFLIX.exe: Der Startbildschirm erscheint dort bei jedem Start, der Schalter entfällt */
+html.inDesktop .settingRow:has(input[data-setting="skipSplash"]) {
+    display: none;
+}
+
 /* Fenster von STEFFLIX.exe: Einträge für die Tools, abgetrennt (siehe addDesktopMenuEntries) */
 #settingsDD .menuSeparator {
     height: 1px;
@@ -468,6 +480,45 @@ input::placeholder, textarea::placeholder {
     background-color: var(--sflix-bg-elevated);
     box-shadow: var(--sflix-shadow);
     color: var(--sflix-text);
+}
+
+/* Fenster von STEFFLIX.exe: "Tools werden geöffnet …" (seit 2.8.2, openDesktopTools in ui.js) */
+#desktopToolsLoading {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: 6000;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 22px;
+    transform: translate(-50%, -50%);
+    border: 1px solid var(--sflix-border);
+    border-radius: 14px;
+    background-color: var(--sflix-bg-elevated);
+    box-shadow: var(--sflix-shadow);
+    color: var(--sflix-text);
+}
+
+.desktopToolsRing {
+    width: 26px;
+    height: 26px;
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    border-top-color: var(--sflix-accent);
+    border-radius: 50%;
+    animation: desktopToolsSpin 0.9s linear infinite;
+}
+
+@keyframes desktopToolsSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .desktopToolsRing {
+        animation-duration: 3s;
+    }
 }
 
 /* Im Browser, von STEFFLIX.exe geöffnet (start.html?export=app): Datensicherung für die Übernahme */
@@ -950,6 +1001,16 @@ input::placeholder, textarea::placeholder {
 #playerContainer .sflixPlayer video {
     max-width: none;
     margin: 0;
+}
+
+/* Querformat (seit 2.8.2, fitVideoToViewport in player.js): Das Video füllt mit seinem Titel die
+   sichtbare Höhe, auch breiter als 1280 px; Zurück/Weiter erst beim Scrollen. Nicht im Kinomodus. */
+html:not(.playerCinema) .sflixPlayer.isVideo.fitViewport {
+    max-width: var(--fit-width);
+}
+
+html:not(.playerCinema) #playerContainer .sflixPlayer.isVideo.fitViewport video {
+    max-height: var(--fit-height);
 }
 
 /* Klickfläche über dem Video */
@@ -2832,6 +2893,10 @@ body.gridOpen {
     z-index: 50;
     overflow-y: auto;
     background-color: var(--sflix-bg);
+    background-image: var(--sflix-bg-gradient);
+    background-repeat: no-repeat;
+    background-size: 100% 100vh;
+    background-attachment: fixed;
     padding-bottom: 40px;
 }
 

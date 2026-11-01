@@ -45,10 +45,10 @@ namespace Sflix
             t.Add(new HelpTopic("STEFFLIX-Fenster",
                 "Ein Doppelklick auf STEFFLIX.exe (oder die Verknüpfung auf dem Desktop bzw. im Startmenü) öffnet STEFFLIX in einem eigenen Fenster: " +
                 "ohne Adresszeile, Linkvorschau, Kontextmenü und Zoom. Links zu Webseiten öffnen im Standardbrowser. Grösse und Lage des Fensters bleiben erhalten. " +
-                "start.html lässt sich weiterhin im Browser öffnen.\n" +
+                "start.html lässt sich weiterhin im Browser öffnen. Der Startbildschirm erscheint im Fenster bei jedem Start.\n" +
                 "- F11: Vollbild ein und aus. Das Vollbild eines Videos füllt ebenfalls den ganzen Bildschirm, danach kehrt das Fenster in den vorherigen Zustand zurück.\n" +
                 "- F5: STEFFLIX neu laden.\n" +
-                "- Menü: „Tools“ öffnet das Fenster der Tools beim Reiter Updates (ist es schon offen, kommt es nach vorne).\n" +
+                "- Menü: „Tools“ öffnet das Fenster der Tools beim Reiter Updates (ist es schon offen, kommt es nach vorne). Es erscheint erst fertig aufgebaut, bis dahin zeigt STEFFLIX „Tools werden geöffnet …“.\n" +
                 "- Nach „Daten einlesen“, dem Importer oder einem Update lädt STEFFLIX die Medien selbst neu. Läuft gerade ein Video oder Musik, erst auf Knopfdruck.\n" +
                 "- Ein zweiter Start von STEFFLIX.exe holt das offene Fenster nach vorne.\n\n" +
                 "# Daten aus dem Browser übernehmen\n" +

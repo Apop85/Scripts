@@ -2,20 +2,38 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0701",
+      "name": "2.7.1",
+      "items": [
+        {
+          "type": "INTERFACE",
+          "text": "Android-App 1.2.3: Im Player auf dem Sperrbildschirm und in der Benachrichtigung ersetzt \"Beenden\" den Knopf \"10 s zurück\". Beenden hält die Wiedergabe an und entfernt den Player."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Android-App 1.2.3: Die Zurück-Taste führt höchstens bis zur Startseite von STEFFLIX, ein weiteres Zurück schliesst die App. Quellen wechselt man über \"Quelle wechseln\" oder die App-Einstellungen."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Android-App 1.2.3: STEFFLIX-Symbol in der Statusleiste und auf dem Sperrbildschirm."
+        }
+      ]
+    },
+    {
       "version": "2.07",
       "name": "2.7.0",
       "items": [
         {
           "type": "FEATURE",
-          "text": "Android-App 1.2.0: Wiedergabe im Hintergrund. Musik und der Ton von Videos laufen weiter, wenn der Bildschirm aus ist oder eine andere App offen ist, auch mit Autoplay. Gesteuert wird über die Benachrichtigung, den Sperrbildschirm oder Bluetooth-Kopfhörer (Zurück, 10 s zurück, Abspielen/Pause, 10 s vor, Weiter) mit Titel und Vorschaubild. Bei Anrufen pausiert die Wiedergabe und läuft danach weiter, beim Trennen der Kopfhörer pausiert sie."
+          "text": "Android-App 1.2.2: Wiedergabe im Hintergrund. Musik und der Ton von Videos laufen weiter, wenn der Bildschirm aus ist oder eine andere App offen ist, auch mit Autoplay. Gesteuert wird über die Benachrichtigung, den Sperrbildschirm oder Bluetooth-Kopfhörer (Zurück, 10 s zurück, Abspielen/Pause, 10 s vor, Weiter) mit Titel und Vorschaubild. Bei Anrufen pausiert die Wiedergabe und läuft danach weiter, beim Trennen der Kopfhörer pausiert sie."
         },
         {
           "type": "FEATURE",
-          "text": "Android-App 1.2.0: Bild-im-Bild. Der Knopf neben \"Vollbild\" im Player zeigt das Video in einem kleinen Fenster über anderen Apps, mit Zurück, Abspielen/Pause und Weiter."
+          "text": "Android-App 1.2.2: Bild-im-Bild. Der Knopf neben \"Vollbild\" im Player zeigt das Video in einem kleinen Fenster über anderen Apps, mit Zurück, Abspielen/Pause und Weiter."
         },
         {
           "type": "INTERFACE",
-          "text": "Android-App 1.2.0: Neue Schalter \"Wiedergabe im Hintergrund\" und \"Bild-im-Bild\" in den App-Einstellungen (beide standardmässig ein)."
+          "text": "Android-App 1.2.2: Neue Schalter \"Wiedergabe im Hintergrund\" und \"Bild-im-Bild\" in den App-Einstellungen (beide standardmässig ein)."
         }
       ]
     },

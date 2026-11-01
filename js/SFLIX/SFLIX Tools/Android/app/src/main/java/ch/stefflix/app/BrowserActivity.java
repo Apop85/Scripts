@@ -318,8 +318,8 @@ public class BrowserActivity extends Activity implements MediaServer.Listener, P
         } else if (web != null && web.canGoBack()) {
             web.goBack();
         } else {
-            // Die Auswahl liegt nicht mehr darunter (ShareListActivity schliesst sich beim Öffnen): neu zeigen
-            startActivity(ShareListActivity.intent(this).putExtra(ShareListActivity.EXTRA_CHOOSE, true));
+            // Zurück geht höchstens bis zur Startseite von STEFFLIX, danach wird die App geschlossen
+            // (Wiedergabe stoppt). Quellen wechselt man über "Quelle wechseln" oder die App-Einstellungen.
             finish();
         }
     }

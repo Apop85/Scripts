@@ -31,9 +31,9 @@ import org.json.JSONObject;
  * (StefflixApp.mediaState), Befehle gehen über Host.mediaCommand zurück an die Seite (sflixAppMedia).
  * <ul>
  * <li>MediaSession: Steuerung auf dem Sperrbildschirm, in der Benachrichtigung und über Bluetooth.</li>
- * <li>Benachrichtigung mit Zurück, 10 s zurück, Abspielen/Pause, 10 s vor, Weiter (nur mit "Wiedergabe im
- *     Hintergrund"); während der Wiedergabe über PlaybackService im Vordergrund, nach einer Pause gelöst,
- *     dann lässt sie sich wegwischen (= Beenden).</li>
+ * <li>Benachrichtigung mit Zurück, Beenden, Abspielen/Pause, 10 s vor, Weiter (nur mit "Wiedergabe im
+ *     Hintergrund"); während der Wiedergabe über PlaybackService im Vordergrund, nach einer Pause gelöst.
+ *     Beenden hält an und entfernt den Player (Wegwischen auf dem Sperrbildschirm blendet ihn nur aus).</li>
  * <li>Pause beim Trennen der Kopfhörer. Den Audiofokus (Pause bei Anruf, danach weiter) holt die WebView
  *     selbst; eine eigene Anfrage nähme ihn ihr weg und sie würde sofort pausieren.</li>
  * <li>Wakelock und WLAN-Lock während der Wiedergabe im Hintergrund, damit der Strom vom NAS nicht abbricht.</li>
@@ -165,6 +165,12 @@ final class Playback {
         if (playing) dismissed = false;
         setNoisy(playing);
         updateLocks();
+        if (dismissed) {
+            // Beendet: Player bleibt weg, bis wieder abgespielt wird
+            updateNotification();
+            host.playbackChanged();
+            return;
+        }
         session.setActive(true);
         pushMetadata();
         pushState();
@@ -228,6 +234,10 @@ final class Playback {
             if (playing) host.mediaCommand(CMD_PAUSE, 0);
             dismissed = true;
             removeNotification();
+            // Player auch vom Sperrbildschirm und aus den Schnelleinstellungen entfernen
+            session.setPlaybackState(new PlaybackState.Builder()
+                    .setState(PlaybackState.STATE_STOPPED, position, 0f, SystemClock.elapsedRealtime()).build());
+            session.setActive(false);
             if (CMD_QUIT.equals(cmd)) host.quit();
             return;
         }
@@ -318,12 +328,12 @@ final class Playback {
         if (hasNext) actions |= PlaybackState.ACTION_SKIP_TO_NEXT;
         if (hasPrev) actions |= PlaybackState.ACTION_SKIP_TO_PREVIOUS;
         // Ab Android 13 baut das System die Steuerung aus diesen Angaben: Zurück, Abspielen, Weiter
-        // und zwei eigene Knöpfe (10 s zurück/vor)
+        // und zwei eigene Knöpfe (Beenden, 10 s vor)
         PlaybackState state = new PlaybackState.Builder()
                 .setActions(actions)
                 .setState(playing ? PlaybackState.STATE_PLAYING : PlaybackState.STATE_PAUSED,
                         position, playing ? rate : 0f, SystemClock.elapsedRealtime())
-                .addCustomAction(new PlaybackState.CustomAction.Builder(CMD_BACK, "10 s zurück", R.drawable.ic_replay).build())
+                .addCustomAction(new PlaybackState.CustomAction.Builder(CMD_STOP, "Beenden", R.drawable.ic_close).build())
                 .addCustomAction(new PlaybackState.CustomAction.Builder(CMD_FORWARD, "10 s vor", R.drawable.ic_forward).build())
                 .build();
         session.setPlaybackState(state);
@@ -433,7 +443,7 @@ final class Playback {
                 .setShowWhen(false)
                 .setOnlyAlertOnce(true)
                 .addAction(action(R.drawable.ic_skip_prev, "Zurück", CMD_PREV))
-                .addAction(action(R.drawable.ic_replay, "10 s zurück", CMD_BACK))
+                .addAction(action(R.drawable.ic_close, "Beenden", CMD_STOP))
                 .addAction(playing ? action(R.drawable.ic_pause, "Pause", CMD_PAUSE) : action(R.drawable.ic_play, "Abspielen", CMD_PLAY))
                 .addAction(action(R.drawable.ic_forward, "10 s vor", CMD_FORWARD))
                 .addAction(action(R.drawable.ic_skip_next, "Weiter", CMD_NEXT))

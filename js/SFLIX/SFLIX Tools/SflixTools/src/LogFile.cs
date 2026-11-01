@@ -25,7 +25,7 @@ namespace Sflix
         // Hängt Text an (Zeilen schon mit Zeitstempel und \r\n). Fehler werden ignoriert.
         public static void Append(string text)
         {
-            if (string.IsNullOrEmpty(text)) return;
+            if (string.IsNullOrEmpty(text) || App.IsReleaseFolder) return;
             lock (gate)
             {
                 try

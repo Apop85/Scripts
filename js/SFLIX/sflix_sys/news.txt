@@ -2,6 +2,13 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.7.2</b>:<br>
+<ul>
+    <li>[<span style="color: red">FEATURE</span>] Getrennte Patchnotes: Unter Hilfe › Changelog stehen die Neuerungen von STEFFLIX wie bisher. Die Neuerungen des Updaters und der Android-App lassen sich darunter aufklappen, gegliedert nach ihren eigenen Versionen.</li>
+    <li>[<span style="color: red">FEATURE</span>] Updater 3.5.0: "Patchnotes" zeigt zuerst die Neuerungen des Updaters, nach seinen Versionen gegliedert. Die von STEFFLIX und der Android-App lassen sich über Schalter dazuschalten.</li>
+    <li>[<span style="color: red">FEATURE</span>] Android-App 1.2.4: Neu "Neuerungen" in den App-Einstellungen: zuerst die Neuerungen der App, die von STEFFLIX und dem Updater lassen sich einblenden.</li>
+    <li>[OPTIMIERUNG] Updater 3.5.0: Im Release-Ordner von STEFFLIX sind Update, Daten einlesen, Importer, Tools und Lizenz gesperrt, und der Updater legt dort keine eigenen Dateien an. Die Dateien für ältere Installationen bleiben erhalten.</li>
+</ul>
 <b>Version 2.7.1</b>:<br>
 <ul>
     <li>[<span style="color: blue">INTERFACE</span>] Android-App 1.2.3: Im Player auf dem Sperrbildschirm und in der Benachrichtigung ersetzt "Beenden" den Knopf "10 s zurück". Beenden hält die Wiedergabe an und entfernt den Player.</li>

@@ -34,8 +34,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX Updater")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX Updater: Update, Daten einlesen, Vorschaubilder, Zusammenführen, Konvertieren")]
-[assembly: AssemblyVersion("3.4.4.0")]
-[assembly: AssemblyFileVersion("3.4.4.0")]
+[assembly: AssemblyVersion("3.5.0.0")]
+[assembly: AssemblyFileVersion("3.5.0.0")]
 
 namespace Sflix
 {
@@ -109,8 +109,17 @@ namespace Sflix
 
             SelfUpdate.CleanupOld();
 
+            // Release-Ordner (mit "SFLIX Tools"): nichts ändern und nichts anlegen, erzeugte Dateien löschen
+            App.IsReleaseFolder = Net.IsReleaseFolder(App.Root);
+            string releaseNote = App.IsReleaseFolder ? ReleaseFolder.RemoveGenerated(App.Root) : null;
+            if (App.IsReleaseFolder && (headless || licenseKey != null || licenseRemove))
+            {
+                Console.Error.WriteLine(ReleaseFolder.Notice);
+                return 4;
+            }
+
             // Eigene Kennung, damit sich mehrere Installationen im Browser nicht beeinflussen
-            string idNote = InstallId.Ensure(App.Root);
+            string idNote = App.IsReleaseFolder ? releaseNote : InstallId.Ensure(App.Root);
 
             // Nur eine Instanz pro STEFFLIX-Ordner. Nach einem Update kurz warten, bis die alte beendet ist.
             using (Mutex mutex = new Mutex(false, "Local\\STEFFLIX-Updater-" + Hash(App.Root.ToLowerInvariant())))
@@ -125,7 +134,8 @@ namespace Sflix
                 }
                 try
                 {
-                    Settings settings = Settings.Load(Path.Combine(App.SysDir, "updater_settings.json"));
+                    // Im Release-Ordner nur im Speicher (gilt bis zum Schliessen)
+                    Settings settings = Settings.Load(App.IsReleaseFolder ? null : Path.Combine(App.SysDir, "updater_settings.json"));
                     // Bis 3.2 wurde das Protokoll immer geschrieben: alte Datei einmal löschen
                     LogFile.RemoveLegacyOnce(settings);
                     // ffmpeg vom alten Ort (sflix_sys\ffmpeg) in den Standardordner verschieben

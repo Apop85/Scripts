@@ -10,6 +10,12 @@ Zahl, z.B. "2.05"). STEFFLIX bis 2.04 und der Updater bis 3.2 lesen nur "version
 Die Einträge jeder Version werden nach Typ gruppiert (TYPE_ORDER, innerhalb eines Typs bleibt die
 Reihenfolge). Das gilt für news.json und wird auch in news.txt zurückgeschrieben, damit neu angehängte
 Einträge zu ihrem Typ wandern.
+
+Getrennte Patchnotes (seit STEFFLIX 2.7.2, Updater 3.5.0, App 1.2.4): Jeder Eintrag bekommt zusätzlich
+"component" ("stefflix", "updater" oder "app", aus dem Anfang "Updater x.y.z:" bzw. "Android-App x.y.z:"),
+"componentVersion" (x.y.z der Komponente; bei STEFFLIX die Version des Blocks, fehlt bei alten Einträgen
+ohne Nummer) und "short" (Text ohne diesen Anfang). "text" bleibt unverändert: Ältere Versionen kennen
+die neuen Felder nicht, überlesen sie und zeigen weiterhin alles zusammen.
 """
 import html
 import json
@@ -32,6 +38,21 @@ def item_type_of(line):
     """Typ eines Eintrags "<li>[...TYP...] Text</li>", sonst None."""
     match = re.match(r"\s*<li>\[(.*?)\]", line)
     return re.sub(r"<[^>]+>", "", match.group(1)).strip().upper() if match else None
+
+
+COMPONENT_PREFIXES = [
+    ("updater", re.compile(r"^Updater(?:\s+(\d+\.\d+\.\d+))?\s*:\s*")),
+    ("app", re.compile(r"^(?:Android-App|App)(?:\s+(\d+\.\d+\.\d+))?\s*:\s*")),
+]
+
+
+def component_of(text, block_version):
+    """(Komponente, Version oder None, Text ohne Anfang) eines Eintrags."""
+    for component, pattern in COMPONENT_PREFIXES:
+        match = pattern.match(text)
+        if match:
+            return component, match.group(1), text[match.end():]
+    return "stefflix", block_version, text
 
 
 def type_rank(item_type):
@@ -74,6 +95,7 @@ if grouped != original:
 
 result = {"knownBugs": [], "versions": []}
 current = None
+current_name = None
 
 for line in grouped.splitlines():
     line = line.strip()
@@ -86,6 +108,7 @@ for line in grouped.splitlines():
         entry = {"version": legacy_number(name), "name": name, "items": []}
         result["versions"].append(entry)
         current = entry["items"]
+        current_name = name
         continue
     item = re.match(r"<li>\[(.*?)\]\s*(.*)</li>$", line)
     if item and current is not None:
@@ -98,6 +121,12 @@ for line in grouped.splitlines():
         entry = {"type": item_type, "text": text}
         if resolved:
             entry["resolved"] = True
+        if current is not result["knownBugs"]:
+            component, component_version, short = component_of(text, current_name)
+            entry["component"] = component
+            if component_version:
+                entry["componentVersion"] = component_version
+            entry["short"] = short
         current.append(entry)
 
 with open(target, "w", encoding="utf-8") as writer:

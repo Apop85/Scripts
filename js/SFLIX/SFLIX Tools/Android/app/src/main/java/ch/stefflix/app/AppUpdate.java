@@ -104,7 +104,7 @@ final class AppUpdate {
         }).start();
     }
 
-    private static byte[] download(String url, long max) throws IOException {
+    static byte[] download(String url, long max) throws IOException {
         HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
         con.setConnectTimeout(15000);
         con.setReadTimeout(30000);

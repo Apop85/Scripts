@@ -35,6 +35,46 @@ namespace Sflix
         {
             return File.Exists(Path.Combine(folder, "start.html")) && Directory.Exists(Path.Combine(folder, "sflix_sys"));
         }
+
+        // Release-Ordner des Entwicklers (seit 3.5.0, gesetzt in Program): Optionen, die Dateien von
+        // STEFFLIX, Updater oder App ändern, sind gesperrt, und der Updater legt keine Dateien an.
+        public static bool IsReleaseFolder;
+    }
+
+    // Dateien, die der Updater in einer Installation anlegt. Im Release-Ordner entstehen sie nicht und
+    // werden beim Start gelöscht, damit sie nicht ins Repository gelangen. Nie dabei: data.js (Muster
+    // im Repository) und license.js (persönlicher Schlüssel).
+    public static class ReleaseFolder
+    {
+        public const string Notice = "Release-Ordner: Update, Daten einlesen, Importer, Tools und Lizenz sind gesperrt, "
+            + "weil sie Dateien im Repository ändern würden. Zum Testen SFLIX_DIR auf eine Testumgebung setzen.";
+        public const string ShortNotice = "Release-Ordner: Optionen, die Dateien im Repository ändern, sind gesperrt.";
+
+        static readonly string[] GeneratedFiles =
+        {
+            "install.js", "updater_info.js", "updater_settings.json", "updater.log", "renamed.js",
+            "folgen_cache.json", "medien_cache.json", "folgen_rueckgaengig.json",
+        };
+
+        // Löscht die erzeugten Dateien in sflix_sys. Ergebnis: Hinweis für das Protokoll oder null.
+        public static string RemoveGenerated(string root)
+        {
+            List<string> removed = new List<string>();
+            foreach (string name in GeneratedFiles)
+            {
+                string path = Path.Combine(Path.Combine(root, "sflix_sys"), name);
+                try
+                {
+                    if (File.Exists(path))
+                    {
+                        FileOps.Delete(path);
+                        removed.Add(name);
+                    }
+                }
+                catch { }
+            }
+            return removed.Count == 0 ? null : "Release-Ordner: vom Updater angelegte Dateien gelöscht: " + string.Join(", ", removed.ToArray()) + ".";
+        }
     }
 
     // Kennung der Installation in sflix_sys\install.js. Der Browser speichert die Daten aller
@@ -139,6 +179,7 @@ namespace Sflix
 
         public static void Write(string root, string ffmpegFolder)
         {
+            if (App.IsReleaseFolder && string.Equals(Path.GetFullPath(root), Path.GetFullPath(App.Root), StringComparison.OrdinalIgnoreCase)) return;
             try
             {
                 string ffmpeg = null;
@@ -304,8 +345,10 @@ namespace Sflix
             return s;
         }
 
+        // Ohne Pfad (Release-Ordner) gelten die Einstellungen nur bis zum Schliessen
         public void Save()
         {
+            if (path == null) return;
             try
             {
                 string tmp = path + ".tmp";

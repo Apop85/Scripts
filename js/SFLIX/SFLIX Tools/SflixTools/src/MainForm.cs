@@ -2066,6 +2066,18 @@ namespace Sflix
             base.OnShown(e);
             AppendLog(App.Title + " " + App.VersionText + "  –  " + App.Root);
             if (startNotice != null) AppendLog(startNotice);
+            if (App.IsReleaseFolder)
+            {
+                // Release-Ordner: Hinweis statt Update-Balken, Optionen gesperrt, nur die Versionsübersicht
+                AppendLog(ReleaseFolder.Notice);
+                updateLabel.Text = ReleaseFolder.ShortNotice;
+                updateButton.Visible = false;
+                updateBar.Visible = true;
+                SetRunning(false);
+                Relayout();
+                CheckForUpdateInBackground(false);
+                return;
+            }
             ConfirmLicenseInBackground();
             if (autoRun != null && autoRun.Count > 0)
             {
@@ -2092,6 +2104,7 @@ namespace Sflix
                     {
                         verRecheck.Enabled = true;
                         ShowAvailableVersions(info);
+                        if (App.IsReleaseFolder) return;   // kein Update-Balken und kein Dialog
                         if (!info.Any)
                         {
                             pendingUpdate = null;
@@ -2136,6 +2149,12 @@ namespace Sflix
         void StartTasks(List<string> preset)
         {
             if (running) return;
+            // Release-Ordner: nur ffmpeg (liegt ausserhalb des Ordners) ist erlaubt
+            if (App.IsReleaseFolder && !(preset != null && preset.Count == 1 && preset[0] == "ffmpeg"))
+            {
+                MessageBox.Show(this, ReleaseFolder.Notice, App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
             // Ausgeführt wird, was auf der sichtbaren Karte gewählt ist (nach einem Selbst-Update
             // die Aufgaben, die noch übrig waren)
             int page = tabs.Selected;
@@ -2425,11 +2444,12 @@ namespace Sflix
         void SetRunning(bool value)
         {
             running = value;
-            startButton.Enabled = !value;
+            bool locked = App.IsReleaseFolder;   // Release-Ordner: Optionen gesperrt (Hinweis im Balken)
+            startButton.Enabled = !value && !locked;
             cancelButton.Enabled = value;
-            updateButton.Enabled = !value;
-            foreach (TileButton c in checks.Values) c.Enabled = !value;
-            renameUndoButton.Enabled = !value && EpisodeTask.UndoFileExists;
+            updateButton.Enabled = !value && !locked;
+            foreach (TileButton c in checks.Values) c.Enabled = !value && !locked;
+            renameUndoButton.Enabled = !value && !locked && EpisodeTask.UndoFileExists;
             if (value) { progress.Value = -1; statusLabel.Text = "Läuft ..."; }
         }
 

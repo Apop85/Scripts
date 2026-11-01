@@ -1401,7 +1401,7 @@ function initSettingsMenu() {
 // Brücke über window.chrome.webview, Gegenstück in PlayerForm.cs:
 //   an das Programm (JSON-Text): {cmd:"ready"}, {cmd:"tools", page}, {cmd:"fullscreen"}, {cmd:"reload"},
 //                                {cmd:"importResult", ok, message}
-//   vom Programm (Objekt):       {event:"dataChanged"}, {event:"importBackup", text}
+//   vom Programm (Objekt):       {event:"dataChanged"}, {event:"importBackup", text}, {event:"toolsShown"}
 // Im Browser und in der Android-App passiert hier nichts.
 // ===================================================================
 
@@ -1438,6 +1438,24 @@ function initDesktopApp() {
             sendToDesktop({ cmd: "reload" });
         }
     }, true);
+    // Beim Öffnen bzw. Aktivieren des Fensters setzt WebView2 den Fokus auf das erste Element (das Logo,
+    // mit sichtbarem Rahmen). Nur Fokus ohne vorherige Taste oder Maus/Finger wieder entfernen,
+    // die Bedienung per Tab bleibt so unverändert.
+    var lastInput = 0;
+    var noteInput = function () {
+        lastInput = Date.now();
+    };
+    document.addEventListener("keydown", noteInput, true);
+    document.addEventListener("pointerdown", noteInput, true);
+    document.addEventListener("focusin", function (event) {
+        var target = event.target;
+        if (Date.now() - lastInput < 1000 || event.relatedTarget != null || isTypingTarget(target)) {
+            return;
+        }
+        if (target && target.blur && target.closest && target.closest(".firstLevelWrap")) {
+            target.blur();
+        }
+    }, true);
     // Links und Bilder lassen sich nicht aus dem Fenster ziehen
     document.addEventListener("dragstart", function (event) {
         var target = event.target;
@@ -1471,17 +1489,54 @@ function addDesktopMenuEntries() {
         label.textContent = entry.label;
         link.append(icon, label);
         link.addEventListener("click", function () {
-            sendToDesktop({ cmd: "tools", page: entry.page });
+            openDesktopTools(entry.page);
         });
         menu.appendChild(link);
     });
+}
+
+// Tools öffnen (seit 2.8.2 mit Hinweis): Dauert das Öffnen länger als 0,3 s, erscheint
+// "Tools werden geöffnet …", bis STEFFLIX.exe {event:"toolsShown"} meldet (höchstens 15 s)
+var desktopToolsTimer = null;
+
+function openDesktopTools(page) {
+    hideDesktopToolsLoading();
+    desktopToolsTimer = setTimeout(showDesktopToolsLoading, 300);
+    sendToDesktop({ cmd: "tools", page: page });
+}
+
+function showDesktopToolsLoading() {
+    if (document.getElementById("desktopToolsLoading") != null) {
+        return;
+    }
+    var node = document.createElement("div");
+    node.id = "desktopToolsLoading";
+    node.setAttribute("role", "status");
+    var ring = document.createElement("span");
+    ring.className = "desktopToolsRing";
+    var text = document.createElement("span");
+    text.textContent = "Tools werden geöffnet …";
+    node.append(ring, text);
+    document.body.appendChild(node);
+    desktopToolsTimer = setTimeout(hideDesktopToolsLoading, 15000);
+}
+
+function hideDesktopToolsLoading() {
+    clearTimeout(desktopToolsTimer);
+    desktopToolsTimer = null;
+    var node = document.getElementById("desktopToolsLoading");
+    if (node != null) {
+        node.remove();
+    }
 }
 
 function handleDesktopMessage(message) {
     if (message == null || typeof message !== "object") {
         return;
     }
-    if (message.event === "dataChanged") {
+    if (message.event === "toolsShown") {
+        hideDesktopToolsLoading();
+    } else if (message.event === "dataChanged") {
         onDesktopDataChanged();
     } else if (message.event === "importBackup" && typeof message.text === "string") {
         importBackupFromDesktop(message.text);

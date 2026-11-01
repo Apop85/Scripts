@@ -7,7 +7,7 @@
 // Brücke (window.chrome.webview, siehe initDesktopApp in ui.js):
 //   STEFFLIX -> Programm (JSON-Text): {cmd:"ready"}, {cmd:"tools", page}, {cmd:"fullscreen"}, {cmd:"reload"},
 //                                     {cmd:"importResult", ok, message}
-//   Programm -> STEFFLIX (JSON):      {event:"dataChanged"}, {event:"importBackup", text}
+//   Programm -> STEFFLIX (JSON):      {event:"dataChanged"}, {event:"importBackup", text}, {event:"toolsShown"}
 // DevTools und Kontextmenü nur mit "player.devtools": true in updater_settings.json oder SFLIX_DEVTOOLS=1.
 
 using System;
@@ -31,13 +31,15 @@ namespace Sflix
         FormWindowState stateBeforeFull;
         Rectangle boundsBeforeFull;
         DataImportDialog importDialog;
+        // Hintergrund bis STEFFLIX geladen ist (wie --sflix-bg in sflix.css), damit nichts aufblitzt
+        static readonly Color PageBack = Color.FromArgb(0x10, 0x10, 0x13);
 
         public PlayerForm(DesktopHost host)
         {
             this.host = host;
             settings = host.Settings;
             Text = App.Title;
-            BackColor = Color.Black;
+            BackColor = PageBack;
             ForeColor = Theme.Text;
             Font = new Font("Segoe UI", 9.5f);
             try
@@ -55,7 +57,7 @@ namespace Sflix
 
             web = new WebView2();
             web.Dock = DockStyle.Fill;
-            web.DefaultBackgroundColor = Color.Black;
+            web.DefaultBackgroundColor = PageBack;
             web.AllowExternalDrop = false;
             Controls.Add(web);
         }
@@ -325,9 +327,20 @@ namespace Sflix
         // Nach "Daten einlesen" oder einem Update in den Tools
         public void NotifyDataChanged()
         {
+            PostEvent("dataChanged");
+        }
+
+        // Das Fenster der Tools ist sichtbar: Hinweis "Tools werden geöffnet …" ausblenden
+        public void NotifyToolsShown()
+        {
+            PostEvent("toolsShown");
+        }
+
+        void PostEvent(string name)
+        {
             if (!coreReady || IsDisposed) return;
             JsonObject o = new JsonObject();
-            o["event"] = "dataChanged";
+            o["event"] = name;
             try { web.CoreWebView2.PostWebMessageAsJson(Json.Write(o)); }
             catch { }
         }

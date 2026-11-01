@@ -707,8 +707,40 @@ function getPlayerTitle(mediaPath, name) {
     return name;
 }
 
+// Querformat (seit 2.8.2): Ein Video füllt zusammen mit seinem Titel die sichtbare Höhe, Zurück/Weiter
+// kommen erst beim Scrollen. Hochformat, Kinomodus (CSS greift dort nicht), Bilder und Musik wie bisher.
+// Setzt --fit-width/--fit-height und die Klasse fitViewport am Player (siehe sflix.css).
+function fitVideoToViewport() {
+    var ui = getPlayerUI();
+    if (ui == null || ui.isAudio) {
+        return;
+    }
+    var shell = ui.shell;
+    var mediaNode = document.getElementById("media");
+    var header = document.querySelector(".firstLevelWrap");
+    if (window.innerWidth <= window.innerHeight || mediaNode == null || header == null || isCinemaMode()) {
+        if (!isCinemaMode()) {
+            shell.classList.remove("fitViewport");
+        }
+        return;
+    }
+    // Wie scrollToPlayer: #media steht 8 px unter der Kopfzeile, darunter Titel und Player
+    var offset = shell.getBoundingClientRect().top - mediaNode.getBoundingClientRect().top;
+    var available = window.innerHeight - header.getBoundingClientRect().height - 8 - offset - 12;
+    if (available < 240) {
+        shell.classList.remove("fitViewport");
+        return;
+    }
+    var video = ui.media;
+    var aspect = video.videoWidth > 0 && video.videoHeight > 0 ? video.videoWidth / video.videoHeight : 16 / 9;
+    shell.style.setProperty("--fit-height", Math.floor(available) + "px");
+    shell.style.setProperty("--fit-width", Math.floor(available * aspect) + "px");
+    shell.classList.add("fitViewport");
+}
+
 // Scrollt so, dass der Player direkt unter der Kopfzeile steht
 function scrollToPlayer(smooth) {
+    fitVideoToViewport();
     // Vollbild: Kopfzeile ist ausgeblendet, das Video beginnt ganz oben
     if (isCinemaMode()) {
         var container = document.getElementById("playerContainer");
@@ -2050,6 +2082,8 @@ function bindPlayerEvents(ui) {
             updateProgress(ui);
         });
     });
+    // Seitenverhältnis bekannt: Grösse im Querformat anpassen
+    media.addEventListener("loadedmetadata", fitVideoToViewport);
     media.addEventListener("volumechange", function () {
         updateVolumeControls(ui);
     });
@@ -2101,12 +2135,20 @@ function bindSurfaceEvents(ui) {
         }, 220);
     });
 
-    // Touch: Tipp = Abspielen/Pause (Leiste wird dabei eingeblendet),
-    // Doppeltipp links/rechts = 10 Sekunden, Mitte = Vollbild
+    // Touch: Tipp = Abspielen/Pause (Leiste wird dabei eingeblendet). Ist die Leiste ausgeblendet,
+    // zeigt der erste Tipp nur die Leiste (seit 2.8.2, z.B. um danach Bild-im-Bild zu wählen),
+    // erst der nächste pausiert. Doppeltipp links/rechts = 10 Sekunden, Mitte = Vollbild.
+    surface.addEventListener("pointerdown", function (event) {
+        if (event.pointerType != "mouse") {
+            ui.controlsHiddenAtTap = !ui.shell.classList.contains("controlsVisible");
+        }
+    });
     surface.addEventListener("pointerup", function (event) {
         if (event.pointerType == "mouse") {
             return;
         }
+        var controlsWereHidden = ui.controlsHiddenAtTap === true;
+        ui.controlsHiddenAtTap = false;
         ui.lastTouchTime = Date.now();
         if (isPlayerMenuOpen(ui)) {
             closePlayerMenus(ui);
@@ -2133,7 +2175,9 @@ function bindSurfaceEvents(ui) {
         ui.lastTap = { time: now, zone: zone };
         clearTimeout(ui.tapTimer);
         ui.tapTimer = setTimeout(function () {
-            togglePlayback(ui);
+            if (!controlsWereHidden) {
+                togglePlayback(ui);
+            }
             showPlayerControls(ui);
         }, doubleTapDelay);
     });
@@ -2704,6 +2748,12 @@ function initPlayerControls() {
         if (event.key === "Tab") {
             revealPlayerControls();
         }
+    });
+    // Fenstergrösse oder Ausrichtung geändert (auch nach dem Kinomodus): Video neu einpassen
+    var fitTimer = null;
+    window.addEventListener("resize", function () {
+        clearTimeout(fitTimer);
+        fitTimer = setTimeout(fitVideoToViewport, 100);
     });
 }
 

@@ -730,11 +730,27 @@ namespace Sflix
                     if ((exitWhenToolsClosed || restarting) && player != null && !playerClosing) player.CloseForRestart();
                     ExitIfDone();
                 };
+                // Unsichtbar aufbauen und erst fertig zeigen (sonst sieht man kurz das halbfertige
+                // Fenster). Danach blendet der Player "Tools werden geöffnet …" aus.
+                MainForm shown = tools;
+                shown.Opacity = 0;
+                shown.Shown += delegate
+                {
+                    shown.BeginInvoke((Action)delegate
+                    {
+                        if (shown.IsDisposed) return;
+                        shown.Opacity = 1;
+                        if (player != null) player.NotifyToolsShown();
+                    });
+                };
                 tools.Show();
+                if (page != null) tools.OpenPage(page);
                 if (player == null) updateChecked = true;   // die Tools prüfen selbst
+                return tools;
             }
-            else Bring(tools);
+            Bring(tools);
             if (page != null) tools.OpenPage(page);
+            if (player != null) player.NotifyToolsShown();
             return tools;
         }
 

@@ -48,7 +48,7 @@ D:\STEFFLIX
 
 ## STEFFLIX im eigenen Fenster
 
-Ein Doppelklick auf `STEFFLIX.exe` öffnet STEFFLIX in einem eigenen Fenster, ohne Adresszeile, Linkvorschau und Kontextmenü. Links zu Webseiten öffnen im Standardbrowser, Grösse und Lage des Fensters bleiben erhalten.
+Ein Doppelklick auf `STEFFLIX.exe` öffnet STEFFLIX in einem eigenen Fenster, ohne Adresszeile, Linkvorschau und Kontextmenü. Der Startbildschirm erscheint dort bei jedem Start. Links zu Webseiten öffnen im Standardbrowser, Grösse und Lage des Fensters bleiben erhalten.
 
 - **Tools**: Der Menüeintrag "Tools" öffnet ein zweites Fenster mit Updates, Importer, Tools, Lizenz und Hilfe (beginnt bei "Updates"). Nach "Daten einlesen" lädt STEFFLIX die Medien selbst neu, während einer Wiedergabe erst auf Wunsch.
 - **Vollbild**: F11 schaltet das Fenster in den Vollbildmodus. Auch das Vollbild eines Videos füllt den ganzen Bildschirm, beim Verlassen kehrt das Fenster in den vorherigen Zustand zurück. F5 lädt neu.
@@ -144,10 +144,11 @@ Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste 
 
 Videos und Musik haben eine eigene Steuerleiste. Bei Videos blendet sie sich während der Wiedergabe nach kurzer Zeit aus und erscheint wieder, sobald die Maus bewegt oder das Video angetippt wird. Bei Musik bleibt sie sichtbar; darüber wird das Vorschaubild des Titels angezeigt (sonst das des Albums bzw. Ordners).
 
+- **Grösse**: Im Querformat füllt ein Video zusammen mit seinem Titel die sichtbare Höhe. Die Knöpfe Zurück / Weiter darunter erscheinen beim Scrollen.
 - **Leiste**: vorheriges / nächstes Medium, Abspielen / Pause, 10 Sekunden zurück / vor, Lautstärke, Zeitleiste, Übergang hier, Autoplay-Menü, Zahnradmenü, Bild im Bild und Vollbild.
 - **Musik**: Neben dem Player steht die Playliste mit allen Titeln und ihrer Dauer, der laufende Titel ist hervorgehoben. Ein Klick spielt einen Titel ab. Auf dem Handy steht die Liste unter dem Player.
 - **Maus**: Klick auf das Video startet oder pausiert, Doppelklick schaltet das Vollbild ein oder aus.
-- **Touch**: Tippen spielt ab oder pausiert und blendet die Leiste ein. Doppeltipp links oder rechts spult 10 Sekunden zurück bzw. vor, Doppeltipp in der Mitte schaltet das Vollbild um.
+- **Touch**: Tippen spielt ab oder pausiert und blendet die Leiste ein. Ist die Leiste ausgeblendet, zeigt der erste Tipp nur die Leiste. Doppeltipp links oder rechts spult 10 Sekunden zurück bzw. vor, Doppeltipp in der Mitte schaltet das Vollbild um.
 - **Zahnradmenü**: Geschwindigkeit (0,5x bis 1,75x), Herunterladen und Browser-Steuerung.
 - **Vollbild**: Das Video füllt den Bildschirm. Darunter kann weiterhin gescrollt und ein anderes Medium gewählt werden.
 - **Browser-Steuerung**: Wer die Steuerung des Browsers bevorzugt, schaltet sie im Zahnradmenü oder im Menü unter "Einstellungen" ein.

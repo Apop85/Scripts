@@ -287,6 +287,7 @@
             <h3>Player</h3>
             <p>Videos und Musik haben eine eigene Steuerleiste. Bei Videos blendet sie sich während der Wiedergabe nach kurzer Zeit aus und erscheint wieder, sobald die Maus bewegt oder das Video angetippt wird. Bei Musik bleibt sie sichtbar; darüber wird das Vorschaubild des Titels angezeigt (sonst das des Albums bzw. Ordners), in derselben Grösse wie ein Video.</p>
             <ul class="helpOptions">
+                <li><b>Grösse</b>: Im Querformat füllt ein Video zusammen mit seinem Titel die sichtbare Höhe. Die Knöpfe Zurück / Weiter darunter erscheinen beim Scrollen.</li>
                 <li><b>Leiste</b>:
                     <span class="helpIconList">
                         <span><span class="helpIcon" data-icon="skipPrev"></span><span class="helpIcon" data-icon="skipNext"></span> vorheriges / nächstes Medium</span>
@@ -303,7 +304,7 @@
                 <li><b>Autoplay-Menü</b> <span class="helpIcon" data-icon="autoplay"></span>: Automatisch vorwärts, Unbegrenzt, Anzahl abzuspielender Medien, Dauer bis Übergang und für welchen Ordner sie gilt.</li>
                 <li><b>Musik</b>: Neben dem Player steht die Playliste mit allen Titeln, ihrer Dauer und dem laufenden Titel. Ein Klick auf einen Titel spielt ihn ab. Auf dem Handy steht die Liste unter dem Player.</li>
                 <li><b>Maus</b>: Klick auf das Video startet oder pausiert, Doppelklick schaltet das Vollbild ein oder aus.</li>
-                <li><b>Touch</b>: Tippen spielt ab oder pausiert und blendet die Leiste ein. Doppeltipp links oder rechts spult 10 Sekunden zurück bzw. vor, Doppeltipp in der Mitte schaltet das Vollbild um.</li>
+                <li><b>Touch</b>: Tippen spielt ab oder pausiert und blendet die Leiste ein. Ist die Leiste ausgeblendet, zeigt der erste Tipp nur die Leiste. Doppeltipp links oder rechts spult 10 Sekunden zurück bzw. vor, Doppeltipp in der Mitte schaltet das Vollbild um.</li>
                 <li><b>Zahnradmenü</b>: Geschwindigkeit (0,5x bis 1,75x, jedes Medium startet wieder mit 1x), Herunterladen und Browser-Steuerung.</li>
                 <li><b>Vollbild</b>: Das Video füllt den Bildschirm. Darunter kann weiterhin gescrollt und ein anderes Medium gewählt werden. Auf dem iPhone bleibt die Browserleiste sichtbar.</li>
                 <li><b>Browser-Steuerung</b>: Wer die bisherige Steuerung des Browsers bevorzugt, schaltet sie im Zahnradmenü oder unter <a onclick="openSettings()">Einstellungen</a> ein.</li>
@@ -386,7 +387,7 @@
             </ul>
 
             <h3 id="desktopHilfe">STEFFLIX im eigenen Fenster</h3>
-            <p>Ein Doppelklick auf <span class="highlighted">STEFFLIX.exe</span> im STEFFLIX-Ordner (oder auf die Verknüpfung auf dem Desktop bzw. im Startmenü) öffnet STEFFLIX in einem eigenen Fenster, ohne Adresszeile und ohne Browser. <span class="highlighted">start.html</span> lässt sich weiterhin im Browser öffnen.</p>
+            <p>Ein Doppelklick auf <span class="highlighted">STEFFLIX.exe</span> im STEFFLIX-Ordner (oder auf die Verknüpfung auf dem Desktop bzw. im Startmenü) öffnet STEFFLIX in einem eigenen Fenster, ohne Adresszeile und ohne Browser. Der Startbildschirm erscheint dort bei jedem Start. <span class="highlighted">start.html</span> lässt sich weiterhin im Browser öffnen.</p>
             <ul class="helpOptions">
                 <li><b>Tools</b>: Der Menüeintrag "Tools" öffnet ein zweites Fenster mit Updates, Importer, Tools, Lizenz und Hilfe (beginnt bei "Updates"). Nach "Daten einlesen" lädt STEFFLIX die Medien selbst neu, während einer Wiedergabe erst auf Wunsch.</li>
                 <li><b>Vollbild</b>: F11 schaltet das Fenster in den Vollbildmodus und zurück. Auch das Vollbild eines Videos füllt den ganzen Bildschirm, beim Verlassen kehrt das Fenster in den vorherigen Zustand zurück. F5 lädt STEFFLIX neu.</li>

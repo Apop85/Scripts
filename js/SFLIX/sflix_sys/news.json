@@ -2,6 +2,24 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.07",
+      "name": "2.7.0",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Android-App 1.2.0: Wiedergabe im Hintergrund. Musik und der Ton von Videos laufen weiter, wenn der Bildschirm aus ist oder eine andere App offen ist, auch mit Autoplay. Gesteuert wird über die Benachrichtigung, den Sperrbildschirm oder Bluetooth-Kopfhörer (Zurück, 10 s zurück, Abspielen/Pause, 10 s vor, Weiter) mit Titel und Vorschaubild. Bei Anrufen pausiert die Wiedergabe und läuft danach weiter, beim Trennen der Kopfhörer pausiert sie."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Android-App 1.2.0: Bild-im-Bild. Der Knopf neben \"Vollbild\" im Player zeigt das Video in einem kleinen Fenster über anderen Apps, mit Zurück, Abspielen/Pause und Weiter."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Android-App 1.2.0: Neue Schalter \"Wiedergabe im Hintergrund\" und \"Bild-im-Bild\" in den App-Einstellungen (beide standardmässig ein)."
+        }
+      ]
+    },
+    {
       "version": "2.0602",
       "name": "2.6.2",
       "items": [

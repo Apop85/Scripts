@@ -4,6 +4,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Updates der App direkt installieren (App-Einstellungen › Über die App) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Wiedergabe im Hintergrund: Vordergrund-Dienst mit Benachrichtigung, CPU und WLAN wach halten -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- largeHeap: Videopuffer bis 128 MB im Arbeitsspeicher -->
     <application
@@ -24,10 +29,14 @@
             </intent-filter>
         </activity>
 
+        <!-- singleTask: Antippen der Benachrichtigung öffnet die laufende Seite. Bild-im-Bild ohne Neuaufbau. -->
         <activity
             android:name=".BrowserActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode"
-            android:exported="false" />
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true" />
 
         <activity
             android:name=".SettingsActivity"
@@ -36,6 +45,16 @@
 
         <receiver
             android:name=".AppUpdate$InstallReceiver"
+            android:exported="false" />
+
+        <service
+            android:name=".PlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback"
+            android:stopWithTask="false" />
+
+        <receiver
+            android:name=".PlaybackReceiver"
             android:exported="false" />
     </application>
 </manifest>

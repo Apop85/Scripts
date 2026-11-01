@@ -1,14 +1,26 @@
 package ch.stefflix.app;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.AppOpsManager;
+import android.app.PictureInPictureParams;
+import android.app.RemoteAction;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.drawable.Icon;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.text.TextUtils;
+import android.util.Rational;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -30,7 +42,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -41,20 +55,32 @@ import java.util.concurrent.Executors;
  * direkt aus der Freigabe beantwortet (über den Zwischenspeicher FileCache, mit Range fuer grosse
  * Dateien), ohne Server. Alle Freigaben teilen sich eine Herkunft; STEFFLIX trennt den Speicher ueber install.js.
  */
-public class BrowserActivity extends Activity implements MediaServer.Listener {
+public class BrowserActivity extends Activity implements MediaServer.Listener, Playback.Host {
 
     static final String EXTRA_ID = "id";
+    /** Nach dem Wechsel der Quelle über onNewIntent: Seite frisch laden statt wiederherstellen. */
+    private static final String EXTRA_FRESH = "fresh";
     private static final String HOST = "appassets.androidplatform.net";
     private static final int REQUEST_SETTINGS = 1;
+    private static final int REQUEST_NOTIFICATIONS = 2;
 
     private ShareStore.Share share;
     private AppPrefs prefs;
     private SmbSource smb;
     private FileCache cache;
     private MediaServer media;
+    private Playback playback;
     private String prefix;
     private FrameLayout root;
-    private WebView web;
+    private PlayerWebView web;
+
+    /** Wiedergabe im Hintergrund: beim Verlassen lief etwas und die Einstellung ist an. */
+    private boolean backgroundOnPause;
+    /** Die App-Einstellungen werden geöffnet (kein Verlassen der App, nichts anhalten). */
+    private boolean openingSettings;
+    /** Bild-im-Bild: Zeitpunkt des Verlassens (Fenster geschlossen oder vergrössert) und Seitenverhältnis. */
+    private long pipLeftAt;
+    private Rational pipAspect = new Rational(16, 9);
     private View customView;
     private WebChromeClient.CustomViewCallback customCallback;
 
@@ -123,10 +149,11 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
         } catch (IOException e) {
             media = null; // Medien laufen dann über die abgefangenen Anfragen
         }
+        playback = new Playback(this, this, prefs, cache, share.id);
 
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
-        web = new WebView(this);
+        web = new PlayerWebView(this);
         web.setBackgroundColor(Color.BLACK);
         root.addView(web, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(root);
@@ -156,10 +183,23 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
         web.setWebChromeClient(new Chrome());
         web.addJavascriptInterface(new Bridge(), "StefflixApp");
 
-        if (state == null || web.restoreState(state) == null) {
+        boolean fresh = getIntent().getBooleanExtra(EXTRA_FRESH, false);
+        getIntent().removeExtra(EXTRA_FRESH);
+        if (state == null || fresh || web.restoreState(state) == null) {
             // Nur beim Oeffnen, nicht beim Zurueckkehren zur Startseite
             showSplash();
             web.loadUrl("https://" + HOST + prefix + "start.html");
+        }
+    }
+
+    /** singleTask (Benachrichtigung öffnet die laufende Seite): gleiche Quelle → nichts tun. */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        String id = intent.getStringExtra(EXTRA_ID);
+        if (id != null && share != null && !id.equals(share.id)) {
+            setIntent(new Intent(intent).putExtra(EXTRA_FRESH, true));
+            recreate();
         }
     }
 
@@ -169,29 +209,68 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
         if (web != null) web.saveState(out);
     }
 
+    /** Wiedergabe im Hintergrund erlaubt: Einstellung an und ein Video oder Musikstück geladen. */
+    private boolean backgroundAllowed() {
+        return playback != null && prefs.backgroundPlayback() && playback.isActive();
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
-        if (web != null) web.onPause();
-        if (root != null) root.removeCallbacks(keepAlive);
+        if (web == null) return;
+        backgroundOnPause = backgroundAllowed();
+        // Im Hintergrund weiterspielen: Seite bleibt "sichtbar" (sonst hält Chromium Videos an) und die
+        // Verbindung zum NAS wird weiter warm gehalten
+        web.setKeepVisible(backgroundOnPause);
+        if (!backgroundOnPause && !isInPictureInPictureMode()) web.onPause();
+        if (!backgroundOnPause) root.removeCallbacks(keepAlive);
         pausedAt = System.currentTimeMillis();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (web == null) return;
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        boolean screenOn = pm == null || pm.isInteractive();
+        // Bild-im-Bild-Fenster geschlossen (nicht: Bildschirm aus): Video anhalten
+        boolean pipClosed = screenOn && (isInPictureInPictureMode() || SystemClock.elapsedRealtime() - pipLeftAt < 1500);
+        if (pipClosed || (!backgroundOnPause && !openingSettings)) {
+            mediaCommand(Playback.CMD_PAUSE, 0);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (web != null) web.onResume();
+        openingSettings = false;
+        boolean playedInBackground = backgroundOnPause;
+        backgroundOnPause = false;
+        if (web != null) {
+            web.setKeepVisible(false);
+            web.onResume();
+        }
         if (root == null) return;
         // Nach einer Pause ist die Verbindung oft tot: sofort verwerfen und im Hintergrund neu aufbauen.
         // Seiten und Skripte kommen derweil aus dem Zwischenspeicher (FileCache prüft im Hintergrund).
-        if (pausedAt > 0 && System.currentTimeMillis() - pausedAt > LISTING_MAX_AGE_MS) reconnectAfterPause();
+        // Lief die Wiedergabe im Hintergrund weiter, ist die Verbindung aktiv: nicht trennen (Video bräche ab).
+        if (!playedInBackground && pausedAt > 0 && System.currentTimeMillis() - pausedAt > LISTING_MAX_AGE_MS) {
+            reconnectAfterPause();
+        }
         root.removeCallbacks(keepAlive);
         root.postDelayed(keepAlive, KEEP_ALIVE_MS);
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == REQUEST_NOTIFICATIONS && playback != null) playback.refresh();
+    }
+
+    @Override
     protected void onDestroy() {
         if (root != null) root.removeCallbacks(keepAlive);
+        if (playback != null) playback.release();
         background.shutdownNow();
         if (connectionDialog != null) connectionDialog.dismiss();
         if (web != null) web.destroy();
@@ -208,6 +287,8 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode != REQUEST_SETTINGS || web == null) return;
         cache.setMaxDiskBytes(prefs.cacheMb() * 1024L * 1024L);
+        // "Wiedergabe im Hintergrund" kann sich geändert haben (Benachrichtigung, Wakelock)
+        if (playback != null) playback.refresh();
         if (!prefs.keepScreenOn()) getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (resultCode == SettingsActivity.RESULT_RELOAD) {
             // Programmdateien vergessen und die Seite frisch von der Freigabe laden
@@ -454,8 +535,48 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
 
         @JavascriptInterface
         public void openSettings() {
-            runOnUiThread(() -> startActivityForResult(new Intent(BrowserActivity.this, SettingsActivity.class)
-                    .putExtra(SettingsActivity.EXTRA_CURRENT, share.id), REQUEST_SETTINGS));
+            runOnUiThread(() -> {
+                openingSettings = true;
+                startActivityForResult(new Intent(BrowserActivity.this, SettingsActivity.class)
+                        .putExtra(SettingsActivity.EXTRA_CURRENT, share.id), REQUEST_SETTINGS);
+            });
+        }
+
+        /** Zustand von Video bzw. Musik als JSON (inject.js, siehe Playback.update). */
+        @JavascriptInterface
+        public void mediaState(String json) {
+            runOnUiThread(() -> {
+                if (playback == null || isDestroyed()) return;
+                try {
+                    org.json.JSONObject state = new org.json.JSONObject(json);
+                    playback.update(state);
+                    if (state.optBoolean("playing")) askNotificationPermission();
+                } catch (org.json.JSONException ignored) {
+                }
+            });
+        }
+
+        /** Bild-im-Bild möglich (Einstellung an, Gerät kann es, in Android nicht abgeschaltet). */
+        @JavascriptInterface
+        public boolean pipAvailable() {
+            return canUsePip();
+        }
+
+        /** Bild-im-Bild-Knopf im Player: kleines Fenster im Seitenverhältnis des Videos. */
+        @JavascriptInterface
+        public boolean enterPip(int width, int height) {
+            if (!canUsePip()) return false;
+            runOnUiThread(() -> {
+                pipAspect = aspect(width, height);
+                boolean entered;
+                try {
+                    entered = enterPictureInPictureMode(pipParams());
+                } catch (RuntimeException e) {
+                    entered = false;
+                }
+                if (!entered && web != null) web.evaluateJavascript("window.sflixAppPip && sflixAppPip(false)", null);
+            });
+            return true;
         }
 
         @JavascriptInterface
@@ -491,6 +612,101 @@ public class BrowserActivity extends Activity implements MediaServer.Listener {
         public String diagnosis() {
             return SettingsActivity.diagnosis(BrowserActivity.this, share);
         }
+    }
+
+    // ---- Wiedergabe (Playback.Host) ----
+
+    @Override
+    public void mediaCommand(String cmd, long arg) {
+        if (web == null) return;
+        web.evaluateJavascript("window.sflixAppMedia && sflixAppMedia(" + org.json.JSONObject.quote(cmd) + "," + arg + ")", null);
+    }
+
+    @Override
+    public void playbackChanged() {
+        if (playback != null && playback.isVideo() && playback.videoWidth() > 0 && playback.videoHeight() > 0) {
+            pipAspect = aspect(playback.videoWidth(), playback.videoHeight());
+        }
+        if (isInPictureInPictureMode()) {
+            try {
+                setPictureInPictureParams(pipParams());
+            } catch (RuntimeException ignored) {
+            }
+        }
+    }
+
+    @Override
+    public void quit() {
+        finish();
+    }
+
+    /** Ab Android 13 einmal beim ersten Abspielen nach Benachrichtigungen fragen. */
+    private void askNotificationPermission() {
+        if (Build.VERSION.SDK_INT < 33 || !prefs.backgroundPlayback() || prefs.notificationsAsked()) return;
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return;
+        prefs.setNotificationsAsked(true);
+        requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATIONS);
+    }
+
+    // ---- Bild-im-Bild ----
+
+    private boolean canUsePip() {
+        return prefs.pictureInPicture()
+                && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
+                && pipAllowedBySystem();
+    }
+
+    /** In den Android-Einstellungen lässt sich Bild-im-Bild je App abschalten. */
+    @SuppressWarnings("deprecation")
+    private boolean pipAllowedBySystem() {
+        try {
+            AppOpsManager ops = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+            int uid = android.os.Process.myUid();
+            int mode = Build.VERSION.SDK_INT >= 29
+                    ? ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_PICTURE_IN_PICTURE, uid, getPackageName())
+                    : ops.checkOpNoThrow(AppOpsManager.OPSTR_PICTURE_IN_PICTURE, uid, getPackageName());
+            return mode == AppOpsManager.MODE_ALLOWED || mode == AppOpsManager.MODE_DEFAULT;
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** Android erlaubt Seitenverhältnisse zwischen 1:2,39 und 2,39:1. */
+    private static Rational aspect(int width, int height) {
+        if (width <= 0 || height <= 0) return new Rational(16, 9);
+        double r = width / (double) height;
+        if (r > 2.39) return new Rational(239, 100);
+        if (r < 1 / 2.39) return new Rational(100, 239);
+        return new Rational(width, height);
+    }
+
+    private PictureInPictureParams pipParams() {
+        return new PictureInPictureParams.Builder().setAspectRatio(pipAspect).setActions(pipActions()).build();
+    }
+
+    /** Knöpfe im kleinen Fenster (Android zeigt meist nur drei): Zurück, Abspielen/Pause, Weiter. */
+    private List<RemoteAction> pipActions() {
+        List<RemoteAction> list = new ArrayList<>();
+        list.add(remoteAction(R.drawable.ic_skip_prev, "Zurück", Playback.CMD_PREV));
+        if (playback != null && playback.isPlaying()) {
+            list.add(remoteAction(R.drawable.ic_pause, "Pause", Playback.CMD_PAUSE));
+        } else {
+            list.add(remoteAction(R.drawable.ic_play, "Abspielen", Playback.CMD_PLAY));
+        }
+        list.add(remoteAction(R.drawable.ic_skip_next, "Weiter", Playback.CMD_NEXT));
+        return list;
+    }
+
+    private RemoteAction remoteAction(int icon, String label, String cmd) {
+        return new RemoteAction(Icon.createWithResource(this, icon), label, label, Playback.commandIntent(this, cmd));
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean inPip, Configuration config) {
+        super.onPictureInPictureModeChanged(inPip, config);
+        if (!inPip) pipLeftAt = SystemClock.elapsedRealtime();
+        // Seite: im kleinen Fenster nur das Video zeigen (Klasse appPip in inject.js)
+        if (web != null) web.evaluateJavascript("window.sflixAppPip && sflixAppPip(" + inPip + ")", null);
     }
 
     // ---- App-Update ----

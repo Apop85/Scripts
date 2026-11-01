@@ -24,7 +24,7 @@ namespace Sflix
                 "Das Programm liegt im STEFFLIX-Ordner und arbeitet nur in diesem Ordner. Bis Version 3.5 hiess es updateStefflix.exe.\n\n" +
                 "# Zwei Fenster\n" +
                 "- STEFFLIX: die Mediathek selbst (Doppelklick auf STEFFLIX.exe), siehe „STEFFLIX-Fenster“.\n" +
-                "- Tools: dieses Fenster. Es öffnet sich aus dem Menü von STEFFLIX (Updates, Importer, Tools, Lizenz, Hilfe zu den Tools) oder mit --tools. " +
+                "- Tools: dieses Fenster. Es öffnet sich im Menü von STEFFLIX mit „Tools“ (beim Reiter Updates) oder mit --tools." +
                 "Wird das Fenster von STEFFLIX geschlossen, schliessen sich auch die Tools.\n\n" +
                 "# Registerkarten\n" +
                 "- Updates: STEFFLIX und das Programm aktualisieren, Medien einlesen, Versionen.\n" +
@@ -48,7 +48,7 @@ namespace Sflix
                 "start.html lässt sich weiterhin im Browser öffnen.\n" +
                 "- F11: Vollbild ein und aus. Das Vollbild eines Videos füllt ebenfalls den ganzen Bildschirm, danach kehrt das Fenster in den vorherigen Zustand zurück.\n" +
                 "- F5: STEFFLIX neu laden.\n" +
-                "- Menü: Updates, Importer, Tools, Lizenz und „Hilfe zu den Tools“ öffnen das Fenster der Tools mit dem passenden Reiter.\n" +
+                "- Menü: „Tools“ öffnet das Fenster der Tools beim Reiter Updates (ist es schon offen, kommt es nach vorne).\n" +
                 "- Nach „Daten einlesen“, dem Importer oder einem Update lädt STEFFLIX die Medien selbst neu. Läuft gerade ein Video oder Musik, erst auf Knopfdruck.\n" +
                 "- Ein zweiter Start von STEFFLIX.exe holt das offene Fenster nach vorne.\n\n" +
                 "# Daten aus dem Browser übernehmen\n" +

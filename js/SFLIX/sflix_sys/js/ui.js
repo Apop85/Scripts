@@ -1405,13 +1405,10 @@ function initSettingsMenu() {
 // Im Browser und in der Android-App passiert hier nichts.
 // ===================================================================
 
-// Menüeinträge, die das Fenster der Tools mit dem passenden Reiter öffnen
+// Menüeintrag, der das Fenster der Tools öffnet (seit 2.8.1 ein einziger Eintrag, immer beim Reiter
+// "Updates"; ist das Fenster schon offen, kommt es nur nach vorne)
 var desktopMenuEntries = [
-    { page: "updates", label: "Updates", icon: "update" },
-    { page: "import", label: "Importer", icon: "importer" },
-    { page: "tools", label: "Tools", icon: "tools" },
-    { page: "license", label: "Lizenz", icon: "key" },
-    { page: "help", label: "Hilfe zu den Tools", icon: "question" }
+    { page: "updates", label: "Tools", icon: "tools" }
 ];
 
 function sendToDesktop(message) {
@@ -1471,7 +1468,7 @@ function addDesktopMenuEntries() {
         icon.appendChild(createIcon(entry.icon));
         var label = document.createElement("span");
         label.className = "menuLabel";
-        label.textContent = entry.page === "license" && getLicenseState().status === "active" ? "Lizenz und Feedback" : entry.label;
+        label.textContent = entry.label;
         link.append(icon, label);
         link.addEventListener("click", function () {
             sendToDesktop({ cmd: "tools", page: entry.page });

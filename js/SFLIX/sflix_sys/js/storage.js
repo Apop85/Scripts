@@ -606,8 +606,8 @@ function getAllDataKeys() {
 
 // Der Browser speichert die Daten aller file://-Seiten gemeinsam. Damit sich mehrere
 // STEFFLIX-Installationen auf einem PC nicht beeinflussen, nutzt jede ihre eigene Datenbank.
-// Die Kennung schreibt updateStefflix.exe in sflix_sys/install.js. Ohne Kennung (älterer
-// Updater) gilt wie bisher die gemeinsame Datenbank "STEFFLIX".
+// Die Kennung schreibt STEFFLIX.exe (bis 3.x updateStefflix.exe) in sflix_sys/install.js. Ohne
+// Kennung (älterer Updater) gilt wie bisher die gemeinsame Datenbank "STEFFLIX".
 var sharedDatabaseName = "STEFFLIX";
 var sharedDataImportedKey = "sharedDataImported";
 
@@ -853,7 +853,9 @@ function showBackupStatus(text, isError) {
     return status;
 }
 
-function exportUserData() {
+// Speichert eine Datensicherung als Datei (Download-Ordner des Browsers). Ergebnis: gesicherte Einträge.
+// Auch für die Datenübernahme nach STEFFLIX.exe (start.html?export=app, siehe showDesktopExportPage).
+function downloadBackup() {
     var entries = {};
     getAllDataKeys().forEach(function (key) {
         if (!isExcludedFromBackup(key)) {
@@ -880,39 +882,78 @@ function exportUserData() {
     setTimeout(function () {
         URL.revokeObjectURL(url);
     }, 1000);
-    showBackupStatus("Sicherung mit " + Object.keys(entries).length + " Einträgen erstellt. Die Datei liegt im Download-Ordner des Browsers.", false);
+    return entries;
+}
+
+function exportUserData() {
+    var entries = downloadBackup();
+    showBackupStatus("Sicherung mit " + Object.keys(entries).length + " Einträgen erstellt. " +
+        (isDesktopApp() ? "Die Datei liegt am gewählten Ort." : "Die Datei liegt im Download-Ordner des Browsers."), false);
+}
+
+// Prüft den Inhalt einer Sicherung. Ergebnis: { error } oder { data, keys, dateText, versionText }
+function parseBackupText(text) {
+    var backup = null;
+    try {
+        backup = JSON.parse(text);
+    } catch (error) {
+        backup = null;
+    }
+    if (backup == null || backup.app !== "STEFFLIX" || backup.data == null || typeof backup.data !== "object") {
+        return { error: "Diese Datei ist keine gültige STEFFLIX-Sicherung." };
+    }
+    // Sicherungen aus einer neueren STEFFLIX-Version kennt diese Version nicht.
+    // Ab 2.5.0 steht die Version als x.y.z in "versionName", "version" bleibt die alte Zahl.
+    var backupVersion = toVersionName(backup.versionName != null ? backup.versionName : backup.version);
+    if (backupVersion != null && compareVersions(backupVersion, getVersionName()) > 0) {
+        return { error: "Diese Sicherung stammt aus STEFFLIX " + backupVersion + ". Installiert ist " + getVersionName() + ". Bitte zuerst STEFFLIX aktualisieren." };
+    }
+    var data = migrateBackupData(backup.data, backupVersion || "0.0.0");
+    // Migrationsmarkierungen gehören zur installierten Version und werden nicht übernommen,
+    // ebenso ein alter Lizenzschlüssel (der Schlüssel steht seit 2.5.0 in sflix_sys/license.js)
+    var keys = Object.keys(data).filter(function (key) {
+        return typeof data[key] === "string" && !isMigrationFlag(key) && !isExcludedFromBackup(key);
+    });
+    var date = backup.exportedAt ? new Date(backup.exportedAt) : null;
+    return {
+        data: data,
+        keys: keys,
+        dateText: date && !isNaN(date) ? date.toLocaleString("de-CH") : "unbekannt",
+        versionText: backupVersion == null ? "unbekannt" : backupVersion
+    };
+}
+
+// Datenübernahme aus dem Browser: STEFFLIX.exe schickt den Inhalt der Sicherung (ohne Rückfrage,
+// die Frage stellt das Programm). Danach neu laden.
+function importBackupFromDesktop(text) {
+    var parsed = parseBackupText(text);
+    if (parsed.error) {
+        sendToDesktop({ cmd: "importResult", ok: false, message: parsed.error });
+        return;
+    }
+    writeBackupData(parsed.data, parsed.keys, function () {
+        sendToDesktop({ cmd: "importResult", ok: true, message: parsed.keys.length + " Einträge aus der Sicherung vom " + parsed.dateText + " übernommen." });
+        setTimeout(function () {
+            location.reload();
+        }, 1600);
+    }, function () {
+        sendToDesktop({ cmd: "importResult", ok: false, message: "Beim Übernehmen der Daten ist ein Fehler aufgetreten." });
+    });
 }
 
 // Prüft die Datei und fragt vor dem Übernehmen nach
 function readBackupFile(file) {
     var reader = new FileReader();
     reader.onload = function () {
-        var backup = null;
-        try {
-            backup = JSON.parse(reader.result);
-        } catch (error) {
-            backup = null;
-        }
-        if (backup == null || backup.app !== "STEFFLIX" || backup.data == null || typeof backup.data !== "object") {
-            showBackupStatus("Diese Datei ist keine gültige STEFFLIX-Sicherung.", true);
+        var parsed = parseBackupText(reader.result);
+        if (parsed.error) {
+            showBackupStatus(parsed.error, true);
             return;
         }
-        // Sicherungen aus einer neueren STEFFLIX-Version kennt diese Version nicht.
-        // Ab 2.5.0 steht die Version als x.y.z in "versionName", "version" bleibt die alte Zahl.
-        var backupVersion = toVersionName(backup.versionName != null ? backup.versionName : backup.version);
-        if (backupVersion != null && compareVersions(backupVersion, getVersionName()) > 0) {
-            showBackupStatus("Diese Sicherung stammt aus STEFFLIX " + backupVersion + ". Installiert ist " + getVersionName() + ". Bitte zuerst STEFFLIX aktualisieren.", true);
-            return;
-        }
-        var data = migrateBackupData(backup.data, backupVersion || "0.0.0");
-        // Migrationsmarkierungen gehören zur installierten Version und werden nicht übernommen,
-        // ebenso ein alter Lizenzschlüssel (der Schlüssel steht seit 2.5.0 in sflix_sys/license.js)
-        var keys = Object.keys(data).filter(function (key) {
-            return typeof data[key] === "string" && !isMigrationFlag(key) && !isExcludedFromBackup(key);
-        });
-        var date = backup.exportedAt ? new Date(backup.exportedAt) : null;
-        var dateText = date && !isNaN(date) ? date.toLocaleString("de-CH") : "unbekannt";
-        var versionText = backupVersion == null ? "unbekannt" : backupVersion;
+        var data = parsed.data;
+        var keys = parsed.keys;
+        var dateText = parsed.dateText;
+        var versionText = parsed.versionText;
 
         var status = showBackupStatus("Sicherung vom " + dateText + " (STEFFLIX " + versionText + ") mit " + keys.length + " Einträgen. Vorhandene Einträge mit gleichem Namen werden überschrieben, alle anderen bleiben erhalten.", false);
         var actions = document.createElement("div");
@@ -942,22 +983,16 @@ function readBackupFile(file) {
     reader.readAsText(file);
 }
 
-// Schreibt alle Einträge in einer Transaktion und lädt danach neu
-function restoreUserData(data, keys) {
+// Schreibt alle Einträge in einer Transaktion
+function writeBackupData(data, keys, done, failed) {
     keys.forEach(function (key) {
         storageCache[key] = data[key];
     });
     // Umbenennungen aus updateData.exe beim nächsten Start auch auf die
     // wiederhergestellten Pfade anwenden
     delete storageCache.renamedPathsApplied;
-    var finish = function () {
-        showBackupStatus(keys.length + " Einträge wiederhergestellt. STEFFLIX wird neu geladen...", false);
-        setTimeout(function () {
-            location.reload();
-        }, 1200);
-    };
     if (!db) {
-        finish();
+        done();
         return;
     }
     var transaction = db.transaction(["storage"], "readwrite");
@@ -966,10 +1001,20 @@ function restoreUserData(data, keys) {
         store.put(data[key], key);
     });
     store.delete("renamedPathsApplied");
-    transaction.oncomplete = finish;
-    transaction.onerror = function () {
+    transaction.oncomplete = done;
+    transaction.onerror = failed;
+}
+
+// Wiederherstellen aus den Einstellungen, danach neu laden
+function restoreUserData(data, keys) {
+    writeBackupData(data, keys, function () {
+        showBackupStatus(keys.length + " Einträge wiederhergestellt. STEFFLIX wird neu geladen...", false);
+        setTimeout(function () {
+            location.reload();
+        }, 1200);
+    }, function () {
         showBackupStatus("Beim Wiederherstellen ist ein Fehler aufgetreten.", true);
-    };
+    });
 }
 
 function initBackup() {

@@ -1,4 +1,4 @@
-// Texte des Reiters "Hilfe" (seit 3.3). Bei Änderungen am Updater hier nachführen.
+// Texte des Reiters "Hilfe" (seit 3.3). Bei Änderungen an STEFFLIX.exe (bis 3.x "Updater") hier nachführen.
 // Format je Zeile: "# " Zwischenüberschrift, "- " Aufzählung, "> " Befehl/Beispiel (Festbreitenschrift),
 // sonst normaler Absatz. Leere Zeile = Abstand.
 
@@ -20,10 +20,14 @@ namespace Sflix
             List<HelpTopic> t = new List<HelpTopic>();
 
             t.Add(new HelpTopic("Überblick",
-                "Der STEFFLIX Updater hält STEFFLIX aktuell, liest die Medien ein und bringt Werkzeuge rund um die Mediathek mit. " +
-                "Er liegt im STEFFLIX-Ordner (updateStefflix.exe) und arbeitet nur in diesem Ordner.\n\n" +
+                "STEFFLIX.exe öffnet STEFFLIX im eigenen Fenster, hält STEFFLIX aktuell, liest die Medien ein und bringt Werkzeuge rund um die Mediathek mit. " +
+                "Das Programm liegt im STEFFLIX-Ordner und arbeitet nur in diesem Ordner. Bis Version 3.5 hiess es updateStefflix.exe.\n\n" +
+                "# Zwei Fenster\n" +
+                "- STEFFLIX: die Mediathek selbst (Doppelklick auf STEFFLIX.exe), siehe „STEFFLIX-Fenster“.\n" +
+                "- Tools: dieses Fenster. Es öffnet sich aus dem Menü von STEFFLIX (Updates, Importer, Tools, Lizenz, Hilfe zu den Tools) oder mit --tools. " +
+                "Wird das Fenster von STEFFLIX geschlossen, schliessen sich auch die Tools.\n\n" +
                 "# Registerkarten\n" +
-                "- Updates: STEFFLIX und den Updater aktualisieren, Medien einlesen, Versionen.\n" +
+                "- Updates: STEFFLIX und das Programm aktualisieren, Medien einlesen, Versionen.\n" +
                 "- Importer: Videos, Musik und Bilder in die Mediathek übernehmen.\n" +
                 "- Tools: Vorschaubilder, Folgen umbenennen, Duplikate finden, Zusammenführen, Konvertieren, Medien prüfen, Ablagen leeren.\n" +
                 "- Lizenz bzw. Feedback: Lizenzschlüssel eingeben, danach Nachrichten an den Entwickler schicken.\n" +
@@ -38,16 +42,38 @@ namespace Sflix
                 "- Speichern unter …: speichert das Protokoll dieser Sitzung in eine selbst gewählte Datei (wenn die Datei aus ist).\n" +
                 "Die Datei ist begrenzt: Wird sie grösser als 1 MB, bleiben die letzten 256 KB."));
 
+            t.Add(new HelpTopic("STEFFLIX-Fenster",
+                "Ein Doppelklick auf STEFFLIX.exe (oder die Verknüpfung auf dem Desktop bzw. im Startmenü) öffnet STEFFLIX in einem eigenen Fenster: " +
+                "ohne Adresszeile, Linkvorschau, Kontextmenü und Zoom. Links zu Webseiten öffnen im Standardbrowser. Grösse und Lage des Fensters bleiben erhalten. " +
+                "start.html lässt sich weiterhin im Browser öffnen.\n" +
+                "- F11: Vollbild ein und aus. Das Vollbild eines Videos füllt ebenfalls den ganzen Bildschirm, danach kehrt das Fenster in den vorherigen Zustand zurück.\n" +
+                "- F5: STEFFLIX neu laden.\n" +
+                "- Menü: Updates, Importer, Tools, Lizenz und „Hilfe zu den Tools“ öffnen das Fenster der Tools mit dem passenden Reiter.\n" +
+                "- Nach „Daten einlesen“, dem Importer oder einem Update lädt STEFFLIX die Medien selbst neu. Läuft gerade ein Video oder Musik, erst auf Knopfdruck.\n" +
+                "- Ein zweiter Start von STEFFLIX.exe holt das offene Fenster nach vorne.\n\n" +
+                "# Daten aus dem Browser übernehmen\n" +
+                "Fenster und Browser speichern Favoriten, Fortschritte, „Weiterschauen“ und Einstellungen getrennt. Beim ersten Start bietet STEFFLIX.exe an, " +
+                "die Daten aus dem bisherigen Browser zu übernehmen: Es öffnet STEFFLIX dort kurz, STEFFLIX speichert eine Datensicherung im Download-Ordner, " +
+                "und das Fenster übernimmt sie. Fragt der Browser nach dem Speicherort, die Datei speichern und mit „Sicherung wählen …“ öffnen. " +
+                "Später geht das jederzeit über STEFFLIX › Einstellungen › Datensicherung (im Browser exportieren, im Fenster importieren).\n\n" +
+                "# Windows-Komponente WebView2\n" +
+                "Das Fenster braucht die Komponente „WebView2“ von Microsoft (unter Windows 11 vorinstalliert, unter Windows 10 meistens). Fehlt sie, " +
+                "bietet STEFFLIX.exe an, sie zu installieren (Setup von Microsoft, Signatur geprüft), oder öffnet STEFFLIX im Browser. " +
+                "Die Daten des Fensters liegen in %LOCALAPPDATA%\\STEFFLIX\\webview, je Installation getrennt.\n\n" +
+                "# Umstieg von updateStefflix.exe\n" +
+                "Beim ersten Start nach dem Update auf Version 4 benennt sich updateStefflix.exe in STEFFLIX.exe um, passt Verknüpfungen an " +
+                "und legt Verknüpfungen auf dem Desktop und im Startmenü an. Ohne Oberfläche (z.B. in der Aufgabenplanung) läuft die alte Datei unverändert weiter."));
+
             t.Add(new HelpTopic("Updates und Versionen",
-                "Beim Start prüft der Updater im Hintergrund, ob es Neues gibt: STEFFLIX-Dateien, den Updater selbst und ein installiertes ffmpeg. " +
-                "Falls ja, erscheint ein Fenster mit „Jetzt aktualisieren“ oder „Später“. Nach „Später“ bleibt ein gelber Balken stehen.\n\n" +
+                "Beim Start prüft STEFFLIX.exe im Hintergrund, ob es Neues gibt: STEFFLIX-Dateien, das Programm selbst und ein installiertes ffmpeg. " +
+                "Falls ja, erscheint ein Fenster mit „Jetzt aktualisieren“ oder „Später“. Nach „Später“ bleibt in den Tools ein gelber Balken stehen.\n\n" +
                 "# Update\n" +
                 "Lädt geänderte Dateien von GitHub, prüft jede über ihre Prüfsumme und ersetzt sie erst danach. Schlägt etwas fehl, bleibt der alte Stand. " +
                 "Welche Dateien zu STEFFLIX gehören und welche alten Dateien entfernt werden, kommt mit dem Update. Persönliche Dateien wie Medienliste, Lizenz und Einstellungen bleiben immer unberührt. " +
-                "Ist ein neuer Updater verfügbar, ersetzt er sich selbst, startet neu und macht mit den restlichen Aufgaben weiter.\n" +
+                "Ist eine neue Version des Programms verfügbar, ersetzt es sich selbst, startet neu (auch das Fenster von STEFFLIX, falls es offen war) und macht mit den restlichen Aufgaben weiter.\n" +
                 "- ffmpeg ebenfalls aktualisieren: bringt ein installiertes ffmpeg auf die vorgegebene Version.\n\n" +
                 "# Versionen\n" +
-                "Rechts stehen die installierten und verfügbaren Versionen von STEFFLIX, Updater und ffmpeg. „Patchnotes“ zeigt die Neuerungen: zuerst die des Updaters, die von STEFFLIX und der Android-App lassen sich über die Schalter oben dazuschalten. " +
+                "Rechts stehen die installierten und verfügbaren Versionen von STEFFLIX, Desktop (STEFFLIX.exe) und ffmpeg. „Patchnotes“ zeigt die Neuerungen: zuerst die von Desktop, die von STEFFLIX und der Android-App lassen sich über die Schalter oben dazuschalten. " +
                 "„Neu prüfen“ fragt erneut nach. STEFFLIX-Versionen haben seit 2.5.0 das Format x.y.z, ältere werden umgerechnet (2.04 = 2.4.0)."));
 
             t.Add(new HelpTopic("Daten einlesen",
@@ -128,7 +154,7 @@ namespace Sflix
 
             t.Add(new HelpTopic("Konvertieren",
                 "Wandelt Videos in browserkompatible MP4-Dateien (H.264/AAC) um, bei mehreren Tonspuren je eine Datei. " +
-                "Der Updater nutzt die Grafikkarte (NVIDIA, Intel, AMD), sonst den Prozessor. Originale kommen nach „__konvertiert“.\n" +
+                "Genutzt wird die Grafikkarte (NVIDIA, Intel, AMD), sonst der Prozessor. Originale kommen nach „__konvertiert“.\n" +
                 "- Gleichzeitig: wie viele Dateien parallel umgewandelt werden (0 = automatisch).\n" +
                 "- Auch Musik in MP3 umwandeln: Musik, die der Browser nicht abspielt (z.B. WMA, AIFF, APE, ALAC in M4A), wird zu MP3 mit hoher Qualität, " +
                 "Titel und Interpret bleiben erhalten. Abspielbare Musik (MP3, AAC, FLAC, OGG …) bleibt unverändert.\n" +
@@ -151,7 +177,7 @@ namespace Sflix
                 "„Ausführen“ startet alle gewählten Dateioperationen, danach wird neu eingelesen."));
 
             t.Add(new HelpTopic("Tabellen",
-                "Alle Tabellen im Updater (Ergebnisse, Vorschau, Vergleich) lassen sich sortieren: Klick auf den Spaltenkopf sortiert aufsteigend, " +
+                "Alle Tabellen der Tools (Ergebnisse, Vorschau, Vergleich) lassen sich sortieren: Klick auf den Spaltenkopf sortiert aufsteigend, " +
                 "ein zweiter Klick absteigend. Ein kleines Dreieck zeigt die Spalte. Grösse und Dauer werden als Zahl sortiert, Namen mit Zahlen natürlich " +
                 "(„Folge 2“ vor „Folge 10“). In Tabellen mit Gruppen (z.B. Duplikate) wird innerhalb jeder Gruppe sortiert."));
 
@@ -159,12 +185,12 @@ namespace Sflix
                 "Die Tools arbeiten auch auf einem NAS. Schreibgeschützte Dateien verschieben, ersetzen und löschen sie trotzdem " +
                 "(der Schreibschutz bleibt beim Verschieben erhalten). Ist eine Datei kurz geöffnet, wird es nach einer Pause erneut versucht.\n" +
                 "Meldet das Protokoll trotzdem „Zugriff verweigert“:\n" +
-                "- Die Datei ist geöffnet, z.B. in STEFFLIX im Browser, in der Vorschau des Explorers oder vom Indexdienst des NAS. Schliessen und erneut starten.\n" +
-                "- Auf dem NAS fehlt das Recht „Löschen“. Wo das NAS Windows-Rechte speichert, ergänzt der Updater es selbst (steht dann im Protokoll). " +
+                "- Die Datei ist geöffnet, z.B. in STEFFLIX (Fenster oder Browser), in der Vorschau des Explorers oder vom Indexdienst des NAS. Schliessen und erneut starten.\n" +
+                "- Auf dem NAS fehlt das Recht „Löschen“. Wo das NAS Windows-Rechte speichert, ergänzen es die Tools selbst (steht dann im Protokoll). " +
                 "NAS mit Linux-Rechten (z.B. QNAP) speichern es nicht pro Datei: Gehört die Datei einem anderen Benutzer, etwa dem Administrator " +
                 "(Dateien aus der Download-Station oder dem Dateimanager des NAS), im NAS den Besitzer bzw. die Rechte des Ordners neu setzen und auf alle Unterordner anwenden.\n" +
-                "- Der Updater läuft als Administrator: Dann sind verbundene Netzlaufwerke (z.B. M:) oft nicht oder mit anderen Zugangsdaten verbunden. " +
-                "Den Updater normal starten."));
+                "- STEFFLIX.exe läuft als Administrator: Dann sind verbundene Netzlaufwerke (z.B. M:) oft nicht oder mit anderen Zugangsdaten verbunden. " +
+                "STEFFLIX.exe normal starten."));
 
             t.Add(new HelpTopic("Ablagen leeren",
                 "Die Tools legen Originale und Teile in Ablagen ab, statt sie zu löschen: „__teile“, „__konvertiert“, „__gelöscht“, „__original“, „__ersetzt“ und „__duplikate“. " +
@@ -186,7 +212,7 @@ namespace Sflix
                 "- Ein ffmpeg aus älteren Versionen (sflix_sys\\ffmpeg) wird beim Start in den Standardordner verschoben."));
 
             t.Add(new HelpTopic("Lizenz und Feedback",
-                "Der Lizenzschlüssel (beginnt mit SFX2) schaltet das Feedback im Updater und in STEFFLIX frei. Er wird im Setup, im Reiter „Lizenz“ oder mit --license eingegeben " +
+                "Der Lizenzschlüssel (beginnt mit SFX2) schaltet das Feedback in den Tools und in STEFFLIX frei. Er wird im Setup, im Reiter „Lizenz“ oder mit --license eingegeben " +
                 "und in sflix_sys\\license.js gespeichert. Er gilt dann für diese Installation in allen Browsern.\n" +
                 "- Beim Speichern wird eine Bestätigung mit der Kennung dieser Installation verschickt. Erst danach heisst der Reiter „Feedback“.\n" +
                 "- Ohne Internet wird der Schlüssel gespeichert und die Bestätigung beim nächsten Start nachgeholt.\n" +
@@ -195,28 +221,34 @@ namespace Sflix
                 "Schlüssel aus STEFFLIX bis 2.04 sind nicht mehr gültig."));
 
             t.Add(new HelpTopic("Kommandozeile",
-                "Der Updater lässt sich auch ohne Oberfläche starten, z.B. für die Windows-Aufgabenplanung. Aufgaben: update, cleanup, merge, convert, preview, data, renameundo " +
+                "STEFFLIX.exe lässt sich auch ohne Oberfläche starten, z.B. für die Windows-Aufgabenplanung. Aufgaben: update, cleanup, merge, convert, preview, data, renameundo " +
                 "(„Folgen umbenennen“ braucht die Oberfläche). Mehrere mit Komma trennen.\n\n" +
-                "# Oberfläche mit sofortigem Start\n" +
-                "> updateStefflix.exe --run update,data\n" +
-                "> updateStefflix.exe --log\n" +
+                "# Fenster\n" +
+                "> STEFFLIX.exe\n" +
+                "> STEFFLIX.exe --tools\n" +
+                "> STEFFLIX.exe --tools --player\n" +
+                "Ohne Angaben öffnet sich STEFFLIX, mit --tools nur die Tools, mit beiden Angaben beide Fenster.\n\n" +
+                "# Tools mit sofortigem Start\n" +
+                "> STEFFLIX.exe --run update,data\n" +
+                "> STEFFLIX.exe --tools --log\n" +
                 "--log schreibt das Protokoll von Anfang an in die Datei.\n\n" +
                 "# Ohne Oberfläche\n" +
-                "> updateStefflix.exe --headless data\n" +
-                "> updateStefflix.exe --headless data --data-folder \"Serien\\Meine Serie\"\n" +
+                "> STEFFLIX.exe --headless data\n" +
+                "> STEFFLIX.exe --headless data --data-folder \"Serien\\Meine Serie\"\n" +
                 "--data-folder liest nur diesen Ordner ein (mehrfach möglich, relativ zum STEFFLIX-Ordner oder absolut). " +
-                "Ohne Oberfläche schreibt der Updater immer ins Protokoll (sflix_sys\\updater.log, begrenzt). Exit-Code 0 = alles in Ordnung, 1 = Fehler, " +
-                "2 = kein STEFFLIX-Ordner, 3 = der Updater läuft bereits.\n\n" +
+                "Ohne Oberfläche schreibt STEFFLIX.exe immer ins Protokoll (sflix_sys\\updater.log, begrenzt). Exit-Code 0 = alles in Ordnung, 1 = Fehler, " +
+                "2 = kein STEFFLIX-Ordner, 3 = STEFFLIX.exe läuft bereits.\n\n" +
                 "# Installation\n" +
-                "> updateStefflix.exe --install \"D:\\Medien\"\n" +
-                "> updateStefflix.exe --install \"D:\\Medien\" --ffmpeg --license SFX2-…\n" +
+                "> STEFFLIX.exe --install \"D:\\Medien\"\n" +
+                "> STEFFLIX.exe --install \"D:\\Medien\" --ffmpeg --license SFX2-…\n" +
                 "--ffmpeg installiert ffmpeg in den Standardordner, --ffmpeg \"Ordner\" in einen eigenen.\n\n" +
                 "# Lizenz\n" +
-                "> updateStefflix.exe --license SFX2-…\n" +
-                "> updateStefflix.exe --license-remove\n\n" +
+                "> STEFFLIX.exe --license SFX2-…\n" +
+                "> STEFFLIX.exe --license-remove\n\n" +
                 "# Aufgabenplanung (Beispiel)\n" +
                 "Jede Nacht um 3 Uhr Medien einlesen:\n" +
-                "> schtasks /create /tn \"STEFFLIX einlesen\" /sc daily /st 03:00 /tr \"\\\"D:\\Medien\\updateStefflix.exe\\\" --headless data\""));
+                "> schtasks /create /tn \"STEFFLIX einlesen\" /sc daily /st 03:00 /tr \"\\\"D:\\Medien\\STEFFLIX.exe\\\" --headless data\"\n" +
+                "Eine Aufgabe, die noch updateStefflix.exe aufruft, läuft weiter, bis die alte Datei beim nächsten Start mit Oberfläche umbenannt wird. Danach den Pfad auf STEFFLIX.exe ändern."));
 
             t.Add(new HelpTopic("Ablagen und Dateien",
                 "# Ablagen der Tools (Ordner mit „__“)\n" +
@@ -232,7 +264,7 @@ namespace Sflix
                 "- install.js: Kennung dieser Installation\n" +
                 "- license.js: Lizenzschlüssel\n" +
                 "- updater_info.js: installierte Versionen für STEFFLIX\n" +
-                "- updater_settings.json: Einstellungen des Updaters\n" +
+                "- updater_settings.json: Einstellungen von STEFFLIX.exe (auch Lage des Fensters)\n" +
                 "- updater.log: Protokoll (nur auf Wunsch bzw. ohne Oberfläche)\n" +
                 "- folgen_cache.json, folgen_rueckgaengig.json: Folgen umbenennen\n" +
                 "- medien_cache.json: gemerkte Prüfergebnisse der Tools (siehe „Schneller prüfen“)"));

@@ -14,7 +14,7 @@ namespace Sflix
     public class InstallForm : Form
     {
         TextBox folderBox, ffmpegBox, licenseBox;
-        DarkCheckBox ffmpegCheck;
+        DarkCheckBox ffmpegCheck, desktopCheck, startMenuCheck;
         Control ffmpegRow;
         Button installButton, openButton, startButton, closeButton;
         DarkProgress progress;
@@ -89,9 +89,9 @@ namespace Sflix
             card.Controls.Add(title);
 
             Label intro = Theme.MakeLabel(
-                "In diesem Ordner ist STEFFLIX noch nicht installiert. STEFFLIX ist eine Browserapplikation im Stil " +
-                "bekannter Streamingdienste, um lokal oder im Netzwerk gespeicherte Mediendateien abzuspielen. Ausser einem Browser braucht " +
-                "es nichts weiter.\n\nWähle den Ordner, in dem STEFFLIX installiert werden soll, am besten den Hauptordner " +
+                "In diesem Ordner ist STEFFLIX noch nicht installiert. STEFFLIX ist eine Mediathek im Stil bekannter " +
+                "Streamingdienste, um lokal oder im Netzwerk gespeicherte Mediendateien abzuspielen. Sie öffnet sich im eigenen Fenster " +
+                "(STEFFLIX.exe) oder im Browser (start.html).\n\nWähle den Ordner, in dem STEFFLIX installiert werden soll, am besten den Hauptordner " +
                 "deiner Medien (z.B. M:\\ oder C:\\Medien). Fehlende Ordner werden angelegt, vorhandene Dateien bleiben unverändert.", true);
             intro.MaximumSize = new Size(Theme.S(840), 0);
             intro.Margin = new Padding(0, 0, 0, Theme.S(10));
@@ -129,6 +129,26 @@ namespace Sflix
             row.Controls.Add(browse, 2, 0);
             card.Controls.Add(row);
 
+            // Verknüpfungen auf STEFFLIX.exe (seit 4.0.0)
+            FlowLayoutPanel shortcutRow = new FlowLayoutPanel();
+            shortcutRow.AutoSize = true;
+            shortcutRow.WrapContents = true;
+            shortcutRow.Margin = new Padding(0, Theme.S(14), 0, 0);
+            desktopCheck = new DarkCheckBox();
+            desktopCheck.Text = "Verknüpfung auf dem Desktop";
+            startMenuCheck = new DarkCheckBox();
+            startMenuCheck.Text = "Verknüpfung im Startmenü";
+            foreach (DarkCheckBox c in new DarkCheckBox[] { desktopCheck, startMenuCheck })
+            {
+                c.ForeColor = Theme.Text;
+                c.Switch = true;
+                c.Checked = true;
+                c.Margin = new Padding(0, 0, Theme.S(24), 0);
+                c.FitText();
+                shortcutRow.Controls.Add(c);
+            }
+            card.Controls.Add(shortcutRow);
+
             // ffmpeg mitinstallieren (empfohlen), Ordner wählbar, Standard je Benutzer in AppData
             ffmpegCheck = new DarkCheckBox();
             ffmpegCheck.Text = "ffmpeg mitinstallieren (empfohlen)";
@@ -153,7 +173,7 @@ namespace Sflix
             Label licenseTitle = Theme.MakeLabel("Lizenzschlüssel (optional)", false);
             licenseTitle.Margin = new Padding(0, Theme.S(14), 0, Theme.S(2));
             card.Controls.Add(licenseTitle);
-            Label licenseHint = Theme.MakeLabel("Schaltet das Feedback in STEFFLIX und im Updater frei. Lässt sich auch später im Updater unter „Lizenz“ eingeben. " +
+            Label licenseHint = Theme.MakeLabel("Schaltet das Feedback in STEFFLIX und in den Tools frei. Lässt sich auch später in STEFFLIX.exe unter „Lizenz“ eingeben. " +
                                                 "Beim Speichern wird eine Bestätigung mit der Kennung dieser Installation verschickt.", true);
             licenseHint.MaximumSize = new Size(Theme.S(840), 0);
             licenseHint.Margin = new Padding(0, 0, 0, Theme.S(4));
@@ -180,11 +200,11 @@ namespace Sflix
             openButton.Padding = installButton.Padding;
             openButton.Visible = false;
             openButton.Click += delegate { OpenStefflix(); };
-            startButton = Theme.MakeButton("Updater starten", false);
+            startButton = Theme.MakeButton("Tools öffnen", false);
             startButton.Margin = new Padding(Theme.S(10), Theme.S(3), 0, 0);
             startButton.Padding = new Padding(Theme.S(14), Theme.S(6), Theme.S(14), Theme.S(6));
             startButton.Visible = false;
-            startButton.Click += delegate { StartUpdater(); };
+            startButton.Click += delegate { StartInstalled("--tools"); };
             closeButton = Theme.MakeButton("Schliessen", false);
             closeButton.Margin = new Padding(Theme.S(10), Theme.S(3), 0, 0);
             closeButton.Padding = new Padding(Theme.S(14), Theme.S(6), Theme.S(14), Theme.S(6));
@@ -306,6 +326,8 @@ namespace Sflix
             }
 
             InstallOptions options = new InstallOptions();
+            options.DesktopShortcut = desktopCheck.Checked;
+            options.StartMenuShortcut = startMenuCheck.Checked;
             options.Ffmpeg = ffmpegCheck.Checked;
             if (options.Ffmpeg)
             {
@@ -382,26 +404,19 @@ namespace Sflix
             FlushUi();
         }
 
+        // STEFFLIX im eigenen Fenster öffnen (STEFFLIX.exe ohne Angaben)
         void OpenStefflix()
         {
-            if (installedFolder == null) return;
-            try
-            {
-                Process.Start(InstallTask.GuideUrl(installedFolder));
-            }
-            catch
-            {
-                try { Process.Start(Path.Combine(installedFolder, "start.html")); } catch { }
-            }
+            StartInstalled("");
         }
 
-        void StartUpdater()
+        void StartInstalled(string args)
         {
             if (installedFolder == null) return;
             string exe = Path.Combine(installedFolder, App.ExeName);
             try
             {
-                ProcessStartInfo psi = new ProcessStartInfo(exe);
+                ProcessStartInfo psi = new ProcessStartInfo(exe, args);
                 psi.UseShellExecute = false;
                 psi.WorkingDirectory = installedFolder;
                 Process.Start(psi);
@@ -409,7 +424,7 @@ namespace Sflix
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, "Der Updater konnte nicht gestartet werden:\n" + ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, "STEFFLIX.exe konnte nicht gestartet werden:\n" + ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

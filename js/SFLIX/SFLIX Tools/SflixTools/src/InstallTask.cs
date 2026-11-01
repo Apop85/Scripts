@@ -4,7 +4,7 @@
 //      Vorhandene Dateien bleiben unverändert.
 //   3. sflix_sys\renamed.js anlegen (wird von "Daten einlesen" gefüllt) und sflix_sys\install.js
 //      mit eigener Kennung (getrennter Speicher im Browser)
-//   4. Dieses Programm als updateStefflix.exe in den Ordner kopieren
+//   4. Dieses Programm als STEFFLIX.exe in den Ordner kopieren, auf Wunsch Verknüpfungen anlegen
 
 using System;
 using System.Collections.Generic;
@@ -18,6 +18,8 @@ namespace Sflix
         public bool Ffmpeg;            // ffmpeg mitinstallieren
         public string FfmpegFolder;    // Ordner für ffmpeg (Standard: FfmpegLocation.DefaultFolder)
         public string LicenseKey;      // optional
+        public bool DesktopShortcut;   // Verknüpfung auf dem Desktop (seit 4.0.0)
+        public bool StartMenuShortcut; // Verknüpfung im Startmenü (seit 4.0.0)
     }
 
     public static class InstallTask
@@ -93,7 +95,7 @@ namespace Sflix
             string idNote = InstallId.Ensure(target);
             if (idNote != null) ctx.Log("  " + idNote);
 
-            // Den Updater selbst in den Ordner kopieren (sein Selbst-Update holt neuere Versionen)
+            // Das Programm selbst in den Ordner kopieren (sein Selbst-Update holt neuere Versionen)
             string exe = Path.Combine(target, App.ExeName);
             if (!string.Equals(Path.GetFullPath(App.ExePath), exe, StringComparison.OrdinalIgnoreCase))
             {
@@ -107,6 +109,13 @@ namespace Sflix
                     ctx.Log("  " + App.ExeName.PadRight(36) + "installiert (Version " + App.VersionText + ")");
                 }
             }
+            if (options != null && File.Exists(exe))
+            {
+                if (options.DesktopShortcut && Shortcuts.Ensure(Shortcuts.DesktopFolder, exe) != null)
+                    ctx.Log("  " + "Verknüpfung auf dem Desktop".PadRight(36) + "angelegt");
+                if (options.StartMenuShortcut && Shortcuts.Ensure(Shortcuts.StartMenuFolder, exe) != null)
+                    ctx.Log("  " + "Verknüpfung im Startmenü".PadRight(36) + "angelegt");
+            }
 
             ctx.Log("Installiert: " + loaded + "   Bereits vorhanden: " + existing + "   Fehler: " + failed);
             if (failed > 0)
@@ -114,7 +123,7 @@ namespace Sflix
 
             if (options != null) InstallExtras(ctx, target, options);
             ctx.Log("");
-            ctx.Log("Anleitung zum Hinzufügen von Medien (im Browser öffnen):");
+            ctx.Log("Anleitung zum Hinzufügen von Medien (in STEFFLIX unter Hilfe, oder im Browser öffnen):");
             ctx.Log("  " + GuideUrl(target));
         }
 

@@ -42,6 +42,8 @@ function initEventListeners() {
     initAutoplayNavButton();
     initPlayerControls();
     initAutoRowResize();
+    // Im Fenster von STEFFLIX.exe: Menüeinträge für die Tools, F11, Brücke zum Programm
+    initDesktopApp();
 
     // Neu erstellte Elemente ebenfalls per Tastatur bedienbar machen
     enhanceAccessibility(document.body);
@@ -105,4 +107,10 @@ initDatabase(function () {
     startApplication();
     // Der Ladescreen wartet auf den Aufbau der Seite (IndexedDB öffnet asynchron, oft erst nach onload)
     markApplicationStarted();
+    // STEFFLIX.exe: Seite ist bereit (Datenübernahme, Update-Prüfung)
+    sendToDesktop({ cmd: "ready" });
+    // Von STEFFLIX.exe im Browser geöffnet: Daten für die Übernahme speichern
+    if (isDesktopExportRequest() && !isDesktopApp()) {
+        showDesktopExportPage();
+    }
 });

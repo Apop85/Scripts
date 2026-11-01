@@ -484,7 +484,13 @@ function parseVersionJs(text) {
     return legacy != null ? toVersionName(legacy[1]) : null;
 }
 
-// Vom Updater geschrieben (sflix_sys/updater_info.js): installierte Versionen von Updater und ffmpeg
+// Desktop-Programm STEFFLIX.exe (seit 2.8.0): STEFFLIX läuft im eigenen Fenster (WebView2) und kann
+// über window.chrome.webview mit dem Programm sprechen (siehe initDesktopApp in ui.js)
+function isDesktopApp() {
+    return !!(window.chrome && window.chrome.webview && typeof window.chrome.webview.postMessage === "function");
+}
+
+// Von STEFFLIX.exe geschrieben (sflix_sys/updater_info.js): installierte Versionen von Desktop und ffmpeg
 function getUpdaterInfo() {
     if (typeof updaterInfo === "undefined" || updaterInfo == null || typeof updaterInfo !== "object") {
         return null;
@@ -584,6 +590,12 @@ var iconShapes = {
     fullscreen: '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
     fullscreenExit: '<path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/>',
     pip: '<rect x="2.5" y="4.5" width="19" height="15" rx="2"/><rect x="12" y="11.5" width="7" height="5.5" rx="1" fill="currentColor" stroke="none"/>',
+    // Menü im Fenster von STEFFLIX.exe (Tools)
+    update: '<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/>',
+    importer: '<path d="M12 3v11M7.5 9.5L12 14l4.5-4.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
+    tools: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.1l-5.8 5.8a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.1-5.4l-2.6 2.6-2.2-.4-.4-2.2z"/>',
+    key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14.5 8.5l2 2"/>',
+    question: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/>',
     gear: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
     // Autoplay: Unendlichkeitszeichen mit Play-Symbol (wie das frühere Autoplay-Bild)
     autoplay: '<path d="M12 12c-1.8-2.4-3.6-3.6-5.4-3.6a3.6 3.6 0 0 0 0 7.2c1.8 0 3.6-1.2 5.4-3.6zm0 0c1.8 2.4 3.6 3.6 5.4 3.6a3.6 3.6 0 0 0 0-7.2c-1.8 0-3.6 1.2-5.4 3.6z" stroke-opacity="0.5"/><path d="M9 6.6v10.8l8.6-5.4z" fill="currentColor" stroke="none"/>'
@@ -643,7 +655,7 @@ function encodeUrlData(decodedData) {
     try {
         return btoa(decodedData);
     } catch (error) {
-        console.warn("Ungültige Zeichen - bitte im Updater (updateStefflix.exe) \"Daten einlesen\" ausführen:", decodedData);
+        console.warn("Ungültige Zeichen - bitte in STEFFLIX.exe \"Daten einlesen\" ausführen:", decodedData);
         return null;
     }
 }

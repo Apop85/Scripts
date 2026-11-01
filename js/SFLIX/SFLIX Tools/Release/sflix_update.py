@@ -1,7 +1,10 @@
 """Dateiliste und Prüffunktionen für das Release (create_checksums.py, check_release.py).
 
 Ab Version 3.0 ist updateStefflix.exe der STEFFLIX Updater mit Oberfläche (C#, Quellcode in
-"SFLIX Tools\\SflixTools"). Er installiert auch, setup.exe gibt es nicht mehr. updater.exe und
+"SFLIX Tools\\SflixTools"). Er installiert auch, setup.exe gibt es nicht mehr.
+Ab 4.0 heisst das Programm STEFFLIX.exe (Player-Fenster und Tools, "Desktop"). Dieselbe Datei liegt
+vorerst auch als updateStefflix.exe im Repo: Updater bis 3.x laden nur diesen Namen, die neue
+Version benennt sich beim ersten Start mit Oberfläche um. updater.exe und
 updateData.exe sind eingefroren und werden nur noch für den Umstieg älterer Installationen
 bereitgestellt. Ihre Python-Quellen (updater.py, getfilepath.py) liegen nicht mehr hier. Die
 Download-Funktionen unten waren in diese Programme eingebaut und bleiben als Referenz erhalten.
@@ -82,8 +85,11 @@ FILES = {
     "start.html": RAW_URL + "start.html",
     "updateData.exe": BIN_URL + "updateData.exe",
     "updater.exe": BIN_URL + "updater.exe",
+    # Updater 3.x (laden nur diesen Namen); ab 4.0 dieselbe Datei wie STEFFLIX.exe
     "updateStefflix.exe": BIN_URL + "updateStefflix.exe",
-    # Vorgabe für ffmpeg (Version, Download-Adresse, SHA256), gelesen von updateStefflix.exe ab 3.0
+    # Ab 4.0: Player und Tools (Selbst-Update über diesen Namen)
+    "STEFFLIX.exe": BIN_URL + "STEFFLIX.exe",
+    # Vorgabe für ffmpeg (Version, Download-Adresse, SHA256), gelesen vom Programm ab 3.0
     "ffmpeg.json": RAW_URL + "ffmpeg.json",
 }
 

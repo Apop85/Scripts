@@ -163,7 +163,7 @@ function renderFolderPage(levels) {
 
     var node = getDataNode(levels);
     if (node == null || typeof node !== "object") {
-        info.textContent = "Dieser Ordner wurde nicht gefunden. Falls er noch existiert, im Updater (updateStefflix.exe) unter \"Updates\" die Aufgabe \"Daten einlesen\" ausführen.";
+        info.textContent = "Dieser Ordner wurde nicht gefunden. Falls er noch existiert, in STEFFLIX.exe unter \"Updates\" die Aufgabe \"Daten einlesen\" ausführen.";
         return;
     }
     info.textContent = describeFolder(node);
@@ -1079,7 +1079,7 @@ function showEmptyState(container) {
     var heading = document.createElement("h2");
     heading.textContent = "Willkommen bei STEFFLIX";
     var text = document.createElement("p");
-    text.textContent = "Es wurden noch keine Medien gefunden. Kopiere Videos, Musik oder Bilder in einen Unterordner von STEFFLIX und führe anschliessend im Updater (updateStefflix.exe) unter \"Updates\" die Aufgabe \"Daten einlesen\" aus.";
+    text.textContent = "Es wurden noch keine Medien gefunden. Kopiere Videos, Musik oder Bilder in einen Unterordner von STEFFLIX und führe anschliessend in STEFFLIX.exe unter \"Updates\" die Aufgabe \"Daten einlesen\" aus.";
     var link = document.createElement("a");
     link.className = "sflixButton primary";
     link.href = buildStartUrl("HELP", false);
@@ -1308,7 +1308,8 @@ function fillUpdateNews(banner, newestVersion) {
 // Startseite: Hinweis auf eine neue STEFFLIX-Version, sonst auf einen neuen Updater
 // (abschaltbar unter Einstellungen › Startseite)
 function checkForUpdate(container) {
-    if (!getSetting("showUpdateHints")) {
+    // Im Desktop-Programm prüft STEFFLIX.exe selbst und bietet das Update an
+    if (!getSetting("showUpdateHints") || isDesktopApp()) {
         return;
     }
     fetchText(versionUrl).then(function (text) {
@@ -1348,8 +1349,8 @@ function checkForUpdaterUpdate(container) {
             return;
         }
         var banner = createUpdateBanner(versions.updater, {
-            heading: "Updater " + versions.updater + " ist verfügbar",
-            meta: "Installiert ist Version " + info.updater + ". Beim Start von updateStefflix.exe die Aufgabe \"Update\" ausführen.",
+            heading: "STEFFLIX.exe " + versions.updater + " ist verfügbar",
+            meta: "Installiert ist Version " + info.updater + ". In STEFFLIX.exe (bis Version 3.5 updateStefflix.exe) unter \"Updates\" die Aufgabe \"Update\" ausführen.",
             storageKey: "updaterBannerDismissed"
         });
         container.insertBefore(banner, container.firstChild);
@@ -1756,10 +1757,10 @@ function markVersionCell(cell, isNewer) {
     cell.classList.toggle("versionNewer", isNewer);
 }
 
-// Hilfe: installierte (updater_info.js) und neueste Versionen (versions.json) von Updater und ffmpeg
+// Hilfe: installierte (updater_info.js) und neueste Versionen (versions.json) von Desktop (STEFFLIX.exe) und ffmpeg
 function fillToolVersions() {
     var info = getUpdaterInfo();
-    var unknown = "unbekannt (Updater starten)";
+    var unknown = "unbekannt (STEFFLIX.exe starten)";
     document.getElementById("updaterVersionNow").textContent = info && info.updater ? info.updater : unknown;
     document.getElementById("ffmpegVersionNow").textContent = info ? (info.ffmpeg || "nicht installiert") : unknown;
     var updaterNew = document.getElementById("updaterVersionNew");
@@ -1952,13 +1953,14 @@ function createNewsList(items, useShortText) {
 }
 
 // Komponenten der getrennten Patchnotes (Feld "component" in news.json seit 2.7.2)
+// Das Programm STEFFLIX.exe heisst seit 4.0.0 "Desktop" (vorher "Updater"), die Komponente bleibt "updater".
 var newsComponents = [
     { id: "stefflix", label: "STEFFLIX" },
-    { id: "updater", label: "Updater", pattern: /^Updater(?:\s+(\d+\.\d+\.\d+))?\s*:\s*/ },
+    { id: "updater", label: "Desktop", pattern: /^(?:Desktop|Updater)(?:\s+(\d+\.\d+\.\d+))?\s*:\s*/ },
     { id: "app", label: "Android-App", pattern: /^(?:Android-App|App)(?:\s+(\d+\.\d+\.\d+))?\s*:\s*/ }
 ];
 
-// Komponente, Version und Text ohne "Updater x.y.z:" eines Eintrags. Ältere news.json ohne die
+// Komponente, Version und Text ohne "Desktop x.y.z:" eines Eintrags. Ältere news.json ohne die
 // Felder: aus dem Textanfang. blockVersion = Version des STEFFLIX-Blocks.
 function getNewsComponent(item, blockVersion) {
     if (typeof item.component === "string" && typeof item.short === "string") {
@@ -1977,7 +1979,7 @@ function getNewsComponent(item, blockVersion) {
     return { component: "stefflix", version: blockVersion, text: item.text };
 }
 
-// Überschrift "Version x.y.z:" bzw. "Updater 3.5.0:" mit Liste
+// Überschrift "Version x.y.z:" bzw. "Desktop 4.0.0:" mit Liste
 function appendNewsGroup(container, title, items) {
     var heading = document.createElement("b");
     heading.textContent = title;
@@ -1987,8 +1989,8 @@ function appendNewsGroup(container, title, items) {
     container.appendChild(createNewsList(items, true));
 }
 
-// Changelog: Einträge von STEFFLIX immer sichtbar, die von Updater und App aufklappbar darunter,
-// je nach Version der Komponente gegliedert (ohne Nummer: "Updater (mit STEFFLIX x.y.z)").
+// Changelog: Einträge von STEFFLIX immer sichtbar, die von Desktop und App aufklappbar darunter,
+// je nach Version der Komponente gegliedert (ohne Nummer: "Desktop (mit STEFFLIX x.y.z)").
 function renderNews(container, news) {
     container.replaceChildren();
 
@@ -2012,7 +2014,7 @@ function renderNews(container, news) {
             var info = getNewsComponent(item, blockVersion);
             var list = groups[info.component] || groups.stefflix;
             var label = info.component == "stefflix" ? "Version " + blockVersion
-                : (info.component == "updater" ? "Updater" : "Android-App") + " " + (info.version || "(mit STEFFLIX " + blockVersion + ")");
+                : (info.component == "updater" ? "Desktop" : "Android-App") + " " + (info.version || "(mit STEFFLIX " + blockVersion + ")");
             // Gleiche Überschrift zusammenfassen (Einträge sind im Block nach Typ sortiert)
             var group = null;
             for (var g = 0; g < list.length; g++) {

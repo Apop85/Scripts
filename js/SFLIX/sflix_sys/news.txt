@@ -2,6 +2,19 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.8.0</b>:<br>
+<ul>
+    <li>[<span style="color: red">FEATURE</span>] Desktop 4.0.0: STEFFLIX im eigenen Fenster. Ein Doppelklick auf STEFFLIX.exe öffnet STEFFLIX ohne Browser, ohne Adresszeile, Linkvorschau und Kontextmenü. Fremde Links öffnen im Browser, Grösse und Lage des Fensters bleiben erhalten. start.html lässt sich weiterhin im Browser öffnen.</li>
+    <li>[<span style="color: red">FEATURE</span>] Desktop 4.0.0: F11 schaltet das Fenster in den Vollbildmodus. Auch das Vollbild eines Videos füllt den ganzen Bildschirm, beim Verlassen kehrt das Fenster in den vorherigen Zustand zurück.</li>
+    <li>[<span style="color: red">FEATURE</span>] Desktop 4.0.0: Beim ersten Start lassen sich Favoriten, Fortschritte, "Weiterschauen" und Einstellungen aus dem bisherigen Browser übernehmen. STEFFLIX öffnet sich dafür kurz im Browser und speichert eine Datensicherung, die das Fenster übernimmt. Eine vorhandene Sicherung lässt sich auch direkt wählen.</li>
+    <li>[<span style="color: red">FEATURE</span>] Desktop 4.0.0: Updates, Importer, Tools, Lizenz und die Hilfe zu den Tools öffnen sich aus dem Menü von STEFFLIX in einem zweiten Fenster. Nach "Daten einlesen" lädt STEFFLIX die Medien selbst neu, während einer Wiedergabe erst auf Wunsch. Beim Start prüft STEFFLIX.exe auf neue Versionen und bietet das Update an.</li>
+    <li>[<span style="color: red">FEATURE</span>] Desktop 4.0.0: Fehlt die Windows-Komponente WebView2 für das Fenster, bietet STEFFLIX.exe an, sie von Microsoft zu installieren, oder öffnet STEFFLIX im Browser.</li>
+    <li>[<span style="color: red">FEATURE</span>] Im Fenster von STEFFLIX.exe zeigt das Menü zusätzlich Updates, Importer, Tools, Lizenz und Hilfe zu den Tools. Die Datensicherung fragt dort nach dem Speicherort.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Desktop 4.0.0: Das Programm heisst neu STEFFLIX.exe (bisher updateStefflix.exe). Beim ersten Start nach dem Update benennt es sich um, passt Verknüpfungen an und legt Verknüpfungen auf dem Desktop und im Startmenü an. Das Setup legt sie auf Wunsch ebenfalls an.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Desktop 4.0.0: In den Patchnotes und Versionen heisst das Programm "Desktop" statt "Updater". Die Tools-Fenster tragen den Reiter im Titel.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Hinweise und Hilfe nennen STEFFLIX.exe statt updateStefflix.exe, die Hilfe hat einen neuen Abschnitt "STEFFLIX im eigenen Fenster". Im Changelog heissen die Neuerungen des Programms "Desktop".</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Android-App 1.3.0: Unter "Neuerungen" heissen die Neuerungen des Programms für Windows "Desktop" statt "Updater".</li>
+</ul>
 <b>Version 2.7.3</b>:<br>
 <ul>
     <li>[<span style="color: blue">INTERFACE</span>] Android-App 1.2.5: Nach einem Update aus der App öffnet sich die App wieder. Lässt Android das nicht zu, erscheint eine Benachrichtigung "STEFFLIX wurde aktualisiert", die die App mit einem Tipp öffnet.</li>

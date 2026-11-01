@@ -30,14 +30,15 @@ import java.util.regex.Pattern;
 
 /**
  * App-Einstellungen › Neuerungen: Patchnotes aus news.json auf GitHub. Zuerst die der App (nach
- * App-Version gegliedert), die von STEFFLIX und Updater lassen sich darunter einblenden. Felder
- * "component", "componentVersion" und "short" schreibt create_news.py; ältere news.json ohne sie:
- * Komponente aus dem Textanfang ("Updater x.y.z:", "Android-App x.y.z:").
+ * App-Version gegliedert), die von STEFFLIX und Desktop (STEFFLIX.exe, bis 3.x "Updater") lassen sich
+ * darunter einblenden. Felder "component", "componentVersion" und "short" schreibt create_news.py
+ * (Desktop weiterhin als "updater"); ältere news.json ohne sie: Komponente aus dem Textanfang
+ * ("Desktop x.y.z:", "Updater x.y.z:", "Android-App x.y.z:").
  */
 final class NewsDialog {
 
     static final String NEWS_URL = "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/sflix_sys/news.json";
-    private static final Pattern UPDATER = Pattern.compile("^Updater(?:\\s+(\\d+\\.\\d+\\.\\d+))?\\s*:\\s*");
+    private static final Pattern UPDATER = Pattern.compile("^(?:Desktop|Updater)(?:\\s+(\\d+\\.\\d+\\.\\d+))?\\s*:\\s*");
     private static final Pattern APP = Pattern.compile("^(?:Android-App|App)(?:\\s+(\\d+\\.\\d+\\.\\d+))?\\s*:\\s*");
     private static final int RED = 0xffe8261a;
     private static final int MUTED = 0xff9a9aa2;
@@ -45,7 +46,7 @@ final class NewsDialog {
     private NewsDialog() {
     }
 
-    /** Ein Eintrag: Typ, Komponente, Überschrift (z.B. "Updater 3.5.0"), Text ohne Anfang. */
+    /** Ein Eintrag: Typ, Komponente, Überschrift (z.B. "Desktop 4.0.0"), Text ohne Anfang. */
     private static final class Item {
         String type, component, title, text;
     }
@@ -125,7 +126,7 @@ final class NewsDialog {
                 if ("stefflix".equals(component)) {
                     item.title = "Version " + block;
                 } else {
-                    item.title = ("updater".equals(component) ? "Updater " : "Android-App ")
+                    item.title = ("updater".equals(component) ? "Desktop " : "Android-App ")
                             + (componentVersion != null && !componentVersion.isEmpty() ? componentVersion : "(mit STEFFLIX " + block + ")");
                 }
                 list.add(item);
@@ -145,12 +146,12 @@ final class NewsDialog {
         LinearLayout content = new LinearLayout(a);
         content.setOrientation(LinearLayout.VERTICAL);
         Switch web = toggle(a, "Auch Neuerungen von STEFFLIX zeigen");
-        Switch updater = toggle(a, "Auch Neuerungen des Updaters zeigen");
+        Switch updater = toggle(a, "Auch Neuerungen von STEFFLIX.exe (Desktop) zeigen");
         Runnable fill = () -> {
             content.removeAllViews();
             section(a, content, items, "app", web.isChecked() || updater.isChecked() ? "Neuerungen der App" : null);
             if (web.isChecked()) section(a, content, items, "stefflix", "Neuerungen von STEFFLIX");
-            if (updater.isChecked()) section(a, content, items, "updater", "Neuerungen des Updaters");
+            if (updater.isChecked()) section(a, content, items, "updater", "Neuerungen von Desktop");
         };
         web.setOnCheckedChangeListener((b, c) -> fill.run());
         updater.setOnCheckedChangeListener((b, c) -> fill.run());

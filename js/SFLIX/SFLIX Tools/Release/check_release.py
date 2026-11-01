@@ -48,8 +48,8 @@ for path in OBSOLETE_FILES:
     if path != "sflix_sys/sflix.js" and os.path.exists(os.path.join(base_dir, path)):
         errors.append(f"Veraltete Datei sollte entfernt werden: {path}")
 
-# 5. updateStefflix.exe muss der STEFFLIX Updater ab 3.0 sein (wird nicht mehr aus
-#    updateStefflix.py gebaut, sondern aus "SFLIX Tools\SflixTools" hierher kopiert)
+# 5. STEFFLIX.exe muss das Programm ab 4.0 sein (aus "SFLIX Tools\SflixTools" hierher kopiert),
+#    updateStefflix.exe dieselbe Datei (für Updater bis 3.x)
 def file_version(path):
     """Dateiversion (major, minor, build) einer Windows-Programmdatei oder None."""
     import ctypes
@@ -71,14 +71,22 @@ def file_version(path):
 
 
 updater_exe = os.path.join(base_dir, "updateStefflix.exe")
-if not os.path.exists(updater_exe):
-    errors.append("updateStefflix.exe fehlt (build_release.bat baut sie aus SFLIX Tools\\SflixTools)")
+desktop_exe = os.path.join(base_dir, "STEFFLIX.exe")
+if not os.path.exists(desktop_exe):
+    errors.append("STEFFLIX.exe fehlt (build_release.bat baut sie aus SFLIX Tools\\SflixTools)")
 else:
-    version = file_version(updater_exe)
-    if version is None or version < (3, 0, 0):
-        errors.append("updateStefflix.exe ist nicht der STEFFLIX Updater ab 3.0 (alte Python-Version?)")
+    version = file_version(desktop_exe)
+    if version is None or version < (4, 0, 0):
+        errors.append("STEFFLIX.exe ist nicht das Programm ab 4.0")
     else:
-        print("updateStefflix.exe Version %d.%d.%d" % version)
+        print("STEFFLIX.exe Version %d.%d.%d" % version)
+if not os.path.exists(updater_exe):
+    errors.append("updateStefflix.exe fehlt (Kopie von STEFFLIX.exe für Updater bis 3.x)")
+elif os.path.exists(desktop_exe):
+    # Updater bis 3.x laden nur updateStefflix.exe: muss dieselbe Datei sein
+    with open(updater_exe, "rb") as a, open(desktop_exe, "rb") as b:
+        if a.read() != b.read():
+            errors.append("updateStefflix.exe ist nicht dieselbe Datei wie STEFFLIX.exe (build_release.bat kopiert sie)")
 
 # 6. ffmpeg.json muss gültig sein (sonst lädt der Updater die eingebaute ffmpeg-Version)
 import json

@@ -1,4 +1,4 @@
-// Aufgabe "Update" (bisher updateStefflix.exe + updater.exe) und das Selbst-Update.
+// Aufgabe "Update" (früher updateStefflix.exe + updater.exe) und das Selbst-Update von STEFFLIX.exe.
 
 using System;
 using System.Diagnostics;
@@ -27,7 +27,7 @@ namespace Sflix
         {
             System.Collections.Generic.List<string> parts = new System.Collections.Generic.List<string>();
             if (WebChanged) parts.Add("STEFFLIX " + WebText());
-            if (SelfChanged) parts.Add("Updater " + App.VersionText + " → " + SelfUpdate.Short(SelfRemote));
+            if (SelfChanged) parts.Add("Desktop " + App.VersionText + " → " + SelfUpdate.Short(SelfRemote));
             if (FfmpegChanged) parts.Add("ffmpeg " + FfmpegLocal + " → " + FfmpegRemote);
             return string.Join(", ", parts.ToArray());
         }
@@ -100,10 +100,11 @@ namespace Sflix
             return result;
         }
 
-        static readonly Regex UpdaterPrefix = new Regex(@"^Updater(?:\s+(\d+\.\d+\.\d+))?\s*:\s*");
+        // Seit 4.0.0 "Desktop x.y.z:", vorher "Updater x.y.z:" (gleiche Komponente "updater")
+        static readonly Regex UpdaterPrefix = new Regex(@"^(?:Desktop|Updater)(?:\s+(\d+\.\d+\.\d+))?\s*:\s*");
         static readonly Regex AppPrefix = new Regex(@"^(?:Android-App|App)(?:\s+(\d+\.\d+\.\d+))?\s*:\s*");
 
-        // Wie create_news.py: "Updater x.y.z:" bzw. "Android-App x.y.z:" am Anfang, sonst STEFFLIX
+        // Wie create_news.py: "Desktop x.y.z:" bzw. "Android-App x.y.z:" am Anfang, sonst STEFFLIX
         static void ComponentOf(string text, out string component, out string version, out string shortText)
         {
             Match m = UpdaterPrefix.Match(text);

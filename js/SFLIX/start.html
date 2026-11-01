@@ -167,15 +167,15 @@
         </div>
     </div>
     <script src="sflix_sys/data.js"></script>
-    <!-- Von updateStefflix.exe (Daten einlesen) erstellt: umbenannte Dateien (fehlt bei Erstinstallation, wird dann ignoriert) -->
+    <!-- Von STEFFLIX.exe (Daten einlesen) erstellt: umbenannte Dateien (fehlt bei Erstinstallation, wird dann ignoriert) -->
     <script src="sflix_sys/renamed.js"></script>
-    <!-- Von updateStefflix.exe erstellt: Kennung dieser Installation, damit mehrere STEFFLIX-Ordner
+    <!-- Von STEFFLIX.exe erstellt: Kennung dieser Installation, damit mehrere STEFFLIX-Ordner
          ihre Daten im Browser getrennt speichern (fehlt sie, gilt der gemeinsame Speicher) -->
     <script src="sflix_sys/install.js"></script>
-    <!-- Von updateStefflix.exe bei jedem Start erstellt: installierte Versionen von Updater und ffmpeg
+    <!-- Von STEFFLIX.exe bei jedem Start erstellt: installierte Versionen von Desktop und ffmpeg
          (fehlt bei Updatern vor 3.2, wird dann ignoriert) -->
     <script src="sflix_sys/updater_info.js"></script>
-    <!-- Vom Updater erstellt: Lizenzschlüssel dieser Installation (fehlt ohne Lizenz, wird dann ignoriert) -->
+    <!-- Von STEFFLIX.exe erstellt: Lizenzschlüssel dieser Installation (fehlt ohne Lizenz, wird dann ignoriert) -->
     <script src="sflix_sys/license.js"></script>
     <script src="sflix_sys/version.js"></script>
     <link rel="stylesheet" href="sflix_sys/sflix.css" type="text/css">
@@ -197,7 +197,7 @@
                 <!-- Symbole: Suche und Favoriten als Inline-SVG, die übrigen per CSS (SVG mit PNG-Fallback) -->
                 <a id="searchToggler" onclick="toggleContainer(['searchFieldContainer'], 'flex')"><span class="menuIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg></span><span class="menuLabel">Suche</span></a>
                 <a id="favoritesToggler" onclick="openFavorites()"><span class="menuIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.2l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg></span><span class="menuLabel">Favoriten</span></a>
-                <!-- Nur sichtbar mit bestätigtem Lizenzschlüssel (Eingabe im Updater, sflix_sys/license.js) -->
+                <!-- Nur sichtbar mit bestätigtem Lizenzschlüssel (Eingabe in STEFFLIX.exe, sflix_sys/license.js) -->
                 <a id="feedbackBoxToggler" onclick="toggleContainer(['feedbackWrapper'], 'flex')"><span class="menuIcon" id="supportIcon"></span><span class="menuLabel">Feedback</span></a>
                 <a id="settingsPageToggler" onclick="openSettings()"><span class="menuIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="menuLabel">Einstellungen</span></a>
                 <a id="helpToggler" onclick="openHelp()"><span class="menuIcon" id="helpIcon"></span><span class="menuLabel">Hilfe</span></a>
@@ -233,9 +233,9 @@
         <a class="closeButton" id="toggleFullscreenButton" style="display: none;" aria-label="Vollbild beenden" onclick="toggleFullscreenMode()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></a>
         <div id="help" style="display: none;">
             <h3>Neue Medien hinzufügen</h3>
-            <p>Neue Filme, Serien, Musik oder Bilder kommen am einfachsten mit dem Importer von <span class="highlighted">updateStefflix.exe</span> in STEFFLIX. Er kopiert oder verschiebt die Medien in den richtigen Ordner, wandelt nicht unterstützte Formate auf Wunsch um und liest danach nur den Zielordner neu ein. Das geht auch bei grossen Mediatheken schnell, der Rest bleibt unverändert.</p>
+            <p>Neue Filme, Serien, Musik oder Bilder kommen am einfachsten mit dem Importer von <span class="highlighted">STEFFLIX.exe</span> in STEFFLIX. Er kopiert oder verschiebt die Medien in den richtigen Ordner, wandelt nicht unterstützte Formate auf Wunsch um und liest danach nur den Zielordner neu ein. Das geht auch bei grossen Mediatheken schnell, der Rest bleibt unverändert.</p>
             <ol>
-                <li><span class="highlighted">updateStefflix.exe</span> starten und die Registerkarte "Importer" öffnen. Dateien oder Ordner lassen sich auch einfach ins Fenster ziehen.</li>
+                <li><span class="highlighted">STEFFLIX.exe</span> starten und im Menü "Importer" wählen. Dateien oder Ordner lassen sich auch einfach ins Fenster ziehen.</li>
                 <li>Unter "Was importieren?" mit "Dateien …" oder "Ordner …" die Medien wählen.</li>
                 <li>Unter "Ziel in STEFFLIX" die Kategorie wählen (z.B. Serien, mit "Neu …" auch eine eigene) und den Unterordner angeben, z.B. <span class="highlighted">Meine Serie\Staffel 1</span>.</li>
                 <li>Bei Bedarf die Optionen einschalten: Ordnerstruktur übernehmen, in ein browserkompatibles Format konvertieren, verschieben statt kopieren oder fehlende Vorschaubilder erstellen.</li>
@@ -246,8 +246,8 @@
                 <p>Die Medien lassen sich auch selbst in die Ordner kopieren. Danach müssen sie eingelesen werden, damit sie in STEFFLIX erscheinen.</p>
                 <ol>
                     <li>Medien in den passenden Unterordner kopieren, z.B. <span class="highlighted">Serien\Meine Serie\Staffel 1</span>.</li>
-                    <li>Optional ein Vorschaubild hinterlegen (siehe unten). Für Videos kann der Updater unter "Tools" mit "Vorschaubilder" auch selbst eines erzeugen.</li>
-                    <li><span class="highlighted">updateStefflix.exe</span> starten und unter "Updates" die Aufgabe "Daten einlesen" ausführen. Ist "Alle Ordner einlesen" ausgeschaltet, werden nur die gewählten Ordner eingelesen. Das ist schneller, wenn nur an wenigen Stellen etwas dazugekommen ist.</li>
+                    <li>Optional ein Vorschaubild hinterlegen (siehe unten). Für Videos kann STEFFLIX.exe unter "Tools" mit "Vorschaubilder" auch selbst eines erzeugen.</li>
+                    <li><span class="highlighted">STEFFLIX.exe</span> starten und im Menü unter "Updates" die Aufgabe "Daten einlesen" ausführen. Ist "Alle Ordner einlesen" ausgeschaltet, werden nur die gewählten Ordner eingelesen. Das ist schneller, wenn nur an wenigen Stellen etwas dazugekommen ist.</li>
                 </ol>
             </details>
             <details class="helpDetails">
@@ -257,11 +257,11 @@
                     <li>Musik: mp3, m4a, ogg, oga, opus, aac, flac, wav</li>
                     <li>Bilder: jpg, jpeg, png, gif, webp, avif, bmp</li>
                 </ul>
-                <p>Gross- und Kleinschreibung der Dateiendung spielt keine Rolle (JPG = jpg). Videos in anderen Formaten (z.B. mkv oder avi) wandelt der Updater mit dem Tool "Konvertieren" in passende MP4-Dateien um, Musik wie WMA oder AIFF in MP3.</p>
+                <p>Gross- und Kleinschreibung der Dateiendung spielt keine Rolle (JPG = jpg). Videos in anderen Formaten (z.B. mkv oder avi) wandelt STEFFLIX.exe mit dem Tool "Konvertieren" in passende MP4-Dateien um, Musik wie WMA oder AIFF in MP3.</p>
             </details>
             <details class="helpDetails">
                 <summary>Vorschaubilder (Preview-Ordner)</summary>
-                <p>Vorschaubilder liegen in einem Ordner namens <span class="highlighted">Preview</span>, und zwar im selben Verzeichnis wie das Medium oder der Ordner, zu dem sie gehören. Das Bild heisst gleich wie das Medium bzw. der Ordner (Endung jpg, png oder webp). Beim Einlesen der Daten schneidet <span class="highlighted">updateStefflix.exe</span> zu grosse Bilder auf 480x270 zu, damit sie schneller laden (webp-Bilder bleiben unverändert). Das Original wird mit gleichem Namen im Unterordner <span class="highlighted">Preview\__original</span> aufbewahrt. Hat ein Ordner kein eigenes Vorschaubild, nimmt STEFFLIX eines aus den Preview-Ordnern darunter (beliebig tief, der nächste zuerst, für jeden Ordner immer dasselbe Bild). Ohne Vorschaubild zeigt STEFFLIX eine farbige Kachel.</p>
+                <p>Vorschaubilder liegen in einem Ordner namens <span class="highlighted">Preview</span>, und zwar im selben Verzeichnis wie das Medium oder der Ordner, zu dem sie gehören. Das Bild heisst gleich wie das Medium bzw. der Ordner (Endung jpg, png oder webp). Beim Einlesen der Daten schneidet <span class="highlighted">STEFFLIX.exe</span> zu grosse Bilder auf 480x270 zu, damit sie schneller laden (webp-Bilder bleiben unverändert). Das Original wird mit gleichem Namen im Unterordner <span class="highlighted">Preview\__original</span> aufbewahrt. Hat ein Ordner kein eigenes Vorschaubild, nimmt STEFFLIX eines aus den Preview-Ordnern darunter (beliebig tief, der nächste zuerst, für jeden Ordner immer dasselbe Bild). Ohne Vorschaubild zeigt STEFFLIX eine farbige Kachel.</p>
                 <pre class="folderTree">D:\sflix\Bilder
 ├── Buddy
 ├── Natur
@@ -385,13 +385,24 @@
                 <li><b>Diagnose</b>: In der App ergänzt die Diagnose unter <a onclick="openSettings('fehlerbehebung')">Einstellungen › Fehlerbehebung</a> auch Angaben zur App wie Version, Gerät und Ladezeiten. Sie wird beim Feedback mitgeschickt.</li>
             </ul>
 
+            <h3 id="desktopHilfe">STEFFLIX im eigenen Fenster</h3>
+            <p>Ein Doppelklick auf <span class="highlighted">STEFFLIX.exe</span> im STEFFLIX-Ordner (oder auf die Verknüpfung auf dem Desktop bzw. im Startmenü) öffnet STEFFLIX in einem eigenen Fenster, ohne Adresszeile und ohne Browser. <span class="highlighted">start.html</span> lässt sich weiterhin im Browser öffnen.</p>
+            <ul class="helpOptions">
+                <li><b>Tools</b>: Im Menü öffnen "Updates", "Importer", "Tools", "Lizenz" und "Hilfe zu den Tools" ein zweites Fenster mit dem passenden Reiter. Nach "Daten einlesen" lädt STEFFLIX die Medien selbst neu, während einer Wiedergabe erst auf Wunsch.</li>
+                <li><b>Vollbild</b>: F11 schaltet das Fenster in den Vollbildmodus und zurück. Auch das Vollbild eines Videos füllt den ganzen Bildschirm, beim Verlassen kehrt das Fenster in den vorherigen Zustand zurück. F5 lädt STEFFLIX neu.</li>
+                <li><b>Daten aus dem Browser</b>: Beim ersten Start bietet STEFFLIX.exe an, Favoriten, Fortschritte, "Weiterschauen" und Einstellungen aus dem bisherigen Browser zu übernehmen. Dafür öffnet sich STEFFLIX kurz im Browser und speichert eine Datensicherung im Download-Ordner, die das Fenster dann übernimmt. Browser und Fenster speichern danach getrennt.</li>
+                <li><b>Updates</b>: Beim Start prüft STEFFLIX.exe, ob es neue Versionen gibt, und bietet das Update an.</li>
+                <li><b>Windows-Komponente</b>: Das Fenster braucht "WebView2" von Microsoft (unter Windows 11 vorinstalliert). Fehlt sie, bietet STEFFLIX.exe die Installation an oder öffnet STEFFLIX im Browser.</li>
+                <li><b>Bisheriger Name</b>: Bis Version 3.5 hiess das Programm <span class="highlighted">updateStefflix.exe</span>. Beim ersten Start nach dem Update benennt es sich um und passt Verknüpfungen an.</li>
+            </ul>
+
             <h3 id="stefflixUpdate">STEFFLIX aktualisieren</h3>
-            <p>Für ein Update <span class="highlighted">updateStefflix.exe</span> im STEFFLIX-Ordner starten, die Aufgaben "Update" und "Daten einlesen" auswählen und ausführen. Der Updater lädt die neue Version herunter und liest danach die Medien neu ein. Er hält sich auch selbst aktuell und meldet beim Start, wenn eine neue Version bereitsteht.</p>
+            <p>Für ein Update <span class="highlighted">STEFFLIX.exe</span> im STEFFLIX-Ordner starten und das angebotene Update annehmen, oder im Menü unter "Updates" die Aufgaben "Update" und "Daten einlesen" ausführen. STEFFLIX.exe lädt die neue Version herunter und liest danach die Medien neu ein. Das Programm hält sich auch selbst aktuell.</p>
             <details class="helpDetails">
-                <summary>Aufgaben des Updaters</summary>
+                <summary>Aufgaben der Tools</summary>
                 <p>Die ausgewählten Aufgaben laufen immer in dieser Reihenfolge ab:</p>
                 <ul class="helpOptions">
-                    <li><b>Update</b>: STEFFLIX-Dateien und den Updater selbst von GitHub aktualisieren. Installiert wird nur, wenn alle Dateien vollständig und gültig heruntergeladen wurden.</li>
+                    <li><b>Update</b>: STEFFLIX-Dateien und das Programm STEFFLIX.exe selbst von GitHub aktualisieren. Installiert wird nur, wenn alle Dateien vollständig und gültig heruntergeladen wurden.</li>
                     <li><b>Ablagen leeren</b>: Die Ablageordner der Werkzeuge (Ordner, deren Name mit __ beginnt, z.B. __teile, __konvertiert, __gelöscht, __original, __ersetzt und __duplikate) endgültig löschen oder wiederherstellen, ganz oder nur einzelne Dateien. Die Liste lässt sich nach Art filtern. Ist beim Wiederherstellen am Ziel schon eine Datei, kannst du ersetzen, überspringen oder als Kopie speichern. Nur innerhalb des STEFFLIX-Ordners möglich.</li>
                     <li><b>Folgen umbenennen</b>: Die Folgen einer Serie anhand der Folgenliste von serienjunkies.de (sonst fernsehserien.de oder TVmaze) umbenennen, z.B. "Serie - S01E02 - Titel" im Ordner "Staffel 01". Erkannt werden Namen mit S01E02 oder 1x02. Doppelfolgen behalten alle Nummern, z.B. "Serie - S01E02E03 - Titel". Vor dem Umbenennen werden alle Änderungen angezeigt, mehrere Dateien für eine Folge lassen sich vergleichen. Danach lässt sich der letzte Lauf rückgängig machen.</li>
                     <li><b>Duplikate finden</b>: Identische Dateien, gleiche Folgen einer Serie (S01E01 = 1x01 = S1E1) und gleiche Dateinamen finden, mit Vergleich von Grösse, Auflösung und Dauer. Aussortierte Dateien kommen nach __duplikate.</li>
@@ -401,32 +412,32 @@
                     <li><b>Vorschaubilder erstellen</b>: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach Preview\__gelöscht. Mit "für Musik" erhalten Alben ohne Vorschaubild ein Albumbild aus einem Bild im Album oder dem Cover der Musikdateien; bei mehreren Bildern wählst du eines mit Vorschau aus.</li>
                     <li><b>Daten einlesen</b>: Medien neu einlesen, ungültige Zeichen in Datei- und Ordnernamen korrigieren und zu grosse Vorschaubilder verkleinern. Ordner, deren Name mit __ beginnt, sowie System- und versteckte Ordner werden ignoriert.</li>
                 </ul>
-                <p>Die Tools durchsuchen mit "Alles" den ganzen STEFFLIX-Ordner, sonst nur die gewählten Ordner. "Medien prüfen", "Duplikate finden" und "Vorschaubilder" bearbeiten mehrere Dateien gleichzeitig und merken sich ihre Ergebnisse, ein zweiter Lauf ist dadurch viel schneller. Danach werden nur die betroffenen Ordner neu eingelesen. Das dafür nötige Programm ffmpeg installiert das Setup auf Wunsch gleich mit, sonst lädt es der Updater beim ersten Bedarf. Unter "Details" zeigt der Updater rechts ein Protokoll mit Suche und Filter. Alles Weitere, auch die Befehle für die Kommandozeile, erklärt der Reiter "Hilfe" im Updater.</p>
+                <p>Die Tools durchsuchen mit "Alles" den ganzen STEFFLIX-Ordner, sonst nur die gewählten Ordner. "Medien prüfen", "Duplikate finden" und "Vorschaubilder" bearbeiten mehrere Dateien gleichzeitig und merken sich ihre Ergebnisse, ein zweiter Lauf ist dadurch viel schneller. Danach werden nur die betroffenen Ordner neu eingelesen. Das dafür nötige Programm ffmpeg installiert das Setup auf Wunsch gleich mit, sonst lädt es STEFFLIX.exe beim ersten Bedarf. Unter "Details" zeigen die Tools rechts ein Protokoll mit Suche und Filter. Alles Weitere, auch die Befehle für die Kommandozeile, erklärt "Hilfe zu den Tools" im Menü von STEFFLIX.exe.</p>
             </details>
             <details class="helpDetails">
                 <summary>STEFFLIX neu installieren</summary>
-                <p>Wird <span class="highlighted">updateStefflix.exe</span> ausserhalb eines STEFFLIX-Ordners gestartet, bietet sie die Installation von STEFFLIX in einen neuen Ordner an. Sie lädt alle Dateien herunter und kopiert sich selbst in den neuen Ordner. Auf Wunsch installiert sie ffmpeg gleich mit (empfohlen) und hinterlegt den Lizenzschlüssel.</p>
+                <p>Wird <span class="highlighted">STEFFLIX.exe</span> ausserhalb eines STEFFLIX-Ordners gestartet, bietet sie die Installation von STEFFLIX in einen neuen Ordner an. Sie lädt alle Dateien herunter, kopiert sich selbst in den neuen Ordner und legt auf Wunsch Verknüpfungen auf dem Desktop und im Startmenü an. Ebenfalls auf Wunsch installiert sie ffmpeg gleich mit (empfohlen) und hinterlegt den Lizenzschlüssel.</p>
             </details>
             <table class="versionInfo">
                 <thead><tr><th></th><th>Installiert</th><th>Neueste</th></tr></thead>
                 <tbody>
                     <tr><th>STEFFLIX</th><td id="versionNow"></td><td id="versionNew"></td></tr>
-                    <tr><th>Updater</th><td id="updaterVersionNow"></td><td id="updaterVersionNew"></td></tr>
+                    <tr><th>Desktop (STEFFLIX.exe)</th><td id="updaterVersionNow"></td><td id="updaterVersionNew"></td></tr>
                     <tr><th>ffmpeg</th><td id="ffmpegVersionNow"></td><td id="ffmpegVersionNew"></td></tr>
                 </tbody>
             </table>
-            <p class="versionNote">Die installierten Versionen von Updater und ffmpeg trägt <span class="highlighted">updateStefflix.exe</span> bei jedem Start ein. ffmpeg lädt der Updater erst, wenn ein Werkzeug es braucht.</p>
+            <p class="versionNote">Die installierten Versionen von Desktop und ffmpeg trägt <span class="highlighted">STEFFLIX.exe</span> bei jedem Start ein. ffmpeg lädt STEFFLIX.exe erst, wenn ein Werkzeug es braucht.</p>
             <h3 id="einstellungenHilfe">Einstellungen</h3>
             <p>Unter <a onclick="openSettings()">Einstellungen</a> im Menü lassen sich die Kachelgrösse, die Anzahl Kacheln pro Zeile (fest oder automatisch nach Fensterbreite), die Markierungen auf den Kacheln, Animationen, der Startbildschirm, alphabetische Gruppen, das Sortieren ohne Artikel, getrennte Ordner, die Anzahl Einträge bei "Weiterschauen", die Update-Hinweise, die Browser-Steuerung sowie Intro und Abspann je Ordner festlegen. Änderungen gelten sofort und nur in diesem Browser.</p>
             <ul class="helpOptions">
                 <li><b>Datensicherung</b>: Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen und die Sortierung der Startseite werden nur in diesem Browser gespeichert. Unter <a onclick="openSettings('datensicherung')">Einstellungen › Datensicherung</a> lassen sie sich exportieren und auf einem anderen Browser oder PC oder nach dem Löschen der Browserdaten wieder importieren.</li>
                 <li><b>Fehlerbehebung</b>: Lädt STEFFLIX nicht richtig, stimmen die Vor- und Zurück-Buttons nicht oder setzen Videos an der falschen Stelle fort, lassen sich unter <a onclick="openSettings('fehlerbehebung')">Einstellungen › Fehlerbehebung</a> die gespeicherten Daten prüfen, verwaiste Einträge entfernen oder Daten gezielt zurücksetzen. Dort steht auch eine Diagnose zum Kopieren.</li>
-                <li><b>Lizenz</b>: Den Lizenzschlüssel für das Feedbackformular im Updater (updateStefflix.exe) unter "Lizenz" eingeben. Der Stand ist unter <a onclick="openSettings('lizenz')">Einstellungen › Lizenz</a> zu sehen.</li>
+                <li><b>Lizenz</b>: Den Lizenzschlüssel für das Feedbackformular in STEFFLIX.exe im Menü unter "Lizenz" eingeben. Der Stand ist unter <a onclick="openSettings('lizenz')">Einstellungen › Lizenz</a> zu sehen.</li>
             </ul>
             <h3>Versionsvorschau</h3>
             <img id="sflixPreview" alt="Vorschau der STEFFLIX-Oberfläche">
             <h3>Changelog</h3>
-            <p>Die Neuerungen von STEFFLIX stehen nach Versionen geordnet. Die Neuerungen des Updaters und der Android-App lassen sich darunter aufklappen, gegliedert nach ihren eigenen Versionen.</p>
+            <p>Die Neuerungen von STEFFLIX stehen nach Versionen geordnet. Die Neuerungen von Desktop (STEFFLIX.exe) und der Android-App lassen sich darunter aufklappen, gegliedert nach ihren eigenen Versionen.</p>
         </div>
         <!-- Seite "Einstellungen": Eingaben mit data-setting werden sofort gespeichert (ui.js) -->
         <div id="settingsPage" style="display: none;">
@@ -458,7 +469,7 @@
 
             <h3>Startseite</h3>
             <label class="settingRow"><span>Weiterschauen: maximale Anzahl<small>So viele Einträge zeigt "Weiterschauen" höchstens (5 bis 50)</small></span><input type="number" data-setting="continueMax" min="5" max="50"></label>
-            <label class="settingRow"><span>Update-Hinweise anzeigen<small>Hinweis auf der Startseite, wenn eine neue Version von STEFFLIX oder vom Updater bereitsteht. Die Versionen stehen weiterhin in der Hilfe.</small></span><input type="checkbox" data-setting="showUpdateHints"></label>
+            <label class="settingRow"><span>Update-Hinweise anzeigen<small>Hinweis auf der Startseite, wenn eine neue Version von STEFFLIX oder STEFFLIX.exe bereitsteht (im Fenster von STEFFLIX.exe meldet sich das Programm selbst). Die Versionen stehen weiterhin in der Hilfe.</small></span><input type="checkbox" data-setting="showUpdateHints"></label>
 
             <h3 id="wiedergabe">Wiedergabe</h3>
             <label class="settingRow"><span>Browser-Steuerung verwenden<small>Statt der STEFFLIX-Steuerung für Videos und Musik</small></span><input type="checkbox" id="nativeControlsCheckBox"></label>
@@ -524,7 +535,7 @@
                 </div>
                 <div class="repairItem">
                     <h5>Alle Daten löschen</h5>
-                    <p>Löscht alle gespeicherten Daten inklusive Einstellungen. Der Lizenzschlüssel bleibt erhalten, er ist im Updater hinterlegt. Nur ausführen, wenn keine andere Massnahme geholfen hat. Vorher wird angeboten, eine Sicherung zu erstellen.</p>
+                    <p>Löscht alle gespeicherten Daten inklusive Einstellungen. Der Lizenzschlüssel bleibt erhalten, er ist in STEFFLIX.exe hinterlegt. Nur ausführen, wenn keine andere Massnahme geholfen hat. Vorher wird angeboten, eine Sicherung zu erstellen.</p>
                     <a onclick="confirmDeleteAllData()" class="button danger">Alles löschen</a>
                 </div>
                 <div id="repairStatus" role="status"></div>
@@ -558,7 +569,7 @@
             <p class="appHint" id="androidHint">Installation: Die APK auf dem Gerät öffnen und die Installation aus unbekannten Quellen erlauben. Danach in der App "Quelle hinzufügen" wählen und den STEFFLIX-Ordner angeben, z.B. \\NAS\Medien\STEFFLIX. Die App funktioniert im Heimnetz, unterwegs nur über eine VPN-Verbindung.</p>
 
             <h3 id="lizenz">Lizenz</h3>
-            <p>Der Lizenzschlüssel schaltet das Feedbackformular frei. Er wird im Updater (updateStefflix.exe) unter "Lizenz" eingegeben oder bei der Installation angegeben und gilt dann für diese STEFFLIX-Installation in allen Browsern. Mit gültigem Schlüssel erscheint im Menü der Eintrag "Feedback".</p>
+            <p>Der Lizenzschlüssel schaltet das Feedbackformular frei. Er wird in STEFFLIX.exe im Menü unter "Lizenz" eingegeben oder bei der Installation angegeben und gilt dann für diese STEFFLIX-Installation in allen Browsern. Mit gültigem Schlüssel erscheint im Menü der Eintrag "Feedback".</p>
             <p id="licenseMsg" role="status"></p>
 
             <h3>Zurücksetzen</h3>
@@ -601,7 +612,7 @@
             typeof loadDecodedMedia, typeof toggleContainer, typeof startApplication].indexOf("undefined") >= 0) {
             var missingNotice = document.createElement("div");
             missingNotice.style.cssText = "position:fixed;inset:auto 16px 16px 16px;z-index:5000;padding:16px;border-radius:8px;background:#3a1d22;color:#f0d4d7;font:16px sans-serif";
-            missingNotice.textContent = "STEFFLIX ist unvollständig installiert: Programmdateien im Ordner sflix_sys/js fehlen. Bitte updateStefflix.exe erneut ausführen.";
+            missingNotice.textContent = "STEFFLIX ist unvollständig installiert: Programmdateien im Ordner sflix_sys/js fehlen. Bitte in STEFFLIX.exe (bis Version 3.5 updateStefflix.exe) das Update erneut ausführen.";
             document.body.appendChild(missingNotice);
         }
     </script>

@@ -445,6 +445,63 @@ input::placeholder, textarea::placeholder {
     color: var(--sflix-text-muted);
 }
 
+/* Fenster von STEFFLIX.exe: Einträge für die Tools, abgetrennt (siehe addDesktopMenuEntries) */
+#settingsDD .menuSeparator {
+    height: 1px;
+    margin: 4px 8px;
+    background-color: var(--sflix-border);
+}
+
+/* Fenster von STEFFLIX.exe: Hinweis nach "Daten einlesen" während der Wiedergabe */
+#desktopNotice {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 5000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: calc(100vw - 48px);
+    padding: 12px 14px 12px 18px;
+    border: 1px solid var(--sflix-border);
+    border-radius: 12px;
+    background-color: var(--sflix-bg-elevated);
+    box-shadow: var(--sflix-shadow);
+    color: var(--sflix-text);
+}
+
+/* Im Browser, von STEFFLIX.exe geöffnet (start.html?export=app): Datensicherung für die Übernahme */
+#desktopExport {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+#desktopExport .desktopExportBox {
+    max-width: 560px;
+    padding: 24px 28px;
+    border: 1px solid var(--sflix-border);
+    border-radius: 14px;
+    background-color: var(--sflix-bg-elevated);
+    box-shadow: var(--sflix-shadow);
+    color: var(--sflix-text);
+}
+
+#desktopExport h2 {
+    margin: 0 0 10px;
+}
+
+#desktopExport p {
+    margin: 0 0 18px;
+    color: var(--sflix-text-muted);
+    line-height: 1.5;
+}
+
 /* Sucheintrag im Menü nur auf dem Handy (auf grossen Bildschirmen ist die Lupe in der Kopfzeile) */
 #settingsDD a#searchToggler {
     display: none;

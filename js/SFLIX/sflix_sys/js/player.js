@@ -844,7 +844,7 @@ function handleMediaError(event) {
     }
     showMediaMessage("«" + stripExtension(getBaseName(currentMediaLocation)) + "» konnte nicht geladen werden. " +
         "Die Datei wurde eventuell verschoben, umbenannt oder gelöscht, oder das Format wird vom Browser nicht unterstützt. " +
-        "Bitte im Updater (updateStefflix.exe) \"Daten einlesen\" ausführen. Nicht abspielbare Dateien findet und konvertiert dort das Tool \"Medien prüfen\".");
+        "Bitte in STEFFLIX.exe \"Daten einlesen\" ausführen. Nicht abspielbare Dateien findet und konvertiert dort das Tool \"Medien prüfen\".");
     skipAfterError();
 }
 
@@ -1037,7 +1037,7 @@ function loadDecodedMedia(decodedData, pushState) {
         var folderUrl = getDataNode(folderLevels) != null ? buildStartUrl(buildLevelPath(folderLevels)) : "start.html";
         showMediaMessage("«" + stripExtension(mediaName) + "» wurde nicht gefunden. " +
             "Die Datei wurde eventuell verschoben, umbenannt oder gelöscht. " +
-            "Falls die Datei noch existiert, im Updater (updateStefflix.exe) \"Daten einlesen\" ausführen.", folderUrl, "Zum Ordner");
+            "Falls die Datei noch existiert, in STEFFLIX.exe \"Daten einlesen\" ausführen.", folderUrl, "Zum Ordner");
     }
 
     if (pushState) {

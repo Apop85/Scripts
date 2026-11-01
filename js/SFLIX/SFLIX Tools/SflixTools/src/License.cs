@@ -259,7 +259,7 @@ namespace Sflix
             try { web = UpdateCheck.ParseWebVersion(File.ReadAllText(Path.Combine(root, "sflix_sys", "version.js"), Encoding.UTF8)); }
             catch { }
             return "STEFFLIX-ID: " + (InstallIdOf(root) ?? "ohne Kennung") + "\n" +
-                   "STEFFLIX " + (web ?? "?") + " · über Updater " + App.VersionText + " · " + Environment.OSVersion.VersionString;
+                   "STEFFLIX " + (web ?? "?") + " · über Desktop " + App.VersionText + " · " + Environment.OSVersion.VersionString;
         }
 
         static int SendNotice(string root, LicenseData d, string title, out string error)
@@ -287,7 +287,7 @@ namespace Sflix
             bool sent = status >= 200 && status < 300;
             try { Write(root, normalized, sent ? InstallIdOf(root) : ""); }
             catch (Exception e) { message = "Der Lizenzschlüssel konnte nicht gespeichert werden: " + e.Message; return false; }
-            message = sent ? "Lizenz gespeichert und bestätigt. Das Feedback ist im Updater und in STEFFLIX verfügbar."
+            message = sent ? "Lizenz gespeichert und bestätigt. Das Feedback ist in den Tools und in STEFFLIX verfügbar."
                            : "Lizenz gespeichert, die Bestätigung folgt beim nächsten Start mit Internetverbindung (" + error + ")";
             return true;
         }
@@ -348,7 +348,7 @@ namespace Sflix
         {
             LicenseData d = Current(App.Root);
             if (d == null) { message = "Kein gültiger Lizenzschlüssel hinterlegt."; return false; }
-            string content = Header(App.Root).Split('\n')[0] + " · Updater " + App.VersionText + "\n" +
+            string content = Header(App.Root).Split('\n')[0] + " · Desktop " + App.VersionText + "\n" +
                              "**Absender:** " + sender + "\n**Nachricht:**\n" + text;
             string error;
             int status = Discord.Send(d.Url, content, files, out error);

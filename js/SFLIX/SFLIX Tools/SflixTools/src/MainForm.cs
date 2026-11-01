@@ -100,6 +100,49 @@ namespace Sflix
         bool logToFile;
         readonly StringBuilder sessionLog = new StringBuilder();
 
+        // Anbindung an den Player (DesktopHost, seit 4.0.0)
+        public bool ShowUpdateDialogOnStart = true;                  // false: der Player zeigt den Hinweis
+        public Action<List<string>, TaskRunResult> TasksFinished;    // nach jedem Lauf (ausgeführte Aufgaben)
+        public Func<string> ExtraRestartArgs;                        // Neustart nach Selbst-Update: z.B. " --player"
+        public Action Restarting;                                    // vor dem Schliessen für den Neustart
+        List<string> lastTasks = new List<string>();
+        static readonly string[] PageTitles = { "Updates", "Importer", "Tools", "Lizenz", "Hilfe" };
+
+        public bool IsRunning { get { return running; } }
+
+        // Laufende Aufgabe abbrechen und danach schliessen (bzw. sofort schliessen)
+        public void CancelAndClose()
+        {
+            closeWhenDone = true;
+            if (running) CancelTasks();
+            else Close();
+        }
+
+        // Aus dem Menü des Players: updates, import, tools, license, help
+        public void OpenPage(string page)
+        {
+            int index;
+            switch ((page ?? "").ToLowerInvariant())
+            {
+                case "updates": index = PageUpdates; break;
+                case "import": index = PageImport; break;
+                case "tools": index = PageTools; break;
+                case "license": index = PageLicense; break;
+                case "help": index = PageHelp; break;
+                default: return;
+            }
+            ShowPage(index);
+        }
+
+        // "Jetzt aktualisieren" im Update-Hinweis des Players
+        public void StartUpdate(UpdateInfo info)
+        {
+            if (running) return;
+            pendingUpdate = info;
+            if (IsHandleCreated) RunUpdateNow();
+            else Shown += delegate { RunUpdateNow(); };
+        }
+
         public MainForm(Settings settings, List<string> autoRun, string startNotice, bool logToFile)
         {
             this.settings = settings;
@@ -107,7 +150,7 @@ namespace Sflix
             this.startNotice = startNotice;
             this.logToFile = logToFile;
 
-            Text = App.Title;
+            Text = App.Title + " – " + PageTitles[PageUpdates];
             BackColor = Theme.Back;
             ForeColor = Theme.Text;
             Font = new Font("Segoe UI", 9.5f);
@@ -244,8 +287,8 @@ namespace Sflix
             optDataAll.CheckedChanged += delegate { dataFoldersRow.Visible = !optDataAll.Checked; Relayout(); };
             dataFoldersRow = BuildDataFoldersRow();
             Control updatesSection = TileSection(new TileSpec[] {
-                Spec("update", Glyph.Up, "Update", "STEFFLIX und Updater von GitHub",
-                     "STEFFLIX-Dateien und dieses Programm von GitHub aktualisieren.", optFfmpeg),
+                Spec("update", Glyph.Up, "Update", "STEFFLIX und Programm von GitHub",
+                     "STEFFLIX-Dateien und dieses Programm (STEFFLIX.exe) von GitHub aktualisieren.", optFfmpeg),
                 Spec("data", Glyph.Data, "Daten einlesen", "Medien neu einlesen",
                      "Medien neu einlesen (data.js), ungültige Zeichen in Namen korrigieren.", optDataAll, dataFoldersRow),
             }, null);
@@ -769,6 +812,8 @@ namespace Sflix
                 ResumeLayout(true);
                 banner.Subtitle = index == PageLicense && feedbackPage.Status == LicenseStatus.Active ? "FEEDBACK" : PageSubtitles[index];
                 banner.Invalidate();
+                // Zwei Fenster "STEFFLIX" in der Taskleiste: die Tools mit Reiter im Titel
+                Text = App.Title + " – " + (index == PageLicense && feedbackPage.Status == LicenseStatus.Active ? "Feedback" : PageTitles[index]);
                 UpdateStartText();
                 Relayout();
             }
@@ -1116,7 +1161,7 @@ namespace Sflix
                 h.Margin = new Padding(0, 0, 0, Theme.S(4));
                 grid.Controls.Add(h, c, 0);
             }
-            string[] names = { "STEFFLIX", "Updater", "ffmpeg" };
+            string[] names = { "STEFFLIX", "Desktop", "ffmpeg" };
             for (int r = 0; r < 3; r++)
             {
                 Panel line = new Panel();
@@ -1165,6 +1210,12 @@ namespace Sflix
         // (sonst die aktuelle). owner: Fenster, über dem sie erscheinen.
         void ShowPatchNotes(Form owner)
         {
+            ShowPatchNotesFor(owner);
+        }
+
+        // Auch vom Player (Update-Hinweis beim Start)
+        public static void ShowPatchNotesFor(Form owner)
+        {
             string local = UpdateCheck.LocalWebVersion();
             Cursor old = owner.Cursor;
             owner.Cursor = Cursors.WaitCursor;
@@ -1174,7 +1225,8 @@ namespace Sflix
                 string error = null;
                 try { all = PatchNotes.Load(CancellationToken.None); }
                 catch (Exception ex) { error = ex.Message; }
-                BeginInvoke((Action)delegate
+                if (owner.IsDisposed) return;
+                owner.BeginInvoke((Action)delegate
                 {
                     owner.Cursor = old;
                     if (owner.IsDisposed) return;
@@ -1190,7 +1242,7 @@ namespace Sflix
                                    : "Neuerungen in STEFFLIX " + (list.Count > 0 ? list[0].Version : (local ?? ""));
                     using (PatchNotesDialog dlg = new PatchNotesDialog(heading, list))
                     {
-                        dlg.Icon = Icon;
+                        dlg.Icon = owner.Icon;
                         dlg.ShowDialog(owner);
                     }
                 });
@@ -1450,7 +1502,7 @@ namespace Sflix
         {
             StringBuilder sb = new StringBuilder();
             string folder;
-            sb.Append("Updater: ").Append(App.VersionText).Append("\r\n");
+            sb.Append("Desktop: ").Append(App.VersionText).Append("\r\n");
             sb.Append("STEFFLIX: ").Append(UpdateCheck.LocalWebVersion() ?? "unbekannt").Append("\r\n");
             sb.Append("STEFFLIX-ID: ").Append(InstallId.Read(App.Root, out folder) ?? "ohne Kennung").Append("\r\n");
             sb.Append("Installationsordner: ").Append(App.Root).Append("\r\n");
@@ -2084,7 +2136,7 @@ namespace Sflix
                 StartTasks(autoRun);
                 CheckForUpdateInBackground(false);   // nur die Versionsübersicht füllen
             }
-            else CheckForUpdateInBackground(true);
+            else CheckForUpdateInBackground(ShowUpdateDialogOnStart);
         }
 
         // Beim Start im Hintergrund prüfen, ob STEFFLIX, der Updater oder ffmpeg neuer sind.
@@ -2333,6 +2385,7 @@ namespace Sflix
 
             TaskRunner runner = new TaskRunner();
             runner.Tasks = selected;
+            lastTasks = new List<string>(selected);
             runner.UpdateFfmpeg = optFfmpeg.Checked || forceFfmpeg;
             forceFfmpeg = false;
             lastRunUpdated = selected.Contains("update");
@@ -2485,16 +2538,24 @@ namespace Sflix
                              : result.Success ? "Vorgang beendet – alles erfolgreich."
                              : "Vorgang beendet – mit Fehlern (siehe Details).";
             WriteLogFile();
+            if (TasksFinished != null)
+            {
+                try { TasksFinished(lastTasks, result); }
+                catch { }
+            }
 
             if (result.Restart)
             {
-                string args = "--updated";
+                // Die neue Version öffnet die Tools wieder (und den Player, falls er offen war)
+                string args = "--updated --tools";
                 if (result.Remaining.Count > 0) args += " --run " + string.Join(",", result.Remaining);
                 if (logToFile) args += " --log";
+                if (ExtraRestartArgs != null) args += ExtraRestartArgs();
                 try
                 {
                     SelfUpdate.Restart(args);
                     closeWhenDone = true;
+                    if (Restarting != null) Restarting();
                     Close();
                     return;
                 }

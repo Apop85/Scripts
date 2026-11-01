@@ -10,8 +10,11 @@ namespace Sflix
 {
     public static class App
     {
-        public const string ExeName = "updateStefflix.exe";
-        public const string Title = "STEFFLIX Updater";
+        // Seit 4.0.0 heisst das Programm STEFFLIX.exe (Player-Fenster und Tools). Updater bis 3.x laden
+        // weiterhin updateStefflix.exe; startet diese Datei, benennt sie sich um (ExeMigration).
+        public const string ExeName = "STEFFLIX.exe";
+        public const string LegacyExeName = "updateStefflix.exe";
+        public const string Title = "STEFFLIX";
 
         public static string Root;      // STEFFLIX-Ordner (enthält start.html und sflix_sys)
         public static string SysDir { get { return Path.Combine(Root, "sflix_sys"); } }

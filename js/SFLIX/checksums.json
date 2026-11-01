@@ -1,5 +1,5 @@
 {
-  "STEFFLIX.exe": "e9ac834623d7b8c51bc703d19c95711219e7887a1e412413f4f8d9d8a55e8cd3",
+  "STEFFLIX.exe": "f41275d73d797dd24791f8fea9b96d64d9b821be3a2e15bc5fa97c199b70c242",
   "_obsoleteFiles": [
     "sflix_sys/sflix.js",
     "sflix_sys/sflix_bg.jpg"
@@ -32,9 +32,9 @@
   "sflix_sys/sflixLogo.png": "fc1b02036258918ab7ada672613ddfc992ac38bdd99bc7611c1a5feca503c0b5",
   "sflix_sys/sflixLogo.svg": "87e9de4e2aa7c6c078a8e5d2ec789654691a32fd14e6ed30b5d289e596ad3286",
   "sflix_sys/splash.svg": "03b4592f93aebe12ec7e7dee800823aa5046bee4027b7ce77a80e32886f98c9d",
-  "sflix_sys/version.js": "88434a9b1489198264c20566c344e2ec68801c2cea91144040c172c534303f33",
+  "sflix_sys/version.js": "7094c750122671945e72138c280c21756ec587473cde95f41dcfa32376139f74",
   "start.html": "c17179e2d5ef50d4f44da7cd7759cccca30d3d26ca0f6558305e64b32783a520",
   "updateData.exe": "0224e1b26854a2a80715122adaf42edbe3de494127d7955fe65f281a2a8eac15",
-  "updateStefflix.exe": "e9ac834623d7b8c51bc703d19c95711219e7887a1e412413f4f8d9d8a55e8cd3",
+  "updateStefflix.exe": "f41275d73d797dd24791f8fea9b96d64d9b821be3a2e15bc5fa97c199b70c242",
   "updater.exe": "bbe88b952de3e6976a971132cb0ba3035b554eb47c770f681cc63dc59509ab7d"
 }

@@ -50,7 +50,9 @@ namespace Sflix
                 "- F5: STEFFLIX neu laden.\n" +
                 "- Menü: „Tools“ öffnet das Fenster der Tools beim Reiter Updates (ist es schon offen, kommt es nach vorne). Es erscheint erst fertig aufgebaut, bis dahin zeigt STEFFLIX „Tools werden geöffnet …“.\n" +
                 "- Nach „Daten einlesen“, dem Importer oder einem Update lädt STEFFLIX die Medien selbst neu. Läuft gerade ein Video oder Musik, erst auf Knopfdruck.\n" +
-                "- Ein zweiter Start von STEFFLIX.exe holt das offene Fenster nach vorne.\n\n" +
+                "- Ein zweiter Start von STEFFLIX.exe holt das offene Fenster nach vorne.\n" +
+                "- Verknüpfungen auf STEFFLIX.exe zeigen ein lokal abgelegtes Logo (%LOCALAPPDATA%\\STEFFLIX\\stefflix.ico), damit die Taskleiste es auch bei STEFFLIX auf einem Netzlaufwerk anzeigt. " +
+                "Bei schon angehefteten Verknüpfungen erscheint es eventuell erst nach einer neuen Anmeldung.\n\n" +
                 "# Daten aus dem Browser übernehmen\n" +
                 "Fenster und Browser speichern Favoriten, Fortschritte, „Weiterschauen“ und Einstellungen getrennt. Beim ersten Start bietet STEFFLIX.exe an, " +
                 "die Daten aus dem bisherigen Browser zu übernehmen: Es öffnet STEFFLIX dort kurz, STEFFLIX speichert eine Datensicherung im Download-Ordner, " +

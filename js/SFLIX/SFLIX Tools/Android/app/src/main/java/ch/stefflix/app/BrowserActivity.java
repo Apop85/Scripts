@@ -318,7 +318,9 @@ public class BrowserActivity extends Activity implements MediaServer.Listener, P
         } else if (web != null && web.canGoBack()) {
             web.goBack();
         } else {
-            super.onBackPressed();
+            // Die Auswahl liegt nicht mehr darunter (ShareListActivity schliesst sich beim Öffnen): neu zeigen
+            startActivity(ShareListActivity.intent(this).putExtra(ShareListActivity.EXTRA_CHOOSE, true));
+            finish();
         }
     }
 

@@ -44,10 +44,11 @@ public class ShareListActivity extends Activity {
     private TextView bannerText;
     private String retryId;
 
-    /** Zurueck zur Auswahl, z.B. aus der WebView oder den App-Einstellungen. */
+    /** Zurueck zur Auswahl, z.B. aus der WebView oder den App-Einstellungen. Ersetzt die ganze Aufgabe:
+     *  Die Auswahl schliesst sich beim Oeffnen einer Quelle (siehe open), STEFFLIX ist dann allein. */
     static Intent intent(Context c) {
         return new Intent(c, ShareListActivity.class)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
     }
 
     @Override
@@ -207,6 +208,9 @@ public class ShareListActivity extends Activity {
         store.setLast(s.id);
         banner.setVisibility(View.GONE);
         startActivity(new Intent(this, BrowserActivity.class).putExtra(BrowserActivity.EXTRA_ID, s.id));
+        // STEFFLIX soll allein in der Aufgabe sein: Beim Wechsel ins Bild-im-Bild-Fenster löst Android eine
+        // Seite, die nicht zuunterst liegt, heraus, und die Auswahl käme nach vorne
+        finish();
     }
 
     private void showActions(ShareStore.Share s) {

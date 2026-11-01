@@ -183,6 +183,8 @@ final class AppUpdate {
                         Intent result = new Intent(app, InstallReceiver.class);
                         PendingIntent pi = PendingIntent.getBroadcast(app, id, result,
                                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+                        // Nach dem Ersetzen die App wieder öffnen (ReplacedReceiver)
+                        new AppPrefs(app).setUpdateStarted(System.currentTimeMillis());
                         session.commit(pi.getIntentSender());
                     }
                 }
@@ -224,8 +226,66 @@ final class AppUpdate {
                     context.startActivity(confirm);
                 }
             } else if (status != PackageInstaller.STATUS_SUCCESS) {
+                new AppPrefs(context).setUpdateStarted(0);
                 String msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
                 Toast.makeText(context, "Update nicht installiert" + (msg != null ? ": " + msg : ""), Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    static final int UPDATED_NOTIFICATION_ID = 8;
+    private static final String UPDATES_CHANNEL = "updates";
+    private static final long REOPEN_WINDOW_MS = 30L * 60 * 1000;
+
+    /** Startbildschirm wie über das App-Symbol (bringt eine laufende App nach vorne). */
+    private static Intent launchIntent(Context c) {
+        return new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_LAUNCHER)
+                .setClass(c, ShareListActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+    }
+
+    /** Beim Öffnen der App: Hinweis "wurde aktualisiert" entfernen. */
+    static void clearUpdatedNotice(Context c) {
+        android.app.NotificationManager nm = c.getSystemService(android.app.NotificationManager.class);
+        if (nm != null) nm.cancel(UPDATED_NOTIFICATION_ID);
+    }
+
+    /**
+     * Nach einem Update aus der App (MY_PACKAGE_REPLACED): Android beendet die App beim Ersetzen.
+     * Sie versucht, sich wieder zu öffnen; ab Android 10 verbietet Android das aus dem Hintergrund
+     * meist, darum zusätzlich eine Benachrichtigung zum Antippen (verschwindet beim Öffnen).
+     */
+    public static final class ReplacedReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!Intent.ACTION_MY_PACKAGE_REPLACED.equals(intent.getAction())) return;
+            AppPrefs prefs = new AppPrefs(context);
+            long started = prefs.updateStarted();
+            prefs.setUpdateStarted(0);
+            if (started <= 0 || System.currentTimeMillis() - started > REOPEN_WINDOW_MS) return;
+            try {
+                android.app.NotificationManager nm = context.getSystemService(android.app.NotificationManager.class);
+                if (nm != null && nm.getNotificationChannel(UPDATES_CHANNEL) == null) {
+                    nm.createNotificationChannel(new android.app.NotificationChannel(UPDATES_CHANNEL, "Updates",
+                            android.app.NotificationManager.IMPORTANCE_HIGH));
+                }
+                PendingIntent open = PendingIntent.getActivity(context, 2, launchIntent(context),
+                        PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+                android.app.Notification n = new android.app.Notification.Builder(context, UPDATES_CHANNEL)
+                        .setSmallIcon(R.drawable.ic_notification)
+                        .setContentTitle("STEFFLIX wurde aktualisiert")
+                        .setContentText("Version " + installedVersion(context) + " ist installiert. Antippen zum Öffnen.")
+                        .setContentIntent(open)
+                        .setAutoCancel(true)
+                        .build();
+                if (nm != null) nm.notify(UPDATED_NOTIFICATION_ID, n);
+            } catch (RuntimeException ignored) {
+                // Benachrichtigungen nicht erlaubt: dann nur der Versuch, die App zu öffnen
+            }
+            try {
+                context.startActivity(launchIntent(context));
+            } catch (RuntimeException ignored) {
             }
         }
     }

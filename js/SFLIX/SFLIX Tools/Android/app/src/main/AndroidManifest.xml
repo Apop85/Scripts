@@ -47,6 +47,15 @@
             android:name=".AppUpdate$InstallReceiver"
             android:exported="false" />
 
+        <!-- Nach einem Update aus der App wieder öffnen bzw. Hinweis zum Antippen -->
+        <receiver
+            android:name=".AppUpdate$ReplacedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".PlaybackService"
             android:exported="false"

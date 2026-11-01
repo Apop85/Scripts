@@ -2,6 +2,10 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.7.3</b>:<br>
+<ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Android-App 1.2.5: Nach einem Update aus der App öffnet sich die App wieder. Lässt Android das nicht zu, erscheint eine Benachrichtigung "STEFFLIX wurde aktualisiert", die die App mit einem Tipp öffnet.</li>
+</ul>
 <b>Version 2.7.2</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Getrennte Patchnotes: Unter Hilfe › Changelog stehen die Neuerungen von STEFFLIX wie bisher. Die Neuerungen des Updaters und der Android-App lassen sich darunter aufklappen, gegliedert nach ihren eigenen Versionen.</li>

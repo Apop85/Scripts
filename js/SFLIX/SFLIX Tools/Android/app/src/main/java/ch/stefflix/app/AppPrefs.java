@@ -52,6 +52,10 @@ final class AppPrefs {
                 .putString("latestSha256", sha256).apply();
     }
 
+    /** Zeitpunkt, zu dem ein Update aus der App installiert wurde (0 = keines). Für das Öffnen danach. */
+    long updateStarted() { return p.getLong("updateStarted", 0); }
+    void setUpdateStarted(long v) { p.edit().putLong("updateStarted", v).commit(); }
+
     /** Version, für die der Hinweis mit "Später" geschlossen wurde. */
     String dismissedVersion() { return p.getString("dismissedVersion", ""); }
     void setDismissedVersion(String v) { p.edit().putString("dismissedVersion", v).apply(); }

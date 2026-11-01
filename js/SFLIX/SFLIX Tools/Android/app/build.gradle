@@ -15,8 +15,8 @@ android {
         applicationId 'ch.stefflix.app'
         minSdk 26
         targetSdk 34
-        versionCode 10203
-        versionName '1.2.3'
+        versionCode 10204
+        versionName '1.2.4'
     }
 
     signingConfigs {

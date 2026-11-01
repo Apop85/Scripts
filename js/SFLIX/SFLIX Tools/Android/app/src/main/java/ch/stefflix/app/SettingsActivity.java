@@ -124,6 +124,7 @@ public class SettingsActivity extends Activity {
         updateStatus = note(page, "");
         updateButton = button("Nach Update suchen", false, v -> checkUpdate());
         page.addView(updateButton);
+        page.addView(button("Neuerungen", false, v -> NewsDialog.show(this)));
         page.addView(button("Hilfe zur App", false, v -> {
             setResult(RESULT_HELP);
             finish();

@@ -237,10 +237,27 @@ namespace Sflix
             TableLayoutPanel root = new TableLayoutPanel();
             root.Dock = DockStyle.Fill;
             root.ColumnCount = 1;
-            root.RowCount = 3;
+            root.RowCount = 4;
+            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            // Neuerungen des Updaters stehen immer oben, die von STEFFLIX und App lassen sich dazuschalten
+            FlowLayoutPanel toggles = new FlowLayoutPanel();
+            toggles.AutoSize = true;
+            toggles.WrapContents = true;
+            toggles.Dock = DockStyle.Fill;
+            toggles.Margin = new Padding(0, 0, 0, Theme.S(8));
+            Label also = Theme.MakeLabel("Auch zeigen:", false);
+            also.ForeColor = Theme.Muted;
+            also.AutoSize = true;
+            also.Margin = new Padding(0, Theme.S(4), Theme.S(10), 0);
+            toggles.Controls.Add(also);
+            showWeb = MakeToggle("STEFFLIX");
+            showApp = MakeToggle("Android-App");
+            toggles.Controls.Add(showWeb);
+            toggles.Controls.Add(showApp);
             root.Padding = new Padding(Theme.S(20), Theme.S(16), Theme.S(20), Theme.S(14));
 
             Label title = Theme.MakeLabel(heading, false);
@@ -271,14 +288,35 @@ namespace Sflix
             close.Click += delegate { Close(); };
 
             root.Controls.Add(title, 0, 0);
-            root.Controls.Add(frame, 0, 1);
-            root.Controls.Add(close, 0, 2);
+            root.Controls.Add(toggles, 0, 1);
+            root.Controls.Add(frame, 0, 2);
+            root.Controls.Add(close, 0, 3);
             Controls.Add(root);
             CancelButton = close;
         }
 
         readonly RichTextBox box;
         readonly System.Collections.Generic.List<PatchVersion> versions;
+        readonly DarkCheckBox showWeb, showApp;
+
+        DarkCheckBox MakeToggle(string text)
+        {
+            DarkCheckBox c = new DarkCheckBox();
+            c.Text = text;
+            c.ForeColor = Theme.Text;
+            c.Switch = true;
+            c.Margin = new Padding(0, 0, Theme.S(16), 0);
+            c.FitText();
+            c.CheckedChanged += delegate { Refill(); };
+            return c;
+        }
+
+        void Refill()
+        {
+            if (!IsHandleCreated) return;
+            box.Clear();
+            Fill(box, versions, showWeb.Checked, showApp.Checked);
+        }
 
         // Erst jetzt befüllen: beim Einsetzen ins Fenster übernimmt das Textfeld die Schrift
         // des Fensters und würde dabei alle Formatierungen verlieren
@@ -286,7 +324,7 @@ namespace Sflix
         {
             base.OnLoad(e);
             try { SetWindowTheme(box.Handle, "DarkMode_Explorer", null); } catch { }   // dunkle Scrollleiste
-            Fill(box, versions);
+            Fill(box, versions, showWeb.Checked, showApp.Checked);
         }
 
         [System.Runtime.InteropServices.DllImport("uxtheme.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
@@ -306,22 +344,63 @@ namespace Sflix
             return Theme.Muted;
         }
 
-        static void Fill(RichTextBox box, System.Collections.Generic.List<PatchVersion> versions)
+        // Überschriften einer Komponente: "Updater 3.5.0" bzw. "Version 2.7.1" (STEFFLIX), gleiche zusammengefasst
+        static System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, System.Collections.Generic.List<string[]>>> GroupsOf(
+            System.Collections.Generic.List<PatchVersion> versions, string component)
         {
+            var groups = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, System.Collections.Generic.List<string[]>>>();
+            foreach (PatchVersion v in versions)
+                foreach (string[] item in v.Items)
+                {
+                    if (item[2] != component) continue;
+                    string title = component == "stefflix" ? "Version " + v.Version
+                        : (component == "updater" ? "Updater " : "Android-App ") + (item[3] != "" ? item[3] : "(mit STEFFLIX " + v.Version + ")");
+                    System.Collections.Generic.List<string[]> list = null;
+                    foreach (var g in groups) if (g.Key == title) { list = g.Value; break; }
+                    if (list == null)
+                    {
+                        list = new System.Collections.Generic.List<string[]>();
+                        groups.Add(new System.Collections.Generic.KeyValuePair<string, System.Collections.Generic.List<string[]>>(title, list));
+                    }
+                    list.Add(item);
+                }
+            return groups;
+        }
+
+        static void Fill(RichTextBox box, System.Collections.Generic.List<PatchVersion> versions, bool withWeb, bool withApp)
+        {
+            using (Font section = new Font("Segoe UI Semibold", 13f))
             using (Font head = new Font("Segoe UI Semibold", 12f))
             using (Font tag = new Font("Segoe UI Semibold", 9f))
             using (Font body = new Font("Segoe UI", 10f))
             {
                 bool first = true;
-                foreach (PatchVersion v in versions)
+                string[][] parts = { new[] { "updater", "Updater" }, new[] { "stefflix", "STEFFLIX" }, new[] { "app", "Android-App" } };
+                foreach (string[] part in parts)
                 {
-                    Append(box, (first ? "" : "\n") + "Version " + v.Version + "\n", head, Theme.Text, 0, 0);
-                    first = false;
-                    foreach (string[] item in v.Items)
+                    if ((part[0] == "stefflix" && !withWeb) || (part[0] == "app" && !withApp)) continue;
+                    // Abschnittstitel nur, wenn mehr als der Updater gezeigt wird
+                    if (withWeb || withApp)
                     {
-                        // Einzug: Folgezeilen beginnen unter dem Text, nicht unter dem Typ
-                        Append(box, item[0] + "\t", tag, TypeColor(item[0]), Theme.S(4), Theme.S(110));
-                        Append(box, item[1] + "\n", body, Color.FromArgb(0xd8, 0xd8, 0xde), Theme.S(4), Theme.S(110));
+                        Append(box, (first ? "" : "\n\n") + "Neuerungen " + part[1] + "\n", section, Branding.Red, 0, 0);
+                        first = false;
+                    }
+                    var groups = GroupsOf(versions, part[0]);
+                    if (groups.Count == 0)
+                    {
+                        Append(box, (first ? "" : "\n") + "Keine Neuerungen in diesen Versionen.\n", body, Theme.Muted, 0, 0);
+                        first = false;
+                    }
+                    foreach (var g in groups)
+                    {
+                        Append(box, (first ? "" : "\n") + g.Key + "\n", head, Theme.Text, 0, 0);
+                        first = false;
+                        foreach (string[] item in g.Value)
+                        {
+                            // Einzug: Folgezeilen beginnen unter dem Text, nicht unter dem Typ
+                            Append(box, item[0] + "\t", tag, TypeColor(item[0]), Theme.S(4), Theme.S(110));
+                            Append(box, item[4] + "\n", body, Color.FromArgb(0xd8, 0xd8, 0xde), Theme.S(4), Theme.S(110));
+                        }
                     }
                 }
                 if (versions.Count == 0) Append(box, "Keine Patchnotes vorhanden.", body, Theme.Muted, 0, 0);

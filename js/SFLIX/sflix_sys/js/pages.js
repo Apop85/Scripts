@@ -1272,22 +1272,31 @@ function fillUpdateNews(banner, newestVersion) {
         if (news == null || !Array.isArray(news.versions)) {
             return;
         }
-        var items = [];
+        // Zuerst die Neuerungen von STEFFLIX (ohne Anfang), danach die von Updater und App (mit Anfang)
+        var own = [];
+        var others = [];
         var installed = getVersionName();
         news.versions.forEach(function (entry) {
             var entryVersion = getNewsVersionName(entry);
             if (entryVersion != null && compareVersions(entryVersion, installed) > 0
                 && compareVersions(entryVersion, newestVersion) <= 0 && Array.isArray(entry.items)) {
-                items = items.concat(entry.items);
+                entry.items.forEach(function (item) {
+                    if (item == null || typeof item.text !== "string") {
+                        return;
+                    }
+                    var info = getNewsComponent(item, entryVersion);
+                    if (info.component == "stefflix") {
+                        own.push(info.text);
+                    } else {
+                        others.push(item.text);
+                    }
+                });
             }
         });
         var list = banner.querySelector(".updateNews");
-        items.slice(0, 5).forEach(function (item) {
-            if (item == null || typeof item.text !== "string") {
-                return;
-            }
+        own.concat(others).slice(0, 5).forEach(function (text) {
             var entry = document.createElement("li");
-            entry.textContent = item.text;
+            entry.textContent = text;
             list.appendChild(entry);
         });
         if (list.children.length > 0) {
@@ -1911,7 +1920,7 @@ function buildSectionPage(pageId, pageTitle, pageInfo) {
 
 // Erstellt eine Liste von Changelog-Einträgen. Alle Texte werden per textContent
 // eingefügt, damit aus dem Netz geladene Inhalte keinen Code ausführen können.
-function createNewsList(items) {
+function createNewsList(items, useShortText) {
     var list = document.createElement("ul");
     (items || []).forEach(function (item) {
         if (item == null || typeof item.text !== "string") {
@@ -1931,7 +1940,7 @@ function createNewsList(items) {
         }
 
         var textNode = document.createElement(item.resolved ? "s" : "span");
-        textNode.textContent = item.text;
+        textNode.textContent = useShortText ? getNewsComponent(item, "").text : item.text;
 
         entry.appendChild(document.createTextNode("["));
         entry.appendChild(typeNode);
@@ -1942,6 +1951,44 @@ function createNewsList(items) {
     return list;
 }
 
+// Komponenten der getrennten Patchnotes (Feld "component" in news.json seit 2.7.2)
+var newsComponents = [
+    { id: "stefflix", label: "STEFFLIX" },
+    { id: "updater", label: "Updater", pattern: /^Updater(?:\s+(\d+\.\d+\.\d+))?\s*:\s*/ },
+    { id: "app", label: "Android-App", pattern: /^(?:Android-App|App)(?:\s+(\d+\.\d+\.\d+))?\s*:\s*/ }
+];
+
+// Komponente, Version und Text ohne "Updater x.y.z:" eines Eintrags. Ältere news.json ohne die
+// Felder: aus dem Textanfang. blockVersion = Version des STEFFLIX-Blocks.
+function getNewsComponent(item, blockVersion) {
+    if (typeof item.component === "string" && typeof item.short === "string") {
+        return {
+            component: item.component,
+            version: item.componentVersion || (item.component == "stefflix" ? blockVersion : null),
+            text: item.short
+        };
+    }
+    for (var i = 1; i < newsComponents.length; i++) {
+        var match = newsComponents[i].pattern.exec(item.text);
+        if (match) {
+            return { component: newsComponents[i].id, version: match[1] || null, text: item.text.slice(match[0].length) };
+        }
+    }
+    return { component: "stefflix", version: blockVersion, text: item.text };
+}
+
+// Überschrift "Version x.y.z:" bzw. "Updater 3.5.0:" mit Liste
+function appendNewsGroup(container, title, items) {
+    var heading = document.createElement("b");
+    heading.textContent = title;
+    container.appendChild(heading);
+    container.appendChild(document.createTextNode(":"));
+    container.appendChild(document.createElement("br"));
+    container.appendChild(createNewsList(items, true));
+}
+
+// Changelog: Einträge von STEFFLIX immer sichtbar, die von Updater und App aufklappbar darunter,
+// je nach Version der Komponente gegliedert (ohne Nummer: "Updater (mit STEFFLIX x.y.z)").
 function renderNews(container, news) {
     container.replaceChildren();
 
@@ -1952,15 +1999,52 @@ function renderNews(container, news) {
         container.appendChild(createNewsList(news.knownBugs));
     }
 
+    var groups = { stefflix: [], updater: [], app: [] };
     news.versions.forEach(function (versionEntry) {
-        if (versionEntry == null) {
+        if (versionEntry == null || !Array.isArray(versionEntry.items)) {
             return;
         }
-        var heading = document.createElement("b");
-        heading.textContent = "Version " + (getNewsVersionName(versionEntry) || String(versionEntry.version));
-        container.appendChild(heading);
-        container.appendChild(document.createTextNode(":"));
-        container.appendChild(document.createElement("br"));
-        container.appendChild(createNewsList(versionEntry.items));
+        var blockVersion = getNewsVersionName(versionEntry) || String(versionEntry.version);
+        versionEntry.items.forEach(function (item) {
+            if (item == null || typeof item.text !== "string") {
+                return;
+            }
+            var info = getNewsComponent(item, blockVersion);
+            var list = groups[info.component] || groups.stefflix;
+            var label = info.component == "stefflix" ? "Version " + blockVersion
+                : (info.component == "updater" ? "Updater" : "Android-App") + " " + (info.version || "(mit STEFFLIX " + blockVersion + ")");
+            // Gleiche Überschrift zusammenfassen (Einträge sind im Block nach Typ sortiert)
+            var group = null;
+            for (var g = 0; g < list.length; g++) {
+                if (list[g].title === label) {
+                    group = list[g];
+                    break;
+                }
+            }
+            if (group) {
+                group.items.push(item);
+            } else {
+                list.push({ title: label, items: [item] });
+            }
+        });
+    });
+
+    groups.stefflix.forEach(function (group) {
+        appendNewsGroup(container, group.title, group.items);
+    });
+    newsComponents.slice(1).forEach(function (component) {
+        var list = groups[component.id];
+        if (list.length == 0) {
+            return;
+        }
+        var details = document.createElement("details");
+        details.className = "newsComponent";
+        var summary = document.createElement("summary");
+        summary.textContent = "Neuerungen " + component.label;
+        details.appendChild(summary);
+        list.forEach(function (group) {
+            appendNewsGroup(details, group.title, group.items);
+        });
+        container.appendChild(details);
     });
 }

@@ -44,7 +44,8 @@ namespace Sflix
     public class PatchVersion
     {
         public string Version;
-        public readonly System.Collections.Generic.List<string[]> Items = new System.Collections.Generic.List<string[]>();   // {Typ, Text}
+        // {Typ, Text, Komponente (stefflix/updater/app), Version der Komponente oder "", Text ohne "Updater x.y.z:"}
+        public readonly System.Collections.Generic.List<string[]> Items = new System.Collections.Generic.List<string[]>();
     }
 
     public static class PatchNotes
@@ -68,7 +69,13 @@ namespace Sflix
                     {
                         JsonObject item = i as JsonObject;
                         if (item == null) continue;
-                        pv.Items.Add(new string[] { item.Str("type") ?? "", CleanText(item.Str("text")) });
+                        string text = CleanText(item.Str("text"));
+                        string component = item.Str("component"), version = item.Str("componentVersion"), shortText = item.Str("short");
+                        // news.json vor den getrennten Patchnotes: Komponente aus dem Textanfang
+                        if (component == null || shortText == null) ComponentOf(text, out component, out version, out shortText);
+                        else shortText = CleanText(shortText);
+                        if (component == "stefflix" && version == null) version = pv.Version;
+                        pv.Items.Add(new string[] { item.Str("type") ?? "", text, component, version ?? "", shortText });
                     }
                 list.Add(pv);
             }
@@ -91,6 +98,26 @@ namespace Sflix
             }
             result.Sort(delegate(PatchVersion a, PatchVersion b) { return WebVersion.Compare(b.Version, a.Version); });
             return result;
+        }
+
+        static readonly Regex UpdaterPrefix = new Regex(@"^Updater(?:\s+(\d+\.\d+\.\d+))?\s*:\s*");
+        static readonly Regex AppPrefix = new Regex(@"^(?:Android-App|App)(?:\s+(\d+\.\d+\.\d+))?\s*:\s*");
+
+        // Wie create_news.py: "Updater x.y.z:" bzw. "Android-App x.y.z:" am Anfang, sonst STEFFLIX
+        static void ComponentOf(string text, out string component, out string version, out string shortText)
+        {
+            Match m = UpdaterPrefix.Match(text);
+            component = "updater";
+            if (!m.Success) { m = AppPrefix.Match(text); component = "app"; }
+            if (!m.Success)
+            {
+                component = "stefflix";
+                version = null;
+                shortText = text;
+                return;
+            }
+            version = m.Groups[1].Success ? m.Groups[1].Value : null;
+            shortText = text.Substring(m.Length);
         }
 
         // HTML-Reste entfernen (news.txt enthält z.B. &amp;)

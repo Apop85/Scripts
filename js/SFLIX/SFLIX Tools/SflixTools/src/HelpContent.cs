@@ -47,7 +47,7 @@ namespace Sflix
                 "Ist ein neuer Updater verfügbar, ersetzt er sich selbst, startet neu und macht mit den restlichen Aufgaben weiter.\n" +
                 "- ffmpeg ebenfalls aktualisieren: bringt ein installiertes ffmpeg auf die vorgegebene Version.\n\n" +
                 "# Versionen\n" +
-                "Rechts stehen die installierten und verfügbaren Versionen von STEFFLIX, Updater und ffmpeg. „Patchnotes“ zeigt die Neuerungen, " +
+                "Rechts stehen die installierten und verfügbaren Versionen von STEFFLIX, Updater und ffmpeg. „Patchnotes“ zeigt die Neuerungen: zuerst die des Updaters, die von STEFFLIX und der Android-App lassen sich über die Schalter oben dazuschalten. " +
                 "„Neu prüfen“ fragt erneut nach. STEFFLIX-Versionen haben seit 2.5.0 das Format x.y.z, ältere werden umgerechnet (2.04 = 2.4.0)."));
 
             t.Add(new HelpTopic("Daten einlesen",

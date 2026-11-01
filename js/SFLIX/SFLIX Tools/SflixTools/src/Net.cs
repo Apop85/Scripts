@@ -466,8 +466,27 @@ namespace Sflix
             return removed;
         }
 
+        // Release-Ordner des Entwicklers (mit "SFLIX Tools\Release\release.ps1"): Dort müssen die veralteten
+        // Dateien bleiben, alte Installationen laden sie noch (check_release.py bricht sonst ab).
+        public static bool IsReleaseFolder(string baseDir)
+        {
+            try
+            {
+                return File.Exists(Path.Combine(baseDir, "SFLIX Tools\\Release\\release.ps1"));
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public static void RemoveObsoleteFiles(string baseDir, JsonObject checksums, TaskContext ctx)
         {
+            if (IsReleaseFolder(baseDir))
+            {
+                ctx.Log("  Release-Ordner: veraltete Dateien bleiben erhalten (alte Installationen laden sie noch).");
+                return;
+            }
             foreach (string name in ObsoleteFilesFor(checksums))
             {
                 string path = Path.Combine(baseDir, name.Replace('/', '\\'));

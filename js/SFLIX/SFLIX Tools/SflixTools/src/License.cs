@@ -273,6 +273,11 @@ namespace Sflix
         // gespeichert und die Bestätigung später nachgeholt. Ungültig: nichts gespeichert.
         public static bool Save(string root, string key, out string message)
         {
+            if (App.IsReleaseFolder && string.Equals(Path.GetFullPath(root), Path.GetFullPath(App.Root), StringComparison.OrdinalIgnoreCase))
+            {
+                message = ReleaseFolder.Notice;
+                return false;
+            }
             string error;
             LicenseData d = LicenseKey.Decode(key, out error);
             if (d == null) { message = error; return false; }
@@ -290,6 +295,7 @@ namespace Sflix
         // Ausstehende Bestätigung nachholen (neuer Ordner, früher keine Verbindung). Meldung oder null.
         public static string ConfirmPending()
         {
+            if (App.IsReleaseFolder) return null;   // license.js im Release-Ordner nie ändern
             try
             {
                 string confirmedFor;
@@ -314,6 +320,11 @@ namespace Sflix
 
         public static bool Remove(bool force, bool offlineFails, out string message)
         {
+            if (App.IsReleaseFolder)
+            {
+                message = ReleaseFolder.Notice;
+                return false;
+            }
             LicenseData d = Current(App.Root);
             if (d != null)
             {

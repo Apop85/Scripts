@@ -105,7 +105,7 @@ Welcher Quellcode-Stand zuletzt bereitgestellt wurde, steht in `release_state.js
 
 `setup.exe` gibt es nicht mehr: `updateStefflix.exe` installiert selbst, wenn sie außerhalb eines STEFFLIX-Ordners gestartet wird.
 
-**Umstieg bestehender Installationen:** `updateData.exe` und `updater.exe` samt ihren Einträgen in `checksums.json` noch eine Weile im Repository lassen. Die alte Python-Version lädt diese Dateien beim Update, holt dann über `updater.exe` die neue `updateStefflix.exe` und ist damit umgestellt. Die neue Version löscht die beiden alten Programme danach selbst.
+**Umstieg bestehender Installationen:** `updateData.exe` und `updater.exe` samt ihren Einträgen in `checksums.json` noch eine Weile im Repository lassen. Die alte Python-Version lädt diese Dateien beim Update, holt dann über `updater.exe` die neue `updateStefflix.exe` und ist damit umgestellt. Die neue Version löscht die beiden alten Programme danach selbst, ausser im Release-Ordner (erkannt an `SFLIX Tools\Release\release.ps1`, `Net.IsReleaseFolder`, seit 3.5.0): Dort bleiben sie und `sflix_sys\sflix.js` erhalten, sonst bricht `check_release.py` ab.
 
 ## Parallele Tools und gemerkte Prüfergebnisse (seit 3.4.2)
 
@@ -123,7 +123,8 @@ Schutzregeln (`Net.IsAllowedWebPath`): nur `start.html` und Dateien in `sflix_sy
 
 - Beim Start prüft das Programm im Hintergrund, ob es Neues gibt: STEFFLIX-Dateien (Vergleich mit `checksums.json`, Versionsnummer aus `version.js` auf GitHub), dieses Programm und ein bereits installiertes ffmpeg. Falls ja, erscheint ein Fenster mit den Versionen und „Jetzt aktualisieren“ / „Später“. Nach „Später“ bleibt ein Hinweisbalken mit demselben Knopf stehen.
 - Rechts auf der Seite „Updates“ steht eine Übersicht „Versionen“ (installiert und verfügbar, Neueres in Rot). „Neu prüfen“ wiederholt die Prüfung, nach einem Update geschieht das automatisch.
-- „Patchnotes“ (im Hinweisfenster und in der Übersicht) lädt `sflix_sys/news.json` von GitHub und zeigt alle Versionen, die neuer sind als die installierte STEFFLIX-Version. Gibt es keine, wird die neueste Version gezeigt.
+- „Patchnotes“ (im Hinweisfenster und in der Übersicht) lädt `sflix_sys/news.json` von GitHub und zeigt alle Versionen, die neuer sind als die installierte STEFFLIX-Version. Gibt es keine, wird die neueste Version gezeigt. Seit 3.5.0 getrennt nach Komponente (Felder `component`, `componentVersion`, `short` aus `create_news.py`, sonst aus dem Textanfang `PatchNotes.ComponentOf`): zuerst die Einträge des Updaters unter „Updater x.y.z“, STEFFLIX und Android-App über Schalter im `PatchNotesDialog`.
+- **Release-Ordner** (seit 3.5.0, `App.IsReleaseFolder` über `Net.IsReleaseFolder`): Update, Daten einlesen, Importer, Tools und Lizenz sind gesperrt (Hinweis im Balken oben, `ReleaseFolder.Notice`), keine Update-Abfrage. Der Updater legt dort keine Dateien an (Einstellungen nur im Speicher, kein `install.js`, `updater_info.js`, `updater.log`) und löscht beim Start die vom Updater angelegten Dateien in `sflix_sys` (`ReleaseFolder.RemoveGenerated`, nie `data.js` und `license.js`). Ohne Oberfläche bricht er dort mit Code 4 ab. Zum Testen `SFLIX_DIR` auf eine Testumgebung setzen.
 - Die Aufgabe „Update“ aktualisiert zuerst die STEFFLIX-Dateien, dann ffmpeg (optional) und zuletzt sich selbst.
 - Bei jedem Start und nach einer ffmpeg-Installation schreibt `UpdaterInfo` (Core.cs) die eigene Version und die installierte ffmpeg-Version nach `sflix_sys\updater_info.js` (nur bei Änderungen, nicht pushen). STEFFLIX zeigt sie in der Hilfe und vergleicht mit `versions.json` auf GitHub.
 - Wurde das Programm ersetzt, startet die neue Version automatisch und erledigt die restlichen ausgewählten Aufgaben.

@@ -2049,6 +2049,26 @@ kbd.wideKey {
     color: #d4d4d8;
 }
 
+/* Neuerungen von Updater und App: aufklappbar unter denen von STEFFLIX */
+#changelog .newsComponent {
+    margin-top: 18px;
+    padding: 4px 14px 6px;
+    border: 1px solid var(--sflix-border, #2c2c33);
+    border-radius: 8px;
+    background: var(--sflix-surface, #17171b);
+}
+
+#changelog .newsComponent > summary {
+    cursor: pointer;
+    padding: 8px 0;
+    font-weight: 600;
+    color: var(--sflix-text);
+}
+
+#changelog .newsComponent > summary:hover {
+    color: var(--sflix-accent);
+}
+
 /*
   _____                _
  |  ___|__ _ __  ___| |_ ___ _ __

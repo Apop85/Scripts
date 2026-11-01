@@ -2,6 +2,11 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.8.1</b>:<br>
+<ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Im Fenster von STEFFLIX.exe gibt es im Menü nur noch einen Eintrag "Tools". Er öffnet das Fenster mit Updates, Importer, Tools, Lizenz und Hilfe, immer beim Reiter "Updates".</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Desktop 4.0.1: Die Hilfe beschreibt den neuen Menüeintrag "Tools".</li>
+</ul>
 <b>Version 2.8.0</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Desktop 4.0.0: STEFFLIX im eigenen Fenster. Ein Doppelklick auf STEFFLIX.exe öffnet STEFFLIX ohne Browser, ohne Adresszeile, Linkvorschau und Kontextmenü. Fremde Links öffnen im Browser, Grösse und Lage des Fensters bleiben erhalten. start.html lässt sich weiterhin im Browser öffnen.</li>

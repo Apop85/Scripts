@@ -2,6 +2,26 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0801",
+      "name": "2.8.1",
+      "items": [
+        {
+          "type": "INTERFACE",
+          "text": "Im Fenster von STEFFLIX.exe gibt es im Menü nur noch einen Eintrag \"Tools\". Er öffnet das Fenster mit Updates, Importer, Tools, Lizenz und Hilfe, immer beim Reiter \"Updates\".",
+          "component": "stefflix",
+          "componentVersion": "2.8.1",
+          "short": "Im Fenster von STEFFLIX.exe gibt es im Menü nur noch einen Eintrag \"Tools\". Er öffnet das Fenster mit Updates, Importer, Tools, Lizenz und Hilfe, immer beim Reiter \"Updates\"."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Desktop 4.0.1: Die Hilfe beschreibt den neuen Menüeintrag \"Tools\".",
+          "component": "updater",
+          "componentVersion": "4.0.1",
+          "short": "Die Hilfe beschreibt den neuen Menüeintrag \"Tools\"."
+        }
+      ]
+    },
+    {
       "version": "2.08",
       "name": "2.8.0",
       "items": [

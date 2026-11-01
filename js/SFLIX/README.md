@@ -50,7 +50,7 @@ D:\STEFFLIX
 
 Ein Doppelklick auf `STEFFLIX.exe` öffnet STEFFLIX in einem eigenen Fenster, ohne Adresszeile, Linkvorschau und Kontextmenü. Links zu Webseiten öffnen im Standardbrowser, Grösse und Lage des Fensters bleiben erhalten.
 
-- **Tools**: Im Menü öffnen "Updates", "Importer", "Tools", "Lizenz" und "Hilfe zu den Tools" ein zweites Fenster mit dem passenden Reiter. Nach "Daten einlesen" lädt STEFFLIX die Medien selbst neu, während einer Wiedergabe erst auf Wunsch.
+- **Tools**: Der Menüeintrag "Tools" öffnet ein zweites Fenster mit Updates, Importer, Tools, Lizenz und Hilfe (beginnt bei "Updates"). Nach "Daten einlesen" lädt STEFFLIX die Medien selbst neu, während einer Wiedergabe erst auf Wunsch.
 - **Vollbild**: F11 schaltet das Fenster in den Vollbildmodus. Auch das Vollbild eines Videos füllt den ganzen Bildschirm, beim Verlassen kehrt das Fenster in den vorherigen Zustand zurück. F5 lädt neu.
 - **Daten aus dem Browser**: Fenster und Browser speichern getrennt. Beim ersten Start bietet STEFFLIX.exe an, Favoriten, Fortschritte, "Weiterschauen" und Einstellungen aus dem bisherigen Browser zu übernehmen. STEFFLIX öffnet sich dafür kurz im Browser und speichert eine Datensicherung im Download-Ordner, die das Fenster übernimmt.
 - **Updates**: Beim Start prüft STEFFLIX.exe auf neue Versionen und bietet das Update an.
@@ -126,7 +126,7 @@ Die Tools durchsuchen mit "Alles" den ganzen STEFFLIX-Ordner, sonst nur die gew�
 
 Gibt es eine Datei schon (Importer, Folgen umbenennen), zeigt ein Vergleich beide Dateien mit Grösse, Auflösung, Dauer, Video/Ton und Datum, bevor du ersetzt oder überspringst.
 
-Der Reiter **Hilfe** der Tools (auch mit F1, oder im Menü "Hilfe zu den Tools") erklärt alle Funktionen und die Befehle für die Kommandozeile, z.B. `STEFFLIX.exe --headless data` für die Windows-Aufgabenplanung oder `STEFFLIX.exe --tools` für nur die Tools. Das Protokoll ("Details") lässt sich mit "In Datei speichern" nach `sflix_sys\updater.log` schreiben; ohne Oberfläche geschieht das immer.
+Der Reiter **Hilfe** der Tools (auch mit F1) erklärt alle Funktionen und die Befehle für die Kommandozeile, z.B. `STEFFLIX.exe --headless data` für die Windows-Aufgabenplanung oder `STEFFLIX.exe --tools` für nur die Tools. Das Protokoll ("Details") lässt sich mit "In Datei speichern" nach `sflix_sys\updater.log` schreiben; ohne Oberfläche geschieht das immer.
 
 ## Autoplay
 

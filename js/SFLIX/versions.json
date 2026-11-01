@@ -2,7 +2,7 @@
   "updater": "3.4.4",
   "ffmpeg": "9.0.2",
   "android": {
-    "version": "1.2.0",
-    "sha256": "6fd935c1194e6153147c7e9317fc23c2a720f7d681731469b9dd170aec64e40f"
+    "version": "1.2.1",
+    "sha256": "826159c52cbd06758a9f1305a69d1a45b2546ed59afef38a5cd7e04586e50efc"
   }
 }

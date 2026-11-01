@@ -11,8 +11,6 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Icon;
-import android.media.AudioAttributes;
-import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.media.session.MediaSession;
@@ -36,7 +34,8 @@ import org.json.JSONObject;
  * <li>Benachrichtigung mit Zurück, 10 s zurück, Abspielen/Pause, 10 s vor, Weiter (nur mit "Wiedergabe im
  *     Hintergrund"); während der Wiedergabe über PlaybackService im Vordergrund, nach einer Pause gelöst,
  *     dann lässt sie sich wegwischen (= Beenden).</li>
- * <li>Audiofokus: Pause bei Anruf oder Ton einer anderen App, danach weiter; Pause beim Trennen der Kopfhörer.</li>
+ * <li>Pause beim Trennen der Kopfhörer. Den Audiofokus (Pause bei Anruf, danach weiter) holt die WebView
+ *     selbst; eine eigene Anfrage nähme ihn ihr weg und sie würde sofort pausieren.</li>
  * <li>Wakelock und WLAN-Lock während der Wiedergabe im Hintergrund, damit der Strom vom NAS nicht abbricht.</li>
  * </ul>
  * Alle Methoden laufen auf dem UI-Thread.
@@ -86,8 +85,6 @@ final class Playback {
     private final String prefix;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final MediaSession session;
-    private final AudioManager audio;
-    private final AudioFocusRequest focusRequest;
     private final NotificationManager notifications;
     private final PowerManager.WakeLock wakeLock;
     private final WifiManager.WifiLock wifiLock;
@@ -100,7 +97,7 @@ final class Playback {
     private Bitmap artwork;
     private Notification lastNotification;
 
-    private boolean hasFocus, resumeOnFocus, noisyRegistered;
+    private boolean noisyRegistered;
     private boolean notificationShown, dismissed, foreground, released;
 
     private final Runnable detach = this::detachForeground;
@@ -120,16 +117,7 @@ final class Playback {
         this.cache = cache;
         this.shareId = shareId;
         this.prefix = "/" + shareId + "/";
-        audio = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         notifications = context.getSystemService(NotificationManager.class);
-        AudioAttributes attributes = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MOVIE)
-                .build();
-        focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                .setAudioAttributes(attributes)
-                .setOnAudioFocusChangeListener(this::onFocusChange, ui)
-                .build();
         session = new MediaSession(context, "STEFFLIX");
         session.setCallback(new Callback(), ui);
         session.setSessionActivity(openIntent());
@@ -174,16 +162,8 @@ final class Playback {
         String art = toRelative(s.optString("artwork", ""));
         if (!art.equals(artworkRel)) loadArtwork(art);
 
-        if (playing) {
-            dismissed = false;
-            resumeOnFocus = false;
-            requestFocus();
-            setNoisy(true);
-        } else {
-            setNoisy(false);
-            // Nach kurzer Unterbrechung (Anruf) wartet die Wiedergabe auf den Audiofokus
-            if (!resumeOnFocus) abandonFocus();
-        }
+        if (playing) dismissed = false;
+        setNoisy(playing);
         updateLocks();
         session.setActive(true);
         pushMetadata();
@@ -210,9 +190,7 @@ final class Playback {
     private void deactivate() {
         active = false;
         playing = false;
-        resumeOnFocus = false;
         setNoisy(false);
-        abandonFocus();
         updateLocks();
         removeNotification();
         if (!released) {
@@ -249,7 +227,6 @@ final class Playback {
         if (CMD_STOP.equals(cmd) || CMD_QUIT.equals(cmd)) {
             if (playing) host.mediaCommand(CMD_PAUSE, 0);
             dismissed = true;
-            resumeOnFocus = false;
             removeNotification();
             if (CMD_QUIT.equals(cmd)) host.quit();
             return;
@@ -270,47 +247,7 @@ final class Playback {
         @Override public void onCustomAction(String action, Bundle extras) { command(action, 0); }
     }
 
-    // ---- Audiofokus und Kopfhörer ----
-
-    private void requestFocus() {
-        if (hasFocus) return;
-        hasFocus = audio.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
-    }
-
-    private void abandonFocus() {
-        if (!hasFocus) return;
-        audio.abandonAudioFocusRequest(focusRequest);
-        hasFocus = false;
-    }
-
-    private void onFocusChange(int change) {
-        if (released) return;
-        switch (change) {
-            case AudioManager.AUDIOFOCUS_GAIN:
-                hasFocus = true;
-                if (resumeOnFocus) {
-                    resumeOnFocus = false;
-                    host.mediaCommand(CMD_PLAY, 0);
-                }
-                break;
-            case AudioManager.AUDIOFOCUS_LOSS:
-                // Andere App spielt dauerhaft: anhalten, nicht von selbst weiter
-                hasFocus = false;
-                resumeOnFocus = false;
-                if (playing) host.mediaCommand(CMD_PAUSE, 0);
-                break;
-            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                // Anruf, Navigation, Sprachnachricht: anhalten und danach weiter
-                if (playing) {
-                    resumeOnFocus = true;
-                    host.mediaCommand(CMD_PAUSE, 0);
-                }
-                break;
-            default:
-                // AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK: Android senkt die Lautstärke selbst
-                break;
-        }
-    }
+    // ---- Kopfhörer ----
 
     private void setNoisy(boolean on) {
         if (on == noisyRegistered) return;

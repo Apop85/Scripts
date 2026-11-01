@@ -2,6 +2,19 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0804",
+      "name": "2.8.4",
+      "items": [
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.0.4: Liegt STEFFLIX auf einem Netzlaufwerk, zeigte die Taskleiste beim Start über eine Verknüpfung nur ein Standardsymbol. Verknüpfungen auf STEFFLIX.exe verwenden jetzt ein lokal abgelegtes Logo, bestehende werden beim Start angepasst.",
+          "component": "updater",
+          "componentVersion": "4.0.4",
+          "short": "Liegt STEFFLIX auf einem Netzlaufwerk, zeigte die Taskleiste beim Start über eine Verknüpfung nur ein Standardsymbol. Verknüpfungen auf STEFFLIX.exe verwenden jetzt ein lokal abgelegtes Logo, bestehende werden beim Start angepasst."
+        }
+      ]
+    },
+    {
       "version": "2.0803",
       "name": "2.8.3",
       "items": [

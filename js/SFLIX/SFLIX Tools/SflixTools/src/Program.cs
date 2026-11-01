@@ -38,8 +38,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX: Mediathek im eigenen Fenster, Update, Daten einlesen, Importer und Tools")]
-[assembly: AssemblyVersion("4.0.3.0")]
-[assembly: AssemblyFileVersion("4.0.3.0")]
+[assembly: AssemblyVersion("4.0.4.0")]
+[assembly: AssemblyFileVersion("4.0.4.0")]
 
 namespace Sflix
 {
@@ -193,6 +193,8 @@ namespace Sflix
                         string migrateNote = ExeMigration.Finish(migratedFrom);
                         if (migrateNote != null) notice = notice == null ? migrateNote : notice + " " + migrateNote;
                     }
+                    // Verknüpfungen auf diese EXE: Symbol lokal (Taskleiste bei STEFFLIX auf einem Netzlaufwerk)
+                    if (!App.IsReleaseFolder) Shortcuts.RefreshIconsInBackground(Path.GetFullPath(App.ExePath));
                     // Ohne Angaben der Player; --tools bzw. --run öffnen die Tools (mit --player beide).
                     // Nach dem Umstieg aus einem Update des alten Updaters: beide (die Tools mit dem Hinweis).
                     bool openTools = tools || run != null || (updated && migratedFrom != null);

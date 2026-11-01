@@ -443,6 +443,105 @@ namespace Sflix
             o.GetType().InvokeMember(prop, BindingFlags.SetProperty, null, o, new object[] { value });
         }
 
+        // Symbol der Verknüpfungen (seit 4.0.4): lokal in %LOCALAPPDATA%\STEFFLIX\stefflix.ico. Liegt
+        // STEFFLIX.exe auf einem Netzlaufwerk, liest die Taskleiste das Symbol beim Start über eine
+        // Verknüpfung nicht aus der EXE und zeigt das Standardsymbol. Ergebnis: "Pfad,0" bzw. die EXE.
+        public static string IconLocation(string exe)
+        {
+            string icon = LocalIcon();
+            return (icon ?? exe) + ",0";
+        }
+
+        static string LocalIcon()
+        {
+            try
+            {
+                byte[] data;
+                using (Stream s = typeof(Shortcuts).Assembly.GetManifestResourceStream("app.ico"))
+                {
+                    if (s == null) return null;
+                    MemoryStream ms = new MemoryStream();
+                    s.CopyTo(ms);
+                    data = ms.ToArray();
+                }
+                string file = Path.Combine(WebViewLibs.BaseFolder, "stefflix.ico");
+                bool same = false;
+                if (File.Exists(file))
+                {
+                    byte[] have = File.ReadAllBytes(file);
+                    same = have.Length == data.Length;
+                    for (int i = 0; same && i < have.Length; i++) same = have[i] == data[i];
+                }
+                if (!same)
+                {
+                    Directory.CreateDirectory(WebViewLibs.BaseFolder);
+                    string tmp = file + "." + Process.GetCurrentProcess().Id + ".tmp";
+                    File.WriteAllBytes(tmp, data);
+                    try { FileOps.Replace(tmp, file); }
+                    finally { FileOps.TryDelete(tmp); }
+                }
+                return file;
+            }
+            catch { return null; }
+        }
+
+        // Beim Start (im Hintergrund, eigener STA-Thread): Verknüpfungen auf exe bekommen das lokale
+        // Symbol, auch solche, die Windows beim Anheften an die Taskleiste selbst angelegt hat.
+        public static void RefreshIconsInBackground(string exe)
+        {
+            Thread t = new Thread(delegate()
+            {
+                try
+                {
+                    string location = IconLocation(exe);
+                    if (location.StartsWith(exe, StringComparison.OrdinalIgnoreCase)) return;   // kein lokales Symbol
+                    object shell = Shell();
+                    if (shell == null) return;
+                    int changed = 0;
+                    foreach (string lnk in AllShortcuts())
+                    {
+                        try
+                        {
+                            object link = Call(shell, "CreateShortcut", lnk);
+                            if (!SamePath(Get(link, "TargetPath") as string, exe)) continue;
+                            if (string.Equals(Get(link, "IconLocation") as string, location, StringComparison.OrdinalIgnoreCase)) continue;
+                            Set(link, "IconLocation", location);
+                            Call(link, "Save");
+                            changed++;
+                        }
+                        catch { }
+                    }
+                    if (changed > 0) SHChangeNotify(0x08000000, 0, IntPtr.Zero, IntPtr.Zero);   // SHCNE_ASSOCCHANGED: Symbole neu laden
+                }
+                catch { }
+            });
+            t.SetApartmentState(ApartmentState.STA);
+            t.IsBackground = true;
+            t.Start();
+        }
+
+        [DllImport("shell32.dll")]
+        static extern void SHChangeNotify(int eventId, int flags, IntPtr item1, IntPtr item2);
+
+        // Verknüpfungen auf dem Desktop, in der Taskleiste und im Startmenü (mit Unterordnern)
+        static List<string> AllShortcuts()
+        {
+            List<string> result = new List<string>();
+            string[][] places = {
+                new[] { DesktopFolder, "" }, new[] { TaskbarFolder, "" }, new[] { StartMenuFolder, "r" },
+            };
+            foreach (string[] place in places)
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(place[0]) || !Directory.Exists(place[0])) continue;
+                    result.AddRange(Directory.GetFiles(place[0], "*.lnk", place[1] == "r" ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
+                }
+                catch { }
+            }
+            return result;
+        }
+
         static bool SamePath(string a, string b)
         {
             if (string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b)) return false;
@@ -480,7 +579,7 @@ namespace Sflix
                 object link = Call(shell, "CreateShortcut", path);
                 Set(link, "TargetPath", exe);
                 Set(link, "WorkingDirectory", dir);
-                Set(link, "IconLocation", exe + ",0");
+                Set(link, "IconLocation", IconLocation(exe));
                 Set(link, "Description", "STEFFLIX");
                 Call(link, "Save");
                 return path;
@@ -516,7 +615,7 @@ namespace Sflix
                         if (!SamePath(Get(link, "TargetPath") as string, oldExe)) continue;
                         Set(link, "TargetPath", newExe);
                         Set(link, "WorkingDirectory", Path.GetDirectoryName(newExe));
-                        Set(link, "IconLocation", newExe + ",0");
+                        Set(link, "IconLocation", IconLocation(newExe));
                         Call(link, "Save");
                         count++;
                         // "updateStefflix.lnk" heisst danach "STEFFLIX.lnk" (nicht in der Taskleiste: Windows merkt sich den Namen)

@@ -2,6 +2,11 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.8.3</b>:<br>
+<ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Desktop 4.0.3: In den Patchnotes zeigt der neue Schalter "Alle Versionen" die Neuerungen aller Versionen, nicht nur die des anstehenden Updates.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Android-App 1.3.1: Unter "Neuerungen" stehen zuerst nur die Neuerungen seit der installierten App-Version (ist die App aktuell, die der installierten Version). Der Schalter "Alle Versionen" zeigt alles.</li>
+</ul>
 <b>Version 2.8.2</b>:<br>
 <ul>
     <li>[<span style="color: blue">INTERFACE</span>] Im Fenster von STEFFLIX.exe erscheint "Tools werden geöffnet …", wenn das Öffnen der Tools einen Moment dauert.</li>

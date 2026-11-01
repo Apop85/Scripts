@@ -1240,7 +1240,7 @@ namespace Sflix
                     List<PatchVersion> list = PatchNotes.Select(all, local, out newer);
                     string heading = newer ? "Neu seit STEFFLIX " + local
                                    : "Neuerungen in STEFFLIX " + (list.Count > 0 ? list[0].Version : (local ?? ""));
-                    using (PatchNotesDialog dlg = new PatchNotesDialog(heading, list))
+                    using (PatchNotesDialog dlg = new PatchNotesDialog(heading, list, all))
                     {
                         dlg.Icon = owner.Icon;
                         dlg.ShowDialog(owner);

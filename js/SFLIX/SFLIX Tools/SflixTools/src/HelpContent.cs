@@ -73,7 +73,7 @@ namespace Sflix
                 "Ist eine neue Version des Programms verfügbar, ersetzt es sich selbst, startet neu (auch das Fenster von STEFFLIX, falls es offen war) und macht mit den restlichen Aufgaben weiter.\n" +
                 "- ffmpeg ebenfalls aktualisieren: bringt ein installiertes ffmpeg auf die vorgegebene Version.\n\n" +
                 "# Versionen\n" +
-                "Rechts stehen die installierten und verfügbaren Versionen von STEFFLIX, Desktop (STEFFLIX.exe) und ffmpeg. „Patchnotes“ zeigt die Neuerungen: zuerst die von Desktop, die von STEFFLIX und der Android-App lassen sich über die Schalter oben dazuschalten. " +
+                "Rechts stehen die installierten und verfügbaren Versionen von STEFFLIX, Desktop (STEFFLIX.exe) und ffmpeg. „Patchnotes“ zeigt die Neuerungen des anstehenden Updates (sonst der neuesten Version): zuerst die von Desktop, die von STEFFLIX und der Android-App lassen sich über die Schalter oben dazuschalten, „Alle Versionen“ zeigt die Neuerungen aller Versionen. " +
                 "„Neu prüfen“ fragt erneut nach. STEFFLIX-Versionen haben seit 2.5.0 das Format x.y.z, ältere werden umgerechnet (2.04 = 2.4.0)."));
 
             t.Add(new HelpTopic("Daten einlesen",

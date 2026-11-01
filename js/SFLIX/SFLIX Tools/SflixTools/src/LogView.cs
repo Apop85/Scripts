@@ -409,7 +409,7 @@ namespace Sflix
             {
                 dlg.Title = "Protokoll speichern";
                 dlg.Filter = "Textdatei|*.txt|Alle Dateien|*.*";
-                dlg.FileName = "updater-protokoll-" + DateTime.Now.ToString("yyyy-MM-dd-HHmm") + ".txt";
+                dlg.FileName = "stefflix-protokoll-" + DateTime.Now.ToString("yyyy-MM-dd-HHmm") + ".txt";
                 if (dlg.ShowDialog(FindForm()) != DialogResult.OK) return;
                 try { File.WriteAllText(dlg.FileName, text, new UTF8Encoding(true)); }
                 catch (Exception e)

@@ -12,7 +12,8 @@ Reihenfolge). Das gilt für news.json und wird auch in news.txt zurückgeschrieb
 Einträge zu ihrem Typ wandern.
 
 Getrennte Patchnotes (seit STEFFLIX 2.7.2, Updater 3.5.0, App 1.2.4): Jeder Eintrag bekommt zusätzlich
-"component" ("stefflix", "updater" oder "app", aus dem Anfang "Updater x.y.z:" bzw. "Android-App x.y.z:"),
+"component" ("stefflix", "updater" oder "app", aus dem Anfang "Desktop x.y.z:" (bis 3.x "Updater x.y.z:")
+bzw. "Android-App x.y.z:"),
 "componentVersion" (x.y.z der Komponente; bei STEFFLIX die Version des Blocks, fehlt bei alten Einträgen
 ohne Nummer) und "short" (Text ohne diesen Anfang). "text" bleibt unverändert: Ältere Versionen kennen
 die neuen Felder nicht, überlesen sie und zeigen weiterhin alles zusammen.
@@ -40,8 +41,10 @@ def item_type_of(line):
     return re.sub(r"<[^>]+>", "", match.group(1)).strip().upper() if match else None
 
 
+# Ab 4.0.0 heisst das Programm "Desktop" (STEFFLIX.exe), die Komponente bleibt "updater", damit
+# ältere Versionen (Updater 3.5, STEFFLIX 2.7, App 1.2) die Einträge weiterhin richtig einordnen.
 COMPONENT_PREFIXES = [
-    ("updater", re.compile(r"^Updater(?:\s+(\d+\.\d+\.\d+))?\s*:\s*")),
+    ("updater", re.compile(r"^(?:Desktop|Updater)(?:\s+(\d+\.\d+\.\d+))?\s*:\s*")),
     ("app", re.compile(r"^(?:Android-App|App)(?:\s+(\d+\.\d+\.\d+))?\s*:\s*")),
 ]
 

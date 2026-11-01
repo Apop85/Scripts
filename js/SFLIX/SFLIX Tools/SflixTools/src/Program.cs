@@ -1,22 +1,26 @@
-// Einstieg: STEFFLIX-Ordner prüfen, Aufräumen nach Updates, Oberfläche oder Kommandozeile.
+// Einstieg: STEFFLIX-Ordner prüfen, Aufräumen nach Updates, Player, Tools oder Kommandozeile.
 //
 // Aufruf:
-//   updateStefflix.exe                       Oberfläche
-//   updateStefflix.exe --run update,data     Oberfläche, startet die Aufgaben sofort
-//   updateStefflix.exe --headless data       ohne Oberfläche (z.B. für die Aufgabenplanung);
-//                                            Protokoll in sflix_sys\updater.log, Exit-Code 0 = OK
-//   updateStefflix.exe --headless data --data-folder "Serien\Show"
-//                                            nur diesen Ordner einlesen (mehrfach angeben möglich,
-//                                            relativ zum STEFFLIX-Ordner oder absolut)
-//   updateStefflix.exe --install <Ordner>    STEFFLIX ohne Oberfläche in <Ordner> installieren
-//       --ffmpeg [Ordner]                    dazu ffmpeg installieren (ohne Ordner: Standard in AppData)
-//       --license <Schlüssel>                dazu den Lizenzschlüssel hinterlegen
-//   updateStefflix.exe --license <Schlüssel> Lizenzschlüssel hinterlegen (ohne Oberfläche)
-//   updateStefflix.exe --license-remove      Lizenzschlüssel entfernen (ohne Oberfläche)
-//   --log                                    Oberfläche: Protokoll von Anfang an in die Datei schreiben
-//                                            (intern nach einem Selbst-Update, wenn es eingeschaltet war)
-//   --updated                                (intern) Start nach einem Selbst-Update
+//   STEFFLIX.exe                       STEFFLIX im eigenen Fenster (Player, WebView2)
+//   STEFFLIX.exe --tools               nur die Tools (Updates, Importer, Tools, Lizenz, Hilfe)
+//   STEFFLIX.exe --run update,data     Tools, startet die Aufgaben sofort
+//   STEFFLIX.exe --headless data       ohne Oberfläche (z.B. für die Aufgabenplanung);
+//                                      Protokoll in sflix_sys\updater.log, Exit-Code 0 = OK
+//   STEFFLIX.exe --headless data --data-folder "Serien\Show"
+//                                      nur diesen Ordner einlesen (mehrfach angeben möglich,
+//                                      relativ zum STEFFLIX-Ordner oder absolut)
+//   STEFFLIX.exe --install <Ordner>    STEFFLIX ohne Oberfläche in <Ordner> installieren
+//       --ffmpeg [Ordner]              dazu ffmpeg installieren (ohne Ordner: Standard in AppData)
+//       --license <Schlüssel>          dazu den Lizenzschlüssel hinterlegen
+//   STEFFLIX.exe --license <Schlüssel> Lizenzschlüssel hinterlegen (ohne Oberfläche)
+//   STEFFLIX.exe --license-remove      Lizenzschlüssel entfernen (ohne Oberfläche)
+//   --player                           zusätzlich zu --tools/--run auch den Player öffnen
+//   --log                              Tools: Protokoll von Anfang an in die Datei schreiben
+//                                      (intern nach einem Selbst-Update, wenn es eingeschaltet war)
+//   --updated                          (intern) Start nach einem Selbst-Update
+//   --migrated <updateStefflix.exe>    (intern) Start nach dem Umstieg auf STEFFLIX.exe
 // Liegt das Programm nicht in einem STEFFLIX-Ordner, bietet es die Installation an.
+// Bis 3.x hiess das Programm updateStefflix.exe (siehe ExeMigration in Desktop.cs).
 // Aufgaben: update, cleanup, merge, convert, preview, data, renameundo (letztes "Folgen umbenennen"
 // rückgängig machen); "rename" braucht die Oberfläche (Auswahl der Serie)
 // Umgebungsvariablen für Tests: SFLIX_DIR (STEFFLIX-Ordner), SFLIX_UPDATE_URL (Update-Server)
@@ -31,11 +35,11 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
-[assembly: AssemblyTitle("STEFFLIX Updater")]
+[assembly: AssemblyTitle("STEFFLIX")]
 [assembly: AssemblyProduct("STEFFLIX")]
-[assembly: AssemblyDescription("STEFFLIX Updater: Update, Daten einlesen, Vorschaubilder, Zusammenführen, Konvertieren")]
-[assembly: AssemblyVersion("3.5.0.0")]
-[assembly: AssemblyFileVersion("3.5.0.0")]
+[assembly: AssemblyDescription("STEFFLIX: Mediathek im eigenen Fenster, Update, Daten einlesen, Importer und Tools")]
+[assembly: AssemblyVersion("4.0.0.0")]
+[assembly: AssemblyFileVersion("4.0.0.0")]
 
 namespace Sflix
 {
@@ -44,12 +48,28 @@ namespace Sflix
         [DllImport("user32.dll")]
         static extern bool SetProcessDPIAware();
 
+        [DllImport("user32.dll")]
+        static extern bool PostMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        static extern bool AllowSetForegroundWindow(int processId);
+
         [STAThread]
         static int Main(string[] args)
+        {
+            // Zuerst: WebView2-Bibliotheken aus der EXE laden können (vor jedem Zugriff auf ihre Typen)
+            WebViewLibs.Register();
+            return Start(args);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        static int Start(string[] args)
         {
             bool updated = false;
             bool headless = false;
             bool logToFile = false;
+            bool tools = false, player = false;
+            string migratedFrom = null;
             string installTo = null;
             string licenseKey = null;
             bool licenseRemove = false;
@@ -62,6 +82,9 @@ namespace Sflix
                 string a = args[i].ToLowerInvariant();
                 if (a == "--updated") updated = true;
                 else if (a == "--log") logToFile = true;
+                else if (a == "--tools") tools = true;
+                else if (a == "--player") player = true;
+                else if (a == "--migrated" && i + 1 < args.Length) migratedFrom = args[++i];
                 else if (a == "--data-folder" && i + 1 < args.Length) dataFolders.Add(args[++i]);
                 else if (a == "--install" && i + 1 < args.Length) installTo = args[++i];
                 else if (a == "--license" && i + 1 < args.Length) licenseKey = args[++i];
@@ -107,10 +130,15 @@ namespace Sflix
                 return 0;
             }
 
-            SelfUpdate.CleanupOld();
-
             // Release-Ordner (mit "SFLIX Tools"): nichts ändern und nichts anlegen, erzeugte Dateien löschen
             App.IsReleaseFolder = Net.IsReleaseFolder(App.Root);
+
+            // Umstieg: als updateStefflix.exe (von einem Updater bis 3.x geladen) mit Oberfläche gestartet
+            // -> als STEFFLIX.exe weiter. Ohne Oberfläche und im Release-Ordner bleibt der Name.
+            if (!headless && installTo == null && !App.IsReleaseFolder && string.IsNullOrEmpty(dir)
+                && ExeMigration.RunsAsLegacyName && ExeMigration.Run(args)) return 0;
+
+            SelfUpdate.CleanupOld();
             string releaseNote = App.IsReleaseFolder ? ReleaseFolder.RemoveGenerated(App.Root) : null;
             if (App.IsReleaseFolder && (headless || licenseKey != null || licenseRemove))
             {
@@ -129,7 +157,17 @@ namespace Sflix
                 catch (AbandonedMutexException) { owned = true; }
                 if (!owned)
                 {
-                    if (!headless) MessageBox.Show("Der STEFFLIX Updater läuft bereits.", App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // Läuft schon: dort den Player bzw. die Tools nach vorne holen
+                    if (!headless)
+                    {
+                        try
+                        {
+                            AllowSetForegroundWindow(-1);   // ASFW_ANY
+                            int command = tools || run != null ? DesktopHost.ShowToolsCommand : DesktopHost.ShowPlayerCommand;
+                            PostMessage((IntPtr)0xffff, DesktopHost.ActivationMessage(App.Root), (IntPtr)command, IntPtr.Zero);   // HWND_BROADCAST
+                        }
+                        catch { }
+                    }
                     return 3;
                 }
                 try
@@ -150,7 +188,17 @@ namespace Sflix
                     string notice = updated ? "Programm wurde auf Version " + App.VersionText + " aktualisiert." : null;
                     if (idNote != null) notice = notice == null ? idNote : notice + " " + idNote;
                     if (ffmpegNote != null) notice = notice == null ? ffmpegNote : notice + " " + ffmpegNote;
-                    Application.Run(new MainForm(settings, run, notice, logToFile));
+                    if (migratedFrom != null && !App.IsReleaseFolder)
+                    {
+                        string migrateNote = ExeMigration.Finish(migratedFrom);
+                        if (migrateNote != null) notice = notice == null ? migrateNote : notice + " " + migrateNote;
+                    }
+                    // Ohne Angaben der Player; --tools bzw. --run öffnen die Tools (mit --player beide).
+                    // Nach dem Umstieg aus einem Update des alten Updaters: beide (die Tools mit dem Hinweis).
+                    bool openTools = tools || run != null || (updated && migratedFrom != null);
+                    bool openPlayer = player || !openTools || migratedFrom != null;
+                    DesktopHost host = new DesktopHost(settings, run, notice, logToFile, openPlayer, openTools);
+                    if (host.HasWindows) Application.Run(host);
                     return 0;
                 }
                 finally
@@ -169,7 +217,7 @@ namespace Sflix
             return result;
         }
 
-        static string Hash(string s)
+        internal static string Hash(string s)
         {
             using (SHA1 sha = SHA1.Create())
                 return FileOps.Hex(sha.ComputeHash(Encoding.UTF8.GetBytes(s))).Substring(0, 16);

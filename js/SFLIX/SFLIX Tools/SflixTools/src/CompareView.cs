@@ -178,7 +178,7 @@ namespace Sflix
             ffmpegRow.Height = Theme.S(36);
             ffmpegRow.Padding = new Padding(0, Theme.S(6), 0, 0);
             ffmpegRow.Visible = false;
-            ffmpegHint = Theme.MakeLabel("Auflösung, Dauer und Codecs zeigt der Updater mit ffmpeg.", true);
+            ffmpegHint = Theme.MakeLabel("Auflösung, Dauer und Codecs zeigen die Tools mit ffmpeg.", true);
             ffmpegHint.Dock = DockStyle.Fill;
             ffmpegHint.AutoSize = false;
             ffmpegHint.TextAlign = ContentAlignment.MiddleLeft;

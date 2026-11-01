@@ -8,9 +8,10 @@
 #  das Updater-Projekt in <Release-Ordner>\SFLIX Tools\SflixTools.
 #
 #  Ablauf (mit Rückfragen, Enter übernimmt jeweils den Vorschlag in [eckigen Klammern]):
-#   1. Updater    Hat sich der Quellcode im Unterordner "SFLIX Tools\SflixTools" seit dem letzten Release
+#   1. Desktop    Hat sich der Quellcode im Unterordner "SFLIX Tools\SflixTools" seit dem letzten Release
 #                 geändert, wird die Versionsnummer erhöht (Vorschlag: nächste Patch-Version,
-#                 änderbar), updateStefflix.exe gebaut und hierher kopiert.
+#                 änderbar), STEFFLIX.exe gebaut und hierher kopiert, dazu als updateStefflix.exe
+#                 (dieselbe Datei, für Updater bis 3.x).
 #   2. Android    Hat sich der Quellcode der App ("SFLIX Tools\Android") oder sflix_sys\splash.svg
 #                 seit dem letzten Release geändert, wird die App-Version erhöht (versionName x.y.z
 #                 und versionCode in app\build.gradle), STEFFLIX.apk gebaut und hierher kopiert.
@@ -23,8 +24,8 @@
 #
 #  Optionen:
 #   -Auto           alle Vorschläge ohne Rückfrage übernehmen (STEFFLIX-Version bleibt unverändert)
-#   -MarkReleased   nur merken, dass der aktuelle Quellcode von Updater und App bereitgestellt ist (ohne Bauen)
-#   -SflixTools P   anderer Pfad zum Updater-Projekt
+#   -MarkReleased   nur merken, dass der aktuelle Quellcode von Desktop und App bereitgestellt ist (ohne Bauen)
+#   -SflixTools P   anderer Pfad zum Projekt von STEFFLIX.exe
 # ===================================================================
 
 param(
@@ -272,15 +273,18 @@ try {
     }
 
     # --------------------------------------------------------------
-    Step '[1/6] Updater (updateStefflix.exe)'
+    Step '[1/6] Desktop (STEFFLIX.exe, als Kopie updateStefflix.exe)'
     # --------------------------------------------------------------
-    $releaseExe = Join-Path $Root 'updateStefflix.exe'
+    $releaseExe = Join-Path $Root 'STEFFLIX.exe'
+    $legacyExe = Join-Path $Root 'updateStefflix.exe'   # Updater bis 3.x laden nur diesen Namen
     if (-not (Test-Path $programCs)) {
-        Warn "Updater-Projekt nicht gefunden: $SflixTools"
-        Warn 'updateStefflix.exe bleibt unverändert.'
+        Warn "Projekt nicht gefunden: $SflixTools"
+        Warn 'STEFFLIX.exe bleibt unverändert.'
     } else {
         $sourceVersion = Get-ProgramVersion $programCs
+        # Vor 4.0 gab es nur updateStefflix.exe
         $releaseVersion = Get-FileVersion $releaseExe
+        if (-not $releaseVersion) { $releaseVersion = Get-FileVersion $legacyExe }
         $fingerprint = Get-SourceFingerprint
         $state = $null
         if (Test-Path $stateFile) { $state = Get-Content $stateFile -Raw -Encoding UTF8 | ConvertFrom-Json }
@@ -291,7 +295,7 @@ try {
         if ($changed) { Info 'Der Quellcode wurde seit dem letzten Release geändert.' }
         else { Info 'Der Quellcode ist seit dem letzten Release unverändert.' }
 
-        if (Ask-YesNo 'Updater neu bauen und bereitstellen?' $changed) {
+        if (Ask-YesNo 'STEFFLIX.exe neu bauen und bereitstellen?' $changed) {
             # Vorschlag: Wurde die Version im Quellcode schon erhöht (höher als die bereitgestellte),
             # gilt sie. Sonst die nächste Patch-Version nach der höheren der beiden.
             if (-not $releaseVersion -or $sourceVersion -gt $releaseVersion) {
@@ -314,16 +318,23 @@ try {
             Info "Baue Version $(Short $newVersion) ..."
             & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $SflixTools 'build.ps1') | ForEach-Object { Info $_ }
             if ($LASTEXITCODE -ne 0) { Fail 'Build fehlgeschlagen.' }
-            $built = Join-Path $SflixTools 'dist\updateStefflix.exe'
+            $built = Join-Path $SflixTools 'dist\STEFFLIX.exe'
             if ((Get-FileVersion $built) -ne $newVersion) { Fail 'Die gebaute EXE hat nicht die erwartete Version.' }
             $programCsBackup = $null   # Build erfolgreich, Version bleibt
 
             Copy-Item $built $releaseExe -Force
+            Copy-Item $built $legacyExe -Force
             Save-State (Short $newVersion) $fingerprint
-            Good "updateStefflix.exe $(Short $newVersion) bereitgestellt."
-            $released += "Updater $(Short $newVersion)"
+            Good "STEFFLIX.exe $(Short $newVersion) bereitgestellt (auch als updateStefflix.exe)."
+            $released += "Desktop $(Short $newVersion)"
         } else {
-            Info 'updateStefflix.exe bleibt unverändert.'
+            Info 'STEFFLIX.exe bleibt unverändert.'
+            # Kopie für Updater bis 3.x nachziehen, falls sie fehlt oder abweicht
+            if ((Test-Path $releaseExe) -and (-not (Test-Path $legacyExe) -or
+                (Get-FileHash $releaseExe).Hash -ne (Get-FileHash $legacyExe).Hash)) {
+                Copy-Item $releaseExe $legacyExe -Force
+                Info 'updateStefflix.exe als Kopie von STEFFLIX.exe aktualisiert.'
+            }
         }
     }
 
@@ -526,11 +537,12 @@ try {
     $newsChanged = $newsBefore -ne (Get-FileHash $newsJson).Hash
     Run-Python 'create_checksums.py'
 
-    # versions.json: neueste Versionen von Updater und ffmpeg für die Hilfe und den Update-Hinweis
-    # in STEFFLIX (wird nur von GitHub gelesen, der Updater lädt sie nicht herunter)
+    # versions.json: neueste Versionen von Desktop (Schlüssel "updater") und ffmpeg für die Hilfe und
+    # den Update-Hinweis in STEFFLIX (wird nur von GitHub gelesen, das Programm lädt sie nicht herunter)
     $versionsJson = Join-Path $Root 'versions.json'
     $versionsBefore = if (Test-Path $versionsJson) { [IO.File]::ReadAllText($versionsJson, $Utf8) } else { '' }
-    $exeVersion = Get-FileVersion (Join-Path $Root 'updateStefflix.exe')
+    $exeVersion = Get-FileVersion (Join-Path $Root 'STEFFLIX.exe')
+    if (-not $exeVersion) { $exeVersion = Get-FileVersion (Join-Path $Root 'updateStefflix.exe') }
     $updaterVersion = if ($exeVersion) { Short $exeVersion } else { '' }
     $ffmpegVersion = ''
     $ffmpegManifest = Join-Path $Root 'ffmpeg.json'
@@ -555,7 +567,7 @@ try {
     $versionsText += "`n}`n"
     if ($versionsText -ne $versionsBefore) {
         [IO.File]::WriteAllText($versionsJson, $versionsText, $Utf8)
-        Good "versions.json: Updater $updaterVersion, ffmpeg $ffmpegVersion$(if ($appVersion) { ", Android-App $appVersion" })"
+        Good "versions.json: Desktop $updaterVersion, ffmpeg $ffmpegVersion$(if ($appVersion) { ", Android-App $appVersion" })"
     }
     $versionsChanged = $versionsText -ne $versionsBefore
 
@@ -586,7 +598,7 @@ try {
     else { Write-Host ' FERTIG - geprüft, nichts Neues bereitgestellt' -ForegroundColor Green }
     Write-Host '==================================================================='
     if ($toPush.Count -gt 0) {
-        Write-Host ' Diese Dateien zusammen pushen (EXE und checksums.json gehören zusammen):'
+        Write-Host ' Diese Dateien zusammen pushen (STEFFLIX.exe, updateStefflix.exe und checksums.json gehören zusammen):'
         $toPush | ForEach-Object { Write-Host "   $_" }
     } else {
         Write-Host ' Gegenüber dem letzten Release hat sich nichts geändert.'

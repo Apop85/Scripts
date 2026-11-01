@@ -1,7 +1,8 @@
 # STEFFLIX
 
-STEFFLIX ist eine lokale Mediathek für Filme, Serien, Musik und Bilder im Stil eines Streamingdienstes. Sie läuft vollständig im Browser: `start.html` per Doppelklick öffnen, fertig. Es wird kein Server und keine Internetverbindung benötigt (ausser für Updates).
+STEFFLIX ist eine lokale Mediathek für Filme, Serien, Musik und Bilder im Stil eines Streamingdienstes. Sie öffnet sich per Doppelklick auf `STEFFLIX.exe` im eigenen Fenster oder mit `start.html` im Browser. Es wird kein Server und keine Internetverbindung benötigt (ausser für Updates).
 
+- Eigenes Fenster ohne Adresszeile, mit Vollbild (F11) und den Tools im Menü
 - Startseite mit "Weiterschauen" (auch für Bildergalerien ab dem 5. Bild) und Menübändern pro Kategorie
 - Eigener Player für Videos und Musik, Bildbetrachter mit Vollbild und Diashow
 - Autoplay, Zufallswiedergabe, Favoriten und Suche
@@ -10,26 +11,27 @@ STEFFLIX ist eine lokale Mediathek für Filme, Serien, Musik und Bilder im Stil 
 
 ## Installation
 
-**[STEFFLIX Setup herunterladen (updateStefflix.exe)](https://github.com/Apop85/Scripts/raw/master/js/SFLIX/updateStefflix.exe)**
+**[STEFFLIX Setup herunterladen (STEFFLIX.exe)](https://github.com/Apop85/Scripts/raw/master/js/SFLIX/STEFFLIX.exe)**
 
 Alle Dateien liegen auch im [STEFFLIX-Ordner auf GitHub](https://github.com/Apop85/Scripts/tree/master/js/SFLIX).
 
 ### Voraussetzungen
 
-- Windows 10 oder 11 (für den Updater; STEFFLIX selbst läuft in jedem aktuellen Browser)
-- Google Chrome, Microsoft Edge oder Mozilla Firefox
+- Windows 10 oder 11 (für STEFFLIX.exe; `start.html` läuft in jedem aktuellen Browser)
+- Für das eigene Fenster die Windows-Komponente WebView2 von Microsoft (unter Windows 11 vorinstalliert, sonst bietet STEFFLIX.exe die Installation an)
+- Für den Browser: Google Chrome, Microsoft Edge oder Mozilla Firefox
 - Internetverbindung für die Installation und für Updates
 
 ### Schritt für Schritt
 
-1. **Setup herunterladen**: Über den Link oben `updateStefflix.exe` herunterladen, z.B. in den Ordner "Downloads".
-2. **Setup starten**: `updateStefflix.exe` per Doppelklick starten. Zeigt Windows den Hinweis "Der Computer wurde durch Windows geschützt", auf "Weitere Informationen" und danach auf "Trotzdem ausführen" klicken.
+1. **Setup herunterladen**: Über den Link oben `STEFFLIX.exe` herunterladen, z.B. in den Ordner "Downloads".
+2. **Setup starten**: `STEFFLIX.exe` per Doppelklick starten. Zeigt Windows den Hinweis "Der Computer wurde durch Windows geschützt", auf "Weitere Informationen" und danach auf "Trotzdem ausführen" klicken.
 3. **Ordner wählen**: Das Setup erkennt, dass es nicht in einem STEFFLIX-Ordner liegt, und öffnet das Fenster "STEFFLIX Setup". Bei "Installationsordner" über "Durchsuchen …" einen Ordner wählen, z.B. `D:\STEFFLIX` oder einen Ordner auf einer externen Festplatte. Ein noch nicht vorhandener Ordner wird auf Nachfrage erstellt.
-4. **Installieren**: Auf "Installieren" klicken. Das Setup lädt alle STEFFLIX-Dateien herunter und kopiert sich selbst in den neuen Ordner. Die heruntergeladene Datei im Ordner "Downloads" wird danach nicht mehr gebraucht und kann gelöscht werden.
+4. **Installieren**: Auf "Installieren" klicken. Das Setup lädt alle STEFFLIX-Dateien herunter, kopiert sich selbst in den neuen Ordner und legt auf Wunsch Verknüpfungen auf dem Desktop und im Startmenü an. Die heruntergeladene Datei im Ordner "Downloads" wird danach nicht mehr gebraucht und kann gelöscht werden.
 5. **Medien hinzufügen**: Im STEFFLIX-Ordner Kategorieordner anlegen, z.B. `Filme`, `Serien`, `Musik` und `Bilder`, und die Medien hineinkopieren (siehe [Neue Medien hinzufügen](#neue-medien-hinzufügen)).
-6. **Daten einlesen**: Im Setup-Fenster auf "Updater starten" klicken (oder später `updateStefflix.exe` im STEFFLIX-Ordner starten), "Daten einlesen" auswählen und ausführen.
-7. **STEFFLIX öffnen**: Im Setup-Fenster auf "STEFFLIX öffnen" klicken oder `start.html` im STEFFLIX-Ordner per Doppelklick öffnen. Tipp: Ein Lesezeichen setzen oder eine Verknüpfung auf den Desktop legen.
-8. **Browser einrichten**: Damit Autoplay mit Ton funktioniert, die automatische Wiedergabe erlauben (siehe [Browsereinstellungen](#browsereinstellungen)).
+6. **Daten einlesen**: Im Setup-Fenster auf "Tools öffnen" klicken (oder später in STEFFLIX im Menü "Updates" wählen), "Daten einlesen" auswählen und ausführen.
+7. **STEFFLIX öffnen**: Im Setup-Fenster auf "STEFFLIX öffnen" klicken, später über die Verknüpfung oder `STEFFLIX.exe` im STEFFLIX-Ordner. Im Browser geht es weiterhin mit `start.html`.
+8. **Nur im Browser**: Damit Autoplay mit Ton funktioniert, die automatische Wiedergabe erlauben (siehe [Browsereinstellungen](#browsereinstellungen)). Im Fenster von STEFFLIX.exe ist das nicht nötig.
 
 Ein STEFFLIX-Ordner mit Medien sieht etwa so aus:
 
@@ -40,27 +42,38 @@ D:\STEFFLIX
 ├── Musik
 ├── Serien
 ├── sflix_sys          (Programmdateien, nicht verändern)
-├── start.html         (STEFFLIX öffnen)
-└── updateStefflix.exe (Updater)
+├── start.html         (STEFFLIX im Browser öffnen)
+└── STEFFLIX.exe       (STEFFLIX im eigenen Fenster, Tools und Updates)
 ```
+
+## STEFFLIX im eigenen Fenster
+
+Ein Doppelklick auf `STEFFLIX.exe` öffnet STEFFLIX in einem eigenen Fenster, ohne Adresszeile, Linkvorschau und Kontextmenü. Links zu Webseiten öffnen im Standardbrowser, Grösse und Lage des Fensters bleiben erhalten.
+
+- **Tools**: Im Menü öffnen "Updates", "Importer", "Tools", "Lizenz" und "Hilfe zu den Tools" ein zweites Fenster mit dem passenden Reiter. Nach "Daten einlesen" lädt STEFFLIX die Medien selbst neu, während einer Wiedergabe erst auf Wunsch.
+- **Vollbild**: F11 schaltet das Fenster in den Vollbildmodus. Auch das Vollbild eines Videos füllt den ganzen Bildschirm, beim Verlassen kehrt das Fenster in den vorherigen Zustand zurück. F5 lädt neu.
+- **Daten aus dem Browser**: Fenster und Browser speichern getrennt. Beim ersten Start bietet STEFFLIX.exe an, Favoriten, Fortschritte, "Weiterschauen" und Einstellungen aus dem bisherigen Browser zu übernehmen. STEFFLIX öffnet sich dafür kurz im Browser und speichert eine Datensicherung im Download-Ordner, die das Fenster übernimmt.
+- **Updates**: Beim Start prüft STEFFLIX.exe auf neue Versionen und bietet das Update an.
+- **WebView2**: Das Fenster braucht diese Windows-Komponente von Microsoft. Fehlt sie, bietet STEFFLIX.exe an, sie zu installieren, oder öffnet STEFFLIX im Browser.
+- **Bisheriger Name**: Bis Version 3.5 hiess das Programm `updateStefflix.exe`. Beim ersten Start nach dem Update benennt es sich um, passt Verknüpfungen an und legt Verknüpfungen auf dem Desktop und im Startmenü an.
 
 ## Neue Medien hinzufügen
 
-Neue Filme, Serien, Musik oder Bilder kommen am einfachsten mit dem Importer von `updateStefflix.exe` in STEFFLIX. Er kopiert oder verschiebt die Medien in den richtigen Ordner, wandelt nicht unterstützte Formate auf Wunsch um und liest danach nur den Zielordner neu ein. Das geht auch bei grossen Mediatheken schnell, der Rest bleibt unverändert.
+Neue Filme, Serien, Musik oder Bilder kommen am einfachsten mit dem Importer von `STEFFLIX.exe` in STEFFLIX. Er kopiert oder verschiebt die Medien in den richtigen Ordner, wandelt nicht unterstützte Formate auf Wunsch um und liest danach nur den Zielordner neu ein. Das geht auch bei grossen Mediatheken schnell, der Rest bleibt unverändert.
 
-1. `updateStefflix.exe` starten und die Registerkarte "Importer" öffnen. Dateien oder Ordner lassen sich auch einfach ins Fenster ziehen.
+1. `STEFFLIX.exe` starten und im Menü "Importer" wählen. Dateien oder Ordner lassen sich auch einfach ins Fenster der Tools ziehen.
 2. Unter "Was importieren?" mit "Dateien …" oder "Ordner …" die Medien wählen.
 3. Unter "Ziel in STEFFLIX" die Kategorie wählen (z.B. Serien, mit "Neu …" auch eine eigene) und den Unterordner angeben, z.B. `Meine Serie\Staffel 1`.
 4. Bei Bedarf die Optionen einschalten: Ordnerstruktur übernehmen, in ein browserkompatibles Format konvertieren, verschieben statt kopieren oder fehlende Vorschaubilder erstellen.
-5. Auf "Start" klicken. Danach STEFFLIX neu laden, die Medien sind da.
+5. Auf "Start" klicken. Im Fenster von STEFFLIX.exe erscheinen die Medien danach von selbst, im Browser STEFFLIX neu laden.
 
 ### Alternative: Medien von Hand kopieren
 
 Die Medien lassen sich auch selbst in die Ordner kopieren. Danach müssen sie eingelesen werden, damit sie in STEFFLIX erscheinen.
 
 1. Medien in den passenden Unterordner kopieren, z.B. `Serien\Meine Serie\Staffel 1`.
-2. Optional ein Vorschaubild hinterlegen (siehe unten). Für Videos kann der Updater unter "Tools" mit "Vorschaubilder" auch selbst eines erzeugen.
-3. `updateStefflix.exe` starten und unter "Updates" die Aufgabe "Daten einlesen" ausführen. Ist "Alle Ordner einlesen" ausgeschaltet, werden nur die gewählten Ordner eingelesen. Das ist schneller, wenn nur an wenigen Stellen etwas dazugekommen ist.
+2. Optional ein Vorschaubild hinterlegen (siehe unten). Für Videos kann STEFFLIX.exe unter "Tools" mit "Vorschaubilder" auch selbst eines erzeugen.
+3. `STEFFLIX.exe` starten und im Menü unter "Updates" die Aufgabe "Daten einlesen" ausführen. Ist "Alle Ordner einlesen" ausgeschaltet, werden nur die gewählten Ordner eingelesen. Das ist schneller, wenn nur an wenigen Stellen etwas dazugekommen ist.
 
 ### Unterstützte Dateiformate
 
@@ -70,7 +83,7 @@ Die Medien lassen sich auch selbst in die Ordner kopieren. Danach müssen sie ei
 | Musik  | mp3, m4a, ogg, oga, opus, aac, flac, wav  |
 | Bilder | jpg, jpeg, png, gif, webp, avif, bmp      |
 
-Gross- und Kleinschreibung der Dateiendung spielt keine Rolle (JPG = jpg). Videos in anderen Formaten (z.B. mkv oder avi) wandelt der Updater mit dem Tool "Konvertieren" in passende MP4-Dateien um, Musik wie WMA oder AIFF in MP3.
+Gross- und Kleinschreibung der Dateiendung spielt keine Rolle (JPG = jpg). Videos in anderen Formaten (z.B. mkv oder avi) wandelt STEFFLIX.exe mit dem Tool "Konvertieren" in passende MP4-Dateien um, Musik wie WMA oder AIFF in MP3.
 
 ### Vorschaubilder (Preview-Ordner)
 
@@ -87,17 +100,17 @@ D:\sflix\Bilder
     └── Pilze.jpg
 ```
 
-Beim Einlesen der Daten schneidet `updateStefflix.exe` zu grosse Bilder auf 480x270 zu, damit sie schneller laden (webp-Bilder bleiben unverändert). Das Original wird mit gleichem Namen im Unterordner `Preview\__original` aufbewahrt.
+Beim Einlesen der Daten schneidet `STEFFLIX.exe` zu grosse Bilder auf 480x270 zu, damit sie schneller laden (webp-Bilder bleiben unverändert). Das Original wird mit gleichem Namen im Unterordner `Preview\__original` aufbewahrt.
 
 ## STEFFLIX aktualisieren
 
-`updateStefflix.exe` im STEFFLIX-Ordner starten, die Aufgaben "Update" und "Daten einlesen" auswählen und ausführen. Der Updater lädt die neue Version herunter und liest danach die Medien neu ein. Er hält sich auch selbst aktuell und meldet beim Start, wenn eine neue Version bereitsteht. Die Hilfe in STEFFLIX zeigt die installierten und neuesten Versionen von STEFFLIX, Updater und ffmpeg, und auf der Startseite erscheint ein Hinweis, wenn ein Update bereitsteht (abschaltbar unter Einstellungen › Startseite).
+`STEFFLIX.exe` im STEFFLIX-Ordner starten und das angebotene Update annehmen, oder im Menü unter "Updates" die Aufgaben "Update" und "Daten einlesen" ausführen. STEFFLIX.exe lädt die neue Version herunter und liest danach die Medien neu ein. Das Programm hält sich auch selbst aktuell. Die Hilfe in STEFFLIX zeigt die installierten und neuesten Versionen von STEFFLIX, Desktop (STEFFLIX.exe) und ffmpeg. Im Browser erscheint auf der Startseite ein Hinweis, wenn ein Update bereitsteht (abschaltbar unter Einstellungen › Startseite).
 
-### Aufgaben des Updaters
+### Aufgaben der Tools
 
 Die ausgewählten Aufgaben laufen immer in dieser Reihenfolge ab:
 
-- **Update**: STEFFLIX-Dateien und den Updater selbst von GitHub aktualisieren. Installiert wird nur, wenn alle Dateien vollständig und gültig heruntergeladen wurden.
+- **Update**: STEFFLIX-Dateien und das Programm STEFFLIX.exe selbst von GitHub aktualisieren. Installiert wird nur, wenn alle Dateien vollständig und gültig heruntergeladen wurden.
 - **Ablagen leeren**: Die Ablageordner der Werkzeuge (Ordner, deren Name mit `__` beginnt, z.B. `__teile`, `__konvertiert`, `__gelöscht`, `__original` und `__duplikate`) endgültig löschen oder wiederherstellen. Die Liste lässt sich nach Art filtern und sortieren. Wiederherstellen geht für ganze Ablagen oder einzelne Dateien (Doppelklick); ist am Ziel schon eine Datei, kannst du ersetzen, überspringen oder als Kopie speichern. Nur innerhalb des STEFFLIX-Ordners möglich.
 - **Folgen umbenennen**: Die Folgen einer Serie anhand der Folgenliste von serienjunkies.de (sonst fernsehserien.de oder TVmaze) umbenennen, z.B. `Serie - S01E02 - Titel.mp4` im Ordner `Staffel 01`. Erkannt werden Namen mit `S01E02` oder `1x02`. Doppelfolgen behalten alle Nummern, z.B. `Serie - S01E02E03 - Titel.mp4`. Vorher werden alle Änderungen angezeigt; bei mehreren Dateien für eine Folge oder einem vorhandenen Ziel vergleicht die Vorschau Grösse, Auflösung und Dauer. Danach lässt sich der letzte Lauf rückgängig machen. Geladene Folgenlisten werden gespeichert, beim nächsten Lauf lässt sich die gespeicherte Liste verwenden, von derselben Webseite aktualisieren („Liste aktualisieren“) oder ab serienjunkies.de neu suchen („Neu suchen“).
 - **Duplikate finden**: Identische Dateien, gleiche Folgen einer Serie (`S01E01` = `1x01` = `S1E1`) und gleiche Dateinamen finden (Preview- und Ablage-Ordner zählen nicht). Ein Vergleich zeigt Grösse, Auflösung, Dauer und Codecs, vorausgewählt bleibt die bessere Fassung. Aussortierte Dateien kommen nach `__duplikate`, Favoriten und Fortschritt gehen auf die behaltene Datei über.
@@ -105,15 +118,15 @@ Die ausgewählten Aufgaben laufen immer in dieser Reihenfolge ab:
 - **Konvertieren**: Videos in browserkompatible MP4 (H.264/AAC) umwandeln, auf Wunsch auch nicht abspielbare Musik (z.B. WMA, AIFF, ALAC) in MP3. Das Ergebnis ersetzt das Original im selben Ordner, das Original kommt nach `__konvertiert` (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.
 - **Medien prüfen**: Medien finden, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton, WMA), dazu defekte und leere Dateien, Medien ohne Vorschaubild sowie leere Ordner (ohne Medien). Im Ergebnis wählst du je Datei Löschen (nach `__gelöscht`), Konvertieren und/oder Vorschaubild erstellen; leere Ordner lassen sich löschen (als Ganzes nach `__gelöscht` im Ordner darüber). Defekte und leere Dateien sowie leere Ordner sind zum Löschen vorgemerkt. „Ausführen“ erledigt alles in einem Durchgang.
 
-Alle Tabellen im Updater lassen sich mit einem Klick auf den Spaltenkopf sortieren.
+Alle Tabellen der Tools lassen sich mit einem Klick auf den Spaltenkopf sortieren.
 - **Vorschaubilder erstellen**: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach `Preview\__gelöscht`. Mit „für Musik“ erhalten Alben ohne Vorschaubild ein Albumbild: aus einem Bild im Album (auch in einem Unterordner wie „Scans“) oder dem Cover der Musikdateien. Gibt es mehrere Bilder, wählst du eines mit Vorschau aus, die übrigen lassen sich nach `__gelöscht` verschieben.
-- **Daten einlesen**: Medien neu einlesen, ungültige Zeichen in Datei- und Ordnernamen korrigieren und zu grosse Vorschaubilder verkleinern. Ordner, deren Name mit `__` beginnt, sowie System- und versteckte Ordner werden ignoriert. Mit dem Schalter "Alle Ordner einlesen" wird alles eingelesen. Ist er aus, lassen sich einzelne Ordner wählen, und nur diese werden aktualisiert. Das geht deutlich schneller bei grossen Mediatheken. Nach einem Import liest der Updater automatisch nur den Zielordner ein.
+- **Daten einlesen**: Medien neu einlesen, ungültige Zeichen in Datei- und Ordnernamen korrigieren und zu grosse Vorschaubilder verkleinern. Ordner, deren Name mit `__` beginnt, sowie System- und versteckte Ordner werden ignoriert. Mit dem Schalter "Alle Ordner einlesen" wird alles eingelesen. Ist er aus, lassen sich einzelne Ordner wählen, und nur diese werden aktualisiert. Das geht deutlich schneller bei grossen Mediatheken. Nach einem Import liest STEFFLIX.exe automatisch nur den Zielordner ein.
 
-Die Tools durchsuchen mit "Alles" den ganzen STEFFLIX-Ordner, sonst nur die gewählten Ordner. "Medien prüfen", "Duplikate finden" und "Vorschaubilder" bearbeiten mehrere Dateien gleichzeitig und merken sich ihre Ergebnisse, ein zweiter Lauf ist dadurch viel schneller. Danach werden nur die betroffenen Ordner neu eingelesen. Das dafür nötige Programm ffmpeg installiert das Setup auf Wunsch gleich mit, sonst lädt es der Updater beim ersten Bedarf. Es liegt je Benutzer in `%LOCALAPPDATA%\STEFFLIX\ffmpeg`, der Ordner lässt sich unter Tools › Einstellungen ändern.
+Die Tools durchsuchen mit "Alles" den ganzen STEFFLIX-Ordner, sonst nur die gewählten Ordner. "Medien prüfen", "Duplikate finden" und "Vorschaubilder" bearbeiten mehrere Dateien gleichzeitig und merken sich ihre Ergebnisse, ein zweiter Lauf ist dadurch viel schneller. Danach werden nur die betroffenen Ordner neu eingelesen. Das dafür nötige Programm ffmpeg installiert das Setup auf Wunsch gleich mit, sonst lädt es STEFFLIX.exe beim ersten Bedarf. Es liegt je Benutzer in `%LOCALAPPDATA%\STEFFLIX\ffmpeg`, der Ordner lässt sich unter Tools › Einstellungen ändern.
 
 Gibt es eine Datei schon (Importer, Folgen umbenennen), zeigt ein Vergleich beide Dateien mit Grösse, Auflösung, Dauer, Video/Ton und Datum, bevor du ersetzt oder überspringst.
 
-Der Reiter **Hilfe** im Updater (auch mit F1) erklärt alle Funktionen und die Befehle für die Kommandozeile, z.B. `updateStefflix.exe --headless data` für die Windows-Aufgabenplanung. Das Protokoll ("Details") lässt sich mit "In Datei speichern" nach `sflix_sys\updater.log` schreiben; ohne Oberfläche geschieht das immer.
+Der Reiter **Hilfe** der Tools (auch mit F1, oder im Menü "Hilfe zu den Tools") erklärt alle Funktionen und die Befehle für die Kommandozeile, z.B. `STEFFLIX.exe --headless data` für die Windows-Aufgabenplanung oder `STEFFLIX.exe --tools` für nur die Tools. Das Protokoll ("Details") lässt sich mit "In Datei speichern" nach `sflix_sys\updater.log` schreiben; ohne Oberfläche geschieht das immer.
 
 ## Autoplay
 
@@ -219,20 +232,20 @@ Ist im Browser eingestellt, dass er beim Schliessen die Chronik oder die Website
 
 Im Menü unter "Einstellungen" lassen sich festlegen: Kachelgrösse (Klein, Mittel, Gross), Kacheln pro Zeile (fest oder automatisch nach Fensterbreite), Markierungen auf den Kacheln ("Gesehen", "Letzte Folge"), Animationen reduzieren, Startbildschirm überspringen, alphabetische Gruppen auf Ordnerseiten (A–D, E–H … mit Sprungleiste, Bilder und Musik ausnehmbar), Artikel beim Sortieren ignorieren ("Der Pate" unter P), Ordner getrennt von Medien, die Anzahl Einträge bei "Weiterschauen", Update-Hinweise, die Browser-Steuerung sowie Intro und Abspann je Ordner. Änderungen gelten sofort und nur im verwendeten Browser. Die Lautstärke merkt sich STEFFLIX je Ordner (Album, Staffel).
 
-Den Lizenzschlüssel für das Feedbackformular im Updater unter "Lizenz" eingeben (oder schon im Setup). Er gilt dann für diese Installation in allen Browsern, mit bestätigtem Schlüssel erscheint im Menü der Eintrag "Feedback". Im Updater heisst der Reiter danach ebenfalls "Feedback". Schlüssel bis STEFFLIX 2.4.0 sind nicht mehr gültig.
+Den Lizenzschlüssel für das Feedbackformular in STEFFLIX.exe im Menü unter "Lizenz" eingeben (oder schon im Setup). Er gilt dann für diese Installation im Fenster und in allen Browsern, mit bestätigtem Schlüssel erscheint im Menü der Eintrag "Feedback". In den Tools heisst der Reiter danach ebenfalls "Feedback". Schlüssel bis STEFFLIX 2.4.0 sind nicht mehr gültig.
 
 ## Datensicherung
 
-Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen, Intro, Abspann und Lautstärke je Ordner sowie die Sortierung der Startseite werden nur im verwendeten Browser gespeichert. Unter Einstellungen › Datensicherung lassen sie sich als Datei exportieren und wieder importieren, z.B. um sie auf einen anderen Browser oder PC zu übertragen.
+Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen, Intro, Abspann und Lautstärke je Ordner sowie die Sortierung der Startseite werden nur im verwendeten Browser bzw. im Fenster von STEFFLIX.exe gespeichert. Unter Einstellungen › Datensicherung lassen sie sich als Datei exportieren und wieder importieren, z.B. um sie auf einen anderen Browser oder PC oder vom Browser ins Fenster zu übertragen (das bietet STEFFLIX.exe beim ersten Start auch selbst an).
 
-Gibt es mehrere STEFFLIX-Ordner auf einem PC, speichert jeder seine Daten getrennt. Der Updater legt dafür in jedem Ordner eine eigene Kennung an (`sflix_sys\install.js`). Diese Datei nicht in einen anderen STEFFLIX-Ordner kopieren. Wer einen ganzen Ordner kopiert, startet danach einmal den Updater in der Kopie, dann bekommt sie automatisch eine neue Kennung.
+Gibt es mehrere STEFFLIX-Ordner auf einem PC, speichert jeder seine Daten getrennt. STEFFLIX.exe legt dafür in jedem Ordner eine eigene Kennung an (`sflix_sys\install.js`). Diese Datei nicht in einen anderen STEFFLIX-Ordner kopieren. Wer einen ganzen Ordner kopiert, startet danach einmal STEFFLIX.exe in der Kopie, dann bekommt sie automatisch eine neue Kennung.
 
 ## Fehlerbehebung
 
 Lädt STEFFLIX nicht richtig, stimmen die Vor- und Zurück-Buttons nicht oder setzen Videos an der falschen Stelle fort, hilft Einstellungen › Fehlerbehebung: "Gespeicherte Daten prüfen" zeigt verwaiste Einträge (z.B. nach dem Umbenennen im Explorer) und entfernt nur diese. Eine Diagnose mit Versionen und Browser lässt sich kopieren. Unter den weiteren Optionen lassen sich Favoriten, Playlisten, Zeitstempel, "Weiterschauen" oder alles zurücksetzen. Die Medien selbst werden dabei nicht verändert. Vor "Alle Daten löschen" wird eine Sicherung angeboten.
 
-Fehlen Programmdateien, z.B. nach einem abgebrochenen Update, `updateStefflix.exe` erneut mit der Aufgabe "Update" ausführen.
+Fehlen Programmdateien, z.B. nach einem abgebrochenen Update, in `STEFFLIX.exe` (bis Version 3.5 `updateStefflix.exe`) erneut die Aufgabe "Update" ausführen. Öffnet sich das Fenster von STEFFLIX.exe nicht, lässt sich `STEFFLIX.exe --tools` in der Kommandozeile starten oder `start.html` im Browser öffnen.
 
 ## Neuerungen
 
-Die Änderungen jeder Version stehen in [sflix_sys/news.txt](sflix_sys/news.txt) und in STEFFLIX unter Hilfe › Changelog. Dort stehen die Neuerungen von STEFFLIX, die des Updaters und der Android-App lassen sich darunter aufklappen. Im Updater zeigt „Patchnotes“ zuerst seine eigenen Neuerungen, in der App „App-Einstellungen › Neuerungen“ die der App.
+Die Änderungen jeder Version stehen in [sflix_sys/news.txt](sflix_sys/news.txt) und in STEFFLIX unter Hilfe › Changelog. Dort stehen die Neuerungen von STEFFLIX, die von Desktop (STEFFLIX.exe) und der Android-App lassen sich darunter aufklappen. In den Tools zeigt „Patchnotes“ zuerst die Neuerungen von Desktop, in der App „App-Einstellungen › Neuerungen“ die der App.

@@ -2,6 +2,82 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.08",
+      "name": "2.8.0",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.0.0: STEFFLIX im eigenen Fenster. Ein Doppelklick auf STEFFLIX.exe öffnet STEFFLIX ohne Browser, ohne Adresszeile, Linkvorschau und Kontextmenü. Fremde Links öffnen im Browser, Grösse und Lage des Fensters bleiben erhalten. start.html lässt sich weiterhin im Browser öffnen.",
+          "component": "updater",
+          "componentVersion": "4.0.0",
+          "short": "STEFFLIX im eigenen Fenster. Ein Doppelklick auf STEFFLIX.exe öffnet STEFFLIX ohne Browser, ohne Adresszeile, Linkvorschau und Kontextmenü. Fremde Links öffnen im Browser, Grösse und Lage des Fensters bleiben erhalten. start.html lässt sich weiterhin im Browser öffnen."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.0.0: F11 schaltet das Fenster in den Vollbildmodus. Auch das Vollbild eines Videos füllt den ganzen Bildschirm, beim Verlassen kehrt das Fenster in den vorherigen Zustand zurück.",
+          "component": "updater",
+          "componentVersion": "4.0.0",
+          "short": "F11 schaltet das Fenster in den Vollbildmodus. Auch das Vollbild eines Videos füllt den ganzen Bildschirm, beim Verlassen kehrt das Fenster in den vorherigen Zustand zurück."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.0.0: Beim ersten Start lassen sich Favoriten, Fortschritte, \"Weiterschauen\" und Einstellungen aus dem bisherigen Browser übernehmen. STEFFLIX öffnet sich dafür kurz im Browser und speichert eine Datensicherung, die das Fenster übernimmt. Eine vorhandene Sicherung lässt sich auch direkt wählen.",
+          "component": "updater",
+          "componentVersion": "4.0.0",
+          "short": "Beim ersten Start lassen sich Favoriten, Fortschritte, \"Weiterschauen\" und Einstellungen aus dem bisherigen Browser übernehmen. STEFFLIX öffnet sich dafür kurz im Browser und speichert eine Datensicherung, die das Fenster übernimmt. Eine vorhandene Sicherung lässt sich auch direkt wählen."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.0.0: Updates, Importer, Tools, Lizenz und die Hilfe zu den Tools öffnen sich aus dem Menü von STEFFLIX in einem zweiten Fenster. Nach \"Daten einlesen\" lädt STEFFLIX die Medien selbst neu, während einer Wiedergabe erst auf Wunsch. Beim Start prüft STEFFLIX.exe auf neue Versionen und bietet das Update an.",
+          "component": "updater",
+          "componentVersion": "4.0.0",
+          "short": "Updates, Importer, Tools, Lizenz und die Hilfe zu den Tools öffnen sich aus dem Menü von STEFFLIX in einem zweiten Fenster. Nach \"Daten einlesen\" lädt STEFFLIX die Medien selbst neu, während einer Wiedergabe erst auf Wunsch. Beim Start prüft STEFFLIX.exe auf neue Versionen und bietet das Update an."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.0.0: Fehlt die Windows-Komponente WebView2 für das Fenster, bietet STEFFLIX.exe an, sie von Microsoft zu installieren, oder öffnet STEFFLIX im Browser.",
+          "component": "updater",
+          "componentVersion": "4.0.0",
+          "short": "Fehlt die Windows-Komponente WebView2 für das Fenster, bietet STEFFLIX.exe an, sie von Microsoft zu installieren, oder öffnet STEFFLIX im Browser."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Im Fenster von STEFFLIX.exe zeigt das Menü zusätzlich Updates, Importer, Tools, Lizenz und Hilfe zu den Tools. Die Datensicherung fragt dort nach dem Speicherort.",
+          "component": "stefflix",
+          "componentVersion": "2.8.0",
+          "short": "Im Fenster von STEFFLIX.exe zeigt das Menü zusätzlich Updates, Importer, Tools, Lizenz und Hilfe zu den Tools. Die Datensicherung fragt dort nach dem Speicherort."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Desktop 4.0.0: Das Programm heisst neu STEFFLIX.exe (bisher updateStefflix.exe). Beim ersten Start nach dem Update benennt es sich um, passt Verknüpfungen an und legt Verknüpfungen auf dem Desktop und im Startmenü an. Das Setup legt sie auf Wunsch ebenfalls an.",
+          "component": "updater",
+          "componentVersion": "4.0.0",
+          "short": "Das Programm heisst neu STEFFLIX.exe (bisher updateStefflix.exe). Beim ersten Start nach dem Update benennt es sich um, passt Verknüpfungen an und legt Verknüpfungen auf dem Desktop und im Startmenü an. Das Setup legt sie auf Wunsch ebenfalls an."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Desktop 4.0.0: In den Patchnotes und Versionen heisst das Programm \"Desktop\" statt \"Updater\". Die Tools-Fenster tragen den Reiter im Titel.",
+          "component": "updater",
+          "componentVersion": "4.0.0",
+          "short": "In den Patchnotes und Versionen heisst das Programm \"Desktop\" statt \"Updater\". Die Tools-Fenster tragen den Reiter im Titel."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Hinweise und Hilfe nennen STEFFLIX.exe statt updateStefflix.exe, die Hilfe hat einen neuen Abschnitt \"STEFFLIX im eigenen Fenster\". Im Changelog heissen die Neuerungen des Programms \"Desktop\".",
+          "component": "stefflix",
+          "componentVersion": "2.8.0",
+          "short": "Hinweise und Hilfe nennen STEFFLIX.exe statt updateStefflix.exe, die Hilfe hat einen neuen Abschnitt \"STEFFLIX im eigenen Fenster\". Im Changelog heissen die Neuerungen des Programms \"Desktop\"."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Android-App 1.3.0: Unter \"Neuerungen\" heissen die Neuerungen des Programms für Windows \"Desktop\" statt \"Updater\".",
+          "component": "app",
+          "componentVersion": "1.3.0",
+          "short": "Unter \"Neuerungen\" heissen die Neuerungen des Programms für Windows \"Desktop\" statt \"Updater\"."
+        }
+      ]
+    },
+    {
       "version": "2.0703",
       "name": "2.7.3",
       "items": [

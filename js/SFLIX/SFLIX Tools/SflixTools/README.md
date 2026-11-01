@@ -1,4 +1,6 @@
-# STEFFLIX Updater (`updateStefflix.exe`)
+# STEFFLIX Desktop (`STEFFLIX.exe`, bis 3.x Updater `updateStefflix.exe`)
+
+Seit 4.0.0 öffnet das Programm STEFFLIX im eigenen Fenster (siehe [Desktop](#desktop-seit-400)) und enthält die Tools. In Patchnotes und Changelog heisst es „Desktop“ (Einträge „Desktop x.y.z:“, Komponente in `news.json` weiterhin `updater`).
 
 Ein Programm mit Oberfläche, das die bisherigen Werkzeuge ersetzt:
 
@@ -64,7 +66,17 @@ Der Updater arbeitet nur in einem STEFFLIX-Ordner, also dort, wo `start.html` un
 
 **Kennung der Installation** (`sflix_sys\install.js`, Klasse `InstallId` in `Core.cs`): Der Browser speichert die Daten aller `file://`-Seiten gemeinsam. Mit der zufälligen Kennung nutzt jede Installation eine eigene IndexedDB (`STEFFLIX-<Kennung>`). Der Updater prüft die Datei bei jedem Start. Fehlt sie, legt er sie an. Ist der Ordner kopiert, enthält der alte Ordner also noch dieselbe Kennung, bekommt die Kopie eine neue. Ist der Ordner verschoben, bleibt die Kennung und nur der gespeicherte Ordner ändert sich.
 
-Danach lässt sich STEFFLIX direkt öffnen oder der Updater im neuen Ordner starten. Ohne Oberfläche geht das mit `updateStefflix.exe --install <Ordner>`.
+Danach lässt sich STEFFLIX direkt öffnen (STEFFLIX.exe) oder die Tools im neuen Ordner starten (`--tools`). Seit 4.0.0 legt das Setup auf Wunsch Verknüpfungen auf dem Desktop und im Startmenü an (`InstallOptions.DesktopShortcut`/`StartMenuShortcut`, `Shortcuts.Ensure`). Ohne Oberfläche geht das mit `STEFFLIX.exe --install <Ordner>` (ohne Verknüpfungen).
+
+## Desktop (seit 4.0.0)
+
+- **Start**: Ohne Angaben öffnet `STEFFLIX.exe` das Player-Fenster (`PlayerForm.cs`), `--tools` bzw. `--run` das bisherige Hauptfenster (`MainForm`), `--player` zusätzlich den Player. Beide Fenster laufen im selben Prozess unter `DesktopHost` (Desktop.cs, `ApplicationContext`); das Programm endet, wenn beide zu sind. Schliessen des Players schliesst auch die Tools (läuft eine Aufgabe: Nachfrage, dann Abbruch). Ein zweiter Start schickt eine registrierte Fensternachricht (`DesktopHost.ActivationMessage`, Broadcast) und holt das offene Fenster nach vorne. Der Mutex heisst weiterhin `STEFFLIX-Updater-<Hash>`.
+- **Player**: WebView2 (`Microsoft.Web.WebView2`, SDK 1.0.4258.31) zeigt `start.html` über `file://`. Aus: Kontextmenü, DevTools, Statusleiste (Linkvorschau), Zoom, Browser-Tastenkürzel, Wischen; an mit `"player.devtools": true` in `updater_settings.json` oder `SFLIX_DEVTOOLS=1`. Navigation ausserhalb des Installationsordners wird abgebrochen und im Standardbrowser geöffnet (nur http, https, mailto). Autoplay ohne Klick (`--autoplay-policy=no-user-gesture-required`). Downloads (Datensicherung) mit „Speichern unter“. Dunkle Titelleiste, Lage in `player.bounds`/`player.maximized`. Vollbild: F11 (meldet STEFFLIX über die Brücke, `ProcessCmdKey` als Rückfall) und `ContainsFullScreenElementChanged` (Video-Vollbild; beim Verlassen zurück, ausser das Fenster war schon per F11 im Vollbild).
+- **Brücke** (`window.chrome.webview`, Gegenstück `initDesktopApp` in ui.js): STEFFLIX → Programm `{cmd:"ready"|"tools"|"fullscreen"|"reload"|"importResult"}`, Programm → STEFFLIX `{event:"dataChanged"|"importBackup"}`. Nachrichten nur von Seiten im Installationsordner. Nach „Daten einlesen“, Import oder Update (`MainForm.TasksFinished`) lädt STEFFLIX neu bzw. bietet es während einer Wiedergabe an.
+- **Daten des Fensters**: `%LOCALAPPDATA%\STEFFLIX\webview\<installId>` (Release-Ordner: `release`, ohne `install.js`: `shared`). Datenübernahme beim ersten Start (`player.dataImportAsked`): `DataImportDialog` öffnet `start.html?export=app` mit dem gewählten Browser direkt über dessen Programm (`Browsers`, App Paths; über die Shell ginge `?…` bei `file://` verloren), STEFFLIX speichert dort `stefflix-sicherung-*.json` im Download-Ordner, der Dialog erkennt die neue Datei (jede Sekunde) und schickt den Inhalt als `importBackup`.
+- **Bibliotheken**: `build.ps1` lädt das NuGet-Paket (feste Version und SHA256) nach `obj\webview2\`, bettet `Microsoft.Web.WebView2.Core.dll`, `…WinForms.dll` und `WebView2Loader.dll` (x64, x86, arm64) als Ressourcen ein. `WebViewLibs.Register` (erste Zeile in `Main`, danach `Start` mit `NoInlining`) lädt die verwalteten DLLs über `AssemblyResolve`, `ExtractLoader` packt den Loader nach `%LOCALAPPDATA%\STEFFLIX\webview2\<SDK>\<Architektur>` aus, `SetLoaderDllFolderPath`. WebView2-Typen nur in `PlayerForm` und `WebViewApi` verwenden.
+- **Runtime fehlt** (`WebViewApi.RuntimeVersion` = null): `RuntimeDialog` mit „Jetzt installieren“ (`RuntimeInstaller`: Evergreen-Bootstrapper von `go.microsoft.com`, `WinVerifyTrust` und Herausgeber Microsoft, `/silent /install`), „Im Browser öffnen“, „Abbrechen“.
+- **Umstieg** (`ExeMigration`): Startet die Datei als `updateStefflix.exe` mit Oberfläche (nicht im Release-Ordner, nicht mit `SFLIX_DIR`), kopiert sie sich nach `STEFFLIX.exe` (falls dort keine gleiche oder neuere liegt) und startet diese mit den gleichen Angaben plus `--migrated <alte Datei>`. `Finish` biegt Verknüpfungen (Desktop, Startmenü, Taskleiste) um, legt fehlende an und löscht die alte Datei (nur `updateStefflix.exe` im selben Ordner). Ohne Oberfläche bleibt die alte Datei in Gebrauch.
 
 ## Bauen
 
@@ -72,7 +84,7 @@ Danach lässt sich STEFFLIX direkt öffnen oder der Updater im neuen Ordner star
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-Das Ergebnis ist `dist\updateStefflix.exe` (rund 0,2 MB). Benötigt wird nur .NET Framework 4.x, das auf jedem Windows 10/11 vorhanden ist. Ein Visual Studio ist nicht nötig. Icon und Kopfbild werden beim Bauen aus dem Logo erzeugt. Eine Vorschau des Kopfbilds liegt danach in `obj\banner.png`.
+Das Ergebnis ist `dist\STEFFLIX.exe` (rund 1,5 MB mit den eingebetteten WebView2-Bibliotheken). Benötigt wird nur .NET Framework 4.x (WebView2 verlangt 4.6.2 oder neuer), das auf jedem Windows 10/11 vorhanden ist. Ein Visual Studio ist nicht nötig. Beim ersten Build wird das WebView2-SDK von NuGet geladen. Icon und Kopfbild werden beim Bauen aus dem Logo erzeugt. Eine Vorschau des Kopfbilds liegt danach in `obj\banner.png`.
 
 ## Neue Version veröffentlichen
 
@@ -80,7 +92,7 @@ Ordnerstruktur:
 
 ```
 SFLIX\                        Release-Ordner (wird gepusht)
-├── README.md, start.html, updateStefflix.exe, updater.exe, updateData.exe
+├── README.md, start.html, STEFFLIX.exe, updateStefflix.exe (Kopie), updater.exe, updateData.exe
 ├── checksums.json, ffmpeg.json   (müssen hier liegen: die Updater laden sie von hier)
 ├── sflix_sys\
 └── SFLIX Tools\
@@ -91,7 +103,7 @@ SFLIX\                        Release-Ordner (wird gepusht)
 
 **`SFLIX Tools\Release\build_release.bat` doppelklicken** (startet `release.ps1`). Die Skripte arbeiten immer auf dem Release-Ordner zwei Ebenen darüber, egal von wo sie gestartet werden. Das Skript fragt alles Nötige ab, Enter übernimmt jeweils den Vorschlag:
 
-1. **Updater:** Hat sich der Quellcode hier seit dem letzten Release geändert, schlägt es vor, ihn zu bauen. Die Versionsnummer wird automatisch um eins erhöht (z.B. 3.0.4 → 3.0.5) und kann vor dem Bauen geändert werden. Danach wird `updateStefflix.exe` gebaut und nach `SFLIX` kopiert. Schlägt der Build fehl, wird die Versionsnummer zurückgesetzt.
+1. **Desktop:** Hat sich der Quellcode hier seit dem letzten Release geändert, schlägt es vor, ihn zu bauen. Die Versionsnummer wird automatisch um eins erhöht (z.B. 4.0.0 → 4.0.1) und kann vor dem Bauen geändert werden. Danach wird `STEFFLIX.exe` gebaut und nach `SFLIX` kopiert, dazu als `updateStefflix.exe` (dieselbe Datei für Updater bis 3.x; `check_release.py` prüft, dass beide gleich sind). Schlägt der Build fehl, wird die Versionsnummer zurückgesetzt.
 2. **ffmpeg:** Gibt es eine neuere stabile ffmpeg-Version, kann `ffmpeg.json` darauf gesetzt werden.
 3. **STEFFLIX-Version:** Wurden Dateien der Weboberfläche geändert, kann `version.js` erhöht werden (z.B. 2.02 → 2.03). Die Changelog-Einträge werden dabei abgefragt und in `news.txt` eingefügt. Gibt es dort schon einen Block für die eingegebene Version, kommen sie an dessen Ende statt in einen neuen Block.
 4. **Prüfen:** `check_release.py`, `create_news.py`, `create_checksums.py`. Danach schreibt das Skript `versions.json` (neueste Versionen von Updater und ffmpeg) in den Release-Ordner. STEFFLIX liest sie nur von GitHub (Hilfe, Hinweis auf einen neuen Updater), der Updater lädt sie nicht.
@@ -103,7 +115,9 @@ Welcher Quellcode-Stand zuletzt bereitgestellt wurde, steht in `release_state.js
 
 `tools\publish.ps1` wird für diesen Ablauf nicht mehr gebraucht. Es kann aber weiterhin eine einzelne EXE samt `ffmpeg.json` in einen anderen Ordner übertragen.
 
-`setup.exe` gibt es nicht mehr: `updateStefflix.exe` installiert selbst, wenn sie außerhalb eines STEFFLIX-Ordners gestartet wird.
+`setup.exe` gibt es nicht mehr: `STEFFLIX.exe` installiert selbst, wenn sie außerhalb eines STEFFLIX-Ordners gestartet wird.
+
+**Umstieg auf STEFFLIX.exe (4.0):** `updateStefflix.exe` bleibt vorerst als Kopie im Repository und in `checksums.json`. Updater bis 3.x ersetzen sich damit selbst durch 4.x, das sich beim ersten Start umbenennt (siehe Desktop). Das Selbst-Update ab 4.0 lädt `STEFFLIX.exe`.
 
 **Umstieg bestehender Installationen:** `updateData.exe` und `updater.exe` samt ihren Einträgen in `checksums.json` noch eine Weile im Repository lassen. Die alte Python-Version lädt diese Dateien beim Update, holt dann über `updater.exe` die neue `updateStefflix.exe` und ist damit umgestellt. Die neue Version löscht die beiden alten Programme danach selbst, ausser im Release-Ordner (erkannt an `SFLIX Tools\Release\release.ps1`, `Net.IsReleaseFolder`, seit 3.5.0): Dort bleiben sie und `sflix_sys\sflix.js` erhalten, sonst bricht `check_release.py` ab.
 
@@ -123,7 +137,7 @@ Schutzregeln (`Net.IsAllowedWebPath`): nur `start.html` und Dateien in `sflix_sy
 
 - Beim Start prüft das Programm im Hintergrund, ob es Neues gibt: STEFFLIX-Dateien (Vergleich mit `checksums.json`, Versionsnummer aus `version.js` auf GitHub), dieses Programm und ein bereits installiertes ffmpeg. Falls ja, erscheint ein Fenster mit den Versionen und „Jetzt aktualisieren“ / „Später“. Nach „Später“ bleibt ein Hinweisbalken mit demselben Knopf stehen.
 - Rechts auf der Seite „Updates“ steht eine Übersicht „Versionen“ (installiert und verfügbar, Neueres in Rot). „Neu prüfen“ wiederholt die Prüfung, nach einem Update geschieht das automatisch.
-- „Patchnotes“ (im Hinweisfenster und in der Übersicht) lädt `sflix_sys/news.json` von GitHub und zeigt alle Versionen, die neuer sind als die installierte STEFFLIX-Version. Gibt es keine, wird die neueste Version gezeigt. Seit 3.5.0 getrennt nach Komponente (Felder `component`, `componentVersion`, `short` aus `create_news.py`, sonst aus dem Textanfang `PatchNotes.ComponentOf`): zuerst die Einträge des Updaters unter „Updater x.y.z“, STEFFLIX und Android-App über Schalter im `PatchNotesDialog`.
+- „Patchnotes“ (im Hinweisfenster und in der Übersicht) lädt `sflix_sys/news.json` von GitHub und zeigt alle Versionen, die neuer sind als die installierte STEFFLIX-Version. Gibt es keine, wird die neueste Version gezeigt. Seit 3.5.0 getrennt nach Komponente (Felder `component`, `componentVersion`, `short` aus `create_news.py`, sonst aus dem Textanfang `PatchNotes.ComponentOf`): zuerst die Einträge des Programms unter „Desktop x.y.z“ (bis 3.x „Updater x.y.z“), STEFFLIX und Android-App über Schalter im `PatchNotesDialog`. Ist der Player offen, zeigt er den Update-Hinweis beim Start (`DesktopHost.CheckForUpdates`), „Jetzt aktualisieren“ öffnet die Tools und startet das Update (`MainForm.StartUpdate`).
 - **Release-Ordner** (seit 3.5.0, `App.IsReleaseFolder` über `Net.IsReleaseFolder`): Update, Daten einlesen, Importer, Tools und Lizenz sind gesperrt (Hinweis im Balken oben, `ReleaseFolder.Notice`), keine Update-Abfrage. Der Updater legt dort keine Dateien an (Einstellungen nur im Speicher, kein `install.js`, `updater_info.js`, `updater.log`) und löscht beim Start die vom Updater angelegten Dateien in `sflix_sys` (`ReleaseFolder.RemoveGenerated`, nie `data.js` und `license.js`). Ohne Oberfläche bricht er dort mit Code 4 ab. Zum Testen `SFLIX_DIR` auf eine Testumgebung setzen.
 - Die Aufgabe „Update“ aktualisiert zuerst die STEFFLIX-Dateien, dann ffmpeg (optional) und zuletzt sich selbst.
 - Bei jedem Start und nach einer ffmpeg-Installation schreibt `UpdaterInfo` (Core.cs) die eigene Version und die installierte ffmpeg-Version nach `sflix_sys\updater_info.js` (nur bei Änderungen, nicht pushen). STEFFLIX zeigt sie in der Hilfe und vergleicht mit `versions.json` auf GitHub.
@@ -166,7 +180,7 @@ Verschieben, Umbenennen und Löschen laufen über `FileOps` in `Util.cs`. Bei �
 ## Ohne Oberfläche (z.B. Aufgabenplanung)
 
 ```bash
-updateStefflix.exe --headless update,data
+STEFFLIX.exe --headless update,data
 ```
 
 - Aufgaben: `update`, `ffmpeg`, `cleanup`, `dupes`, `merge`, `convert`, `check`, `preview`, `data`, `renameundo`. `rename` braucht die Oberfläche (Auswahl der Serie); `dupes` und `check` protokollieren ohne Oberfläche nur.
@@ -177,9 +191,10 @@ updateStefflix.exe --headless update,data
 - Beim Zusammenführen wird ohne Oberfläche nur verarbeitet, was ohne Neukodieren geht.
 - Das Protokoll steht immer in `sflix_sys\updater.log` (begrenzt auf 1 MB). Exit-Code 0 bedeutet, dass alles in Ordnung war.
 
-Mit `--run update,data` startet die Oberfläche und beginnt sofort mit diesen Aufgaben.
+Mit `--run update,data` starten die Tools und beginnen sofort mit diesen Aufgaben. `--tools` öffnet nur die Tools, `--player` zusätzlich den Player (nach einem Selbst-Update gibt `MainForm` beides weiter).
 
 ## Testen
 
-- `SFLIX_DIR=<Ordner>` verwendet einen anderen STEFFLIX-Ordner.
+- `SFLIX_DIR=<Ordner>` verwendet einen anderen STEFFLIX-Ordner (dann kein Umstieg auf STEFFLIX.exe).
+- `SFLIX_DEVTOOLS=1` schaltet im Player Kontextmenü und DevTools ein (F12).
 - `SFLIX_UPDATE_URL=http://127.0.0.1:8000/` verwendet einen lokalen Update-Server, zum Beispiel `python -m http.server 8000` im Repository-Ordner.

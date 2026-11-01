@@ -481,7 +481,7 @@ function initTransitionOverview() {
 // Einstellungen › Lizenz
 // ===================================================================
 
-// Seit 2.5.0 nur Anzeige: Der Schlüssel wird im Updater eingegeben (sflix_sys/license.js).
+// Seit 2.5.0 nur Anzeige: Der Schlüssel wird in STEFFLIX.exe eingegeben (sflix_sys/license.js).
 function initLicenseSection() {
     var message = document.getElementById("licenseMsg");
     var state = getLicenseState();
@@ -503,9 +503,9 @@ function buildDiagnosisText() {
         "STEFFLIX " + getVersionName(),
         "STEFFLIX-ID: " + getInstallIdText(),
         "Lizenz: " + getLicenseStatusText(),
-        "Updater: " + (info && info.updater ? info.updater : "unbekannt"),
+        "Desktop: " + (info && info.updater ? info.updater : "unbekannt"),
         "ffmpeg: " + (info ? (info.ffmpeg || "nicht installiert") : "unbekannt"),
-        "Browser: " + detectBrowser() + " (" + navigator.userAgent + ")",
+        "Browser: " + (isDesktopApp() ? "Fenster von STEFFLIX.exe, " : "") + detectBrowser() + " (" + navigator.userAgent + ")",
         "Speicher: " + (getDatabaseName() === sharedDatabaseName ? "gemeinsam (keine install.js)" : "eigener Speicher dieser Installation") + ", " + getAllDataKeys().length + " Einträge",
         "Medien: " + paths.length + " (Videos " + count(isVideo) + ", Musik " + count(isMusic) + ", Bilder " + count(isImage) + ")",
         "Kategorien: " + Object.keys(data || {}).filter(function (key) { return key != "Preview"; }).length,
@@ -758,13 +758,13 @@ function getLicenseState() {
 function getLicenseStatusText() {
     var status = getLicenseState().status;
     if (status === "active") {
-        return "Lizenz aktiv (im Updater hinterlegt). Das Feedbackformular ist im Menü verfügbar.";
+        return "Lizenz aktiv (in STEFFLIX.exe hinterlegt). Das Feedbackformular ist im Menü verfügbar.";
     } else if (status === "pending") {
-        return "Lizenzschlüssel hinterlegt, die Bestätigung steht noch aus. Den Updater mit Internetverbindung starten.";
+        return "Lizenzschlüssel hinterlegt, die Bestätigung steht noch aus. STEFFLIX.exe mit Internetverbindung starten.";
     } else if (status === "invalid") {
-        return "Der hinterlegte Lizenzschlüssel ist ungültig. Im Updater unter \"Lizenz\" einen gültigen Schlüssel eingeben.";
+        return "Der hinterlegte Lizenzschlüssel ist ungültig. In STEFFLIX.exe unter \"Lizenz\" einen gültigen Schlüssel eingeben.";
     }
-    return "Kein Lizenzschlüssel hinterlegt. Den Schlüssel im Updater unter \"Lizenz\" eingeben.";
+    return "Kein Lizenzschlüssel hinterlegt. Den Schlüssel in STEFFLIX.exe unter \"Lizenz\" eingeben.";
 }
 
 // Meldung im Feedback-Fenster (type: "error", "success" oder "info")
@@ -777,7 +777,7 @@ function showFeedbackStatus(text, type) {
 // Verständliche Meldung zu einer Antwort von Discord
 function describeFeedbackError(status) {
     if (status === 401 || status === 403 || status === 404) {
-        return "Der Lizenzschlüssel ist nicht mehr gültig. Bitte einen neuen Schlüssel anfordern und im Updater eingeben.";
+        return "Der Lizenzschlüssel ist nicht mehr gültig. Bitte einen neuen Schlüssel anfordern und in STEFFLIX.exe eingeben.";
     } else if (status === 429) {
         return "Es wurden gerade zu viele Nachrichten verschickt. Bitte in einer Minute erneut versuchen.";
     } else if (status === 400 || status === 413) {
@@ -870,7 +870,7 @@ function showLicenseChangeNotice(container) {
     heading.textContent = "Die Lizenzierung wurde geändert";
     var meta = document.createElement("p");
     meta.className = "updateMeta";
-    meta.textContent = "Dein bisheriger Lizenzschlüssel ist nicht mehr gültig. Bitte einen neuen Schlüssel anfordern und im Updater (updateStefflix.exe) unter \"Lizenz\" eingeben, damit das Feedback wieder verfügbar ist.";
+    meta.textContent = "Dein bisheriger Lizenzschlüssel ist nicht mehr gültig. Bitte einen neuen Schlüssel anfordern und in STEFFLIX.exe unter \"Lizenz\" eingeben, damit das Feedback wieder verfügbar ist.";
     var actions = document.createElement("div");
     actions.className = "updateActions";
     var more = document.createElement("a");
@@ -1394,4 +1394,185 @@ function initSettingsMenu() {
             settingsNode.classList.remove("open");
         }
     });
+}
+
+// ===================================================================
+// Desktop-Programm STEFFLIX.exe (seit 2.8.0): STEFFLIX im eigenen Fenster (WebView2).
+// Brücke über window.chrome.webview, Gegenstück in PlayerForm.cs:
+//   an das Programm (JSON-Text): {cmd:"ready"}, {cmd:"tools", page}, {cmd:"fullscreen"}, {cmd:"reload"},
+//                                {cmd:"importResult", ok, message}
+//   vom Programm (Objekt):       {event:"dataChanged"}, {event:"importBackup", text}
+// Im Browser und in der Android-App passiert hier nichts.
+// ===================================================================
+
+// Menüeinträge, die das Fenster der Tools mit dem passenden Reiter öffnen
+var desktopMenuEntries = [
+    { page: "updates", label: "Updates", icon: "update" },
+    { page: "import", label: "Importer", icon: "importer" },
+    { page: "tools", label: "Tools", icon: "tools" },
+    { page: "license", label: "Lizenz", icon: "key" },
+    { page: "help", label: "Hilfe zu den Tools", icon: "question" }
+];
+
+function sendToDesktop(message) {
+    if (!isDesktopApp()) {
+        return;
+    }
+    try {
+        window.chrome.webview.postMessage(JSON.stringify(message));
+    } catch (error) {
+        console.warn("STEFFLIX.exe nicht erreichbar:", error);
+    }
+}
+
+function initDesktopApp() {
+    if (!isDesktopApp()) {
+        return;
+    }
+    document.documentElement.classList.add("inDesktop");
+    addDesktopMenuEntries();
+    // F11: Vollbild des Fensters, F5: neu laden (die Tasten des Browsers sind im Fenster aus)
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "F11") {
+            event.preventDefault();
+            sendToDesktop({ cmd: "fullscreen" });
+        } else if (event.key === "F5" && !event.ctrlKey && !event.altKey) {
+            event.preventDefault();
+            sendToDesktop({ cmd: "reload" });
+        }
+    }, true);
+    // Links und Bilder lassen sich nicht aus dem Fenster ziehen
+    document.addEventListener("dragstart", function (event) {
+        var target = event.target;
+        if (target && target.closest && target.closest("a, img") && !target.closest("[draggable='true']")) {
+            event.preventDefault();
+        }
+    }, true);
+    window.chrome.webview.addEventListener("message", function (event) {
+        handleDesktopMessage(event.data);
+    });
+}
+
+function addDesktopMenuEntries() {
+    var menu = document.getElementById("settingsDD");
+    if (menu == null || document.getElementById("desktopMenuSeparator") != null) {
+        return;
+    }
+    var separator = document.createElement("div");
+    separator.id = "desktopMenuSeparator";
+    separator.className = "menuSeparator";
+    menu.appendChild(separator);
+    desktopMenuEntries.forEach(function (entry) {
+        var link = document.createElement("a");
+        link.className = "desktopMenuEntry";
+        link.dataset.page = entry.page;
+        var icon = document.createElement("span");
+        icon.className = "menuIcon";
+        icon.appendChild(createIcon(entry.icon));
+        var label = document.createElement("span");
+        label.className = "menuLabel";
+        label.textContent = entry.page === "license" && getLicenseState().status === "active" ? "Lizenz und Feedback" : entry.label;
+        link.append(icon, label);
+        link.addEventListener("click", function () {
+            sendToDesktop({ cmd: "tools", page: entry.page });
+        });
+        menu.appendChild(link);
+    });
+}
+
+function handleDesktopMessage(message) {
+    if (message == null || typeof message !== "object") {
+        return;
+    }
+    if (message.event === "dataChanged") {
+        onDesktopDataChanged();
+    } else if (message.event === "importBackup" && typeof message.text === "string") {
+        importBackupFromDesktop(message.text);
+    }
+}
+
+// Nach "Daten einlesen" oder einem Update in den Tools: neu laden. Läuft gerade etwas, erst auf Wunsch.
+function onDesktopDataChanged() {
+    var player = document.getElementById("video");
+    var playing = player != null && (player.tagName == "VIDEO" || player.tagName == "AUDIO") && !player.paused && !player.ended;
+    if (!playing) {
+        location.reload();
+        return;
+    }
+    showDesktopNotice("Die Medien wurden neu eingelesen.", "Neu laden", function () {
+        location.reload();
+    });
+}
+
+// Kleiner Hinweis unten rechts mit einem Knopf
+function showDesktopNotice(text, buttonText, action) {
+    var old = document.getElementById("desktopNotice");
+    if (old != null) {
+        old.remove();
+    }
+    var notice = document.createElement("div");
+    notice.id = "desktopNotice";
+    notice.setAttribute("role", "status");
+    var message = document.createElement("span");
+    message.textContent = text;
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "sflixButton primary small";
+    button.textContent = buttonText;
+    button.addEventListener("click", action);
+    var close = document.createElement("button");
+    close.type = "button";
+    close.className = "sflixButton ghost small";
+    close.textContent = "Später";
+    close.addEventListener("click", function () {
+        notice.remove();
+    });
+    notice.append(message, button, close);
+    document.body.appendChild(notice);
+}
+
+// Im Browser mit start.html?export=app (von STEFFLIX.exe geöffnet): Datensicherung in den
+// Download-Ordner speichern, STEFFLIX.exe übernimmt sie von dort
+function isDesktopExportRequest() {
+    return window.location.search === "?export=app";
+}
+
+function showDesktopExportPage() {
+    // Ein Neuladen soll nicht nochmals speichern
+    try {
+        history.replaceState(null, "", window.location.pathname);
+    } catch (error) {
+        // file:// lässt das in manchen Browsern nicht zu
+    }
+    var count = Object.keys(downloadBackup()).length;
+    var overlay = document.createElement("div");
+    overlay.id = "desktopExport";
+    var box = document.createElement("section");
+    box.className = "desktopExportBox";
+    var heading = document.createElement("h2");
+    heading.textContent = "Daten für STEFFLIX.exe";
+    var text = document.createElement("p");
+    text.textContent = "Die Datensicherung mit " + count + " Einträgen ist im Download-Ordner gespeichert. STEFFLIX.exe übernimmt sie gleich. " +
+        "Fragt der Browser nach dem Speicherort, die Datei im Download-Ordner speichern oder sie in STEFFLIX.exe mit \"Sicherung wählen …\" öffnen. " +
+        "Danach kann dieses Fenster geschlossen werden, die Daten im Browser bleiben erhalten.";
+    var actions = document.createElement("div");
+    actions.className = "updateActions";
+    var again = document.createElement("button");
+    again.type = "button";
+    again.className = "sflixButton ghost";
+    again.textContent = "Erneut speichern";
+    again.addEventListener("click", function () {
+        downloadBackup();
+    });
+    var hide = document.createElement("button");
+    hide.type = "button";
+    hide.className = "sflixButton primary";
+    hide.textContent = "Ausblenden";
+    hide.addEventListener("click", function () {
+        overlay.remove();
+    });
+    actions.append(again, hide);
+    box.append(heading, text, actions);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
 }

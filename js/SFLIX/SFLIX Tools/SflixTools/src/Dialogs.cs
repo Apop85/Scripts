@@ -116,7 +116,7 @@ namespace Sflix
         }
     }
 
-    // Hinweis beim Start: Update verfügbar, mit den Versionen von STEFFLIX, Updater und ffmpeg
+    // Hinweis beim Start: Update verfügbar, mit den Versionen von STEFFLIX, Desktop und ffmpeg
     public class UpdateDialog : Form
     {
         bool accepted;
@@ -155,7 +155,7 @@ namespace Sflix
             rows.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Theme.S(240)));
             rows.Margin = new Padding(0);
             AddRow(rows, "STEFFLIX", u.WebChanged ? u.WebText() : "aktuell (" + (u.WebLocal ?? "?") + ")", u.WebChanged);
-            AddRow(rows, "Updater", u.SelfChanged ? App.VersionText + " → " + SelfUpdate.Short(u.SelfRemote) : "aktuell (" + App.VersionText + ")", u.SelfChanged);
+            AddRow(rows, "Desktop", u.SelfChanged ? App.VersionText + " → " + SelfUpdate.Short(u.SelfRemote) : "aktuell (" + App.VersionText + ")", u.SelfChanged);
             AddRow(rows, "ffmpeg", u.FfmpegLocal == null ? "wird bei Bedarf geladen"
                                    : u.FfmpegChanged ? u.FfmpegLocal + " → " + u.FfmpegRemote : "aktuell (" + u.FfmpegLocal + ")", u.FfmpegChanged);
 
@@ -243,7 +243,7 @@ namespace Sflix
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-            // Neuerungen des Updaters stehen immer oben, die von STEFFLIX und App lassen sich dazuschalten
+            // Neuerungen von Desktop stehen immer oben, die von STEFFLIX und App lassen sich dazuschalten
             FlowLayoutPanel toggles = new FlowLayoutPanel();
             toggles.AutoSize = true;
             toggles.WrapContents = true;
@@ -344,7 +344,8 @@ namespace Sflix
             return Theme.Muted;
         }
 
-        // Überschriften einer Komponente: "Updater 3.5.0" bzw. "Version 2.7.1" (STEFFLIX), gleiche zusammengefasst
+        // Überschriften einer Komponente: "Desktop 4.0.0" bzw. "Version 2.7.1" (STEFFLIX), gleiche zusammengefasst.
+        // Die Komponente heisst in news.json weiterhin "updater" (ältere Leser), angezeigt wird "Desktop".
         static System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, System.Collections.Generic.List<string[]>>> GroupsOf(
             System.Collections.Generic.List<PatchVersion> versions, string component)
         {
@@ -354,7 +355,7 @@ namespace Sflix
                 {
                     if (item[2] != component) continue;
                     string title = component == "stefflix" ? "Version " + v.Version
-                        : (component == "updater" ? "Updater " : "Android-App ") + (item[3] != "" ? item[3] : "(mit STEFFLIX " + v.Version + ")");
+                        : (component == "updater" ? "Desktop " : "Android-App ") + (item[3] != "" ? item[3] : "(mit STEFFLIX " + v.Version + ")");
                     System.Collections.Generic.List<string[]> list = null;
                     foreach (var g in groups) if (g.Key == title) { list = g.Value; break; }
                     if (list == null)
@@ -375,11 +376,11 @@ namespace Sflix
             using (Font body = new Font("Segoe UI", 10f))
             {
                 bool first = true;
-                string[][] parts = { new[] { "updater", "Updater" }, new[] { "stefflix", "STEFFLIX" }, new[] { "app", "Android-App" } };
+                string[][] parts = { new[] { "updater", "Desktop" }, new[] { "stefflix", "STEFFLIX" }, new[] { "app", "Android-App" } };
                 foreach (string[] part in parts)
                 {
                     if ((part[0] == "stefflix" && !withWeb) || (part[0] == "app" && !withApp)) continue;
-                    // Abschnittstitel nur, wenn mehr als der Updater gezeigt wird
+                    // Abschnittstitel nur, wenn mehr als Desktop gezeigt wird
                     if (withWeb || withApp)
                     {
                         Append(box, (first ? "" : "\n\n") + "Neuerungen " + part[1] + "\n", section, Branding.Red, 0, 0);

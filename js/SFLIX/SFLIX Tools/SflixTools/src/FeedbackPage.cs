@@ -43,7 +43,7 @@ namespace Sflix
             // --- Lizenz eingeben ---
             licensePanel = Card("Lizenzschlüssel");
             licensePanel.Controls.Add(Hint(
-                "Der Lizenzschlüssel schaltet das Feedback im Updater und in STEFFLIX frei. Er gilt für diese Installation " +
+                "Der Lizenzschlüssel schaltet das Feedback in den Tools und in STEFFLIX frei. Er gilt für diese Installation " +
                 "in allen Browsern. Den ganzen Schlüssel einfügen (er beginnt mit SFX2), Zeilenumbrüche spielen keine Rolle. " +
                 "Beim Speichern wird eine Bestätigung mit der Kennung dieser Installation verschickt."));
             keyBox = Theme.MakeTextBox();
@@ -200,7 +200,7 @@ namespace Sflix
         void RemoveKey()
         {
             if (busy) return;
-            if (MessageBox.Show(FindForm(), "Lizenzschlüssel entfernen? Das Feedback ist danach im Updater und in STEFFLIX nicht mehr verfügbar.",
+            if (MessageBox.Show(FindForm(), "Lizenzschlüssel entfernen? Das Feedback ist danach in den Tools und in STEFFLIX nicht mehr verfügbar.",
                                 App.Title, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
             RunBusy(null, sendStatus, "Abmeldung wird gesendet …", delegate
             {

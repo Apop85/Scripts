@@ -2,6 +2,19 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0703",
+      "name": "2.7.3",
+      "items": [
+        {
+          "type": "INTERFACE",
+          "text": "Android-App 1.2.5: Nach einem Update aus der App öffnet sich die App wieder. Lässt Android das nicht zu, erscheint eine Benachrichtigung \"STEFFLIX wurde aktualisiert\", die die App mit einem Tipp öffnet.",
+          "component": "app",
+          "componentVersion": "1.2.5",
+          "short": "Nach einem Update aus der App öffnet sich die App wieder. Lässt Android das nicht zu, erscheint eine Benachrichtigung \"STEFFLIX wurde aktualisiert\", die die App mit einem Tipp öffnet."
+        }
+      ]
+    },
+    {
       "version": "2.0702",
       "name": "2.7.2",
       "items": [

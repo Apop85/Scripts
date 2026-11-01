@@ -54,6 +54,7 @@ public class ShareListActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        AppUpdate.clearUpdatedNotice(this);
         store = new ShareStore(this);
 
         LinearLayout layout = new LinearLayout(this);

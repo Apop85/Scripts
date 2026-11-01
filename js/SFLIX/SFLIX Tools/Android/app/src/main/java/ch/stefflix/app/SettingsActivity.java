@@ -79,6 +79,11 @@ public class SettingsActivity extends Activity {
                 prefs.keepScreenOn(), prefs::setKeepScreenOn);
         switchRow(page, "Videos im Vollbild quer anzeigen", "Dreht das Bild im Vollbild ins Querformat",
                 prefs.landscapeFullscreen(), prefs::setLandscapeFullscreen);
+        switchRow(page, "Wiedergabe im Hintergrund",
+                "Musik und Ton von Videos laufen weiter bei ausgeschaltetem Bildschirm oder in einer anderen App, mit Steuerung in der Benachrichtigung",
+                prefs.backgroundPlayback(), prefs::setBackgroundPlayback);
+        switchRow(page, "Bild-im-Bild", "Knopf im Player: Video in einem kleinen Fenster über anderen Apps",
+                prefs.pictureInPicture(), prefs::setPictureInPicture);
 
         // ---- Speicher ----
         heading(page, "Speicher");
@@ -283,6 +288,8 @@ public class SettingsActivity extends Activity {
         sb.append("\nVideopuffer: ").append(p.bufferMb()).append(" MB");
         sb.append("\nDisplay anlassen: ").append(p.keepScreenOn() ? "ja" : "nein")
                 .append(", Vollbild quer: ").append(p.landscapeFullscreen() ? "ja" : "nein");
+        sb.append("\nWiedergabe im Hintergrund: ").append(p.backgroundPlayback() ? "ja" : "nein")
+                .append(", Bild-im-Bild: ").append(p.pictureInPicture() ? "ja" : "nein");
         sb.append("\nLetzte Seitenaufrufe:\n").append(LoadStats.text());
         return sb.toString();
     }

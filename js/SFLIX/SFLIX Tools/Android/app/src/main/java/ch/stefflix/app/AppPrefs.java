@@ -21,6 +21,18 @@ final class AppPrefs {
     boolean landscapeFullscreen() { return p.getBoolean("landscapeFullscreen", true); }
     void setLandscapeFullscreen(boolean v) { p.edit().putBoolean("landscapeFullscreen", v).apply(); }
 
+    /** Musik und Ton von Videos laufen weiter (Bildschirm aus, andere App), mit Benachrichtigung. */
+    boolean backgroundPlayback() { return p.getBoolean("backgroundPlayback", true); }
+    void setBackgroundPlayback(boolean v) { p.edit().putBoolean("backgroundPlayback", v).apply(); }
+
+    /** Bild-im-Bild-Knopf im Player. */
+    boolean pictureInPicture() { return p.getBoolean("pictureInPicture", true); }
+    void setPictureInPicture(boolean v) { p.edit().putBoolean("pictureInPicture", v).apply(); }
+
+    /** Ab Android 13 einmal nach Benachrichtigungen gefragt (beim ersten Abspielen). */
+    boolean notificationsAsked() { return p.getBoolean("notificationsAsked", false); }
+    void setNotificationsAsked(boolean v) { p.edit().putBoolean("notificationsAsked", v).apply(); }
+
     /** Zwischenspeicher auf dem Gerät (Programmdateien und Vorschaubilder), alle Quellen zusammen. */
     int cacheMb() { return p.getInt("cacheMb", 250); }
     void setCacheMb(int v) { p.edit().putInt("cacheMb", v).apply(); }

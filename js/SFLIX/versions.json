@@ -1,8 +1,8 @@
 {
-  "updater": "4.0.2",
+  "updater": "4.0.3",
   "ffmpeg": "9.0.2",
   "android": {
-    "version": "1.3.0",
-    "sha256": "c765f3f32683fe1f59b3851d076d75710b3b1ecfea1207ea9137d93aa5350544"
+    "version": "1.3.1",
+    "sha256": "d2e069add75e299a7da15aac36a2d3fbd6d133208490b84e9ac26f0d94077c76"
   }
 }

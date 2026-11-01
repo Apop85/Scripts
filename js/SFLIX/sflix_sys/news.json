@@ -2,6 +2,26 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0803",
+      "name": "2.8.3",
+      "items": [
+        {
+          "type": "INTERFACE",
+          "text": "Desktop 4.0.3: In den Patchnotes zeigt der neue Schalter \"Alle Versionen\" die Neuerungen aller Versionen, nicht nur die des anstehenden Updates.",
+          "component": "updater",
+          "componentVersion": "4.0.3",
+          "short": "In den Patchnotes zeigt der neue Schalter \"Alle Versionen\" die Neuerungen aller Versionen, nicht nur die des anstehenden Updates."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Android-App 1.3.1: Unter \"Neuerungen\" stehen zuerst nur die Neuerungen seit der installierten App-Version (ist die App aktuell, die der installierten Version). Der Schalter \"Alle Versionen\" zeigt alles.",
+          "component": "app",
+          "componentVersion": "1.3.1",
+          "short": "Unter \"Neuerungen\" stehen zuerst nur die Neuerungen seit der installierten App-Version (ist die App aktuell, die der installierten Version). Der Schalter \"Alle Versionen\" zeigt alles."
+        }
+      ]
+    },
+    {
       "version": "2.0802",
       "name": "2.8.2",
       "items": [

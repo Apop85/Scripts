@@ -249,4 +249,4 @@ Fehlen Programmdateien, z.B. nach einem abgebrochenen Update, in `STEFFLIX.exe` 
 
 ## Neuerungen
 
-Die Änderungen jeder Version stehen in [sflix_sys/news.txt](sflix_sys/news.txt) und in STEFFLIX unter Hilfe › Changelog. Dort stehen die Neuerungen von STEFFLIX, die von Desktop (STEFFLIX.exe) und der Android-App lassen sich darunter aufklappen. In den Tools zeigt „Patchnotes“ zuerst die Neuerungen von Desktop, in der App „App-Einstellungen › Neuerungen“ die der App.
+Die Änderungen jeder Version stehen in [sflix_sys/news.txt](sflix_sys/news.txt) und in STEFFLIX unter Hilfe › Changelog. Dort stehen die Neuerungen von STEFFLIX, die von Desktop (STEFFLIX.exe) und der Android-App lassen sich darunter aufklappen. In den Tools zeigt „Patchnotes“ zuerst die Neuerungen von Desktop, in der App „App-Einstellungen › Neuerungen“ die der App. Beide zeigen zuerst nur das Neue, der Schalter „Alle Versionen“ alles.

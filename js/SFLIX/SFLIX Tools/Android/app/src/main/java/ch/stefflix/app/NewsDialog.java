@@ -29,8 +29,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * App-Einstellungen › Neuerungen: Patchnotes aus news.json auf GitHub. Zuerst die der App (nach
- * App-Version gegliedert), die von STEFFLIX und Desktop (STEFFLIX.exe, bis 3.x "Updater") lassen sich
+ * App-Einstellungen › Neuerungen: Patchnotes aus news.json auf GitHub. Seit 1.3.1 zuerst nur das Neue
+ * (neuer als die installierte App, sonst die installierte Version), "Alle Versionen" zeigt alles.
+ * Zuerst die der App (nach App-Version gegliedert), die von STEFFLIX und Desktop (STEFFLIX.exe, bis 3.x "Updater") lassen sich
  * darunter einblenden. Felder "component", "componentVersion" und "short" schreibt create_news.py
  * (Desktop weiterhin als "updater"); ältere news.json ohne sie: Komponente aus dem Textanfang
  * ("Desktop x.y.z:", "Updater x.y.z:", "Android-App x.y.z:").
@@ -49,6 +50,8 @@ final class NewsDialog {
     /** Ein Eintrag: Typ, Komponente, Überschrift (z.B. "Desktop 4.0.0"), Text ohne Anfang. */
     private static final class Item {
         String type, component, title, text;
+        String block;             // STEFFLIX-Version des Blocks in news.json
+        String componentVersion;  // Version der Komponente oder null
     }
 
     static void show(Activity a) {
@@ -123,6 +126,8 @@ final class NewsDialog {
                 }
                 item.component = component;
                 item.text = shortText;
+                item.block = block;
+                item.componentVersion = componentVersion != null && !componentVersion.isEmpty() ? componentVersion : null;
                 if ("stefflix".equals(component)) {
                     item.title = "Version " + block;
                 } else {
@@ -145,21 +150,75 @@ final class NewsDialog {
 
         LinearLayout content = new LinearLayout(a);
         content.setOrientation(LinearLayout.VERTICAL);
+        // Seit 1.3.1: zuerst nur das Neue (siehe recentItems), "Alle Versionen" zeigt alles (nicht gemerkt)
+        List<Item> recent = recentItems(items, installedVersion(a));
         Switch web = toggle(a, "Auch Neuerungen von STEFFLIX zeigen");
         Switch updater = toggle(a, "Auch Neuerungen von STEFFLIX.exe (Desktop) zeigen");
+        Switch all = toggle(a, "Alle Versionen");
         Runnable fill = () -> {
             content.removeAllViews();
-            section(a, content, items, "app", web.isChecked() || updater.isChecked() ? "Neuerungen der App" : null);
-            if (web.isChecked()) section(a, content, items, "stefflix", "Neuerungen von STEFFLIX");
-            if (updater.isChecked()) section(a, content, items, "updater", "Neuerungen von Desktop");
+            List<Item> shown = all.isChecked() ? items : recent;
+            section(a, content, shown, "app", web.isChecked() || updater.isChecked() ? "Neuerungen der App" : null);
+            if (web.isChecked()) section(a, content, shown, "stefflix", "Neuerungen von STEFFLIX");
+            if (updater.isChecked()) section(a, content, shown, "updater", "Neuerungen von Desktop");
         };
         web.setOnCheckedChangeListener((b, c) -> fill.run());
         updater.setOnCheckedChangeListener((b, c) -> fill.run());
+        all.setOnCheckedChangeListener((b, c) -> fill.run());
         page.addView(web);
         page.addView(updater);
+        page.addView(all);
         page.addView(content);
         fill.run();
         return scroll;
+    }
+
+    // Neues gegenüber der installierten App: die Blöcke von news.json mit App-Einträgen, die neuer sind
+    // als die installierte Version. Gibt es keine (App aktuell), die Blöcke der installierten Version,
+    // sonst der neueste Block mit App-Einträgen. STEFFLIX und Desktop folgen denselben Blöcken.
+    private static List<Item> recentItems(List<Item> items, String installed) {
+        java.util.Set<String> newer = new java.util.HashSet<>();
+        java.util.Set<String> current = new java.util.HashSet<>();
+        String newest = null;
+        for (Item item : items) {
+            if (!"app".equals(item.component)) continue;
+            if (newest == null) newest = item.block;   // news.json: neueste Version zuerst
+            if (item.componentVersion == null || installed == null) continue;
+            int c = compareVersions(item.componentVersion, installed);
+            if (c > 0) newer.add(item.block);
+            else if (c == 0) current.add(item.block);
+        }
+        java.util.Set<String> blocks = !newer.isEmpty() ? newer : current;
+        if (blocks.isEmpty() && newest != null) blocks.add(newest);
+        List<Item> result = new ArrayList<>();
+        for (Item item : items) if (blocks.contains(item.block)) result.add(item);
+        return result;
+    }
+
+    private static String installedVersion(Activity a) {
+        try {
+            return a.getPackageManager().getPackageInfo(a.getPackageName(), 0).versionName;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // positiv, wenn a neuer ist (x.y.z)
+    private static int compareVersions(String a, String b) {
+        String[] pa = a.split("\\."), pb = b.split("\\.");
+        for (int i = 0; i < 3; i++) {
+            int x = i < pa.length ? parseInt(pa[i]) : 0, y = i < pb.length ? parseInt(pb[i]) : 0;
+            if (x != y) return Integer.compare(x, y);
+        }
+        return 0;
+    }
+
+    private static int parseInt(String s) {
+        try {
+            return Integer.parseInt(s.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private static Switch toggle(Activity a, String label) {

@@ -219,11 +219,25 @@ namespace Sflix
         }
     }
 
-    // Patchnotes: je Version eine Überschrift, darunter die Einträge mit farbigem Typ
+    // Patchnotes: je Version eine Überschrift, darunter die Einträge mit farbigem Typ.
+    // Seit 4.0.3: Schalter "Alle Versionen" (nicht gespeichert) zeigt statt der ausgewählten
+    // Versionen (neu seit der installierten) alle aus news.json, die neuesten oben.
     public class PatchNotesDialog : Form
     {
         public PatchNotesDialog(string heading, System.Collections.Generic.List<PatchVersion> versions)
+            : this(heading, versions, null)
         {
+        }
+
+        public PatchNotesDialog(string heading, System.Collections.Generic.List<PatchVersion> versions,
+                                System.Collections.Generic.List<PatchVersion> allVersions)
+        {
+            this.heading = heading;
+            if (allVersions != null)
+            {
+                this.allVersions = new System.Collections.Generic.List<PatchVersion>(allVersions);
+                this.allVersions.Sort(delegate(PatchVersion a, PatchVersion b) { return WebVersion.Compare(b.Version, a.Version); });
+            }
             Text = "Patchnotes";
             BackColor = Theme.Back;
             ForeColor = Theme.Text;
@@ -258,9 +272,15 @@ namespace Sflix
             showApp = MakeToggle("Android-App");
             toggles.Controls.Add(showWeb);
             toggles.Controls.Add(showApp);
+            if (this.allVersions != null)
+            {
+                showAll = MakeToggle("Alle Versionen");
+                toggles.Controls.Add(showAll);
+            }
             root.Padding = new Padding(Theme.S(20), Theme.S(16), Theme.S(20), Theme.S(14));
 
             Label title = Theme.MakeLabel(heading, false);
+            titleLabel = title;
             title.Font = new Font("Segoe UI Semibold", 13f);
             title.Margin = new Padding(0, 0, 0, Theme.S(10));
 
@@ -297,7 +317,16 @@ namespace Sflix
 
         readonly RichTextBox box;
         readonly System.Collections.Generic.List<PatchVersion> versions;
-        readonly DarkCheckBox showWeb, showApp;
+        readonly System.Collections.Generic.List<PatchVersion> allVersions;   // null = kein Schalter "Alle Versionen"
+        readonly string heading;
+        readonly DarkCheckBox showWeb, showApp, showAll;
+        Label titleLabel;
+
+        // Angezeigt: alle Versionen oder nur die ausgewählten
+        System.Collections.Generic.List<PatchVersion> ShownVersions
+        {
+            get { return showAll != null && showAll.Checked ? allVersions : versions; }
+        }
 
         DarkCheckBox MakeToggle(string text)
         {
@@ -314,8 +343,9 @@ namespace Sflix
         void Refill()
         {
             if (!IsHandleCreated) return;
+            titleLabel.Text = showAll != null && showAll.Checked ? "Alle Neuerungen" : heading;
             box.Clear();
-            Fill(box, versions, showWeb.Checked, showApp.Checked);
+            Fill(box, ShownVersions, showWeb.Checked, showApp.Checked);
         }
 
         // Erst jetzt befüllen: beim Einsetzen ins Fenster übernimmt das Textfeld die Schrift
@@ -324,7 +354,7 @@ namespace Sflix
         {
             base.OnLoad(e);
             try { SetWindowTheme(box.Handle, "DarkMode_Explorer", null); } catch { }   // dunkle Scrollleiste
-            Fill(box, versions, showWeb.Checked, showApp.Checked);
+            Fill(box, ShownVersions, showWeb.Checked, showApp.Checked);
         }
 
         [System.Runtime.InteropServices.DllImport("uxtheme.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]

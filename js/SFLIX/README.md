@@ -144,7 +144,7 @@ Mit Autoplay spielt STEFFLIX nach dem aktuellen Medium automatisch das nächste 
 
 Videos und Musik haben eine eigene Steuerleiste. Bei Videos blendet sie sich während der Wiedergabe nach kurzer Zeit aus und erscheint wieder, sobald die Maus bewegt oder das Video angetippt wird. Bei Musik bleibt sie sichtbar; darüber wird das Vorschaubild des Titels angezeigt (sonst das des Albums bzw. Ordners).
 
-- **Grösse**: Im Querformat füllt ein Video zusammen mit seinem Titel die sichtbare Höhe. Die Knöpfe Zurück / Weiter darunter erscheinen beim Scrollen.
+- **Grösse**: Im Querformat füllt ein Video zusammen mit seinem Titel die sichtbare Höhe. Die Knöpfe Zurück / Weiter darunter erscheinen beim Scrollen. Videos haben immer das Format 16:9 (andere mit schwarzen Rändern), Bilder eine feste Fläche, damit beim Laden nichts springt.
 - **Leiste**: vorheriges / nächstes Medium, Abspielen / Pause, 10 Sekunden zurück / vor, Lautstärke, Zeitleiste, Übergang hier, Autoplay-Menü, Zahnradmenü, Bild im Bild und Vollbild.
 - **Musik**: Neben dem Player steht die Playliste mit allen Titeln und ihrer Dauer, der laufende Titel ist hervorgehoben. Ein Klick spielt einen Titel ab. Auf dem Handy steht die Liste unter dem Player.
 - **Maus**: Klick auf das Video startet oder pausiert, Doppelklick schaltet das Vollbild ein oder aus.

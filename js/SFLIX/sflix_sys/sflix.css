@@ -851,6 +851,15 @@ html.inDesktop .settingRow:has(input[data-setting="skipSplash"]) {
     box-shadow: var(--sflix-shadow);
 }
 
+/* Seit 2.8.5: Bilder in einer festen Fläche (72 % der Fensterhöhe), das Bild mittig. Beim Blättern
+   bleibt die Leiste darunter stehen, auch solange das nächste Bild lädt. Nicht im Vollbild. */
+#media:not(.fullscreened) #playerContainer:has(> #imageLink) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 72vh;
+}
+
 /* Das Audio-Element selbst ist unsichtbar, bedient wird über die eigene Leiste */
 .audioPlayer {
     display: none;
@@ -1001,6 +1010,14 @@ html.inDesktop .settingRow:has(input[data-setting="skipSplash"]) {
 #playerContainer .sflixPlayer video {
     max-width: none;
     margin: 0;
+}
+
+/* Seit 2.8.5: Die Fläche des Videos steht schon vor dem Laden fest (immer 16:9, andere Formate mit
+   schwarzen Rändern), damit die Leiste darunter nicht springt. Im Kinomodus und Vollbild gelten
+   Breite und Höhe 100 %, dort hat aspect-ratio keine Wirkung. */
+#playerContainer .sflixPlayer.isVideo video {
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
 }
 
 /* Querformat (seit 2.8.2, fitVideoToViewport in player.js): Das Video füllt mit seinem Titel die

@@ -731,10 +731,9 @@ function fitVideoToViewport() {
         shell.classList.remove("fitViewport");
         return;
     }
-    var video = ui.media;
-    var aspect = video.videoWidth > 0 && video.videoHeight > 0 ? video.videoWidth / video.videoHeight : 16 / 9;
+    // Seit 2.8.5 immer 16:9 (die Fläche steht schon vor dem Laden fest, andere Formate mit Rändern)
     shell.style.setProperty("--fit-height", Math.floor(available) + "px");
-    shell.style.setProperty("--fit-width", Math.floor(available * aspect) + "px");
+    shell.style.setProperty("--fit-width", Math.floor(available * 16 / 9) + "px");
     shell.classList.add("fitViewport");
 }
 
@@ -2072,6 +2071,16 @@ function bindPlayerEvents(ui) {
     media.addEventListener("waiting", function () {
         ui.shell.classList.add("isWaiting");
     });
+    // Seit 2.8.5: Lade-Kreis in der schwarzen Fläche, bis das erste Bild des Videos da ist
+    if (!ui.isAudio) {
+        ui.shell.classList.add("isWaiting");
+        media.addEventListener("loadstart", function () {
+            ui.shell.classList.add("isWaiting");
+        });
+        media.addEventListener("loadeddata", function () {
+            ui.shell.classList.remove("isWaiting");
+        });
+    }
     ["playing", "canplay", "seeked", "pause", "emptied"].forEach(function (type) {
         media.addEventListener(type, function () {
             ui.shell.classList.remove("isWaiting");
@@ -2082,7 +2091,7 @@ function bindPlayerEvents(ui) {
             updateProgress(ui);
         });
     });
-    // Seitenverhältnis bekannt: Grösse im Querformat anpassen
+    // Geladen: Grösse im Querformat nochmals prüfen (z.B. Titel inzwischen umgebrochen)
     media.addEventListener("loadedmetadata", fitVideoToViewport);
     media.addEventListener("volumechange", function () {
         updateVolumeControls(ui);

@@ -2,6 +2,10 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.8.5</b>:<br>
+<ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Der Platz für Videos und Bilder steht schon beim Laden fest. Die Knöpfe Zurück, Merken, Zufall und Weiter springen dadurch nicht mehr nach oben und wieder zurück. Videos haben immer das Format 16:9 (andere mit schwarzen Rändern) und zeigen bis zum ersten Bild einen Lade-Kreis.</li>
+</ul>
 <b>Version 2.8.4</b>:<br>
 <ul>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.0.4: Liegt STEFFLIX auf einem Netzlaufwerk, zeigte die Taskleiste beim Start über eine Verknüpfung nur ein Standardsymbol. Verknüpfungen auf STEFFLIX.exe verwenden jetzt ein lokal abgelegtes Logo, bestehende werden beim Start angepasst.</li>

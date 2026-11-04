@@ -2,6 +2,19 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0806",
+      "name": "2.8.6",
+      "items": [
+        {
+          "type": "BUGFIX",
+          "text": "Ein Klick auf \"Weiter\" während des Autoplay-Countdowns (der Knopf füllt sich rot) liess die Füllung stehen und markierte das Video nicht als gesehen. Jetzt verhält er sich wie der automatische Wechsel: Die Füllung wird zurückgesetzt, das Video gilt als gesehen, die gespeicherte Position wird gelöscht und die Autoplay-Anzahl zählt eins herunter. \"Zurück\" während des Countdowns setzt die Füllung ebenfalls zurück, markiert das Video als gesehen und löscht die Position, die Anzahl bleibt.",
+          "component": "stefflix",
+          "componentVersion": "2.8.6",
+          "short": "Ein Klick auf \"Weiter\" während des Autoplay-Countdowns (der Knopf füllt sich rot) liess die Füllung stehen und markierte das Video nicht als gesehen. Jetzt verhält er sich wie der automatische Wechsel: Die Füllung wird zurückgesetzt, das Video gilt als gesehen, die gespeicherte Position wird gelöscht und die Autoplay-Anzahl zählt eins herunter. \"Zurück\" während des Countdowns setzt die Füllung ebenfalls zurück, markiert das Video als gesehen und löscht die Position, die Anzahl bleibt."
+        }
+      ]
+    },
+    {
       "version": "2.0805",
       "name": "2.8.5",
       "items": [

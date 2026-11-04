@@ -2577,6 +2577,33 @@ function hideAutoplayCountdown() {
     }
 }
 
+// Klick auf Weiter bzw. Zurück während des Autoplay-Countdowns (seit 2.8.6; Knöpfe unter dem Medium,
+// in der Leiste, "Nächstes in … s", Tasten N/P): Füllung und Countdown zurücksetzen, ein Video gilt
+// als gesehen, die gespeicherte Position wird gelöscht. Weiter zählt zusätzlich die Autoplay-Anzahl
+// herunter (wie der automatische Wechsel), Zurück nicht. Ausserhalb des Countdowns: nichts.
+function finishCountdownOnNavigation(direction) {
+    var ui = getPlayerUI();
+    var nextNode = document.getElementById("next");
+    var active = (ui != null && !ui.countdown.hidden) || (nextNode != null && nextNode.style.background !== "");
+    if (!active) {
+        return;
+    }
+    if (nextNode != null) {
+        nextNode.style.background = "";
+    }
+    hideAutoplayCountdown();
+    var player = document.getElementById("video");
+    if (player != null && (player.tagName == "VIDEO" || player.tagName == "AUDIO")) {
+        removeData(getTimestampKey(player));
+        if (player.tagName == "VIDEO") {
+            markSeen(player.dataset.mediaPath);
+        }
+    }
+    if (direction == "next") {
+        updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
+    }
+}
+
 // Neues Medium im bestehenden Player: Geschwindigkeit 1x, Download-Link, Anzeige zurücksetzen
 function onPlayerMediaChanged(media) {
     var ui = getPlayerUI();
@@ -2758,6 +2785,13 @@ function initPlayerControls() {
             revealPlayerControls();
         }
     });
+    // Weiter/Zurück während des Autoplay-Countdowns: alle Wege führen über den Link in #next bzw. #prev
+    document.addEventListener("click", function (event) {
+        var link = event.target && event.target.closest ? event.target.closest("#next a, #prev a") : null;
+        if (link != null) {
+            finishCountdownOnNavigation(link.closest("#next") != null ? "next" : "prev");
+        }
+    }, true);
     // Fenstergrösse oder Ausrichtung geändert (auch nach dem Kinomodus): Video neu einpassen
     var fitTimer = null;
     window.addEventListener("resize", function () {

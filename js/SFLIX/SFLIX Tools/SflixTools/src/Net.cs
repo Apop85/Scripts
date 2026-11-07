@@ -79,6 +79,7 @@ namespace Sflix
             "sflix_sys/data.js", "sflix_sys/install.js", "sflix_sys/license.js", "sflix_sys/renamed.js",
             "sflix_sys/updater_info.js", "sflix_sys/updater_settings.json", "sflix_sys/folgen_cache.json",
             "sflix_sys/folgen_rueckgaengig.json", "sflix_sys/updater.log", "sflix_sys/" + MediaCache.FileName,
+            "sflix_sys/" + DownloadStore.FileName,
         };
 
         // Endungen, die zur Weboberfläche gehören dürfen (keine Programme, keine Medien)

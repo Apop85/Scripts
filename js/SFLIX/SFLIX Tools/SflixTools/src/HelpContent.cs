@@ -24,11 +24,12 @@ namespace Sflix
                 "Das Programm liegt im STEFFLIX-Ordner und arbeitet nur in diesem Ordner. Bis Version 3.5 hiess es updateStefflix.exe.\n\n" +
                 "# Zwei Fenster\n" +
                 "- STEFFLIX: die Mediathek selbst (Doppelklick auf STEFFLIX.exe), siehe „STEFFLIX-Fenster“.\n" +
-                "- Tools: dieses Fenster. Es öffnet sich im Menü von STEFFLIX mit „Tools“ (beim Reiter Updates) oder mit --tools." +
+                "- Tools: dieses Fenster. Es öffnet sich im Menü von STEFFLIX mit „Tools“ (beim Reiter Tools) oder mit --tools. " +
                 "Wird das Fenster von STEFFLIX geschlossen, schliessen sich auch die Tools.\n\n" +
                 "# Registerkarten\n" +
                 "- Updates: STEFFLIX und das Programm aktualisieren, Medien einlesen, Versionen.\n" +
                 "- Importer: Videos, Musik und Bilder in die Mediathek übernehmen.\n" +
+                "- Download: Videos aus einer m3u8-Adresse (HLS) laden.\n" +
                 "- Tools: Vorschaubilder, Folgen umbenennen, Duplikate finden, Zusammenführen, Konvertieren, Medien prüfen, Ablagen leeren.\n" +
                 "- Lizenz bzw. Feedback: Lizenzschlüssel eingeben, danach Nachrichten an den Entwickler schicken.\n" +
                 "- Hilfe: diese Seite (auch mit F1).\n\n" +
@@ -48,7 +49,7 @@ namespace Sflix
                 "start.html lässt sich weiterhin im Browser öffnen. Der Startbildschirm erscheint im Fenster bei jedem Start.\n" +
                 "- F11: Vollbild ein und aus. Das Vollbild eines Videos füllt ebenfalls den ganzen Bildschirm, danach kehrt das Fenster in den vorherigen Zustand zurück.\n" +
                 "- F5: STEFFLIX neu laden.\n" +
-                "- Menü: „Tools“ öffnet das Fenster der Tools beim Reiter Updates (ist es schon offen, kommt es nach vorne). Es erscheint erst fertig aufgebaut, bis dahin zeigt STEFFLIX „Tools werden geöffnet …“.\n" +
+                "- Menü: „Tools“ öffnet das Fenster der Tools beim Reiter Tools (ist es schon offen, kommt es nach vorne). Es erscheint erst fertig aufgebaut, bis dahin zeigt STEFFLIX „Tools werden geöffnet …“.\n" +
                 "- Nach „Daten einlesen“, dem Importer oder einem Update lädt STEFFLIX die Medien selbst neu. Läuft gerade ein Video oder Musik, erst auf Knopfdruck.\n" +
                 "- Ein zweiter Start von STEFFLIX.exe holt das offene Fenster nach vorne.\n" +
                 "- Verknüpfungen auf STEFFLIX.exe zeigen ein lokal abgelegtes Logo (%LOCALAPPDATA%\\STEFFLIX\\stefflix.ico), damit die Taskleiste es auch bei STEFFLIX auf einem Netzlaufwerk anzeigt. " +
@@ -97,6 +98,29 @@ namespace Sflix
                 "Gibt es eine Datei im Ziel schon, zeigt ein Fenster beide Dateien mit Grösse, Auflösung, Dauer, Video/Ton und Datum. " +
                 "Die besseren Werte sind hervorgehoben. Du wählst Ersetzen, Überspringen oder „Als Kopie speichern“ (die neue Datei heisst dann z.B. „Film_1.mp4“), " +
                 "auf Wunsch für alle weiteren Fälle. Dasselbe Fenster erscheint auch bei „Folgen umbenennen“ und beim Wiederherstellen aus einer Ablage."));
+
+            t.Add(new HelpTopic("Download",
+                "Lädt Videos aus einer m3u8-Adresse (HLS), z.B. aus den Entwicklertools des Browsers (Netzwerk, Filter „m3u8“). " +
+                "Nur Streams ohne Kopierschutz lassen sich laden.\n\n" +
+                "# Hinzufügen\n" +
+                "- Adressen: eine je Zeile, mehrere auf einmal möglich.\n" +
+                "- Zielordner: ein Ordner im Installationsordner, z.B. Serien\\Meine Serie\\Staffel 01. Neue Ordner werden angelegt („Neuer Ordner …“ oder einfach eintippen).\n" +
+                "- Dateiname: In einem Staffelordner schlägt STEFFLIX die nächste fehlende Folge vor (z.B. S01E05.mp4). Bei mehreren Adressen werden die Folgen fortlaufend nummeriert.\n" +
+                "- Qualität: Standard ist die beste. Bei einer einzelnen Adresse zeigt „Qualitäten abrufen“ alle zur Auswahl.\n" +
+                "- Ganze Datei prüfen: dekodiert die ganze Datei statt kurzer Stichproben (dauert länger).\n" +
+                "- Erweitert: Referer und User-Agent, falls der Server ohne diese Angaben nichts liefert.\n\n" +
+                "# Ablauf\n" +
+                "STEFFLIX.exe lädt die Teilstücke einzeln nach %LOCALAPPDATA%\\STEFFLIX\\downloads und wiederholt fehlerhafte Teilstücke. ffmpeg fügt sie danach zu einer MP4 zusammen. " +
+                "Geprüft wird, ob die Dauer zur Playlist passt, dazu ein kurzer Dekodiertest. Erst dann kommt die Datei in den Zielordner (gibt es den Namen schon, mit Zusatz). " +
+                "Kann der Browser sie nicht abspielen, wird sie konvertiert, danach entsteht ein Vorschaubild. " +
+                "Sobald für einen Zielordner kein Download mehr wartet oder läuft, wird er eingelesen (läuft gerade eine andere Aufgabe, danach).\n\n" +
+                "# Bedienen\n" +
+                "- Gleichzeitig: wie viele Downloads parallel laufen (1 bis 4), die übrigen warten.\n" +
+                "- Pausieren und Fortsetzen: Bereits geladene Teilstücke bleiben, auch nach dem Schliessen des Programms. Laufende Downloads werden beim Schliessen pausiert.\n" +
+                "- URL bearbeiten: neue Adresse, z.B. wenn sie abgelaufen ist (Fehler 403). Hat die Playlist gleich viele Teilstücke, geht es an derselben Stelle weiter.\n" +
+                "- Entfernen: bricht ab und löscht die geladenen Teilstücke. Fertige Dateien im Zielordner bleiben.\n" +
+                "- Meldungen (Doppelklick): Hinweise von ffmpeg und der Prüfung. Die Spalte Ergebnis zeigt OK, Warnung oder Fehler.\n" +
+                "- Aufräumen: entfernt fertige und fehlgeschlagene Downloads aus der Liste samt ihren Zwischendateien. Verwaiste Zwischendateien löscht das Programm auch beim Start."));
 
             t.Add(new HelpTopic("Vorschaubilder",
                 "Erstellt fehlende Vorschaubilder (480×270) im Ordner Preview neben den Medien: für Videos ein Bild aus der Mitte, für Bilder eine verkleinerte Kopie. " +
@@ -206,7 +230,7 @@ namespace Sflix
                 "- Nur einzelne Dateien: Doppelklick auf eine Ablage oder „Dateien wählen …“. Die Vergleichstabelle zeigt die Datei in der Ablage neben einer vorhandenen am Ziel."));
 
             t.Add(new HelpTopic("ffmpeg",
-                "ffmpeg wird für Vorschaubilder, Konvertieren, den Importer, „Medien prüfen“, „Duplikate finden“ und die Vergleichstabellen gebraucht. " +
+                "ffmpeg wird für Vorschaubilder, Konvertieren, den Importer, Downloads, „Medien prüfen“, „Duplikate finden“ und die Vergleichstabellen gebraucht. " +
                 "Es wird im Setup oder beim ersten Bedarf geladen (ca. 100 MB) und über eine Prüfsumme kontrolliert.\n" +
                 "- Standardordner: %LOCALAPPDATA%\\STEFFLIX\\ffmpeg (je Benutzer und PC, auch wenn STEFFLIX auf einem NAS liegt).\n" +
                 "- Unter Tools › Einstellungen stehen Ordner und Version, mit „Ändern …“ und „Installieren“.\n" +
@@ -269,7 +293,8 @@ namespace Sflix
                 "- updater_settings.json: Einstellungen von STEFFLIX.exe (auch Lage des Fensters)\n" +
                 "- updater.log: Protokoll (nur auf Wunsch bzw. ohne Oberfläche)\n" +
                 "- folgen_cache.json, folgen_rueckgaengig.json: Folgen umbenennen\n" +
-                "- medien_cache.json: gemerkte Prüfergebnisse der Tools (siehe „Schneller prüfen“)"));
+                "- medien_cache.json: gemerkte Prüfergebnisse der Tools (siehe „Schneller prüfen“)\n" +
+                "- downloads.json: Liste der Downloads (die Teilstücke liegen in %LOCALAPPDATA%\\STEFFLIX\\downloads)"));
 
             return t;
         }

@@ -19,12 +19,13 @@ Dazu kommen „Duplikate finden“, „Medien prüfen“ und „Ablagen leeren�
 
 „Daten einlesen“ verkleinert zu große Vorschaubilder auf 480×270. Das Original kommt nach `Preview\__original\<Dateiname>`. Bis Version 3.0.3 lag es als `<Dateiname>.original` direkt im Preview-Ordner; solche Dateien zieht „Daten einlesen“ automatisch um.
 
-Das Fenster hat fünf Registerkarten. Sichtbar ist nur der Bereich der gewählten Karte, der Untertitel im Kopfbild wechselt mit (UPDATES, IMPORTER, TOOLS, LIZENZ bzw. FEEDBACK, HILFE). „Start“ führt aus, was auf der sichtbaren Karte gewählt ist:
+Das Fenster hat sechs Registerkarten. Sichtbar ist nur der Bereich der gewählten Karte, der Untertitel im Kopfbild wechselt mit (UPDATES, IMPORTER, DOWNLOAD, TOOLS, LIZENZ bzw. FEEDBACK, HILFE). „Start“ führt aus, was auf der sichtbaren Karte gewählt ist:
 
 | Karte | Inhalt | beim Start |
 |---|---|---|
 | Updates | Update, Daten einlesen | die angehakten |
 | Importer | Medien importieren | Import, auf Wunsch Vorschaubilder (nur im Zielordner), danach Daten einlesen für den Zielordner |
+| Download | m3u8-Downloads (`DownloadPage.cs`, Ablauf `DownloadTask.cs`) | kein Start-Knopf: eigene Warteschlange (`DownloadManager`, 1–4 gleichzeitig, `download.parallel`), Teilstücke in `%LOCALAPPDATA%\STEFFLIX\downloads\<Id>`, Liste `sflix_sys\downloads.json`; je Download prüfen, verschieben, bei Bedarf konvertieren (`ConvertTask` mit `OnlyFiles`), Vorschaubild; Zielordner einlesen, wenn dort nichts mehr wartet oder läuft (`MainForm.RequestDataRead`, nach laufenden Aufgaben) |
 | Tools | Vorschaubilder, Folgen umbenennen, Duplikate finden, Zusammenführen, Konvertieren, Medien prüfen, Ablagen leeren (höchstens vier Kacheln je Reihe), Einstellungen | die angehakten, danach Daten einlesen nur für die betroffenen Ordner im Installationsordner (mit „Alles“ alles, nach „Ablagen leeren“ allein nichts) |
 | Lizenz / Feedback | `FeedbackPage.cs` | kein Start-Knopf |
 | Hilfe | `HelpPage.cs`, Texte in `HelpContent.cs` (auch F1) | kein Start-Knopf |

@@ -2,6 +2,68 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0807",
+      "name": "2.8.7",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.0.5: Neuer Reiter \"Download\" in den Tools (zwischen Importer und Tools). Er lädt Videos aus einer m3u8-Adresse direkt in einen Ordner von STEFFLIX, auch mehrere Adressen auf einmal und mehrere Downloads gleichzeitig. Downloads lassen sich pausieren, nach einem Neustart fortsetzen und mit einer neuen Adresse weiterführen, wenn die alte abgelaufen ist. In einem Staffelordner wird die nächste fehlende Folge als Dateiname vorgeschlagen, die Qualität ist wählbar (Standard: die beste). Danach wird die Datei geprüft, bei Bedarf konvertiert, mit Vorschaubild versehen und der Zielordner eingelesen. Meldungen von ffmpeg und der Prüfung zeigt ein Doppelklick, \"Aufräumen\" entfernt fertige und fehlgeschlagene Downloads samt Zwischendateien. Nur Streams ohne Kopierschutz.",
+          "component": "updater",
+          "componentVersion": "4.0.5",
+          "short": "Neuer Reiter \"Download\" in den Tools (zwischen Importer und Tools). Er lädt Videos aus einer m3u8-Adresse direkt in einen Ordner von STEFFLIX, auch mehrere Adressen auf einmal und mehrere Downloads gleichzeitig. Downloads lassen sich pausieren, nach einem Neustart fortsetzen und mit einer neuen Adresse weiterführen, wenn die alte abgelaufen ist. In einem Staffelordner wird die nächste fehlende Folge als Dateiname vorgeschlagen, die Qualität ist wählbar (Standard: die beste). Danach wird die Datei geprüft, bei Bedarf konvertiert, mit Vorschaubild versehen und der Zielordner eingelesen. Meldungen von ffmpeg und der Prüfung zeigt ein Doppelklick, \"Aufräumen\" entfernt fertige und fehlgeschlagene Downloads samt Zwischendateien. Nur Streams ohne Kopierschutz."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Ein Wechsel zwischen Seiten (Ordner, Suche, Favoriten, Hilfe, Einstellungen, Zurück) lädt STEFFLIX nicht mehr neu: kein schwarzes Bild und kein Ladescreen mehr zwischen den Seiten, und auf einem NAS deutlich schneller. \"Zurück\" kehrt an die vorherige Stelle der Seite zurück. Der Ladescreen erscheint nur noch beim Öffnen von STEFFLIX.",
+          "component": "stefflix",
+          "componentVersion": "2.8.7",
+          "short": "Ein Wechsel zwischen Seiten (Ordner, Suche, Favoriten, Hilfe, Einstellungen, Zurück) lädt STEFFLIX nicht mehr neu: kein schwarzes Bild und kein Ladescreen mehr zwischen den Seiten, und auf einem NAS deutlich schneller. \"Zurück\" kehrt an die vorherige Stelle der Seite zurück. Der Ladescreen erscheint nur noch beim Öffnen von STEFFLIX."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Menübänder laden die Vorschaubilder ein bis zwei Bandbreiten im Voraus, beim Blättern, Ziehen und Wischen erscheinen sie dadurch ohne Verzögerung.",
+          "component": "stefflix",
+          "componentVersion": "2.8.7",
+          "short": "Menübänder laden die Vorschaubilder ein bis zwei Bandbreiten im Voraus, beim Blättern, Ziehen und Wischen erscheinen sie dadurch ohne Verzögerung."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "\"Kacheln pro Zeile automatisch\" gilt jetzt auf allen Ordnerseiten, auch bei Ordnern mit wenigen Unterordnern wie den Staffeln einer Serie oder Alben: Statt eines seitlich scrollenden Bandes brechen die Kacheln in Zeilen um.",
+          "component": "stefflix",
+          "componentVersion": "2.8.7",
+          "short": "\"Kacheln pro Zeile automatisch\" gilt jetzt auf allen Ordnerseiten, auch bei Ordnern mit wenigen Unterordnern wie den Staffeln einer Serie oder Alben: Statt eines seitlich scrollenden Bandes brechen die Kacheln in Zeilen um."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Im Fenster von STEFFLIX.exe verschwindet die Scrollbar im Video-Vollbild zusammen mit der Player-Leiste und erscheint beim Scrollen wieder.",
+          "component": "stefflix",
+          "componentVersion": "2.8.7",
+          "short": "Im Fenster von STEFFLIX.exe verschwindet die Scrollbar im Video-Vollbild zusammen mit der Player-Leiste und erscheint beim Scrollen wieder."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Im Fenster von STEFFLIX.exe öffnet der Menüeintrag \"Tools\" die Tools jetzt beim Reiter \"Tools\".",
+          "component": "stefflix",
+          "componentVersion": "2.8.7",
+          "short": "Im Fenster von STEFFLIX.exe öffnet der Menüeintrag \"Tools\" die Tools jetzt beim Reiter \"Tools\"."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.0.5: Das Update von STEFFLIX.exe konnte still ausbleiben, wenn ein Virenscanner die heruntergeladene Datei beim Lesen der Version sperrte. Die Version wird jetzt direkt aus den heruntergeladenen Daten gelesen.",
+          "component": "updater",
+          "componentVersion": "4.0.5",
+          "short": "Das Update von STEFFLIX.exe konnte still ausbleiben, wenn ein Virenscanner die heruntergeladene Datei beim Lesen der Version sperrte. Die Version wird jetzt direkt aus den heruntergeladenen Daten gelesen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Der Ladescreen wartete manchmal auf die falschen Vorschaubilder, weil ein Update-Hinweis die Seite während des Wartens nach unten schob. Hinweise erscheinen jetzt erst nach dem Ladescreen.",
+          "component": "stefflix",
+          "componentVersion": "2.8.7",
+          "short": "Der Ladescreen wartete manchmal auf die falschen Vorschaubilder, weil ein Update-Hinweis die Seite während des Wartens nach unten schob. Hinweise erscheinen jetzt erst nach dem Ladescreen."
+        }
+      ]
+    },
+    {
       "version": "2.0806",
       "name": "2.8.6",
       "items": [

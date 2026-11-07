@@ -1718,6 +1718,17 @@ html.playerCinema #media {
     padding: 0;
 }
 
+/* Scrollbar der Seite im Vollbild: verschwindet mit der Leiste, beim Scrollen erscheint sie wieder
+   (Edge und Chrome blenden sie selbst aus, das Fenster von STEFFLIX.exe nicht). Nur unsichtbar,
+   nicht entfernt: Sonst würde das Video beim Ein- und Ausblenden um die Breite der Scrollbar springen. */
+html.playerCinema {
+    background-color: #000;
+}
+
+html.playerCinema:not(.cinemaScrolling):has(.sflixPlayer.isVideo:not(.controlsVisible)) {
+    scrollbar-color: transparent transparent;
+}
+
 html.playerCinema .sflixPlayer.isVideo {
     max-width: none;
     height: 100vh;

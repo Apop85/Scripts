@@ -1003,6 +1003,8 @@ function readTimestamp(player) {
 // Medienwechsel ohne Seitenreload verwendet.
 function loadDecodedMedia(decodedData, pushState) {
     timeoutArray = cancelTimeouts();
+    // Vor dem Umbau der Seite: Position der Ordnerseite für "Zurück"
+    var scrollBefore = window.scrollY;
 
     var medialocation = normalizeMediaLocation(getMediaLocationFromDecodedData(decodedData));
     if (medialocation == null) {
@@ -1072,6 +1074,8 @@ function loadDecodedMedia(decodedData, pushState) {
     }
 
     if (pushState) {
+        // Zurück zur Ordnerseite landet wieder an derselben Stelle
+        saveScrollPosition(scrollBefore);
         history.pushState({}, "", startUrl);
     }
 
@@ -2798,6 +2802,19 @@ function initPlayerControls() {
         clearTimeout(fitTimer);
         fitTimer = setTimeout(fitVideoToViewport, 100);
     });
+    // Vollbild: Die Scrollbar der Seite blendet mit der Leiste aus (CSS) und erscheint beim Scrollen
+    // wieder für dieselbe Zeit wie die Leiste
+    var scrollbarTimer = null;
+    window.addEventListener("scroll", function () {
+        if (!isCinemaMode()) {
+            return;
+        }
+        document.documentElement.classList.add("cinemaScrolling");
+        clearTimeout(scrollbarTimer);
+        scrollbarTimer = setTimeout(function () {
+            document.documentElement.classList.remove("cinemaScrolling");
+        }, controlsHideDelay);
+    }, { passive: true });
 }
 
 // Vollbild für Bilder: Bild auf der ganzen Fläche, der Browser wechselt ebenfalls in den Vollbildmodus

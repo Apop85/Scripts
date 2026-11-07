@@ -1,4 +1,4 @@
-// Hauptfenster: Aufgaben auswählen, starten, Fortschritt und Protokoll.
+﻿// Hauptfenster: Aufgaben auswählen, starten, Fortschritt und Protokoll.
 
 using System;
 using System.Collections.Concurrent;
@@ -58,10 +58,13 @@ namespace Sflix
         Label importHint;
 
         // Registerkarten: nur der Bereich der gewählten Karte ist sichtbar
-        const int PageUpdates = 0, PageImport = 1, PageTools = 2, PageLicense = 3, PageHelp = 4;
-        static readonly string[] PageSubtitles = { "UPDATES", "IMPORTER", "TOOLS", "LIZENZ", "HILFE" };
+        const int PageUpdates = 0, PageImport = 1, PageDownload = 2, PageTools = 3, PageLicense = 4, PageHelp = 5;
+        static readonly string[] PageSubtitles = { "UPDATES", "IMPORTER", "DOWNLOAD", "TOOLS", "LIZENZ", "HILFE" };
         FeedbackPage feedbackPage;
         HelpPage helpPage;
+        DownloadPage downloadPage;
+        // Zielordner fertiger Downloads, die eingelesen werden, sobald keine Aufgabe mehr läuft
+        readonly List<string> pendingDataFolders = new List<string>();
         FlowLayoutPanel buttonsRow;
         Label ffmpegInfo;
         static readonly string[] ToolIds = { "cleanup", "rename", "dupes", "merge", "convert", "check", "preview" };
@@ -106,9 +109,10 @@ namespace Sflix
         public Func<string> ExtraRestartArgs;                        // Neustart nach Selbst-Update: z.B. " --player"
         public Action Restarting;                                    // vor dem Schliessen für den Neustart
         List<string> lastTasks = new List<string>();
-        static readonly string[] PageTitles = { "Updates", "Importer", "Tools", "Lizenz", "Hilfe" };
+        static readonly string[] PageTitles = { "Updates", "Importer", "Download", "Tools", "Lizenz", "Hilfe" };
 
-        public bool IsRunning { get { return running; } }
+        // Auch laufende Downloads zählen (Nachfrage beim Schliessen des Players)
+        public bool IsRunning { get { return running || (downloadPage != null && downloadPage.Manager.AnyRunning); } }
 
         // Laufende Aufgabe abbrechen und danach schliessen (bzw. sofort schliessen)
         public void CancelAndClose()
@@ -126,6 +130,7 @@ namespace Sflix
             {
                 case "updates": index = PageUpdates; break;
                 case "import": index = PageImport; break;
+                case "download": index = PageDownload; break;
                 case "tools": index = PageTools; break;
                 case "license": index = PageLicense; break;
                 case "help": index = PageHelp; break;
@@ -210,6 +215,7 @@ namespace Sflix
             tabs.Margin = new Padding(0);
             tabs.Add("Updates", Glyph.Up);
             tabs.Add("Importer", Glyph.Import);
+            tabs.Add("Download", Glyph.Download);
             tabs.Add("Tools", Glyph.Tools);
             tabs.Add("Lizenz", Glyph.Key);
             tabs.Add("Hilfe", Glyph.Help);
@@ -418,10 +424,14 @@ namespace Sflix
             feedbackPage.Diagnosis = BuildDiagnosis;
             feedbackPage.StatusChanged = UpdateLicenseTab;
             helpPage = new HelpPage();
+            downloadPage = new DownloadPage(settings);
+            downloadPage.Log = delegate(string line) { pendingLog.Enqueue(line); };
+            downloadPage.FolderReady = RequestDataRead;
 
             pages = new Control[] {
                 Page(new Control[] { updatesRow }),
                 Page(BuildImportPage()),
+                Page(new Control[] { downloadPage }),
                 Page(new Control[] { toolsNote, toolsSection }),
                 Page(new Control[] { feedbackPage }),
                 Page(new Control[] { helpPage }),
@@ -808,7 +818,7 @@ namespace Sflix
                 for (int i = 0; i < pages.Length; i++) pages[i].Visible = i == index;
                 tasksScroller.AutoScrollPosition = new Point(0, 0);
                 // Lizenz/Feedback und Hilfe haben keinen Start-Knopf
-                buttonsRow.Visible = index <= PageTools;
+                buttonsRow.Visible = index <= PageTools && index != PageDownload;
                 ResumeLayout(true);
                 banner.Subtitle = index == PageLicense && feedbackPage.Status == LicenseStatus.Active ? "FEEDBACK" : PageSubtitles[index];
                 banner.Invalidate();
@@ -2200,6 +2210,29 @@ namespace Sflix
 
         void StartTasks(List<string> preset)
         {
+            StartTasks(preset, null);
+        }
+
+        // Fertige Downloads: Zielordner einlesen, sobald keine andere Aufgabe läuft
+        void RequestDataRead(string folder)
+        {
+            if (!pendingDataFolders.Exists(delegate(string f) { return string.Equals(f, folder, StringComparison.OrdinalIgnoreCase); }))
+                pendingDataFolders.Add(folder);
+            RunPendingDataRead();
+        }
+
+        void RunPendingDataRead()
+        {
+            if (running || pendingDataFolders.Count == 0 || App.IsReleaseFolder || IsDisposed || closeWhenDone) return;
+            List<string> folders = Folders.WithoutNested(pendingDataFolders);
+            pendingDataFolders.Clear();
+            AppendLog("Download: Zielordner werden eingelesen (" + folders.Count + ")");
+            StartTasks(new List<string> { "data" }, folders);
+        }
+
+        // dataOverride: nur diese Ordner einlesen (fertige Downloads)
+        void StartTasks(List<string> preset, List<string> dataOverride)
+        {
             if (running) return;
             // Release-Ordner: nur ffmpeg (liegt ausserhalb des Ordners) ist erlaubt
             if (App.IsReleaseFolder && !(preset != null && preset.Count == 1 && preset[0] == "ffmpeg"))
@@ -2319,7 +2352,11 @@ namespace Sflix
 
             // Welche Ordner "Daten einlesen" durchsucht (null = alle)
             List<string> dataScope = null;
-            if (import != null)
+            if (dataOverride != null)
+            {
+                dataScope = dataOverride;
+            }
+            else if (import != null)
             {
                 // Importer: nur der Zielordner
                 dataScope = new List<string> { Path.Combine(App.Root, import.Category, import.SubFolder) };
@@ -2564,7 +2601,9 @@ namespace Sflix
                     AppendLog("Neustart nicht möglich: " + ex.Message + ". Bitte das Programm neu starten.");
                 }
             }
-            if (closeWhenDone) Close();
+            if (closeWhenDone) { Close(); return; }
+            // Während der Aufgabe fertig gewordene Downloads: jetzt deren Zielordner einlesen
+            if (pendingDataFolders.Count > 0) BeginInvoke((Action)RunPendingDataRead);
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
@@ -2581,6 +2620,16 @@ namespace Sflix
                 return;
             }
             if (running) { e.Cancel = true; return; }   // wartet auf das Ende des Abbruchs
+            if (downloadPage != null && downloadPage.Manager.AnyRunning && !closeWhenDone)
+            {
+                if (MessageBox.Show(this, "Es laufen noch Downloads. Pausieren und schliessen? Sie lassen sich beim nächsten Öffnen der Tools im Reiter „Download“ fortsetzen.",
+                                    App.Title, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+            if (downloadPage != null) downloadPage.Manager.PauseAll();
             SaveOptions(autoRun == null);
             WriteLogFile();
             base.OnFormClosing(e);

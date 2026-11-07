@@ -378,7 +378,7 @@ namespace Sflix
 
     }
 
-    public enum Glyph { Up, Import, Tools, Data, Photo, Merge, Convert, Trash, Settings, Rename, Feedback, Key, Help, Inspect, Duplicate }
+    public enum Glyph { Up, Import, Tools, Data, Photo, Merge, Convert, Trash, Settings, Rename, Feedback, Key, Help, Inspect, Duplicate, Download }
 
     // Einfache Strichsymbole im Stil der Registerkarten
     public static class Glyphs
@@ -508,6 +508,12 @@ namespace Sflix
                         g.DrawEllipse(pen, -s * 0.42f, -s * 0.42f, s * 0.62f, s * 0.62f);
                         g.DrawLine(pen, s * 0.14f, s * 0.14f, s * 0.42f, s * 0.42f);
                         g.DrawLines(pen, new PointF[] { P(s, -0.25f, -0.11f), P(s, -0.13f, 0.01f), P(s, 0.05f, -0.21f) });
+                        break;
+                    case Glyph.Download:
+                        // Pfeil nach unten auf eine Linie (Importer: Pfeil in eine Ablage)
+                        g.DrawLine(pen, 0, -s * 0.46f, 0, s * 0.2f);
+                        g.DrawLines(pen, new PointF[] { P(s, -0.24f, -0.04f), P(s, 0, 0.2f), P(s, 0.24f, -0.04f) });
+                        g.DrawLine(pen, -s * 0.4f, s * 0.42f, s * 0.4f, s * 0.42f);
                         break;
                     case Glyph.Duplicate:
                         // Zwei überlappende Blätter

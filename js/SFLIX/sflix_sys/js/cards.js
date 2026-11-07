@@ -80,10 +80,11 @@ function createCard(container, options) {
     if (options.previewSrc) {
         var image = document.createElement("img");
         image.className = "cardImage";
-        image.src = options.previewSrc;
-        image.alt = "";
+        // "lazy" vor src setzen, sonst kann der Browser das Bild sofort laden
         image.loading = "lazy";
         image.decoding = "async";
+        image.src = options.previewSrc;
+        image.alt = "";
         image.draggable = false;
         mediaNode.appendChild(image);
     } else {
@@ -383,7 +384,49 @@ function addRowTrack(section) {
     section.appendChild(viewport);
 
     initRowScrolling(viewport, track, previousButton, nextButton);
+    observeTrackForPreload(track);
     return track;
+}
+
+// ===================================================================
+// Vorladen in Bändern: Der Browser lädt "lazy"-Bilder in einem seitlich scrollenden Band erst kurz
+// bevor sie sichtbar werden. Liegt ein Band in der Nähe des sichtbaren Bereichs, werden seine Bilder
+// bis zwei Bandbreiten links und rechts vom sichtbaren Teil geladen. Das wirkt bei jeder Art zu
+// scrollen (Pfeile, Ziehen, Wischen, Tasten), weil es nur von der Scrollposition abhängt.
+// ===================================================================
+var bandPreloadObserver = null;
+
+function observeTrackForPreload(track) {
+    if (!window.IntersectionObserver) {
+        return;
+    }
+    if (bandPreloadObserver == null) {
+        bandPreloadObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    bandPreloadObserver.unobserve(entry.target);
+                    startTrackPreload(entry.target);
+                }
+            });
+        }, { rootMargin: "400px 0px" });
+    }
+    bandPreloadObserver.observe(track);
+}
+
+function startTrackPreload(track) {
+    var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                observer.unobserve(entry.target);
+                if (entry.target.loading === "lazy") {
+                    entry.target.loading = "eager";
+                }
+            }
+        });
+    }, { root: track, rootMargin: "0px 200%" });
+    track.querySelectorAll("img.cardImage").forEach(function (image) {
+        observer.observe(image);
+    });
 }
 
 // ===================================================================
@@ -475,7 +518,15 @@ function initRowScrolling(viewport, track, previousButton, nextButton) {
     };
     track.updateArrows = updateArrows;
     track.addEventListener("scroll", updateArrows, { passive: true });
-    window.addEventListener("resize", updateArrows);
+    // Nach einem Seitenwechsel (ohne Neuladen) ist das Band weg: Listener entfernen
+    var onResize = function () {
+        if (!track.isConnected && !document.body.classList.contains("gridOpen")) {
+            window.removeEventListener("resize", onResize);
+            return;
+        }
+        updateArrows();
+    };
+    window.addEventListener("resize", onResize);
 
     previousButton.addEventListener("click", function () {
         track.scrollBy({ left: -track.clientWidth * 0.9, behavior: "smooth" });

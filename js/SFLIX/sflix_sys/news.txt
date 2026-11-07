@@ -2,6 +2,17 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.8.7</b>:<br>
+<ul>
+    <li>[<span style="color: red">FEATURE</span>] Desktop 4.0.5: Neuer Reiter "Download" in den Tools (zwischen Importer und Tools). Er lädt Videos aus einer m3u8-Adresse direkt in einen Ordner von STEFFLIX, auch mehrere Adressen auf einmal und mehrere Downloads gleichzeitig. Downloads lassen sich pausieren, nach einem Neustart fortsetzen und mit einer neuen Adresse weiterführen, wenn die alte abgelaufen ist. In einem Staffelordner wird die nächste fehlende Folge als Dateiname vorgeschlagen, die Qualität ist wählbar (Standard: die beste). Danach wird die Datei geprüft, bei Bedarf konvertiert, mit Vorschaubild versehen und der Zielordner eingelesen. Meldungen von ffmpeg und der Prüfung zeigt ein Doppelklick, "Aufräumen" entfernt fertige und fehlgeschlagene Downloads samt Zwischendateien. Nur Streams ohne Kopierschutz.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Ein Wechsel zwischen Seiten (Ordner, Suche, Favoriten, Hilfe, Einstellungen, Zurück) lädt STEFFLIX nicht mehr neu: kein schwarzes Bild und kein Ladescreen mehr zwischen den Seiten, und auf einem NAS deutlich schneller. "Zurück" kehrt an die vorherige Stelle der Seite zurück. Der Ladescreen erscheint nur noch beim Öffnen von STEFFLIX.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Menübänder laden die Vorschaubilder ein bis zwei Bandbreiten im Voraus, beim Blättern, Ziehen und Wischen erscheinen sie dadurch ohne Verzögerung.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] "Kacheln pro Zeile automatisch" gilt jetzt auf allen Ordnerseiten, auch bei Ordnern mit wenigen Unterordnern wie den Staffeln einer Serie oder Alben: Statt eines seitlich scrollenden Bandes brechen die Kacheln in Zeilen um.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Im Fenster von STEFFLIX.exe verschwindet die Scrollbar im Video-Vollbild zusammen mit der Player-Leiste und erscheint beim Scrollen wieder.</li>
+    <li>[<span style="color: blue">INTERFACE</span>] Im Fenster von STEFFLIX.exe öffnet der Menüeintrag "Tools" die Tools jetzt beim Reiter "Tools".</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.0.5: Das Update von STEFFLIX.exe konnte still ausbleiben, wenn ein Virenscanner die heruntergeladene Datei beim Lesen der Version sperrte. Die Version wird jetzt direkt aus den heruntergeladenen Daten gelesen.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Der Ladescreen wartete manchmal auf die falschen Vorschaubilder, weil ein Update-Hinweis die Seite während des Wartens nach unten schob. Hinweise erscheinen jetzt erst nach dem Ladescreen.</li>
+</ul>
 <b>Version 2.8.6</b>:<br>
 <ul>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Ein Klick auf "Weiter" während des Autoplay-Countdowns (der Knopf füllt sich rot) liess die Füllung stehen und markierte das Video nicht als gesehen. Jetzt verhält er sich wie der automatische Wechsel: Die Füllung wird zurückgesetzt, das Video gilt als gesehen, die gespeicherte Position wird gelöscht und die Autoplay-Anzahl zählt eins herunter. "Zurück" während des Countdowns setzt die Füllung ebenfalls zurück, markiert das Video als gesehen und löscht die Position, die Anzahl bleibt.</li>

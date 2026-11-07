@@ -38,8 +38,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX: Mediathek im eigenen Fenster, Update, Daten einlesen, Importer und Tools")]
-[assembly: AssemblyVersion("4.0.4.0")]
-[assembly: AssemblyFileVersion("4.0.4.0")]
+[assembly: AssemblyVersion("4.0.5.0")]
+[assembly: AssemblyFileVersion("4.0.5.0")]
 
 namespace Sflix
 {

@@ -208,7 +208,25 @@ function renderFolderPage(levels) {
         }
         children.folders.forEach(function (folder) {
             var subLevels = levels.concat([folder]);
-            var track = createCardRow(bands, folder, buildStartUrl(buildLevelPath(subLevels)));
+            var subHref = buildStartUrl(buildLevelPath(subLevels));
+            if (getSetting("rowAuto")) {
+                // "Kacheln pro Zeile automatisch" gilt auch hier: Zeilen statt eines seitlich scrollenden Bandes
+                var sub = getSortedChildren(node[folder]);
+                var subEntries = sub.media.map(function (mediaPath) {
+                    return { media: mediaPath };
+                }).concat(sub.folders.map(function (subFolder) {
+                    return { folder: subFolder };
+                }));
+                renderGroupedBands(bands, subEntries, folder, function (track, entry) {
+                    if (entry.media != null) {
+                        createPlayableCard(track, entry.media);
+                    } else {
+                        createFolderCard(track, subLevels.concat([entry.folder]));
+                    }
+                }, true, subHref);
+                return;
+            }
+            var track = createCardRow(bands, folder, subHref);
             fillFolderTrack(track, subLevels, node[folder]);
         });
     } else if (getSetting("separateFolders") && mediaEntries.length > 0 && folderEntries.length > 0) {
@@ -301,9 +319,9 @@ function splitIntoRows(items) {
 
 // Ein Band, dessen Kacheln auf mehrere Zeilen umbrechen. Ohne showTitle erscheint "title"
 // (z.B. "Filme") nur in der Rasteransicht von "Alle anzeigen". Gibt das Band zurück.
-function renderGroupedBands(container, items, title, renderItem, showTitle) {
+function renderGroupedBands(container, items, title, renderItem, showTitle, linkHref) {
     var rows = splitIntoRows(items);
-    var track = createCardRow(container, title, null);
+    var track = createCardRow(container, title, linkHref || null);
     var section = track.parentNode.parentNode;
     if (!showTitle) {
         section.classList.add("untitledRow");
@@ -622,7 +640,7 @@ function startSearch(term) {
     if (searchTerm === "") {
         return;
     }
-    window.location.href = buildStartUrl("SEARCH:" + searchTerm, false);
+    navigateTo(buildStartUrl("SEARCH:" + searchTerm, false));
 }
 
 // Funktion zum Erstellen des Playlisteneintrags für Suchresultate
@@ -1331,8 +1349,10 @@ function checkForUpdate(container) {
             // Das STEFFLIX-Update bringt auch den neuen Updater mit
             if (!isUpdateBannerDismissed(newestVersion)) {
                 var banner = createUpdateBanner(newestVersion);
-                container.insertBefore(banner, container.firstChild);
                 fillUpdateNews(banner, newestVersion);
+                afterLoadingScreen(function () {
+                    container.insertBefore(banner, container.firstChild);
+                });
             }
             return;
         }
@@ -1366,18 +1386,20 @@ function checkForUpdaterUpdate(container) {
             meta: "Installiert ist Version " + info.updater + ". In STEFFLIX.exe (bis Version 3.5 updateStefflix.exe) unter \"Updates\" die Aufgabe \"Update\" ausführen.",
             storageKey: "updaterBannerDismissed"
         });
-        container.insertBefore(banner, container.firstChild);
+        afterLoadingScreen(function () {
+            container.insertBefore(banner, container.firstChild);
+        });
     });
 }
 
 // Öffne Hilfeseite
 function openHelp() {
-    window.location.href = buildStartUrl("HELP", false);
+    navigateTo(buildStartUrl("HELP", false));
 }
 
 // Öffne Favoritenseite
 function openFavorites() {
-    window.location.href = buildStartUrl("FAVORITES", false);
+    navigateTo(buildStartUrl("FAVORITES", false));
 }
 
 // ===================================================================
@@ -1409,7 +1431,10 @@ function showStartPage() {
     mediaNode.style.display = "block";
     document.body.classList.add("darkPage");
 
-    showSplashscreen();
+    // Nur beim Öffnen von STEFFLIX, nicht beim Wechsel zurück zur Startseite
+    if (!softNavigation) {
+        showSplashscreen();
+    }
 
     var dashboard = document.createElement("div");
     dashboard.id = "dashboard";
@@ -1813,7 +1838,7 @@ function showSettingsPage() {
 
 // Öffne Einstellungen, optional bei einem Abschnitt (z.B. "datensicherung")
 function openSettings(anchor) {
-    window.location.href = buildStartUrl("SETTINGS", false) + (anchor ? "#" + anchor : "");
+    navigateTo(buildStartUrl("SETTINGS", false) + (anchor ? "#" + anchor : ""));
 }
 
 // Gliedert eine Seite (Hilfe, Einstellungen) in Abschnitte (eine Karte pro Überschrift) und

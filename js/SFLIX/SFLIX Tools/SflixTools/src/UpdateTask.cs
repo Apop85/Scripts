@@ -259,18 +259,97 @@ namespace Sflix
             return v.Major + "." + v.Minor + "." + v.Build;
         }
 
-        static Version ReadVersion(byte[] data)
+        // Dateiversion direkt aus den Bytes der EXE (Block VS_FIXEDFILEINFO der Versionsressource).
+        // Bis 4.0.4 wurde die EXE dafür in den Temp-Ordner geschrieben: Virenscanner melden eine frische,
+        // nicht signierte EXE dort teils als verdächtig und sperren sie, dann schlug das Update still fehl.
+        // Gesucht wird nur in der Versionsressource der EXE selbst (über die PE-Kopfdaten), nicht in
+        // eingebetteten Dateien wie den WebView2-DLLs, die eigene Versionsblöcke haben.
+        public static Version ReadVersion(byte[] data)
         {
-            string tmp = Path.Combine(Path.GetTempPath(), "sflix-version-" + Process.GetCurrentProcess().Id + ".exe");
             try
             {
-                File.WriteAllBytes(tmp, data);
-                FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(tmp);
-                if (fvi.FileMajorPart == 0 && fvi.FileMinorPart == 0 && fvi.FileBuildPart == 0) return null;
-                return new Version(fvi.FileMajorPart, fvi.FileMinorPart, fvi.FileBuildPart, 0);
+                int start, length;
+                if (!FindVersionResource(data, out start, out length)) return null;
+                // Kennung 0xFEEF04BD, danach dwStrucVersion (0x00010000), dwFileVersionMS, dwFileVersionLS
+                for (int i = start; i + 16 <= start + length; i++)
+                {
+                    if (ReadUInt(data, i) != 0xFEEF04BD || ReadUInt(data, i + 4) != 0x00010000) continue;
+                    uint ms = ReadUInt(data, i + 8);
+                    uint ls = ReadUInt(data, i + 12);
+                    int major = (int)(ms >> 16), minor = (int)(ms & 0xFFFF), build = (int)(ls >> 16);
+                    if (major == 0 && minor == 0 && build == 0) return null;
+                    return new Version(major, minor, build, 0);
+                }
+                return null;
             }
-            catch { return null; }
-            finally { FileOps.TryDelete(tmp); }
+            catch { return null; }   // keine gültige EXE
+        }
+
+        // Lage der Versionsressource (RT_VERSION = 16) in der Datei
+        static bool FindVersionResource(byte[] d, out int start, out int length)
+        {
+            start = 0; length = 0;
+            if (d == null || d.Length < 0x40 || d[0] != 'M' || d[1] != 'Z') return false;
+            int pe = (int)ReadUInt(d, 0x3C);
+            if (pe <= 0 || pe + 24 > d.Length || ReadUInt(d, pe) != 0x00004550) return false;
+            int sections = ReadUShort(d, pe + 6);
+            int optSize = ReadUShort(d, pe + 20);
+            int opt = pe + 24;
+            int magic = ReadUShort(d, opt);
+            int dirs = opt + (magic == 0x20B ? 112 : 96);
+            uint rsrcRva = ReadUInt(d, dirs + 2 * 8);
+            if (rsrcRva == 0) return false;
+            int table = opt + optSize;
+            int rsrc = RvaToOffset(d, table, sections, rsrcRva);
+            if (rsrc < 0) return false;
+
+            // Ebene 1: Typ 16, Ebene 2 und 3: jeweils der erste Eintrag (Name bzw. Sprache)
+            uint entry = FindResourceEntry(d, rsrc, rsrc, 16, true);
+            for (int level = 0; level < 2 && entry != 0 && (entry & 0x80000000) != 0; level++)
+                entry = FindResourceEntry(d, rsrc, rsrc + (int)(entry & 0x7FFFFFFF), 0, false);
+            if (entry == 0 || (entry & 0x80000000) != 0) return false;
+            int dataEntry = rsrc + (int)entry;
+            int offset = RvaToOffset(d, table, sections, ReadUInt(d, dataEntry));
+            int size = (int)ReadUInt(d, dataEntry + 4);
+            if (offset < 0 || size <= 0 || offset + size > d.Length) return false;
+            start = offset; length = size;
+            return true;
+        }
+
+        // OffsetToData des Eintrags mit der Id (oder des ersten, wenn byId false); 0 = keiner
+        static uint FindResourceEntry(byte[] d, int rsrc, int dir, int id, bool byId)
+        {
+            int named = ReadUShort(d, dir + 12);
+            int ids = ReadUShort(d, dir + 14);
+            for (int i = 0; i < named + ids; i++)
+            {
+                int e = dir + 16 + i * 8;
+                uint name = ReadUInt(d, e);
+                if (!byId || ((name & 0x80000000) == 0 && name == (uint)id)) return ReadUInt(d, e + 4);
+            }
+            return 0;
+        }
+
+        static int RvaToOffset(byte[] d, int table, int sections, uint rva)
+        {
+            for (int i = 0; i < sections; i++)
+            {
+                int s = table + i * 40;
+                uint va = ReadUInt(d, s + 12);
+                uint vsize = Math.Max(ReadUInt(d, s + 8), ReadUInt(d, s + 16));
+                if (rva >= va && rva < va + vsize) return (int)(rva - va + ReadUInt(d, s + 20));
+            }
+            return -1;
+        }
+
+        static int ReadUShort(byte[] data, int offset)
+        {
+            return data[offset] | (data[offset + 1] << 8);
+        }
+
+        static uint ReadUInt(byte[] data, int offset)
+        {
+            return (uint)(data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
         }
 
         // Ersetzt die laufende EXE: neue Datei als .new schreiben, laufende in .old umbenennen

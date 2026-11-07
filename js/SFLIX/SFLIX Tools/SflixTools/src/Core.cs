@@ -56,7 +56,7 @@ namespace Sflix
         static readonly string[] GeneratedFiles =
         {
             "install.js", "updater_info.js", "updater_settings.json", "updater.log", "renamed.js",
-            "folgen_cache.json", "medien_cache.json", "folgen_rueckgaengig.json",
+            "folgen_cache.json", "medien_cache.json", "folgen_rueckgaengig.json", "downloads.json",
         };
 
         // Löscht die erzeugten Dateien in sflix_sys. Ergebnis: Hinweis für das Protokoll oder null.

@@ -991,7 +991,31 @@ function copyAddress(button) {
 // Ladescreen: verschwindet erst, wenn die Seite geladen (onload von body, ruft setHeight)
 // UND aufgebaut ist (markApplicationStarted nach startApplication). Danach wird noch auf die
 // Bilder im sichtbaren Bereich gewartet. Die Reihenfolge der beiden Ereignisse ist beliebig.
-var loadingState = { loaded: false, started: false };
+var loadingState = { loaded: false, started: false, hidden: false, waiting: [] };
+
+// Führt callback aus, sobald der Ladescreen ausgeblendet ist (sofort, wenn er es schon ist).
+// Für Inhalt, der später dazukommt (z.B. Update-Hinweise): Er würde sonst die Seite verschieben,
+// während der Ladescreen noch auf die sichtbaren Bilder wartet.
+function afterLoadingScreen(callback) {
+    if (loadingState.hidden) {
+        callback();
+    } else {
+        loadingState.waiting.push(callback);
+    }
+}
+
+function runAfterLoadingScreen() {
+    loadingState.hidden = true;
+    var waiting = loadingState.waiting;
+    loadingState.waiting = [];
+    waiting.forEach(function (callback) {
+        try {
+            callback();
+        } catch (error) {
+            console.error(error);
+        }
+    });
+}
 
 function markApplicationStarted() {
     loadingState.started = true;
@@ -1022,6 +1046,7 @@ function waitForVisibleImages() {
         if (!finished) {
             finished = true;
             screenNode.style.display = "none";
+            runAfterLoadingScreen();
         }
     };
     var pending = getVisibleLoadingImages();
@@ -1408,7 +1433,7 @@ function initSettingsMenu() {
 // Menüeintrag, der das Fenster der Tools öffnet (seit 2.8.1 ein einziger Eintrag, immer beim Reiter
 // "Updates"; ist das Fenster schon offen, kommt es nur nach vorne)
 var desktopMenuEntries = [
-    { page: "updates", label: "Tools", icon: "tools" }
+    { page: "tools", label: "Tools", icon: "tools" }
 ];
 
 function sendToDesktop(message) {

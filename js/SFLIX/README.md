@@ -50,7 +50,8 @@ D:\STEFFLIX
 
 Ein Doppelklick auf `STEFFLIX.exe` öffnet STEFFLIX in einem eigenen Fenster, ohne Adresszeile, Linkvorschau und Kontextmenü. Der Startbildschirm erscheint dort bei jedem Start. Links zu Webseiten öffnen im Standardbrowser, Grösse und Lage des Fensters bleiben erhalten.
 
-- **Tools**: Der Menüeintrag "Tools" öffnet ein zweites Fenster mit Updates, Importer, Tools, Lizenz und Hilfe (beginnt bei "Updates"). Nach "Daten einlesen" lädt STEFFLIX die Medien selbst neu, während einer Wiedergabe erst auf Wunsch.
+- **Tools**: Der Menüeintrag "Tools" öffnet ein zweites Fenster mit Updates, Importer, Download, Tools, Lizenz und Hilfe (beginnt bei "Tools"). Nach "Daten einlesen" lädt STEFFLIX die Medien selbst neu, während einer Wiedergabe erst auf Wunsch.
+- **Download**: Lädt Videos aus einer m3u8-Adresse (HLS) direkt in einen Ordner von STEFFLIX, auch mehrere gleichzeitig. Downloads lassen sich pausieren, nach einem Neustart fortsetzen und mit einer neuen Adresse weiterführen (z.B. wenn sie abgelaufen ist). Danach wird die Datei geprüft, bei Bedarf konvertiert, mit Vorschaubild versehen und der Ordner eingelesen. Nur Streams ohne Kopierschutz.
 - **Vollbild**: F11 schaltet das Fenster in den Vollbildmodus. Auch das Vollbild eines Videos füllt den ganzen Bildschirm, beim Verlassen kehrt das Fenster in den vorherigen Zustand zurück. F5 lädt neu.
 - **Daten aus dem Browser**: Fenster und Browser speichern getrennt. Beim ersten Start bietet STEFFLIX.exe an, Favoriten, Fortschritte, "Weiterschauen" und Einstellungen aus dem bisherigen Browser zu übernehmen. STEFFLIX öffnet sich dafür kurz im Browser und speichert eine Datensicherung im Download-Ordner, die das Fenster übernimmt.
 - **Updates**: Beim Start prüft STEFFLIX.exe auf neue Versionen und bietet das Update an.

@@ -576,7 +576,7 @@ function Build-IndexText($recs, [string]$existing) {
     $out = New-Object System.Collections.Generic.List[string]
     foreach ($l in $head) { [void]$out.Add($l) }
     [void]$out.Add('')
-    [void]$out.Add('<!-- Erzeugt von SFLIX_Tools/Auftrag.ps1, nicht von Hand bearbeiten -->')
+    [void]$out.Add('<!-- Erzeugt von SFLIX Tools/Auftrag.ps1, nicht von Hand bearbeiten -->')
     [void]$out.Add('')
     [void]$out.Add(('**Letzte vergebene Nummer: {0:000}** (Stand {1}). N' -f $max, $script:Heute) + [char]0xE4 + ('chste ID: `SFLIX-YYYYMMDD-{0:000}`.' -f ($max + 1)))
     [void]$out.Add('')

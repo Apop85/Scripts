@@ -480,10 +480,13 @@ Fall 6 'Aenderung am Skript vorbei zwischen Lesen und Ersetzen: Exit 3, nichts g
     )
 
     $pr.WaitForExit()
+    $pr.Refresh()
+
+    $childExit = $pr.ExitCode
 
     Check 'Exit 3 bei erkannter Fremdaenderung' (
-        $pr.ExitCode -eq 3
-    ) "Exit $($pr.ExitCode)"
+        $childExit -eq 3
+    ) "Exit=[$childExit]; PID=$($pr.Id); HasExited=$($pr.HasExited)"
 
     $txt = ReadT $p
 

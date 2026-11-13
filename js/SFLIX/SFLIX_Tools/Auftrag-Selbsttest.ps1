@@ -14,8 +14,29 @@ param(
 $ErrorActionPreference = 'Stop'
 $FallListe = @(); if ($Fall) { $FallListe = @($Fall -split '[,; ]+' | Where-Object { $_ } | ForEach-Object { [int]$_ }) }
 $Script = Join-Path $PSScriptRoot 'Auftrag.ps1'
-if (-not $Quelle) { $Quelle = Join-Path (Split-Path -Parent $PSScriptRoot) 'coordination' }
-if (-not $Arbeitsordner) { $Arbeitsordner = Join-Path ([IO.Path]::GetTempPath()) ('auftrag-selbsttest-' + (Get-Date -Format 'yyyyMMdd-HHmmss')) }
+if (-not $Arbeitsordner) {
+    $Arbeitsordner = Join-Path ([IO.Path]::GetTempPath()) (
+        'sflix-auftrag-selbsttest-' + (Get-Date -Format 'yyyyMMdd-HHmmss')
+    )
+}
+
+$Arbeitsordner = [IO.Path]::GetFullPath($Arbeitsordner)
+
+if (-not (Test-Path -LiteralPath $PSScriptRoot -PathType Container)) {
+    throw "Skriptverzeichnis nicht gefunden: $PSScriptRoot"
+}
+
+if (-not (Test-Path -LiteralPath $Script -PathType Leaf)) {
+    throw "Auftrag.ps1 nicht gefunden: $Script"
+}
+
+[void](New-Item -ItemType Directory -Path $Arbeitsordner -Force)
+
+Write-Output "SFLIX Selbsttest"
+Write-Output "Skript: $Script"
+Write-Output "Arbeitsordner: $Arbeitsordner"
+Write-Output "Testdaten: ausschliesslich synthetisch"
+
 [void](New-Item -ItemType Directory -Path $Arbeitsordner -Force)
 $env:AUFTRAG_TESTMODUS = '1'
 $Utf8 = New-Object System.Text.UTF8Encoding($false)
@@ -101,31 +122,84 @@ function Fall([int]$n, [string]$titel, [scriptblock]$body) {
 }
 
 # ------------------------------------------------------------------ Fall 1
-Fall 1 'Rundlauf ueber alle Task-Dateien der Kopie (byteidentisch ohne BOM)' {
-    $w = New-Kopie 'f1'
-    $r = Run $w @('_rundlauf')
-    Check 'rundlauf exit 0, keine Abweichung' ($r.Exit -eq 0) $r.Out
-    $taskFiles = @()
+Fall 1 'Rundlauf ueber synthetische SFLIX-Task-Dateien (byteidentisch ohne BOM)' {
+    $w = New-Wurzel 'f1'
+
+    # Vier synthetische Tickets erzeugen.
+    $a = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Test OPEN'
+    $b = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Test IN_PROGRESS'
+    $c = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Test BLOCKED'
+    $d = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Test COMPLETED'
+
+    # In die jeweiligen Statusordner verschieben.
+    $r = Run $w @(
+        'status', '-Id', $b, '-Neu', 'IN_PROGRESS',
+        '-Rolle', 'JavaScript Developer'
+    )
+    if ($r.Exit -ne 0) { throw $r.Out }
+
+    $r = Run $w @(
+        'status', '-Id', $c, '-Neu', 'BLOCKED',
+        '-Frage', 'Synthetische Testfrage',
+        '-Rolle', 'JavaScript Developer'
+    )
+    if ($r.Exit -ne 0) { throw $r.Out }
+
+    $r = Run $w @(
+        'status', '-Id', $d, '-Neu', 'IN_PROGRESS',
+        '-Rolle', 'JavaScript Developer'
+    )
+    if ($r.Exit -ne 0) { throw $r.Out }
+
+    $r = Run $w @(
+        'abschliessen', '-Id', $d,
+        '-Rolle', 'JavaScript Developer',
+        '-Arbeiten', 'Synthetischer Test',
+        '-Tests', 'Statuswechsel erfolgreich'
+    )
+    if ($r.Exit -ne 0) { throw $r.Out }
+
+    # Exakt die vier gültigen Task-Dateien erfassen.
+    $files = @()
 
     foreach ($folder in @('OPEN', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED')) {
         $dir = Join-Path $w "tasks\$folder"
 
-        if (Test-Path -LiteralPath $dir) {
-            $taskFiles += @(
-                Get-ChildItem -LiteralPath $dir -File -Force |
-                Where-Object {
-                    $_.Name -match '^SFLIX-\d{8}-\d{3,}\.md$'
-                }
-            )
+        $files += @(
+            Get-ChildItem -LiteralPath $dir -File -Force |
+            Where-Object {
+                $_.Name -match '^SFLIX-\d{8}-\d{3,}\.md$'
+            }
+        )
+    }
+
+    Check 'vier synthetische Tickets angelegt' ($files.Count -eq 4) "Anzahl $($files.Count)"
+
+    # BOM-Freiheit prüfen.
+    $bomCount = 0
+
+    foreach ($f in $files) {
+        $bytes = [IO.File]::ReadAllBytes($f.FullName)
+
+        if ($bytes.Length -ge 3 -and
+            $bytes[0] -eq 0xEF -and
+            $bytes[1] -eq 0xBB -and
+            $bytes[2] -eq 0xBF) {
+            $bomCount++
         }
     }
 
-    $n = $taskFiles.Count
+    Check 'alle Task-Dateien ohne UTF-8-BOM' ($bomCount -eq 0) "BOM-Dateien: $bomCount"
 
-    Check 'Kopie enthaelt gueltige Task-Dateien' ($n -gt 0) "Anzahl $n"
+    # Rundlauf ausführen.
+    $r = Run $w @('_rundlauf')
 
-    Check "Dateien gelesen ($n)" (
-        $r.Out -match "rundlauf: $n Dateien, 0 Abweichungen"
+    Check 'rundlauf exit 0, keine Abweichung' (
+        $r.Exit -eq 0 -and $r.Out -match '0 Abweichungen'
+    ) $r.Out
+
+    Check 'vier Dateien byteidentisch gelesen' (
+        $r.Out -match 'rundlauf: 4 Dateien, 0 Abweichungen'
     ) $r.Out
 }
 
@@ -298,108 +372,136 @@ Fall 5 'Abbruch an jedem Schritt: check meldet, -Fix stellt her, keine Datei geh
 
 # ------------------------------------------------------------------ Fall 6
 Fall 6 'Aenderung am Skript vorbei zwischen Lesen und Ersetzen: Exit 3, nichts geschrieben' {
+
     $w = New-Wurzel 'f6'
 
-    $a = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Konflikt'
+    $a = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Konflikttest'
     $p = TaskFile $w $a
 
-    # Argumente explizit quotieren, damit auch absolute Pfade
-    # mit Leerzeichen korrekt uebergeben werden.
-    $scriptArg = '"' + $Script + '"'
-    $wurzelArg = '"' + $w + '"'
+    $stdout = Join-Path $w 'child-stdout.log'
+    $stderr = Join-Path $w 'child-stderr.log'
 
-    $arguments = (
-        '-NoProfile -ExecutionPolicy Bypass -File {0} status ' +
-        '-Id {1} -Neu IN_PROGRESS ' +
-        '-Rolle "JavaScript Developer" ' +
-        '-Wurzel {2} -Haltepunkt schlaf-nach-tmp'
-    ) -f $scriptArg, $a, $wurzelArg
+    # Argumente sicher fuer Windows-Prozessstart quotieren.
+    function Quote-Argument([string]$value) {
+        $escaped = $value -replace '(\\*)"', '$1$1\"'
+        $escaped = $escaped -replace '(\\+)$', '$1$1'
+        return '"' + $escaped + '"'
+    }
 
-    $process = Start-Process `
-        -FilePath 'powershell.exe' `
-        -ArgumentList $arguments `
+    $argsList = @(
+        '-NoProfile'
+        '-ExecutionPolicy'
+        'Bypass'
+        '-File'
+        $Script
+        'status'
+        '-Id'
+        $a
+        '-Neu'
+        'IN_PROGRESS'
+        '-Rolle'
+        'JavaScript Developer'
+        '-Wurzel'
+        $w
+        '-Haltepunkt'
+        'schlaf-nach-tmp'
+    )
+
+    $argumentLine = (
+        $argsList | ForEach-Object {
+            Quote-Argument ([string]$_)
+        }
+    ) -join ' '
+
+    $exe = Join-Path $PSHOME 'powershell.exe'
+
+    $pr = Start-Process `
+        -FilePath $exe `
+        -ArgumentList $argumentLine `
         -PassThru `
-        -WindowStyle Hidden
+        -WindowStyle Hidden `
+        -RedirectStandardOutput $stdout `
+        -RedirectStandardError $stderr
 
+    # Auf die Temp-Datei warten.
     $tmp = @()
-    $timeout = [Diagnostics.Stopwatch]::StartNew()
+    $watch = [Diagnostics.Stopwatch]::StartNew()
 
-    # Maximal 15 Sekunden auf die Temp-Datei warten.
-    while ($timeout.Elapsed.TotalSeconds -lt 15) {
+    while ($watch.Elapsed.TotalSeconds -lt 15) {
 
         $tmp = @(
             Get-ChildItem -LiteralPath (Join-Path $w 'tasks\OPEN') -Force |
             Where-Object { $_.Name -match '\.tmp-' }
         )
 
-        if ($tmp.Count -gt 0) {
-            break
-        }
-
-        if ($process.HasExited) {
+        if ($tmp.Count -gt 0 -or $pr.HasExited) {
             break
         }
 
         Start-Sleep -Milliseconds 100
     }
 
-    $timeout.Stop()
+    $watch.Stop()
+
+    if ($pr.HasExited) {
+        $out = if (Test-Path $stdout) {
+            Get-Content -LiteralPath $stdout -Raw
+        } else { '' }
+
+        $err = if (Test-Path $stderr) {
+            Get-Content -LiteralPath $stderr -Raw
+        } else { '' }
+
+        throw "Kindprozess vor Temp-Datei beendet. Exit=$($pr.ExitCode)`nSTDOUT:`n$out`nSTDERR:`n$err"
+    }
 
     Check 'Prozess hat Temp-Datei geschrieben und wartet' (
-        $tmp.Count -gt 0 -and -not $process.HasExited
-    ) (
-        "Temp-Dateien: $($tmp.Count); Prozess beendet: $($process.HasExited); Exit: $(if ($process.HasExited) { $process.ExitCode } else { '-' })"
+        $tmp.Count -gt 0
+    ) "Temp-Dateien: $($tmp.Count)"
+
+    if ($tmp.Count -eq 0) {
+        Stop-Process -Id $pr.Id -Force
+        throw 'Temp-Datei nicht innerhalb von 15 Sekunden erzeugt.'
+    }
+
+    # Fremdaenderung am Original simulieren.
+    [IO.File]::AppendAllText(
+        $p,
+        "`r`nVon-Hand-Zeile`r`n",
+        $Utf8
     )
 
-    if ($tmp.Count -gt 0 -and -not $process.HasExited) {
+    $pr.WaitForExit()
 
-        # Fremdaenderung nach dem Schreiben der Temp-Datei.
-        [IO.File]::AppendAllText(
-            $p,
-            "`r`nVon-Hand-Zeile`r`n",
-            $Utf8
-        )
+    Check 'Exit 3 bei erkannter Fremdaenderung' (
+        $pr.ExitCode -eq 3
+    ) "Exit $($pr.ExitCode)"
 
-        $process.WaitForExit()
+    $txt = ReadT $p
 
-        Check 'Exit 3' ($process.ExitCode -eq 3) "Exit $($process.ExitCode)"
+    Check 'Handaenderung bleibt, Status unveraendert OPEN' (
+        $txt.Contains('Von-Hand-Zeile') -and
+        $txt -match '- Status: OPEN'
+    ) ''
 
-        $txt = ReadT $p
+    $remaining = @(
+        Get-ChildItem -LiteralPath (Join-Path $w 'tasks\OPEN') -Force |
+        Where-Object { $_.Name -match '\.tmp-' }
+    )
 
-        Check 'Handaenderung bleibt, Status unveraendert OPEN' (
-            $txt.Contains('Von-Hand-Zeile') -and
-            $txt -match '- Status: OPEN'
-        ) ''
+    $orphanDir = Join-Path $w '.history\_verwaist'
 
-        $remainingTmp = @(
-            Get-ChildItem -LiteralPath (Join-Path $w 'tasks\OPEN') -Force |
-            Where-Object { $_.Name -match '\.tmp-' }
-        )
+    $orphans = @()
 
-        $orphanDir = Join-Path $w '.history\_verwaist'
-
-        $orphans = @()
-
-        if (Test-Path -LiteralPath $orphanDir) {
-            $orphans = @(Get-ChildItem -LiteralPath $orphanDir -File -Force)
-        }
-
-        Check 'Temp-Datei nach .history\_verwaist verschoben' (
-            $remainingTmp.Count -eq 0 -and $orphans.Count -ge 1
-        ) "Verbliebene Temp-Dateien: $($remainingTmp.Count); verwaiste Dateien: $($orphans.Count)"
-    }
-    else {
-        if (-not $process.HasExited) {
-            $process.Kill()
-            $process.WaitForExit()
-        }
-
-        Check 'Exit 3' $false 'Konflikttest konnte nicht bis zur Temp-Datei ausgefuehrt werden.'
-        Check 'Handaenderung bleibt, Status unveraendert OPEN' $false 'Nicht getestet.'
-        Check 'Temp-Datei nach .history\_verwaist verschoben' $false 'Nicht getestet.'
+    if (Test-Path -LiteralPath $orphanDir) {
+        $orphans = @(Get-ChildItem -LiteralPath $orphanDir -File -Force)
     }
 
-    $process.Dispose()
+    Check 'Temp-Datei nach .history\_verwaist verschoben' (
+        $remaining.Count -eq 0 -and $orphans.Count -ge 1
+    ) "Verblieben: $($remaining.Count); verwaist: $($orphans.Count)"
+
+    $pr.Dispose()
 }
 
 # ------------------------------------------------------------------ Fall 7

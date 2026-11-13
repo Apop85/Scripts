@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "C:\\Users\\rbald\\AppData\\Local\\STEFFLIX-Android\\gradle-home\\daemon\\8.7\\ch.stefflix.app-debug-4:\\drawable-nodpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\rbald\\AppData\\Local\\STEFFLIX-Android\\gradle-home\\daemon\\8.7\\ch.stefflix.app-main-6:\\drawable-nodpi\\ic_launcher.png"
+    },
+    {
+        "merged": "ch.stefflix.app-debug-4:/xml_network_security_config.xml.flat",
+        "source": "ch.stefflix.app-main-6:/xml/network_security_config.xml"
+    }
+]

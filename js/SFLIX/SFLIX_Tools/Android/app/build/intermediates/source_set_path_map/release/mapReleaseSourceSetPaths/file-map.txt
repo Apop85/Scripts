@@ -1,0 +1,7 @@
+ch.stefflix.app-pngs-0 C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\build\generated\res\pngs\release
+ch.stefflix.app-resValues-1 C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\build\generated\res\resValues\release
+ch.stefflix.app-packageReleaseResources-2 C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\build\intermediates\incremental\release\packageReleaseResources\merged.dir
+ch.stefflix.app-packageReleaseResources-3 C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\build\intermediates\incremental\release\packageReleaseResources\stripped.dir
+ch.stefflix.app-release-4 C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\build\intermediates\merged_res\release\mergeReleaseResources
+ch.stefflix.app-main-5 C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\res
+ch.stefflix.app-release-6 C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\release\res

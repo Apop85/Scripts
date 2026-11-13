@@ -1,0 +1,3 @@
+ch.stefflix.app:xml/network_security_config = 0x7f030000
+ch.stefflix.app:style/Sflix = 0x7f020000
+ch.stefflix.app:drawable/ic_launcher = 0x7f010000

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- STEFFLIX-"S" aus Bilder\sflixLogo.svg (nur das Band, einfarbig): Symbol in Statusleiste,
+     Always-on-Display und Mediaplayer. Ausschnitt 400x400 um das S. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="400" android:viewportHeight="400">
+    <group android:translateX="-56" android:translateY="-63">
+        <path
+            android:pathData="M362,170C334,120 176,112 166,196C158,244 214,252 258,262C304,272 354,284 350,334C344,414 186,414 150,346"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="84"
+            android:strokeLineCap="butt" />
+    </group>
+</vector>

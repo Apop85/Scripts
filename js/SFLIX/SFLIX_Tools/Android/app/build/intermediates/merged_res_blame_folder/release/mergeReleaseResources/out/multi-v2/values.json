@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "ch.stefflix.app-mergeReleaseResources-2:/values/values.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\rbald\\Documents\\SFLIX\\SFLIX_Tools\\Android\\app\\src\\main\\res\\values\\styles.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "9",
+                        "endColumns": "12",
+                        "endOffsets": "489"
+                    }
+                }
+            ]
+        }
+    ]
+}

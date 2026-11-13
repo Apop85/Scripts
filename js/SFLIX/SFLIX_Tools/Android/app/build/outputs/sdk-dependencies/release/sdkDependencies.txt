@@ -1,0 +1,92 @@
+# List of SDK dependencies of this app, this information is also included in an encrypted form in the APK.
+# For more information visit: https://d.android.com/r/tools/dependency-metadata
+
+library {
+  maven_library {
+    groupId: "com.hierynomus"
+    artifactId: "smbj"
+    version: "0.13.0"
+  }
+  digests {
+    sha256: "\331\242\373%\205\354/b\322h\233\211N\v\230\363\n\306\224\323\332\030P\235\275\231\355`\225\232\260\223"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.slf4j"
+    artifactId: "slf4j-api"
+    version: "2.0.9"
+  }
+  digests {
+    sha256: "\b\030\223\r\310\327\336\273@2\004a\026\221\332X\344\235B\305\vo\374\375\316\002\332\333|<+l"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.bouncycastle"
+    artifactId: "bcprov-jdk18on"
+    version: "1.75"
+  }
+  digests {
+    sha256: "\177$\001\216\222\022\333\332a\306\222\022\370\327\261RL(\357\271x\361\r\365\220\337;L\312\304{\325"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "net.engio"
+    artifactId: "mbassador"
+    version: "1.3.0"
+  }
+  digests {
+    sha256: "\360e\003\032I\f\210\311\262\r4\363\311\304\353n\r\377\343)\300\220x\21485t\341\254|k\272"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "com.hierynomus"
+    artifactId: "asn-one"
+    version: "0.6.0"
+  }
+  digests {
+    sha256: "\344\367\017\331(I\265\"@\004\213\216\272\316\f\232\027\323\273{\234\210+<wx\316\303E\204\225\365"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library_dependencies {
+  library_dep_index: 1
+  library_dep_index: 2
+  library_dep_index: 3
+  library_dep_index: 4
+}
+library_dependencies {
+  library_index: 4
+  library_dep_index: 1
+}
+module_dependencies {
+  module_name: "base"
+  dependency_index: 0
+}
+repositories {
+  maven_repo {
+    url: "https://dl.google.com/dl/android/maven2/"
+  }
+}
+repositories {
+  maven_repo {
+    url: "https://repo.maven.apache.org/maven2/"
+  }
+}

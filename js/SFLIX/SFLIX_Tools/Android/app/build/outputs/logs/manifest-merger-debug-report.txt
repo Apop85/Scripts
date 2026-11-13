@@ -1,0 +1,87 @@
+-- Merging decision tree log ---
+manifest
+ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:2:1-41:12
+INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:2:1-41:12
+INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:2:1-41:12
+INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:2:1-41:12
+	package
+		INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml
+	android:versionName
+		INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml
+	android:versionCode
+		INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:2:11-69
+uses-permission#android.permission.INTERNET
+ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:4:5-67
+	android:name
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:4:22-64
+uses-permission#android.permission.REQUEST_INSTALL_PACKAGES
+ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:6:5-83
+	android:name
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:6:22-80
+application
+ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:9:5-40:19
+INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:9:5-40:19
+	android:extractNativeLibs
+		INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml
+	android:label
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:12:9-33
+	android:largeHeap
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:13:9-33
+	android:icon
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:11:9-45
+	android:allowBackup
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:10:9-36
+	android:theme
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:15:9-37
+	android:networkSecurityConfig
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:14:9-69
+activity#ch.stefflix.app.ShareListActivity
+ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:17:9-25:20
+	android:launchMode
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:20:13-43
+	android:exported
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:19:13-36
+	android:name
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:18:13-46
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:21:13-24:29
+action#android.intent.action.MAIN
+ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:22:17-69
+	android:name
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:22:25-66
+category#android.intent.category.LAUNCHER
+ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:23:17-77
+	android:name
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:23:27-74
+activity#ch.stefflix.app.BrowserActivity
+ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:27:9-30:40
+	android:exported
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:30:13-37
+	android:configChanges
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:29:13-122
+	android:name
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:28:13-44
+activity#ch.stefflix.app.SettingsActivity
+ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:32:9-35:40
+	android:exported
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:35:13-37
+	android:configChanges
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:34:13-122
+	android:name
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:33:13-45
+receiver#ch.stefflix.app.AppUpdate$InstallReceiver
+ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:37:9-39:40
+	android:exported
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:39:13-37
+	android:name
+		ADDED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:38:13-54
+uses-sdk
+INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml
+INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml

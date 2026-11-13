@@ -1,0 +1,10 @@
+ch.stefflix.app:style/Sflix = 0x7f020000
+ch.stefflix.app:drawable/ic_skip_prev = 0x7f010007
+ch.stefflix.app:drawable/ic_skip_next = 0x7f010006
+ch.stefflix.app:drawable/ic_play = 0x7f010005
+ch.stefflix.app:xml/network_security_config = 0x7f030000
+ch.stefflix.app:drawable/ic_notification = 0x7f010003
+ch.stefflix.app:drawable/ic_forward = 0x7f010001
+ch.stefflix.app:drawable/ic_pause = 0x7f010004
+ch.stefflix.app:drawable/ic_launcher = 0x7f010002
+ch.stefflix.app:drawable/ic_close = 0x7f010000

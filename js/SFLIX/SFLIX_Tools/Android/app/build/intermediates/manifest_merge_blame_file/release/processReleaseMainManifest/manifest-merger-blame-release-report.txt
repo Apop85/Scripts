@@ -1,0 +1,132 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="ch.stefflix.app"
+4    android:versionCode="10301"
+5    android:versionName="1.3.1" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+9        android:targetSdkVersion="34" />
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:4:5-67
+11-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:4:22-64
+12    <!-- Updates der App direkt installieren (App-Einstellungen › Über die App) -->
+13    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+13-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:6:5-83
+13-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:6:22-80
+14    <!-- Wiedergabe im Hintergrund: Vordergrund-Dienst mit Benachrichtigung, CPU und WLAN wach halten -->
+15    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+15-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:8:5-77
+15-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:8:22-74
+16    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+16-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:9:5-92
+16-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:9:22-89
+17    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+17-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:10:5-77
+17-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:10:22-74
+18    <uses-permission android:name="android.permission.WAKE_LOCK" />
+18-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:11:5-68
+18-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:11:22-65
+19    <!-- largeHeap: Videopuffer bis 128 MB im Arbeitsspeicher -->
+20    <application
+20-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:14:5-68:19
+21        android:allowBackup="false"
+21-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:15:9-36
+22        android:extractNativeLibs="false"
+23        android:icon="@drawable/ic_launcher"
+23-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:16:9-45
+24        android:label="STEFFLIX"
+24-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:17:9-33
+25        android:largeHeap="true"
+25-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:18:9-33
+26        android:networkSecurityConfig="@xml/network_security_config"
+26-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:19:9-69
+27        android:theme="@style/Sflix" >
+27-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:20:9-37
+28        <activity
+28-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:22:9-30:20
+29            android:name="ch.stefflix.app.ShareListActivity"
+29-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:23:13-46
+30            android:exported="true"
+30-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:24:13-36
+31            android:launchMode="singleTop" >
+31-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:25:13-43
+32            <intent-filter>
+32-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:26:13-29:29
+33                <action android:name="android.intent.action.MAIN" />
+33-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:27:17-69
+33-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:27:25-66
+34
+35                <category android:name="android.intent.category.LAUNCHER" />
+35-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:28:17-77
+35-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:28:27-74
+36            </intent-filter>
+37        </activity>
+38
+39        <!-- singleTask: Antippen der Benachrichtigung öffnet die laufende Seite. Bild-im-Bild ohne Neuaufbau. -->
+40        <activity
+40-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:33:9-39:55
+41            android:name="ch.stefflix.app.BrowserActivity"
+41-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:34:13-44
+42            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode"
+42-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:35:13-122
+43            android:exported="false"
+43-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:36:13-37
+44            android:launchMode="singleTask"
+44-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:37:13-44
+45            android:resizeableActivity="true"
+45-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:38:13-46
+46            android:supportsPictureInPicture="true" />
+46-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:39:13-52
+47        <activity
+47-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:41:9-44:40
+48            android:name="ch.stefflix.app.SettingsActivity"
+48-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:42:13-45
+49            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode"
+49-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:43:13-122
+50            android:exported="false" />
+50-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:44:13-37
+51
+52        <receiver
+52-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:46:9-48:40
+53            android:name="ch.stefflix.app.AppUpdate$InstallReceiver"
+53-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:47:13-54
+54            android:exported="false" />
+54-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:48:13-37
+55
+56        <!-- Nach einem Update aus der App wieder öffnen bzw. Hinweis zum Antippen -->
+57        <receiver
+57-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:51:9-57:20
+58            android:name="ch.stefflix.app.AppUpdate$ReplacedReceiver"
+58-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:52:13-55
+59            android:exported="false" >
+59-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:53:13-37
+60            <intent-filter>
+60-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:54:13-56:29
+61                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+61-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:55:17-84
+61-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:55:25-81
+62            </intent-filter>
+63        </receiver>
+64
+65        <service
+65-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:59:9-63:44
+66            android:name="ch.stefflix.app.PlaybackService"
+66-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:60:13-44
+67            android:exported="false"
+67-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:61:13-37
+68            android:foregroundServiceType="mediaPlayback"
+68-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:62:13-58
+69            android:stopWithTask="false" />
+69-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:63:13-41
+70
+71        <receiver
+71-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:65:9-67:40
+72            android:name="ch.stefflix.app.PlaybackReceiver"
+72-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:66:13-45
+73            android:exported="false" />
+73-->C:\Users\rbald\Documents\SFLIX\SFLIX_Tools\Android\app\src\main\AndroidManifest.xml:67:13-37
+74    </application>
+75
+76</manifest>

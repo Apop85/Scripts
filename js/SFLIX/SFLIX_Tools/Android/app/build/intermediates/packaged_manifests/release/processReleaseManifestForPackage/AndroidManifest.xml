@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="ch.stefflix.app"
+    android:versionCode="10301"
+    android:versionName="1.3.1" >
+
+    <uses-sdk
+        android:minSdkVersion="26"
+        android:targetSdkVersion="34" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Updates der App direkt installieren (App-Einstellungen › Über die App) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Wiedergabe im Hintergrund: Vordergrund-Dienst mit Benachrichtigung, CPU und WLAN wach halten -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- largeHeap: Videopuffer bis 128 MB im Arbeitsspeicher -->
+    <application
+        android:allowBackup="false"
+        android:extractNativeLibs="false"
+        android:icon="@drawable/ic_launcher"
+        android:label="STEFFLIX"
+        android:largeHeap="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:theme="@style/Sflix" >
+        <activity
+            android:name="ch.stefflix.app.ShareListActivity"
+            android:exported="true"
+            android:launchMode="singleTop" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- singleTask: Antippen der Benachrichtigung öffnet die laufende Seite. Bild-im-Bild ohne Neuaufbau. -->
+        <activity
+            android:name="ch.stefflix.app.BrowserActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true" />
+        <activity
+            android:name="ch.stefflix.app.SettingsActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode"
+            android:exported="false" />
+
+        <receiver
+            android:name="ch.stefflix.app.AppUpdate$InstallReceiver"
+            android:exported="false" />
+
+        <!-- Nach einem Update aus der App wieder öffnen bzw. Hinweis zum Antippen -->
+        <receiver
+            android:name="ch.stefflix.app.AppUpdate$ReplacedReceiver"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name="ch.stefflix.app.PlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback"
+            android:stopWithTask="false" />
+
+        <receiver
+            android:name="ch.stefflix.app.PlaybackReceiver"
+            android:exported="false" />
+    </application>
+
+</manifest>

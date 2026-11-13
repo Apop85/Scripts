@@ -1,0 +1,26 @@
+<dependencies>
+  <compile
+      roots="com.hierynomus:smbj:0.13.0@jar">
+    <dependency
+        name="com.hierynomus:smbj:0.13.0@jar"
+        simpleName="com.hierynomus:smbj"/>
+  </compile>
+  <package
+      roots="com.hierynomus:smbj:0.13.0@jar,com.hierynomus:asn-one:0.6.0@jar,org.slf4j:slf4j-api:2.0.9@jar,org.bouncycastle:bcprov-jdk18on:1.75@jar,net.engio:mbassador:1.3.0@jar">
+    <dependency
+        name="com.hierynomus:smbj:0.13.0@jar"
+        simpleName="com.hierynomus:smbj"/>
+    <dependency
+        name="com.hierynomus:asn-one:0.6.0@jar"
+        simpleName="com.hierynomus:asn-one"/>
+    <dependency
+        name="org.slf4j:slf4j-api:2.0.9@jar"
+        simpleName="org.slf4j:slf4j-api"/>
+    <dependency
+        name="org.bouncycastle:bcprov-jdk18on:1.75@jar"
+        simpleName="org.bouncycastle:bcprov-jdk18on"/>
+    <dependency
+        name="net.engio:mbassador:1.3.0@jar"
+        simpleName="net.engio:mbassador"/>
+  </package>
+</dependencies>

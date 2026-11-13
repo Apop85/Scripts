@@ -298,6 +298,14 @@ Fall 4 'Sperre: Zeitlimit (Exit 4) und sofortige Freigabe nach Prozessende' {
     Check 'waehrend der Halter lebt: Exit 4' ($r2.Exit -eq 4) $r2.Out
     Stop-Process -Id $pr.Id -Force
     $pr.WaitForExit()
+
+    $pr.Refresh()
+    $childExit = $pr.ExitCode
+
+    Check 'Exit 3 bei erkannter Fremdaenderung' (
+        $childExit -eq 3
+    ) "Exit=[$childExit]; Prozess beendet=$($pr.HasExited); PID=$($pr.Id)"
+
     $r3 = Run $w @('erstellen', '-Rolle', 'JavaScript Developer', '-An', 'QA Engineer', '-Titel', 'nach Halter', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y', '-SperrZeitlimitSek', '2')
     Check 'nach hartem Ende des Halters sofort frei (Exit 0)' ($r3.Exit -eq 0) $r3.Out
 }

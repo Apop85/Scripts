@@ -105,8 +105,28 @@ Fall 1 'Rundlauf ueber alle Task-Dateien der Kopie (byteidentisch ohne BOM)' {
     $w = New-Kopie 'f1'
     $r = Run $w @('_rundlauf')
     Check 'rundlauf exit 0, keine Abweichung' ($r.Exit -eq 0) $r.Out
-    $n = (Get-ChildItem (Join-Path $w 'tasks') -Recurse -File).Count
-    Check "Dateien gelesen ($n)" ($r.Out -match "rundlauf: $n Dateien") $r.Out
+    $taskFiles = @()
+
+    foreach ($folder in @('OPEN', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED')) {
+        $dir = Join-Path $w "tasks\$folder"
+
+        if (Test-Path -LiteralPath $dir) {
+            $taskFiles += @(
+                Get-ChildItem -LiteralPath $dir -File -Force |
+                Where-Object {
+                    $_.Name -match '^SFLIX-\d{8}-\d{3,}\.md$'
+                }
+            )
+        }
+    }
+
+    $n = $taskFiles.Count
+
+    Check 'Kopie enthaelt gueltige Task-Dateien' ($n -gt 0) "Anzahl $n"
+
+    Check "Dateien gelesen ($n)" (
+        $r.Out -match "rundlauf: $n Dateien, 0 Abweichungen"
+    ) $r.Out
 }
 
 # ------------------------------------------------------------------ Fall 2
@@ -279,18 +299,107 @@ Fall 5 'Abbruch an jedem Schritt: check meldet, -Fix stellt her, keine Datei geh
 # ------------------------------------------------------------------ Fall 6
 Fall 6 'Aenderung am Skript vorbei zwischen Lesen und Ersetzen: Exit 3, nichts geschrieben' {
     $w = New-Wurzel 'f6'
+
     $a = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Konflikt'
     $p = TaskFile $w $a
-    $pr = Start-Process powershell -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $Script, 'status', '-Id', $a, '-Neu', 'IN_PROGRESS', '-Rolle', 'JavaScript Developer', '-Wurzel', $w, '-Haltepunkt', 'schlaf-nach-tmp') -PassThru -WindowStyle Hidden
-    $tmp = $null
-    foreach ($i in 1..60) { $tmp = @(Get-ChildItem (Join-Path $w 'tasks\OPEN') -Force | Where-Object { $_.Name -match '\.tmp-' }); if ($tmp.Count -gt 0) { break }; Start-Sleep -Milliseconds 100 }
-    Check 'Prozess hat Temp-Datei geschrieben und wartet' ($tmp.Count -gt 0) ''
-    [IO.File]::AppendAllText($p, "`r`nVon-Hand-Zeile`r`n", $Utf8)
-    $pr.WaitForExit()
-    Check 'Exit 3' ($pr.ExitCode -eq 3) "Exit $($pr.ExitCode)"
-    $txt = ReadT $p
-    Check 'Handaenderung bleibt, Status unveraendert OPEN' ($txt.Contains('Von-Hand-Zeile') -and $txt -match '- Status: OPEN') ''
-    Check 'Temp-Datei nach .history\_verwaist verschoben' ((@(Get-ChildItem (Join-Path $w 'tasks\OPEN') -Force | Where-Object { $_.Name -match '\.tmp-' }).Count -eq 0) -and (@(Get-ChildItem (Join-Path $w '.history\_verwaist') -ErrorAction SilentlyContinue).Count -ge 1)) ''
+
+    # Argumente explizit quotieren, damit auch absolute Pfade
+    # mit Leerzeichen korrekt uebergeben werden.
+    $scriptArg = '"' + $Script + '"'
+    $wurzelArg = '"' + $w + '"'
+
+    $arguments = (
+        '-NoProfile -ExecutionPolicy Bypass -File {0} status ' +
+        '-Id {1} -Neu IN_PROGRESS ' +
+        '-Rolle "JavaScript Developer" ' +
+        '-Wurzel {2} -Haltepunkt schlaf-nach-tmp'
+    ) -f $scriptArg, $a, $wurzelArg
+
+    $process = Start-Process `
+        -FilePath 'powershell.exe' `
+        -ArgumentList $arguments `
+        -PassThru `
+        -WindowStyle Hidden
+
+    $tmp = @()
+    $timeout = [Diagnostics.Stopwatch]::StartNew()
+
+    # Maximal 15 Sekunden auf die Temp-Datei warten.
+    while ($timeout.Elapsed.TotalSeconds -lt 15) {
+
+        $tmp = @(
+            Get-ChildItem -LiteralPath (Join-Path $w 'tasks\OPEN') -Force |
+            Where-Object { $_.Name -match '\.tmp-' }
+        )
+
+        if ($tmp.Count -gt 0) {
+            break
+        }
+
+        if ($process.HasExited) {
+            break
+        }
+
+        Start-Sleep -Milliseconds 100
+    }
+
+    $timeout.Stop()
+
+    Check 'Prozess hat Temp-Datei geschrieben und wartet' (
+        $tmp.Count -gt 0 -and -not $process.HasExited
+    ) (
+        "Temp-Dateien: $($tmp.Count); Prozess beendet: $($process.HasExited); Exit: $(if ($process.HasExited) { $process.ExitCode } else { '-' })"
+    )
+
+    if ($tmp.Count -gt 0 -and -not $process.HasExited) {
+
+        # Fremdaenderung nach dem Schreiben der Temp-Datei.
+        [IO.File]::AppendAllText(
+            $p,
+            "`r`nVon-Hand-Zeile`r`n",
+            $Utf8
+        )
+
+        $process.WaitForExit()
+
+        Check 'Exit 3' ($process.ExitCode -eq 3) "Exit $($process.ExitCode)"
+
+        $txt = ReadT $p
+
+        Check 'Handaenderung bleibt, Status unveraendert OPEN' (
+            $txt.Contains('Von-Hand-Zeile') -and
+            $txt -match '- Status: OPEN'
+        ) ''
+
+        $remainingTmp = @(
+            Get-ChildItem -LiteralPath (Join-Path $w 'tasks\OPEN') -Force |
+            Where-Object { $_.Name -match '\.tmp-' }
+        )
+
+        $orphanDir = Join-Path $w '.history\_verwaist'
+
+        $orphans = @()
+
+        if (Test-Path -LiteralPath $orphanDir) {
+            $orphans = @(Get-ChildItem -LiteralPath $orphanDir -File -Force)
+        }
+
+        Check 'Temp-Datei nach .history\_verwaist verschoben' (
+            $remainingTmp.Count -eq 0 -and $orphans.Count -ge 1
+        ) "Verbliebene Temp-Dateien: $($remainingTmp.Count); verwaiste Dateien: $($orphans.Count)"
+    }
+    else {
+        if (-not $process.HasExited) {
+            $process.Kill()
+            $process.WaitForExit()
+        }
+
+        Check 'Exit 3' $false 'Konflikttest konnte nicht bis zur Temp-Datei ausgefuehrt werden.'
+        Check 'Handaenderung bleibt, Status unveraendert OPEN' $false 'Nicht getestet.'
+        Check 'Temp-Datei nach .history\_verwaist verschoben' $false 'Nicht getestet.'
+    }
+
+    $process.Dispose()
 }
 
 # ------------------------------------------------------------------ Fall 7

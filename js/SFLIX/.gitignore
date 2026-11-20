@@ -1,8 +1,8 @@
 # Persoenliche und geheime Daten (nie pushen)
 sflix_sys/install.js
 sflix_sys/license.js
-SFLIX Tools/Lizenz/lizenzen.json
-SFLIX Tools/Android/signing/
+SFLIX_Tools/Lizenz/lizenzen.json
+SFLIX_Tools/Android/signing/
 
 # Lokale Dateien des Updaters
 sflix_sys/renamed.js
@@ -18,15 +18,25 @@ sflix_sys/ffmpeg/
 *.new
 
 # Build der Android-App
-SFLIX Tools/Android/.gradle/
-SFLIX Tools/Android/app/build/
-SFLIX Tools/Android/build/
-SFLIX Tools/Android/dist/
-SFLIX Tools/Android/local.properties
+SFLIX_Tools/Android/.gradle/
+SFLIX_Tools/Android/app/build/
+SFLIX_Tools/Android/build/
+SFLIX_Tools/Android/dist/
+SFLIX_Tools/Android/local.properties
 
 # Vorschaubilder von ladehintergrund.py (das Ergebnis steckt in start.html und den App-Assets)
-SFLIX Tools/Bilder/ladehintergrund.jpg
-SFLIX Tools/Bilder/ladehintergrund_scharf.jpg
+SFLIX_Tools/Bilder/ladehintergrund.jpg
+SFLIX_Tools/Bilder/ladehintergrund_scharf.jpg
 
 # Build des Updaters (Zwischenprodukte)
-SFLIX Tools/SflixTools/obj/
+SFLIX_Tools/SflixTools/obj/
+
+# Python-Zwischenstaende
+__pycache__/
+
+# Zusammenarbeit der Rollen (Tickets) und interne Dokumentation (Eastereggs), nie pushen
+coordination/
+docs/intern/
+
+# Alte Fassungen des Regelwerks (Rollen lesen sie nie)
+.claude/old/

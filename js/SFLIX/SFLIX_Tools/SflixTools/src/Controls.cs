@@ -8,6 +8,40 @@ using System.Windows.Forms;
 
 namespace Sflix
 {
+    // Rückruf aus einem Hintergrund-Thread in den UI-Thread. BeginInvoke auf einem inzwischen
+    // geschlossenen Fenster (oder ohne Handle) wirft InvalidOperationException; unbehandelt im
+    // Thread-Pool beendet das den ganzen Prozess, also auch den Player.
+    public static class Ui
+    {
+        // Liefert false, wenn das Steuerelement nicht mehr lebt (die Aktion entfällt dann). Ein Handle,
+        // das gerade neu erzeugt wird (z.B. durch Opacity), wird in Hintergrund-Threads kurz abgewartet.
+        public static bool Post(Control c, Action action)
+        {
+            if (c == null || action == null) return false;
+            for (int attempt = 0; ; attempt++)
+            {
+                if (c.IsDisposed || c.Disposing) return false;
+                if (c.IsHandleCreated)
+                {
+                    try
+                    {
+                        c.BeginInvoke((Action)delegate
+                        {
+                            if (c.IsDisposed || c.Disposing) return;
+                            action();
+                        });
+                        return true;
+                    }
+                    catch (ObjectDisposedException) { return false; }
+                    catch (InvalidOperationException) { }   // Handle zwischen Prüfung und Aufruf entfernt
+                }
+                // Im UI-Thread nicht warten (blockiert sonst das Fenster); nach etwa 2 s aufgeben
+                if (!System.Threading.Thread.CurrentThread.IsBackground || attempt >= 40) return false;
+                System.Threading.Thread.Sleep(50);
+            }
+        }
+    }
+
     public static class Theme
     {
         public static readonly Color Back = Color.FromArgb(0x18, 0x18, 0x1c);
@@ -171,6 +205,95 @@ namespace Sflix
             b.Margin = new Padding(Theme.S(8), Theme.S(4), 0, 0);
             b.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             return b;
+        }
+    }
+
+    // Knopfzeile, die umbricht und ihre Höhe selbst aus der Breite berechnet; ein optionales
+    // Element (RightControl) steht fest rechts in der ersten Zeile. Ersetzt verschachtelte AutoSize-
+    // Panels, deren Höhe bei grosser Skalierung zu gross berechnet wurde.
+    public class WrapRow : Panel
+    {
+        Control right;
+        bool arranging;
+
+        public WrapRow()
+        {
+            AutoSize = false;
+            Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
+            Margin = new Padding(0);
+            Padding = new Padding(0);
+        }
+
+        public Control RightControl
+        {
+            get { return right; }
+            set { right = value; if (value != null && !Controls.Contains(value)) Controls.Add(value); PerformLayout(); }
+        }
+
+        static Size Outer(Control c)
+        {
+            Size s = c.AutoSize ? c.GetPreferredSize(Size.Empty) : c.Size;
+            return new Size(s.Width + c.Margin.Horizontal, s.Height + c.Margin.Vertical);
+        }
+
+        // Ordnet die Elemente für die Breite an (place = false: nur messen) und gibt die Höhe zurück
+        int Arrange(int width, bool place)
+        {
+            int rightWidth = 0, rightHeight = 0;
+            if (right != null && right.Visible)
+            {
+                Size r = Outer(right);
+                rightWidth = r.Width;
+                rightHeight = r.Height;
+            }
+            int x = 0, y = 0, rowHeight = 0;
+            foreach (Control c in Controls)
+            {
+                if (c == right || !c.Visible) continue;
+                Size o = Outer(c);
+                // Neben dem rechten Element nur die Restbreite, darunter die ganze Breite
+                int avail = Math.Max(1, y < rightHeight ? width - rightWidth : width);
+                if (x > 0 && x + o.Width > avail)
+                {
+                    y += rowHeight;
+                    x = 0;
+                    rowHeight = 0;
+                }
+                if (place) c.SetBounds(x + c.Margin.Left, y + c.Margin.Top, o.Width - c.Margin.Horizontal, o.Height - c.Margin.Vertical);
+                x += o.Width;
+                rowHeight = Math.Max(rowHeight, o.Height);
+            }
+            if (place && rightWidth > 0)
+            {
+                Size r = Outer(right);
+                right.SetBounds(width - r.Width + right.Margin.Left, right.Margin.Top, r.Width - right.Margin.Horizontal, r.Height - right.Margin.Vertical);
+            }
+            int total = y + rowHeight;
+            return Math.Max(total, rightHeight);
+        }
+
+        public override Size GetPreferredSize(Size proposedSize)
+        {
+            int w = proposedSize.Width > 0 && proposedSize.Width < int.MaxValue / 2 ? proposedSize.Width : Width;
+            return new Size(w, Arrange(w, false));
+        }
+
+        protected override void OnLayout(LayoutEventArgs e)
+        {
+            if (arranging) return;
+            arranging = true;
+            try
+            {
+                int h = Arrange(Width, true);
+                if (Height != h) Height = h;
+            }
+            finally { arranging = false; }
+        }
+
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            PerformLayout();
         }
     }
 

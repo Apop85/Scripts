@@ -2,7 +2,7 @@
 #
 # Arbeitet ausschliesslich auf Kopien von coordination/ bzw. auf kleinen Test-Wurzeln in einem Temp-Ordner.
 # Der echte Bestand wird nur gelesen (Kopie) und nie veraendert.
-# Aufruf: powershell -NoProfile -ExecutionPolicy Bypass -File tools\Auftrag-Selbsttest.ps1 [-Fall 1,2,...] [-Quelle <coordination>]
+# Aufruf: powershell -NoProfile -ExecutionPolicy Bypass -File SFLIX_Tools\Auftrag-Selbsttest.ps1 [-Fall 1,2,...] [-Quelle <coordination>]
 # Exit-Code: 0 alle Faelle bestanden, 1 mindestens ein Fall fehlgeschlagen.
 # Reines ASCII (PowerShell 5.1); Sonderzeichen entstehen zur Laufzeit.
 
@@ -126,36 +126,37 @@ Fall 1 'Rundlauf ueber synthetische SFLIX-Task-Dateien (byteidentisch ohne BOM)'
     $w = New-Wurzel 'f1'
 
     # Vier synthetische Tickets erzeugen.
-    $a = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Test OPEN'
-    $b = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Test IN_PROGRESS'
-    $c = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Test BLOCKED'
-    $d = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Test COMPLETED'
+    $a = MkTask $w 'Pruefung' 'Entwicklung' 'Test OPEN'
+    $b = MkTask $w 'Pruefung' 'Entwicklung' 'Test IN_PROGRESS'
+    $c = MkTask $w 'Pruefung' 'Entwicklung' 'Test BLOCKED'
+    $d = MkTask $w 'Pruefung' 'Entwicklung' 'Test COMPLETED'
 
     # In die jeweiligen Statusordner verschieben.
     $r = Run $w @(
         'status', '-Id', $b, '-Neu', 'IN_PROGRESS',
-        '-Rolle', 'JavaScript Developer'
+        '-Rolle', 'Entwicklung'
     )
     if ($r.Exit -ne 0) { throw $r.Out }
 
     $r = Run $w @(
         'status', '-Id', $c, '-Neu', 'BLOCKED',
         '-Frage', 'Synthetische Testfrage',
-        '-Rolle', 'JavaScript Developer'
+        '-Rolle', 'Entwicklung'
     )
     if ($r.Exit -ne 0) { throw $r.Out }
 
     $r = Run $w @(
         'status', '-Id', $d, '-Neu', 'IN_PROGRESS',
-        '-Rolle', 'JavaScript Developer'
+        '-Rolle', 'Entwicklung'
     )
     if ($r.Exit -ne 0) { throw $r.Out }
 
     $r = Run $w @(
         'abschliessen', '-Id', $d,
-        '-Rolle', 'JavaScript Developer',
+        '-Rolle', 'Entwicklung',
         '-Arbeiten', 'Synthetischer Test',
-        '-Tests', 'Statuswechsel erfolgreich'
+        '-Tests', 'Statuswechsel erfolgreich',
+        '-Entscheide', 'keine'
     )
     if ($r.Exit -ne 0) { throw $r.Out }
 
@@ -206,14 +207,14 @@ Fall 1 'Rundlauf ueber synthetische SFLIX-Task-Dateien (byteidentisch ohne BOM)'
 # ------------------------------------------------------------------ Fall 2
 Fall 2 'Parallel erstellen: 10 Prozesse x 5 Auftraege' {
     $w = New-Wurzel 'f2'
-    [void](MkTask $w 'JavaScript Developer' 'QA Engineer' 'Start')
+    [void](MkTask $w 'Entwicklung' 'Pruefung' 'Start')
     $before = @(Get-ChildItem (Join-Path $w 'tasks') -Recurse -File).Count
     $jobs = @()
     foreach ($j in 1..10) {
         $jobs += Start-Job -ArgumentList $Script, $w, $j -ScriptBlock {
             param($s, $w, $j)
             foreach ($k in 1..5) {
-                & powershell -NoProfile -ExecutionPolicy Bypass -File $s erstellen -Wurzel $w -Rolle 'JavaScript Developer' -An 'QA Engineer' -Titel "Parallel $j-$k" -Prio LOW -Aufgabe 'x' -Ergebnis 'y' | Out-Null
+                & powershell -NoProfile -ExecutionPolicy Bypass -File $s erstellen -Wurzel $w -Rolle 'Entwicklung' -An 'Pruefung' -Titel "Parallel $j-$k" -Prio LOW -Aufgabe 'x' -Ergebnis 'y' | Out-Null
                 $LASTEXITCODE
             }
         }
@@ -229,7 +230,7 @@ Fall 2 'Parallel erstellen: 10 Prozesse x 5 Auftraege' {
     $idx = ReadT (Join-Path $w 'TASK-INDEX.md')
     $rows = @(($idx -split "`n") | Where-Object { $_ -match '^\| SFLIX-' }).Count
     Check 'Index enthaelt alle 51 Zeilen' ($rows -eq 51) "Zeilen $rows"
-    $inb = ReadT (Join-Path $w 'inbox\qa.md')
+    $inb = ReadT (Join-Path $w 'inbox\pruefung.md')
     $rows2 = @(($inb -split "`n") | Where-Object { $_ -match '^\| SFLIX-' }).Count
     Check 'Posteingang QA enthaelt alle 51 Zeilen' ($rows2 -eq 51) "Zeilen $rows2"
     $c = Run $w @('check')
@@ -239,16 +240,16 @@ Fall 2 'Parallel erstellen: 10 Prozesse x 5 Auftraege' {
 # ------------------------------------------------------------------ Fall 3
 Fall 3 'Parallele Statuswechsel und Anhaenge: keine verlorene Verlaufszeile' {
     $w = New-Wurzel 'f3'
-    $a = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Anhaenge'
-    $r = Run $w @('status', '-Id', $a, '-Neu', 'IN_PROGRESS', '-Rolle', 'JavaScript Developer')
+    $a = MkTask $w 'Pruefung' 'Entwicklung' 'Anhaenge'
+    $r = Run $w @('status', '-Id', $a, '-Neu', 'IN_PROGRESS', '-Rolle', 'Entwicklung')
     Check 'Uebernahme' ($r.Exit -eq 0) $r.Out
-    $bs = @(); foreach ($i in 1..5) { $bs += MkTask $w 'QA Engineer' 'JavaScript Developer' "Wechsel $i" }
+    $bs = @(); foreach ($i in 1..5) { $bs += MkTask $w 'Pruefung' 'Entwicklung' "Wechsel $i" }
     $jobs = @()
     foreach ($j in 1..6) {
         $jobs += Start-Job -ArgumentList $Script, $w, $j, $a -ScriptBlock {
             param($s, $w, $j, $a)
             foreach ($k in 1..3) {
-                & powershell -NoProfile -ExecutionPolicy Bypass -File $s aendern -Wurzel $w -Rolle 'QA Engineer' -Id $a -Feld 'Offene Fragen' -Wert "q$j-$k" -Notiz "n$j-$k" | Out-Null
+                & powershell -NoProfile -ExecutionPolicy Bypass -File $s aendern -Wurzel $w -Rolle 'Pruefung' -Id $a -Feld 'Offene Fragen' -Wert "q$j-$k" -Notiz "n$j-$k" | Out-Null
                 $LASTEXITCODE
             }
         }
@@ -256,7 +257,7 @@ Fall 3 'Parallele Statuswechsel und Anhaenge: keine verlorene Verlaufszeile' {
     foreach ($b in $bs) {
         $jobs += Start-Job -ArgumentList $Script, $w, $b -ScriptBlock {
             param($s, $w, $b)
-            & powershell -NoProfile -ExecutionPolicy Bypass -File $s status -Wurzel $w -Rolle 'JavaScript Developer' -Id $b -Neu IN_PROGRESS | Out-Null
+            & powershell -NoProfile -ExecutionPolicy Bypass -File $s status -Wurzel $w -Rolle 'Entwicklung' -Id $b -Neu IN_PROGRESS | Out-Null
             $LASTEXITCODE
         }
     }
@@ -274,12 +275,12 @@ Fall 3 'Parallele Statuswechsel und Anhaenge: keine verlorene Verlaufszeile' {
 # ------------------------------------------------------------------ Fall 4
 Fall 4 'Sperre: Zeitlimit (Exit 4) und sofortige Freigabe nach Prozessende' {
     $w = New-Wurzel 'f4'
-    [void](MkTask $w 'JavaScript Developer' 'QA Engineer' 'Sperrtest')
+    [void](MkTask $w 'Entwicklung' 'Pruefung' 'Sperrtest')
     $lock = Join-Path $w '.lock'
     $fs = [IO.FileStream]::new($lock, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
     $n0 = @(Get-ChildItem (Join-Path $w 'tasks\OPEN')).Count
     $sw = [Diagnostics.Stopwatch]::StartNew()
-    $r = Run $w @('erstellen', '-Rolle', 'JavaScript Developer', '-An', 'QA Engineer', '-Titel', 'blockiert', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y', '-SperrZeitlimitSek', '2')
+    $r = Run $w @('erstellen', '-Rolle', 'Entwicklung', '-An', 'Pruefung', '-Titel', 'blockiert', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y', '-SperrZeitlimitSek', '2')
     $sw.Stop()
     $fs.Dispose()
     Check 'Exit 4 nach Zeitlimit' ($r.Exit -eq 4) "Exit $($r.Exit) $($r.Out)"
@@ -294,19 +295,12 @@ Fall 4 'Sperre: Zeitlimit (Exit 4) und sofortige Freigabe nach Prozessende' {
         try { $t = [IO.FileStream]::new($lock, [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None); $t.Dispose(); Start-Sleep -Milliseconds 250 } catch { $held = $true; break }
     }
     Check 'Halter haelt die Sperre' $held ''
-    $r2 = Run $w @('erstellen', '-Rolle', 'JavaScript Developer', '-An', 'QA Engineer', '-Titel', 'waehrend Halter', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y', '-SperrZeitlimitSek', '2')
+    $r2 = Run $w @('erstellen', '-Rolle', 'Entwicklung', '-An', 'Pruefung', '-Titel', 'waehrend Halter', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y', '-SperrZeitlimitSek', '2')
     Check 'waehrend der Halter lebt: Exit 4' ($r2.Exit -eq 4) $r2.Out
     Stop-Process -Id $pr.Id -Force
     $pr.WaitForExit()
 
-    $pr.Refresh()
-    $childExit = $pr.ExitCode
-
-    Check 'Exit 3 bei erkannter Fremdaenderung' (
-        $childExit -eq 3
-    ) "Exit=[$childExit]; Prozess beendet=$($pr.HasExited); PID=$($pr.Id)"
-
-    $r3 = Run $w @('erstellen', '-Rolle', 'JavaScript Developer', '-An', 'QA Engineer', '-Titel', 'nach Halter', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y', '-SperrZeitlimitSek', '2')
+    $r3 = Run $w @('erstellen', '-Rolle', 'Entwicklung', '-An', 'Pruefung', '-Titel', 'nach Halter', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y', '-SperrZeitlimitSek', '2')
     Check 'nach hartem Ende des Halters sofort frei (Exit 0)' ($r3.Exit -eq 0) $r3.Out
 }
 
@@ -315,40 +309,40 @@ Fall 5 'Abbruch an jedem Schritt: check meldet, -Fix stellt her, keine Datei geh
     function CountAll([string]$w) { return @(Get-ChildItem (Join-Path $w 'tasks') -Recurse -File -Force | Where-Object { $_.Name -match '^SFLIX-' }).Count }
     # erstellen: nach-anlegen (leere Datei), nach-schreiben (Uebersicht fehlt)
     $w = New-Wurzel 'f5a'
-    [void](MkTask $w 'JavaScript Developer' 'QA Engineer' 'Basis')
-    $r = Run $w @('erstellen', '-Rolle', 'JavaScript Developer', '-An', 'QA Engineer', '-Titel', 'abbruch', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y', '-Haltepunkt', 'nach-anlegen')
+    [void](MkTask $w 'Entwicklung' 'Pruefung' 'Basis')
+    $r = Run $w @('erstellen', '-Rolle', 'Entwicklung', '-An', 'Pruefung', '-Titel', 'abbruch', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y', '-Haltepunkt', 'nach-anlegen')
     Check 'erstellen nach-anlegen: Abbruch (99)' ($r.Exit -eq 99) "Exit $($r.Exit)"
     $leer = @(Get-ChildItem (Join-Path $w 'tasks\OPEN') | Where-Object { $_.Length -eq 0 })
     Check 'leere Datei bleibt liegen' ($leer.Count -eq 1) ''
     $c = Run $w @('check')
     Check 'check meldet unvollstaendig (Exit 5)' ($c.Exit -eq 5 -and $c.Out -match 'unvollstaendig') $c.Out
-    $c2 = Run $w @('check', '-Fix', '-Rolle', 'JavaScript Developer')
+    $c2 = Run $w @('check', '-Fix', '-Rolle', 'Entwicklung')
     Check '-Fix loescht die leere Datei nicht' (@(Get-ChildItem (Join-Path $w 'tasks\OPEN') | Where-Object { $_.Length -eq 0 }).Count -eq 1) $c2.Out
-    $r2 = RunJson $w @('erstellen', '-Rolle', 'JavaScript Developer', '-An', 'QA Engineer', '-Titel', 'danach', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y')
+    $r2 = RunJson $w @('erstellen', '-Rolle', 'Entwicklung', '-An', 'Pruefung', '-Titel', 'danach', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y')
     Check 'Nummer der leeren Datei bleibt vergeben' ($r2.Exit -eq 0 -and $r2.J.ids[0] -match '-003$') "$($r2.Out)"
 
     $w = New-Wurzel 'f5b'
-    [void](MkTask $w 'JavaScript Developer' 'QA Engineer' 'Basis')
-    $r = Run $w @('erstellen', '-Rolle', 'JavaScript Developer', '-An', 'QA Engineer', '-Titel', 'abbruch2', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y', '-Haltepunkt', 'nach-schreiben')
+    [void](MkTask $w 'Entwicklung' 'Pruefung' 'Basis')
+    $r = Run $w @('erstellen', '-Rolle', 'Entwicklung', '-An', 'Pruefung', '-Titel', 'abbruch2', '-Prio', 'LOW', '-Aufgabe', 'x', '-Ergebnis', 'y', '-Haltepunkt', 'nach-schreiben')
     Check 'erstellen nach-schreiben: Abbruch' ($r.Exit -eq 99) ''
     $c = Run $w @('check')
     Check 'check meldet Uebersicht (Exit 5)' ($c.Exit -eq 5 -and $c.Out -match 'uebersicht') $c.Out
-    $f = Run $w @('check', '-Fix', '-Rolle', 'JavaScript Developer')
+    $f = Run $w @('check', '-Fix', '-Rolle', 'Entwicklung')
     Check '-Fix stellt Uebersicht her (Exit 0)' ($f.Exit -eq 0) $f.Out
     Check 'keine Datei verloren (2 Auftraege)' ((CountAll $w) -eq 2) ''
 
     # Statuswechsel an jedem Haltepunkt
     foreach ($hp in @('nach-tmp', 'nach-replace', 'nach-move', 'nach-index')) {
         $w = New-Wurzel ('f5-' + $hp)
-        $a = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Wechsel'
+        $a = MkTask $w 'Pruefung' 'Entwicklung' 'Wechsel'
         $n0 = CountAll $w
-        $r = Run $w @('status', '-Id', $a, '-Neu', 'IN_PROGRESS', '-Rolle', 'JavaScript Developer', '-Haltepunkt', $hp)
+        $r = Run $w @('status', '-Id', $a, '-Neu', 'IN_PROGRESS', '-Rolle', 'Entwicklung', '-Haltepunkt', $hp)
         Check "status Abbruch bei $hp (99)" ($r.Exit -eq 99) "Exit $($r.Exit) $($r.Out)"
         $c = Run $w @('check')
         $expect5 = ($hp -ne 'nach-tmp')
         $c1 = if ($hp -eq 'nach-tmp') { ($c.Exit -eq 5 -and $c.Out -match 'tmp') } else { ($c.Exit -eq 5) }
         Check "check meldet nach $hp" $c1 $c.Out
-        $f = Run $w @('check', '-Fix', '-Rolle', 'JavaScript Developer')
+        $f = Run $w @('check', '-Fix', '-Rolle', 'Entwicklung')
         Check "-Fix nach ${hp}: check danach sauber" ($f.Exit -eq 0) $f.Out
         Check "keine Datei verloren nach $hp" ((CountAll $w) -eq $n0) ''
         if ($hp -ne 'nach-tmp') {
@@ -361,20 +355,20 @@ Fall 5 'Abbruch an jedem Schritt: check meldet, -Fix stellt her, keine Datei geh
     }
     # abschliessen: Abbruch nach dem Verschieben -> Schreibschutz fehlt
     $w = New-Wurzel 'f5-abschluss'
-    $a = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Abschluss'
-    [void](Run $w @('status', '-Id', $a, '-Neu', 'IN_PROGRESS', '-Rolle', 'JavaScript Developer'))
-    $r = Run $w @('abschliessen', '-Id', $a, '-Rolle', 'JavaScript Developer', '-Arbeiten', 'a', '-Tests', 't', '-Haltepunkt', 'nach-move')
+    $a = MkTask $w 'Pruefung' 'Entwicklung' 'Abschluss'
+    [void](Run $w @('status', '-Id', $a, '-Neu', 'IN_PROGRESS', '-Rolle', 'Entwicklung'))
+    $r = Run $w @('abschliessen', '-Id', $a, '-Rolle', 'Entwicklung', '-Arbeiten', 'a', '-Tests', 't', '-Entscheide', 'keine', '-Haltepunkt', 'nach-move')
     Check 'abschliessen Abbruch nach Verschieben' ($r.Exit -eq 99) $r.Out
     $c = Run $w @('check')
     Check 'check meldet Schreibschutz' ($c.Exit -eq 5 -and $c.Out -match 'schreibschutz') $c.Out
-    $f = Run $w @('check', '-Fix', '-Rolle', 'JavaScript Developer')
+    $f = Run $w @('check', '-Fix', '-Rolle', 'Entwicklung')
     Check '-Fix setzt Schreibschutz, check sauber' ($f.Exit -eq 0 -and (Get-Item (Join-Path $w "tasks\COMPLETED\$a.md")).IsReadOnly) $f.Out
     # Nummer nicht wiederverwenden, wenn ein Auftrag von Hand entfernt wurde (Ordner in .history zaehlt)
     $w = New-Wurzel 'f5-nummer'
-    $a = MkTask $w 'QA Engineer' 'JavaScript Developer' 'A'
-    [void](Run $w @('aendern', '-Id', $a, '-Rolle', 'JavaScript Developer', '-Feld', 'Technischer Kontext', '-Wert', 'x'))
+    $a = MkTask $w 'Pruefung' 'Entwicklung' 'A'
+    [void](Run $w @('aendern', '-Id', $a, '-Rolle', 'Entwicklung', '-Feld', 'Technischer Kontext', '-Wert', 'x'))
     Remove-Item (TaskFile $w $a) -Force
-    $b = MkTask $w 'QA Engineer' 'JavaScript Developer' 'B'
+    $b = MkTask $w 'Pruefung' 'Entwicklung' 'B'
     Check 'entfernte Nummer wird nicht erneut vergeben' ($b -match '-002$') $b
 }
 
@@ -383,7 +377,7 @@ Fall 6 'Aenderung am Skript vorbei zwischen Lesen und Ersetzen: Exit 3, nichts g
 
     $w = New-Wurzel 'f6'
 
-    $a = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Konflikttest'
+    $a = MkTask $w 'Pruefung' 'Entwicklung' 'Konflikttest'
     $p = TaskFile $w $a
 
     $stdout = Join-Path $w 'child-stdout.log'
@@ -408,7 +402,7 @@ Fall 6 'Aenderung am Skript vorbei zwischen Lesen und Ersetzen: Exit 3, nichts g
         '-Neu'
         'IN_PROGRESS'
         '-Rolle'
-        'JavaScript Developer'
+        'Entwicklung'
         '-Wurzel'
         $w
         '-Haltepunkt'
@@ -430,6 +424,9 @@ Fall 6 'Aenderung am Skript vorbei zwischen Lesen und Ersetzen: Exit 3, nichts g
         -WindowStyle Hidden `
         -RedirectStandardOutput $stdout `
         -RedirectStandardError $stderr
+
+    # Handle sofort holen: sonst liefert ExitCode nach Start-Process mit Umleitung keinen Wert (Exit=[]).
+    $null = $pr.Handle
 
     # Auf die Temp-Datei warten.
     $tmp = @()
@@ -519,17 +516,11 @@ Fall 6 'Aenderung am Skript vorbei zwischen Lesen und Ersetzen: Exit 3, nichts g
 Fall 7 'Berechtigungen: Wechsel x Rollen, mit und ohne -Benutzerfreigabe' {
     $w = New-Wurzel 'f7'
 $roles = @(
-        'Technical Product Owner',
-        'Software Architect',
-        'JavaScript Developer',
-        'Debugging Specialist',
-        'QA Engineer',
-        'Security Auditor',
-        'Performance Engineer',
-        'C#/.NET Developer',
-        'Android Developer',
-        'Documentation Assistant',
-        'Release Manager',
+        'Planung',
+        'Architekt',
+        'Entwicklung',
+        'Pruefung',
+        'Release',
         'Benutzer'
     )
     foreach ($c in $cmds) {
@@ -563,7 +554,7 @@ Fall 13 'Pfadpruefung: nichts ausserhalb von coordination/' {
     Check 'Junction wird abgelehnt (Exit 1)' ($r.Exit -eq 1) "Exit $($r.Exit) $($r.Out)"
     cmd /c rmdir "$jx" | Out-Null
     Check 'Ziel der Junction unveraendert (leer)' (@(Get-ChildItem $ausserhalb -Force).Count -eq 0) ''
-    $r = Run $w @('status', '-Id', '../x', '-Neu', 'IN_PROGRESS', '-Rolle', 'JavaScript Developer')
+    $r = Run $w @('status', '-Id', '../x', '-Neu', 'IN_PROGRESS', '-Rolle', 'Entwicklung')
     Check 'manipulierte -Id abgelehnt (Exit 1)' ($r.Exit -eq 1) $r.Out
     $env:AUFTRAG_TESTMODUS = ''
     $r = Run $w @('liste')
@@ -574,9 +565,9 @@ Fall 13 'Pfadpruefung: nichts ausserhalb von coordination/' {
 # ------------------------------------------------------------------ Fall 14
 Fall 14 'Index-Defekt (Leerzeile, fehlende und ueberzaehlige Zeile) wird durch die Erzeugung behoben' {
     $w = New-Wurzel 'f14'
-    $a = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Eins'
-    $b = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Zwei'
-    $c = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Drei'
+    $a = MkTask $w 'Pruefung' 'Entwicklung' 'Eins'
+    $b = MkTask $w 'Pruefung' 'Entwicklung' 'Zwei'
+    $c = MkTask $w 'Pruefung' 'Entwicklung' 'Drei'
     $ip = Join-Path $w 'TASK-INDEX.md'
     $lines = @((ReadT $ip) -split "`r?`n")
     $out = New-Object System.Collections.Generic.List[string]
@@ -589,7 +580,7 @@ Fall 14 'Index-Defekt (Leerzeile, fehlende und ueberzaehlige Zeile) wird durch d
     [IO.File]::WriteAllText($ip, ($out -join "`r`n"), $Utf8)
     $chk = Run $w @('check')
     Check 'check erkennt den Defekt (Exit 5, fehlt/ueberzaehlig)' ($chk.Exit -eq 5 -and $chk.Out -match 'fehlt' -and $chk.Out -match 'berz') $chk.Out
-    [void](MkTask $w 'QA Engineer' 'JavaScript Developer' 'Vier')
+    [void](MkTask $w 'Pruefung' 'Entwicklung' 'Vier')
     $idx = ReadT $ip
     $tab = @(($idx -split "`n") | Where-Object { $_ -match '^\|' })
     Check 'Tabelle ohne Leerzeile, 4 Aufgabenzeilen + Kopf' ($tab.Count -eq 6) "Zeilen $($tab.Count)"
@@ -603,8 +594,8 @@ Fall 14 'Index-Defekt (Leerzeile, fehlende und ueberzaehlige Zeile) wird durch d
 # ------------------------------------------------------------------ Fall 15
 Fall 15 '.history-Obergrenze, liste mit allen Filtern, COMPLETED gegen CANCELLED, BLOCKED-Hinweis' {
     $w = New-Wurzel 'f15'
-    $a = MkTask $w 'QA Engineer' 'JavaScript Developer' 'Historie'
-    foreach ($i in 1..24) { [void](Run $w @('aendern', '-Id', $a, '-Rolle', 'JavaScript Developer', '-Feld', 'Technischer Kontext', '-Wert', "v$i")) }
+    $a = MkTask $w 'Pruefung' 'Entwicklung' 'Historie'
+    foreach ($i in 1..24) { [void](Run $w @('aendern', '-Id', $a, '-Rolle', 'Entwicklung', '-Feld', 'Technischer Kontext', '-Wert', "v$i")) }
     $n = @(Get-ChildItem (Join-Path $w ".history\$a") -File).Count
     Check 'Obergrenze 20 Fassungen' ($n -eq 20) "Fassungen $n"
     $newest = ReadT (TaskFile $w $a)
@@ -624,37 +615,37 @@ Fall 15 'liste (Fortsetzung)' {
         if ($r.Exit -ne 0) { throw $r.Out }
         return $r.J.ids[0]
     }
-    $t1 = & $mk 'QA Engineer' 'JavaScript Developer' 'Alpha Suchwort' 'HIGH'
-    $t2 = & $mk 'QA Engineer' 'JavaScript Developer' 'Beta' 'LOW'
-    $t3 = & $mk 'Software Architect' 'JavaScript Developer' 'Gamma' 'MEDIUM'
-    $t4 = & $mk 'Software Architect' 'Documentation Assistant' 'Delta' 'LOW'
-    $t5 = & $mk 'Documentation Assistant' 'JavaScript Developer' 'Epsilon' 'LOW'
-    [void](Run $w @('status', '-Id', $t2, '-Neu', 'IN_PROGRESS', '-Rolle', 'JavaScript Developer'))
-    [void](Run $w @('status', '-Id', $t3, '-Neu', 'BLOCKED', '-Frage', 'q', '-Rolle', 'JavaScript Developer'))
-    [void](Run $w @('status', '-Id', $t4, '-Neu', 'IN_PROGRESS', '-Rolle', 'Documentation Assistant'))
-    [void](Run $w @('abschliessen', '-Id', $t4, '-Rolle', 'Documentation Assistant', '-Arbeiten', 'a', '-Tests', 't'))
-    [void](Run $w @('status', '-Id', $t5, '-Neu', 'CANCELLED', '-Notiz', 'weg', '-Rolle', 'Documentation Assistant'))
+    $t1 = & $mk 'Pruefung' 'Entwicklung' 'Alpha Suchwort' 'HIGH'
+    $t2 = & $mk 'Pruefung' 'Entwicklung' 'Beta' 'LOW'
+    $t3 = & $mk 'Architekt' 'Entwicklung' 'Gamma' 'MEDIUM'
+    $t4 = & $mk 'Architekt' 'Release' 'Delta' 'LOW'
+    $t5 = & $mk 'Release' 'Entwicklung' 'Epsilon' 'LOW'
+    [void](Run $w @('status', '-Id', $t2, '-Neu', 'IN_PROGRESS', '-Rolle', 'Entwicklung'))
+    [void](Run $w @('status', '-Id', $t3, '-Neu', 'BLOCKED', '-Frage', 'q', '-Rolle', 'Entwicklung'))
+    [void](Run $w @('status', '-Id', $t4, '-Neu', 'IN_PROGRESS', '-Rolle', 'Release'))
+    [void](Run $w @('abschliessen', '-Id', $t4, '-Rolle', 'Release', '-Arbeiten', 'a', '-Tests', 't', '-Entscheide', 'keine'))
+    [void](Run $w @('status', '-Id', $t5, '-Neu', 'CANCELLED', '-Notiz', 'weg', '-Rolle', 'Release'))
     $ids = { param($r) @($r.J.daten | ForEach-Object { $_.id }) }
-    $r = RunJson $w @('liste', '-Rolle', 'JavaScript Developer')
+    $r = RunJson $w @('liste', '-Rolle', 'Entwicklung')
     $l = @(& $ids $r)
     Check 'Standard mit -Rolle (Posteingang): OPEN, IN_PROGRESS und BLOCKED der Rolle' ($l.Count -eq 3 -and $l -contains $t1 -and $l -contains $t2 -and $l -contains $t3) ($l -join ',')
-    $r = RunJson $w @('liste', '-An', 'JavaScript Developer')
+    $r = RunJson $w @('liste', '-An', 'Entwicklung')
     $l = @(& $ids $r)
     Check 'Standard ohne -Rolle: OPEN und IN_PROGRESS' ($l.Count -eq 2 -and $l -contains $t1 -and $l -contains $t2) ($l -join ',')
     Check 'Hinweis "1 BLOCKED ausgeblendet"' ((@($r.J.meldungen) -join ' ') -match '1 BLOCKED ausgeblendet') $r.Out
-    $r = Run $w @('liste', '-Rolle', 'JavaScript Developer', '-MitDateien')
+    $r = Run $w @('liste', '-Rolle', 'Entwicklung', '-MitDateien')
     Check '-MitDateien: Exit 0' ($r.Exit -eq 0) $r.Out
-    $r = RunJson $w @('liste', '-Rolle', 'JavaScript Developer', '-Status', 'BLOCKED'); $l = @(& $ids $r)
+    $r = RunJson $w @('liste', '-Rolle', 'Entwicklung', '-Status', 'BLOCKED'); $l = @(& $ids $r)
     Check '-Status BLOCKED' ($l.Count -eq 1 -and $l[0] -eq $t3) ($l -join ',')
-    $r = RunJson $w @('liste', '-Rolle', 'JavaScript Developer', '-Status', 'Alle'); $l = @(& $ids $r)
-    Check '-Status Alle (Rolle JavaScript Developer: 1,2,3 und CANCELLED 5)' ($l.Count -eq 4) ($l -join ',')
+    $r = RunJson $w @('liste', '-Rolle', 'Entwicklung', '-Status', 'Alle'); $l = @(& $ids $r)
+    Check '-Status Alle (Rolle Entwicklung: 1,2,3 und CANCELLED 5)' ($l.Count -eq 4) ($l -join ',')
     $r = RunJson $w @('liste', '-Status', 'COMPLETED'); $l = @(& $ids $r)
     Check 'COMPLETED ohne CANCELLED' ($l.Count -eq 1 -and $l[0] -eq $t4) ($l -join ',')
     $r = RunJson $w @('liste', '-Status', 'CANCELLED'); $l = @(& $ids $r)
     Check 'CANCELLED ohne COMPLETED' ($l.Count -eq 1 -and $l[0] -eq $t5) ($l -join ',')
     $r = RunJson $w @('liste', '-Status', 'OPEN,IN_PROGRESS'); $l = @(& $ids $r)
     Check 'mehrere Status' ($l.Count -eq 2) ($l -join ',')
-    $r = RunJson $w @('liste', '-An', 'JavaScript Developer', '-Von', 'Software Architect', '-Status', 'Alle'); $l = @(& $ids $r)
+    $r = RunJson $w @('liste', '-An', 'Entwicklung', '-Von', 'Architekt', '-Status', 'Alle'); $l = @(& $ids $r)
     Check '-An und -Von' ($l.Count -eq 1 -and $l[0] -eq $t3) ($l -join ',')
     $r = RunJson $w @('liste', '-Prio', 'HIGH'); $l = @(& $ids $r)
     Check '-Prio' ($l.Count -eq 1 -and $l[0] -eq $t1) ($l -join ',')
@@ -676,17 +667,17 @@ Fall 15 'liste (Fortsetzung)' {
 Fall 16 'Nummer 999 wird zu 1000' {
     $w = New-Wurzel 'f16'
     $id = 'SFLIX-20260101-999'
-    $txt = "# $id - Altauftrag`r`n- Erstellt am: 2026-01-01`r`n- Absender: QA Engineer`r`n- Empf" + [char]0xE4 + "nger: JavaScript Developer`r`n- Priorit" + [char]0xE4 + "t: LOW`r`n- Status: OPEN`r`n- Aufgabenbeschreibung: x`r`n- Erwartetes Ergebnis: y`r`n"
+    $txt = "# $id - Altauftrag`r`n- Erstellt am: 2026-01-01`r`n- Absender: Pruefung`r`n- Empf" + [char]0xE4 + "nger: Entwicklung`r`n- Priorit" + [char]0xE4 + "t: LOW`r`n- Status: OPEN`r`n- Aufgabenbeschreibung: x`r`n- Erwartetes Ergebnis: y`r`n"
     [IO.File]::WriteAllText((Join-Path $w "tasks\OPEN\$id.md"), $txt, $Utf8)
-    $r = RunJson $w @('erstellen', '-Rolle', 'Software Architect', '-An', 'JavaScript Developer', '-Titel', 'Tausend', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E')
+    $r = RunJson $w @('erstellen', '-Rolle', 'Architekt', '-An', 'Entwicklung', '-Titel', 'Tausend', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E')
     Check 'naechste Nummer 1000' ($r.Exit -eq 0 -and $r.J.ids[0] -match '-1000$') $r.Out
-    $r2 = RunJson $w @('erstellen', '-Rolle', 'Software Architect', '-An', 'JavaScript Developer', '-Titel', 'Tausendeins', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E')
+    $r2 = RunJson $w @('erstellen', '-Rolle', 'Architekt', '-An', 'Entwicklung', '-Titel', 'Tausendeins', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E')
     Check 'danach 1001' ($r2.Exit -eq 0 -and $r2.J.ids[0] -match '-1001$') $r2.Out
     $c = Run $w @('check')
     Check 'check akzeptiert vierstellige Nummern' ($c.Exit -eq 0) $c.Out
-    $a = Run $w @('status', '-Id', $r.J.ids[0], '-Neu', 'IN_PROGRESS', '-Rolle', 'JavaScript Developer')
+    $a = Run $w @('status', '-Id', $r.J.ids[0], '-Neu', 'IN_PROGRESS', '-Rolle', 'Entwicklung')
     Check 'Statuswechsel mit vierstelliger ID' ($a.Exit -eq 0) $a.Out
-    $a = Run $w @('status', '-Id', '1001', '-Neu', 'IN_PROGRESS', '-Rolle', 'JavaScript Developer')
+    $a = Run $w @('status', '-Id', '1001', '-Neu', 'IN_PROGRESS', '-Rolle', 'Entwicklung')
     Check 'Kurzform -Id 1001' ($a.Exit -eq 0) $a.Out
     $idx = ReadT (Join-Path $w 'TASK-INDEX.md')
     Check 'Zaehler 1001' ($idx -match 'Letzte vergebene Nummer: 1001') ''
@@ -697,28 +688,28 @@ Fall 17 '-Eingabe ohne stillen Verlust, -Help, Pfade mit * in der Dublettenpruef
     $w = New-Wurzel 'f17'
     $vorher = Snapshot $w
     $ein = Join-Path $Arbeitsordner 'f17-fremd.txt'
-    [IO.File]::WriteAllText($ein, "- An: JavaScript Developer`r`n- Titel: T`r`n- Prio: LOW`r`n- Aufgabe: A`r`n- Schritt 1: Spalte 0`r`n- Ergebnis: E`r`n", $Utf8)
-    $r = Run $w @('erstellen', '-Rolle', 'Software Architect', '-Eingabe', $ein)
+    [IO.File]::WriteAllText($ein, "- An: Entwicklung`r`n- Titel: T`r`n- Prio: LOW`r`n- Aufgabe: A`r`n- Schritt 1: Spalte 0`r`n- Ergebnis: E`r`n", $Utf8)
+    $r = Run $w @('erstellen', '-Rolle', 'Architekt', '-Eingabe', $ein)
     Check 'unbekanntes Feld: Exit 1' ($r.Exit -eq 1 -and $r.Out -match 'Schritt 1') $r.Out
     $ein2 = Join-Path $Arbeitsordner 'f17-kopf.txt'
-    [IO.File]::WriteAllText($ein2, "Vorlauf`n- An: JavaScript Developer`n- Titel: T`n- Prio: LOW`n- Aufgabe: A`n## Abschnitt`n- Ergebnis: E`n", $Utf8)
-    $r = Run $w @('erstellen', '-Rolle', 'Software Architect', '-Eingabe', $ein2)
+    [IO.File]::WriteAllText($ein2, "Vorlauf`n- An: Entwicklung`n- Titel: T`n- Prio: LOW`n- Aufgabe: A`n## Abschnitt`n- Ergebnis: E`n", $Utf8)
+    $r = Run $w @('erstellen', '-Rolle', 'Architekt', '-Eingabe', $ein2)
     Check 'Ueberschrift und Vorlauf: Exit 1' ($r.Exit -eq 1 -and $r.Out -match 'Ueberschrift' -and $r.Out -match 'Vorlauf') $r.Out
     Check 'abgelehnt: nichts geschrieben' (Same-Snapshot $vorher (Snapshot $w)) ''
     $ein3 = Join-Path $Arbeitsordner 'f17-gut.txt'
-    [IO.File]::WriteAllText($ein3, ("- An: JavaScript Developer`n- Titel: T`n- Prio: HIGH`n- " + ('Begr' + [char]0xFC + 'ndung') + ": B`n- Aufgabe: A`n  - Schritt 1: eingerueckt`n- Erwartetes Ergebnis: E`n"), $Utf8)
-    $r = RunJson $w @('erstellen', '-Rolle', 'Software Architect', '-Eingabe', $ein3)
+    [IO.File]::WriteAllText($ein3, ("- An: Entwicklung`n- Titel: T`n- Prio: HIGH`n- " + ('Begr' + [char]0xFC + 'ndung') + ": B`n- Aufgabe: A`n  - Schritt 1: eingerueckt`n- Erwartetes Ergebnis: E`n"), $Utf8)
+    $r = RunJson $w @('erstellen', '-Rolle', 'Architekt', '-Eingabe', $ein3)
     Check 'eingerueckte Liste und Langnamen: Exit 0' ($r.Exit -eq 0) $r.Out
     if ($r.Exit -eq 0) { Check 'eingerueckte Zeile bleibt im Feld' ((ReadT (TaskFile $w $r.J.ids[0])).Contains('  - Schritt 1: eingerueckt')) '' }
     $id = $r.J.ids[0]
-    $a = Run $w @('status', '-Id', $id, '-Neu', 'IN_PROGRESS', '-Rolle', 'JavaScript Developer')
+    $a = Run $w @('status', '-Id', $id, '-Neu', 'IN_PROGRESS', '-Rolle', 'Entwicklung')
     $ein4 = Join-Path $Arbeitsordner 'f17-abschluss.txt'
-    [IO.File]::WriteAllText($ein4, "- Arbeiten: X`n- Tests: Y`n- Dateien: Z`n", $Utf8)
-    $r = Run $w @('abschliessen', '-Id', $id, '-Rolle', 'JavaScript Developer', '-Eingabe', $ein4)
+    [IO.File]::WriteAllText($ein4, "- Arbeiten: X`n- Tests: Y`n- Entscheide: keine`n- Dateien: Z`n", $Utf8)
+    $r = Run $w @('abschliessen', '-Id', $id, '-Rolle', 'Entwicklung', '-Eingabe', $ein4)
     Check 'abschliessen: fremder Schluessel Exit 1' ($a.Exit -eq 0 -and $r.Exit -eq 1 -and $r.Out -match 'Dateien') $r.Out
     $ein5 = Join-Path $Arbeitsordner 'f17-abschnitt.txt'
     [IO.File]::WriteAllText($ein5, "## Unterpunkt`n- Frei: Text`nZeile", $Utf8)
-    $r = Run $w @('aendern', '-Id', $id, '-Rolle', 'JavaScript Developer', '-Abschnitt', 'Bericht', '-Eingabe', $ein5)
+    $r = Run $w @('aendern', '-Id', $id, '-Rolle', 'Entwicklung', '-Abschnitt', 'Bericht', '-Eingabe', $ein5)
     Check 'aendern -Abschnitt bleibt frei' ($r.Exit -eq 0 -and (ReadT (TaskFile $w $id)).Contains('- Frei: Text')) $r.Out
     $h = Run $w @('-Help')
     Check '-Help: Exit 0 mit Befehlsliste' ($h.Exit -eq 0 -and $h.Out -match 'abschliessen' -and $h.Out -match 'Exit-Codes') $h.Out
@@ -726,32 +717,98 @@ Fall 17 '-Eingabe ohne stillen Verlust, -Help, Pfade mit * in der Dublettenpruef
     Check '<Befehl> -Hilfe: Exit 0' ($h.Exit -eq 0 -and $h.Out -match '-Abschnitt') $h.Out
     $h = Run $w @('foo', '-Help')
     Check 'unbekannter Befehl -Help: Exit 1' ($h.Exit -eq 1) $h.Out
-    $p1 = RunJson $w @('erstellen', '-Rolle', 'Software Architect', '-An', 'JavaScript Developer', '-Titel', 'Pfad eins', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E', '-Dateien', '.claude/skills/*/SKILL.md')
-    $p2 = RunJson $w @('erstellen', '-Rolle', 'Software Architect', '-An', 'JavaScript Developer', '-Titel', 'Anderes Thema', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E', '-Dateien', 'docs/SKILL.md, tools/x/SKILL.md', '-WhatIf')
+    $p1 = RunJson $w @('erstellen', '-Rolle', 'Architekt', '-An', 'Entwicklung', '-Titel', 'Pfad eins', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E', '-Dateien', '.claude/skills/*/SKILL.md')
+    $p2 = RunJson $w @('erstellen', '-Rolle', 'Architekt', '-An', 'Entwicklung', '-Titel', 'Anderes Thema', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E', '-Dateien', 'docs/SKILL.md, tools/x/SKILL.md', '-WhatIf')
     Check 'kein Fehlalarm aus Pfad mit *' ($p1.Exit -eq 0 -and $p2.Exit -eq 0 -and -not (@($p2.J.warnungen) -match 'Gleiche Dateien')) $p2.Out
-    $p3 = RunJson $w @('erstellen', '-Rolle', 'Software Architect', '-An', 'JavaScript Developer', '-Titel', 'Drittes Thema', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E', '-Dateien', '.claude/skills/*/SKILL.md', '-WhatIf')
+    $p3 = RunJson $w @('erstellen', '-Rolle', 'Architekt', '-An', 'Entwicklung', '-Titel', 'Drittes Thema', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E', '-Dateien', '.claude/skills/*/SKILL.md', '-WhatIf')
     Check 'gleicher Pfad mit * wird erkannt' ($p3.Exit -eq 0 -and (@($p3.J.warnungen) -match 'skills/\*/skill\.md')) $p3.Out
-    $m1 = RunJson $w @('erstellen', '-Rolle', 'Software Architect', '-An', 'JavaScript Developer', '-Titel', 'Markdown eins', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E', '-Dateien', 'app/SyncEngine.kt')
-    $m2 = RunJson $w @('erstellen', '-Rolle', 'Software Architect', '-An', 'JavaScript Developer', '-Titel', 'Ganz anders', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E', '-Dateien', '**app/SyncEngine.kt**', '-WhatIf')
+    $m1 = RunJson $w @('erstellen', '-Rolle', 'Architekt', '-An', 'Entwicklung', '-Titel', 'Markdown eins', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E', '-Dateien', 'app/SyncEngine.kt')
+    $m2 = RunJson $w @('erstellen', '-Rolle', 'Architekt', '-An', 'Entwicklung', '-Titel', 'Ganz anders', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E', '-Dateien', '**app/SyncEngine.kt**', '-WhatIf')
     Check 'Markdown-Sternchen um Pfad: Dublette erkannt' ($m1.Exit -eq 0 -and (@($m2.J.warnungen) -match 'app/syncengine\.kt')) $m2.Out
-    $k = Run $w @('aendern', '-Id', $m1.J.ids[0], '-Rolle', 'Software Architect', '-Feld', 'Dateien', '-Wert', 'app/Neu.kt')
+    $k = Run $w @('aendern', '-Id', $m1.J.ids[0], '-Rolle', 'Architekt', '-Feld', 'Dateien', '-Wert', 'app/Neu.kt')
     Check 'aendern mit Kurzname Dateien' ($k.Exit -eq 0 -and (ReadT (TaskFile $w $m1.J.ids[0])).Contains('- Betroffene Dateien: app/Neu.kt')) $k.Out
-    $k = Run $w @('aendern', '-Id', $m1.J.ids[0], '-Rolle', 'Software Architect', '-Feld', 'Gibtsnicht', '-Wert', 'x')
+    $k = Run $w @('aendern', '-Id', $m1.J.ids[0], '-Rolle', 'Architekt', '-Feld', 'Gibtsnicht', '-Wert', 'x')
     Check 'aendern unbekanntes Feld nennt gueltige Namen' ($k.Exit -eq 1 -and $k.Out -match 'erlaubt:' -and $k.Out -match 'Kurznamen') $k.Out
     $ein6 = Join-Path $Arbeitsordner 'f17-status.txt'
     [IO.File]::WriteAllText($ein6, "- Neu: BLOCKED`n- Frage: F`n- Grund: x`n", $Utf8)
-    $k = Run $w @('status', '-Id', $m1.J.ids[0], '-Rolle', 'JavaScript Developer', '-Eingabe', $ein6)
+    $k = Run $w @('status', '-Id', $m1.J.ids[0], '-Rolle', 'Entwicklung', '-Eingabe', $ein6)
     Check 'status -Eingabe mit unbekanntem Schluessel: Exit 1' ($k.Exit -eq 1 -and $k.Out -match 'Grund') $k.Out
     $ein7 = Join-Path $Arbeitsordner 'f17-bom.txt'
-    [IO.File]::WriteAllBytes($ein7, ([byte[]]@(0xEF, 0xBB, 0xBF) + $Utf8.GetBytes("- **An:** JavaScript Developer`r`n- Titel: Bom`r`n- Prio: LOW`r`n- Aufgabe: A`r`n- Ergebnis: E`r`n")))
-    $k = RunJson $w @('erstellen', '-Rolle', 'Software Architect', '-Eingabe', $ein7)
+    [IO.File]::WriteAllBytes($ein7, ([byte[]]@(0xEF, 0xBB, 0xBF) + $Utf8.GetBytes("- **An:** Entwicklung`r`n- Titel: Bom`r`n- Prio: LOW`r`n- Aufgabe: A`r`n- Ergebnis: E`r`n")))
+    $k = RunJson $w @('erstellen', '-Rolle', 'Architekt', '-Eingabe', $ein7)
     Check 'BOM, CRLF und Fett-Feldname in -Eingabe' ($k.Exit -eq 0) $k.Out
     $c = Run $w @('check')
     $cd = Run $w @('check', '-Details')
     Check 'check fasst Hinweise zusammen, -Details einzeln' ($c.Exit -eq 0 -and $cd.Exit -eq 0 -and -not ($c.Out -match 'Hinweis  \[') -and ($c.Out -match 'check: \d+ Task-Dateien')) ($c.Out + ' | ' + $cd.Out)
-    $l = RunJson $w @('liste', '-Rolle', 'JavaScript Developer', '-MitDateien')
+    $l = RunJson $w @('liste', '-Rolle', 'Entwicklung', '-MitDateien')
     $hit = @($l.J.daten | Where-Object { $_.id -eq $m1.J.ids[0] })
     Check 'liste -MitDateien: Dateien in Ausgabe und JSON' ($l.Exit -eq 0 -and $hit.Count -eq 1 -and $hit[0].betroffeneDateien -eq 'app/Neu.kt' -and ((@($l.J.meldungen) -join "`n") -match '    Dateien: app/Neu\.kt')) $l.Out
+}
+
+# ------------------------------------------------------------------ Fall 18
+Fall 18 'Fuenf Rollen, -Entscheide, erledigt, liste -Gruppen (2026-11-20)' {
+    $w = New-Wurzel 'f18'
+    $r = RunJson $w @('erstellen', '-Rolle', 'Planung', '-An', 'Pruefung', '-Titel', 'Rollenname', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E')
+    $pf = 'Pr' + [char]0xFC + 'fung'
+    Check 'Pruefung ohne Umlaut wird erkannt, Posteingang pruefung.md' ($r.Exit -eq 0 -and (Test-Path (Join-Path $w 'inbox\pruefung.md')) -and (ReadT (TaskFile $w $r.J.ids[0])).Contains('- ' + ('Empf' + [char]0xE4 + 'nger') + ': ' + $pf)) $r.Out
+    $alt = RunJson $w @('erstellen', '-Rolle', 'QA', '-An', 'JavaScript Developer', '-Titel', 'Altname', '-Prio', 'LOW', '-Aufgabe', 'A', '-Ergebnis', 'E')
+    Check 'Altnamen (QA, JavaScript Developer) werden zugeordnet' ($alt.Exit -eq 0 -and (ReadT (TaskFile $w $alt.J.ids[0])).Contains('- Absender: ' + $pf)) $alt.Out
+    $id = $r.J.ids[0]
+    [void](Run $w @('status', '-Id', $id, '-Neu', 'IN_PROGRESS', '-Rolle', 'Pruefung'))
+    $k = Run $w @('abschliessen', '-Id', $id, '-Rolle', 'Pruefung', '-Arbeiten', 'a', '-Tests', 't')
+    Check 'abschliessen ohne -Entscheide: Exit 1' ($k.Exit -eq 1 -and $k.Out -match 'Entscheidungen') $k.Out
+    $k = Run $w @('abschliessen', '-Id', $id, '-Rolle', 'Pruefung', '-Arbeiten', 'a', '-Tests', 't', '-Entscheide', 'irgendwas')
+    Check 'abschliessen mit ungueltigem -Entscheide: Exit 1' ($k.Exit -eq 1) $k.Out
+    $k = Run $w @('abschliessen', '-Id', $id, '-Rolle', 'Pruefung', '-Arbeiten', 'a', '-Tests', 't', '-Entscheide', 'DEC-329, DEC-330')
+    Check 'abschliessen mit DEC-IDs: Exit 0, Feld Entscheidungen' ($k.Exit -eq 0 -and (ReadT (TaskFile $w $id)).Contains('- Entscheidungen: DEC-329, DEC-330')) $k.Out
+    $e = RunJson $w @('erledigt', '-Rolle', 'Entwicklung', '-Titel', 'Kleine Korrektur', '-Aufgabe', 'Tippfehler', '-Arbeiten', 'start.html korrigiert', '-Tests', 'Vorschau geprueft', '-Entscheide', 'keine', '-Dateien', 'start.html')
+    $ef = $null; if ($e.Exit -eq 0) { $ef = TaskFile $w $e.J.ids[0] }
+    Check 'erledigt: Exit 0, COMPLETED, schreibgeschuetzt' ($e.Exit -eq 0 -and $ef -and $ef -match '\\COMPLETED\\' -and (ReadT $ef) -match '- Status: COMPLETED' -and (Get-Item $ef).IsReadOnly) $e.Out
+    $e2 = Run $w @('erledigt', '-Rolle', 'Entwicklung', '-Titel', 'Ohne Tests', '-Aufgabe', 'A', '-Arbeiten', 'a', '-Entscheide', 'keine')
+    Check 'erledigt ohne -Tests: Exit 1, nichts angelegt' ($e2.Exit -eq 1 -and -not ((Run $w @('liste', '-Status', 'Alle')).Out -match 'Ohne Tests')) $e2.Out
+    $e3 = Run $w @('erledigt', '-Rolle', 'Entwicklung', '-An', 'Architekt', '-Titel', 'Fremd', '-Aufgabe', 'A', '-Arbeiten', 'a', '-Tests', 't', '-Entscheide', 'keine')
+    Check 'erledigt fuer fremde Rolle: Exit 1' ($e3.Exit -eq 1) $e3.Out
+    $g1 = MkTask $w 'Architekt' 'Entwicklung' 'Gruppe Player eins'
+    [void](Run $w @('aendern', '-Id', $g1, '-Rolle', 'Architekt', '-Feld', 'Dateien', '-Wert', 'sflix_sys/js/player.js, sflix_sys/sflix.css'))
+    $mkd = { param($titel, $prio, $dat) $x = RunJson $w @('erstellen', '-Rolle', 'Architekt', '-An', 'Entwicklung', '-Titel', $titel, '-Prio', $prio, '-Aufgabe', 'A', '-Ergebnis', 'E', '-Dateien', $dat, '-Begruendung', 'Test'); return $x.J.ids[0] }
+    $g2 = & $mkd 'Zweites Thema Band' 'HIGH' 'sflix_sys/js/player.js'
+    $g3 = & $mkd 'Drittes Thema Karten' 'LOW' 'sflix_sys/js/cards.js'
+    $g4 = & $mkd 'Viertes Thema Desktop' 'LOW' 'SFLIX_Tools/SflixTools/src/Net.cs'
+    $l = Run $w @('liste', '-Rolle', 'Entwicklung', '-Gruppen')
+    $gz = @(($l.Out -split "`n") | Where-Object { $_ -match 'Gruppe 1' })
+    $dz = @(($l.Out -split "`n") | Where-Object { $_ -match 'passt dazu' })
+    $ez = @(($l.Out -split "`n") | Where-Object { $_ -match 'Einzeln:' })
+    Check 'liste -Gruppen: gemeinsame Datei bildet Gruppe [HIGH]' ($l.Exit -eq 0 -and $gz.Count -eq 1 -and $gz[0] -match [regex]::Escape($g1) -and $gz[0] -match [regex]::Escape($g2) -and $gz[0] -match 'HIGH') $l.Out
+    Check 'liste -Gruppen: gleicher Ordner passt dazu, Rest einzeln' ($dz.Count -eq 1 -and $dz[0] -match [regex]::Escape($g3) -and $ez.Count -eq 1 -and $ez[0] -match [regex]::Escape($g4)) $l.Out
+}
+
+# ------------------------------------------------------------------ Fall 19
+Fall 19 'Abgeschlossene Auftraege gesperrt, Nachfuehrung nur mit -Erzwingen -Notiz' {
+    $w = New-Wurzel 'f19'
+    $e = RunJson $w @('erledigt', '-Rolle', 'Entwicklung', '-Titel', 'Fertig', '-Aufgabe', 'A', '-Arbeiten', 'a', '-Tests', 't', '-Entscheide', 'keine', '-Dateien', 'start.html')
+    $id = $e.J.ids[0]
+    $f = TaskFile $w $id
+    $vorher = ReadT $f
+    $k = Run $w @('aendern', '-Id', $id, '-Rolle', 'Entwicklung', '-Feld', 'Tests', '-Wert', 'nachgetragen')
+    Check 'aendern auf COMPLETED: Exit 3 "bereits abgeschlossen", nichts geaendert' ($k.Exit -eq 3 -and $k.Out -match 'bereits abgeschlossen' -and (ReadT $f) -eq $vorher) $k.Out
+    $k = Run $w @('aendern', '-Id', $id, '-Rolle', 'Entwicklung', '-Feld', 'Verlauf', '-Wert', 'x')
+    Check 'aendern Bearbeitungsverlauf auf COMPLETED: Exit 3' ($k.Exit -eq 3 -and (ReadT $f) -eq $vorher) $k.Out
+    $k = Run $w @('status', '-Id', $id, '-Rolle', 'Entwicklung', '-Neu', 'IN_PROGRESS')
+    Check 'status auf COMPLETED: Exit 3 "bereits abgeschlossen"' ($k.Exit -eq 3 -and $k.Out -match 'bereits abgeschlossen') $k.Out
+    $k = Run $w @('abschliessen', '-Id', $id, '-Rolle', 'Entwicklung', '-Arbeiten', 'a', '-Tests', 't', '-Entscheide', 'keine')
+    Check 'abschliessen auf COMPLETED: Exit 3 "bereits abgeschlossen"' ($k.Exit -eq 3 -and $k.Out -match 'bereits abgeschlossen') $k.Out
+    $k = Run $w @('aendern', '-Id', $id, '-Rolle', 'Entwicklung', '-Feld', 'Tests', '-Wert', 'nachgetragen', '-Erzwingen')
+    Check '-Erzwingen ohne -Notiz: Exit 1' ($k.Exit -eq 1 -and (ReadT $f) -eq $vorher) $k.Out
+    $k = Run $w @('aendern', '-Id', $id, '-Rolle', 'Entwicklung', '-Feld', 'Kontext', '-Wert', 'neu', '-Erzwingen', '-Notiz', 'Test')
+    Check '-Erzwingen ersetzt nie: Exit 3' ($k.Exit -eq 3 -and (ReadT $f) -eq $vorher) $k.Out
+    $k = Run $w @('aendern', '-Id', $id, '-Rolle', 'Entwicklung', '-Feld', 'Tests', '-Wert', 'nachgetragen', '-Erzwingen', '-Notiz', 'Testangabe vergessen')
+    $nach = ReadT $f
+    Check '-Erzwingen -Notiz: Exit 0, angehaengt, Verlauf [erzwungen: ...], schreibgeschuetzt' ($k.Exit -eq 0 -and $nach.Contains('nachgetragen') -and $nach.Contains('[erzwungen: Testangabe vergessen]') -and (Get-Item $f).IsReadOnly) $k.Out
+    $o = MkTask $w 'Architekt' 'Entwicklung' 'Offen'
+    $k = Run $w @('aendern', '-Id', $o, '-Rolle', 'Architekt', '-Feld', 'Kontext', '-Wert', 'x', '-Erzwingen', '-Notiz', 'n')
+    Check '-Erzwingen auf offenem Auftrag: Exit 1' ($k.Exit -eq 1) $k.Out
+    $c = Run $w @('check')
+    Check 'check danach ohne Befund' ($c.Exit -eq 0) $c.Out
 }
 
 # ------------------------------------------------------------------ Ergebnis

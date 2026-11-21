@@ -4269,3 +4269,213 @@ table.versionInfo td.versionNewer {
         --cards-per-view: 1.6;
     }
 }
+
+/* Eigenes Bild-im-Bild-Fenster im Fenster von STEFFLIX.exe (DEC-351, player.js fillDocPip):
+   Bedienelemente über dem Bild wie beim nativen Bild im Bild, ausgeblendet ohne Mausbewegung */
+html.pipDocument,
+html.pipDocument body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #000;
+    color: white;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 13px;
+    user-select: none;
+}
+
+.pipFrame {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: #000;
+}
+
+.pipFrame video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    object-fit: contain;
+    background: #000;
+}
+
+.pipShade,
+.pipTop,
+.pipCenter,
+.pipBottom {
+    position: absolute;
+    z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.pipFrame.controlsVisible .pipShade,
+.pipFrame.controlsVisible .pipTop,
+.pipFrame.controlsVisible .pipCenter,
+.pipFrame.controlsVisible .pipBottom {
+    opacity: 1;
+}
+
+.pipFrame.controlsVisible .pipTop,
+.pipFrame.controlsVisible .pipCenter,
+.pipFrame.controlsVisible .pipBottom {
+    pointer-events: auto;
+}
+
+.pipShade {
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.15) 30%, rgba(0, 0, 0, 0.15) 70%, rgba(0, 0, 0, 0.65));
+}
+
+.pipTop {
+    top: 0;
+    right: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+}
+
+.pipTitle {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-align: center;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Mitte: nur die Knöpfe nehmen Klicks an, daneben wirkt der Klick ins Bild */
+.pipFrame.controlsVisible .pipCenter {
+    pointer-events: none;
+}
+
+.pipCenter {
+    top: 50%;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transform: translate(-50%, -50%);
+}
+
+.pipFrame.controlsVisible .pipCenter .ctrlButton {
+    pointer-events: auto;
+}
+
+.pipBottom {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 6px 4px 12px;
+}
+
+.pipDocument .ctrlButton {
+    width: 36px;
+    height: 36px;
+}
+
+.pipDocument .ctrlButton .icon {
+    width: 20px;
+    height: 20px;
+}
+
+.pipDocument .ctrlButton.pipPlay {
+    width: 52px;
+    height: 52px;
+}
+
+.pipDocument .ctrlButton.pipPlay .icon {
+    width: 32px;
+    height: 32px;
+}
+
+/* Wie .sflixPlayer [hidden]: ausgeblendete Teile (Countdown, Vor/Zurück ohne Ziel) nie zeigen */
+.pipFrame [hidden] {
+    display: none !important;
+}
+
+.pipDocument input.pipProgress,
+.pipDocument input.pipVolumeSlider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--sflix-accent, #e8261a) var(--fill, 0%), rgba(255, 255, 255, 0.3) var(--fill, 0%));
+    cursor: pointer;
+}
+
+.pipDocument input.pipProgress {
+    flex: 1;
+    min-width: 40px;
+}
+
+.pipDocument input.pipVolumeSlider {
+    width: 70px;
+    background: linear-gradient(to right, white var(--fill, 100%), rgba(255, 255, 255, 0.3) var(--fill, 100%));
+}
+
+.pipDocument input.pipProgress::-webkit-slider-thumb,
+.pipDocument input.pipVolumeSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border: none;
+    border-radius: 50%;
+    background-color: white;
+}
+
+.pipTime {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.pipVolume {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+/* Autoplay-Countdown des Players im BiB-Fenster */
+.pipFrame .autoplayCountdown {
+    right: 8px;
+    bottom: 48px;
+    z-index: 3;
+}
+
+.pipFrame:not(.controlsVisible) .autoplayCountdown {
+    bottom: 8px;
+}
+
+.pipFrame .countdownNext {
+    max-width: min(260px, 70vw);
+    padding: 6px 10px;
+}
+
+/* Schmale Fenster: Zeit und Lautstärkeregler zuerst weglassen */
+@media (max-width: 340px) {
+    .pipTime,
+    .pipDocument input.pipVolumeSlider {
+        display: none;
+    }
+}

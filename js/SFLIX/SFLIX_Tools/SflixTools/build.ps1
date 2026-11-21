@@ -64,6 +64,7 @@ $sources = Get-ChildItem "$PSScriptRoot\src\*.cs" | ForEach-Object { $_.FullName
     "/out:$dist\STEFFLIX.exe" `
     "/win32icon:$obj\app.ico" `
     "/resource:$obj\app.ico,app.ico" `
+    "/resource:$obj\app_pip.ico,app_pip.ico" `
     "/resource:$wvCore,webview2.Microsoft.Web.WebView2.Core.dll" `
     "/resource:$wvWinForms,webview2.Microsoft.Web.WebView2.WinForms.dll" `
     "/resource:$sdkDir\build\native\x64\WebView2Loader.dll,webview2.x64.WebView2Loader.dll" `

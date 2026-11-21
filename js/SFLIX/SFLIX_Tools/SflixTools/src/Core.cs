@@ -241,8 +241,20 @@ namespace Sflix
             return Skip(Path.GetFileName(path.TrimEnd('\\'))) || IsHidden(path);
         }
 
+        // Wie Ignore(path), aber mit den Attributen aus der Auflistung (DirectoryInfo.GetFileSystemInfos):
+        // kein weiterer Zugriff je Eintrag. Nur für Einträge in einem Ordner, nie für Laufwerkswurzeln.
+        public static bool Ignore(FileSystemInfo info)
+        {
+            string name = info.Name;
+            if (Skip(name) || name.StartsWith(".")) return true;
+            try { return (info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0; }
+            catch { return false; }
+        }
+
         // Liegt der Ordner wirklich im STEFFLIX-Ordner? Nein, wenn er ausserhalb liegt oder der Weg
         // dorthin über eine Verknüpfung (Junction, symbolischer Link) führt, die nach aussen zeigen kann.
+        // Noch nicht vorhandene Ordner sind erlaubt (werden danach angelegt): geprüft werden nur die
+        // vorhandenen Pfadteile; ab dem ersten fehlenden gibt es keine Verknüpfung mehr.
         public static bool IsInsideRoot(string folder, out string reason)
         {
             reason = null;
@@ -259,6 +271,8 @@ namespace Sflix
                 {
                     if ((File.GetAttributes(dir) & FileAttributes.ReparsePoint) != 0) { reason = "führt über eine Verknüpfung"; return false; }
                 }
+                catch (FileNotFoundException) { break; }
+                catch (DirectoryNotFoundException) { break; }
                 catch (Exception e) { reason = e.Message; return false; }
             }
             return true;
@@ -303,26 +317,34 @@ namespace Sflix
         // Rekursiv alle Dateien mit passender Endung. Preview-Ordner optional überspringen.
         public static void CollectFiles(string dir, ICollection<string> extensions, bool skipPreview, List<string> result, CancellationToken token)
         {
+            List<FileInfo> infos = new List<FileInfo>();
+            CollectFiles(dir, extensions, skipPreview, infos, token);
+            foreach (FileInfo f in infos) result.Add(f.FullName);
+        }
+
+        // Wie oben, aber mit FileInfo: Grösse und Änderungszeit stammen aus der Auflistung (in .NET 4
+        // füllt DirectoryInfo.GetFileSystemInfos die Objekte mit den Daten des Verzeichnisses), ohne
+        // weiteren Zugriff je Datei. Reihenfolge wie bisher: erst die Dateien, dann die Unterordner.
+        public static void CollectFiles(string dir, ICollection<string> extensions, bool skipPreview, List<FileInfo> result, CancellationToken token)
+        {
             token.ThrowIfCancellationRequested();
-            string[] files, dirs;
-            try
-            {
-                files = Directory.GetFiles(dir);
-                dirs = Directory.GetDirectories(dir);
-            }
+            FileSystemInfo[] entries;
+            try { entries = new DirectoryInfo(dir).GetFileSystemInfos(); }
             catch (UnauthorizedAccessException) { return; }
 
-            foreach (string f in files)
+            List<DirectoryInfo> dirs = new List<DirectoryInfo>();
+            foreach (FileSystemInfo e in entries)
             {
-                string ext = Path.GetExtension(f).ToLowerInvariant();
-                if (extensions.Contains(ext)) result.Add(f);
+                DirectoryInfo d = e as DirectoryInfo;
+                if (d != null) { dirs.Add(d); continue; }
+                FileInfo f = e as FileInfo;
+                if (f != null && extensions.Contains(f.Extension.ToLowerInvariant())) result.Add(f);
             }
-            foreach (string d in dirs)
+            foreach (DirectoryInfo d in dirs)
             {
-                string name = Path.GetFileName(d);
                 if (Ignore(d)) continue;
-                if (skipPreview && string.Equals(name, "Preview", StringComparison.OrdinalIgnoreCase)) continue;
-                CollectFiles(d, extensions, skipPreview, result, token);
+                if (skipPreview && string.Equals(d.Name, "Preview", StringComparison.OrdinalIgnoreCase)) continue;
+                CollectFiles(d.FullName, extensions, skipPreview, result, token);
             }
         }
     }
@@ -396,10 +418,11 @@ namespace Sflix
         public Func<List<MediaCheckItem>, MediaCheckChoice> ChooseMediaCheck;  // Medien prüfen: null = nur protokollieren
         public Func<List<DupeGroup>, DupeChoice> ChooseDuplicates;             // Duplikate: null = nur protokollieren
         public Func<List<AlbumCandidate>, bool> ChooseAlbumCovers;            // Albumbilder: Auswahl in den Kandidaten, false = abgebrochen
-        public Func<string, EpisodeList> ChooseEpisodeList;   // Folgen umbenennen: Suchbegriff -> Liste, null = abgebrochen
-        // Gespeicherte Folgenliste gefunden (zweiter Wert: Neuladen ist eben fehlgeschlagen):
-        // "use", "reload", "search" oder null = abbrechen
-        public Func<EpisodeList, string, string> ChooseCachedEpisodeList;
+        // Folgen umbenennen: (Suchbegriff, Quelle für den Anfang oder null) -> Liste, null = abgebrochen
+        public Func<string, string, EpisodeList> ChooseEpisodeList;
+        // Gespeicherte Folgenliste gefunden (zweiter Wert: Neuladen ist eben fehlgeschlagen; dritter: true =
+        // in dieser Sitzung gemerkte Liste beim Quellenwechsel): "use", "reload", "search" oder null = abbrechen
+        public Func<EpisodeList, string, bool, string> ChooseCachedEpisodeList;
         public Func<EpisodePlan, bool> ConfirmEpisodePlan;     // Vorschau; true = umbenennen (Auswahl in Ops[i].Selected)
         public bool RestartRequested;                  // Programm wurde aktualisiert -> neu starten
         public string Summary;                         // kurzes Ergebnis der Aufgabe für die Zusammenfassung

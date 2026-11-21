@@ -431,7 +431,7 @@ function compareVersions(a, b) {
 // ===================================================================
 // STEFFLIX-Version: ab 2.5.0 im Format x.y.z (versionName in version.js). Bis 2.04 gab es nur
 // die Zahl "version" (2.04), die alte Installationen weiterhin lesen. Umrechnung wie
-// "SFLIX Tools\Release\versioning.py": alte Zahl = x + y/100 + z/10000.
+// "SFLIX_Tools\Release\versioning.py": alte Zahl = x + y/100 + z/10000.
 // ===================================================================
 
 // "2.04" -> "2.4.0", "1.323" -> "1.32.3", "2.0501" -> "2.5.1"; x.y.z bleibt
@@ -590,6 +590,8 @@ var iconShapes = {
     fullscreen: '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
     fullscreenExit: '<path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/>',
     pip: '<rect x="2.5" y="4.5" width="19" height="15" rx="2"/><rect x="12" y="11.5" width="7" height="5.5" rx="1" fill="currentColor" stroke="none"/>',
+    // Bild im Bild: zurück zum Player (Pfeil aus dem kleinen Fenster ins grosse)
+    pipBack: '<rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="M15.5 15l-5.5-5.5M10 13.5V9.5h4"/>',
     // Menü im Fenster von STEFFLIX.exe (Tools)
     tools: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.1l-5.8 5.8a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.1-5.4l-2.6 2.6-2.2-.4-.4-2.2z"/>',
     gear: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',

@@ -1,9 +1,9 @@
 # Auftrag.ps1 - zentrale Auftragsverwaltung fuer coordination/ (SFLIX-20261112-254, Konzept SFLIX-20261112-253)
 #
-# Aufruf:  powershell -NoProfile -ExecutionPolicy Bypass -File tools\Auftrag.ps1 <Befehl> [Parameter]
-# Befehle: erstellen | status | aendern | abschliessen | liste | check [-Fix] | hilfe
+# Aufruf:  powershell -NoProfile -ExecutionPolicy Bypass -File SFLIX_Tools\Auftrag.ps1 <Befehl> [Parameter]
+# Befehle: erstellen | erledigt | status | aendern | abschliessen | liste [-Gruppen] | check [-Fix] | hilfe
 # Gemeinsam: -Rolle (Pflicht bei schreibenden Befehlen), -Json, -WhatIf, -Eingabe <Datei>, -Help (Alias -Hilfe)
-# Hilfe:   tools\Auftrag.ps1 -Help  bzw.  tools\Auftrag.ps1 <Befehl> -Help  (Bedienung: coordination/README.md Abschnitt 13)
+# Hilfe:   SFLIX_Tools\Auftrag.ps1 -Help  bzw.  SFLIX_Tools\Auftrag.ps1 <Befehl> -Help  (Bedienung: coordination/README.md Abschnitt 13)
 # Exit-Codes: 0 ok | 1 Eingabe/Pflichtfeld | 2 Berechtigung | 3 Zustandskonflikt | 4 Sperre nicht erhalten
 #             5 check hat Inkonsistenzen gefunden | 6 E/A- oder unerwarteter Fehler
 #
@@ -25,10 +25,10 @@ param(
     [string]$UX, [string]$Freigabe, [string]$Begruendung, [switch]$Trotzdem,
     # status / aendern / abschliessen
     [string]$Neu, [string]$Notiz, [string]$Frage, [string]$Benutzerfreigabe,
-    [string]$Feld, [string]$Wert, [switch]$Anhaengen, [string]$Abschnitt,
-    [string]$Arbeiten, [string]$Tests, [string]$Risiken, [string]$Folgeschritt,
+    [string]$Feld, [string]$Wert, [switch]$Anhaengen, [string]$Abschnitt, [switch]$Erzwingen,
+    [string]$Arbeiten, [string]$Tests, [string]$Risiken, [string]$Folgeschritt, [string]$Entscheide,
     # liste
-    [string]$Von, [string[]]$Status, [string]$Text, [int]$IdVon = 0, [int]$IdBis = 0, [string]$Seit, [string]$Bis, [switch]$MitDateien,
+    [string]$Von, [string[]]$Status, [string]$Text, [int]$IdVon = 0, [int]$IdBis = 0, [string]$Seit, [string]$Bis, [switch]$MitDateien, [switch]$Gruppen,
     # check
     [switch]$Fix, [switch]$Details,
     # Test-/Betriebsparameter
@@ -74,6 +74,7 @@ $FN = @{
     Uebernahme  = (UniText '\u00dcbernahmebest\u00e4tigung')
     Ergebnis    = 'Erwartetes Ergebnis'
     ErgRueck    = (UniText 'Ergebnis und R\u00fcckmeldung')
+    Entscheide  = 'Entscheidungen'
 }
 $ArbeitenUndTests = (UniText 'Durchgef\u00fchrte Arbeiten und Tests')
 
@@ -83,33 +84,25 @@ foreach ($v in @((UniText 'Tats\u00e4chlich durchgef\u00fchrte Arbeiten'), $Arbe
 $script:Alias['tests'] = $FN.Tests
 $script:BothKey = Norm $ArbeitenUndTests
 
+# Fuenf Rollen (seit 2026-11-20, CLAUDE.md "Rollen"): Planung, Architekt, Entwicklung, Pruefung, Release
+$RolePruefung = ('Pr' + [char]0xFC + 'fung')
 $Roles = @(
-    'Technical Product Owner',
-    'Software Architect',
-    'JavaScript Developer',
-    'Debugging Specialist',
-    'QA Engineer',
-    'Security Auditor',
-    'Performance Engineer',
-    'C#/.NET Developer',
-    'Android Developer',
-    'Documentation Assistant',
-    'Release Manager'
+    'Planung',
+    'Architekt',
+    'Entwicklung',
+    $RolePruefung,
+    'Release'
 )
 
 $InboxOf = @{
-    'Technical Product Owner' = 'project-manager'
-    'Software Architect' = 'architecture'
-    'JavaScript Developer' = 'javascript'
-    'Debugging Specialist' = 'debugging'
-    'QA Engineer' = 'qa'
-    'Security Auditor' = 'security'
-    'Performance Engineer' = 'performance'
-    'C#/.NET Developer' = 'csharp'
-    'Android Developer' = 'android'
-    'Documentation Assistant' = 'documentation'
-    'Release Manager' = 'release'
+    'Planung'     = 'planung'
+    'Architekt'   = 'architekt'
+    'Entwicklung' = 'entwicklung'
+    'Release'     = 'release'
 }
+$InboxOf[$RolePruefung] = 'pruefung'
+# Dateipfade in "Betroffene Dateien" (Dublettenwarnung, liste -Gruppen)
+$script:PathRx = '[A-Za-z0-9_./\\*-]+\.(?:js|html|css|cs|java|xml|gradle|ps1|bat|py|md|txt|json|svg|kt|kts|properties)'
 $ActiveStatus = @('OPEN', 'IN_PROGRESS', 'BLOCKED')
 $AllStatus = @('OPEN', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELLED')
 $CoreDup = @($FN.Status, $FN.Absender, $FN.Empfaenger, $FN.Prio, $FN.Erstellt)
@@ -179,17 +172,12 @@ function Get-RoleName([string]$s) {
     $n = Norm $s
     if ($n -eq '') { return $null }
 
-    if ($n -match '^(technical product owner|project manager|projektmanager|pm)(\b|$)') { return 'Technical Product Owner' }
-    if ($n -match '^(software architect|architect|architecture)(\b|$)') { return 'Software Architect' }
-    if ($n -match '^(javascript developer|javascript|js developer)(\b|$)') { return 'JavaScript Developer' }
-    if ($n -match '^(debugging specialist|debugger)(\b|$)') { return 'Debugging Specialist' }
-    if ($n -match '^(qa engineer|qa|quality assurance)(\b|$)') { return 'QA Engineer' }
-    if ($n -match '^(security auditor|security)(\b|$)') { return 'Security Auditor' }
-    if ($n -match '^(performance engineer|performance)(\b|$)') { return 'Performance Engineer' }
-    if ($n -match '^(c#/.net developer|csharp developer|c# developer|dotnet developer)(\b|$)') { return 'C#/.NET Developer' }
-    if ($n -match '^(android developer|android)(\b|$)') { return 'Android Developer' }
-    if ($n -match '^(documentation assistant|documentation|dokumentation)(\b|$)') { return 'Documentation Assistant' }
-    if ($n -match '^(release manager|release)(\b|$)') { return 'Release Manager' }
+    # Kurz- und Altnamen (bis 2026-11-20 gab es 11 Rollen) werden der zustaendigen der fuenf Rollen zugeordnet
+    if ($n -match '^(planung|planer|orchestrator|master orchestrator|technical product owner|product owner|project manager|projektmanager|po|pm)(\b|$)') { return 'Planung' }
+    if ($n -match '^(architekt|software architect|softwarearchitekt|architect|architecture)(\b|$)') { return 'Architekt' }
+    if ($n -match '^(entwicklung|entwickler|development|developer|dev|javascript developer|javascript|js developer|js|c#/.net developer|csharp developer|c# developer|dotnet developer|csharp|android developer|android|debugging specialist|debugger|debugging)(\b|$)') { return 'Entwicklung' }
+    if ($n -match '^(pruefung|pruefer|qa engineer|qa|quality assurance|security auditor|security|performance engineer|performance)(\b|$)') { return $RolePruefung }
+    if ($n -match '^(release|release manager|documentation assistant|documentation|dokumentation|doku)(\b|$)') { return 'Release' }
     if ($n -match '^benutzer(\b|$)') { return 'Benutzer' }
 
     return $null
@@ -576,7 +564,7 @@ function Build-IndexText($recs, [string]$existing) {
     $out = New-Object System.Collections.Generic.List[string]
     foreach ($l in $head) { [void]$out.Add($l) }
     [void]$out.Add('')
-    [void]$out.Add('<!-- Erzeugt von SFLIX Tools/Auftrag.ps1, nicht von Hand bearbeiten -->')
+    [void]$out.Add('<!-- Erzeugt von SFLIX_Tools/Auftrag.ps1, nicht von Hand bearbeiten -->')
     [void]$out.Add('')
     [void]$out.Add(('**Letzte vergebene Nummer: {0:000}** (Stand {1}). N' -f $max, $script:Heute) + [char]0xE4 + ('chste ID: `SFLIX-YYYYMMDD-{0:000}`.' -f ($max + 1)))
     [void]$out.Add('')
@@ -712,10 +700,14 @@ function Pick([string]$param, [string[]]$keys) {
 }
 
 # ---------------------------------------------------------------- Befehl: erstellen
+$script:ErstellenKeys = @('An', 'Titel', 'Prio', 'Aufgabe', 'Ergebnis', 'Begruendung', 'Uebergabegrund', 'Kontext', 'Dateien', 'Abhaengigkeiten', 'UX', 'Freigabe', 'Folgeschritt',
+    'Empfaenger', 'Prioritaet', 'Aufgabenbeschreibung', 'Erwartetes Ergebnis', 'Technischer Kontext', 'Betroffene Dateien', 'UX-Beteiligung', 'Benutzerfreigabe')
+$script:ErledigtModus = $false
 function Invoke-Erstellen {
     if (-not $script:RoleN) { Stop-Auftrag 1 '-Rolle fehlt oder ist ungueltig' }
-    Assert-Eingabe @('An', 'Titel', 'Prio', 'Aufgabe', 'Ergebnis', 'Begruendung', 'Uebergabegrund', 'Kontext', 'Dateien', 'Abhaengigkeiten', 'UX', 'Freigabe', 'Folgeschritt',
-        'Empfaenger', 'Prioritaet', 'Aufgabenbeschreibung', 'Erwartetes Ergebnis', 'Technischer Kontext', 'Betroffene Dateien', 'UX-Beteiligung', 'Benutzerfreigabe')
+    if (-not $script:ErledigtModus) {
+        Assert-Eingabe $script:ErstellenKeys
+    }
     $an0 = Pick $An @('an', 'empfaenger')
     $titel = (Pick $Titel @('titel')) -replace "[\r\n]+", ' '
     $prioIn = ''; if ($Prio) { $prioIn = ($Prio -join '') } else { $prioIn = Pick '' @('prio', 'prioritaet') }
@@ -741,9 +733,8 @@ function Invoke-Erstellen {
     $pr = $prioIn.Trim().ToUpperInvariant()
     if (@('LOW', 'MEDIUM', 'HIGH', 'CRITICAL') -notcontains $pr) { Stop-Auftrag 1 "Prioritaet ungueltig: $prioIn (LOW, MEDIUM, HIGH, CRITICAL)" }
     if (($pr -eq 'HIGH' -or $pr -eq 'CRITICAL') -and -not $beg) { Stop-Auftrag 1 "Begruendung (-Begruendung) bei $pr Pflicht" }
-    if ($anR -eq $script:RoleN) { Add-Warnung 'Empfaenger ist die eigene Rolle: kleine Aufgaben der eigenen Rolle erzeugen keinen Auftrag (README 3).' }
-    if ($anR -eq 'Technical Product Owner' -and $script:RoleN -ne 'Technical Product Owner' -and $script:RoleN -ne 'Benutzer') { Add-Warnung 'Auftrag an den Technical Product Owner nur bei Koordinationsbedarf (README 3).' }
-    if ($script:RoleN -eq 'Technical Product Owner' -and $anR -eq 'Technical Product Owner') { Add-Warnung 'Absender und Empfaenger sind beide Technical Product Owner.' }
+    if ($anR -eq $script:RoleN -and -not $script:ErledigtModus -and $anR -ne 'Planung') { Add-Warnung 'Empfaenger ist die eigene Rolle: eigene Arbeit mit "erledigt" erfassen (README 3).' }
+    if ($anR -eq 'Planung' -and $script:RoleN -ne 'Planung' -and $script:RoleN -ne 'Benutzer') { Add-Warnung 'Auftrag an die Planung nur bei Koordinationsbedarf oder fuer Ideen (README 3).' }
     if ($beg) { $ugr = (($ugr + ' Begruendung ' + $pr + ': ' + $beg).Trim()) }
 
     # Dublettenpruefung: aehnlicher Titel mit mindestens zwei gemeinsamen Woertern -> Abbruch vor dem Schreiben (Exit 3,
@@ -753,7 +744,7 @@ function Invoke-Erstellen {
     $words = { param($s) @(([regex]::Split((Norm $s), '[^a-z0-9]+')) | Where-Object { $_.Length -ge 3 } | Sort-Object -Unique) }
     $wN = & $words $titel
     # '*' gehoert zum Pfad (z. B. .claude/skills/*/SKILL.md), sonst bliebe nur das Endstueck /skill.md (Fehlalarm)
-    $pathRx = '[A-Za-z0-9_./\\*-]+\.(?:kt|xml|ps1|md|py|kts|gradle|properties|json|bat|cs)'
+    $pathRx = $script:PathRx
     # fuehrende Markdown-Sternchen (**Datei.kt**) abschneiden, Platzhalter wie */SKILL.md behalten
     $pN = @([regex]::Matches($dat, $pathRx) | ForEach-Object { ($_.Value.Replace('\', '/').ToLowerInvariant()) -replace '^\*+(?!/)', '' } | Sort-Object -Unique)
     foreach ($p in (Get-TaskFiles @('OPEN', 'IN_PROGRESS', 'BLOCKED'))) {
@@ -885,6 +876,7 @@ function Invoke-Status {
     Assert-Eindeutig $t
     $alt = Get-StatusWort $t
     $trans = @{ 'OPEN' = @('IN_PROGRESS', 'BLOCKED', 'CANCELLED'); 'IN_PROGRESS' = @('BLOCKED', 'CANCELLED'); 'BLOCKED' = @('IN_PROGRESS', 'CANCELLED') }
+    if ($alt -eq 'COMPLETED' -or $alt -eq 'CANCELLED') { Stop-Auftrag 3 "Auftrag $($t.Id) ist bereits abgeschlossen ($alt); kein Statuswechsel. Neue Arbeit als Folgeauftrag (README 6)." }
     if (-not $trans.ContainsKey($alt) -or ($trans[$alt] -notcontains $neu)) { Stop-Auftrag 3 "Unzulaessiger Statuswechsel: $alt -> $neu (README 6)" }
     $recht = if ($neu -eq 'CANCELLED') { 'AbsenderOderBenutzer' } else { 'Empfaenger' }
     $fr = Test-Recht $recht $t
@@ -909,19 +901,33 @@ function Invoke-Status {
 }
 
 # ---------------------------------------------------------------- Befehl: abschliessen
+# -Entscheide: "keine" oder DEC-IDs aus docs/DECISIONS.md (Pflicht beim Abschluss, CLAUDE.md "Entscheidungen festhalten")
+function Get-EntscheideWert([string]$v) {
+    $v = ($v -replace "[\r\n]+", ' ').Trim()
+    if ($v -eq '') { return '' }
+    if ((Norm $v) -match '^keine?\b') { return $v }
+    $ids = @([regex]::Matches($v, '(?i)\bDEC-\d{3,}\b') | ForEach-Object { $_.Value.ToUpperInvariant() })
+    if ($ids.Count -eq 0) { Stop-Auftrag 1 ('-Entscheide braucht DEC-IDs (z. B. "DEC-329, DEC-330") oder "keine": ' + $v) }
+    return $v
+}
+
 function Invoke-Abschliessen {
     if (-not $script:RoleN) { Stop-Auftrag 1 '-Rolle fehlt oder ist ungueltig' }
-    Assert-Eingabe @('Arbeiten', 'Tests', 'Risiken', 'Folgeschritt', 'Notiz', 'Durchgefuehrte Arbeiten', 'Tests und Ergebnisse', 'Verbleibende Risiken')
+    if (-not $script:ErledigtModus) {
+        Assert-Eingabe @('Arbeiten', 'Tests', 'Risiken', 'Folgeschritt', 'Notiz', 'Entscheide', 'Entscheidungen', 'Durchgefuehrte Arbeiten', 'Tests und Ergebnisse', 'Verbleibende Risiken')
+    }
     $arb = Pick $Arbeiten @('arbeiten', 'durchgefuehrte arbeiten')
     $tst = Pick $Tests @('tests', 'tests und ergebnisse')
     $rsk = Pick $Risiken @('risiken', 'verbleibende risiken')
     $fol = Pick $Folgeschritt @('folgeschritt')
     $notiz = Pick $Notiz @('notiz')
-    if (-not $WhatIf) { Enter-Lock }
+    $ent = Get-EntscheideWert (Pick $Entscheide @('entscheide', 'entscheidungen'))
+    if (-not $WhatIf -and -not $script:ErledigtModus) { Enter-Lock }
     $path = Find-TaskPath $Id
     $t = Load-Task $path
     Assert-Eindeutig $t
     $alt = Get-StatusWort $t
+    if ($alt -eq 'COMPLETED' -or $alt -eq 'CANCELLED') { Stop-Auftrag 3 "Auftrag $($t.Id) ist bereits abgeschlossen ($alt); nichts geaendert." }
     if ($alt -ne 'IN_PROGRESS') { Stop-Auftrag 3 "Abschluss nur aus IN_PROGRESS moeglich (aktuell $alt)" }
     $fr = Test-Recht 'Empfaenger' $t
     $n = $t
@@ -929,12 +935,14 @@ function Invoke-Abschliessen {
     if ($tst) { $n = Add-FeldText $n $FN.Tests $tst }
     if ($rsk) { $n = Add-FeldText $n $FN.Risiken $rsk }
     if ($fol) { $n = Add-FeldText $n $FN.Folge $fol }
+    if ($ent) { $n = Add-FeldText $n $FN.Entscheide $ent }
     $fa = Get-Fld $n $FN.Arbeiten
     $both = ($null -ne $fa -and $fa.Key -eq $script:BothKey)
     $fv = Get-Fld $n $FN.Tests
     $miss = @()
     if ($null -eq $fa -or (Test-Leer (Get-FldVal $n $fa))) { $miss += $FN.Arbeiten }
     if (-not $both -and ($null -eq $fv -or (Test-Leer (Get-FldVal $n $fv)))) { $miss += $FN.Tests }
+    if (Test-Leer (Get-Val $n $FN.Entscheide)) { $miss += ($FN.Entscheide + ' (-Entscheide "DEC-..." oder "keine")') }
     if ($miss.Count -gt 0) { Stop-Auftrag 1 ('Pflichtfelder fuer den Abschluss fehlen oder sind leer: ' + ($miss -join ', ')) }
     $entry = $script:Heute + ' ' + $script:RoleN + ' COMPLETED'
     if ($notiz) { $entry += ' (' + ($notiz -replace "[\r\n]+", ' ').Trim() + ')' }
@@ -951,10 +959,42 @@ function Invoke-Abschliessen {
     return 0
 }
 
+# ---------------------------------------------------------------- Befehl: erledigt
+# Eigene Arbeit in einem Aufruf erfassen (CLAUDE.md "Tickets"): erstellen (An = eigene Rolle) -> IN_PROGRESS -> COMPLETED,
+# unter einer Sperre. Pflicht: -Titel, -Aufgabe, -Arbeiten, -Tests, -Entscheide; -Prio Standard LOW.
+function Invoke-Erledigt {
+    if (-not $script:RoleN -or $script:RoleN -eq 'Benutzer') { Stop-Auftrag 1 'erledigt braucht -Rolle (eigene Rolle, nicht Benutzer)' }
+    $script:ErledigtModus = $true
+    Assert-Eingabe ($script:ErstellenKeys + @('Arbeiten', 'Tests', 'Risiken', 'Notiz', 'Entscheide', 'Entscheidungen', 'Durchgefuehrte Arbeiten', 'Tests und Ergebnisse', 'Verbleibende Risiken'))
+    $an0 = Pick $An @('an', 'empfaenger')
+    if ($an0 -and (Get-RoleName $an0) -ne $script:RoleN) { Stop-Auftrag 1 'erledigt gilt nur fuer die eigene Rolle; fuer andere Rollen erstellen verwenden' }
+    $script:An = $script:RoleN
+    if (-not $Prio -and -not (Get-In @('prio', 'prioritaet'))) { $script:Prio = @('LOW') }
+    if (-not (Pick $Ergebnis @('ergebnis', 'erwartetes ergebnis'))) { $script:Ergebnis = 'Erledigt in derselben Sitzung (siehe Durchgefuehrte Arbeiten)' }
+    $miss = @()
+    if (-not (Pick $Arbeiten @('arbeiten', 'durchgefuehrte arbeiten'))) { $miss += '-Arbeiten' }
+    if (-not (Pick $Tests @('tests', 'tests und ergebnisse'))) { $miss += '-Tests' }
+    if (-not (Pick $Entscheide @('entscheide', 'entscheidungen'))) { $miss += '-Entscheide ("DEC-..." oder "keine")' }
+    if ($miss.Count -gt 0) { Stop-Auftrag 1 ('Pflichtfelder fehlen, nichts angelegt: ' + ($miss -join ', ')) }
+    [void](Get-EntscheideWert (Pick $Entscheide @('entscheide', 'entscheidungen')))
+    $r = Invoke-Erstellen
+    if ($WhatIf) { Add-Plan 'danach: IN_PROGRESS und COMPLETED (erledigt)'; return $r }
+    $neueId = $script:Ids[$script:Ids.Count - 1]
+    $t = Load-Task (Find-TaskPath $neueId)
+    $n = Set-FeldWert $t $FN.Status 'IN_PROGRESS'
+    $n = Set-FeldWert $n $FN.Uebernahme ($script:Heute + ', ' + $script:RoleN)
+    $n = Add-Verlauf $n ($script:Heute + ' ' + $script:RoleN + ' IN_PROGRESS (erledigt)')
+    Save-Task $n ($n.Lines -join "`n")
+    $script:Id = $neueId
+    return (Invoke-Abschliessen)
+}
+
 # ---------------------------------------------------------------- Befehl: aendern
 function Invoke-Aendern {
     if (-not $script:RoleN) { Stop-Auftrag 1 '-Rolle fehlt oder ist ungueltig' }
     $notiz = Pick $Notiz @('notiz')
+    # Abgeschlossene Auftraege sind gesperrt; Nachfuehrung nur ausnahmsweise mit -Erzwingen und Begruendung (nur Anhaengen)
+    if ($Erzwingen -and -not $notiz) { Stop-Auftrag 1 '-Erzwingen braucht -Notiz "<Grund der Nachfuehrung>"' }
     $abs = $Abschnitt
     $feld = $Feld
     $wert = $Wert
@@ -969,7 +1009,7 @@ function Invoke-Aendern {
         # Kurznamen wie bei erstellen (nur fuer aendern, nicht fuer den Parser der Task-Dateien)
         $kurz = @{ 'aufgabe' = 'aufgabenbeschreibung'; 'ergebnis' = 'erwartetes ergebnis'; 'dateien' = 'betroffene dateien'; 'kontext' = 'technischer kontext'
             'ux' = 'ux-beteiligung'; 'freigabe' = 'benutzerfreigabe'; 'prio' = 'prioritaet'; 'arbeiten' = 'durchgefuehrte arbeiten'; 'risiken' = 'verbleibende risiken'
-            'fragen' = 'offene fragen'; 'verlauf' = 'bearbeitungsverlauf'
+            'fragen' = 'offene fragen'; 'verlauf' = 'bearbeitungsverlauf'; 'entscheide' = 'entscheidungen'
         }
         if (-not $script:Alias.ContainsKey($key) -and $kurz.ContainsKey($key)) { $key = $kurz[$key] }
         if (-not $script:Alias.ContainsKey($key)) { Stop-Auftrag 1 ("Unbekanntes Feld: $feld (erlaubt: " + (($FN.Values | Sort-Object -Unique) -join ', ') + '; Kurznamen: ' + (($kurz.Keys | Sort-Object) -join ', ') + ')') }
@@ -988,6 +1028,15 @@ function Invoke-Aendern {
     Assert-Eindeutig $t
     $st = Get-StatusWort $t
     $abgeschl = ($st -eq 'COMPLETED' -or $st -eq 'CANCELLED')
+    if ($abgeschl -and -not $Erzwingen) {
+        $am = Get-Val $t $FN.Abgeschl
+        $am = if (Test-Leer $am) { '' } else { ', ' + $am.Trim() }
+        Stop-Auftrag 3 ("Auftrag $($t.Id) ist bereits abgeschlossen ($st$am); nichts geaendert. Neue Arbeit als Folgeauftrag. " +
+            'Nachfuehrung nur ausnahmsweise: -Erzwingen -Notiz "<Grund>" (nur Anhaengen).')
+    }
+    if ($Erzwingen -and -not $abgeschl) { Stop-Auftrag 1 "-Erzwingen nur fuer abgeschlossene Auftraege ($($t.Id) ist $st); ohne -Erzwingen aufrufen." }
+    $erz = ''
+    if ($Erzwingen) { $erz = ' [erzwungen: ' + ($notiz -replace "[\r\n]+", ' ').Trim() + ']' }
     $n = $t
     if ($abs) {
         $hadTail = ($n.Lines.Count -gt 0 -and $n.Lines[$n.Lines.Count - 1] -eq '')
@@ -995,23 +1044,23 @@ function Invoke-Aendern {
         $n.Lines.Add((Mk $n '')); $n.Lines.Add((Mk $n ('## ' + $abs.Trim())))
         foreach ($x in (($wert -replace "`r`n", "`n") -split "`n")) { $n.Lines.Add((Mk $n $x.TrimEnd())) }
         if ($hadTail) { $n.Lines.Add('') }
-        $n = Add-Verlauf (Reparse $n) ($script:Heute + ' ' + $script:RoleN + ' ' + (UniText 'ge\u00e4ndert') + ': Abschnitt ' + $abs.Trim())
+        $n = Add-Verlauf (Reparse $n) ($script:Heute + ' ' + $script:RoleN + ' ' + (UniText 'ge\u00e4ndert') + ': Abschnitt ' + $abs.Trim() + $erz)
         $what = "Abschnitt $abs"
     }
     elseif ($canon -eq $FN.Verlauf) {
-        $n = Add-Verlauf $n ($script:Heute + ' ' + $script:RoleN + ': ' + ($wert -replace "[\r\n]+", ' ').Trim())
+        $n = Add-Verlauf $n ($script:Heute + ' ' + $script:RoleN + ': ' + ($wert -replace "[\r\n]+", ' ').Trim() + $erz)
         $what = $canon
     }
     else {
         $doAppend = ($Anhaengen -or ($AppendOnly -contains $canon))
-        if ($abgeschl -and -not $doAppend) { Stop-Auftrag 3 "Abgeschlossener Auftrag ($st): nur Anhaengen erlaubt (-Anhaengen), kein Ersetzen." }
+        if ($abgeschl -and -not $doAppend) { Stop-Auftrag 3 "Abgeschlossener Auftrag ($st): auch mit -Erzwingen nur Anhaengen (-Anhaengen), kein Ersetzen." }
         if ($doAppend) { $n = Add-FeldText $n $canon $wert } else {
             if ($null -ne (Get-Fld $n $canon)) { $n = Set-FeldWert $n $canon (($wert -replace "`r`n", "`n") -split "`n")[0] ; $rest = (($wert -replace "`r`n", "`n") -split "`n") | Select-Object -Skip 1; if ($rest) { $n = Add-FeldText $n $canon ($rest -join "`n") } }
             else { $n = Add-NeuesFeld $n $canon $wert }
         }
         $verb = if ($doAppend) { (UniText 'erg\u00e4nzt') } else { (UniText 'ge\u00e4ndert') }
         $e = $script:Heute + ' ' + $script:RoleN + ' ' + $verb + ': ' + $canon
-        if ($notiz) { $e += ' (' + ($notiz -replace "[\r\n]+", ' ').Trim() + ')' }
+        if ($erz) { $e += $erz } elseif ($notiz) { $e += ' (' + ($notiz -replace "[\r\n]+", ' ').Trim() + ')' }
         $n = Add-Verlauf $n $e
         $what = $canon
     }
@@ -1025,6 +1074,73 @@ function Invoke-Aendern {
 }
 
 # ---------------------------------------------------------------- Befehl: liste
+# Gruppenvorschlag (liste -Gruppen): Auftraege mit mindestens einer gemeinsamen Datei bilden eine Gruppe (in einem Durchgang
+# bearbeiten, Dateien nur einmal lesen). Einzelne Auftraege im selben Ordner wie eine Gruppe erscheinen als "passt dazu".
+# Reihenfolge: hoechste Prioritaet in der Gruppe, dann kleinste Nummer. BLOCKED wird nicht gruppiert.
+function Get-PfadSchluessel([string]$dateien) {
+    return @([regex]::Matches($dateien, $script:PathRx) | ForEach-Object { ($_.Value.Replace('\', '/').ToLowerInvariant()) -replace '^\*+(?!/)', '' -replace '^\./', '' } | Where-Object { $_ -notmatch '\*' } | Sort-Object -Unique)
+}
+function Add-GruppenVorschlag($recs) {
+    if ($recs.Count -lt 2) { return }
+    $rang = @{ 'CRITICAL' = 0; 'HIGH' = 1; 'MEDIUM' = 2; 'LOW' = 3 }
+    $wurzel = @{}
+    foreach ($r in $recs) { $wurzel[$r.Id] = $r.Id }
+    $finde = { param($x) while ($wurzel[$x] -ne $x) { $x = $wurzel[$x] }; return $x }
+    $pfade = @{}
+    foreach ($r in $recs) { $pfade[$r.Id] = @(Get-PfadSchluessel ([string]$r.Dateien)) }
+    $besitzer = @{}
+    foreach ($r in $recs) {
+        foreach ($p in $pfade[$r.Id]) {
+            if ($besitzer.ContainsKey($p)) {
+                $a = & $finde $besitzer[$p]; $b = & $finde $r.Id
+                if ($a -ne $b) { $wurzel[$b] = $a }
+            }
+            else { $besitzer[$p] = $r.Id }
+        }
+    }
+    $gruppen = @{}
+    foreach ($r in $recs) {
+        $w = & $finde $r.Id
+        if (-not $gruppen.ContainsKey($w)) { $gruppen[$w] = New-Object System.Collections.Generic.List[object] }
+        [void]$gruppen[$w].Add($r)
+    }
+    $liste = @()
+    foreach ($k in $gruppen.Keys) {
+        $g = $gruppen[$k]
+        $best = 9; foreach ($r in $g) { $x = 9; if ($rang.ContainsKey([string]$r.Prio)) { $x = $rang[[string]$r.Prio] }; if ($x -lt $best) { $best = $x } }
+        $minNum = ($g | Measure-Object -Property Num -Minimum).Minimum
+        $liste += [pscustomobject]@{ Mitglieder = $g; Rang = $best; Num = $minNum }
+    }
+    $mehr = @($liste | Where-Object { $_.Mitglieder.Count -gt 1 } | Sort-Object Rang, Num)
+    $einzel = @($liste | Where-Object { $_.Mitglieder.Count -eq 1 } | Sort-Object Rang, Num)
+    if ($mehr.Count -eq 0) { Add-Msg ''; Add-Msg 'Gruppen: keine (keine gemeinsamen Dateien).'; return }
+    Add-Msg ''
+    Add-Msg 'Gruppen (gemeinsame Dateien, in einem Durchgang bearbeiten):'
+    $i = 0
+    foreach ($g in $mehr) {
+        $i++
+        $ids = @($g.Mitglieder | Sort-Object Num | ForEach-Object { $_.Id })
+        $gem = @{}
+        foreach ($m in $g.Mitglieder) { foreach ($p in $pfade[$m.Id]) { if ($gem.ContainsKey($p)) { $gem[$p]++ } else { $gem[$p] = 1 } } }
+        $geteilt = @($gem.Keys | Where-Object { $gem[$_] -gt 1 } | Sort-Object)
+        $prioTxt = @('CRITICAL', 'HIGH', 'MEDIUM', 'LOW', '?')[[Math]::Min($g.Rang, 4)]
+        Add-Msg ('  Gruppe {0} [{1}]: {2}' -f $i, $prioTxt, ($ids -join ', '))
+        Add-Msg ('    gemeinsam: ' + ($geteilt -join ', '))
+        $ordner = @($geteilt | ForEach-Object { if ($_ -match '/') { $_.Substring(0, $_.LastIndexOf('/')) } else { '' } } | Sort-Object -Unique)
+        $dazu = @()
+        foreach ($e in $einzel) {
+            $r = $e.Mitglieder[0]
+            foreach ($p in $pfade[$r.Id]) {
+                $o = ''; if ($p -match '/') { $o = $p.Substring(0, $p.LastIndexOf('/')) }
+                if ($o -and $ordner -contains $o) { $dazu += $r.Id; break }
+            }
+        }
+        if ($dazu.Count -gt 0) { Add-Msg ('    passt dazu (gleicher Ordner): ' + (($dazu | Sort-Object -Unique) -join ', ')) }
+    }
+    $rest = @($einzel | ForEach-Object { $_.Mitglieder[0].Id })
+    if ($rest.Count -gt 0) { Add-Msg ('  Einzeln: ' + ($rest -join ', ')) }
+}
+
 function Invoke-Liste {
     $want = @()
     if ($Status) {
@@ -1048,7 +1164,12 @@ function Invoke-Liste {
             $t = Load-Task $p
             if ($t.Problems.Count -gt 0) { Add-Warnung ("{0}: {1}" -f (Split-Path -Leaf $p), ($t.Problems -join '; ')); continue }
             $r = Get-Record $t
-            if ($MitDateien) { $r | Add-Member -NotePropertyName Dateien -NotePropertyValue (((Get-Val $t $FN.Dateien) -replace '[\r\n]+', ' ').Trim()) }
+            if ($MitDateien -or $Gruppen) { $r | Add-Member -NotePropertyName Dateien -NotePropertyValue (((Get-Val $t $FN.Dateien) -replace '[\r\n]+', ' ').Trim()) }
+            if ($Gruppen -and $r.Status -eq 'BLOCKED') {
+                $fq = @(((Get-Val $t $FN.Fragen) -replace "`r", '') -split "`n" | Where-Object { $_.Trim() -ne '' })
+                $lf = ''; if ($fq.Count -gt 0) { $lf = $fq[$fq.Count - 1].Trim() }
+                $r | Add-Member -NotePropertyName Frage -NotePropertyValue $lf
+            }
             if ($Text) {
                 $full = ($t.Lines -join "`n")
                 if ($full.IndexOf($Text, [StringComparison]::OrdinalIgnoreCase) -lt 0) { continue }
@@ -1068,12 +1189,14 @@ function Invoke-Liste {
     if ($want -notcontains 'BLOCKED') { $hidden = @($f | Where-Object { $_.Status -eq 'BLOCKED' }).Count }
     foreach ($r in $shown) {
         Add-Msg ('{0}  {1} -> {2}  {3,-8}  {4,-11}  {5}' -f $r.Id, $r.Von, $r.An, $r.Prio, $r.Status, $r.Titel)
-        if ($MitDateien -and $r.Dateien) {
+        if (($MitDateien -or $Gruppen) -and $r.Dateien) {
             $d = $r.Dateien; if ($d.Length -gt 300) { $d = $d.Substring(0, 300) + ' ...' }
             Add-Msg ('    Dateien: ' + $d)
         }
+        if ($Gruppen -and $r.Status -eq 'BLOCKED' -and $r.Frage) { Add-Msg ('    Offene Frage: ' + $r.Frage) }
     }
     if ($shown.Count -eq 0) { Add-Msg 'Keine passenden Auftraege.' }
+    if ($Gruppen -and $shown.Count -gt 1) { Add-GruppenVorschlag @($shown | Where-Object { $_.Status -ne 'BLOCKED' }) }
     if ($hidden -gt 0) { Add-Msg "$hidden BLOCKED ausgeblendet (-Status BLOCKED oder -Status Alle)" }
     $script:Daten = @($shown | ForEach-Object {
             $e = [ordered]@{ id = $_.Id; von = $_.Von; an = $_.An; prio = $_.Prio; status = $_.Status; titel = $_.Titel; erstellt = $_.Erstellt; datei = ('tasks/{0}/{1}' -f $_.Folder, $_.File) }
@@ -1246,21 +1369,22 @@ function Invoke-TestRundlauf {
 $script:HilfeText = @{
     '' = @'
 Auftrag.ps1 - Auftragsverwaltung fuer coordination/ (Bedienung und Beispiele: coordination/README.md Abschnitt 13)
-Aufruf:  powershell -NoProfile -ExecutionPolicy Bypass -File tools\Auftrag.ps1 <Befehl> [Parameter]
-Hilfe zu einem Befehl:  ... tools\Auftrag.ps1 <Befehl> -Help
+Aufruf:  powershell -NoProfile -ExecutionPolicy Bypass -File SFLIX_Tools\Auftrag.ps1 <Befehl> [Parameter]
+Hilfe zu einem Befehl:  ... SFLIX_Tools\Auftrag.ps1 <Befehl> -Help
 
 Befehle:
   erstellen     neuen Auftrag anlegen (Absender)
+  erledigt      eigene Arbeit in einem Aufruf erfassen: anlegen, uebernehmen, abschliessen
   status        Statuswechsel IN_PROGRESS | BLOCKED | CANCELLED
   abschliessen  IN_PROGRESS -> COMPLETED (Empfaenger)
   aendern       Feld setzen oder anhaengen, Abschnitt anhaengen
-  liste         Auftraege anzeigen und filtern (nur lesend)
+  liste         Auftraege anzeigen und filtern (nur lesend), -Gruppen schlaegt Gruppen vor
   check         Konsistenz pruefen (nur lesend), -Fix repariert sicher
 
 Gemeinsame Parameter:
-  -Rolle <R>         eigene Rolle: PM, Software Architect, Development, QA, Documentation, UX, Benutzer
-                     (Pflicht bei erstellen, status, abschliessen, aendern, check -Fix)
-  -Id <ID|Nummer>    z. B. SFLIX-20261112-259 oder 259
+  -Rolle <R>         eigene Rolle: Planung, Architekt, Entwicklung, Pruefung, Release, Benutzer
+                     (Pflicht bei erstellen, erledigt, status, abschliessen, aendern, check -Fix)
+  -Id <ID|Nummer>    z. B. SFLIX-20261120-001 oder 1
   -Eingabe <Datei>   Werte aus UTF-8-Datei im Format "- Schluessel: Wert", Folgezeilen 2 Leerzeichen eingerueckt;
                      Datei im Scratchpad, nie unter coordination/. Parameter haben Vorrang.
   -WhatIf            zeigt Plan, Inhalt und Warnungen, schreibt nichts
@@ -1283,16 +1407,26 @@ erstellen -Rolle <R> -An <Rolle> -Titel "..." -Prio LOW|MEDIUM|HIGH|CRITICAL -Au
   Das Skript vergibt die ID, setzt Erstellt am, Absender (= -Rolle), Status OPEN, Verlauf und erzeugt Index und
   Posteingaenge. Dublette: aehnlicher Titel mit mindestens zwei gemeinsamen Woertern -> Exit 3, nichts angelegt
   (bestehenden Auftrag mit aendern ergaenzen oder bewusst -Trotzdem). Nur Warnung: aehnlicher kurzer Titel,
-  gleiche Datei in aktivem Auftrag, Empfaenger = eigene Rolle, Auftrag an PM. Unter -Abhaengigkeiten genannte
-  Vorgaenger sind von der Dublettenpruefung ausgenommen.
+  gleiche Datei in aktivem Auftrag, Empfaenger = eigene Rolle (dafuer erledigt), Auftrag an die Planung.
+  Unter -Abhaengigkeiten genannte Vorgaenger sind von der Dublettenpruefung ausgenommen.
   Folgeauftrag vollstaendig formulieren: noetige Erkenntnisse in -Kontext, damit der Empfaenger die
-  Vorgaenger-Datei nicht lesen muss.
+  Vorgaenger-Datei nicht lesen muss. -Dateien mit Pfaden ab der Projektwurzel (fuer liste -Gruppen).
   -Eingabe-Schluessel: An, Titel, Prio, Aufgabe, Ergebnis, Begruendung, Uebergabegrund, Kontext, Dateien,
   Abhaengigkeiten, UX, Freigabe, Folgeschritt (oder die Feldnamen der Vorlage). Unbekannte Schluessel,
   #-Ueberschriften und Text vor dem ersten Feld: Exit 1. Abschnitte danach mit aendern -Abschnitt.
 Beispiel:
-  ... erstellen -Rolle Development -An QA -Prio MEDIUM -Titel "Pruefung X (aus -249)" -Aufgabe "X pruefen" -Ergebnis "Pruefbericht" -Abhaengigkeiten "SFLIX-20261112-249"
-  ... erstellen -Rolle Software Architect -Eingabe C:\...\scratchpad\auftrag.md
+  ... erstellen -Rolle Entwicklung -An Pruefung -Prio MEDIUM -Titel "Pruefung Download (aus -012)" -Aufgabe "Download pruefen" -Ergebnis "Pruefbericht" -Dateien "SFLIX_Tools/SflixTools/src/DownloadTask.cs" -Abhaengigkeiten "SFLIX-20261120-012"
+  ... erstellen -Rolle Architekt -Eingabe C:\...\scratchpad\auftrag.md
+'@
+    'erledigt' = @'
+erledigt -Rolle <R> -Titel "..." -Aufgabe "..." -Arbeiten "..." -Tests "..." -Entscheide "DEC-...|keine" [-Prio ...] [-Dateien "..."]
+  Fuer eigene Arbeit, die keine andere Rolle braucht (auch kleine Aenderungen): legt den Auftrag an die eigene Rolle an,
+  setzt IN_PROGRESS und schliesst ihn ab, alles unter einer Sperre. Jede Aufgabe bekommt so ein Ticket.
+  Pflicht:   -Titel, -Aufgabe, -Arbeiten, -Tests, -Entscheide; -Prio Standard LOW, -Ergebnis optional.
+  Optional:  wie erstellen (-Kontext, -Dateien, -Abhaengigkeiten, -Freigabe) und -Risiken, -Folgeschritt, -Notiz.
+  -An darf nur die eigene Rolle sein. Dublettenpruefung wie bei erstellen.
+Beispiel:
+  ... erledigt -Rolle Entwicklung -Titel "Tippfehler in der Hilfe" -Aufgabe "Hilfe Abschnitt Player korrigieren" -Dateien "start.html" -Arbeiten "start.html: Tippfehler korrigiert" -Tests "Vorschau-Server: Hilfe geprueft" -Entscheide keine
 '@
     'status' = @'
 status -Rolle <R> -Id <ID> -Neu IN_PROGRESS|BLOCKED|CANCELLED [-Notiz "..."] [-Frage "..."]
@@ -1300,51 +1434,58 @@ status -Rolle <R> -Id <ID> -Neu IN_PROGRESS|BLOCKED|CANCELLED [-Notiz "..."] [-F
   BLOCKED      -Frage Pflicht (wird unter Offene Fragen eingetragen); nur Empfaenger
   CANCELLED    -Notiz Pflicht (Begruendung); nur Absender oder Benutzer
   Zulaessig: OPEN -> IN_PROGRESS|BLOCKED|CANCELLED, IN_PROGRESS -> BLOCKED|CANCELLED,
-             BLOCKED -> IN_PROGRESS|CANCELLED. COMPLETED nur ueber abschliessen.
+             BLOCKED -> IN_PROGRESS|CANCELLED. COMPLETED nur ueber abschliessen bzw. erledigt.
   -Notiz erscheint in der Verlaufszeile. -Eingabe-Schluessel: Neu, Notiz, Frage
 Beispiele:
-  ... status -Rolle QA -Id 260 -Neu IN_PROGRESS
-  ... status -Rolle QA -Id 260 -Neu BLOCKED -Frage "Welche App-Version ist installiert?"
-  ... status -Rolle Development -Id 260 -Neu CANCELLED -Notiz "Dublette von SFLIX-20261112-255"
+  ... status -Rolle Pruefung -Id 12 -Neu IN_PROGRESS
+  ... status -Rolle Pruefung -Id 12 -Neu BLOCKED -Frage "Welche App-Version ist installiert?"
+  ... status -Rolle Entwicklung -Id 12 -Neu CANCELLED -Notiz "Dublette von SFLIX-20261120-010"
 '@
     'abschliessen' = @'
-abschliessen -Rolle <R> -Id <ID> -Arbeiten "..." -Tests "..." [-Risiken "..."] [-Folgeschritt "..."] [-Notiz "..."]
+abschliessen -Rolle <R> -Id <ID> -Arbeiten "..." -Tests "..." -Entscheide "DEC-...|keine" [-Risiken "..."] [-Folgeschritt "..."] [-Notiz "..."]
   Nur aus IN_PROGRESS, nur Empfaenger. Die Texte werden an Durchgefuehrte Arbeiten, Tests und Ergebnisse,
-  Verbleibende Risiken und Folgeschritt angehaengt; Arbeiten und Tests duerfen danach nicht leer sein.
+  Entscheidungen, Verbleibende Risiken und Folgeschritt angehaengt; Arbeiten, Tests und Entscheidungen duerfen
+  danach nicht leer sein. -Entscheide nennt die in docs/DECISIONS.md festgehaltenen Entscheide (DEC-IDs, mit
+  SFLIX_Tools\Doku\decisions.py neu erfasst) oder "keine".
   Setzt Status COMPLETED und Abgeschlossen am, verschiebt nach tasks/COMPLETED/, setzt den Schreibschutz.
-  Folgeauftraege vorher erstellen und unter -Folgeschritt nennen. Danach nur noch Anhaengen (aendern).
-  -Eingabe-Schluessel: Arbeiten, Tests, Risiken, Folgeschritt, Notiz
+  Folgeauftraege vorher erstellen und unter -Folgeschritt nennen. Danach gesperrt (aendern nur mit -Erzwingen).
+  -Eingabe-Schluessel: Arbeiten, Tests, Entscheide, Risiken, Folgeschritt, Notiz
 Beispiel:
-  ... abschliessen -Rolle QA -Id 260 -Arbeiten "Filter geprueft" -Tests "TrashFilterTest bestanden; Emulator nicht geprueft: kein Geraet" -Folgeschritt "SFLIX-20261112-261 an Development"
+  ... abschliessen -Rolle Pruefung -Id 12 -Arbeiten "Download geprueft" -Tests "Testumgebung: 3 Faelle bestanden; Emulator nicht geprueft: kein Bezug" -Entscheide keine -Folgeschritt "SFLIX-20261120-013 an Entwicklung"
 '@
     'aendern' = @'
-aendern -Rolle <R> -Id <ID> -Feld "<Feldname>" -Wert "..." [-Anhaengen] [-Notiz "..."]
+aendern -Rolle <R> -Id <ID> -Feld "<Feldname>" -Wert "..." [-Anhaengen] [-Notiz "..."] [-Erzwingen]
 aendern -Rolle <R> -Id <ID> -Feld "<Feldname>" -Eingabe <Datei>     (Wert des Felds in der Datei, sonst ganzer Inhalt)
 aendern -Rolle <R> -Id <ID> -Abschnitt "<Titel>" -Eingabe <Datei>   (ganzer Inhalt als "## <Titel>" ans Ende)
   Ersetzt den Feldwert; fehlt das Feld, wird es eingefuegt. Immer angehaengt: Bearbeitungsverlauf,
   Durchgefuehrte Arbeiten, Tests und Ergebnisse, Offene Fragen; -Anhaengen haengt auch an andere Felder an.
   Nicht aenderbar: ID/Titel, Status, Absender, Empfaenger, Erstellt am, Uebernahmebestaetigung, Abgeschlossen am.
-  COMPLETED/CANCELLED: nur Anhaengen und -Abschnitt. Jede Aenderung schreibt eine Verlaufszeile;
+  COMPLETED/CANCELLED sind gesperrt (Exit 3 "bereits abgeschlossen"); neue Arbeit als Folgeauftrag.
+  Nur ausnahmsweise: -Erzwingen -Notiz "<Grund>" erlaubt Anhaengen und -Abschnitt (Verlauf: [erzwungen: Grund]),
+  nie Ersetzen. Jede Aenderung schreibt eine Verlaufszeile;
   -Feld Bearbeitungsverlauf -Wert "x" ergibt "<Datum> <Rolle>: x". Feldnamen mit Umlaut oder ae/oe/ue;
-  Kurznamen: Aufgabe, Ergebnis, Dateien, Kontext, UX, Freigabe, Prio, Arbeiten, Risiken, Fragen, Verlauf.
+  Kurznamen: Aufgabe, Ergebnis, Dateien, Kontext, UX, Freigabe, Prio, Arbeiten, Risiken, Fragen, Verlauf, Entscheide.
 Beispiele:
-  ... aendern -Rolle UX -Id 251 -Feld Bearbeitungsverlauf -Wert "Designvorschlag erstellt"
-  ... aendern -Rolle UX -Id 251 -Feld Benutzerfreigabe -Wert "erteilt 2026-11-12, Variante B, Chat UX"
-  ... aendern -Rolle Development -Id 260 -Feld "Offene Fragen" -Wert "2026-11-12 Antwort: 0.16.35"
-  ... aendern -Rolle UX -Id 251 -Abschnitt "Designvorschlag" -Eingabe C:\...\scratchpad\vorschlag.md
+  ... aendern -Rolle Architekt -Id 5 -Feld Bearbeitungsverlauf -Wert "Konzept erstellt"
+  ... aendern -Rolle Architekt -Id 5 -Feld Benutzerfreigabe -Wert "erteilt 2026-11-20, Variante B, Chat Architekt"
+  ... aendern -Rolle Entwicklung -Id 12 -Feld "Offene Fragen" -Wert "2026-11-20 Antwort: 4.0.6"
+  ... aendern -Rolle Architekt -Id 5 -Abschnitt "Konzept" -Eingabe C:\...\scratchpad\konzept.md
 '@
     'liste' = @'
 liste [-Rolle <R>] [-An <Rolle>] [-Von <Rolle>] [-Status <S>[,<S>...]|Alle] [-Prio <P>[,<P>]] [-Text "..."]
-      [-IdVon <n>] [-IdBis <n>] [-Seit yyyy-MM-dd] [-Bis yyyy-MM-dd] [-MitDateien]
+      [-IdVon <n>] [-IdBis <n>] [-Seit yyyy-MM-dd] [-Bis yyyy-MM-dd] [-MitDateien] [-Gruppen]
   Mit -Rolle (ohne -An): eigener Posteingang, Standard-Status OPEN,IN_PROGRESS,BLOCKED.
   Ohne -Rolle, mit -Rolle Benutzer oder mit -An: alle bzw. die genannte Rolle, Standard-Status OPEN,IN_PROGRESS
   (BLOCKED wird dann ausgeblendet und gezaehlt). Alle = auch COMPLETED/CANCELLED.
   -Text sucht im ganzen Auftrag (z. B. Dateiname). -MitDateien zeigt je Auftrag zusaetzlich die Betroffenen
-  Dateien (zum Gruppieren, ohne Task-Dateien zu lesen). Ausgabe je Zeile: ID  Von -> An  Prio  Status  Titel
+  Dateien (zum Gruppieren, ohne Task-Dateien zu lesen). -Gruppen (schliesst -MitDateien ein) schlaegt Gruppen vor:
+  Auftraege mit gemeinsamen Dateien in einem Durchgang, Einzelne im gleichen Ordner als "passt dazu", Reihenfolge
+  nach hoechster Prioritaet; BLOCKED mit der letzten offenen Frage, nicht gruppiert.
+  Ausgabe je Zeile: ID  Von -> An  Prio  Status  Titel
 Beispiele:
-  ... liste -Rolle QA -MitDateien                            (eigener Posteingang beim Rollenstart)
+  ... liste -Rolle Pruefung -Gruppen                          (eigener Posteingang beim Rollenstart)
   ... liste -Status BLOCKED                                  (alle blockierten Auftraege)
-  ... liste -Text "SyncEngine.kt"                            (laufende Arbeit an einer Datei)
+  ... liste -Text "player.js"                                (laufende Arbeit an einer Datei)
 '@
     'check' = @'
 check [-Fix -Rolle <R>] [-WhatIf] [-Details] [-Json]
@@ -1375,7 +1516,7 @@ function Invoke-Main {
         $Rolle = $script:RoleN
     }
     Read-Eingabe
-    if (-not $Befehl) { Stop-Auftrag 1 'Befehl fehlt: erstellen | status | aendern | abschliessen | liste | check (Hilfe: -Help)' }
+    if (-not $Befehl) { Stop-Auftrag 1 'Befehl fehlt: erstellen | erledigt | status | aendern | abschliessen | liste | check (Hilfe: -Help)' }
     $b = $Befehl.ToLowerInvariant()
     if ($b.StartsWith('_') -and -not $script:Testmodus) { Stop-Auftrag 1 'Testbefehle nur im Testmodus' }
     if (-not (Test-Path -LiteralPath $script:Root)) { Stop-Auftrag 6 "coordination-Ordner nicht gefunden: $script:Root" }
@@ -1384,6 +1525,7 @@ function Invoke-Main {
         'status' { return (Invoke-Status) }
         'aendern' { return (Invoke-Aendern) }
         'abschliessen' { return (Invoke-Abschliessen) }
+        'erledigt' { return (Invoke-Erledigt) }
         'liste' { return (Invoke-Liste) }
         'check' { return (Invoke-Check) }
         '_rundlauf' { return (Invoke-TestRundlauf) }

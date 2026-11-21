@@ -22,6 +22,7 @@ namespace Sflix
         readonly ComboBox parallelBox;
         readonly Label summary;
         readonly System.Windows.Forms.Timer refreshTimer = new System.Windows.Forms.Timer();
+        readonly ToolTip tips = new ToolTip();
         volatile bool dirty = true;
 
         static int TextWidth { get { return Theme.S(800); } }
@@ -42,7 +43,7 @@ namespace Sflix
             Manager.Log = delegate(string line) { if (Log != null) Log("Download: " + line); };
             Manager.FolderReady = delegate(string folder)
             {
-                if (IsHandleCreated) BeginInvoke((Action)delegate { if (FolderReady != null) FolderReady(folder); });
+                Ui.Post(this, delegate { if (FolderReady != null) FolderReady(folder); });
             };
 
             Label intro = Theme.MakeLabel("Videos aus einer m3u8-Adresse (HLS) laden, z.B. aus den Entwicklertools des Browsers. Die Teilstücke werden einzeln " +
@@ -53,12 +54,16 @@ namespace Sflix
             intro.Margin = new Padding(0, 0, 0, Theme.S(10));
             Controls.Add(intro);
 
-            // Knöpfe
-            FlowLayoutPanel bar = new FlowLayoutPanel();
-            bar.AutoSize = true;
-            bar.WrapContents = true;
-            bar.Dock = DockStyle.Fill;
+            // Knöpfe links (umbrechend), "Gleichzeitig" fest rechts in der ersten Zeile: bei grosser
+            // Skalierung rutscht sonst die Einstellung allein in eine eigene Zeile. WrapRow berechnet
+            // die Höhe selbst (verschachtelte AutoSize-Panels liessen einen grossen Leerraum).
+            WrapRow bar = new WrapRow();
             bar.Margin = new Padding(0, 0, 0, Theme.S(8));
+            FlowLayoutPanel parallelGroup = new FlowLayoutPanel();
+            parallelGroup.AutoSize = true;
+            parallelGroup.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            parallelGroup.WrapContents = false;
+            parallelGroup.Margin = new Padding(0);
             addButton = Theme.MakeButton("Hinzufügen …", true);
             pauseButton = SmallButton("Pausieren");
             resumeButton = SmallButton("Fortsetzen");
@@ -86,8 +91,9 @@ namespace Sflix
                 settings.Save();
                 Manager.Schedule();
             };
-            bar.Controls.Add(parallelLabel);
-            bar.Controls.Add(parallelBox);
+            parallelGroup.Controls.Add(parallelLabel);
+            parallelGroup.Controls.Add(parallelBox);
+            bar.RightControl = parallelGroup;
             Controls.Add(bar);
 
             // Liste
@@ -124,7 +130,17 @@ namespace Sflix
 
             addButton.Click += delegate { AddDownloads(); };
             pauseButton.Click += delegate { foreach (DownloadJob j in Selected()) Manager.Pause(j); };
-            resumeButton.Click += delegate { foreach (DownloadJob j in Selected()) Manager.Resume(j); };
+            // Nur Fehler ausgewählt: "Wiederholen" lädt neu (Restart), sonst Fortsetzen an derselben Stelle
+            resumeButton.Click += delegate
+            {
+                List<DownloadJob> sel = Selected();
+                bool restart = IsRetry(sel);
+                foreach (DownloadJob j in sel)
+                {
+                    if (restart) Manager.Restart(j);
+                    else Manager.Resume(j);
+                }
+            };
             editButton.Click += delegate { EditUrl(); };
             removeButton.Click += delegate { RemoveSelected(); };
             messagesButton.Click += delegate { ShowMessages(); };
@@ -140,12 +156,7 @@ namespace Sflix
             refreshTimer.Tick += delegate { if (dirty) RefreshList(); };
             refreshTimer.Start();
 
-            // Verwaiste Zwischendateien (z.B. nach einem Absturz)
-            ThreadPool.QueueUserWorkItem(delegate
-            {
-                long freed = DownloadStore.RemoveOrphans(new List<DownloadJob>(Manager.Jobs));
-                if (freed > 0 && Log != null) Log("Download: verwaiste Zwischendateien gelöscht (" + Fmt.Size(freed) + ")");
-            });
+            // downloads.json und verwaiste Zwischendateien: DownloadManager im Hintergrund
             RefreshList();
         }
 
@@ -181,10 +192,19 @@ namespace Sflix
             bool locked = App.IsReleaseFolder;
             pauseButton.Enabled = canPause && !locked;
             resumeButton.Enabled = canResume && !locked;
-            resumeButton.Text = sel.Count > 0 && sel.TrueForAll(delegate(DownloadJob j) { return j.State == DownloadState.Failed; }) ? "Wiederholen" : "Fortsetzen";
+            bool retry = IsRetry(sel);
+            resumeButton.Text = retry ? "Wiederholen" : "Fortsetzen";
+            string tip = retry ? "Verwirft alle geladenen Teilstücke und lädt den Download komplett neu."
+                               : "Setzt den Download an derselben Stelle fort, geladene Teilstücke bleiben.";
+            if (tips.GetToolTip(resumeButton) != tip) tips.SetToolTip(resumeButton, tip);
             editButton.Enabled = canEdit && !locked;
             removeButton.Enabled = sel.Count > 0 && !locked;
             messagesButton.Enabled = hasMessages;
+        }
+
+        static bool IsRetry(List<DownloadJob> sel)
+        {
+            return sel.Count > 0 && sel.TrueForAll(delegate(DownloadJob j) { return j.State == DownloadState.Failed; });
         }
 
         static string StateText(DownloadJob j)
@@ -209,7 +229,7 @@ namespace Sflix
         void RefreshList()
         {
             dirty = false;
-            List<DownloadJob> jobs = new List<DownloadJob>(Manager.Jobs);
+            List<DownloadJob> jobs = Manager.Snapshot();
             HashSet<string> selected = new HashSet<string>();
             foreach (DownloadJob j in Selected()) selected.Add(j.Id);
             list.BeginUpdate();
@@ -254,7 +274,8 @@ namespace Sflix
                     else if (j.State == DownloadState.Failed) failed++;
                     else done++;
                 }
-                summary.Text = jobs.Count == 0 ? "Noch keine Downloads. Mit „Hinzufügen …“ eine oder mehrere m3u8-Adressen einfügen."
+                summary.Text = !Manager.Loaded && jobs.Count == 0 ? "Downloads werden geladen …"
+                    : jobs.Count == 0 ? "Noch keine Downloads. Mit „Hinzufügen …“ eine oder mehrere m3u8-Adressen einfügen."
                     : running + " laufen, " + waiting + " warten, " + paused + " pausiert, " + failed + " mit Fehler, " + done + " fertig. "
                       + "Doppelklick zeigt die Meldungen eines Downloads.";
             }
@@ -267,7 +288,7 @@ namespace Sflix
         {
             if (App.IsReleaseFolder) return;
             List<string> reserved = new List<string>();
-            foreach (DownloadJob j in Manager.Jobs) if (j.IsActive || j.State == DownloadState.Paused) reserved.Add(j.FileName);
+            foreach (DownloadJob j in Manager.Snapshot()) if (j.IsActive || j.State == DownloadState.Paused) reserved.Add(j.FileName);
             using (DownloadAddDialog dlg = new DownloadAddDialog(settings, reserved))
             {
                 List<DownloadJob> jobs = dlg.Ask(FindForm());
@@ -288,7 +309,8 @@ namespace Sflix
                 Manager.ChangeUrl(job, dlg.Url, dlg.Referer, dlg.UserAgent);
                 if (job.State == DownloadState.Failed || job.State == DownloadState.Paused)
                 {
-                    if (MessageBox.Show(FindForm(), "Adresse geändert. Download jetzt fortsetzen?", App.Title, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    // Abgelaufene Adresse: an derselben Stelle weiter (Teilstücke bleiben), nicht von vorne
+                    if (MessageBox.Show(FindForm(), "Adresse geändert. Download jetzt an derselben Stelle fortsetzen?", App.Title, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                         Manager.Resume(job);
                 }
             }
@@ -316,7 +338,7 @@ namespace Sflix
         {
             long size = Manager.CleanupSize();
             int count = 0;
-            foreach (DownloadJob j in Manager.Jobs) if (j.State == DownloadState.Failed || j.State == DownloadState.Done) count++;
+            foreach (DownloadJob j in Manager.Snapshot()) if (j.State == DownloadState.Failed || j.State == DownloadState.Done) count++;
             string text = "Entfernt " + count + " fertige oder fehlgeschlagene Downloads aus der Liste und löscht ihre Zwischendateien"
                         + (size > 0 ? " (" + Fmt.Size(size) + ")" : "") + " sowie verwaiste Zwischendateien.\n\n"
                         + "Pausierte Downloads bleiben, fertige Dateien im Zielordner ebenfalls. Fortfahren?";
@@ -327,7 +349,7 @@ namespace Sflix
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing) refreshTimer.Dispose();
+            if (disposing) { refreshTimer.Dispose(); tips.Dispose(); }
             base.Dispose(disposing);
         }
     }
@@ -381,7 +403,25 @@ namespace Sflix
             folder.ForeColor = Theme.Text;
             folder.Width = width - Theme.S(130);
             folder.MaxDropDownItems = 20;
-            foreach (string f in StefflixFolders()) folder.Items.Add(f);
+            // Ordnerliste im Hintergrund (Netzlaufwerk: viele Verzeichniszugriffe), Liste danach nachfüllen;
+            // der zuletzt verwendete Ordner steht sofort im Feld
+            Load += delegate
+            {
+                ThreadPool.QueueUserWorkItem(delegate
+                {
+                    List<string> found = StefflixFolders();
+                    Ui.Post(this, delegate   // entfällt, wenn der Dialog inzwischen geschlossen ist
+                    {
+                        string typed = folder.Text;
+                        int start = folder.SelectionStart, length = folder.SelectionLength;
+                        folder.BeginUpdate();
+                        foreach (string f in found) folder.Items.Add(f);
+                        folder.EndUpdate();
+                        if (folder.Text != typed) folder.Text = typed;
+                        if (folder.Focused) folder.Select(start, length);
+                    });
+                });
+            };
             string last = settings.GetString("download.folder", "");
             folder.Text = last;
             folder.TextChanged += delegate { SuggestName(); };
@@ -503,7 +543,7 @@ namespace Sflix
                 {
                     string name = Path.GetFileName(category);
                     if (Folders.Ignore(category) || name.Equals("sflix_sys", StringComparison.OrdinalIgnoreCase)
-                        || name.Equals("SFLIX_Tools", StringComparison.OrdinalIgnoreCase)) continue;
+                        || Array.Exists(Net.DevFolderNames, d => name.Equals(d, StringComparison.OrdinalIgnoreCase))) continue;
                     Collect(category, name, 1, result);
                 }
             }
@@ -595,8 +635,7 @@ namespace Sflix
                     else message = "Nur eine Qualität";
                 }
                 catch (Exception e) { message = "Fehler: " + e.Message; }
-                if (IsDisposed || !IsHandleCreated) return;
-                BeginInvoke((Action)delegate
+                Ui.Post(this, delegate
                 {
                     qualityButton.Enabled = Urls().Count == 1;
                     qualityInfo.Text = message;

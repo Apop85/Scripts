@@ -626,7 +626,13 @@ namespace Sflix
 
     public class DownloadManager
     {
-        public readonly List<DownloadJob> Jobs;
+        public readonly List<DownloadJob> Jobs;   // nur unter gate ändern; von aussen Snapshot() verwenden
+
+        // Kopie der Liste (die Liste wird im Hintergrund geladen und von den Download-Threads geändert)
+        public List<DownloadJob> Snapshot()
+        {
+            lock (gate) return new List<DownloadJob>(Jobs);
+        }
         readonly object gate = new object();
         readonly Settings settings;
         // Nachbearbeitung (Konvertieren, Vorschaubild) immer nur eine auf einmal
@@ -643,13 +649,41 @@ namespace Sflix
         // Zielordner mit fertigen Downloads, die noch eingelesen werden müssen
         readonly HashSet<string> unreadFolders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        // downloads.json ist gelesen. Vorher wird nicht gespeichert (würde die Liste überschreiben) und
+        // werden keine verwaisten Zwischenordner gelöscht (gehörten sonst zu noch nicht geladenen Einträgen).
+        volatile bool loaded;
+        bool savePending;
+        public bool Loaded { get { return loaded; } }
+
         public DownloadManager(Settings settings)
         {
             this.settings = settings;
-            Jobs = DownloadStore.Load();
+            Jobs = new List<DownloadJob>();
             MaxParallel = Math.Max(1, Math.Min(4, settings.GetInt("download.parallel", 2)));
             // Viele gleichzeitige Verbindungen zum selben Server (Standard in .NET: 2)
             if (ServicePointManager.DefaultConnectionLimit < 32) ServicePointManager.DefaultConnectionLimit = 32;
+            // downloads.json liegt im Installationsordner (oft Netzlaufwerk): im Hintergrund lesen
+            ThreadPool.QueueUserWorkItem(delegate { LoadJobs(); });
+        }
+
+        void LoadJobs()
+        {
+            List<DownloadJob> stored = DownloadStore.Load();
+            bool save;
+            lock (gate)
+            {
+                // Vor dem Laden hinzugefügte Downloads bleiben hinten
+                Jobs.InsertRange(0, stored);
+                loaded = true;
+                save = savePending;
+            }
+            if (save) Save();
+            Notify();
+            // Verwaiste Zwischendateien (z.B. nach einem Absturz)
+            List<DownloadJob> all;
+            lock (gate) all = new List<DownloadJob>(Jobs);
+            long freed = DownloadStore.RemoveOrphans(all);
+            if (freed > 0) Write("verwaiste Zwischendateien gelöscht (" + Fmt.Size(freed) + ")");
         }
 
         void Notify()
@@ -664,7 +698,11 @@ namespace Sflix
 
         public void Save()
         {
-            lock (gate) DownloadStore.Save(new List<DownloadJob>(Jobs));
+            lock (gate)
+            {
+                if (!loaded) { savePending = true; return; }
+                DownloadStore.Save(new List<DownloadJob>(Jobs));
+            }
         }
 
         public bool AnyRunning
@@ -729,7 +767,8 @@ namespace Sflix
             Notify();
         }
 
-        // Fortsetzen bzw. Wiederholen: wieder in die Warteschlange
+        // Fortsetzen: wieder in die Warteschlange, vorhandene Teilstücke bleiben (auch nach "URL bearbeiten"
+        // bei einem Fehler). "Wiederholen" nach einem Fehler: Restart.
         public void Resume(DownloadJob job)
         {
             lock (gate)
@@ -742,6 +781,41 @@ namespace Sflix
             Save();
             Notify();
             Schedule();
+        }
+
+        // "Wiederholen" nach einem Fehler: alle Zwischendateien des Downloads verwerfen (Teilstücke,
+        // Schlüssel, Zwischenergebnis; nur im eigenen Ordner unter TempRoot, siehe DeleteTemp) und
+        // komplett neu laden, Playlist inklusive. Beschädigte Teilstücke werden so nicht wiederverwendet.
+        // Löschen im Hintergrund (viele Dateien), danach in die Warteschlange.
+        public void Restart(DownloadJob job)
+        {
+            lock (gate)
+            {
+                if (job.State != DownloadState.Failed || !Jobs.Contains(job)) return;
+                job.Status = "Wird zurückgesetzt …";
+            }
+            Notify();
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                if (!string.IsNullOrEmpty(job.Id)) DownloadStore.DeleteTemp(job.TempDir);
+                lock (gate)
+                {
+                    // Inzwischen entfernt oder aufgeräumt: nichts mehr tun
+                    if (job.State != DownloadState.Failed || !Jobs.Contains(job)) return;
+                    job.SegmentsDone = 0;
+                    job.SegmentsTotal = 0;
+                    job.Bytes = 0;
+                    job.Result = "";
+                    job.ResultPath = "";
+                    job.AddMessage("Wiederholen: alle Teilstücke werden neu geladen.");
+                    job.State = DownloadState.Waiting;
+                    job.Status = "Wartet";
+                }
+                Write(job.FileName + ": wird von vorne geladen");
+                Save();
+                Notify();
+                Schedule();
+            });
         }
 
         // Entfernt den Download samt Zwischendateien (laufend: erst abbrechen)
@@ -792,7 +866,7 @@ namespace Sflix
             }
             List<DownloadJob> rest;
             lock (gate) rest = new List<DownloadJob>(Jobs);
-            freed += DownloadStore.RemoveOrphans(rest);
+            if (loaded) freed += DownloadStore.RemoveOrphans(rest);
             Save();
             Notify();
             return freed;

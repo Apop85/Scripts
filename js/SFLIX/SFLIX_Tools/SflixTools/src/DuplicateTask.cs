@@ -47,16 +47,26 @@ namespace Sflix
                                                                     MediaTypes.ConvertVideo, MediaTypes.ConvertAudio, MediaTypes.ConvertImage })
                 extensions.UnionWith(set);
             ctx.Progress(-1, "Suche Medien ...");
+            // Dauer je Schritt fürs Protokoll (Vergleich am Netzlaufwerk: welcher Schritt bremst)
+            System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
+            MediaCache.TakeStats();
+            // Grösse und Änderungszeit aus der Auflistung (kein FileInfo je Datei)
+            List<FileInfo> infos = new List<FileInfo>();
+            Folders.CollectFiles(folder, extensions, true, infos, ctx.Token);
+            infos.RemoveAll(delegate(FileInfo f) { string n = f.Name; return n.StartsWith("._") || n.Contains(".__temp__"); });
             List<string> files = new List<string>();
-            Folders.CollectFiles(folder, extensions, true, files, ctx.Token);
-            files.RemoveAll(delegate(string f) { string n = Path.GetFileName(f); return n.StartsWith("._") || n.Contains(".__temp__"); });
+            Dictionary<string, FileInfo> infoOf = new Dictionary<string, FileInfo>(StringComparer.OrdinalIgnoreCase);
+            foreach (FileInfo f in infos) { files.Add(f.FullName); infoOf[f.FullName] = f; }
             ctx.Log(files.Count + " Mediendateien gefunden in " + folder);
+            double tList = clock.Elapsed.TotalSeconds;
 
             List<DupeGroup> groups = new List<DupeGroup>();
             Dictionary<string, int> inIdentical = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);   // Datei -> Gruppe
-            FindIdentical(ctx, files, groups, inIdentical);
+            double tQuick, tFull;
+            FindIdentical(ctx, files, infoOf, groups, inIdentical, clock, out tQuick, out tFull);
             FindEpisodes(ctx, folder, files, groups, inIdentical);
             FindSameName(folder, files, groups, inIdentical);
+            double tGroups = clock.Elapsed.TotalSeconds;
 
             // Angaben für den Vergleich und die Vorauswahl: parallel untersuchen (gemerkte Ergebnisse
             // aus MediaCache brauchen kein ffprobe), danach in fester Reihenfolge den Gruppen zuordnen
@@ -67,13 +77,20 @@ namespace Sflix
             int probedCount = 0;
             Workers.ForEach(toProbe, Workers.Degree(ctx, 4), ctx.Token, delegate(int i, string f)
             {
-                MediaFacts facts = MediaFacts.Basic(f);
+                FileInfo known;
+                MediaFacts facts = infoOf.TryGetValue(f, out known) ? MediaFacts.Basic(known) : MediaFacts.Basic(f);
                 facts.Probe(ctx.Ffmpeg, ctx.Token);
                 probed[i] = facts;
                 int n = System.Threading.Interlocked.Increment(ref probedCount);
                 if (n % 5 == 0 || n == toProbe.Count) ctx.Progress((double)n / Math.Max(1, toProbe.Count), "Untersuche " + n + " / " + toProbe.Count);
             });
             MediaCache.Save();
+            double tProbe = clock.Elapsed.TotalSeconds;
+            ctx.Log(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                    "Dauer: Auflistung {0:0.0} s, Schnelltest {1:0.0} s, Prüfsummen {2:0.0} s, Gruppen {3:0.0} s, Untersuchen {4:0.0} s ({5} Dateien), gesamt {6:0.0} s",
+                    tList, tQuick - tList, tFull - tQuick, tGroups - tFull, tProbe - tGroups, toProbe.Count, tProbe));
+            string stats = MediaCache.TakeStats();
+            if (stats != null) ctx.Log(stats);
             Dictionary<string, MediaFacts> factsOf = new Dictionary<string, MediaFacts>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < toProbe.Count; i++) factsOf[toProbe[i]] = probed[i];
             foreach (DupeGroup g in groups)
@@ -217,13 +234,16 @@ namespace Sflix
             }
         }
 
-        static void FindIdentical(TaskContext ctx, List<string> files, List<DupeGroup> groups, Dictionary<string, int> inIdentical)
+        static void FindIdentical(TaskContext ctx, List<string> files, Dictionary<string, FileInfo> infoOf, List<DupeGroup> groups, Dictionary<string, int> inIdentical,
+                                  System.Diagnostics.Stopwatch clock, out double tQuick, out double tFull)
         {
             Dictionary<long, List<string>> bySize = new Dictionary<long, List<string>>();
             foreach (string f in files)
             {
                 long size;
-                try { size = new FileInfo(f).Length; } catch { continue; }
+                FileInfo info;
+                if (!infoOf.TryGetValue(f, out info)) continue;
+                try { size = info.Length; } catch { continue; }
                 if (size <= 0) continue;
                 List<string> l;
                 if (!bySize.TryGetValue(size, out l)) { l = new List<string>(); bySize[size] = l; }
@@ -247,6 +267,7 @@ namespace Sflix
             });
             Dictionary<string, string> quickOf = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < quickFiles.Count; i++) if (quick[i] != null) quickOf[quickFiles[i]] = quick[i];
+            tQuick = clock.Elapsed.TotalSeconds;
 
             // 2. Volle Prüfsumme nur bei gleichem Schnelltest, eine Datei nach der anderen (liest ganze Dateien)
             List<List<string>> fullCandidates = new List<List<string>>();
@@ -274,7 +295,7 @@ namespace Sflix
                     ctx.Progress((double)done++ / Math.Max(1, total), "Prüfsumme " + done + " / " + total + ": " + Path.GetFileName(f));
                     string hash;
                     // Kleine Dateien hat der Schnelltest schon ganz gelesen
-                    if (new FileInfo(f).Length <= QuickBlock * 3) hash = quickOf[f];
+                    if (infoOf[f].Length <= QuickBlock * 3) hash = quickOf[f];
                     else
                     {
                         try { hash = FileOps.Sha256File(f); } catch (Exception e) { ctx.Log("Hinweis: " + f + " nicht lesbar (" + e.Message + ")"); continue; }
@@ -294,6 +315,7 @@ namespace Sflix
                     groups.Add(g);
                 }
             }
+            tFull = clock.Elapsed.TotalSeconds;
         }
 
         // Serie eines Videos, vom Staffelordner aus bestimmt: Liegt die Folge in einem Staffelordner

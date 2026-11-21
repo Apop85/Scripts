@@ -2,6 +2,66 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0810",
+      "name": "2.8.10",
+      "items": [
+        {
+          "type": "BUGFIX",
+          "text": "Ein Video im Bild-im-Bild schliesst sich jetzt, wenn man zu einer Ordner- oder zur Startseite wechselt. Vorher blieb das kleine Fenster mit stehendem Bild offen, und beim nächsten Video brauchte der Bild-im-Bild-Knopf zwei Klicks.",
+          "component": "stefflix",
+          "componentVersion": "2.8.10",
+          "short": "Ein Video im Bild-im-Bild schliesst sich jetzt, wenn man zu einer Ordner- oder zur Startseite wechselt. Vorher blieb das kleine Fenster mit stehendem Bild offen, und beim nächsten Video brauchte der Bild-im-Bild-Knopf zwei Klicks."
+        }
+      ]
+    },
+    {
+      "version": "2.0809",
+      "name": "2.8.9",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Medientasten der Tastatur und die Mediensteuerung von Windows bedienen den Player: Abspielen/Pause sowie nächstes und vorheriges Video. Auch im Bild-im-Bild erscheinen Knöpfe für das nächste und das vorherige Video, das Bild-im-Bild bleibt beim Wechsel offen. Titel, Serie, Staffel und Vorschaubild werden dort angezeigt.",
+          "component": "stefflix",
+          "componentVersion": "2.8.9",
+          "short": "Medientasten der Tastatur und die Mediensteuerung von Windows bedienen den Player: Abspielen/Pause sowie nächstes und vorheriges Video. Auch im Bild-im-Bild erscheinen Knöpfe für das nächste und das vorherige Video, das Bild-im-Bild bleibt beim Wechsel offen. Titel, Serie, Staffel und Vorschaubild werden dort angezeigt."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.0.7: Bild-im-Bild im Fenster von STEFFLIX: Das kleine Fenster zeigt in der Taskleiste das STEFFLIX-Logo mit Bild-im-Bild-Zeichen, und das Fenster von STEFFLIX wird beim Start des Bild-im-Bild minimiert. 'Zurück zum Tab' öffnet es wieder im vorherigen Zustand (normal, maximiert oder Vollbild) im Vordergrund, Schliessen mit X lässt es minimiert.",
+          "component": "updater",
+          "componentVersion": "4.0.7",
+          "short": "Bild-im-Bild im Fenster von STEFFLIX: Das kleine Fenster zeigt in der Taskleiste das STEFFLIX-Logo mit Bild-im-Bild-Zeichen, und das Fenster von STEFFLIX wird beim Start des Bild-im-Bild minimiert. 'Zurück zum Tab' öffnet es wieder im vorherigen Zustand (normal, maximiert oder Vollbild) im Vordergrund, Schliessen mit X lässt es minimiert."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.0.7: Interne Prüfung auf den Release-Ordner des Entwicklers bei leerem Pfad abgesichert. Bei Nutzern ändert sich nichts.",
+          "component": "updater",
+          "componentVersion": "4.0.7",
+          "short": "Interne Prüfung auf den Release-Ordner des Entwicklers bei leerem Pfad abgesichert. Bei Nutzern ändert sich nichts."
+        }
+      ]
+    },
+    {
+      "version": "2.0808",
+      "name": "2.8.8",
+      "items": [
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Verweise im Quellcode auf den umbenannten Entwicklungsordner angepasst, ohne Auswirkung auf die Bedienung.",
+          "component": "stefflix",
+          "componentVersion": "2.8.8",
+          "short": "Verweise im Quellcode auf den umbenannten Entwicklungsordner angepasst, ohne Auswirkung auf die Bedienung."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.0.6: Der Release-Ordner des Entwicklers wird nach der Umbenennung seines Entwicklungsordners wieder erkannt. Bei Nutzern ändert sich nichts.",
+          "component": "updater",
+          "componentVersion": "4.0.6",
+          "short": "Der Release-Ordner des Entwicklers wird nach der Umbenennung seines Entwicklungsordners wieder erkannt. Bei Nutzern ändert sich nichts."
+        }
+      ]
+    },
+    {
       "version": "2.0807",
       "name": "2.8.7",
       "items": [

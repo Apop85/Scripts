@@ -368,7 +368,7 @@ namespace Sflix
                 string error = null;
                 try { InstallTask.Run(ctx, target, options); }
                 catch (Exception ex) { error = ex.Message; }
-                BeginInvoke((Action)delegate { Finished(target, error); });
+                Ui.Post(this, delegate { Finished(target, error); });
             });
             t.IsBackground = true;
             t.Start();

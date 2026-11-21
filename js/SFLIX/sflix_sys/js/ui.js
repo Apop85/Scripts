@@ -658,7 +658,7 @@ function cancelTimeouts() {
 // Feedback und Lizenz
 // Seit 2.5.0: Der Lizenzschlüssel (SFX2-…) wird im Updater eingegeben und steht in
 // sflix_sys/license.js: var licenseFile = { key: "SFX2-…", confirmedFor: "<installId>" };
-// Gleiches Format wie "SFLIX Tools\Lizenz\create_license.py" und License in Core.cs des Updaters.
+// Gleiches Format wie "SFLIX_Tools\Lizenz\create_license.py" und License in Core.cs des Updaters.
 // ===================================================================
 
 var licensePrefix = "SFX2";
@@ -1425,7 +1425,7 @@ function initSettingsMenu() {
 // Desktop-Programm STEFFLIX.exe (seit 2.8.0): STEFFLIX im eigenen Fenster (WebView2).
 // Brücke über window.chrome.webview, Gegenstück in PlayerForm.cs:
 //   an das Programm (JSON-Text): {cmd:"ready"}, {cmd:"tools", page}, {cmd:"fullscreen"}, {cmd:"reload"},
-//                                {cmd:"importResult", ok, message}
+//                                {cmd:"importResult", ok, message}, {cmd:"pip", on, paused} (player.js)
 //   vom Programm (Objekt):       {event:"dataChanged"}, {event:"importBackup", text}, {event:"toolsShown"}
 // Im Browser und in der Android-App passiert hier nichts.
 // ===================================================================
@@ -1565,6 +1565,10 @@ function handleDesktopMessage(message) {
         onDesktopDataChanged();
     } else if (message.event === "importBackup" && typeof message.text === "string") {
         importBackupFromDesktop(message.text);
+    } else if (message.event === "pipWindowReady") {
+        onDesktopPipWindowReady();   // eigenes BiB-Fenster (player.js, DEC-351)
+    } else if (message.event === "pipWindowClosed") {
+        restoreDocPip(false);        // Fenster geschlossen, falls pagehide ausblieb
     }
 }
 

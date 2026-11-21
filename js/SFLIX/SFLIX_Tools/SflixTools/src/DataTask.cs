@@ -215,6 +215,12 @@ namespace Sflix
                 if (ext == "webp") notShrinkable++;
                 return;
             }
+            // Schon klein genug (Normalfall nach dem ersten Einlesen): nur den Dateikopf lesen, nicht
+            // das ganze Bild dekodieren. Bei unklarem Kopf oder EXIF-Drehung um 90° wie bisher dekodieren.
+            int headerWidth, headerHeight;
+            bool turned;
+            if (ImageHeader.TryGetSize(fullPath, out headerWidth, out headerHeight, out turned)
+                && !turned && headerWidth <= PreviewWidth && headerHeight <= PreviewHeight) return;
             string originalPath = OriginalPathFor(fullPath);
 
             string tempPath = fullPath + ".tmp";
@@ -277,6 +283,136 @@ namespace Sflix
             catch (Exception)
             {
                 errorList.Add(Path.Combine(previewDir, item));
+            }
+        }
+
+        // Bildgrösse aus dem Dateikopf (JPEG SOF, PNG IHDR, BMP), ohne das Bild zu dekodieren.
+        // turned: JPEG mit EXIF-Ausrichtung 5 bis 8 (um 90° gedreht, Breite und Höhe vertauscht).
+        static class ImageHeader
+        {
+            public static bool TryGetSize(string path, out int width, out int height, out bool turned)
+            {
+                width = height = 0;
+                turned = false;
+                try
+                {
+                    using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096))
+                    {
+                        byte[] head = new byte[26];
+                        if (ReadFully(fs, head, 0, 26) < 26) return false;
+                        // PNG: Signatur, dann IHDR mit Breite und Höhe (Big Endian)
+                        if (head[0] == 0x89 && head[1] == 0x50 && head[2] == 0x4E && head[3] == 0x47
+                            && head[12] == 0x49 && head[13] == 0x48 && head[14] == 0x44 && head[15] == 0x52)
+                        {
+                            width = BigEndian(head, 16, 4);
+                            height = BigEndian(head, 20, 4);
+                            return width > 0 && height > 0;
+                        }
+                        // BMP: Breite und Höhe ab Byte 18 (Little Endian, Höhe negativ = von oben)
+                        if (head[0] == 0x42 && head[1] == 0x4D)
+                        {
+                            width = BitConverter.ToInt32(head, 18);
+                            height = Math.Abs(BitConverter.ToInt32(head, 22));
+                            return width > 0 && height > 0;
+                        }
+                        if (head[0] == 0xFF && head[1] == 0xD8)
+                        {
+                            fs.Position = 2;
+                            return ReadJpeg(fs, out width, out height, out turned);
+                        }
+                    }
+                }
+                catch { }
+                return false;
+            }
+
+            static bool ReadJpeg(FileStream fs, out int width, out int height, out bool turned)
+            {
+                width = height = 0;
+                turned = false;
+                byte[] two = new byte[2];
+                for (int guard = 0; guard < 200; guard++)
+                {
+                    int b = fs.ReadByte();
+                    if (b != 0xFF) return false;
+                    int marker;
+                    do { marker = fs.ReadByte(); } while (marker == 0xFF);
+                    if (marker < 0) return false;
+                    if (marker == 0x01 || (marker >= 0xD0 && marker <= 0xD7)) continue;   // ohne Länge
+                    if (marker == 0xD9 || marker == 0xDA) return false;                   // Ende bzw. Bilddaten ohne SOF
+                    if (ReadFully(fs, two, 0, 2) < 2) return false;
+                    int length = BigEndian(two, 0, 2);
+                    if (length < 2) return false;
+                    bool sof = marker >= 0xC0 && marker <= 0xCF && marker != 0xC4 && marker != 0xC8 && marker != 0xCC;
+                    if (sof)
+                    {
+                        byte[] sofData = new byte[5];
+                        if (ReadFully(fs, sofData, 0, 5) < 5) return false;
+                        height = BigEndian(sofData, 1, 2);
+                        width = BigEndian(sofData, 3, 2);
+                        return width > 0 && height > 0;
+                    }
+                    if (marker == 0xE1 && length > 8 && length <= 65535)
+                    {
+                        byte[] app = new byte[length - 2];
+                        if (ReadFully(fs, app, 0, app.Length) < app.Length) return false;
+                        int orientation = ExifOrientation(app);
+                        if (orientation >= 5 && orientation <= 8) turned = true;
+                        continue;
+                    }
+                    fs.Seek(length - 2, SeekOrigin.Current);
+                }
+                return false;
+            }
+
+            // Ausrichtung (Tag 0x0112) aus IFD0 eines APP1-Segments "Exif\0\0", 0 = keine
+            static int ExifOrientation(byte[] app)
+            {
+                if (app.Length < 14 || app[0] != 'E' || app[1] != 'x' || app[2] != 'i' || app[3] != 'f' || app[4] != 0 || app[5] != 0) return 0;
+                int t = 6;
+                bool little = app[t] == 'I' && app[t + 1] == 'I';
+                if (!little && !(app[t] == 'M' && app[t + 1] == 'M')) return 0;
+                int ifd = Read32(app, t + 4, little);
+                int pos = t + ifd;
+                if (ifd < 8 || pos + 2 > app.Length) return 0;
+                int count = Read16(app, pos, little);
+                for (int i = 0; i < count; i++)
+                {
+                    int e = pos + 2 + i * 12;
+                    if (e + 12 > app.Length) return 0;
+                    if (Read16(app, e, little) == 0x0112) return Read16(app, e + 8, little);
+                }
+                return 0;
+            }
+
+            static int Read16(byte[] d, int o, bool little)
+            {
+                return little ? d[o] | (d[o + 1] << 8) : (d[o] << 8) | d[o + 1];
+            }
+
+            static int Read32(byte[] d, int o, bool little)
+            {
+                return little ? d[o] | (d[o + 1] << 8) | (d[o + 2] << 16) | (d[o + 3] << 24)
+                              : (d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3];
+            }
+
+            static int BigEndian(byte[] d, int o, int n)
+            {
+                int v = 0;
+                for (int i = 0; i < n; i++) v = (v << 8) | d[o + i];
+                return v;
+            }
+
+            static int ReadFully(Stream s, byte[] buffer, int offset, int count)
+            {
+                int total = 0;
+                while (total < count)
+                {
+                    int n = s.Read(buffer, offset + total, count - total);
+                    if (n <= 0) break;
+                    total += n;
+                }
+                return total;
             }
         }
 
@@ -372,10 +508,13 @@ namespace Sflix
             JsonObject data = new JsonObject();
             bool isPreviewFolder = Path.GetFileName(path) == PreviewFolder;
 
-            string[] entries;
+            // Art und Attribute kommen aus der Auflistung (kein File.Exists, Directory.Exists und
+            // GetAttributes je Eintrag: auf einem Netzlaufwerk je eine Anfrage). Gleiche Reihenfolge
+            // wie Directory.GetFileSystemEntries.
+            FileSystemInfo[] entries;
             try
             {
-                entries = Directory.GetFileSystemEntries(path);
+                entries = new DirectoryInfo(path).GetFileSystemInfos();
             }
             catch (UnauthorizedAccessException)
             {
@@ -383,11 +522,12 @@ namespace Sflix
                 return data;
             }
 
-            foreach (string entry in entries)
+            foreach (FileSystemInfo entry in entries)
             {
-                string item = Path.GetFileName(entry);
+                string item = entry.Name;
                 string fullPath = Path.Combine(path, item);
-                bool isFile = File.Exists(fullPath);
+                bool isFile = entry is FileInfo;
+                bool isDir = entry is DirectoryInfo;
                 string fileExtension = item.Substring(item.LastIndexOf('.') + 1).ToLowerInvariant();
 
                 if (isFile && isPreviewFolder && item.EndsWith(OriginalSuffix, StringComparison.OrdinalIgnoreCase))
@@ -406,7 +546,7 @@ namespace Sflix
                 }
                 // Ablagen der Werkzeuge (__teile, __konvertiert, __gelöscht), Systemordner und
                 // Papierkörbe (z.B. @Recycle) gehören nicht in die Mediathek
-                else if (Directory.Exists(fullPath) && !Folders.Ignore(fullPath))
+                else if (isDir && !Folders.Ignore(entry))
                 {
                     item = RenameIfNeeded(path, item, false);
                     if (item == null) continue;

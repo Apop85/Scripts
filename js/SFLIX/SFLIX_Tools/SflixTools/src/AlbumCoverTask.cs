@@ -30,6 +30,8 @@ namespace Sflix
         public string Chosen;        // gewähltes Bild (ein Eintrag aus Images oder Embedded), null = keins
         public bool Include;         // übernehmen
         public bool DeleteRest;      // übrige Bilder nach __gelöscht
+        // Dateigrössen der Bilder, im Arbeitsthread ermittelt (der Dialog fragt keine Dateien ab)
+        public readonly Dictionary<string, long> Sizes = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
 
         public List<string> Sources
         {
@@ -72,6 +74,12 @@ namespace Sflix
             Workers.ForEach(albums, Workers.Degree(ctx, 2), ctx.Token, delegate(int i, AlbumCandidate a)
             {
                 ExtractEmbedded(ctx, a);
+                foreach (string src in a.Sources)
+                {
+                    long size = 0;
+                    try { size = new FileInfo(src).Length; } catch { }
+                    a.Sizes[src] = size;
+                }
                 int n = System.Threading.Interlocked.Increment(ref done);
                 ctx.Progress((double)n / albums.Count, "Albumcover " + n + " / " + albums.Count);
             });
@@ -538,8 +546,8 @@ namespace Sflix
                         : string.Equals(Path.GetDirectoryName(src), a.AlbumDir, StringComparison.OrdinalIgnoreCase) ? "im Album"
                         : Path.GetFileName(Path.GetDirectoryName(src));
                     item.SubItems.Add(where);
-                    long size = 0;
-                    try { size = new FileInfo(src).Length; } catch { }
+                    long size;
+                    if (!a.Sizes.TryGetValue(src, out size)) size = 0;   // im Arbeitsthread ermittelt
                     ListSort.Add(item, Fmt.Size(size), size);
                     item.SubItems.Add(src == a.Chosen ? "gewählt" : "");
                     item.ToolTipText = src;
@@ -569,22 +577,48 @@ namespace Sflix
             ShowPreview(src);
         }
 
+        // Vorschau im Hintergrund laden (Netzlaufwerk, ffmpeg bei WEBP/HEIC); nur das zuletzt
+        // angeforderte Bild wird angezeigt, ältere Ergebnisse landen nur im Zwischenspeicher
+        string wantedPreview;
+
         void ShowPreview(string src)
         {
+            wantedPreview = src;
             if (src == null) { preview.Image = null; return; }
             Bitmap shown;
-            if (!previews.TryGetValue(src, out shown))
+            if (previews.TryGetValue(src, out shown))
             {
-                Cursor old = Cursor.Current;
-                Cursor.Current = Cursors.WaitCursor;
+                ApplyPreview(shown);
+                return;
+            }
+            preview.Image = null;
+            System.Threading.ThreadPool.QueueUserWorkItem(delegate
+            {
+                Bitmap rendered = null;
                 try
                 {
                     using (Bitmap raw = AlbumCovers.Load(ff, src, 900, System.Threading.CancellationToken.None))
-                        shown = raw != null ? AlbumCovers.RenderPreview(raw) : null;
+                        rendered = raw != null ? AlbumCovers.RenderPreview(raw) : null;
                 }
-                finally { Cursor.Current = old; }
-                previews[src] = shown;
-            }
+                catch { }
+                if (IsDisposed || !IsHandleCreated) { if (rendered != null) rendered.Dispose(); return; }
+                try
+                {
+                    BeginInvoke((Action)delegate
+                    {
+                        if (IsDisposed) { if (rendered != null) rendered.Dispose(); return; }
+                        Bitmap existing;
+                        if (previews.TryGetValue(src, out existing)) { if (rendered != null) rendered.Dispose(); rendered = existing; }
+                        else previews[src] = rendered;
+                        if (wantedPreview == src) ApplyPreview(rendered);
+                    });
+                }
+                catch (InvalidOperationException) { if (rendered != null) rendered.Dispose(); }
+            });
+        }
+
+        void ApplyPreview(Bitmap shown)
+        {
             preview.Image = shown;
             if (shown == null) hint.Text = "Vorschau nicht möglich (Format nicht lesbar).";
         }

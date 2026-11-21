@@ -90,6 +90,12 @@ namespace Sflix
             countLabel = Theme.MakeLabel("", true);
             countLabel.Font = new Font("Segoe UI", 8.5f);
             countLabel.Margin = new Padding(0, Theme.S(6), 0, 0);
+            // Immer einzeilig, bei wenig Platz mit "…": als AutoSize-Label in der schmalen Spalte brach
+            // der Text bei grosser Skalierung nach jedem Buchstaben um
+            countLabel.AutoSize = false;
+            countLabel.AutoEllipsis = true;
+            countLabel.Size = new Size(Theme.S(20), TextRenderer.MeasureText("Ag", countLabel.Font).Height);
+            countLabel.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
             FlowLayoutPanel tools = new FlowLayoutPanel();
             tools.AutoSize = true;
             tools.WrapContents = false;
@@ -272,6 +278,8 @@ namespace Sflix
             if (error && ErrorAdded != null) ErrorAdded();
         }
 
+        Font boldFont;
+
         void AppendEntry(LogEntry e)
         {
             box.SelectionStart = box.TextLength;
@@ -285,7 +293,13 @@ namespace Sflix
             box.SelectionColor = TimeColor;
             box.SelectedText = e.Time.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + "  ";
             box.SelectionColor = ColorOf(e.Kind);
-            box.SelectionFont = e.Kind == LogKind.Heading ? new Font(box.Font, FontStyle.Bold) : box.Font;
+            // Fett-Schrift einmal erzeugen statt je Überschrift (GDI-Handles)
+            if (e.Kind == LogKind.Heading && (boldFont == null || boldFont.FontFamily.Name != box.Font.FontFamily.Name || boldFont.Size != box.Font.Size))
+            {
+                if (boldFont != null) boldFont.Dispose();
+                boldFont = new Font(box.Font, FontStyle.Bold);
+            }
+            box.SelectionFont = e.Kind == LogKind.Heading ? boldFont : box.Font;
             box.SelectedText = Display(e);
         }
 

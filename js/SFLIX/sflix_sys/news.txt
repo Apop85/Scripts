@@ -2,6 +2,49 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.8.14</b>:<br>
+<ul>
+    <li>[<span style="color: red">FEATURE</span>] Desktop 4.0.12: Folgen umbenennen: Die Quelle der Folgenliste lässt sich in der Suche und in der Vorschau jederzeit wechseln, in beide Richtungen. In der Vorschau wird dieselbe Serie auf der gewählten Webseite gesucht (genau ein Treffer wird direkt geladen, sonst öffnet die Suche), danach baut sich die Vorschau neu auf. In diesem Lauf schon geladene Listen werden angeboten („Gemerkte verwenden“ oder „Neu laden“). Gespeichert wird nur die Liste, mit der umbenannt wird.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.0.12: Listen mit Häkchen (z. B. Vorschau von Folgen umbenennen, Ablagen leeren, Duplikate): Markieren mit Shift- oder Strg-Klick ändert keine Häkchen mehr. Die Leertaste schaltet die Häkchen aller markierten Zeilen gemeinsam um.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.0.12: Protokoll: Die Anzahl Hinweise und Fehler neben „Protokoll“ steht auch bei grosser Bildschirmskalierung in einer Zeile. In der Vorschau von Folgen umbenennen ist die letzte Zeile des Hinweisbereichs nicht mehr abgeschnitten.</li>
+    <li>[OPTIMIERUNG] Desktop 4.0.12: Duplikate finden und Medien prüfen nennen im Protokoll die Dauer jedes Schritts und wie viele Dateien aus den gemerkten Prüfergebnissen kamen bzw. neu untersucht wurden (auch, ob die gemerkten Ergebnisse verworfen wurden).</li>
+</ul>
+<b>Version 2.8.13</b>:<br>
+<ul>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Bild-im-Bild im Fenster von STEFFLIX: Die Fläche „Nächstes in … s“ erscheint nur noch während des Autoplay-Countdowns statt dauerhaft.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.0.11: Download: Bei grosser Bildschirmskalierung bleibt unter der Knopfzeile kein leerer Bereich mehr, umgebrochene Knöpfe nutzen die ganze Breite</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.0.11: Medien prüfen: Verknüpfungen auf Ordner (Junctions, symbolische Links) erscheinen nicht mehr als leere Ordner zum Löschen</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.0.11: Ablagen leeren: „1 Datei“ statt „1 Dateien“; der Dialog „Dateien wählen“ zeigt das STEFFLIX-Symbol und einen durchgehend dunklen Spaltenkopf</li>
+</ul>
+<b>Version 2.8.12</b>:<br>
+<ul>
+    <li>[<span style="color: red">FEATURE</span>] Desktop 4.0.10: Bild-im-Bild im Fenster von STEFFLIX: Das kleine Fenster ist jetzt ein eigenes Fenster mit dem Videotitel (auch in Taskleiste und Alt+Tab). Bedienung wie gewohnt über dem Bild: oben „Zurück zum Player“, Titel und Schliessen, in der Mitte vorheriges Video, 10 s zurück, Abspielen/Pause, 10 s vor und nächstes Video, unten Fortschritt, Zeit, Ton und stufenlose Lautstärke. Die Bedienelemente erscheinen bei Mausbewegung. Klick ins Bild pausiert, Ziehen verschiebt das Fenster, am Rand lässt sich die Grösse ändern. Die Tastenkürzel des Players und der Autoplay-Countdown funktionieren auch im kleinen Fenster, Lage und Grösse werden gemerkt.</li>
+</ul>
+<b>Version 2.8.11</b>:<br>
+<ul>
+    <li>[OPTIMIERUNG] Desktop 4.0.8: Download: 'Wiederholen' nach einem Fehler verwirft alle geladenen Teilstücke und lädt den Download komplett neu, so lassen sich auch Downloads mit beschädigten Teilstücken retten. 'Fortsetzen' und 'URL bearbeiten' setzen weiterhin an derselben Stelle fort.</li>
+    <li>[OPTIMIERUNG] Desktop 4.0.8: Die Tools öffnen schneller und bleiben bedienbar, auch wenn STEFFLIX auf einem Netzlaufwerk liegt: Versionen, Lizenz, Kategorien und Downloads werden im Hintergrund gelesen, ebenso Grössen und Vorschauen in den Dialogen beim Umbenennen von Folgen, Leeren der Ablagen und Wählen der Albumbilder. Ist der Player offen, blendet Schliessen die Tools nur aus: Das nächste Öffnen geht sofort, das Protokoll bleibt.</li>
+    <li>[OPTIMIERUNG] Desktop 4.0.8: Daten einlesen, Medien prüfen, Duplikate finden, Ablagen leeren und Zusammenführen fragen Ordner und Dateien deutlich seltener einzeln ab, auf einem Netzlaufwerk spürbar schneller. Schon verkleinerte Vorschaubilder werden beim Einlesen nicht mehr ganz geladen. Die Ergebnisliste von Medien prüfen zeigt auch Tausende Einträge, Filter und Suche ohne Wartezeit.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.0.8: Öffnet eine Seite ein leeres Fenster, ersetzt das den Player nicht mehr durch eine leere Seite.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.0.9: Absturz behoben: Wurden die Tools kurz nach dem Öffnen geschlossen (z. B. ohne Internetverbindung während der Update-Prüfung), konnte sich das ganze Programm samt Player beenden</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.0.9: Download: Ein neuer Zielordner (eingetippt oder mit „Neuer Ordner …“) wird angelegt statt als „nicht im Installationsordner“ abgelehnt</li>
+    <li>[OPTIMIERUNG] Desktop 4.0.9: Download: „Gleichzeitig“ bleibt auch bei grosser Bildschirmskalierung rechts neben den Knöpfen</li>
+</ul>
+<b>Version 2.8.10</b>:<br>
+<ul>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Ein Video im Bild-im-Bild schliesst sich jetzt, wenn man zu einer Ordner- oder zur Startseite wechselt. Vorher blieb das kleine Fenster mit stehendem Bild offen, und beim nächsten Video brauchte der Bild-im-Bild-Knopf zwei Klicks.</li>
+</ul>
+<b>Version 2.8.9</b>:<br>
+<ul>
+    <li>[<span style="color: red">FEATURE</span>] Medientasten der Tastatur und die Mediensteuerung von Windows bedienen den Player: Abspielen/Pause sowie nächstes und vorheriges Video. Auch im Bild-im-Bild erscheinen Knöpfe für das nächste und das vorherige Video, das Bild-im-Bild bleibt beim Wechsel offen. Titel, Serie, Staffel und Vorschaubild werden dort angezeigt.</li>
+    <li>[<span style="color: red">FEATURE</span>] Desktop 4.0.7: Bild-im-Bild im Fenster von STEFFLIX: Das kleine Fenster zeigt in der Taskleiste das STEFFLIX-Logo mit Bild-im-Bild-Zeichen, und das Fenster von STEFFLIX wird beim Start des Bild-im-Bild minimiert. 'Zurück zum Tab' öffnet es wieder im vorherigen Zustand (normal, maximiert oder Vollbild) im Vordergrund, Schliessen mit X lässt es minimiert.</li>
+    <li>[OPTIMIERUNG] Desktop 4.0.7: Interne Prüfung auf den Release-Ordner des Entwicklers bei leerem Pfad abgesichert. Bei Nutzern ändert sich nichts.</li>
+</ul>
+<b>Version 2.8.8</b>:<br>
+<ul>
+    <li>[OPTIMIERUNG] Verweise im Quellcode auf den umbenannten Entwicklungsordner angepasst, ohne Auswirkung auf die Bedienung.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.0.6: Der Release-Ordner des Entwicklers wird nach der Umbenennung seines Entwicklungsordners wieder erkannt. Bei Nutzern ändert sich nichts.</li>
+</ul>
 <b>Version 2.8.7</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Desktop 4.0.5: Neuer Reiter "Download" in den Tools (zwischen Importer und Tools). Er lädt Videos aus einer m3u8-Adresse direkt in einen Ordner von STEFFLIX, auch mehrere Adressen auf einmal und mehrere Downloads gleichzeitig. Downloads lassen sich pausieren, nach einem Neustart fortsetzen und mit einer neuen Adresse weiterführen, wenn die alte abgelaufen ist. In einem Staffelordner wird die nächste fehlende Folge als Dateiname vorgeschlagen, die Qualität ist wählbar (Standard: die beste). Danach wird die Datei geprüft, bei Bedarf konvertiert, mit Vorschaubild versehen und der Zielordner eingelesen. Meldungen von ffmpeg und der Prüfung zeigt ein Doppelklick, "Aufräumen" entfernt fertige und fehlgeschlagene Downloads samt Zwischendateien. Nur Streams ohne Kopierschutz.</li>

@@ -19,6 +19,7 @@ namespace Sflix
         public string Problem;   // z.B. kein Zugriff beim Zählen
         public string Kind;      // Art der Ablage für Anzeige und Filter, z.B. "Gelöscht"
         public List<string> OnlyFiles;   // gewählte Dateien (volle Pfade); null = ganzer Ordner
+        public long OnlyFilesSize;       // Summe der gewählten Dateien (CleanupFilesDialog)
     }
 
     // Auswahl im Fenster: löschen oder wiederherstellen
@@ -277,18 +278,20 @@ namespace Sflix
         static void Find(string dir, List<CleanupFolder> result, Action<string> log, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
-            string[] dirs;
-            try { dirs = Directory.GetDirectories(dir); }
+            // Attribute aus der Auflistung (kein GetAttributes je Ordner)
+            DirectoryInfo[] dirs;
+            try { dirs = new DirectoryInfo(dir).GetDirectories(); }
             catch (UnauthorizedAccessException) { return; }
             catch (IOException) { return; }
 
-            foreach (string d in dirs)
+            foreach (DirectoryInfo info in dirs)
             {
-                string name = System.IO.Path.GetFileName(d);
+                string d = info.FullName;
+                string name = info.Name;
                 // Verknüpfungen/Junctions nie verfolgen und nie als Ablage löschen (sie können
                 // auf Ordner ausserhalb von STEFFLIX zeigen)
                 bool link;
-                try { link = (File.GetAttributes(d) & FileAttributes.ReparsePoint) != 0; }
+                try { link = (info.Attributes & FileAttributes.ReparsePoint) != 0; }
                 catch { continue; }
                 if (link)
                 {
@@ -305,22 +308,29 @@ namespace Sflix
                     result.Add(f);
                     continue;
                 }
-                if (Folders.Ignore(d)) continue;   // sflix_sys, Papierkorb, System- und versteckte Ordner
+                if (Folders.Ignore(info)) continue;   // sflix_sys, Papierkorb, System- und versteckte Ordner
                 Find(d, result, log, token);
             }
         }
 
+        // Dateien und Grösse einer Ablage; Grössen und Attribute aus der Auflistung, Verknüpfungen nicht verfolgen
         static void Measure(string dir, CleanupFolder f)
         {
-            foreach (string file in Directory.GetFiles(dir))
+            List<DirectoryInfo> subs = new List<DirectoryInfo>();
+            foreach (FileSystemInfo e in new DirectoryInfo(dir).GetFileSystemInfos())
             {
-                f.Files++;
-                f.Size += new FileInfo(file).Length;
+                FileInfo file = e as FileInfo;
+                if (file != null)
+                {
+                    f.Files++;
+                    f.Size += file.Length;
+                }
+                else if (e is DirectoryInfo) subs.Add((DirectoryInfo)e);
             }
-            foreach (string sub in Directory.GetDirectories(dir))
+            foreach (DirectoryInfo sub in subs)
             {
-                if ((File.GetAttributes(sub) & FileAttributes.ReparsePoint) != 0) continue;
-                Measure(sub, f);
+                if ((sub.Attributes & FileAttributes.ReparsePoint) != 0) continue;
+                Measure(sub.FullName, f);
             }
         }
 

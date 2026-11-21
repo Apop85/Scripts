@@ -21,6 +21,8 @@ namespace Sflix
         static Dictionary<string, JsonObject> entries;
         static string loadedFor;     // ffmpeg-Version (SHA256 aus version.json), für die die Einträge gelten
         static bool dirty;
+        static int hits, misses;     // Zähler für das Protokoll (TakeStats)
+        static string discarded;     // Grund, falls die gemerkten Ergebnisse verworfen wurden
 
         public static string FilePath
         {
@@ -51,7 +53,12 @@ namespace Sflix
             {
                 if (!File.Exists(FilePath)) return;
                 JsonObject root = Json.Parse(File.ReadAllText(FilePath, Encoding.UTF8)) as JsonObject;
-                if (root == null || root.Str("ffmpeg") != ffmpegVersion) { dirty = true; return; }
+                if (root == null || root.Str("ffmpeg") != ffmpegVersion)
+                {
+                    discarded = root == null ? "Datei beschädigt" : "andere ffmpeg-Version";
+                    dirty = true;
+                    return;
+                }
                 JsonObject files = root.Obj("files");
                 if (files == null) return;
                 foreach (KeyValuePair<string, object> p in files)
@@ -68,13 +75,14 @@ namespace Sflix
         {
             info = null;
             error = null;
-            string version = ff.InstalledVersion() ?? "";
+            string version = ff.CachedVersion() ?? "";
             lock (sync)
             {
                 EnsureLoaded(version);
                 JsonObject e;
-                if (!entries.TryGetValue(KeyOf(path), out e)) return false;
-                if ((long)e.Num("s", -1) != size || e.Str("m") != ticks.ToString()) return false;
+                if (!entries.TryGetValue(KeyOf(path), out e)) { misses++; return false; }
+                if ((long)e.Num("s", -1) != size || e.Str("m") != ticks.ToString()) { misses++; return false; }
+                hits++;
                 if (e.Str("e") != null)
                 {
                     error = e.Str("e");
@@ -151,7 +159,7 @@ namespace Sflix
 
         static void Store(FfmpegTools ff, string path, JsonObject e)
         {
-            string version = ff.InstalledVersion() ?? "";
+            string version = ff.CachedVersion() ?? "";
             lock (sync)
             {
                 EnsureLoaded(version);
@@ -181,6 +189,28 @@ namespace Sflix
                     dirty = false;
                 }
                 catch { }
+            }
+        }
+
+        // Treffer aus dem Arbeitsspeicher (FfmpegTools.Probe) zählen wie gemerkte Ergebnisse
+        public static void CountHit()
+        {
+            lock (sync) hits++;
+        }
+
+        // Zeile fürs Protokoll seit dem letzten Aufruf (null, wenn nichts untersucht wurde), setzt zurück.
+        // Zeigt, ob ein langsamer Lauf neu untersucht hat und warum (z.B. andere ffmpeg-Version).
+        public static string TakeStats()
+        {
+            lock (sync)
+            {
+                string line = hits + misses == 0 && discarded == null ? null
+                            : "ffprobe: " + hits + " aus gemerkten Ergebnissen, " + misses + " neu untersucht" +
+                              (discarded != null ? " (gemerkte Ergebnisse verworfen: " + discarded + ")" : "");
+                hits = 0;
+                misses = 0;
+                discarded = null;
+                return line;
             }
         }
 

@@ -114,6 +114,8 @@ function restorePageTemplate() {
 // Laufende Wiedergabe beenden und den Zustand des Players zurücksetzen
 function stopCurrentMedia() {
     var media = document.getElementById("video");
+    // Läuft das Video im BiB, das BiB schliessen (sonst bleibt es verwaist offen)
+    reportPipRemoved();
     if (media != null && (media.tagName == "VIDEO" || media.tagName == "AUDIO")) {
         clearTimeout(media.sflixStallTimer);
         if (media.sflixRecovery != null && media.sflixRecovery.timer != null) {
@@ -147,6 +149,8 @@ function stopCurrentMedia() {
     timeoutArray = cancelTimeouts();
     currentMediaLocation = null;
     playerUI = null;
+    // Medientasten und BiB-Knöpfe ohne Player abmelden
+    updateMediaSession(null);
     lastNavigation = null;
     renderedMusicListKey = null;
     durationQueue = [];

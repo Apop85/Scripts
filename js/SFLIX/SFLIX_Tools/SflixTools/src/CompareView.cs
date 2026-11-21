@@ -40,6 +40,16 @@ namespace Sflix
             return f;
         }
 
+        // Mit Grösse und Zeit aus einer Verzeichnis-Auflistung (Folders.CollectFiles): kein weiterer Zugriff
+        public static MediaFacts Basic(FileInfo known)
+        {
+            MediaFacts f = new MediaFacts();
+            f.Path = known.FullName;
+            try { f.Size = known.Length; f.Modified = known.LastWriteTime; }
+            catch { }
+            return f;
+        }
+
         // Mit ffprobe ergänzen (nur Videos und Musik). Fehler stehen in ProbeError.
         public void Probe(FfmpegTools ff, CancellationToken token)
         {
@@ -316,12 +326,23 @@ namespace Sflix
             List<CompareEntry> work = new List<CompareEntry>(entries);
             ThreadPool.QueueUserWorkItem(delegate
             {
-                foreach (CompareEntry e in work)
+                // Mehrere Dateien gleichzeitig (automatisch 2, Einstellung "Gleichzeitig" der Tools gilt nicht:
+                // hier gibt es keinen Aufgabenlauf). Bei neuen Einträgen (generation) abbrechen.
+                using (CancellationTokenSource stop = new CancellationTokenSource())
                 {
-                    if (gen != generation || IsDisposed) return;
-                    try { e.Facts.Probe(ff, CancellationToken.None); } catch { }
+                    try
+                    {
+                        Workers.ForEach(work, Workers.Degree(null, 2), stop.Token, delegate(int i, CompareEntry e)
+                        {
+                            if (gen != generation || IsDisposed) { stop.Cancel(); return; }
+                            if (e.Facts.Probed || e.Facts.ProbeError != null) return;
+                            try { e.Facts.Probe(ff, CancellationToken.None); } catch { }
+                        });
+                    }
+                    catch (OperationCanceledException) { return; }
+                    catch { }
                 }
-                if (IsDisposed || !IsHandleCreated) return;
+                if (gen != generation || IsDisposed || !IsHandleCreated) return;
                 try { BeginInvoke((Action)delegate { if (gen == generation) Render(); }); } catch { }
             });
         }

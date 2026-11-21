@@ -758,7 +758,7 @@ namespace Sflix
         static extern int RegisterWindowMessage(string name);
 
         public Settings Settings { get { return settings; } }
-        public bool ToolsOpen { get { return tools != null; } }
+        public bool ToolsOpen { get { return tools != null && tools.Visible; } }
 
         public void ShowPlayer()
         {
@@ -791,6 +791,8 @@ namespace Sflix
             {
                 player = null;
                 if (tools != null && (exitWhenToolsClosed || restarting)) return;   // Tools schliessen sich selbst
+                // Ausgeblendete Tools (HideOnClose) ohne Player: richtig schliessen, sonst liefe das Programm unsichtbar weiter
+                if (tools != null && !tools.Visible) { tools.Close(); return; }
                 ExitIfDone();
             };
             player.Show();
@@ -822,6 +824,8 @@ namespace Sflix
                     restarting = true;
                     if (player != null) player.CloseForRestart();
                 };
+                // Schliessen der Tools blendet sie nur aus, solange der Player offen ist (wiederverwenden)
+                tools.HideOnClose = delegate { return player != null && !playerClosing && !restarting && !exitWhenToolsClosed; };
                 tools.FormClosed += delegate
                 {
                     tools = null;

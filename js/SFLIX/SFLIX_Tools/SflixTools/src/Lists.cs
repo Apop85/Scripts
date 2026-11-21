@@ -23,6 +23,37 @@ namespace Sflix
             list.DrawSubItem += delegate(object s, DrawListViewSubItemEventArgs e) { e.DrawDefault = true; };
             list.DrawColumnHeader += delegate(object s, DrawListViewColumnHeaderEventArgs e) { DrawHeader(list, e); };
             if (sortable) ListSort.Enable(list);
+            GuardChecks(list);
+        }
+
+        // Listen mit Häkchen: Markieren (Klick, Shift- oder Strg-Klick) ändert nie Häkchen. Mit OwnerDraw
+        // schaltet die ListView bei einer Bereichsauswahl sonst Häkchen der markierten Zeilen um. Während
+        // eine Maustaste gedrückt ist, gilt eine Änderung nur, wenn der Zeiger auf einem Kästchen steht
+        // (Folgeänderungen im Code, z.B. andere Zeilen derselben Folge abhaken, laufen dann mit).
+        // Leertaste: schaltet alle markierten Zeilen gemeinsam um.
+        static void GuardChecks(ListView list)
+        {
+            list.ItemCheck += delegate(object s, ItemCheckEventArgs e)
+            {
+                if (!list.CheckBoxes || list.VirtualMode || Control.MouseButtons == MouseButtons.None) return;
+                Point p = list.PointToClient(Control.MousePosition);
+                ListViewHitTestInfo hit = list.HitTest(p);
+                if (hit.Location != ListViewHitTestLocations.StateImage) e.NewValue = e.CurrentValue;
+            };
+            list.KeyDown += delegate(object s, KeyEventArgs e)
+            {
+                if (!list.CheckBoxes || list.VirtualMode || e.KeyCode != Keys.Space || e.Modifiers != Keys.None) return;
+                if (list.SelectedItems.Count < 2) return;
+                ListViewItem lead = list.FocusedItem != null && list.FocusedItem.Selected ? list.FocusedItem : list.SelectedItems[0];
+                bool target = !lead.Checked;
+                List<ListViewItem> sel = new List<ListViewItem>();
+                foreach (ListViewItem it in list.SelectedItems) sel.Add(it);
+                list.BeginUpdate();
+                try { foreach (ListViewItem it in sel) if (it.Checked != target) it.Checked = target; }
+                finally { list.EndUpdate(); }
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            };
         }
 
         public static void DrawHeader(ListView list, DrawListViewColumnHeaderEventArgs e)
@@ -65,6 +96,8 @@ namespace Sflix
         public bool Descending;
         // Eigene Sortierung (z.B. Vergleichstabelle mit Gruppen): ersetzt das Sortieren der Zeilen
         public Action Custom;
+        // Liste im VirtualMode (VirtualRows): sortiert wird die Datenliste statt der ListView
+        public VirtualRows Virtual;
         // Vor und nach dem Sortieren (z.B. Häkchen-Meldungen unterdrücken)
         public Action Sorting, Sorted;
 
@@ -104,6 +137,15 @@ namespace Sflix
             try
             {
                 if (Custom != null) Custom();
+                else if (Virtual != null)
+                {
+                    if (Sorting != null) Sorting();
+                    Virtual.Sort(this);
+                    if (Sorted != null) Sorted();
+                    list.Invalidate();
+                    Virtual.EnsureSelectionVisible();
+                    return;
+                }
                 else
                 {
                     if (Sorting != null) Sorting();
@@ -186,6 +228,97 @@ namespace Sflix
             ListViewItem.ListViewSubItem sub = it.SubItems.Add(text);
             sub.Tag = key;
             return sub;
+        }
+    }
+
+    // Tabelle im VirtualMode (seit Desktop 4.0.8): Die Zeilen (fertige ListViewItems) liegen in Rows,
+    // die ListView fragt nur die sichtbaren ab. Aufbau und Filter mit Tausenden Zeilen dauern so nicht
+    // mehr Sekunden. Sortieren (ListSort) und Filtern ändern Rows, die Auswahl bleibt erhalten.
+    // Nicht für Listen mit CheckBoxes (VirtualMode kennt kein ItemChecked).
+    // Über list.Items nie aufzählen (geht im VirtualMode nicht): Rows bzw. Selected() verwenden.
+    public class VirtualRows
+    {
+        readonly ListView list;
+        public readonly List<ListViewItem> Rows = new List<ListViewItem>();
+
+        VirtualRows(ListView list) { this.list = list; }
+
+        public static VirtualRows Attach(ListView list)
+        {
+            VirtualRows v = new VirtualRows(list);
+            list.VirtualMode = true;
+            list.VirtualListSize = 0;
+            list.RetrieveVirtualItem += delegate(object s, RetrieveVirtualItemEventArgs e)
+            {
+                e.Item = e.ItemIndex >= 0 && e.ItemIndex < v.Rows.Count ? v.Rows[e.ItemIndex] : new ListViewItem("");
+            };
+            ListSort sort = ListSort.Of(list);
+            if (sort != null) sort.Virtual = v;
+            return v;
+        }
+
+        // Markierte Zeilen (in der Reihenfolge der Liste)
+        public List<ListViewItem> Selected()
+        {
+            List<ListViewItem> sel = new List<ListViewItem>();
+            foreach (int i in list.SelectedIndices) if (i >= 0 && i < Rows.Count) sel.Add(Rows[i]);
+            return sel;
+        }
+
+        // Angezeigte Zeilen ersetzen (Filter); markierte Zeilen bleiben markiert, wenn sie noch dabei sind
+        public void SetRows(IEnumerable<ListViewItem> rows)
+        {
+            List<ListViewItem> sel = Selected();
+            Rows.Clear();
+            Rows.AddRange(rows);
+            list.BeginUpdate();
+            try
+            {
+                list.SelectedIndices.Clear();
+                list.VirtualListSize = Rows.Count;
+                Reselect(sel);
+            }
+            finally { list.EndUpdate(); }
+            list.Invalidate();
+        }
+
+        internal void Sort(ListSort sort)
+        {
+            List<ListViewItem> sel = Selected();
+            // Stabil sortieren (gleiche Schlüssel behalten ihre Reihenfolge)
+            List<KeyValuePair<int, ListViewItem>> indexed = new List<KeyValuePair<int, ListViewItem>>();
+            for (int i = 0; i < Rows.Count; i++) indexed.Add(new KeyValuePair<int, ListViewItem>(i, Rows[i]));
+            indexed.Sort(delegate(KeyValuePair<int, ListViewItem> a, KeyValuePair<int, ListViewItem> b)
+            {
+                int r = sort.Compare(a.Value, b.Value);
+                return r != 0 ? r : a.Key.CompareTo(b.Key);
+            });
+            Rows.Clear();
+            foreach (KeyValuePair<int, ListViewItem> p in indexed) Rows.Add(p.Value);
+            list.BeginUpdate();
+            try
+            {
+                list.SelectedIndices.Clear();
+                Reselect(sel);
+            }
+            finally { list.EndUpdate(); }
+        }
+
+        void Reselect(List<ListViewItem> sel)
+        {
+            if (sel.Count == 0) return;
+            Dictionary<ListViewItem, int> index = new Dictionary<ListViewItem, int>();
+            for (int i = 0; i < Rows.Count; i++) index[Rows[i]] = i;
+            foreach (ListViewItem it in sel)
+            {
+                int i;
+                if (index.TryGetValue(it, out i)) list.SelectedIndices.Add(i);
+            }
+        }
+
+        internal void EnsureSelectionVisible()
+        {
+            if (list.SelectedIndices.Count > 0) list.EnsureVisible(list.SelectedIndices[0]);
         }
     }
 }

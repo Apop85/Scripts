@@ -214,9 +214,9 @@ namespace Sflix
             {
                 if (f.OnlyFiles != null)
                 {
+                    // Grösse beim Wählen der Dateien einmal ermittelt, nicht bei jedem Häkchen
                     files += f.OnlyFiles.Count;
-                    foreach (string file in f.OnlyFiles)
-                        try { size += new FileInfo(file).Length; } catch { }
+                    size += f.OnlyFilesSize;
                 }
                 else
                 {
@@ -225,7 +225,7 @@ namespace Sflix
                 }
                 count++;
             }
-            totalLabel.Text = count + " Ordner, " + files + " Dateien, " + Fmt.Size(size);
+            totalLabel.Text = count + " Ordner, " + files + (files == 1 ? " Datei, " : " Dateien, ") + Fmt.Size(size);
         }
 
         // Einzelne Dateien des markierten Ordners wählen
@@ -238,12 +238,16 @@ namespace Sflix
             }
             ListViewItem row = list.SelectedItems[0];
             CleanupFolder f = (CleanupFolder)row.Tag;
+            int total;
             using (CleanupFilesDialog dlg = new CleanupFilesDialog(f, ff))
             {
+                dlg.Icon = Icon;
+                dlg.ShowIcon = true;
                 if (dlg.ShowDialog(this) != DialogResult.OK) return;
                 f.OnlyFiles = dlg.Selected;
+                f.OnlyFilesSize = dlg.SelectedSize;
+                total = dlg.TotalFiles;
             }
-            int total = CleanupTask.FilesIn(f.Path).Count;
             if (f.OnlyFiles != null && f.OnlyFiles.Count >= total) f.OnlyFiles = null;
             row.SubItems[4].Text = f.OnlyFiles == null ? (f.Problem ?? "") : f.OnlyFiles.Count + " von " + total + " Dateien gewählt";
             if (f.OnlyFiles != null && f.OnlyFiles.Count > 0) row.Checked = true;
@@ -288,7 +292,10 @@ namespace Sflix
         readonly ListView list;
         readonly CompareView compare;
         readonly CleanupFolder folder;
+        readonly Dictionary<string, long> sizes = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
         public List<string> Selected;
+        public long SelectedSize;     // Summe der gewählten Dateien (beim Aufbau einmal ermittelt)
+        public int TotalFiles;        // Dateien der Ablage insgesamt
 
         public CleanupFilesDialog(CleanupFolder folder, FfmpegTools ff)
         {
@@ -330,6 +337,8 @@ namespace Sflix
                 ListViewItem item = new ListViewItem(rel);
                 long size = 0;
                 try { size = new FileInfo(file).Length; } catch { }
+                sizes[file] = size;
+                TotalFiles++;
                 ListSort.Add(item, Fmt.Size(size), size);
                 item.SubItems.Add(File.Exists(Path.Combine(parent, rel)) ? "vorhanden" : "");
                 item.Tag = file;
@@ -360,7 +369,15 @@ namespace Sflix
             ok.Click += delegate
             {
                 Selected = new List<string>();
-                foreach (ListViewItem i in list.Items) if (i.Checked) Selected.Add((string)i.Tag);
+                SelectedSize = 0;
+                foreach (ListViewItem i in list.Items)
+                {
+                    if (!i.Checked) continue;
+                    string file = (string)i.Tag;
+                    Selected.Add(file);
+                    long size;
+                    if (sizes.TryGetValue(file, out size)) SelectedSize += size;
+                }
                 DialogResult = DialogResult.OK;
             };
             cancel.Click += delegate { DialogResult = DialogResult.Cancel; };
@@ -375,6 +392,9 @@ namespace Sflix
             Controls.Add(buttons);
             Controls.Add(intro);
             CancelButton = cancel;
+            // Letzte Spalte bis zum Rand: sonst bleibt rechts im Spaltenkopf ein ungestalteter Streifen
+            Shown += delegate { list.Columns[list.Columns.Count - 1].Width = -2; };
+            list.Resize += delegate { if (list.Columns.Count > 0 && Visible) list.Columns[list.Columns.Count - 1].Width = -2; };
         }
 
         void ShowCompare(string parent, string basePath)

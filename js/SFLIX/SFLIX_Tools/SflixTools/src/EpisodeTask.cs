@@ -539,6 +539,9 @@ namespace Sflix
         public string Note = "";
         public string Group;       // gleiche Zielfolge: nur eine Datei darf gewählt sein
         public bool Selected = true;
+        // Vom Arbeitsthread ermittelt (Plan), damit der Dialog keine Dateien abfragt
+        public long Size = -1;        // Grösse der Quelldatei, -1 = keine Datei
+        public bool TargetExists;     // Ziel gibt es schon (und ist nicht die Quelle)
     }
 
     public class EpisodePlan
@@ -549,6 +552,7 @@ namespace Sflix
         public readonly List<string> Unmatched = new List<string>();   // "Datei: Grund"
         public readonly List<string> Missing = new List<string>();     // "Staffel 02: E05, E06"
         public int Unchanged;
+        public string SwitchTo;   // von der Vorschau gesetzt: Liste von dieser Quelle laden und neu planen
     }
 
     public static class EpisodeTask
@@ -860,6 +864,19 @@ namespace Sflix
             }
             plan.Ops.AddRange(fileOps);
 
+            // Grössen und vorhandene Ziele für den Dialog (hier im Arbeitsthread, nicht im UI-Thread)
+            foreach (EpisodeOp op in plan.Ops)
+            {
+                try
+                {
+                    FileInfo info = new FileInfo(op.Source);
+                    if (info.Exists) op.Size = info.Length;
+                }
+                catch { }
+                try { op.TargetExists = !string.Equals(op.Target, op.Source, StringComparison.OrdinalIgnoreCase) && File.Exists(op.Target); }
+                catch { }
+            }
+
             // Fehlende Folgen je Staffel
             foreach (KeyValuePair<int, SortedDictionary<int, string>> season in list.Seasons)
             {
@@ -930,44 +947,71 @@ namespace Sflix
             ctx.Log("Serienordner: " + seriesDir);
             ctx.Progress(-1, "Folgenliste wählen ...");
             string folderName = Path.GetFileName(seriesDir);
-            EpisodeList list = ChooseList(ctx, folderName);
+            // In dieser Sitzung geladene Listen je Quelle (für den Quellenwechsel in der Vorschau)
+            Dictionary<string, EpisodeList> loaded = new Dictionary<string, EpisodeList>(StringComparer.OrdinalIgnoreCase);
+            EpisodeList cached;
+            EpisodeList list = ChooseList(ctx, folderName, out cached);
             if (list == null)
             {
                 ctx.Log("Keine Folgenliste gewählt, nichts umbenannt.");
                 ctx.Summary = "nichts umbenannt";
                 return;
             }
-            ctx.Log("Folgenliste: " + list.SeriesTitle + " (" + list.Source + "), " + list.Seasons.Count + " Staffeln, " + list.Count + " Folgen");
+            loaded[list.Source ?? ""] = list;
 
-            EpisodePlan plan = Plan(seriesDir, list);
-            ctx.Log("Geplant: " + plan.Ops.Count + " Änderungen, " + plan.Unchanged + " Dateien passen bereits, " +
-                    plan.Unmatched.Count + " nicht zugeordnet");
-            if (plan.Ops.Count == 0)
+            while (true)
             {
-                ctx.Log("Alle Dateien heissen bereits richtig.");
-                LogLists(ctx, plan);
-                ctx.Summary = "alles bereits richtig benannt";
-                return;
+                ctx.Log("Folgenliste: " + list.SeriesTitle + " (" + list.Source + "), " + list.Seasons.Count + " Staffeln, " + list.Count + " Folgen");
+                EpisodePlan plan = Plan(seriesDir, list);
+                ctx.Log("Geplant: " + plan.Ops.Count + " Änderungen, " + plan.Unchanged + " Dateien passen bereits, " +
+                        plan.Unmatched.Count + " nicht zugeordnet");
+                if (plan.Ops.Count == 0)
+                {
+                    // Die Liste passt: sie gilt als verwendet und wird gespeichert
+                    SaveUsed(ctx, folderName, list, cached);
+                    ctx.Log("Alle Dateien heissen bereits richtig.");
+                    LogLists(ctx, plan);
+                    ctx.Summary = "alles bereits richtig benannt";
+                    return;
+                }
+                plan.SwitchTo = null;
+                if (ctx.ConfirmEpisodePlan(plan))
+                {
+                    // Gespeichert wird nur die Liste, mit der umbenannt wird (nicht nur angesehene)
+                    SaveUsed(ctx, folderName, list, cached);
+                    Execute(ctx, plan);
+                    LogLists(ctx, plan);
+                    return;
+                }
+                if (plan.SwitchTo == null)
+                {
+                    ctx.Log("Abgebrochen, nichts umbenannt.");
+                    ctx.Summary = "nichts umbenannt";
+                    return;
+                }
+                EpisodeList other = SwitchSource(ctx, list, plan.SwitchTo, loaded);
+                if (other != null) list = other;
+                else ctx.Log("Quellenwechsel abgebrochen, Folgenliste von " + list.Source + " bleibt.");
             }
-            if (!ctx.ConfirmEpisodePlan(plan))
-            {
-                ctx.Log("Abgebrochen, nichts umbenannt.");
-                ctx.Summary = "nichts umbenannt";
-                return;
-            }
-            Execute(ctx, plan);
-            LogLists(ctx, plan);
         }
 
-        // Gespeicherte Liste verwenden, dieselbe Serie neu laden oder neu suchen. Neu geladene oder
-        // gesuchte Listen werden gespeichert (nur mit Folgen, ein Fehler überschreibt nichts).
-        static EpisodeList ChooseList(TaskContext ctx, string folderName)
+        // Liste speichern, ausser es ist unverändert die gespeicherte (nur mit Folgen, ein Fehler überschreibt nichts)
+        static void SaveUsed(TaskContext ctx, string folderName, EpisodeList list, EpisodeList cached)
         {
-            EpisodeList cached = EpisodeCache.Find(folderName);
+            if (list == cached) return;
+            EpisodeCache.Save(folderName, list, ctx);
+            ctx.Log("Folgenliste von " + list.Source + " gespeichert.");
+        }
+
+        // Gespeicherte Liste verwenden, dieselbe Serie neu laden oder neu suchen. Gespeichert wird erst,
+        // wenn mit der Liste umbenannt wird (SaveUsed). cached: die gespeicherte Liste (oder null).
+        static EpisodeList ChooseList(TaskContext ctx, string folderName, out EpisodeList cached)
+        {
+            cached = EpisodeCache.Find(folderName);
             string failure = null;
             while (cached != null && ctx.ChooseCachedEpisodeList != null)
             {
-                string choice = ctx.ChooseCachedEpisodeList(cached, failure);
+                string choice = ctx.ChooseCachedEpisodeList(cached, failure, false);
                 if (choice == null) return null;
                 if (choice == "use")
                 {
@@ -981,16 +1025,77 @@ namespace Sflix
                 ctx.Token.ThrowIfCancellationRequested();
                 if (fresh != null)
                 {
-                    EpisodeCache.Save(folderName, fresh, ctx);
-                    ctx.Log("Folgenliste neu geladen und gespeichert.");
+                    ctx.Log("Folgenliste neu geladen.");
                     return fresh;
                 }
                 ctx.Log("Warnung: Folgenliste konnte nicht neu geladen werden (" + error + "). Die gespeicherte Liste bleibt erhalten.");
                 failure = error;
             }
-            EpisodeList list = ctx.ChooseEpisodeList(folderName);
-            if (list != null) EpisodeCache.Save(folderName, list, ctx);
-            return list;
+            return ctx.ChooseEpisodeList(folderName, null);
+        }
+
+        // Quellenwechsel aus der Vorschau: dieselbe Serie auf der anderen Quelle. Schon in dieser Sitzung
+        // geladen: fragen (gemerkte verwenden, neu laden, neu suchen). Sonst mit dem Serientitel suchen:
+        // genau ein Treffer wird direkt geladen, sonst öffnet der Suchdialog für diese Quelle.
+        // Läuft im Arbeitsthread (Fortschritt im Hauptfenster, Abbruch über die Aufgabe). null = abgebrochen.
+        static EpisodeList SwitchSource(TaskContext ctx, EpisodeList current, string sourceName, Dictionary<string, EpisodeList> loaded)
+        {
+            EpisodeSource src = EpisodeSource.ByName(sourceName);
+            if (src == null) return null;
+            ctx.Log("Quelle wechseln: " + src.Name);
+            EpisodeList known;
+            if (loaded.TryGetValue(src.Name, out known) && ctx.ChooseCachedEpisodeList != null)
+            {
+                string failure = null;
+                while (true)
+                {
+                    string choice = ctx.ChooseCachedEpisodeList(known, failure, true);
+                    if (choice == null) return null;
+                    if (choice == "use") { ctx.Log("Gemerkte Folgenliste von " + src.Name + " verwendet."); return known; }
+                    if (choice == "search") break;
+                    ctx.Progress(-1, "Lade Folgen von „" + known.SeriesTitle + "“ ...");
+                    string error;
+                    EpisodeList fresh = EpisodeCache.Reload(known, ctx.Token, out error);
+                    ctx.Token.ThrowIfCancellationRequested();
+                    if (fresh != null)
+                    {
+                        loaded[src.Name] = fresh;
+                        ctx.Log("Folgenliste von " + src.Name + " neu geladen.");
+                        return fresh;
+                    }
+                    ctx.Log("Warnung: Folgenliste konnte nicht neu geladen werden (" + error + ").");
+                    failure = error;
+                }
+            }
+
+            string term = string.IsNullOrEmpty(current.SeriesTitle) ? null : current.SeriesTitle;
+            EpisodeList result = null;
+            if (term != null)
+            {
+                ctx.Progress(-1, "Suche „" + term + "“ auf " + src.Name + " ...");
+                List<SeriesHit> hits = null;
+                try { hits = src.Search(term, ctx.Token); }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception e) { ctx.Log("Warnung: Suche auf " + src.Name + " fehlgeschlagen (" + e.Message + ")."); }
+                ctx.Token.ThrowIfCancellationRequested();
+                if (hits != null && hits.Count == 1)
+                {
+                    ctx.Progress(-1, "Lade Folgen von „" + hits[0].Title + "“ ...");
+                    try
+                    {
+                        EpisodeList l = src.Load(hits[0], ctx.Token);
+                        if (l != null && l.Count > 0) result = l;
+                        else ctx.Log("Warnung: " + src.Name + " liefert für „" + hits[0].Title + "“ keine Folgen.");
+                    }
+                    catch (OperationCanceledException) { throw; }
+                    catch (Exception e) { ctx.Log("Warnung: Folgen von " + src.Name + " konnten nicht geladen werden (" + e.Message + ")."); }
+                    ctx.Token.ThrowIfCancellationRequested();
+                    if (result != null) ctx.Log("Ein Treffer auf " + src.Name + ": „" + hits[0].Title + "“ geladen.");
+                }
+            }
+            if (result == null) result = ctx.ChooseEpisodeList(term ?? current.SeriesTitle ?? "", src.Name);
+            if (result != null) loaded[result.Source ?? src.Name] = result;
+            return result;
         }
 
         static void LogLists(TaskContext ctx, EpisodePlan plan)

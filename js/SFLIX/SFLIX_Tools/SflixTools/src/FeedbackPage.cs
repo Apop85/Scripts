@@ -110,15 +110,24 @@ namespace Sflix
 
             Controls.Add(licensePanel);
             Controls.Add(feedbackPanel);
-            RefreshState();
+            // Lizenzstatus liest das Hauptfenster im Hintergrund (license.js, install.js) und ruft dann
+            // ApplyStatus auf; bis dahin keine der beiden Ansichten
+            licensePanel.Visible = false;
+            feedbackPanel.Visible = false;
         }
 
         public LicenseStatus Status { get; private set; }
 
-        // Ansicht passend zum Lizenzstatus
+        // Ansicht passend zum Lizenzstatus (liest die Dateien, nur nach Aktionen des Benutzers)
         public void RefreshState()
         {
-            Status = LicenseStore.Status(App.Root);
+            ApplyStatus(LicenseStore.Status(App.Root));
+        }
+
+        // Ansicht zu einem bereits gelesenen Status (UI-Thread)
+        public void ApplyStatus(LicenseStatus status)
+        {
+            Status = status;
             bool active = Status == LicenseStatus.Active;
             licensePanel.Visible = !active;
             feedbackPanel.Visible = active;
@@ -240,8 +249,7 @@ namespace Sflix
                 object[] result;
                 try { result = work(); }
                 catch (Exception e) { result = new object[] { false, "Fehler: " + e.Message }; }
-                if (IsDisposed) return;
-                BeginInvoke((Action)delegate
+                Ui.Post(this, delegate
                 {
                     busy = false;
                     if (button != null) button.Enabled = true;

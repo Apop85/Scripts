@@ -817,6 +817,7 @@ function adjustMediaType(mediaUrl, node) {
         setImageFullscreen(false);
     }
     var created = createMediaElement(mediaUrl);
+    reportPipRemoved();
     document.getElementById("playerContainer").replaceChildren(created.wrapper);
     if (wantedTag != "IMG") {
         syncPlayerState();
@@ -826,7 +827,447 @@ function adjustMediaType(mediaUrl, node) {
 
 function removePlayer() {
     exitCinemaMode();
+    reportPipRemoved();
     document.getElementById("playerContainer").replaceChildren();
+}
+
+// ===================================================================
+// Eigenes Bild-im-Bild-Fenster im Fenster von STEFFLIX.exe (DEC-351)
+// Document Picture-in-Picture: STEFFLIX.exe stellt das Fenster (obenliegend, ohne Titelleiste),
+// das Video-Element zieht ohne Neuladen hinein und beim Schliessen zurück. Das Dokument des
+// Fensters läuft im Skriptkontext dieser Seite: Bedienung, Tasten und Countdown brauchen keine
+// Brücke. Rückfall auf das native BiB, wenn es fehlt, STEFFLIX.exe nicht antwortet oder
+// requestWindow scheitert. Browser und Android-App nutzen immer das native BiB.
+// ===================================================================
+
+var docPip = null;            // Zustand des offenen Fensters (fillDocPip)
+var docPipReady = null;       // Antwort von STEFFLIX.exe auf {cmd:"pipWindow"}
+var docPipFailed = false;     // einmal gescheitert: bis zum Neuladen das native BiB
+var docPipHideDelay = 2000;   // Bedienelemente ohne Mausbewegung ausblenden
+
+// STEFFLIX.exe setzt window.sflixDocPip (Einstellung player.docpip, Standard ein)
+function canUseDocPip() {
+    return isDesktopApp() && window.sflixDocPip === true && !docPipFailed && "documentPictureInPicture" in window;
+}
+
+// STEFFLIX.exe hat das Fenster angemeldet ({event:"pipWindowReady"})
+function onDesktopPipWindowReady() {
+    if (docPipReady != null) {
+        var resolve = docPipReady;
+        docPipReady = null;
+        resolve();
+    }
+}
+
+// Natives BiB von Chromium (Rückfall und Browser)
+function requestNativePip(media) {
+    if (media.requestPictureInPicture) {
+        return media.requestPictureInPicture();
+    }
+    return Promise.reject(new Error("Bild im Bild nicht verfügbar"));
+}
+
+// Grösse beim Öffnen im Seitenverhältnis des Videos (CSS-Pixel; Lage und Breite merkt STEFFLIX.exe)
+function getDocPipSize(media) {
+    var width = 480;
+    var ratio = media.videoWidth > 0 && media.videoHeight > 0 ? media.videoHeight / media.videoWidth : 9 / 16;
+    ratio = Math.min(2, Math.max(0.3, ratio));
+    return { width: width, height: Math.round(width * ratio) };
+}
+
+function openDocPip(ui) {
+    var media = ui.media;
+    var size = getDocPipSize(media);
+    // Erst das Fenster bei STEFFLIX.exe anmelden (sonst ersetzt die Anfrage den Player), dann öffnen.
+    // Kurze Wartezeit, damit der Rückfall noch innerhalb der Nutzeraktivierung des Klicks liegt.
+    new Promise(function (resolve, reject) {
+        docPipReady = resolve;
+        sendToDesktop({ cmd: "pipWindow", width: size.width, height: size.height });
+        setTimeout(function () {
+            if (docPipReady === resolve) {
+                docPipReady = null;
+                reject(new Error("STEFFLIX.exe hat das Fenster nicht angemeldet"));
+            }
+        }, 1000);
+    }).then(function () {
+        return window.documentPictureInPicture.requestWindow({ width: size.width, height: size.height });
+    }).then(function (win) {
+        if (getPlayerUI() !== ui || ui.media.tagName != "VIDEO") {
+            win.close();   // inzwischen anderes Medium
+            return;
+        }
+        fillDocPip(ui, win);
+    }).catch(function (error) {
+        console.warn("Eigenes Bild im Bild nicht möglich, natives Bild im Bild:", error);
+        docPipFailed = true;
+        requestNativePip(media).catch(function () {
+            showPlayerToast(ui, "Bild im Bild konnte nicht geöffnet werden. Bitte nochmals versuchen.");
+        });
+    });
+}
+
+// Knopf mit Symbol des Players im Dokument des BiB-Fensters
+function createDocPipButton(className, iconName, label, action) {
+    var button = createControlButton("pipButton " + className, iconName, label);
+    button.addEventListener("click", function (event) {
+        event.stopPropagation();
+        action();
+    });
+    return button;
+}
+
+function fillDocPip(ui, win) {
+    var media = ui.media;
+    var doc = win.document;
+    doc.documentElement.className = "pipDocument";
+    // Gleiche Stile wie der Player (Symbole, Countdown), dazu die Regeln für .pipDocument in sflix.css
+    Array.prototype.forEach.call(document.querySelectorAll("link[rel='stylesheet']"), function (link) {
+        var copy = doc.createElement("link");
+        copy.rel = "stylesheet";
+        copy.href = link.href;
+        doc.head.appendChild(copy);
+    });
+    // Bis die Stile geladen sind: schwarzer Hintergrund, nichts blitzt auf
+    var base = doc.createElement("style");
+    base.textContent = "html,body{margin:0;height:100%;background:#000;overflow:hidden}";
+    doc.head.appendChild(base);
+
+    var frame = doc.createElement("div");
+    frame.className = "pipFrame controlsVisible";
+    var shade = doc.createElement("div");
+    shade.className = "pipShade";
+
+    var top = doc.createElement("div");
+    top.className = "pipTop";
+    var back = createDocPipButton("pipBack", "pipBack", "Zurück zum Player", function () { closeDocPip(true); });
+    var title = doc.createElement("span");
+    title.className = "pipTitle";
+    var close = createDocPipButton("pipClose", "close", "Schliessen", function () { closeDocPip(false); });
+    top.append(back, title, close);
+
+    var center = doc.createElement("div");
+    center.className = "pipCenter";
+    var prev = createDocPipButton("pipPrev", "skipPrev", "Vorheriges (P)", function () { clickNavigation("prev"); });
+    var rewind = createDocPipButton("pipSeek", "back10", "10 Sekunden zurück (Pfeil links)", function () { seekPlayerBy(ui, -10, false); });
+    var play = createDocPipButton("pipPlay ctrlPlay", "play", "Abspielen (K)", function () { togglePlayback(ui); });
+    var forward = createDocPipButton("pipSeek", "forward10", "10 Sekunden vor (Pfeil rechts)", function () { seekPlayerBy(ui, 10, false); });
+    var next = createDocPipButton("pipNext", "skipNext", "Nächstes (N)", function () { clickNavigation("next"); });
+    center.append(prev, rewind, play, forward, next);
+
+    var bottom = doc.createElement("div");
+    bottom.className = "pipBottom";
+    var progress = doc.createElement("input");
+    progress.type = "range";
+    progress.className = "pipProgress";
+    progress.min = "0";
+    progress.max = "1000";
+    progress.step = "1";
+    progress.value = "0";
+    progress.setAttribute("aria-label", "Wiedergabeposition");
+    var time = doc.createElement("span");
+    time.className = "pipTime";
+    var volumeGroup = doc.createElement("div");
+    volumeGroup.className = "pipVolume";
+    var mute = createDocPipButton("pipMute", "volumeHigh", "Ton aus (M)", function () {
+        if (media.muted || media.volume == 0) {
+            media.muted = false;
+            if (media.volume == 0) {
+                media.volume = 0.2;
+            }
+        } else {
+            media.muted = true;
+        }
+    });
+    var volume = doc.createElement("input");
+    volume.type = "range";
+    volume.className = "pipVolumeSlider";
+    volume.min = "0";
+    volume.max = "1";
+    volume.step = "0.01";
+    volume.setAttribute("aria-label", "Lautstärke");
+    volumeGroup.append(mute, volume);
+    bottom.append(progress, time, volumeGroup);
+
+    // Platzhalter merkt die Stelle im Player, das Video zieht im selben Schritt um (läuft weiter).
+    // Der Autoplay-Countdown des Players zieht mit (gleiche Elemente, gleiche Logik).
+    var marker = document.createComment("sflix-docpip");
+    media.parentNode.insertBefore(marker, media);
+    var countdownHome = ui.countdown.nextSibling;
+    frame.append(media, shade, top, center, ui.countdown, bottom);
+    doc.body.appendChild(frame);
+
+    var seeking = false;
+    progress.addEventListener("input", function () {
+        seeking = true;
+        if (hasMediaDuration(media)) {
+            media.currentTime = media.duration * parseFloat(progress.value) / 1000;
+        }
+    });
+    progress.addEventListener("change", function () {
+        seeking = false;
+    });
+    volume.addEventListener("input", function () {
+        var value = parseFloat(volume.value);
+        media.volume = value;
+        media.muted = value == 0;
+    });
+
+    var state = {
+        win: win, doc: doc, ui: ui, media: media, marker: marker, countdownHome: countdownHome,
+        frame: frame, title: title, play: play, prev: prev, next: next, mute: mute, volume: volume,
+        progress: progress, time: time, hideTimer: null, listeners: [],
+        isSeeking: function () { return seeking; }
+    };
+
+    // Bedienelemente: bei Mausbewegung zeigen, nach etwa 2 s ohne Maus und beim Verlassen ausblenden.
+    // Über einem Knopf oder Regler und beim Ziehen eines Reglers bleiben sie sichtbar.
+    var showControls = function () {
+        frame.classList.add("controlsVisible");
+        clearTimeout(state.hideTimer);
+        state.hideTimer = setTimeout(function () {
+            if (seeking || frame.querySelector("button:hover, input:hover, .autoplayCountdown:hover") != null) {
+                showControls();
+                return;
+            }
+            frame.classList.remove("controlsVisible");
+        }, docPipHideDelay);
+    };
+    var hideControls = function () {
+        clearTimeout(state.hideTimer);
+        if (!seeking) {
+            frame.classList.remove("controlsVisible");
+        }
+    };
+    state.showControls = showControls;
+
+    // Klick ins Bild spielt ab bzw. pausiert; Ziehen im Bild verschiebt das Fenster ({cmd:"pipDrag"})
+    var press = null;
+    var isControl = function (target) {
+        return target.closest != null && target.closest("button, input, .autoplayCountdown") != null;
+    };
+    var listen = function (target, type, handler) {
+        target.addEventListener(type, handler);
+        state.listeners.push([target, type, handler]);
+    };
+    listen(frame, "mousedown", function (event) {
+        press = event.button === 0 && !isControl(event.target) ? { x: event.screenX, y: event.screenY, dragged: false } : null;
+    });
+    listen(frame, "mousemove", function (event) {
+        showControls();
+        if (press == null || press.dragged || (event.buttons & 1) === 0) {
+            return;
+        }
+        if (Math.abs(event.screenX - press.x) + Math.abs(event.screenY - press.y) > 4) {
+            press.dragged = true;
+            sendToDesktop({ cmd: "pipDrag" });
+        }
+    });
+    listen(frame, "mouseup", function (event) {
+        if (press != null && !press.dragged && event.button === 0 && !isControl(event.target)) {
+            togglePlayback(ui);
+            showControls();
+        }
+        press = null;
+    });
+    listen(doc.documentElement, "mouseleave", hideControls);
+    listen(doc, "keydown", function (event) {
+        handleDocPipKey(state, event);
+    });
+
+    var refresh = function () {
+        refreshDocPip(state);
+    };
+    state.refresh = refresh;
+    ["timeupdate", "play", "pause", "ended", "durationchange", "loadedmetadata", "volumechange", "emptied"].forEach(function (type) {
+        listen(media, type, refresh);
+    });
+
+    docPip = state;
+    refresh();
+    showControls();
+    ui.pipButton.classList.add("active");
+    sendToDesktop({ cmd: "pip", on: true });
+    // Fenster von aussen geschlossen (Windows, Programmende): Video zurückholen und anhalten
+    win.addEventListener("pagehide", function () {
+        if (docPip === state) {
+            restoreDocPip(false);
+        }
+    });
+}
+
+// Anzeige im BiB-Fenster nachführen (Medienereignisse, Medienwechsel, Titel)
+function refreshDocPip(state) {
+    state = state || docPip;
+    if (state == null) {
+        return;
+    }
+    var media = state.media;
+    var playing = !media.paused && !media.ended;
+    setControlButton(state.play, playing ? "pause" : "play", playing ? "Pause (K)" : "Abspielen (K)");
+    state.frame.classList.toggle("isPaused", !playing);
+    // Vor/Zurück nur mit Ziel (wie die Media Session)
+    [["prev", state.prev, "Vorheriges"], ["next", state.next, "Nächstes"]].forEach(function (entry) {
+        var link = document.querySelector("#" + entry[0] + " a");
+        entry[1].hidden = link == null;
+        var name = link == null ? "" : link.textContent.trim();
+        var label = entry[2] + (name ? ": " + name : "") + " (" + (entry[0] == "prev" ? "P" : "N") + ")";
+        entry[1].title = label;
+        entry[1].setAttribute("aria-label", label);
+    });
+    var duration = hasMediaDuration(media) ? media.duration : 0;
+    var current = media.currentTime || 0;
+    var ratio = duration > 0 ? Math.min(1, current / duration) : 0;
+    if (!state.isSeeking()) {
+        state.progress.value = String(Math.round(ratio * 1000));
+    }
+    state.progress.style.setProperty("--fill", (ratio * 100) + "%");
+    state.time.textContent = formatMediaTime(current) + " / " + formatMediaTime(duration);
+    var volume = media.muted ? 0 : media.volume;
+    setControlButton(state.mute, volume == 0 ? "volumeMute" : (volume < 0.5 ? "volumeLow" : "volumeHigh"), volume == 0 ? "Ton an (M)" : "Ton aus (M)");
+    state.volume.value = String(volume);
+    state.volume.style.setProperty("--fill", (volume * 100) + "%");
+    var title = document.getElementById("mediaTitle").textContent || "STEFFLIX";
+    state.title.textContent = title;
+    state.title.title = title;
+    if (state.doc.title !== title) {
+        state.doc.title = title;   // STEFFLIX.exe übernimmt ihn als Fenstertitel (Taskleiste, Alt+Tab)
+    }
+}
+
+// Tastenkürzel des Players im BiB-Fenster (ohne F: kein Vollbild im BiB)
+function handleDocPipKey(state, event) {
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+    }
+    var media = state.media;
+    var targetIsButton = event.target.closest != null && event.target.closest("button") != null;
+    var targetIsSlider = event.target.tagName == "INPUT";
+    switch (event.key) {
+        case " ":
+        case "k":
+        case "K":
+            if (event.key === " " && targetIsButton) {
+                return;
+            }
+            event.preventDefault();
+            togglePlayback(state.ui);
+            break;
+        case "ArrowLeft":
+        case "ArrowRight":
+            if (targetIsSlider) {
+                return;
+            }
+            event.preventDefault();
+            seekPlayerBy(state.ui, event.key === "ArrowRight" ? 10 : -10, false);
+            break;
+        case "ArrowUp":
+        case "ArrowDown":
+            if (targetIsSlider) {
+                return;
+            }
+            event.preventDefault();
+            var step = event.key === "ArrowUp" ? 0.1 : -0.1;
+            media.volume = Math.round(Math.min(1, Math.max(0, media.volume + step)) * 10) / 10;
+            if (media.volume > 0) {
+                media.muted = false;
+            }
+            break;
+        case "m":
+        case "M":
+            event.preventDefault();
+            media.muted = !media.muted;
+            break;
+        case "n":
+        case "N":
+            event.preventDefault();
+            clickNavigation("next");
+            break;
+        case "p":
+        case "P":
+            event.preventDefault();
+            clickNavigation("prev");
+            break;
+        default:
+            return;
+    }
+    state.showControls();
+}
+
+// back: "Zurück zum Player" (Hauptfenster wiederherstellen, weiterspielen); sonst Schliessen
+// (Video anhalten, Hauptfenster bleibt minimiert). Das Video kommt sofort zurück, dann schliesst
+// das Fenster.
+function closeDocPip(back) {
+    var state = docPip;
+    if (state == null) {
+        return;
+    }
+    restoreDocPip(back);
+    try {
+        state.win.close();
+    } catch (error) {
+        // Fenster schon zu
+    }
+}
+
+// Video und Countdown zurück in den Player. Ohne Angabe (Fenster von aussen geschlossen,
+// {event:"pipWindowClosed"}): wie Schliessen.
+function restoreDocPip(back) {
+    var state = docPip;
+    if (state == null) {
+        return;
+    }
+    docPip = null;
+    back = back === true;
+    clearTimeout(state.hideTimer);
+    state.listeners.forEach(function (entry) {
+        entry[0].removeEventListener(entry[1], entry[2]);
+    });
+    var media = state.media;
+    var wasPlaying = !media.paused && !media.ended;
+    // Zurück an die gemerkte Stelle (Player noch da), sonst nichts: der Player wurde inzwischen ersetzt
+    if (state.marker.parentNode != null) {
+        state.marker.parentNode.insertBefore(media, state.marker);
+        state.marker.parentNode.removeChild(state.marker);
+    }
+    var ui = state.ui;
+    if (ui.shell.isConnected) {
+        if (state.countdownHome != null && state.countdownHome.parentNode === ui.shell) {
+            ui.shell.insertBefore(ui.countdown, state.countdownHome);
+        } else {
+            ui.shell.appendChild(ui.countdown);
+        }
+    }
+    if (back) {
+        // Das Verschieben kann die Wiedergabe anhalten: weiterspielen, wie es im BiB lief
+        if (wasPlaying && media.paused) {
+            media.play().catch(function () {});
+        }
+    } else {
+        media.pause();
+    }
+    ui.pipButton.classList.remove("active");
+    sendToDesktop({ cmd: "pip", on: false, paused: !back });
+    if (getPlayerUI() === ui) {
+        updatePlayButton(ui);
+        updateVolumeControls(ui);
+        updateProgress(ui);
+        showPlayerControls(ui);
+    }
+}
+
+// Das Video im BiB wird entfernt (Wechsel zu Bild oder Musik, Medium fehlt, Ordner- oder Startseite):
+// BiB schliessen, sonst bliebe ein Fenster mit stehendem Bild offen. STEFFLIX.exe setzt den
+// BiB-Zustand zurück, das Fenster bleibt minimiert. Doppelte Meldung mit leavepictureinpicture schadet nicht.
+function reportPipRemoved() {
+    if (docPip != null) {
+        closeDocPip(false);
+        return;
+    }
+    var old = document.getElementById("video");
+    if (old != null && document.pictureInPictureElement === old) {
+        sendToDesktop({ cmd: "pip", on: false, paused: true });
+        document.exitPictureInPicture().catch(function () {});
+    }
 }
 
 // ===================================================================
@@ -1046,7 +1487,8 @@ function loadDecodedMedia(decodedData, pushState) {
     var node = null;
 
     if (mediaExists(medialocation)) {
-        node = adjustMediaType(medialocation, document.getElementById("video"));
+        // Liegt das Video im eigenen BiB-Fenster, dort weiterverwenden (nächste Folge im BiB)
+        node = adjustMediaType(medialocation, docPip != null ? docPip.media : document.getElementById("video"));
         if (node.tagName == "IMG") {
             node.alt = stripExtension(mediaName);
         }
@@ -1524,7 +1966,8 @@ function useNativeControls() {
 
 // Liefert den Player-Zustand, wenn er zum aktuell angezeigten Medium gehört
 function getPlayerUI() {
-    var media = document.getElementById("video");
+    // Im eigenen BiB-Fenster liegt das Video nicht im Dokument des Players
+    var media = docPip != null ? docPip.media : document.getElementById("video");
     return playerUI != null && playerUI.media === media ? playerUI : null;
 }
 
@@ -2027,20 +2470,37 @@ function bindPlayerEvents(ui) {
 
     if (!ui.isAudio) {
         ui.pipButton.addEventListener("click", function () {
-            if (document.pictureInPictureElement) {
+            // Im Fenster von STEFFLIX.exe: eigenes BiB-Fenster (DEC-351), sonst das native BiB
+            if (canUseDocPip()) {
+                if (docPip != null) {
+                    closeDocPip(true);
+                } else {
+                    openDocPip(ui);
+                }
+                return;
+            }
+            // Nur das BiB dieses Videos schliessen; ein anderes (z.B. verwaistes) ersetzt requestPictureInPicture
+            if (document.pictureInPictureElement === media) {
                 document.exitPictureInPicture().catch(function () {});
-            } else if (media.requestPictureInPicture) {
-                media.requestPictureInPicture().catch(function () {});
+            } else {
+                requestNativePip(media).catch(function () {});
             }
         });
         ui.fullscreenButton.addEventListener("click", function () {
             toggleCinemaMode();
         });
+        // Natives BiB (Rückfall): STEFFLIX.exe minimiert das Fenster (PlayerForm.cs). Beim Ende unterscheidet
+        // der Pausenzustand X (Chromium pausiert) von "Zurück zum Tab"; kurz warten, falls die Pause
+        // erst nach dem Ereignis eintrifft. Im Browser und in der App tut sendToDesktop nichts.
         media.addEventListener("enterpictureinpicture", function () {
             ui.pipButton.classList.add("active");
+            sendToDesktop({ cmd: "pip", on: true });
         });
         media.addEventListener("leavepictureinpicture", function () {
             ui.pipButton.classList.remove("active");
+            setTimeout(function () {
+                sendToDesktop({ cmd: "pip", on: false, paused: media.paused || !media.isConnected });
+            }, 200);
         });
         bindSurfaceEvents(ui);
     }
@@ -2504,6 +2964,8 @@ function startProgressLoop(ui) {
 // Vor/Zurück-Knöpfe nur, wenn es ein vorheriges/nächstes Medium gibt
 function updatePlayerNavButtons() {
     var ui = getPlayerUI();
+    updateMediaSession(ui);
+    refreshDocPip();   // Vor/Zurück und Titel im eigenen BiB-Fenster
     if (ui == null) {
         return;
     }
@@ -2517,11 +2979,75 @@ function updatePlayerNavButtons() {
     });
 }
 
+// ===================================================================
+// Media Session: Medientasten, Windows-Mediensteuerung, Vor/Zurück im Bild-im-Bild
+// ===================================================================
+
+// Wird nach jedem Medienwechsel aufgerufen (updatePlayerNavButtons). Vor/Zurück nur mit Ziel,
+// sonst Handler null, damit die Schaltfläche im Bild-im-Bild verschwindet. Das Video-Element
+// bleibt beim Wechsel bestehen (adjustMediaType), daher bleibt das Bild-im-Bild offen.
+// Nicht in der Android-App: dort steuert die eigene MediaSession (Playback.java) die Wiedergabe.
+function updateMediaSession(ui) {
+    if (!("mediaSession" in navigator) || window.StefflixApp) {
+        return;
+    }
+    var session = navigator.mediaSession;
+    var media = ui == null ? null : ui.media;
+    var setHandler = function (action, handler) {
+        try {
+            session.setActionHandler(action, handler);
+        } catch (error) {
+            // Aktion wird vom Browser nicht unterstützt
+        }
+    };
+    setHandler("play", media == null ? null : function () {
+        media.play().catch(function () {});
+    });
+    setHandler("pause", media == null ? null : function () {
+        media.pause();
+    });
+    ["prev", "next"].forEach(function (direction) {
+        var available = media != null && document.querySelector("#" + direction + " a") != null;
+        setHandler(direction == "prev" ? "previoustrack" : "nexttrack", available ? function () {
+            clickNavigation(direction);
+        } : null);
+    });
+    session.metadata = media == null ? null : createMediaSessionMetadata(media.dataset.mediaPath || currentMediaLocation || "");
+}
+
+// Titel wie im Player; Serie bzw. Interpret und Staffel bzw. Album aus den Ordnern
+// (./Serien/Show/S01/x.mp4 -> "Show", "S01"); Vorschaubild als Artwork, falls vorhanden
+function createMediaSessionMetadata(mediaPath) {
+    if (typeof MediaMetadata === "undefined") {
+        return null;
+    }
+    var folders = getMediaFolders(mediaPath);
+    var data = {
+        title: document.getElementById("mediaTitle").textContent || getDisplayName(mediaPath),
+        artist: folders.length >= 2 ? folders[1] : "STEFFLIX",
+        album: folders.length >= 3 ? folders[folders.length - 1] : ""
+    };
+    var preview = mediaPath ? getInheritedPreview(mediaPath) : null;
+    if (preview != null) {
+        try {
+            data.artwork = [{ src: new URL(preview, window.location.href).href }];
+        } catch (error) {
+            // Ohne Artwork
+        }
+    }
+    try {
+        return new MediaMetadata(data);
+    } catch (error) {
+        return null;
+    }
+}
+
 function updatePlayerTitle(text) {
     var ui = getPlayerUI();
     if (ui != null && ui.title) {
         ui.title.textContent = text;
     }
+    refreshDocPip();
 }
 
 // Autoplay-Anzeige in der Leiste: ausgegraut, wenn Autoplay aus ist

@@ -1,0 +1,82 @@
+# STEFFLIX – Desktop (`STEFFLIX.exe`)
+
+Quellcode in `SFLIX_Tools\SflixTools\`. Bis 3.x hiess das Programm „Updater“ (`updateStefflix.exe`); im Code und in Dateinamen steht oft noch „Updater“ (`updater_settings.json`, `updater_info.js`, Komponente `updater` in `news.json`). Gelesen von der Rolle Entwicklung (bei Änderungen am Desktop), Architekt und Prüfung; nur den nötigen Abschnitt lesen.
+
+## Grundsätze
+- C#-WinForms, .NET Framework 4.x, gebaut mit `csc`, **C# 5**: keine String-Interpolation, kein `?.`, keine expression-bodied Members.
+- Dateien immer über `FileOps` verschieben und löschen (nicht direkt mit `File`/`Directory`).
+- In Texten für Nutzer nur „System- und versteckte Ordner“ schreiben, keine einzelnen Ordnernamen.
+- Bei Änderungen die Hilfe nachführen: `src\HelpContent.cs`, Hilfe in `start.html`, `README.md`.
+- Im Release-Ordner (es gibt `SFLIX_Tools\Release\release.ps1`; alter Name `SFLIX Tools` wird auch erkannt) sind Update, Daten einlesen, Importer, Download, Tools und Lizenz gesperrt (`ReleaseFolder`, `Net.IsReleaseFolder`).
+- Funktionen: STEFFLIX im eigenen Fenster (Player mit WebView2), Tools als zweites Fenster, Update von STEFFLIX und sich selbst über GitHub, Daten einlesen (`data.js`), Importer, Download (HLS), Tools (Vorschaubilder, Folgen umbenennen, Duplikate, Zusammenführen, Konvertieren, Medien prüfen, Ablagen leeren), Lizenz/Feedback (Webhook je Lizenz), Hilfe, Setup.
+
+## Ordner
+| Datei | Zweck |
+|---|---|
+| `build.ps1` | Baut `dist\STEFFLIX.exe`: lädt beim ersten Mal das NuGet-Paket `Microsoft.Web.WebView2` (feste Version 1.0.4258.31 mit SHA256, gleich wie `WebViewLibs.SdkVersion`) nach `obj\webview2\`, dann `tools\AssetGen.cs` (Icon und Banner aus Branding.cs) → `obj\`, dann alle `src\*.cs` mit den WebView2-DLLs als Ressourcen `webview2.*`. Version in `src\Program.cs`. Ergebnis etwa 1,7 MB. |
+| `README.md` | Entwickler-Doku: Aufgaben, Registerkarten, Desktop (Player, Brücke, Umstieg), Release, Selbst-Update, ffmpeg, `__`-Ordner, Konvertieren, Headless-Aufruf, Testvariablen. |
+| `release_state.json` | Fingerabdruck des zuletzt bereitgestellten Quellcodes und Version (von `release.ps1`). |
+| `dist\STEFFLIX.exe` | Build-Ergebnis. |
+| `obj\` | Zwischenprodukte: `app.ico`, `app_pip.ico` (Symbol des BiB-Fensters, eingebettet), `AssetGen.exe`, `banner.png`, `logo256.png`, `logo256_pip.png`, `webview2\`, `tests\` (Test-DLLs). |
+| `tools\AssetGen.cs` | Erzeugt Icon und Banner-Vorschau beim Build. |
+| `tools\publish.ps1` | Alt: EXE samt `ffmpeg.json` in einen anderen Klon übertragen. Im normalen Ablauf nicht nötig. |
+
+## `src\`
+| Datei | Zweck |
+|---|---|
+| `Program.cs` | Einstieg (`Main` → `WebViewLibs.Register`, dann `Start`) und Kommandozeile (`--tools`, `--player`, `--run`, `--headless`, `--install` mit `--ffmpeg [Ordner]` und `--license`, `--license`, `--license-remove`, `--log`, `--updated`, `--migrated`, `--data-folder`), Umstieg (`ExeMigration.Run`), Single-Instance-Mutex (zweiter Start: `PostMessage` an `DesktopHost.ActivationMessage`, Exit 3), AssemblyVersion. Ohne Angaben Player, mit `--tools`/`--run` Tools. Kein STEFFLIX-Ordner → `InstallForm`. |
+| `Desktop.cs` | `WebViewLibs` (eingebettete WebView2-DLLs über `AssemblyResolve`; Loader nach `%LOCALAPPDATA%\STEFFLIX\webview2\<SDK>\<Arch>`; `UserDataFolder` → `%LOCALAPPDATA%\STEFFLIX\webview\<installId>`), `WebViewApi`, `RuntimeInstaller` (Evergreen-Bootstrapper, `Signature.CheckMicrosoft`), `Browsers` (installierte Browser, `Open`, `DownloadsFolder`), `Shortcuts` (Symbol über `%LOCALAPPDATA%\STEFFLIX\stefflix.ico`, `RefreshIconsInBackground`), `ExeMigration` (updateStefflix.exe → STEFFLIX.exe), `DesktopHost` (`ApplicationContext`: `ShowPlayer`, `ShowTools(page)` (ausgeblendete Tools wieder zeigen, `HideOnClose`; schliesst sich der Player, werden ausgeblendete Tools richtig geschlossen), `ConfirmPlayerClose`, `OnTasksFinished` → `NotifyDataChanged`, `CheckForUpdates`, `ActivationWindow`). In `DesktopHost` immer `Sflix.MainForm` schreiben. |
+| `PlayerForm.cs` | Player-Fenster mit WebView2 (`file://…/start.html`): ohne Kontextmenü/DevTools/Zoom (DevTools mit `player.devtools` bzw. `SFLIX_DEVTOOLS=1`), `--autoplay-policy=no-user-gesture-required`, fremde Adressen im Standardbrowser, Downloads mit „Speichern unter“, Vollbild, dunkle Titelleiste, Lage `player.bounds`/`player.maximized`, Brücke `OnWebMessage` (`ready`, `tools`, `fullscreen`, `reload`, `importResult`, `pip`), `ImportBackup`, `NotifyDataChanged`, `NotifyToolsShown`, beim ersten `ready` `DataImportDialog` und `host.CheckForUpdates`. Bild-im-Bild (DEC-341/344): `OnPip` minimiert und merkt `stateBeforePip`, bei `paused=false` wiederherstellen und `Activate`, bei `paused=true` minimiert lassen; `ResetPip` (auch beim Neu laden und Schliessen); `SetPipWindowIcon` sucht per `EnumWindows` das Fenster `Chrome_WidgetWin_1` im Prozess `BrowserProcessId` (ohne `WS_EX_TOOLWINDOW`, bis 10 Versuche à 200 ms) und setzt `app_pip.ico` per `WM_SETICON`; nicht gefunden: nur `Trace`-Zeile. Leere Fensteranfragen (`about:blank`) ersetzen nie den Player. Eigenes BiB-Fenster (DEC-351, Standard ein; aus mit `player.docpip` = false bzw. `SFLIX_DOCPIP=0`, dann natives BiB): `window.sflixDocPip`, Brücke `pipWindow` → `pipWindowReady`, `NewWindowRequested` mit Deferral beantwortet durch `DocPipWindow` (eigene WebView2 in derselben Umgebung, ohne Titelleiste, TopMost, `app_pip.ico`, Titel aus `DocumentTitleChanged`, Rand zum Vergrössern per `WM_NCHITTEST`, Verschieben über `pipDrag` → `BeginDrag`, Lage und Breite in `player.pipBounds` mit `ApplySavedBounds` innerhalb eines sichtbaren Bildschirms, Höhe im Seitenverhältnis der Anfrage), beim Schliessen `pipWindowClosed`; Programmende schliesst es (`OnFormClosing`). Fenstersuche und `StartPipIconSearch` nur im Rückfall. |
+| `DesktopDialogs.cs` | `RuntimeDialog` (WebView2 fehlt), `DataImportDialog` (Daten aus dem Browser übernehmen: `start.html?export=app`, Download-Ordner nach `stefflix-sicherung*.json` absuchen), `DesktopUi`. |
+| `MainForm.cs` | Fenster der Tools (siehe „Aufbau von MainForm“), enthält `TaskRunner`. `LoadStateInBackground` (beim Laden und Wiedereinblenden: Versionen, Rückgängig, Kategorien, Cache-Grösse, Lizenzstatus im Hintergrund, Felder bis dahin „…“); `HideOnClose`: Schliessen blendet nur aus, solange der Player offen ist. |
+| `LogView.cs` | Protokoll: `LogPanel` (gefärbte Zeilen, Suche, Filter, „In Datei speichern“, `ErrorAdded`) und `SplitBar` (Breite in `log.width`). |
+| `Controls.cs` | `Ui.Post` (Rückruf aus Hintergrund-Threads in den UI-Thread: nur bei lebendem Fenster, fängt fehlendes Handle ab; immer statt `BeginInvoke` aus dem Thread-Pool, sonst beendet ein geschlossenes Fenster den ganzen Prozess), `Theme` (Farben, `S()` für DPI), `LogToggle`, `WrapRow` (umbrechende Knopfzeile mit fester Höhe aus der Breite, optional ein Element fest rechts in der ersten Zeile; statt verschachtelter AutoSize-Panels), `BannerPanel`, `TabStrip` (auch `SetTab`), `Glyph`/`Glyphs`, `TileButton`, `DarkCheckBox` (`Switch`), `DarkProgress`. |
+| `Branding.cs` | Logo und Kopfbild mit GDI+, Icon-Erzeugung (`RenderLogo(size, pip)`/`WriteIcon(path, pip)`: mit Bild-im-Bild-Zeichen für `app_pip.ico`). Farben `Branding.Red`/`DarkRed`. |
+| `Dialogs.cs` | `ConflictDialog` (ersetzen/überspringen/„Als Kopie speichern“, mit `CompareView`), `UpdateDialog`, `PatchNotesDialog` (erst in `OnLoad` befüllen; zuerst Einträge des Programms nach „Desktop x.y.z“, Schalter „STEFFLIX“/„Android-App“, `GroupsOf`, „Alle Versionen“), `GlyphBox`, `InputDialog`. |
+| `UpdateTask.cs` | `UpdateInfo`, `UpdateCheck` (Web-Dateien gegen `checksums.json`, Version aus GitHub-`version.js`, Desktop, ffmpeg), `PatchVersion`/`PatchNotes` (lädt `news.json`, `ComponentOf`), `WebVersion` (x.y.z, Umrechnung, Vergleich), `SelfUpdate` (EXE ersetzen über .new/.old, `CleanupOld`, `ReadVersion` aus den Bytes: PE → RT_VERSION → `VS_FIXEDFILEINFO`), `UpdateTask`. |
+| `Net.cs` | Download mit TLS 1.2, `RawUrl`/`BinUrl` (`SFLIX_UPDATE_URL`), `WebFiles`/`ObsoleteFiles`, `WebFilesFor`/`ObsoleteFilesFor` (aus `checksums.json`, gefiltert mit `IsAllowedWebPath`; nie `ProtectedFiles` wie `data.js`, `install.js`, `license.js`), Prüfsummen, `InstallFile` mit .old-Sicherung und Rollback, `RemoveObsoleteFiles` (nicht im Release-Ordner: `IsReleaseFolder`, `DevFolderNames`), `RemoveOldBackups`. |
+| `Ffmpeg.cs` | ffmpeg-Verwaltung (`FfmpegLocation`: `%LOCALAPPDATA%\STEFFLIX\ffmpeg`, gewählter Ordner `ffmpeg.folder`, `MigrateLegacy`; `FfmpegManifest`, `InstallNow`), `Probe`, Encoder-Erkennung. |
+| `DataTask.cs` | „Daten einlesen“ → `data.js`, korrigiert Namen, verkleinert Vorschaubilder (Original nach `Preview\__original`), `LogOverview`, `AppendRenamedPairs`, Teil-Einlesen `Run(ctx, folders)` (ersetzt nur gewählte Zweige, byte-gleich). `Crawl` listet mit `DirectoryInfo.GetFileSystemInfos` (Art und Attribute aus der Auflistung, `Folders.Ignore(FileSystemInfo)`); `ShrinkPreview` liest zuerst die Grösse aus dem Dateikopf (`ImageHeader`: JPEG SOF mit EXIF-Ausrichtung, PNG IHDR, BMP) und dekodiert nur bei Übergrösse oder 90°-Drehung. |
+| `ImportTask.cs` | Importer: `ImportOptions`, `MediaTypes`, `Plan`, Kopieren/Verschieben, Konvertieren, `ConflictAnswer` (`Replace`, `Copy`, `Remember`, `Resolve`) für alle Tools. |
+| `ConvertTask.cs` | Konvertieren (H.264/AAC, je Tonspur eine Datei, Originale nach `__konvertiert`; Musik → MP3 mit `convert.audio`, `IsAudioReady` prüft ALAC), `OnlyFiles`, `PlaceResults`. |
+| `MergeTask.cs`, `MergeDialog.cs` | Gesplittete Videos (pt1, pt2 …) zusammenführen. |
+| `PreviewTask.cs` | Vorschaubilder 480×270, Waisen nach `Preview\__gelöscht`, `MakeFor`, `MakeMany` parallel, mit Musik danach `AlbumCovers.Run`. |
+| `AlbumCoverTask.cs` | Albumbilder: `AlbumCandidate`, `AlbumCovers.Run`/`Find`/`Apply`/`Load`, `AlbumCoverDialog`. |
+| `CleanupTask.cs`, `CleanupDialog.cs` | „Ablagen leeren“: `__`-Ordner nur im Installationsordner (`Folders.IsInsideRoot`), Verknüpfungen nie verfolgen; `CleanupFolder.Kind`, `CleanupChoice` (Löschen oder `Restore`), `CleanupFilesDialog`. `ItemChecked` erst nach `Shown` auswerten. |
+| `EpisodeTask.cs`, `EpisodeDialogs.cs` | „Folgen umbenennen“: Quellen `SerienjunkiesSource`, `FernsehserienSource`, `TvmazeSource`; `EpisodeList`, `ParseEpisodes`, `BuildName`, `EpisodeCache` (`folgen_cache.json`), `Plan`, `IsSeasonFolder`, `__ersetzt`, `renamed.js`, Rückgängig (`folgen_rueckgaengig.json`, Aufgabe `renameundo`); Dialoge `EpisodeSearchDialog` (Quellenwahl `SourceBox` in beide Richtungen), `EpisodeCacheDialog` (auch für in diesem Lauf gemerkte Listen), `EpisodePlanDialog` (Quellenwahl setzt `EpisodePlan.SwitchTo`; `Run` lädt im Arbeitsthread über `SwitchSource` neu und plant neu). Gespeichert wird nur die Liste, mit der umbenannt wird (`SaveUsed`). |
+| `InstallTask.cs`, `InstallForm.cs` | Setup in einen neuen Ordner (kopiert sich als `STEFFLIX.exe`), `InstallOptions` (ffmpeg, Lizenz, Verknüpfungen). |
+| `LogFile.cs` | `updater.log`: `Append` mit Kürzung (über 1 MB auf 256 KB), `RemoveLegacyOnce`. |
+| `License.cs` | `LicenseKey` (SFX2: Webhook-ID + Token + CRC-16, XOR xorshift32), Webhook-Versand (`Send`, multipart), `LicenseStore` (`license.js`, `Status`, `Save`, `ConfirmPending`, `Remove`, `SendFeedback`). |
+| `FeedbackPage.cs` | Reiter „Lizenz“ bzw. „Feedback“. Status setzt `MainForm` über `ApplyStatus` (im Hintergrund gelesen), `RefreshState` nur nach Aktionen. |
+| `HelpPage.cs`, `HelpContent.cs` | Reiter „Hilfe“; Texte in `HelpContent.cs`. |
+| `CompareView.cs` | `MediaFacts` (`Basic(FileInfo)` mit Daten aus der Auflistung), `CompareView` (Vergleichstabelle; ffprobe im Hintergrund mit `Workers.ForEach`, 2 gleichzeitig). |
+| `MediaCheckTask.cs` | „Medien prüfen“ (`MediaCheck.IsPlayable`/`Reason`, parallel mit `MediaCache`, leere Ordner `FindEmptyFolders` und `CountLeftovers` mit `DirectoryInfo`-Auflistung, `MoveFolderToDeleted`), `MediaCheckDialog` (VirtualMode über `VirtualRows`), `Execute`. |
+| `MediaCache.cs` | Gemerkte ffprobe-Ergebnisse in `sflix_sys\medien_cache.json` (je ffmpeg-Version über `FfmpegTools.CachedVersion`, einmal je Lauf gelesen; 180 Tage). `TakeStats` liefert die Protokollzeile mit Treffern, neu untersuchten Dateien und ggf. dem Grund für das Verwerfen. |
+| `Lists.cs` | `DarkList.Apply` (Listen mit Häkchen: Markieren ändert keine Häkchen, Leertaste schaltet alle markierten um), `ListSort` (auch `Virtual`), `VirtualRows` (VirtualMode: Zeilen in `Rows`, `SetRows` für Filter, `Selected()`, Sortieren der Datenliste mit erhaltener Auswahl; nicht mit CheckBoxes, `list.Items` nie aufzählen). |
+| `DuplicateTask.cs` | „Duplikate finden“ (`QuickFingerprint`, SHA256, gleiche Folge, gleicher Name), `DuplicateDialog`. |
+| `DownloadTask.cs` | Reiter „Download“: `DownloadJob`, `DownloadStore` (`sflix_sys\downloads.json`, Zwischenordner `%LOCALAPPDATA%\STEFFLIX\downloads\<Id>`), `Hls` (Master-Playlist, AES-128 mit lokalem Schlüssel; abgelehnt: SAMPLE-AES, Kopierschutz, BYTERANGE, Live), `Http`, `DownloadManager` (Warteschlange `download.parallel`, Pause/Fortsetzen/`ChangeUrl`, `Restart` = „Wiederholen“ bei Fehler: Zwischenordner über `DeleteTemp` löschen, Zähler zurück, neu laden; `Join` mit ffmpeg `-c copy`, `Verify`, `PostProcess`, `FolderReady`, `SuggestName`). `downloads.json` wird im Hintergrund geladen (`LoadJobs`): vorher kein `Save` (`savePending`) und kein `RemoveOrphans`; von aussen `Snapshot()` statt `Jobs`. |
+| `DownloadPage.cs` | Reiter „Download“: Liste, `DownloadAddDialog` (Ordnerliste im Hintergrund), `DownloadUrlDialog`, `DownloadMessagesDialog`. Knopf „Wiederholen“ (nur Fehler ausgewählt) ruft `Restart`, sonst „Fortsetzen“. Im Release-Ordner gesperrt. |
+| `Core.cs` | `App` (Root, Version, `ExeName` = `STEFFLIX.exe`, `LegacyExeName`, `IsReleaseFolder`), `ReleaseFolder` (`RemoveGenerated`, Sperren), `UpdaterInfo`, `InstallId`, `TaskContext` (Log, Progress, Rückfragen), `Settings`, `Folders` (`IsInsideRoot`: vorhandene Pfadteile ohne Verknüpfung, fehlende erlaubt; `Skip`, `Ignore`, `IgnoreAny`). |
+| `Util.cs` | `Workers` (parallel, `tools.parallel`), Mini-JSON, `FileOps` (Schreibschutz, Recht „Löschen“, Wiederholen, Hinweis für NAS), `Proc`, `Fmt`. |
+
+## Aufbau von MainForm
+- **Registerkarten** (`TabStrip`): UPDATES, IMPORTER, DOWNLOAD (`PageDownload`, fertige Zielordner über `RequestDataRead`/`RunPendingDataRead`; beim Schliessen werden Downloads pausiert), TOOLS, LIZENZ bzw. FEEDBACK, HILFE.
+  - **Updates**: Kacheln „Update“ und „Daten einlesen“, Karte „Versionen“.
+  - **Importer**: Liste, Ziel und Optionen.
+  - **Tools**: Kacheln (höchstens vier je Reihe) mit Ordnerfeld (`FolderPick`); Folgen umbenennen mit Serienordner und „Letztes Umbenennen rückgängig“; Reiter „Einstellungen“ (Installationsordner, ffmpeg, „Gleichzeitig“ `tools.parallel`, „Gemerkte Prüfergebnisse“).
+- **Reiterwechsel** (`ShowPage`, `ShowOptionPanel`) in `FreezePainting` (WM_SETREDRAW).
+- **Start** führt nur die sichtbare Karte aus; Importer und Tools hängen `data` an (`TaskRunner.DataFolders`). Reihenfolge in `TaskIds`: update, ffmpeg, cleanup, import, rename, renameundo, dupes, merge, convert, check, preview, data.
+- **Update-Prüfung beim Start**: `CheckForUpdateInBackground(true)` → `UpdateDialog`; nach Selbst-Update Neustart mit `--updated --run <rest>`.
+- **Drag and Drop** wechselt zum Importer.
+- **Bekannte Eigenheit**: Im Release-Ordner erscheinen Entwicklungsordner (`SFLIX_Tools`, `docs`, `coordination`) als Import-Kategorie, weil `LoadCategories` alle Ordner der Wurzel listet. Bei Nutzern gibt es sie nicht.
+
+## Lokale Dateien bei Nutzern
+| Datei | Zweck |
+|---|---|
+| `sflix_sys\updater_settings.json` | Einstellungen (`task.*`, `import.*`, `data.*`, `convert.*`, `log.width`, `ffmpeg.folder`, `download.*`, `tools.parallel`, `player.*` …). |
+| `sflix_sys\updater_info.js` | `{ updater, ffmpeg }` für STEFFLIX. |
+| `sflix_sys\folgen_cache.json`, `folgen_rueckgaengig.json` | Folgenlisten und Rückgängig-Protokoll von „Folgen umbenennen“. |
+| `sflix_sys\medien_cache.json` | Gemerkte Prüfergebnisse (persönlich, `Net.ProtectedFiles`). |
+| `sflix_sys\downloads.json` | Downloads mit Adressen (persönlich, `Net.ProtectedFiles`, nie im Release-Ordner). |
+| `sflix_sys\updater.log` | Protokoll (über 1 MB gekürzt). |
+| `%LOCALAPPDATA%\STEFFLIX\` | ffmpeg, WebView2-Loader und -Daten, Zwischenordner der Downloads, `stefflix.ico`. |

@@ -22,6 +22,7 @@ namespace Sflix
     {
         public string Target;
         public List<string> Parts = new List<string>();
+        public List<long> PartSizes = new List<long>();   // aus der Auflistung (Walk), gleiche Reihenfolge wie Parts
         public List<MediaInfo> Infos = new List<MediaInfo>();
         public double TotalDuration;
         public long TotalSize;
@@ -111,19 +112,25 @@ namespace Sflix
         static void Walk(string dir, List<MergeGroup> groups, TaskContext ctx)
         {
             ctx.Check();
-            string[] files, dirs;
-            try
-            {
-                files = Directory.GetFiles(dir);
-                dirs = Directory.GetDirectories(dir);
-            }
+            // Grössen und Attribute aus der Auflistung
+            FileSystemInfo[] entries;
+            try { entries = new DirectoryInfo(dir).GetFileSystemInfos(); }
             catch (UnauthorizedAccessException) { return; }
+            List<FileInfo> files = new List<FileInfo>();
+            List<DirectoryInfo> dirs = new List<DirectoryInfo>();
+            foreach (FileSystemInfo e in entries)
+            {
+                if (e is DirectoryInfo) dirs.Add((DirectoryInfo)e);
+                else if (e is FileInfo) files.Add((FileInfo)e);
+            }
+            Dictionary<string, long> sizeOf = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
 
             Dictionary<string, Candidate> candidates = new Dictionary<string, Candidate>();
             List<string> order = new List<string>();
-            foreach (string path in files)
+            foreach (FileInfo info in files)
             {
-                string file = Path.GetFileName(path);
+                string file = info.Name;
+                try { sizeOf[file] = info.Length; } catch { }
                 string stem, ext;
                 FileOps.SplitExt(file, out stem, out ext);
                 if (!VideoExtensions.Contains(ext.ToLowerInvariant())) continue;
@@ -167,28 +174,35 @@ namespace Sflix
                 }
                 MergeGroup g = new MergeGroup();
                 g.Target = Path.Combine(dir, c.Title + c.Ext);
-                foreach (int n in numbers) g.Parts.Add(Path.Combine(dir, c.Parts[n][0]));
+                foreach (int n in numbers)
+                {
+                    g.Parts.Add(Path.Combine(dir, c.Parts[n][0]));
+                    long size;
+                    g.PartSizes.Add(sizeOf.TryGetValue(c.Parts[n][0], out size) ? size : -1);
+                }
                 groups.Add(g);
             }
 
-            foreach (string d in dirs)
+            foreach (DirectoryInfo d in dirs)
             {
                 // __teile (und andere Ablagen der Werkzeuge) nicht durchsuchen
                 if (Folders.Ignore(d)) continue;
-                Walk(d, groups, ctx);
+                Walk(d.FullName, groups, ctx);
             }
         }
 
         static void Inspect(MergeGroup g, TaskContext ctx)
         {
-            foreach (string part in g.Parts)
+            for (int i = 0; i < g.Parts.Count; i++)
             {
+                string part = g.Parts[i];
                 try
                 {
                     MediaInfo info = ctx.Ffmpeg.Probe(part, ctx.Token);
                     g.Infos.Add(info);
                     g.TotalDuration += info.Duration;
-                    g.TotalSize += new FileInfo(part).Length;
+                    long known = i < g.PartSizes.Count ? g.PartSizes[i] : -1;
+                    g.TotalSize += known >= 0 ? known : new FileInfo(part).Length;
                 }
                 catch (OperationCanceledException) { throw; }
                 catch (Exception e)

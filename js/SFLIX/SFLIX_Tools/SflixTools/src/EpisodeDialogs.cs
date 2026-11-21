@@ -10,21 +10,29 @@ using System.Windows.Forms;
 
 namespace Sflix
 {
-    // Serie suchen: Treffer der aktuellen Quelle, "Nächste Quelle" wechselt zu TVmaze.
-    // Netzwerkzugriffe laufen im Hintergrund, das Fenster bleibt bedienbar.
+    // Serie suchen: Treffer der gewählten Quelle; die Quelle lässt sich in beide Richtungen wechseln
+    // (seit Desktop 4.0.12, vorher nur "nächste Quelle"). Ohne Treffer sucht "Suchen" automatisch in
+    // der nächsten Quelle weiter. Netzwerkzugriffe laufen im Hintergrund, das Fenster bleibt bedienbar.
     public class EpisodeSearchDialog : Form
     {
         readonly TextBox term;
-        readonly Button searchButton, nextButton, loadButton;
-        readonly Label sourceLabel, status;
+        readonly Button searchButton, loadButton;
+        readonly ComboBox sourceBox;
+        readonly Label status;
         readonly ListView list;
         int source;
+        bool settingSource;
         int busy;   // laufende Anfrage (Nummer), ältere Antworten werden verworfen
         CancellationTokenSource cts = new CancellationTokenSource();
         public EpisodeList Result;
 
-        public EpisodeSearchDialog(string searchTerm)
+        public EpisodeSearchDialog(string searchTerm) : this(searchTerm, null) { }
+
+        // startSource: Name der Quelle, mit der die Suche beginnt (null = erste Quelle)
+        public EpisodeSearchDialog(string searchTerm, string startSource)
         {
+            for (int i = 0; i < EpisodeSource.All.Length; i++)
+                if (startSource != null && string.Equals(EpisodeSource.All[i].Name, startSource, StringComparison.OrdinalIgnoreCase)) source = i;
             Text = "Folgen umbenennen – Serie suchen";
             BackColor = Theme.Back;
             ForeColor = Theme.Text;
@@ -51,14 +59,24 @@ namespace Sflix
             term.Margin = new Padding(0, Theme.S(3), Theme.S(8), 0);
             searchButton = Theme.MakeButton("Suchen", false);
             searchButton.Margin = new Padding(0);
-            searchButton.Click += delegate { source = 0; Search(); };
+            searchButton.Click += delegate { Search(true); };
             top.Controls.Add(l, 0, 0);
             top.Controls.Add(term, 1, 0);
             top.Controls.Add(searchButton, 2, 0);
-            sourceLabel = Theme.MakeLabel("", true);
-            sourceLabel.Margin = new Padding(0, Theme.S(8), 0, 0);
-            top.Controls.Add(sourceLabel, 0, 1);
-            top.SetColumnSpan(sourceLabel, 3);
+            Label sl = Theme.MakeLabel("Quelle:", false);
+            sl.Margin = new Padding(0, Theme.S(10), Theme.S(8), 0);
+            sourceBox = SourceBox();
+            sourceBox.Margin = new Padding(0, Theme.S(7), 0, 0);
+            sourceBox.SelectedIndex = source;
+            // Andere Quelle gewählt: dort suchen (ohne automatisch weiterzuspringen)
+            sourceBox.SelectedIndexChanged += delegate
+            {
+                if (settingSource || sourceBox.SelectedIndex < 0) return;
+                source = sourceBox.SelectedIndex;
+                Search(false);
+            };
+            top.Controls.Add(sl, 0, 1);
+            top.Controls.Add(sourceBox, 1, 1);
 
             list = new ListView();
             list.View = View.Details;
@@ -94,13 +112,10 @@ namespace Sflix
             buttons.Padding = new Padding(Theme.S(12), Theme.S(6), Theme.S(12), Theme.S(12));
             loadButton = Theme.MakeButton("Folgen laden", true);
             Button cancel = Theme.MakeButton("Abbrechen", false);
-            nextButton = Theme.MakeButton("Nicht dabei – nächste Quelle", false);
             loadButton.Click += delegate { LoadEpisodes(); };
             cancel.Click += delegate { Result = null; DialogResult = DialogResult.Cancel; };
-            nextButton.Click += delegate { if (source < EpisodeSource.All.Length - 1) { source++; Search(); } };
             buttons.Controls.Add(loadButton);
             buttons.Controls.Add(cancel);
-            buttons.Controls.Add(nextButton);
 
             Controls.Add(listHost);
             Controls.Add(top);
@@ -110,17 +125,44 @@ namespace Sflix
             CancelButton = cancel;
             term.Enter += delegate { AcceptButton = searchButton; };
             list.Enter += delegate { AcceptButton = loadButton; };
-            Shown += delegate { list.Columns[2].Width = -2; Search(); };
+            Shown += delegate { list.Columns[2].Width = -2; Search(true); };
             FormClosed += delegate { cts.Cancel(); };
         }
 
         EpisodeSource Current { get { return EpisodeSource.All[source]; } }
+
+        // Auswahlliste aller Quellen ("Name (Sprache)"), Index wie EpisodeSource.All
+        public static ComboBox SourceBox()
+        {
+            ComboBox box = new ComboBox();
+            box.DropDownStyle = ComboBoxStyle.DropDownList;
+            box.FlatStyle = FlatStyle.Flat;
+            box.BackColor = Theme.Input;
+            box.ForeColor = Theme.Text;
+            int width = 0;
+            foreach (EpisodeSource s in EpisodeSource.All)
+            {
+                string text = s.Name + " (" + s.Language + ")";
+                box.Items.Add(text);
+                width = Math.Max(width, TextRenderer.MeasureText(text, box.Font).Width);
+            }
+            box.Width = width + Theme.S(36);
+            return box;
+        }
+
+        void ShowSource()
+        {
+            settingSource = true;
+            try { sourceBox.SelectedIndex = source; }
+            finally { settingSource = false; }
+        }
 
         void SetBusy(bool value, string text)
         {
             status.Text = text;
             searchButton.Enabled = !value;
             term.Enabled = !value;
+            sourceBox.Enabled = !value;
             UseWaitCursor = value;
             UpdateButtons(value);
         }
@@ -130,16 +172,16 @@ namespace Sflix
         void UpdateButtons(bool isBusy)
         {
             loadButton.Enabled = !isBusy && list.SelectedItems.Count == 1;
-            nextButton.Enabled = !isBusy && source < EpisodeSource.All.Length - 1;
         }
 
-        void Search()
+        // autoAdvance: ohne Treffer automatisch in der nächsten Quelle weitersuchen
+        void Search(bool autoAdvance)
         {
             string name = term.Text.Trim();
             if (name.Length == 0) { status.Text = "Bitte einen Namen eingeben."; return; }
             int request = ++busy;
             EpisodeSource src = Current;
-            sourceLabel.Text = "Quelle " + (source + 1) + " von " + EpisodeSource.All.Length + ": " + src.Name + " (" + src.Language + ")";
+            ShowSource();
             list.Items.Clear();
             SetBusy(true, "Suche auf " + src.Name + " …");
             CancellationToken token = cts.Token;
@@ -156,11 +198,11 @@ namespace Sflix
                     {
                         if (request != busy || IsDisposed) return;
                         if (error != null) { SetBusy(false, src.Name + ": Fehler bei der Suche (" + error + ")."); return; }
-                        if (hits.Count == 0 && source < EpisodeSource.All.Length - 1)
+                        if (hits.Count == 0 && autoAdvance && source < EpisodeSource.All.Length - 1)
                         {
                             // Keine Treffer: automatisch in der nächsten Quelle weitersuchen
                             source++;
-                            Search();
+                            Search(true);
                             return;
                         }
                         foreach (SeriesHit h in hits.GetRange(0, Math.Min(hits.Count, 25)))
@@ -175,8 +217,8 @@ namespace Sflix
                         ListSort.Of(list).Apply();
                         if (list.Items.Count > 0) { list.Items[0].Selected = true; list.Focus(); }
                         SetBusy(false, hits.Count == 0
-                            ? "Keine Treffer. Tipp: Originaltitel oder einen kürzeren Namen versuchen."
-                            : hits.Count + (hits.Count == 1 ? " Treffer" : " Treffer") + ". Richtige Serie wählen und „Folgen laden“ klicken.");
+                            ? src.Name + ": keine Treffer. Tipp: andere Quelle wählen, Originaltitel oder einen kürzeren Namen versuchen."
+                            : src.Name + ": " + hits.Count + " Treffer. Richtige Serie wählen und „Folgen laden“ klicken, sonst oben eine andere Quelle wählen.");
                     });
                 }
                 catch (InvalidOperationException) { }
@@ -221,14 +263,18 @@ namespace Sflix
         }
     }
 
-    // Gespeicherte Folgenliste gefunden: verwenden, aktualisieren (gleiche Quelle), neu suchen oder abbrechen
+    // Gespeicherte Folgenliste gefunden: verwenden, aktualisieren (gleiche Quelle), neu suchen oder abbrechen.
+    // session = true: Liste wurde in dieser Sitzung schon von dieser Quelle geladen (Quellenwechsel in der
+    // Vorschau); sie wird nie automatisch verwendet.
     public class EpisodeCacheDialog : Form
     {
         string choice;
 
-        public EpisodeCacheDialog(EpisodeList cached, string failure)
+        public EpisodeCacheDialog(EpisodeList cached, string failure) : this(cached, failure, false) { }
+
+        public EpisodeCacheDialog(EpisodeList cached, string failure, bool session)
         {
-            Text = "Gespeicherte Folgenliste";
+            Text = session ? "Gemerkte Folgenliste" : "Gespeicherte Folgenliste";
             ConflictDialog.Setup(this);
 
             TableLayoutPanel root = new TableLayoutPanel();
@@ -237,16 +283,20 @@ namespace Sflix
             root.ColumnCount = 1;
             root.Padding = new Padding(Theme.S(16), Theme.S(14), Theme.S(16), Theme.S(12));
 
-            Label title = Theme.MakeLabel("Für „" + cached.SeriesTitle + "“ ist eine Folgenliste gespeichert.", false);
+            Label title = Theme.MakeLabel(session
+                ? "Von " + cached.Source + " ist in dieser Sitzung schon eine Folgenliste geladen: „" + cached.SeriesTitle + "“."
+                : "Für „" + cached.SeriesTitle + "“ ist eine Folgenliste gespeichert.", false);
             title.Font = new Font("Segoe UI Semibold", 10.5f);
             title.MaximumSize = new Size(Theme.S(560), 0);
             Label info = Theme.MakeLabel(cached.Source + ", geladen am " + cached.Loaded.ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) +
                 ", " + cached.Seasons.Count + (cached.Seasons.Count == 1 ? " Staffel, " : " Staffeln, ") + cached.Count + " Folgen", true);
             info.MaximumSize = new Size(Theme.S(560), 0);
             info.Margin = new Padding(0, Theme.S(4), 0, Theme.S(10));
-            Label question = Theme.MakeLabel(failure == null
-                ? "Gespeicherte Liste verwenden, von " + cached.Source + " aktualisieren oder neu suchen (zuerst auf " + EpisodeSource.All[0].Name + ")?"
-                : "Aktualisieren ist fehlgeschlagen (" + failure + "). Die gespeicherte Liste bleibt erhalten und kann verwendet werden.", false);
+            Label question = Theme.MakeLabel(failure != null
+                ? (session ? "Neu laden ist fehlgeschlagen (" + failure + "). Die gemerkte Liste kann weiterhin verwendet werden."
+                           : "Aktualisieren ist fehlgeschlagen (" + failure + "). Die gespeicherte Liste bleibt erhalten und kann verwendet werden.")
+                : session ? "Gemerkte Liste verwenden, von " + cached.Source + " neu laden oder dort neu suchen?"
+                : "Gespeicherte Liste verwenden, von " + cached.Source + " aktualisieren oder neu suchen (zuerst auf " + EpisodeSource.All[0].Name + ")?", false);
             question.MaximumSize = new Size(Theme.S(560), 0);
             if (failure != null) question.ForeColor = Color.FromArgb(0xfa, 0xcc, 0x15);
 
@@ -257,8 +307,9 @@ namespace Sflix
             buttons.Margin = new Padding(0, Theme.S(14), 0, 0);
             Button cancel = Theme.MakeButton("Abbrechen", false);
             Button search = Theme.MakeButton("Neu suchen", false);
-            Button reload = Theme.MakeButton(failure == null ? "Liste aktualisieren" : "Erneut aktualisieren", false);
-            Button use = Theme.MakeButton("Gespeicherte verwenden", true);
+            Button reload = Theme.MakeButton(session ? (failure == null ? "Neu laden" : "Erneut laden")
+                                                     : (failure == null ? "Liste aktualisieren" : "Erneut aktualisieren"), false);
+            Button use = Theme.MakeButton(session ? "Gemerkte verwenden" : "Gespeicherte verwenden", true);
             cancel.Click += delegate { choice = null; DialogResult = DialogResult.Cancel; };
             search.Click += delegate { choice = "search"; DialogResult = DialogResult.OK; };
             reload.Click += delegate { choice = "reload"; DialogResult = DialogResult.OK; };
@@ -297,6 +348,7 @@ namespace Sflix
         readonly Label compareTitle;
         bool adjusting;
         bool confirmed;
+        readonly ComboBox sourceBox;
 
         public EpisodePlanDialog(EpisodePlan plan) : this(plan, null) { }
 
@@ -345,8 +397,7 @@ namespace Sflix
                 ListViewItem item = new ListViewItem(action);
                 item.SubItems.Add(Rel(op.Source));
                 item.SubItems.Add(op.Kind == "folder" || op.Kind == "merge" ? Path.GetFileName(op.Target) : Rel(op.Target));
-                long size = -1;
-                try { if (File.Exists(op.Source)) size = new FileInfo(op.Source).Length; } catch { }
+                long size = op.Size;   // vom Arbeitsthread ermittelt (EpisodeTask.Plan)
                 ListSort.Add(item, size >= 0 ? Fmt.Size(size) : "", size >= 0 ? (object)size : null);
                 item.SubItems.Add(op.Note);
                 item.Tag = op;
@@ -394,7 +445,8 @@ namespace Sflix
             Panel detailsHost = new Panel();
             detailsHost.Dock = DockStyle.Bottom;
             detailsHost.Height = Theme.S(170);
-            detailsHost.Padding = new Padding(Theme.S(12), Theme.S(8), Theme.S(12), 0);
+            // Abstand unten: die letzte Zeile des Hinweises stiess sonst an die Knopfzeile
+            detailsHost.Padding = new Padding(Theme.S(12), Theme.S(8), Theme.S(12), Theme.S(6));
             detailsHost.Controls.Add(details);
             detailsHost.Controls.Add(compare);
             detailsHost.Controls.Add(compareTitle);
@@ -420,7 +472,7 @@ namespace Sflix
                 confirmed = true;
                 DialogResult = DialogResult.OK;
             };
-            cancel.Click += delegate { confirmed = false; DialogResult = DialogResult.Cancel; };
+            cancel.Click += delegate { confirmed = false; plan.SwitchTo = null; DialogResult = DialogResult.Cancel; };
             all.Click += delegate
             {
                 adjusting = true;
@@ -437,6 +489,31 @@ namespace Sflix
             buttons.Controls.Add(cancel);
             buttons.Controls.Add(none);
             buttons.Controls.Add(all);
+
+            // Quelle der Folgenliste wechseln (seit Desktop 4.0.12): schliesst die Vorschau, die Aufgabe
+            // sucht dieselbe Serie auf der gewählten Quelle und zeigt danach eine neue Vorschau
+            FlowLayoutPanel sourceRow = new FlowLayoutPanel();
+            sourceRow.AutoSize = true;
+            sourceRow.WrapContents = false;
+            sourceRow.Margin = new Padding(0, 0, Theme.S(16), 0);
+            Label sl = Theme.MakeLabel("Quelle:", false);
+            sl.Margin = new Padding(0, Theme.S(9), Theme.S(6), 0);
+            sourceBox = EpisodeSearchDialog.SourceBox();
+            sourceBox.Margin = new Padding(0, Theme.S(6), 0, 0);
+            for (int i = 0; i < EpisodeSource.All.Length; i++)
+                if (string.Equals(EpisodeSource.All[i].Name, plan.List.Source, StringComparison.OrdinalIgnoreCase)) sourceBox.SelectedIndex = i;
+            sourceBox.SelectedIndexChanged += delegate
+            {
+                if (sourceBox.SelectedIndex < 0) return;
+                string name = EpisodeSource.All[sourceBox.SelectedIndex].Name;
+                if (string.Equals(name, plan.List.Source, StringComparison.OrdinalIgnoreCase)) return;
+                plan.SwitchTo = name;
+                confirmed = false;
+                DialogResult = DialogResult.Cancel;
+            };
+            sourceRow.Controls.Add(sl);
+            sourceRow.Controls.Add(sourceBox);
+            buttons.Controls.Add(sourceRow);
 
             Controls.Add(listHost);
             Controls.Add(intro);
@@ -457,7 +534,7 @@ namespace Sflix
                     foreach (EpisodeOp other in plan.Ops)
                         if (other.Group == op.Group) entries.Add(Entry(other == op ? "gewählt" : "andere", other.Source, Path.GetFileName(other.Target)));
                 }
-                if (File.Exists(op.Target) && !string.Equals(op.Target, op.Source, StringComparison.OrdinalIgnoreCase))
+                if (op.TargetExists)
                 {
                     if (entries.Count == 0) entries.Add(Entry("neu", op.Source, null));
                     bool known = false;

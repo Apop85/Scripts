@@ -95,13 +95,46 @@ namespace Sflix
 
         public static Bitmap RenderLogo(int size)
         {
+            return RenderLogo(size, false);
+        }
+
+        // pip = Logo mit kleinem Bild-im-Bild-Zeichen unten rechts (Symbol des BiB-Fensters im Player)
+        public static Bitmap RenderLogo(int size, bool pip)
+        {
             Bitmap bmp = new Bitmap(size, size, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.Clear(Color.Transparent);
                 DrawLogo(g, 0, 0, size, true);
+                if (pip) DrawPipBadge(g, size);
             }
             return bmp;
+        }
+
+        // Bild-im-Bild-Zeichen: heller Rahmen (Bildschirm) mit rotem kleinem Bild unten rechts,
+        // auf dunklem Grund, damit es auch bei 16 px über dem Logo erkennbar bleibt
+        static void DrawPipBadge(Graphics g, int size)
+        {
+            GraphicsState state = g.Save();
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            float w = size * 0.62f, h = size * 0.46f;
+            RectangleF outer = new RectangleF(size - w - size * 0.02f, size - h - size * 0.02f, w, h);
+            float line = Math.Max(1f, size * 0.07f);
+            using (GraphicsPath frame = RoundedRect(outer, Math.Max(1f, size * 0.06f)))
+            {
+                using (SolidBrush bg = new SolidBrush(Background)) g.FillPath(bg, frame);
+                RectangleF inner = RectangleF.Inflate(outer, -line / 2f, -line / 2f);
+                using (GraphicsPath border = RoundedRect(inner, Math.Max(0.5f, size * 0.04f)))
+                using (Pen pen = new Pen(Color.FromArgb(0xd8, 0xd8, 0xdc), line))
+                    g.DrawPath(pen, border);
+            }
+            float pw = w * 0.48f, ph = h * 0.50f;
+            RectangleF small = new RectangleF(outer.Right - line * 1.5f - pw, outer.Bottom - line * 1.5f - ph, pw, ph);
+            using (GraphicsPath p = RoundedRect(small, Math.Max(0.5f, size * 0.03f)))
+            using (SolidBrush red = new SolidBrush(Red))
+                g.FillPath(red, p);
+            g.Restore(state);
         }
 
         static FontFamily TitleFamily()
@@ -247,11 +280,17 @@ namespace Sflix
         // ICO-Datei mit PNG-Bildern in mehreren Grössen
         public static void WriteIcon(string path)
         {
+            WriteIcon(path, false);
+        }
+
+        // pip = Symbol des BiB-Fensters (app_pip.ico)
+        public static void WriteIcon(string path, bool pip)
+        {
             int[] sizes = { 16, 20, 24, 32, 40, 48, 64, 128, 256 };
             byte[][] images = new byte[sizes.Length][];
             for (int i = 0; i < sizes.Length; i++)
             {
-                using (Bitmap bmp = RenderLogo(sizes[i]))
+                using (Bitmap bmp = RenderLogo(sizes[i], pip))
                 using (MemoryStream ms = new MemoryStream())
                 {
                     bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png);

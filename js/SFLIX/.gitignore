@@ -34,9 +34,13 @@ SFLIX_Tools/SflixTools/obj/
 # Python-Zwischenstaende
 __pycache__/
 
+# Arbeitsordner der Rollen fuer temporaere Dateien (Messungen, Vergleiche; Ausnahme im Virenscanner)
+/tmp/
+
 # Zusammenarbeit der Rollen (Tickets) und interne Dokumentation (Eastereggs), nie pushen
 coordination/
 docs/intern/
 
 # Alte Fassungen des Regelwerks (Rollen lesen sie nie)
 .claude/old/
+.claude/archiv/

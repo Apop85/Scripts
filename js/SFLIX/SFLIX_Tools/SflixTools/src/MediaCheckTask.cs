@@ -179,6 +179,9 @@ namespace Sflix
                 extensions.UnionWith(set);
 
             ctx.Progress(-1, "Suche Medien ...");
+            // Dauer je Schritt fürs Protokoll (Vergleich am Netzlaufwerk: welcher Schritt bremst)
+            System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
+            MediaCache.TakeStats();
             List<string> files = new List<string>();
             foreach (string root in roots)
             {
@@ -187,6 +190,7 @@ namespace Sflix
             }
             files.RemoveAll(delegate(string f) { string n = Path.GetFileName(f); return n.StartsWith("._") || n.Contains(".__temp__"); });
             ctx.Log(files.Count + " Mediendateien gefunden in " + string.Join(", ", roots.ToArray()));
+            double tList = clock.Elapsed.TotalSeconds;
 
             // Parallel prüfen (ffprobe wartet vor allem aufs Lesen), Ergebnisse je Datei in fester Reihenfolge
             List<MediaCheckItem>[] perFile = new List<MediaCheckItem>[files.Count];
@@ -200,10 +204,12 @@ namespace Sflix
                 if (n % 5 == 0 || n == files.Count) ctx.Progress((double)n / Math.Max(1, files.Count), "Prüfe " + n + " / " + files.Count);
             });
             MediaCache.Save();
+            double tProbe = clock.Elapsed.TotalSeconds;
             List<MediaCheckItem> items = new List<MediaCheckItem>();
             foreach (List<MediaCheckItem> found in perFile) if (found != null) items.AddRange(found);
             ctx.Progress(-1, "Suche leere Ordner ...");
             foreach (string root in roots) FindEmptyFolders(ctx, root, extensions, items);
+            double tCheck = clock.Elapsed.TotalSeconds;
 
             int format = 0, broken = 0, empty = 0, preview = 0, emptyFolders = 0, logged = 0;
             // Mit Oberfläche steht alles in der Ergebnisliste: im Protokoll nur die ersten Einträge
@@ -218,6 +224,11 @@ namespace Sflix
                 if (logged++ < maxLogged) ctx.Log("  " + (it.Kind == "preview" || it.Kind == "folder" ? "Hinweis: " : it.Kind == "format" ? "WARNUNG " : "FEHLER ") + it.Problem + "  –  " + it.Path);
             }
             if (items.Count > maxLogged) ctx.Log("  … und " + (items.Count - maxLogged) + " weitere (alle stehen in der Ergebnisliste)");
+            ctx.Log(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                    "Dauer: Auflistung {0:0.0} s, Prüfen {1:0.0} s, leere Ordner {2:0.0} s, gesamt {3:0.0} s",
+                    tList, tProbe - tList, tCheck - tProbe, tCheck));
+            string stats = MediaCache.TakeStats();
+            if (stats != null) ctx.Log(stats);
             ctx.Log("Nicht abspielbar: " + format + "   Defekt: " + broken + "   Leer: " + empty + "   Ohne Vorschaubild: " + preview + "   Leere Ordner: " + emptyFolders);
             ctx.Summary = files.Count + " geprüft, " + format + " nicht abspielbar, " + broken + " defekt, " + empty + " leer, " + preview + " ohne Vorschaubild, " + emptyFolders + " leere Ordner";
             if (items.Count == 0 || ctx.ChooseMediaCheck == null) return;
@@ -371,31 +382,34 @@ namespace Sflix
         static bool ScanFolder(TaskContext ctx, string dir, HashSet<string> extensions, List<string> found, bool top)
         {
             ctx.Check();
-            string[] files, dirs;
-            try
-            {
-                files = Directory.GetFiles(dir);
-                dirs = Directory.GetDirectories(dir);
-            }
+            // Art und Attribute aus der Auflistung (kein GetAttributes je Ordner)
+            FileSystemInfo[] entries;
+            try { entries = new DirectoryInfo(dir).GetFileSystemInfos(); }
             catch (UnauthorizedAccessException) { return true; }   // nicht lesbar: lieber nicht melden
             catch (IOException) { return true; }
 
             bool hasMedia = false;
-            foreach (string f in files)
+            List<DirectoryInfo> dirs = new List<DirectoryInfo>();
+            foreach (FileSystemInfo e in entries)
             {
-                string n = Path.GetFileName(f);
+                if (e is DirectoryInfo) { dirs.Add((DirectoryInfo)e); continue; }
+                if (hasMedia) continue;
+                string n = e.Name;
                 if (n.StartsWith("._") || n.Contains(".__temp__")) continue;
-                if (extensions.Contains(Path.GetExtension(f).ToLowerInvariant())) { hasMedia = true; break; }
+                if (extensions.Contains(e.Extension.ToLowerInvariant())) hasMedia = true;
             }
             // Die Kategorien direkt im STEFFLIX-Ordner gelten selbst als "oben"
             bool appRoot = IsAppRoot(dir);
             List<string> empty = new List<string>();
-            foreach (string d in dirs)
+            foreach (DirectoryInfo d in dirs)
             {
                 if (Folders.Ignore(d)) continue;
-                if (string.Equals(Path.GetFileName(d), "Preview", StringComparison.OrdinalIgnoreCase)) continue;
-                if (ScanFolder(ctx, d, extensions, found, appRoot)) hasMedia = true;
-                else empty.Add(d);
+                if (string.Equals(d.Name, "Preview", StringComparison.OrdinalIgnoreCase)) continue;
+                // Verknüpfung (Junction, symbolischer Link): nie als leerer Ordner melden und den Ordner
+                // darüber nicht als leer werten, das Ziel liegt womöglich ausserhalb
+                if ((d.Attributes & FileAttributes.ReparsePoint) != 0) { hasMedia = true; continue; }
+                if (ScanFolder(ctx, d.FullName, extensions, found, appRoot)) hasMedia = true;
+                else empty.Add(d.FullName);
             }
             if ((hasMedia || top) && !appRoot) found.AddRange(empty);
             return hasMedia;
@@ -405,13 +419,17 @@ namespace Sflix
         static void CountLeftovers(string dir, out int previews, out int others, out long size)
         {
             previews = 0; others = 0; size = 0;
-            string[] all;
-            try { all = Directory.GetFiles(dir, "*", SearchOption.AllDirectories); }
+            // Grössen aus der Auflistung (kein FileInfo je Datei)
+            FileInfo[] all;
+            try { all = new DirectoryInfo(dir).GetFiles("*", SearchOption.AllDirectories); }
             catch { return; }
-            foreach (string f in all)
+            // FullName ist ein normalisierter voller Pfad: relativ zum ebenso normalisierten Ordner rechnen
+            string baseDir = Path.GetFullPath(dir).TrimEnd('\\');
+            foreach (FileInfo info in all)
             {
-                try { size += new FileInfo(f).Length; } catch { }
-                string rel = f.Substring(dir.Length).TrimStart('\\');
+                string f = info.FullName;
+                try { size += info.Length; } catch { }
+                string rel = f.Length > baseDir.Length ? f.Substring(baseDir.Length).TrimStart('\\') : info.Name;
                 string name = Path.GetFileName(f);
                 if (name.StartsWith(".") || string.Equals(name, "Thumbs.db", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(name, "desktop.ini", StringComparison.OrdinalIgnoreCase)) continue;
@@ -492,6 +510,7 @@ namespace Sflix
         static readonly Glyph[] ActionIcons = { Glyph.Trash, Glyph.Convert, Glyph.Photo };
 
         readonly ListView list;
+        readonly VirtualRows view;   // VirtualMode: Tausende Zeilen ohne Wartezeit (SFLIX-20261121-030)
         readonly Button runButton;
         readonly Label info;
         readonly List<MediaCheckFile> files;
@@ -564,6 +583,7 @@ namespace Sflix
             list.Columns.Add("Grösse", Theme.S(80));
             list.Columns.Add("Video / Ton", Theme.S(140));
             list.Columns.Add("Ordner", Theme.S(220));
+            view = VirtualRows.Attach(list);
 
             // Zeilen einmal erzeugen, Filter und Suche zeigen davon nur einen Teil
             List<MediaCheckFile> sorted = new List<MediaCheckFile>(files);
@@ -708,10 +728,10 @@ namespace Sflix
         void OnListKey(object sender, KeyEventArgs e)
         {
             int col = e.KeyCode == Keys.Delete ? ColDelete : e.KeyCode == Keys.K ? ColConvert : e.KeyCode == Keys.V ? ColPreview : -1;
-            if (col < 0 || list.SelectedItems.Count == 0) return;
-            ListViewItem[] rows = new ListViewItem[list.SelectedItems.Count];
-            list.SelectedItems.CopyTo(rows, 0);
-            Toggle(rows, col);
+            if (col < 0) return;
+            List<ListViewItem> rows = view.Selected();
+            if (rows.Count == 0) return;
+            Toggle(rows.ToArray(), col);
             e.Handled = true;
         }
 
@@ -729,8 +749,8 @@ namespace Sflix
             {
                 Set((MediaCheckFile)row.Tag, col, value.Value);
                 UpdateKeys(row);
-                list.Invalidate(row.Bounds);
             }
+            list.Invalidate();   // VirtualMode: Bounds einer Zeile nur über ihren Index, ganz neu zeichnen ist billig
             UpdateButtons();
         }
 
@@ -809,27 +829,16 @@ namespace Sflix
                 if (q.Length > 0 && f.Path.IndexOf(q, StringComparison.OrdinalIgnoreCase) < 0) continue;
                 shown.Add(row);
             }
-            Cursor old = Cursor.Current;
-            Cursor.Current = Cursors.WaitCursor;
-            list.BeginUpdate();
-            try
-            {
-                list.Items.Clear();
-                list.Items.AddRange(shown.ToArray());
-                ListSort.Of(list).Apply();
-            }
-            finally
-            {
-                list.EndUpdate();
-                Cursor.Current = old;
-            }
+            // VirtualMode: nur die Datenliste ersetzen, die ListView fragt die sichtbaren Zeilen ab
+            view.SetRows(shown);
+            ListSort.Of(list).Apply();
             UpdateButtons();
         }
 
         // Für alle angezeigten Zeilen: Vorschlag (true) bzw. keine Aktion (false)
         void SetVisible(bool suggest)
         {
-            foreach (ListViewItem row in list.Items)
+            foreach (ListViewItem row in view.Rows)
             {
                 MediaCheckFile f = (MediaCheckFile)row.Tag;
                 if (suggest) f.Suggest();
@@ -865,7 +874,7 @@ namespace Sflix
             if (c.Preview.Count > 0) parts.Add(c.Preview.Count + " Vorschaubild" + (c.Preview.Count == 1 ? "" : "er"));
             runButton.Enabled = c.Count > 0;
             runButton.Text = c.Count > 0 ? "Ausführen: " + string.Join(", ", parts.ToArray()) : "Ausführen";
-            info.Text = list.Items.Count + " von " + files.Count + " angezeigt";
+            info.Text = view.Rows.Count + " von " + files.Count + " angezeigt";
         }
 
         void Finish()

@@ -171,6 +171,21 @@ namespace Sflix
             get { return File.Exists(FfmpegPath) && File.Exists(FfprobePath); }
         }
 
+        // Wie InstalledVersion, aber nur einmal je Objekt gelesen (ein Lauf der Tools; MediaCache fragt
+        // sonst je Datei version.json ab). Nach einer Installation über dieses Objekt neu gelesen.
+        volatile string cachedVersion;
+        volatile bool versionCached;
+
+        public string CachedVersion()
+        {
+            if (!versionCached)
+            {
+                cachedVersion = InstalledVersion();
+                versionCached = true;
+            }
+            return cachedVersion;
+        }
+
         public string InstalledVersion()
         {
             try
@@ -301,6 +316,7 @@ namespace Sflix
                 }
                 File.WriteAllText(VersionFile, Json.Write(m.ToJson(), 2), FileOps.Utf8NoBom);
                 encoder = null;
+                versionCached = false;
                 ctx.Log("  ffmpeg " + m.Version + " installiert");
                 // Für die Versionsanzeige in der Hilfe von STEFFLIX
                 UpdaterInfo.Write(App.Root, Dir);
@@ -325,7 +341,7 @@ namespace Sflix
             long size = fi.Length, ticks = fi.LastWriteTimeUtc.Ticks;
             string key = path + "|" + size + "|" + ticks;
             MediaInfo cached;
-            if (probeCache.TryGetValue(key, out cached)) return cached;
+            if (probeCache.TryGetValue(key, out cached)) { MediaCache.CountHit(); return cached; }
             string storedError;
             if (MediaCache.TryGet(this, path, size, ticks, out cached, out storedError))
             {

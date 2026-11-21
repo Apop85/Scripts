@@ -49,6 +49,12 @@ namespace Sflix
                 "start.html lässt sich weiterhin im Browser öffnen. Der Startbildschirm erscheint im Fenster bei jedem Start.\n" +
                 "- F11: Vollbild ein und aus. Das Vollbild eines Videos füllt ebenfalls den ganzen Bildschirm, danach kehrt das Fenster in den vorherigen Zustand zurück.\n" +
                 "- F5: STEFFLIX neu laden.\n" +
+                "- Bild-im-Bild: Ein eigenes kleines Fenster über allen anderen, mit dem Videotitel und dem STEFFLIX-Logo mit Bild-im-Bild-Zeichen in der Taskleiste; " +
+                "das Fenster von STEFFLIX wird dabei minimiert. Die Bedienelemente erscheinen bei Mausbewegung: oben „Zurück zum Player“, Titel und Schliessen, in der Mitte " +
+                "vorheriges Video, 10 s zurück, Abspielen/Pause, 10 s vor und nächstes Video, unten Fortschritt, Zeit, Ton und Lautstärke. " +
+                "Klick ins Bild pausiert, Ziehen verschiebt das Fenster, am Rand lässt sich die Grösse ändern; Lage und Grösse werden gemerkt. " +
+                "Die Tastenkürzel des Players und der Autoplay-Countdown gelten auch dort. " +
+                "„Zurück zum Player“ öffnet STEFFLIX wieder wie zuvor (normal, maximiert oder Vollbild), Schliessen hält das Video an und lässt es minimiert.\n" +
                 "- Menü: „Tools“ öffnet das Fenster der Tools beim Reiter Tools (ist es schon offen, kommt es nach vorne). Es erscheint erst fertig aufgebaut, bis dahin zeigt STEFFLIX „Tools werden geöffnet …“.\n" +
                 "- Nach „Daten einlesen“, dem Importer oder einem Update lädt STEFFLIX die Medien selbst neu. Läuft gerade ein Video oder Musik, erst auf Knopfdruck.\n" +
                 "- Ein zweiter Start von STEFFLIX.exe holt das offene Fenster nach vorne.\n" +
@@ -117,6 +123,8 @@ namespace Sflix
                 "# Bedienen\n" +
                 "- Gleichzeitig: wie viele Downloads parallel laufen (1 bis 4), die übrigen warten.\n" +
                 "- Pausieren und Fortsetzen: Bereits geladene Teilstücke bleiben, auch nach dem Schliessen des Programms. Laufende Downloads werden beim Schliessen pausiert.\n" +
+                "- Wiederholen (bei Fehler): verwirft alle geladenen Teilstücke des Downloads und lädt ihn komplett neu, so werden auch beschädigte Teilstücke ersetzt. " +
+                "Ist nur die Adresse abgelaufen, besser mit „URL bearbeiten“ eine neue einfügen: Dann geht es an derselben Stelle weiter.\n" +
                 "- URL bearbeiten: neue Adresse, z.B. wenn sie abgelaufen ist (Fehler 403). Hat die Playlist gleich viele Teilstücke, geht es an derselben Stelle weiter.\n" +
                 "- Entfernen: bricht ab und löscht die geladenen Teilstücke. Fertige Dateien im Zielordner bleiben.\n" +
                 "- Meldungen (Doppelklick): Hinweise von ffmpeg und der Prüfung. Die Spalte Ergebnis zeigt OK, Warnung oder Fehler.\n" +
@@ -156,9 +164,11 @@ namespace Sflix
                 "Ordner mit mehreren Staffeln („Staffel 1-3“) bleiben unverändert.\n" +
                 "- Vorher zeigt eine Vorschau alle Änderungen, fehlende Folgen und nicht zugeordnete Dateien. Nur angehakte Zeilen werden ausgeführt.\n" +
                 "- Gibt es mehrere Dateien für eine Folge oder das Ziel schon, zeigt die Vorschau beim Anklicken einen Vergleich mit Grösse, Auflösung und Dauer.\n" +
+                "- Quelle wechseln: In der Suche und in der Vorschau wählt „Quelle“ jederzeit eine andere Webseite (in beide Richtungen). In der Vorschau wird dieselbe Serie dort gesucht: " +
+                "genau ein Treffer wird direkt geladen, sonst öffnet die Suche. Listen, die in diesem Lauf schon geladen wurden, werden angeboten („Gemerkte verwenden“ oder „Neu laden“).\n" +
                 "- Vorschaubilder ziehen mit, Favoriten und Fortschritt bleiben erhalten.\n" +
                 "- „Letztes Umbenennen rückgängig“ stellt den vorherigen Zustand wieder her.\n" +
-                "Geladene Folgenlisten werden gespeichert (sflix_sys\\folgen_cache.json) und beim nächsten Mal angeboten: " +
+                "Gespeichert wird die Folgenliste, mit der umbenannt wird (sflix_sys\\folgen_cache.json), nur angesehene Listen nicht. Beim nächsten Mal wird sie angeboten: " +
                 "„Gespeicherte verwenden“, „Liste aktualisieren“ (lädt sie nochmals von derselben Webseite) oder „Neu suchen“ (Suche wieder ab serienjunkies.de)."));
 
             t.Add(new HelpTopic("Duplikate finden",

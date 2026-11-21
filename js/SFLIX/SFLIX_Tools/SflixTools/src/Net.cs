@@ -467,13 +467,22 @@ namespace Sflix
             return removed;
         }
 
+        // Entwicklungsordner im Release-Ordner (seit 4.0.6 "SFLIX_Tools", vorher "SFLIX Tools"; beide werden erkannt).
+        public static readonly string[] DevFolderNames = { "SFLIX_Tools", "SFLIX Tools" };
+
         // Release-Ordner des Entwicklers (mit "SFLIX_Tools\Release\release.ps1"): Dort müssen die veralteten
         // Dateien bleiben, alte Installationen laden sie noch (check_release.py bricht sonst ab).
         public static bool IsReleaseFolder(string baseDir)
         {
+            // Leerer Pfad würde gegen das Arbeitsverzeichnis aufgelöst
+            if (string.IsNullOrEmpty(baseDir)) return false;
             try
             {
-                return File.Exists(Path.Combine(baseDir, "SFLIX_Tools\\Release\\release.ps1"));
+                foreach (string dev in DevFolderNames)
+                {
+                    if (File.Exists(Path.Combine(baseDir, dev + "\\Release\\release.ps1"))) return true;
+                }
+                return false;
             }
             catch
             {

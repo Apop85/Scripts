@@ -108,6 +108,8 @@ namespace Sflix
         public Action<List<string>, TaskRunResult> TasksFinished;    // nach jedem Lauf (ausgeführte Aufgaben)
         public Func<string> ExtraRestartArgs;                        // Neustart nach Selbst-Update: z.B. " --player"
         public Action Restarting;                                    // vor dem Schliessen für den Neustart
+        public Func<bool> HideOnClose;                               // true: Schliessen blendet nur aus (Player offen, DesktopHost)
+        bool hiddenByClose;
         List<string> lastTasks = new List<string>();
         static readonly string[] PageTitles = { "Updates", "Importer", "Download", "Tools", "Lizenz", "Hilfe" };
 
@@ -744,15 +746,11 @@ namespace Sflix
                 }
                 catch (OperationCanceledException) { return; }
                 catch (Exception e) { text = "Belegter Speicher nicht ermittelt: " + e.Message; }
-                try
+                Ui.Post(this, delegate
                 {
-                    BeginInvoke((Action)delegate
-                    {
-                        if (gen != cleanupGeneration || cleanupInfo.IsDisposed) return;
-                        cleanupInfo.Text = text;
-                    });
-                }
-                catch (InvalidOperationException) { }
+                    if (gen != cleanupGeneration || cleanupInfo.IsDisposed) return;
+                    cleanupInfo.Text = text;
+                });
             });
         }
 
@@ -777,7 +775,11 @@ namespace Sflix
         void UpdateUndoInfo()
         {
             string series;
-            string info = EpisodeTask.UndoInfo(out series);
+            ApplyUndoInfo(EpisodeTask.UndoInfo(out series));
+        }
+
+        void ApplyUndoInfo(string info)
+        {
             renameUndoButton.Enabled = info != null && !running;
             renameUndoInfo.Text = info ?? "Noch nichts umbenannt.";
         }
@@ -889,6 +891,40 @@ namespace Sflix
             UpdateStartText();
             UpdateLicenseTab();
             SetLogExpanded(false);
+            LoadStateInBackground();
+        }
+
+        // Angaben mit Dateizugriffen (Installationsordner oft auf einem Netzlaufwerk) im Hintergrund lesen,
+        // damit das Fenster sofort erscheint und der gemeinsame UI-Thread mit dem Player frei bleibt.
+        // Bis dahin zeigen die Felder "…".
+        void LoadStateInBackground()
+        {
+            string ffmpegFolder = FfmpegLocation.Folder(settings);
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                string web = null, ffmpeg = "?", undo = null, series;
+                long cacheSize = 0;
+                List<string> categories = new List<string>();
+                LicenseStatus license = LicenseStatus.None;
+                try { ReadInstalledVersions(ffmpegFolder, out web, out ffmpeg); } catch { }
+                try { undo = EpisodeTask.UndoInfo(out series); } catch { }
+                try { categories = ReadCategories(); } catch { }
+                try { cacheSize = MediaCache.FileSize(); } catch { }
+                try { license = LicenseStore.Status(App.Root); } catch { }
+                // Handle kann beim Aufbau kurz fehlen (Opacity): Ui.Post wartet darauf, statt die Angaben zu verlieren
+                Ui.Post(this, delegate
+                {
+                    ApplyInstalledVersions(web, ffmpeg);
+                    if (!running) ApplyUndoInfo(undo);
+                    bool wasLoading = loading;
+                    loading = true;   // Auswahl ist keine Änderung des Benutzers
+                    FillCategories(categories, importCategory.SelectedItem as string ?? settings.GetString("import.category", ""));
+                    loading = wasLoading;
+                    ApplyMediaCacheInfo(cacheSize);
+                    feedbackPage.ApplyStatus(license);
+                    Relayout();
+                });
+            });
         }
 
         // ---------------------------------------------------------------
@@ -1212,7 +1248,7 @@ namespace Sflix
             foot.Controls.Add(verRecheck);
             card.Controls.Add(foot);
 
-            ShowInstalledVersions();
+            ApplyInstalledVersions("…", "…");   // LoadStateInBackground
             return card;
         }
 
@@ -1235,8 +1271,7 @@ namespace Sflix
                 string error = null;
                 try { all = PatchNotes.Load(CancellationToken.None); }
                 catch (Exception ex) { error = ex.Message; }
-                if (owner.IsDisposed) return;
-                owner.BeginInvoke((Action)delegate
+                Ui.Post(owner, delegate
                 {
                     owner.Cursor = old;
                     if (owner.IsDisposed) return;
@@ -1262,16 +1297,31 @@ namespace Sflix
         // Installierte Versionen stehen sofort fest (ohne Internet)
         void ShowInstalledVersions()
         {
-            string web = UpdateCheck.LocalWebVersion();
-            FfmpegTools ff = new FfmpegTools(App.Root, FfmpegLocation.Folder(settings));
-            verInstalled[0].Text = web ?? "unbekannt";
-            verInstalled[1].Text = App.VersionText;
-            verInstalled[2].Text = ff.Installed ? (ff.InstalledVersionName() ?? "unbekannt") : "nicht installiert";
+            string web, ffmpeg;
+            ReadInstalledVersions(FfmpegLocation.Folder(settings), out web, out ffmpeg);
+            ApplyInstalledVersions(web, ffmpeg);
         }
 
-        void ShowAvailableVersions(UpdateInfo u)
+        // Liest version.js und die ffmpeg-Version (Dateizugriffe: beim Aufbau im Hintergrund).
+        // ffmpegFolder vorher im UI-Thread aus den Einstellungen holen.
+        static void ReadInstalledVersions(string ffmpegFolder, out string web, out string ffmpeg)
         {
-            ShowInstalledVersions();
+            web = UpdateCheck.LocalWebVersion();
+            FfmpegTools ff = new FfmpegTools(App.Root, ffmpegFolder);
+            ffmpeg = ff.Installed ? (ff.InstalledVersionName() ?? "unbekannt") : "nicht installiert";
+        }
+
+        void ApplyInstalledVersions(string web, string ffmpeg)
+        {
+            verInstalled[0].Text = web ?? "unbekannt";
+            verInstalled[1].Text = App.VersionText;
+            verInstalled[2].Text = ffmpeg;
+        }
+
+        // web/ffmpeg: installierte Versionen, im Hintergrund gelesen
+        void ShowAvailableVersions(UpdateInfo u, string web, string ffmpeg)
+        {
+            ApplyInstalledVersions(web, ffmpeg);
             SetAvailable(0, u.WebChanged ? (u.WebRemote ?? "neu") + (u.WebRemote != null && u.WebRemote == u.WebLocal ? " (neu)" : "") : u.WebLocal ?? "?", u.WebChanged);
             SetAvailable(1, u.SelfAvailable ?? "?", u.SelfChanged);
             SetAvailable(2, u.FfmpegRemote ?? "?", u.FfmpegChanged);
@@ -1399,14 +1449,18 @@ namespace Sflix
             };
             box.Controls.Add(mediaCacheInfo);
             box.Controls.Add(clear);
-            ShowMediaCacheInfo();
+            mediaCacheInfo.Text = "Die Tools merken sich die Angaben jeder untersuchten Datei (…).";   // LoadStateInBackground
             return box;
         }
 
         void ShowMediaCacheInfo()
         {
+            ApplyMediaCacheInfo(MediaCache.FileSize());
+        }
+
+        void ApplyMediaCacheInfo(long size)
+        {
             if (mediaCacheInfo == null) return;
-            long size = MediaCache.FileSize();
             mediaCacheInfo.Text = "Die Tools merken sich die Angaben jeder untersuchten Datei (" +
                 (size > 0 ? Fmt.Size(size) + " in sflix_sys\\" + MediaCache.FileName : "noch nichts gemerkt") +
                 "). Unveränderte Dateien werden beim nächsten Mal nicht neu untersucht. Eine neue ffmpeg-Version verwirft alles.";
@@ -1558,8 +1612,7 @@ namespace Sflix
                 string note = LicenseStore.ConfirmPending();
                 if (note == null || IsDisposed) return;
                 pendingLog.Enqueue(note);
-                try { BeginInvoke((Action)delegate { feedbackPage.RefreshState(); }); }
-                catch { }
+                Ui.Post(this, delegate { feedbackPage.RefreshState(); });
             });
         }
 
@@ -1919,19 +1972,29 @@ namespace Sflix
 
         bool importConvertWasOff;
 
-        void LoadCategories(string selected)
+        // Kategorien = Ordner im Installationsordner (Dateizugriffe: beim Aufbau im Hintergrund)
+        static List<string> ReadCategories()
         {
-            importCategory.Items.Clear();
+            List<string> names = new List<string>();
             try
             {
                 foreach (string d in Directory.GetDirectories(App.Root))
                 {
                     string name = Path.GetFileName(d);
                     if (Folders.Ignore(d) || string.Equals(name, "Preview", StringComparison.OrdinalIgnoreCase)) continue;
-                    importCategory.Items.Add(name);
+                    names.Add(name);
                 }
             }
             catch { }
+            return names;
+        }
+
+        void FillCategories(List<string> names, string selected)
+        {
+            importCategory.BeginUpdate();
+            importCategory.Items.Clear();
+            foreach (string name in names) importCategory.Items.Add(name);
+            importCategory.EndUpdate();
             if (!string.IsNullOrEmpty(selected) && !importCategory.Items.Contains(selected)) importCategory.Items.Add(selected);
             if (!string.IsNullOrEmpty(selected)) importCategory.SelectedItem = selected;
             else if (importCategory.Items.Count > 0) importCategory.SelectedIndex = 0;
@@ -2069,7 +2132,9 @@ namespace Sflix
             optImportPreview.Checked = settings.GetBool("import.preview", true);
             optFfmpeg.Checked = settings.GetBool("update.ffmpeg", true);
             installFolderBox.Text = App.Root;
-            UpdateUndoInfo();
+            // Rückgängig-Info und Kategorien liest LoadStateInBackground nach
+            renameUndoButton.Enabled = false;
+            renameUndoInfo.Text = "…";
             optMoveParts.Checked = settings.GetBool("merge.moveParts", true);
             convertParallel.Value = Math.Max(0, Math.Min(16, settings.GetInt("convert.parallel", 0)));
             optDeleteOriginal.Checked = settings.GetBool("convert.deleteOriginal", false);
@@ -2081,7 +2146,7 @@ namespace Sflix
             optImportConvert.Checked = settings.GetBool("import.convert", false);
             optImportMove.Checked = settings.GetBool("import.move", false);
             importSub.Text = settings.GetString("import.sub", "");
-            LoadCategories(settings.GetString("import.category", ""));
+            FillCategories(new List<string>(), settings.GetString("import.category", ""));
             dataFolders.Items.Clear();
             foreach (string f in DataTask.SplitFolders(settings.GetString("data.folders", ""))) dataFolders.Items.Add(f);
             optDataAll.Checked = settings.GetBool("data.all", true);
@@ -2162,10 +2227,12 @@ namespace Sflix
                 try
                 {
                     UpdateInfo info = UpdateCheck.Run(new FfmpegTools(App.Root, ffmpegFolder), CancellationToken.None);
-                    BeginInvoke((Action)delegate
+                    string web, ffmpeg;
+                    ReadInstalledVersions(ffmpegFolder, out web, out ffmpeg);
+                    Ui.Post(this, delegate
                     {
                         verRecheck.Enabled = true;
-                        ShowAvailableVersions(info);
+                        ShowAvailableVersions(info, web, ffmpeg);
                         if (App.IsReleaseFolder) return;   // kein Update-Balken und kein Dialog
                         if (!info.Any)
                         {
@@ -2186,7 +2253,7 @@ namespace Sflix
                 catch (Exception ex)
                 {
                     pendingLog.Enqueue("Hinweis: Update-Prüfung nicht möglich (" + ex.Message + ")");
-                    BeginInvoke((Action)delegate
+                    Ui.Post(this, delegate
                     {
                         verRecheck.Enabled = true;
                         verStatus.Text = "Prüfung nicht möglich (keine Verbindung?)";
@@ -2466,18 +2533,18 @@ namespace Sflix
                     using (CleanupDialog dlg = new CleanupDialog(folders, App.Root, new FfmpegTools(App.Root, FfmpegLocation.Folder(settings)))) return dlg.Choose(this);
                 });
             };
-            ctx.ChooseEpisodeList = delegate(string term)
+            ctx.ChooseEpisodeList = delegate(string term, string startSource)
             {
                 return (EpisodeList)Invoke((Func<EpisodeList>)delegate
                 {
-                    using (EpisodeSearchDialog dlg = new EpisodeSearchDialog(term)) return dlg.Choose(this);
+                    using (EpisodeSearchDialog dlg = new EpisodeSearchDialog(term, startSource)) return dlg.Choose(this);
                 });
             };
-            ctx.ChooseCachedEpisodeList = delegate(EpisodeList cached, string failure)
+            ctx.ChooseCachedEpisodeList = delegate(EpisodeList cached, string failure, bool session)
             {
                 return (string)Invoke((Func<string>)delegate
                 {
-                    using (EpisodeCacheDialog dlg = new EpisodeCacheDialog(cached, failure)) return dlg.Choose(this);
+                    using (EpisodeCacheDialog dlg = new EpisodeCacheDialog(cached, failure, session)) return dlg.Choose(this);
                 });
             };
             ctx.ConfirmEpisodePlan = delegate(EpisodePlan plan)
@@ -2523,7 +2590,7 @@ namespace Sflix
             worker = new Thread(delegate()
             {
                 TaskRunResult result = runner.Run(ctx);
-                BeginInvoke((Action)delegate { Finished(result); });
+                Ui.Post(this, delegate { Finished(result); });
             });
             worker.IsBackground = true;
             worker.Start();
@@ -2632,7 +2699,27 @@ namespace Sflix
             if (downloadPage != null) downloadPage.Manager.PauseAll();
             SaveOptions(autoRun == null);
             WriteLogFile();
+            // Player offen: nur ausblenden, das nächste Öffnen der Tools zeigt dasselbe Fenster ohne Neuaufbau
+            // (Protokoll bleibt). Programmende, Neustart nach Selbst-Update und "Abbrechen und beenden" schliessen.
+            if (e.CloseReason == CloseReason.UserClosing && !closeWhenDone && HideOnClose != null && HideOnClose())
+            {
+                e.Cancel = true;
+                hiddenByClose = true;
+                Hide();
+                return;
+            }
             base.OnFormClosing(e);
+        }
+
+        // Wieder eingeblendet: Angaben mit Dateizugriffen neu lesen (Versionen, Rückgängig, Kategorien, Lizenz)
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            base.OnVisibleChanged(e);
+            if (Visible && hiddenByClose)
+            {
+                hiddenByClose = false;
+                LoadStateInBackground();
+            }
         }
 
         // ---------------------------------------------------------------

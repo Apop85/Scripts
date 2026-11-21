@@ -6,7 +6,15 @@
 //
 // Brücke (window.chrome.webview, siehe initDesktopApp in ui.js):
 //   STEFFLIX -> Programm (JSON-Text): {cmd:"ready"}, {cmd:"tools", page}, {cmd:"fullscreen"}, {cmd:"reload"},
-//                                     {cmd:"importResult", ok, message}
+//                                     {cmd:"importResult", ok, message}, {cmd:"pip", on, paused}
+//
+// Bild-im-Bild (DEC-341, DEC-344): Das BiB ist das native Fenster von Chromium (gehört dem Prozess
+// msedgewebview2.exe). Beim Start ({cmd:"pip", on:true}) merkt sich das Fenster seinen Zustand und
+// minimiert sich; das BiB-Fenster bekommt das Symbol app_pip.ico (Suche über BrowserProcessId,
+// WM_SETICON). Beim Ende ({cmd:"pip", on:false, paused}) unterscheidet der Pausenzustand:
+// paused=false ("Zurück zum Tab") stellt den vorherigen Zustand im Vordergrund wieder her,
+// paused=true (X, Chromium pausiert beim Schliessen) lässt das Fenster minimiert. Heuristik über das
+// Verhalten von Chromium: findet sich das Fenster nicht, passiert still nichts.
 //   Programm -> STEFFLIX (JSON):      {event:"dataChanged"}, {event:"importBackup", text}, {event:"toolsShown"}
 // DevTools und Kontextmenü nur mit "player.devtools": true in updater_settings.json oder SFLIX_DEVTOOLS=1.
 
@@ -15,6 +23,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
@@ -31,6 +40,18 @@ namespace Sflix
         FormWindowState stateBeforeFull;
         Rectangle boundsBeforeFull;
         DataImportDialog importDialog;
+        // Bild-im-Bild: aktiv, Fensterzustand vor dem Minimieren, Suche nach dem BiB-Fenster
+        bool pipActive;
+        FormWindowState stateBeforePip;
+        Timer pipIconTimer;
+        int pipIconTries;
+        Icon pipIconSmall, pipIconBig;
+        // Eigenes BiB-Fenster (Document Picture-in-Picture, DEC-351): Standard ein, abschalten mit
+        // "player.docpip": false in updater_settings.json oder SFLIX_DOCPIP=0 (dann natives BiB)
+        bool docPipEnabled;
+        int docPipWidth, docPipHeight;
+        DateTime docPipRequested = DateTime.MinValue;
+        DocPipWindow docPipWindow;
         // Hintergrund bis STEFFLIX geladen ist (wie --sflix-bg in sflix.css), damit nichts aufblitzt
         static readonly Color PageBack = Color.FromArgb(0x10, 0x10, 0x13);
 
@@ -170,6 +191,12 @@ namespace Sflix
             core.ContainsFullScreenElementChanged += OnFullScreenElementChanged;
             core.DownloadStarting += OnDownloadStarting;
             core.ProcessFailed += OnProcessFailed;
+            docPipEnabled = settings.GetBool("player.docpip", true) && Environment.GetEnvironmentVariable("SFLIX_DOCPIP") != "0";
+            if (docPipEnabled)
+            {
+                try { await core.AddScriptToExecuteOnDocumentCreatedAsync("window.sflixDocPip = true;"); }
+                catch { docPipEnabled = false; }
+            }
             coreReady = true;
             core.Navigate(new Uri(Path.Combine(App.Root, "start.html")).AbsoluteUri);
         }
@@ -208,7 +235,15 @@ namespace Sflix
 
         void OnNavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
         {
-            if (IsInternal(e.Uri)) return;
+            if (IsInternal(e.Uri))
+            {
+                // Neu laden beendet ein laufendes BiB ohne Meldung der Seite. Das eigene BiB-Fenster
+                // schliessen: sein Dokument gehört zur alten Seite und würde jedes neue BiB blockieren.
+                ResetPip();
+                if (docPipWindow != null && !docPipWindow.IsDisposed) docPipWindow.Close();
+                docPipWindow = null;
+                return;
+            }
             e.Cancel = true;
             OpenExternal(e.Uri);
         }
@@ -216,8 +251,48 @@ namespace Sflix
         void OnNewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e)
         {
             e.Handled = true;
-            if (IsInternal(e.Uri)) web.CoreWebView2.Navigate(e.Uri);
-            else OpenExternal(e.Uri);
+            string uri = e.Uri ?? "";
+            // Leere Fenster (about:blank, z.B. documentPictureInPicture.requestWindow) ersetzen nie den Player
+            if (uri.Length == 0 || uri.StartsWith("about:blank", StringComparison.OrdinalIgnoreCase))
+            {
+                if (docPipEnabled && docPipWindow == null && (DateTime.Now - docPipRequested).TotalSeconds < 5)
+                {
+                    docPipRequested = DateTime.MinValue;
+                    OpenDocPipWindow(e);
+                }
+                else Trace.WriteLine("STEFFLIX: leeres Fenster abgelehnt (" + uri + ")");
+                return;
+            }
+            if (IsInternal(uri)) web.CoreWebView2.Navigate(uri);
+            else OpenExternal(uri);
+        }
+
+        // Angemeldetes BiB-Fenster mit eigener WebView2 (gleiche Umgebung) beantworten
+        async void OpenDocPipWindow(CoreWebView2NewWindowRequestedEventArgs e)
+        {
+            CoreWebView2Deferral deferral = e.GetDeferral();
+            DocPipWindow w = null;
+            try
+            {
+                LoadPipIcons();
+                w = new DocPipWindow(this, settings, docPipWidth, docPipHeight, pipIconBig ?? Icon, DevTools(settings));
+                w.FormClosed += delegate
+                {
+                    if (docPipWindow == w) docPipWindow = null;
+                    PostEvent("pipWindowClosed");   // falls pagehide im BiB-Dokument ausbleibt
+                };
+                w.Show();
+                await w.Web.EnsureCoreWebView2Async(web.CoreWebView2.Environment);
+                w.Attach();
+                e.NewWindow = w.Web.CoreWebView2;
+                docPipWindow = w;
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("STEFFLIX: eigenes BiB-Fenster nicht möglich: " + ex.Message);
+                if (w != null && !w.IsDisposed) w.Close();
+            }
+            finally { deferral.Complete(); }
         }
 
         void OnProcessFailed(object sender, CoreWebView2ProcessFailedEventArgs e)
@@ -296,7 +371,163 @@ namespace Sflix
                 case "importResult":
                     if (importDialog != null) importDialog.ImportFinished(msg.Bool("ok", false), msg.Str("message"));
                     break;
+                case "pipWindow":
+                    // Nächste leere Fensteranfrage (requestWindow) ist das BiB-Fenster
+                    if (!docPipEnabled) break;
+                    docPipWidth = Math.Max(240, Math.Min(1920, (int)msg.Num("width", 480)));
+                    docPipHeight = Math.Max(160, Math.Min(1080, (int)msg.Num("height", 320)));
+                    docPipRequested = DateTime.Now;
+                    PostEvent("pipWindowReady");
+                    break;
+                case "pipDrag":
+                    // Videobild im BiB-Fenster gezogen -> Fenster verschieben
+                    DocPipWindow drag = docPipWindow;
+                    if (drag != null) BeginInvoke((Action)drag.BeginDrag);
+                    break;
+                case "pip":
+                    bool on = msg.Bool("on", false);
+                    bool paused = msg.Bool("paused", true);
+                    BeginInvoke((Action)delegate { OnPip(on, paused); });
+                    break;
             }
+        }
+
+        // ---------------------------------------------------------------
+        // Bild-im-Bild
+        // ---------------------------------------------------------------
+
+        void OnPip(bool on, bool paused)
+        {
+            if (IsDisposed) return;
+            if (on)
+            {
+                if (pipActive) return;
+                pipActive = true;
+                // Normal, maximiert oder eigener Vollbildmodus (randlos, Zustand Normal, fullscreen bleibt gesetzt)
+                stateBeforePip = WindowState == FormWindowState.Minimized ? FormWindowState.Normal : WindowState;
+                // Eigenes BiB-Fenster hat sein Symbol schon; nur im Rückfall das native Fenster von Chromium suchen
+                if (docPipWindow == null) StartPipIconSearch();
+                WindowState = FormWindowState.Minimized;
+                return;
+            }
+            if (!pipActive) return;
+            ResetPip();
+            if (paused) return;   // X: Benutzer will etwas anderes tun, Fenster bleibt minimiert
+            if (WindowState == FormWindowState.Minimized) WindowState = stateBeforePip;
+            Activate();
+        }
+
+        // BiB beendet (auch ohne Meldung: Neu laden, Schliessen)
+        void ResetPip()
+        {
+            pipActive = false;
+            if (pipIconTimer != null) pipIconTimer.Stop();
+        }
+
+        // Das BiB-Fenster erscheint erst kurz nach enterpictureinpicture: einige Versuche bis etwa 2 s
+        void StartPipIconSearch()
+        {
+            if (!LoadPipIcons()) return;
+            if (pipIconTimer == null)
+            {
+                pipIconTimer = new Timer();
+                pipIconTimer.Interval = 200;
+                pipIconTimer.Tick += delegate
+                {
+                    pipIconTries++;
+                    bool found = pipActive && SetPipWindowIcon();
+                    if (found || !pipActive || pipIconTries >= 10)
+                    {
+                        pipIconTimer.Stop();
+                        if (!found && pipActive) Trace.WriteLine("STEFFLIX: Fenster des Bild-im-Bild nicht gefunden, Symbol nicht gesetzt");
+                    }
+                };
+            }
+            pipIconTries = 0;
+            pipIconTimer.Stop();
+            pipIconTimer.Start();
+        }
+
+        bool LoadPipIcons()
+        {
+            if (pipIconSmall != null) return true;
+            try
+            {
+                using (Stream s = typeof(PlayerForm).Assembly.GetManifestResourceStream("app_pip.ico"))
+                {
+                    if (s == null) return false;
+                    byte[] data = new byte[s.Length];
+                    int read = 0;
+                    while (read < data.Length)
+                    {
+                        int n = s.Read(data, read, data.Length - read);
+                        if (n <= 0) break;
+                        read += n;
+                    }
+                    using (MemoryStream a = new MemoryStream(data)) pipIconSmall = new Icon(a, SystemInformation.SmallIconSize);
+                    using (MemoryStream b = new MemoryStream(data)) pipIconBig = new Icon(b, SystemInformation.IconSize);
+                }
+                return true;
+            }
+            catch
+            {
+                pipIconSmall = null;
+                pipIconBig = null;
+                return false;
+            }
+        }
+
+        // Sichtbare Top-Level-Fenster der Klasse Chrome_WidgetWin_1 im Browserprozess der WebView2,
+        // ohne Hilfsfenster (Tooltips, Auswahllisten) und ohne das eigene Fenster
+        bool SetPipWindowIcon()
+        {
+            uint browserPid;
+            try { browserPid = web.CoreWebView2.BrowserProcessId; }
+            catch { return false; }
+            IntPtr own = Handle;
+            IntPtr found = IntPtr.Zero;
+            EnumWindows(delegate (IntPtr hwnd, IntPtr param)
+            {
+                if (hwnd == own || !IsWindowVisible(hwnd)) return true;
+                uint pid;
+                GetWindowThreadProcessId(hwnd, out pid);
+                if (pid != browserPid) return true;
+                StringBuilder cls = new StringBuilder(64);
+                GetClassName(hwnd, cls, cls.Capacity);
+                if (cls.ToString() != "Chrome_WidgetWin_1") return true;
+                long exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE).ToInt64();
+                if ((exStyle & WS_EX_TOOLWINDOW) != 0) return true;
+                found = hwnd;
+                return false;
+            }, IntPtr.Zero);
+            if (found == IntPtr.Zero) return false;
+            SendMessage(found, WM_SETICON, (IntPtr)ICON_SMALL, pipIconSmall.Handle);
+            SendMessage(found, WM_SETICON, (IntPtr)ICON_BIG, pipIconBig.Handle);
+            return true;
+        }
+
+        delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr param);
+        const int WM_SETICON = 0x0080, ICON_SMALL = 0, ICON_BIG = 1, GWL_EXSTYLE = -20;
+        const long WS_EX_TOOLWINDOW = 0x00000080;
+
+        [DllImport("user32.dll")]
+        static extern bool EnumWindows(EnumWindowsProc callback, IntPtr param);
+        [DllImport("user32.dll")]
+        static extern bool IsWindowVisible(IntPtr hwnd);
+        [DllImport("user32.dll")]
+        static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        static extern int GetClassName(IntPtr hwnd, StringBuilder name, int maxCount);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        static extern IntPtr SendMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
+        [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
+        static extern int GetWindowLong32(IntPtr hwnd, int index);
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
+        static extern IntPtr GetWindowLongPtr64(IntPtr hwnd, int index);
+
+        static IntPtr GetWindowLongPtr(IntPtr hwnd, int index)
+        {
+            return IntPtr.Size == 8 ? GetWindowLongPtr64(hwnd, index) : new IntPtr(GetWindowLong32(hwnd, index));
         }
 
         // STEFFLIX ist zum ersten Mal geladen: einmalig die Datenübernahme anbieten, dann nach Updates suchen
@@ -435,7 +666,10 @@ namespace Sflix
                 e.Cancel = true;
                 return;
             }
+            ResetPip();
             SaveWindowBounds();
+            // Programmende schliesst das BiB-Fenster (merkt dabei seine Lage)
+            if (docPipWindow != null && !docPipWindow.IsDisposed) docPipWindow.Close();
             base.OnFormClosing(e);
         }
 
@@ -444,6 +678,150 @@ namespace Sflix
             if (disposing)
             {
                 try { web.Dispose(); }
+                catch { }
+                if (docPipWindow != null && !docPipWindow.IsDisposed) docPipWindow.Close();
+                if (pipIconTimer != null) pipIconTimer.Dispose();
+                if (pipIconSmall != null) pipIconSmall.Dispose();
+                if (pipIconBig != null) pipIconBig.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+    }
+
+    // Fenster für Document Picture-in-Picture (DEC-351). Die WebView2 wird als e.NewWindow der Anfrage
+    // von documentPictureInPicture.requestWindow übergeben; ihr Dokument füllt player.js (Video mit
+    // Bedienelementen über dem Bild). Immer im Vordergrund, eigenes Symbol, Titel = Videotitel.
+    // Lage und Breite in "player.pipBounds" (x,y,Breite,Höhe), Höhe beim Öffnen im Seitenverhältnis des Videos.
+    class DocPipWindow : Form
+    {
+        public readonly WebView2 Web;
+        readonly bool devTools;
+        readonly Settings settings;
+
+        public DocPipWindow(Form owner, Settings settings, int width, int height, Icon icon, bool devTools)
+        {
+            this.devTools = devTools;
+            this.settings = settings;
+            Text = App.Title;
+            if (icon != null) Icon = icon;
+            TopMost = true;
+            ShowInTaskbar = true;
+            BackColor = Color.Black;
+            // Ohne Titelleiste: nur Bild und Bedienleiste. Verschieben über das Videobild (player.js meldet
+            // {cmd:"pipDrag"}, BeginDrag), Grösse über einen schmalen Rand (WndProc, WM_NCHITTEST).
+            FormBorderStyle = FormBorderStyle.None;
+            Padding = new Padding(ResizeBorder);
+            MinimumSize = new Size(Theme.S(240), Theme.S(150));
+            StartPosition = FormStartPosition.Manual;
+            ClientSize = new Size(Theme.S(width), Theme.S(height));
+            // Standard: unten rechts auf dem Bildschirm des Players
+            Rectangle work = Screen.FromControl(owner).WorkingArea;
+            Location = new Point(work.Right - Width - Theme.S(24), work.Bottom - Height - Theme.S(24));
+            ApplySavedBounds(width, height);
+            Web = new WebView2();
+            Web.Dock = DockStyle.Fill;
+            Web.DefaultBackgroundColor = Color.Black;
+            Web.AllowExternalDrop = false;
+            Controls.Add(Web);
+        }
+
+        // Nach EnsureCoreWebView2Async, vor e.NewWindow
+        public void Attach()
+        {
+            CoreWebView2 core = Web.CoreWebView2;
+            CoreWebView2Settings s = core.Settings;
+            s.AreDefaultContextMenusEnabled = devTools;
+            s.AreDevToolsEnabled = devTools;
+            s.IsStatusBarEnabled = false;
+            s.IsZoomControlEnabled = false;
+            s.AreBrowserAcceleratorKeysEnabled = devTools;
+            core.DocumentTitleChanged += delegate
+            {
+                string title = core.DocumentTitle;
+                if (!string.IsNullOrEmpty(title) && !title.StartsWith("about:")) Text = title;
+            };
+            core.WindowCloseRequested += delegate { if (!IsDisposed) BeginInvoke((Action)Close); };
+            core.NewWindowRequested += delegate(object sender, CoreWebView2NewWindowRequestedEventArgs e) { e.Handled = true; };
+            core.NavigationStarting += delegate(object sender, CoreWebView2NavigationStartingEventArgs e)
+            {
+                if (!string.IsNullOrEmpty(e.Uri) && !e.Uri.StartsWith("about:", StringComparison.OrdinalIgnoreCase)) e.Cancel = true;
+            };
+        }
+
+        // Gemerkte Lage und Breite übernehmen, Höhe im gewünschten Seitenverhältnis; immer ganz auf
+        // einem sichtbaren Bildschirm (sonst Standardlage)
+        void ApplySavedBounds(int width, int height)
+        {
+            string[] p = settings.GetString("player.pipBounds", "").Split(',');
+            int x, y, w, h;
+            if (p.Length != 4 || !int.TryParse(p[0], out x) || !int.TryParse(p[1], out y)
+                || !int.TryParse(p[2], out w) || !int.TryParse(p[3], out h)) return;
+            Rectangle wanted = new Rectangle(x, y, w, h);
+            Screen screen = null;
+            foreach (Screen s in Screen.AllScreens)
+                if (s.WorkingArea.IntersectsWith(wanted)) { screen = s; break; }
+            if (screen == null) return;
+            Rectangle work = screen.WorkingArea;
+            int border = ResizeBorder * 2;
+            int newWidth = Math.Max(MinimumSize.Width, Math.Min(work.Width, w));
+            int newHeight = (int)Math.Round((newWidth - border) * (double)height / Math.Max(1, width)) + border;
+            newHeight = Math.Max(MinimumSize.Height, Math.Min(work.Height, newHeight));
+            if (newHeight == work.Height && height > 0)
+                newWidth = Math.Max(MinimumSize.Width, (int)Math.Round((newHeight - border) * (double)width / height) + border);
+            int newX = Math.Max(work.Left, Math.Min(work.Right - newWidth, x));
+            int newY = Math.Max(work.Top, Math.Min(work.Bottom - newHeight, y));
+            Bounds = new Rectangle(newX, newY, newWidth, newHeight);
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            Rectangle r = Bounds;
+            if (WindowState == FormWindowState.Normal && r.Width > 0 && r.Height > 0)
+            {
+                settings.SetString("player.pipBounds", r.X + "," + r.Y + "," + r.Width + "," + r.Height);
+                settings.Save();
+            }
+            base.OnFormClosing(e);
+        }
+
+        // Rand, an dem sich das Fenster ohne Titelleiste vergrössern lässt (gehört dem Formular, nicht der WebView2)
+        static int ResizeBorder { get { return Math.Max(4, Theme.S(6)); } }
+
+        const int WM_NCHITTEST = 0x0084, WM_NCLBUTTONDOWN = 0x00A1;
+        const int HTCLIENT = 1, HTCAPTION = 2, HTLEFT = 10, HTRIGHT = 11, HTTOP = 12, HTTOPLEFT = 13, HTTOPRIGHT = 14,
+                  HTBOTTOM = 15, HTBOTTOMLEFT = 16, HTBOTTOMRIGHT = 17;
+
+        [DllImport("user32.dll")]
+        static extern bool ReleaseCapture();
+        [DllImport("user32.dll")]
+        static extern IntPtr SendMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
+
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+            if (m.Msg != WM_NCHITTEST || (int)m.Result != HTCLIENT) return;
+            long lp = m.LParam.ToInt64();
+            Point p = PointToClient(new Point((short)(lp & 0xFFFF), (short)((lp >> 16) & 0xFFFF)));
+            int b = ResizeBorder;
+            bool left = p.X < b, right = p.X >= ClientSize.Width - b, top = p.Y < b, bottom = p.Y >= ClientSize.Height - b;
+            int hit = top && left ? HTTOPLEFT : top && right ? HTTOPRIGHT : bottom && left ? HTBOTTOMLEFT : bottom && right ? HTBOTTOMRIGHT
+                    : left ? HTLEFT : right ? HTRIGHT : top ? HTTOP : bottom ? HTBOTTOM : HTCLIENT;
+            m.Result = (IntPtr)hit;
+        }
+
+        // Verschieben wie über eine Titelleiste (Maustaste ist im Videobild gedrückt)
+        public void BeginDrag()
+        {
+            if (IsDisposed || (MouseButtons & MouseButtons.Left) == 0) return;
+            ReleaseCapture();
+            SendMessage(Handle, WM_NCLBUTTONDOWN, (IntPtr)HTCAPTION, IntPtr.Zero);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                try { Web.Dispose(); }
                 catch { }
             }
             base.Dispose(disposing);

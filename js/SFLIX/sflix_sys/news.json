@@ -2,6 +2,142 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0814",
+      "name": "2.8.14",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.0.12: Folgen umbenennen: Die Quelle der Folgenliste lässt sich in der Suche und in der Vorschau jederzeit wechseln, in beide Richtungen. In der Vorschau wird dieselbe Serie auf der gewählten Webseite gesucht (genau ein Treffer wird direkt geladen, sonst öffnet die Suche), danach baut sich die Vorschau neu auf. In diesem Lauf schon geladene Listen werden angeboten („Gemerkte verwenden“ oder „Neu laden“). Gespeichert wird nur die Liste, mit der umbenannt wird.",
+          "component": "updater",
+          "componentVersion": "4.0.12",
+          "short": "Folgen umbenennen: Die Quelle der Folgenliste lässt sich in der Suche und in der Vorschau jederzeit wechseln, in beide Richtungen. In der Vorschau wird dieselbe Serie auf der gewählten Webseite gesucht (genau ein Treffer wird direkt geladen, sonst öffnet die Suche), danach baut sich die Vorschau neu auf. In diesem Lauf schon geladene Listen werden angeboten („Gemerkte verwenden“ oder „Neu laden“). Gespeichert wird nur die Liste, mit der umbenannt wird."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.0.12: Duplikate finden und Medien prüfen nennen im Protokoll die Dauer jedes Schritts und wie viele Dateien aus den gemerkten Prüfergebnissen kamen bzw. neu untersucht wurden (auch, ob die gemerkten Ergebnisse verworfen wurden).",
+          "component": "updater",
+          "componentVersion": "4.0.12",
+          "short": "Duplikate finden und Medien prüfen nennen im Protokoll die Dauer jedes Schritts und wie viele Dateien aus den gemerkten Prüfergebnissen kamen bzw. neu untersucht wurden (auch, ob die gemerkten Ergebnisse verworfen wurden)."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.0.12: Listen mit Häkchen (z. B. Vorschau von Folgen umbenennen, Ablagen leeren, Duplikate): Markieren mit Shift- oder Strg-Klick ändert keine Häkchen mehr. Die Leertaste schaltet die Häkchen aller markierten Zeilen gemeinsam um.",
+          "component": "updater",
+          "componentVersion": "4.0.12",
+          "short": "Listen mit Häkchen (z. B. Vorschau von Folgen umbenennen, Ablagen leeren, Duplikate): Markieren mit Shift- oder Strg-Klick ändert keine Häkchen mehr. Die Leertaste schaltet die Häkchen aller markierten Zeilen gemeinsam um."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.0.12: Protokoll: Die Anzahl Hinweise und Fehler neben „Protokoll“ steht auch bei grosser Bildschirmskalierung in einer Zeile. In der Vorschau von Folgen umbenennen ist die letzte Zeile des Hinweisbereichs nicht mehr abgeschnitten.",
+          "component": "updater",
+          "componentVersion": "4.0.12",
+          "short": "Protokoll: Die Anzahl Hinweise und Fehler neben „Protokoll“ steht auch bei grosser Bildschirmskalierung in einer Zeile. In der Vorschau von Folgen umbenennen ist die letzte Zeile des Hinweisbereichs nicht mehr abgeschnitten."
+        }
+      ]
+    },
+    {
+      "version": "2.0813",
+      "name": "2.8.13",
+      "items": [
+        {
+          "type": "BUGFIX",
+          "text": "Bild-im-Bild im Fenster von STEFFLIX: Die Fläche „Nächstes in … s“ erscheint nur noch während des Autoplay-Countdowns statt dauerhaft.",
+          "component": "stefflix",
+          "componentVersion": "2.8.13",
+          "short": "Bild-im-Bild im Fenster von STEFFLIX: Die Fläche „Nächstes in … s“ erscheint nur noch während des Autoplay-Countdowns statt dauerhaft."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.0.11: Download: Bei grosser Bildschirmskalierung bleibt unter der Knopfzeile kein leerer Bereich mehr, umgebrochene Knöpfe nutzen die ganze Breite",
+          "component": "updater",
+          "componentVersion": "4.0.11",
+          "short": "Download: Bei grosser Bildschirmskalierung bleibt unter der Knopfzeile kein leerer Bereich mehr, umgebrochene Knöpfe nutzen die ganze Breite"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.0.11: Medien prüfen: Verknüpfungen auf Ordner (Junctions, symbolische Links) erscheinen nicht mehr als leere Ordner zum Löschen",
+          "component": "updater",
+          "componentVersion": "4.0.11",
+          "short": "Medien prüfen: Verknüpfungen auf Ordner (Junctions, symbolische Links) erscheinen nicht mehr als leere Ordner zum Löschen"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.0.11: Ablagen leeren: „1 Datei“ statt „1 Dateien“; der Dialog „Dateien wählen“ zeigt das STEFFLIX-Symbol und einen durchgehend dunklen Spaltenkopf",
+          "component": "updater",
+          "componentVersion": "4.0.11",
+          "short": "Ablagen leeren: „1 Datei“ statt „1 Dateien“; der Dialog „Dateien wählen“ zeigt das STEFFLIX-Symbol und einen durchgehend dunklen Spaltenkopf"
+        }
+      ]
+    },
+    {
+      "version": "2.0812",
+      "name": "2.8.12",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.0.10: Bild-im-Bild im Fenster von STEFFLIX: Das kleine Fenster ist jetzt ein eigenes Fenster mit dem Videotitel (auch in Taskleiste und Alt+Tab). Bedienung wie gewohnt über dem Bild: oben „Zurück zum Player“, Titel und Schliessen, in der Mitte vorheriges Video, 10 s zurück, Abspielen/Pause, 10 s vor und nächstes Video, unten Fortschritt, Zeit, Ton und stufenlose Lautstärke. Die Bedienelemente erscheinen bei Mausbewegung. Klick ins Bild pausiert, Ziehen verschiebt das Fenster, am Rand lässt sich die Grösse ändern. Die Tastenkürzel des Players und der Autoplay-Countdown funktionieren auch im kleinen Fenster, Lage und Grösse werden gemerkt.",
+          "component": "updater",
+          "componentVersion": "4.0.10",
+          "short": "Bild-im-Bild im Fenster von STEFFLIX: Das kleine Fenster ist jetzt ein eigenes Fenster mit dem Videotitel (auch in Taskleiste und Alt+Tab). Bedienung wie gewohnt über dem Bild: oben „Zurück zum Player“, Titel und Schliessen, in der Mitte vorheriges Video, 10 s zurück, Abspielen/Pause, 10 s vor und nächstes Video, unten Fortschritt, Zeit, Ton und stufenlose Lautstärke. Die Bedienelemente erscheinen bei Mausbewegung. Klick ins Bild pausiert, Ziehen verschiebt das Fenster, am Rand lässt sich die Grösse ändern. Die Tastenkürzel des Players und der Autoplay-Countdown funktionieren auch im kleinen Fenster, Lage und Grösse werden gemerkt."
+        }
+      ]
+    },
+    {
+      "version": "2.0811",
+      "name": "2.8.11",
+      "items": [
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.0.8: Download: 'Wiederholen' nach einem Fehler verwirft alle geladenen Teilstücke und lädt den Download komplett neu, so lassen sich auch Downloads mit beschädigten Teilstücken retten. 'Fortsetzen' und 'URL bearbeiten' setzen weiterhin an derselben Stelle fort.",
+          "component": "updater",
+          "componentVersion": "4.0.8",
+          "short": "Download: 'Wiederholen' nach einem Fehler verwirft alle geladenen Teilstücke und lädt den Download komplett neu, so lassen sich auch Downloads mit beschädigten Teilstücken retten. 'Fortsetzen' und 'URL bearbeiten' setzen weiterhin an derselben Stelle fort."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.0.8: Die Tools öffnen schneller und bleiben bedienbar, auch wenn STEFFLIX auf einem Netzlaufwerk liegt: Versionen, Lizenz, Kategorien und Downloads werden im Hintergrund gelesen, ebenso Grössen und Vorschauen in den Dialogen beim Umbenennen von Folgen, Leeren der Ablagen und Wählen der Albumbilder. Ist der Player offen, blendet Schliessen die Tools nur aus: Das nächste Öffnen geht sofort, das Protokoll bleibt.",
+          "component": "updater",
+          "componentVersion": "4.0.8",
+          "short": "Die Tools öffnen schneller und bleiben bedienbar, auch wenn STEFFLIX auf einem Netzlaufwerk liegt: Versionen, Lizenz, Kategorien und Downloads werden im Hintergrund gelesen, ebenso Grössen und Vorschauen in den Dialogen beim Umbenennen von Folgen, Leeren der Ablagen und Wählen der Albumbilder. Ist der Player offen, blendet Schliessen die Tools nur aus: Das nächste Öffnen geht sofort, das Protokoll bleibt."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.0.8: Daten einlesen, Medien prüfen, Duplikate finden, Ablagen leeren und Zusammenführen fragen Ordner und Dateien deutlich seltener einzeln ab, auf einem Netzlaufwerk spürbar schneller. Schon verkleinerte Vorschaubilder werden beim Einlesen nicht mehr ganz geladen. Die Ergebnisliste von Medien prüfen zeigt auch Tausende Einträge, Filter und Suche ohne Wartezeit.",
+          "component": "updater",
+          "componentVersion": "4.0.8",
+          "short": "Daten einlesen, Medien prüfen, Duplikate finden, Ablagen leeren und Zusammenführen fragen Ordner und Dateien deutlich seltener einzeln ab, auf einem Netzlaufwerk spürbar schneller. Schon verkleinerte Vorschaubilder werden beim Einlesen nicht mehr ganz geladen. Die Ergebnisliste von Medien prüfen zeigt auch Tausende Einträge, Filter und Suche ohne Wartezeit."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.0.9: Download: „Gleichzeitig“ bleibt auch bei grosser Bildschirmskalierung rechts neben den Knöpfen",
+          "component": "updater",
+          "componentVersion": "4.0.9",
+          "short": "Download: „Gleichzeitig“ bleibt auch bei grosser Bildschirmskalierung rechts neben den Knöpfen"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.0.8: Öffnet eine Seite ein leeres Fenster, ersetzt das den Player nicht mehr durch eine leere Seite.",
+          "component": "updater",
+          "componentVersion": "4.0.8",
+          "short": "Öffnet eine Seite ein leeres Fenster, ersetzt das den Player nicht mehr durch eine leere Seite."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.0.9: Absturz behoben: Wurden die Tools kurz nach dem Öffnen geschlossen (z. B. ohne Internetverbindung während der Update-Prüfung), konnte sich das ganze Programm samt Player beenden",
+          "component": "updater",
+          "componentVersion": "4.0.9",
+          "short": "Absturz behoben: Wurden die Tools kurz nach dem Öffnen geschlossen (z. B. ohne Internetverbindung während der Update-Prüfung), konnte sich das ganze Programm samt Player beenden"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.0.9: Download: Ein neuer Zielordner (eingetippt oder mit „Neuer Ordner …“) wird angelegt statt als „nicht im Installationsordner“ abgelehnt",
+          "component": "updater",
+          "componentVersion": "4.0.9",
+          "short": "Download: Ein neuer Zielordner (eingetippt oder mit „Neuer Ordner …“) wird angelegt statt als „nicht im Installationsordner“ abgelehnt"
+        }
+      ]
+    },
+    {
       "version": "2.0810",
       "name": "2.8.10",
       "items": [

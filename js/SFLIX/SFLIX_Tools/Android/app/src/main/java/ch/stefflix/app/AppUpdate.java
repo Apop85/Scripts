@@ -160,12 +160,21 @@ final class AppUpdate {
                 .setMessage("Update wird heruntergeladen …")
                 .setCancelable(false)
                 .show();
-        String expected = new AppPrefs(a).latestSha256();
         Handler ui = new Handler(Looper.getMainLooper());
         Context app = a.getApplicationContext();
         new Thread(() -> {
             String error = null;
             try {
+                // Prüfsumme frisch aus versions.json (die gemerkte kann von einer älteren Prüfung stammen)
+                String expected;
+                try {
+                    JSONObject o = new JSONObject(new String(download(VERSIONS_URL + "?t=" + System.currentTimeMillis(), 64 * 1024), StandardCharsets.UTF_8));
+                    JSONObject info = o.optJSONObject("android");
+                    expected = info == null ? "" : info.optString("sha256", "").toLowerCase(Locale.ROOT);
+                    if (info != null) new AppPrefs(app).setLatest(info.optString("version", ""), expected);
+                } catch (Exception e) {
+                    expected = new AppPrefs(app).latestSha256();
+                }
                 byte[] apk = download(APK_URL + "?t=" + System.currentTimeMillis(), 200L * 1024 * 1024);
                 String sha = sha256(apk);
                 if (expected.isEmpty() || !expected.equals(sha)) {
@@ -188,8 +197,11 @@ final class AppUpdate {
                         session.commit(pi.getIntentSender());
                     }
                 }
-            } catch (Exception e) {
-                error = "Update fehlgeschlagen: " + e.getMessage();
+            } catch (Throwable e) {
+                // Auch OutOfMemoryError (APK im Speicher): sonst bliebe das Fenster "Lade …" stehen
+                android.util.Log.w("STEFFLIX", "App-Update fehlgeschlagen", e);
+                error = e instanceof OutOfMemoryError ? "Update fehlgeschlagen: zu wenig Arbeitsspeicher. Bitte andere Apps schliessen und erneut versuchen."
+                        : "Update fehlgeschlagen: " + e.getMessage();
             }
             final String err = error;
             ui.post(() -> {
@@ -280,12 +292,14 @@ final class AppUpdate {
                         .setAutoCancel(true)
                         .build();
                 if (nm != null) nm.notify(UPDATED_NOTIFICATION_ID, n);
-            } catch (RuntimeException ignored) {
+            } catch (RuntimeException e) {
                 // Benachrichtigungen nicht erlaubt: dann nur der Versuch, die App zu öffnen
+                android.util.Log.w("STEFFLIX", "Hinweis nach dem Update nicht gezeigt", e);
             }
             try {
                 context.startActivity(launchIntent(context));
-            } catch (RuntimeException ignored) {
+            } catch (RuntimeException e) {
+                android.util.Log.w("STEFFLIX", "App nach dem Update nicht geöffnet", e);
             }
         }
     }

@@ -279,7 +279,47 @@ namespace Sflix
             }
         }
 
-        // Lädt checksums.json. Ohne Prüfsummen wird nichts installiert.
+        public const string SignatureFile = "checksums.sig";
+
+        // Prüft die Signatur von checksums.json (DEC-356): Base64, PKCS#1 v1.5 mit SHA-256 über die Bytes
+        // mit vereinheitlichten Zeilenenden (CRLF -> LF). Gültig, wenn einer der Schlüssel passt.
+        public static bool VerifyChecksums(byte[] json, byte[] signatureFile, string[] publicKeys)
+        {
+            if (json == null || signatureFile == null || publicKeys == null) return false;
+            byte[] signature;
+            try { signature = Convert.FromBase64String(Encoding.ASCII.GetString(signatureFile).Trim()); }
+            catch (FormatException) { return false; }
+            byte[] normalized = NormalizeLineEnds(json);
+            foreach (string key in publicKeys)
+            {
+                try
+                {
+                    using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+                    {
+                        rsa.PersistKeyInCsp = false;
+                        rsa.FromXmlString(key);
+                        using (SHA256CryptoServiceProvider sha = new SHA256CryptoServiceProvider())
+                            if (rsa.VerifyData(normalized, sha, signature)) return true;
+                    }
+                }
+                catch (CryptographicException) { }
+            }
+            return false;
+        }
+
+        static byte[] NormalizeLineEnds(byte[] data)
+        {
+            MemoryStream ms = new MemoryStream(data.Length);
+            for (int i = 0; i < data.Length; i++)
+            {
+                if (data[i] == '\r' && i + 1 < data.Length && data[i + 1] == '\n') continue;
+                ms.WriteByte(data[i]);
+            }
+            return ms.ToArray();
+        }
+
+        // Lädt checksums.json und prüft die Signatur (checksums.sig, seit 4.1.0). Ohne gültige Signatur
+        // wird nichts installiert: das gilt für Update, Setup und ffmpeg (alle holen die Prüfsummen hier).
         public static JsonObject LoadChecksums(CancellationToken token)
         {
             byte[] data;
@@ -291,6 +331,21 @@ namespace Sflix
             {
                 throw new DownloadException("Prüfsummen nicht erreichbar (" + e.Message + ")");
             }
+            if (UpdateKeys.PublicKeys.Length == 0)
+                throw new DownloadException("In diesem Programm ist kein Schlüssel für signierte Updates eingebaut (Entwicklerversion): es wird nichts installiert");
+            byte[] signature;
+            try
+            {
+                signature = Get(RawUrl + SignatureFile, token);
+            }
+            catch (DownloadException e)
+            {
+                throw new DownloadException("Signatur der Prüfsummen nicht erreichbar (" + e.Message + "). Aus Sicherheitsgründen wird nichts installiert. "
+                    + "Kurz nach einer neuen Version kann das vorübergehend sein: später erneut versuchen.");
+            }
+            if (!VerifyChecksums(data, signature, UpdateKeys.PublicKeys))
+                throw new DownloadException("Die Signatur der Prüfsummen ist ungültig: es wird nichts installiert. "
+                    + "Meist ist das vorübergehend (der Server liefert kurz nach einer neuen Version noch alte Dateien): später erneut versuchen.");
             try
             {
                 JsonObject o = Json.Parse(new UTF8Encoding(false, true).GetString(data)) as JsonObject;
@@ -347,7 +402,8 @@ namespace Sflix
             bool hasBackup = false;
             if (backup && File.Exists(target))
             {
-                FileOps.Replace(target, old);
+                try { FileOps.Replace(target, old); }
+                catch { FileOps.TryDelete(temp); throw; }   // kein <ziel>.new liegen lassen
                 hasBackup = true;
             }
 
@@ -357,6 +413,7 @@ namespace Sflix
             }
             catch
             {
+                FileOps.TryDelete(temp);
                 if (hasBackup) FileOps.Replace(old, target);
                 throw;
             }
@@ -375,8 +432,13 @@ namespace Sflix
         public static void RestoreFile(string target, bool hasBackup)
         {
             string old = target + ".old";
-            if (hasBackup && File.Exists(old)) FileOps.Replace(old, target);
-            else if (!hasBackup && File.Exists(target)) File.Delete(target);
+            if (hasBackup)
+            {
+                // Fehlt die Sicherung (z.B. von einem zweiten Start gelöscht), als Fehler melden statt still weiter
+                if (!File.Exists(old)) throw new IOException("Sicherung fehlt: " + old);
+                FileOps.Replace(old, target);
+            }
+            else if (File.Exists(target)) File.Delete(target);
         }
 
         // Lädt und installiert nach dem Alles-oder-nichts-Prinzip:
@@ -446,6 +508,27 @@ namespace Sflix
         // Sicherungen (*.old) früherer Updates entfernen: im STEFFLIX-Ordner, in sflix_sys und
         // sflix_sys\js (dort legen alte und neue Updater sie an). Medienordner bleiben unberührt.
         // Gibt die Anzahl entfernter Dateien zurück.
+        // Seit 4.1.0 nur eigene Sicherungen: im Installationsordner (oft der Medien-Hauptordner) nur die der
+        // Programmdateien, in sflix_sys nur die von Dateien der Weboberfläche (nie persönliche Dateien).
+        static readonly string[] ProgramFiles = { "STEFFLIX.exe", "updateStefflix.exe", "updater.exe", "updateData.exe", "start.html" };
+
+        public static bool IsOwnBackup(string baseDir, string file)
+        {
+            if (!file.EndsWith(".old", StringComparison.OrdinalIgnoreCase)) return false;   // "*.old" findet auch "x.older"
+            string original = file.Substring(0, file.Length - 4);
+            string folder = Path.GetFullPath(Path.GetDirectoryName(file)).TrimEnd('\\');
+            string root = Path.GetFullPath(baseDir).TrimEnd('\\');
+            if (string.Equals(folder, root, StringComparison.OrdinalIgnoreCase))
+            {
+                string name = Path.GetFileName(original);
+                foreach (string p in ProgramFiles) if (string.Equals(name, p, StringComparison.OrdinalIgnoreCase)) return true;
+                return false;
+            }
+            if (!folder.StartsWith(root + "\\", StringComparison.OrdinalIgnoreCase)) return false;
+            string rel = Path.GetFullPath(original).Substring(root.Length + 1).Replace('\\', '/');
+            return IsAllowedWebPath(rel);
+        }
+
         public static int RemoveOldBackups(string baseDir)
         {
             int removed = 0;
@@ -458,8 +541,7 @@ namespace Sflix
                 catch { continue; }
                 foreach (string f in files)
                 {
-                    // GetFiles("*.old") findet auch z.B. "x.older": nur echte .old
-                    if (!f.EndsWith(".old", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!IsOwnBackup(baseDir, f)) continue;
                     try { File.Delete(f); removed++; }
                     catch { }   // z.B. noch gesperrt: beim nächsten Start erneut
                 }

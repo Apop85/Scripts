@@ -270,7 +270,6 @@ namespace Sflix
     {
         string choice;
 
-        public EpisodeCacheDialog(EpisodeList cached, string failure) : this(cached, failure, false) { }
 
         public EpisodeCacheDialog(EpisodeList cached, string failure, bool session)
         {
@@ -350,7 +349,6 @@ namespace Sflix
         bool confirmed;
         readonly ComboBox sourceBox;
 
-        public EpisodePlanDialog(EpisodePlan plan) : this(plan, null) { }
 
         public EpisodePlanDialog(EpisodePlan plan, FfmpegTools ff)
         {

@@ -211,10 +211,17 @@ namespace Sflix
             "System Volume Information", "$RECYCLE.BIN", "@Recycle", "#recycle", "@eaDir", ".vscode", "sflix_sys"
         };
 
-        // Ordner mit "__" im Namen sind Ablagen der Werkzeuge (__teile, __konvertiert, __gelöscht)
+        // Ordner, deren Name mit "__" beginnt, sind Ablagen der Werkzeuge (__teile, __konvertiert, __gelöscht).
+        // Seit 4.1.0 dieselbe Regel wie "Ablagen leeren" (vorher: "__" irgendwo im Namen).
         public static bool IsToolFolder(string name)
         {
-            return name.Contains("__");
+            return name.StartsWith("__");
+        }
+
+        // "__" mitten im Namen: wurde bis 4.0.x übersprungen, seit 4.1.0 eingelesen (Hinweis im Protokoll)
+        public static bool HasInnerDoubleUnderscore(string name)
+        {
+            return !name.StartsWith("__") && name.Contains("__");
         }
 
         public static bool Skip(string name)
@@ -235,10 +242,19 @@ namespace Sflix
             catch { return false; }
         }
 
-        // Ordner überspringen: Ablage, System- oder Papierkorb-Ordner oder versteckt
+        // Verknüpfung auf einen Ordner (Junction, symbolischer Link): seit 4.1.0 nie durchsucht (DEC-359), ihr
+        // Ziel kann ausserhalb des Installationsordners liegen oder fehlen
+        public static bool IsLink(string path)
+        {
+            if (Path.GetPathRoot(path) == path) return false;
+            try { return (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0; }
+            catch { return false; }
+        }
+
+        // Ordner überspringen: Ablage, System- oder Papierkorb-Ordner, versteckt oder Verknüpfung
         public static bool Ignore(string path)
         {
-            return Skip(Path.GetFileName(path.TrimEnd('\\'))) || IsHidden(path);
+            return Skip(Path.GetFileName(path.TrimEnd('\\'))) || IsHidden(path) || IsLink(path);
         }
 
         // Wie Ignore(path), aber mit den Attributen aus der Auflistung (DirectoryInfo.GetFileSystemInfos):
@@ -247,7 +263,7 @@ namespace Sflix
         {
             string name = info.Name;
             if (Skip(name) || name.StartsWith(".")) return true;
-            try { return (info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0; }
+            try { return (info.Attributes & (FileAttributes.Hidden | FileAttributes.System | FileAttributes.ReparsePoint)) != 0; }
             catch { return false; }
         }
 
@@ -331,6 +347,14 @@ namespace Sflix
             FileSystemInfo[] entries;
             try { entries = new DirectoryInfo(dir).GetFileSystemInfos(); }
             catch (UnauthorizedAccessException) { return; }
+            catch (Exception e)
+            {
+                // Pfad zu lang, Verknüpfung ohne Ziel, Netzlaufwerk weg: Ordner melden, weiter mit dem Rest
+                if (!(e is IOException || e is System.Security.SecurityException || e is ArgumentException)) throw;
+                Action<string> notice = FileOps.Notice;
+                if (notice != null) notice("  Hinweis: Ordner nicht lesbar, übersprungen (" + e.Message + "): " + dir);
+                return;
+            }
 
             List<DirectoryInfo> dirs = new List<DirectoryInfo>();
             foreach (FileSystemInfo e in entries)
@@ -395,13 +419,6 @@ namespace Sflix
             return string.IsNullOrEmpty(s) ? fallback : s;
         }
         public void SetString(string key, string value) { data[key] = value; }
-
-        // Ordner aus den Einstellungen; leer oder nicht vorhanden -> STEFFLIX-Ordner
-        public string GetFolder(string key)
-        {
-            string s = data.Str(key);
-            return string.IsNullOrEmpty(s) ? App.Root : s;
-        }
     }
 
     // Wird jeder Aufgabe übergeben: Protokoll, Fortschritt, Abbruch, Rückfragen an die Oberfläche.
@@ -424,6 +441,8 @@ namespace Sflix
         // in dieser Sitzung gemerkte Liste beim Quellenwechsel): "use", "reload", "search" oder null = abbrechen
         public Func<EpisodeList, string, bool, string> ChooseCachedEpisodeList;
         public Func<EpisodePlan, bool> ConfirmEpisodePlan;     // Vorschau; true = umbenennen (Auswahl in Ops[i].Selected)
+        // Ja/Nein-Rückfrage (Text) vor einem riskanten Schritt; null (ohne Oberfläche) = Nein
+        public Func<string, bool> Confirm;
         public bool RestartRequested;                  // Programm wurde aktualisiert -> neu starten
         public string Summary;                         // kurzes Ergebnis der Aufgabe für die Zusammenfassung
 

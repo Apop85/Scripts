@@ -558,11 +558,8 @@ namespace Sflix
     public static class EpisodeTask
     {
         // Videos, die umbenannt werden (auch solche, die noch konvertiert werden müssen)
-        static readonly HashSet<string> VideoExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
-            ".mp4", ".m4v", ".webm", ".ogv", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".ts", ".m2ts", ".mts",
-            ".mpeg", ".mpg", ".3gp", ".vob", ".divx", ".asf", ".f4v",
-        };
-        static readonly string[] PreviewExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+        static readonly HashSet<string> VideoExtensions = MediaTypes.AllVideo();
+        static readonly string[] PreviewExtensions = MediaTypes.PreviewExtensions;
 
         static readonly Regex DoubleFour = new Regex(@"S(\d{1,3})[ ._-]*E(\d{2})(\d{2})(?!\d)", RegexOptions.IgnoreCase);
         static readonly Regex SeasonEpisode = new Regex(@"S(\d{1,3})[ ._-]*E(\d{1,4})(?!\d)", RegexOptions.IgnoreCase);
@@ -595,16 +592,6 @@ namespace Sflix
 
         public static string UndoFile { get { return Path.Combine(App.SysDir, UndoFileName); } }
         public static bool UndoFileExists { get { return File.Exists(UndoFile); } }
-
-        // Folgennummer aus einem Dateinamen (bei Doppelfolgen die kleinste); false, wenn keine erkannt wird
-        public static bool ParseEpisode(string fileName, out int season, out int episode)
-        {
-            List<int> episodes;
-            episode = 0;
-            if (!ParseEpisodes(fileName, out season, out episodes)) return false;
-            episode = episodes[0];
-            return true;
-        }
 
         // Alle Folgen einer Datei, aufsteigend und ohne Doppelte: S01E02 -> [2], S01E02E03, S01E02-E03,
         // S01E02-03, S01E0203, 1x02-03 und 1x02-1x03 -> [2, 3]

@@ -85,14 +85,6 @@ namespace Sflix
             Filter();
         }
 
-        // Thema nach Titel wählen (z.B. von aussen "Kommandozeile")
-        public void ShowTopic(string title)
-        {
-            search.Text = "";
-            foreach (HelpTopic t in list.Items)
-                if (t.Title == title) { list.SelectedItem = t; return; }
-        }
-
         void DrawTopic(object sender, DrawItemEventArgs e)
         {
             if (e.Index < 0) return;

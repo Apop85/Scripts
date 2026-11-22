@@ -573,6 +573,9 @@ namespace Sflix
                     // Schon eine andere Installation: Ordnername dazu
                     string name = Path.GetFileName(dir.TrimEnd('\\'));
                     if (name.Length == 0) name = dir.Substring(0, 1);
+                    // Laufwerkswurzel ("D:") bzw. andere ungültige Zeichen im Dateinamen der Verknüpfung
+                    foreach (char c in Path.GetInvalidFileNameChars()) name = name.Replace(c.ToString(), "");
+                    if (name.Length == 0) name = "2";
                     path = Path.Combine(folder, "STEFFLIX (" + name + ").lnk");
                     if (File.Exists(path)) return null;
                 }
@@ -758,7 +761,6 @@ namespace Sflix
         static extern int RegisterWindowMessage(string name);
 
         public Settings Settings { get { return settings; } }
-        public bool ToolsOpen { get { return tools != null && tools.Visible; } }
 
         public void ShowPlayer()
         {
@@ -890,7 +892,16 @@ namespace Sflix
             }
             exitWhenToolsClosed = true;
             playerClosing = true;
-            tools.Close();
+            MainForm closing = tools;
+            closing.Close();
+            // Die Tools können das Schliessen ablehnen (z.B. laufende Downloads nicht abbrechen): dann
+            // bleibt auch der Player offen (vorher schloss er trotzdem und die Merker blieben gesetzt)
+            if (tools == closing)   // FormClosed setzt tools = null (läuft während Close)
+            {
+                exitWhenToolsClosed = false;
+                playerClosing = false;
+                return false;
+            }
             return true;
         }
 

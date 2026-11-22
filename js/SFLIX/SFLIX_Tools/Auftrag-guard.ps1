@@ -1,4 +1,4 @@
-# Auftrag-guard.ps1 - PreToolUse-Hook fuer .claude/settings.json (STEFFLIX, uebernommen aus Sync2PC, DEC-329 ff.)
+# Auftrag-guard.ps1 - PreToolUse-Hook, eingetragen in .claude/settings.local.json (Pfad mit Benutzernamen, nicht gepusht) (STEFFLIX, uebernommen aus Sync2PC, DEC-329 ff.)
 #
 # 1. PowerShell-Alias-Falle (CLAUDE.md, oberste Regel): Definiert ein PowerShell-Befehl oder eine geschriebene .ps1/.psm1-Datei
 #    eine Funktion (function/filter), deren Name ein Alias oder Cmdlet ist -> Exit 2 (gesperrt). Aliase haben Vorrang vor
@@ -13,6 +13,9 @@
 #    - Read/Glob/Grep ausserhalb der Leseorte -> Exit 2.
 #    - PowerShell/Bash: absolute Pfade im Befehl (Umgebungsvariablen aufgeloest) und Arbeitsverzeichnis ausserhalb
 #      -> Rueckfrage (heuristisch). Programme (.exe/.bat/.cmd/.com/.dll) zaehlen nicht als Ziel.
+#    - GitHub-Klon (%USERPROFILE%\Documents\GitHub, Ziel von sync_github.py; DEC-363): Datei-Werkzeuge -> Exit 2;
+#      Shell -> Exit 2, ausser ein Aufruf von SFLIX_Tools\Release\sync_github.py ohne weiteres Schreibverb, dessen
+#      Pfade im Zielordner liegen (%SFLIX_GITHUB_DIR% bzw. ...\GitHub\Scripts\js\SFLIX). Nur die Rolle Release.
 # 4. STEFFLIX.exe / updateStefflix.exe nur mit SFLIX_DIR auf .claude\testenv starten -> sonst Exit 2.
 # Ein Fehler im Waechter blockiert nie (Exit 0). Grenze: haelt Versehen auf, keine absichtliche Umgehung.
 # Reines ASCII (PowerShell 5.1). Selbsttest: SFLIX_Tools\Auftrag-guard-Selbsttest.ps1
@@ -102,7 +105,7 @@ try {
     $Orte = New-Object System.Collections.Generic.List[string]
     foreach ($o in @(
             $root,                                                                    # Projekt (Rollengrenzen: CLAUDE.md)
-            'C:\Users\rbald\AppData\Local\Temp', (Join-Path $env:LOCALAPPDATA 'Temp'), # Temp fest (TMP kann auf einen Unterordner zeigen)
+            (Join-Path $env:USERPROFILE 'AppData\Local\Temp'), (Join-Path $env:LOCALAPPDATA 'Temp'), # Temp fest (TMP kann auf einen Unterordner zeigen)
             [IO.Path]::GetTempPath(), $env:TMP, $env:TEMP,                            # Scratchpad
             (Join-Path $env:USERPROFILE '.claude'),                                   # Gedaechtnis, Ausgaben, Plaene von Claude Code
             (Join-Path $env:LOCALAPPDATA 'STEFFLIX'),                                 # ffmpeg, WebView2, Downloads der EXE (Tests)
@@ -116,6 +119,16 @@ try {
     $LeseOrte = New-Object System.Collections.Generic.List[string]
     foreach ($o in $Orte) { [void]$LeseOrte.Add($o) }
     foreach ($o in @('C:\Windows\Microsoft.NET', 'C:\Program Files\Android', 'C:\Program Files (x86)\Microsoft\EdgeWebView')) { [void]$LeseOrte.Add($o) }
+    # GitHub-Klon: nur ueber sync_github.py (Rolle Release, nach Freigabe des Benutzers; DEC-363)
+    $GitHubOrt = $null; $KlonOrt = $null
+    try {
+        $GitHubOrt = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE 'Documents\GitHub')).TrimEnd('\')
+        $KlonOrt = [IO.Path]::GetFullPath((Join-Path $GitHubOrt 'Scripts\js\SFLIX')).TrimEnd('\')
+        if ($env:SFLIX_GITHUB_DIR) { $KlonOrt = [IO.Path]::GetFullPath($env:SFLIX_GITHUB_DIR).TrimEnd('\') }
+    }
+    catch {}
+    $KlonSperre = @(); foreach ($o in @($GitHubOrt, $KlonOrt)) { if ($o) { $KlonSperre += $o } }
+    $KlonMeldung = 'Gesperrt: GitHub-Klon. Schreiben dorthin nur ueber python SFLIX_Tools\Release\sync_github.py (Rolle Release, nach ausdruecklicher Freigabe des Benutzers; DEC-363), ohne weitere Befehle in derselben Zeile. Kein direktes Lesen, Kopieren oder Loeschen.'
     $OrtHinweis = 'Erlaubt sind: Projektordner, %TEMP% (Scratchpad), %USERPROFILE%\.claude, %LOCALAPPDATA%\STEFFLIX, \STEFFLIX-Android, \STEFFLIX-TestShare, \Android\Sdk, %USERPROFILE%\.android (CLAUDE.md "Zugriff nur im Projekt"). Einen erlaubten Ort waehlen; nur zulassen, wenn der Auftrag diesen Ort wirklich braucht.'
 
     # ------------------------------------------------------------ Datei-Werkzeuge (schreibend)
@@ -137,6 +150,7 @@ try {
             $rel = $full.Substring($base.Length + 1)
             if ($rel -match '^(?i)(tasks|inbox|\.history)(\\|$)' -or $rel -match '^(?i)(TASK-INDEX\.md|\.audit\.log|\.lock)$') { Stop-Guard $Meldung }
         }
+        if (Test-GuardOrt $full $KlonSperre) { Stop-Guard ($KlonMeldung + ' Pfad: ' + $full) }
         if (-not (Test-GuardOrt $full $Orte)) { Stop-Guard ('Gesperrt: Schreiben ausserhalb der erlaubten Orte: ' + $full + '. ' + $OrtHinweis) }
         exit 0
     }
@@ -150,6 +164,7 @@ try {
             $full = Resolve-GuardPfad $c $cwd
             if (-not $full) { continue }
             if (Test-NetzPfad $full) { Stop-Guard ($NetzMeldung + ' Pfad: ' + $full) }
+            if (Test-GuardOrt $full $KlonSperre) { Stop-Guard ($KlonMeldung + ' Pfad: ' + $full) }
             if (-not (Test-GuardOrt $full $LeseOrte)) { Stop-Guard ('Gesperrt: Lesen ausserhalb der erlaubten Orte: ' + $full + '. ' + $OrtHinweis) }
         }
         exit 0
@@ -193,7 +208,7 @@ try {
         foreach ($s in $startRx) { if ($cmd -match $s) { $startet = $true; break } }
         if ($startet -and $cmd -notmatch '(?i)SFLIX_DIR[^;\r\n]*\.claude[\\/]+testenv') {
             Stop-Guard ('Gesperrt: STEFFLIX.exe/updateStefflix.exe nur mit der Testumgebung starten (CLAUDE.md "Testumgebung"): ' +
-                'im selben Befehl $env:SFLIX_DIR = ''C:\Users\rbald\Documents\SFLIX\.claude\testenv'' setzen (Pfad ausgeschrieben). Nie produktive STEFFLIX-Ordner.')
+                'im selben Befehl $env:SFLIX_DIR = ''' + (Join-Path $root '.claude\testenv') + ''' setzen (Pfad ausgeschrieben). Nie produktive STEFFLIX-Ordner.')
         }
 
         # 1b. Array-Abflachung (nur schreibende PowerShell-Befehle)
@@ -256,17 +271,23 @@ try {
         foreach ($m in [regex]::Matches($rest, '(?<![\w"''$:])(' + $start + '[^\s"'';|<>(){},`]*)')) { [void]$kand.Add($m.Groups[1].Value) }
 
         $liste = $LeseOrte; if ($schreibt) { $liste = $Orte }
+        $syncAufruf = ($cmd -match '(?i)SFLIX_Tools[\\/]+Release[\\/]+sync_github\.py') -and -not $schreibt -and -not (Test-AusfuehrtText $cmd)
         $draussen = New-Object System.Collections.Generic.List[string]
         foreach ($c in $kand) {
             $full = Resolve-GuardPfad $c $cwd
             if (-not $full) { continue }
             if (Test-NetzPfad $full) { Stop-Guard ($NetzMeldung + ' Pfad: ' + $full) }
+            if (Test-GuardOrt $full $KlonSperre) {
+                if ($syncAufruf -and $KlonOrt -and (Test-GuardOrt $full @($KlonOrt))) { continue }
+                Stop-Guard ($KlonMeldung + ' Pfad: ' + $full)
+            }
             if ($full -match '^(?i)\\\\(127\.0\.0\.1|localhost)(\\|$)') { continue }     # lokaler SMB-Testserver
             if ($c -match '(?i)\.(exe|bat|cmd|com|dll)$') { continue }
             if (-not (Test-GuardOrt $full $liste) -and -not $draussen.Contains($full)) { [void]$draussen.Add($full) }
         }
         $cwdVoll = Resolve-GuardPfad $cwd $root
         if ($cwdVoll -and (Test-NetzPfad $cwdVoll)) { Stop-Guard ($NetzMeldung + ' Arbeitsverzeichnis: ' + $cwdVoll) }
+        if ($cwdVoll -and (Test-GuardOrt $cwdVoll $KlonSperre)) { Stop-Guard ($KlonMeldung + ' Arbeitsverzeichnis: ' + $cwdVoll) }
         if ($cwdVoll -and -not (Test-GuardOrt $cwdVoll $liste)) { [void]$draussen.Add('Arbeitsverzeichnis ' + $cwdVoll) }
         if ($draussen.Count -gt 0) {
             $art = 'greift'; if ($schreibt) { $art = 'schreibt' }

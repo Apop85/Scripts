@@ -41,9 +41,16 @@ namespace Sflix
     public class ConvertTask
     {
         public const string OriginalsFolderName = "__konvertiert";
-        static readonly HashSet<string> VideoExtensions = new HashSet<string> {
-            ".mp4", ".mkv", ".avi", ".mov", ".m4v", ".wmv", ".flv", ".webm", ".ts", ".mpeg", ".mpg",
-        };
+        // Dieselben Endungen wie Import und "Medien prüfen" (MediaTypes), ohne .ogv (spielt der Browser ab,
+        // kein MP4-Ziel nötig). Vorher fehlten u.a. .m2ts, .mts, .3gp, .vob, .divx, .asf, .f4v.
+        static readonly HashSet<string> VideoExtensions = VideoSet();
+
+        static HashSet<string> VideoSet()
+        {
+            HashSet<string> s = MediaTypes.AllVideo();
+            s.Remove(".ogv");
+            return s;
+        }
 
         readonly TaskContext ctx;
         readonly ConvertOptions opt;
@@ -81,11 +88,7 @@ namespace Sflix
             if (opt.Audio) { extensions.UnionWith(MediaTypes.ConvertAudio); extensions.UnionWith(CheckedAudio); }
             List<string> files = new List<string>();
             Folders.CollectFiles(opt.Folder, extensions, true, files, ctx.Token);
-            files.RemoveAll(delegate(string f)
-            {
-                string name = Path.GetFileName(f);
-                return name.StartsWith("._") || name.Contains(".__temp__");
-            });
+            files.RemoveAll(delegate(string f) { return MediaTypes.IsWorkFile(Path.GetFileName(f)); });
             if (opt.OnlyFiles != null) files.RemoveAll(delegate(string f) { return !opt.OnlyFiles.Contains(f); });
             files.Sort(StringComparer.OrdinalIgnoreCase);
             total = files.Count;
@@ -185,16 +188,21 @@ namespace Sflix
                 temp,
             };
             double duration = info.Duration;
-            ProcResult r = Proc.Run(ctx.Ffmpeg.FfmpegPath, args, ctx.Token, delegate(string line)
+            ProcResult r;
+            try
             {
-                if (duration <= 0 || !line.StartsWith("out_time_us=")) return;
-                long us;
-                if (long.TryParse(line.Substring(12), NumberStyles.Integer, CultureInfo.InvariantCulture, out us))
+                r = Proc.Run(ctx.Ffmpeg.FfmpegPath, args, ctx.Token, delegate(string line)
                 {
-                    lock (gate) { active[workerId] = Math.Min(1, us / 1e6 / duration); }
-                    ReportProgress();
-                }
-            });
+                    if (duration <= 0 || !line.StartsWith("out_time_us=")) return;
+                    long us;
+                    if (long.TryParse(line.Substring(12), NumberStyles.Integer, CultureInfo.InvariantCulture, out us))
+                    {
+                        lock (gate) { active[workerId] = Math.Min(1, us / 1e6 / duration); }
+                        ReportProgress();
+                    }
+                });
+            }
+            catch { FileOps.TryDelete(temp); throw; }   // Abbruch: keine halbe Datei liegen lassen
             string error = null;
             if (r.ExitCode != 0)
             {
@@ -226,45 +234,73 @@ namespace Sflix
             return "ok";
         }
 
-        // Original sichern (oder löschen), dann die geprüften Ergebnisse an ihren Platz; bei Fehlern zurück
+        // Geprüfte Ergebnisse an ihren Platz, das Original erst danach sichern oder löschen (seit 4.1.0: vorher
+        // wurde das Original zuerst gelöscht, scheiterte danach das Umbenennen, waren Original und Ergebnis weg).
+        // Ein Ergebnis mit demselben Namen wie das Original (z.B. MP4 neu kodiert) ersetzt es zuletzt.
         void PlaceResults(string source, List<string> temps, List<string> finals)
         {
             string dir = Path.GetDirectoryName(source);
-            string movedOriginal = null;
-            try
+            int same = -1;
+            for (int i = 0; i < finals.Count; i++)
+                if (string.Equals(Path.GetFullPath(finals[i]), Path.GetFullPath(source), StringComparison.OrdinalIgnoreCase)) same = i;
+            List<int> placed = new List<int>();
+            Action rollback = delegate
             {
-                if (opt.DeleteOriginal)
-                {
-                    FileOps.Delete(source);
-                }
-                else
-                {
-                    string storage = Path.Combine(dir, OriginalsFolderName);
-                    Directory.CreateDirectory(storage);
-                    movedOriginal = FileOps.UniquePath(storage, Path.GetFileName(source));
-                    FileOps.Rename(source, movedOriginal);
-                }
-            }
-            catch (Exception e)
-            {
+                foreach (int j in placed) { try { FileOps.Rename(finals[j], temps[j]); } catch { } }
                 foreach (string t in temps) FileOps.TryDelete(t);
-                throw new Exception("Original kann nicht verschoben werden (" + e.Message + ")");
-            }
+            };
 
             for (int i = 0; i < temps.Count; i++)
             {
-                try
-                {
-                    FileOps.Rename(temps[i], finals[i]);
-                }
+                if (i == same) continue;
+                try { FileOps.Rename(temps[i], finals[i]); placed.Add(i); }
                 catch (Exception e)
                 {
-                    // Zurück auf den alten Stand
-                    for (int j = 0; j < i; j++) { try { FileOps.Rename(finals[j], temps[j]); } catch { } }
-                    foreach (string t in temps) FileOps.TryDelete(t);
-                    if (movedOriginal != null) { try { FileOps.Rename(movedOriginal, source); } catch { } }
-                    throw new Exception("Ergebnis kann nicht umbenannt werden (" + e.Message + ")");
+                    rollback();
+                    throw new Exception("Ergebnis kann nicht umbenannt werden, Original unverändert (" + e.Message + ")");
                 }
+            }
+
+            if (opt.DeleteOriginal)
+            {
+                if (same >= 0)
+                {
+                    try { FileOps.Replace(temps[same], source); }
+                    catch (Exception e)
+                    {
+                        rollback();
+                        throw new Exception("Original kann nicht ersetzt werden, Original unverändert (" + e.Message + ")");
+                    }
+                }
+                else
+                {
+                    // Ergebnisse liegen schon am Platz: scheitert das Löschen, bleibt nur das Original zusätzlich liegen
+                    try { FileOps.Delete(source); }
+                    catch (Exception e) { ctx.Log("  Hinweis " + source + " :: Original nicht gelöscht (" + e.Message + ")"); }
+                }
+                return;
+            }
+
+            string movedOriginal;
+            try
+            {
+                string storage = Path.Combine(dir, OriginalsFolderName);
+                Directory.CreateDirectory(storage);
+                movedOriginal = FileOps.UniquePath(storage, Path.GetFileName(source));
+                FileOps.Rename(source, movedOriginal);
+            }
+            catch (Exception e)
+            {
+                rollback();
+                throw new Exception("Original kann nicht verschoben werden (" + e.Message + ")");
+            }
+            if (same < 0) return;
+            try { FileOps.Rename(temps[same], source); }
+            catch (Exception e)
+            {
+                try { FileOps.Rename(movedOriginal, source); } catch { }
+                rollback();
+                throw new Exception("Ergebnis kann nicht umbenannt werden (" + e.Message + ")");
             }
         }
 
@@ -431,7 +467,39 @@ namespace Sflix
 
         // ---------------------------------------------------------------
 
+        // Eine Datei wird nie von zwei Aufgaben gleichzeitig konvertiert (Download-Nachbearbeitung und Tool
+        // "Konvertieren" nutzen dieselben Zwischennamen "Name.__temp__.mp4"), seit 4.1.0
+        static readonly Dictionary<string, object> fileLocks = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+        static object LockFor(string path)
+        {
+            string key = Path.GetFullPath(path);
+            lock (fileLocks)
+            {
+                object o;
+                if (!fileLocks.TryGetValue(key, out o)) { o = new object(); fileLocks[key] = o; }
+                return o;
+            }
+        }
+
         string ProcessSource(int workerId, string source)
+        {
+            object fileLock = LockFor(source);
+            while (!Monitor.TryEnter(fileLock, 500)) ctx.Check();
+            try
+            {
+                // Inzwischen von der anderen Aufgabe bearbeitet (Original verschoben bzw. ersetzt)
+                if (!File.Exists(source))
+                {
+                    ctx.Log("  ÜBERSPRUNGEN  " + source + " :: inzwischen von einer anderen Aufgabe bearbeitet");
+                    return "skipped";
+                }
+                return ProcessSourceLocked(workerId, source);
+            }
+            finally { Monitor.Exit(fileLock); }
+        }
+
+        string ProcessSourceLocked(int workerId, string source)
         {
             string key = CacheKey(source);
             if (knownCompatible.Contains(key))

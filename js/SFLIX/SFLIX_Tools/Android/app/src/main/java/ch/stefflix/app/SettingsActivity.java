@@ -82,6 +82,19 @@ public class SettingsActivity extends Activity {
         switchRow(page, "Wiedergabe im Hintergrund",
                 "Musik und Ton von Videos laufen weiter bei ausgeschaltetem Bildschirm oder in einer anderen App, mit Steuerung in der Benachrichtigung",
                 prefs.backgroundPlayback(), prefs::setBackgroundPlayback);
+        // Ab Android 13 braucht die Steuerung in der Benachrichtigung eine Erlaubnis. Nach einer Ablehnung fragt
+        // Android nicht mehr nach: deshalb hier der Weg zu den Benachrichtigungs-Einstellungen der App
+        if (android.os.Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            page.addView(button("Benachrichtigungen erlauben", false, v -> {
+                try {
+                    startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                            .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName()));
+                } catch (RuntimeException e) {
+                    Toast.makeText(this, "Bitte in den Android-Einstellungen unter Apps › STEFFLIX › Benachrichtigungen erlauben.", Toast.LENGTH_LONG).show();
+                }
+            }));
+        }
         switchRow(page, "Bild-im-Bild", "Knopf im Player: Video in einem kleinen Fenster über anderen Apps",
                 prefs.pictureInPicture(), prefs::setPictureInPicture);
 
@@ -94,9 +107,15 @@ public class SettingsActivity extends Activity {
                     fillStorage();
                 }));
         page.addView(button("Zwischenspeicher leeren", false, v -> {
-            FileCache.clearAll(this);
-            fillStorage();
-            Toast.makeText(this, "Zwischenspeicher geleert", Toast.LENGTH_SHORT).show();
+            // Löschen vieler Dateien nicht auf dem UI-Thread
+            new Thread(() -> {
+                FileCache.clearAll(getApplicationContext());
+                runOnUiThread(() -> {
+                    if (isFinishing()) return;
+                    fillStorage();
+                    Toast.makeText(this, "Zwischenspeicher geleert", Toast.LENGTH_SHORT).show();
+                });
+            }, "stefflix-clear").start();
         }));
         if (currentId != null) {
             page.addView(button("STEFFLIX-Dateien neu laden", false, v -> {
@@ -205,9 +224,15 @@ public class SettingsActivity extends Activity {
     }
 
     private void fillStorage() {
-        long used = FileCache.diskUsage(this);
-        cacheValue.setText(String.format(Locale.ROOT, "%d MB, belegt %.0f MB  ›", prefs.cacheMb(), used / 1048576.0));
         bufferValue.setText(prefs.bufferMb() + " MB  ›");
+        cacheValue.setText(prefs.cacheMb() + " MB  ›");
+        // Belegten Platz im Hintergrund zählen (viele Dateien)
+        new Thread(() -> {
+            long used = FileCache.diskUsage(getApplicationContext());
+            runOnUiThread(() -> {
+                if (!isFinishing()) cacheValue.setText(String.format(Locale.ROOT, "%d MB, belegt %.0f MB  ›", prefs.cacheMb(), used / 1048576.0));
+            });
+        }, "stefflix-usage").start();
     }
 
     private void fillUpdate() {

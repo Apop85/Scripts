@@ -199,7 +199,7 @@ namespace Sflix
             string dest = FileOps.UniquePath(storage, Path.GetFileName(file));
             FileOps.Rename(file, dest);
             string stem = Path.GetFileNameWithoutExtension(file);
-            foreach (string ext in new string[] { ".jpg", ".jpeg", ".png", ".webp" })
+            foreach (string ext in MediaTypes.PreviewExtensions)
             {
                 string preview = Path.Combine(Path.Combine(dir, "Preview"), stem + ext);
                 if (!File.Exists(preview)) continue;

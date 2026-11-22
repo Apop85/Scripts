@@ -301,10 +301,40 @@ namespace Sflix
             Move(source, target, MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
         }
 
-        // Verschiebt eine Datei, auch auf ein anderes Laufwerk (dann wird kopiert und gelöscht).
+        const int ERROR_NOT_SAME_DEVICE = 17;
+
+        // Verschiebt eine Datei, auch auf ein anderes Laufwerk. Dann wird zuerst unter "<Ziel>.__temp__"
+        // kopiert, umbenannt und erst danach die Quelle gelöscht (seit 4.1.0): ein Abbruch hinterlässt
+        // keine abgeschnittene Datei unter dem Endnamen, und ein vorhandenes Ziel wird erst durch die
+        // vollständige Kopie ersetzt.
         public static void MoveAcross(string source, string target, bool overwrite)
         {
-            Move(source, target, MOVEFILE_COPY_ALLOWED | (overwrite ? MOVEFILE_REPLACE_EXISTING : 0));
+            int replace = overwrite ? MOVEFILE_REPLACE_EXISTING : 0;
+            if (MoveFileEx(source, target, replace)) return;            // gleiches Laufwerk: umbenennen
+            if (Marshal.GetLastWin32Error() != ERROR_NOT_SAME_DEVICE)
+            {
+                Move(source, target, replace);                          // Wiederholen, Schreibschutz, Rechte
+                return;
+            }
+            if (!overwrite && Exists(target)) throw new IOException(Describe(80) + ": " + target);   // ERROR_FILE_EXISTS
+            string temp = target + ".__temp__";
+            try
+            {
+                File.Copy(source, temp, true);
+                Move(temp, target, replace);
+            }
+            catch
+            {
+                TryDelete(temp);
+                throw;
+            }
+            // Ziel ist vollständig: bleibt die Quelle liegen, ist nichts verloren, nur doppelt
+            try { Delete(source); }
+            catch (Exception e)
+            {
+                Action<string> notice = Notice;
+                if (notice != null) notice("  Hinweis: kopiert, Quelle aber nicht gelöscht (" + e.Message + "): " + source);
+            }
         }
 
         // Wie Python os.rename: schlägt fehl, wenn das Ziel existiert (ausser bei reiner
@@ -575,8 +605,68 @@ namespace Sflix
 
     public static class Proc
     {
-        // Laufende Prozesse, damit "Abbrechen" sie beenden kann
-        static readonly HashSet<Process> running = new HashSet<Process>();
+        // Laufende Prozesse mit dem Abbruch-Token ihrer Aufgabe, damit "Abbrechen" nur die eigenen beendet
+        // (seit 4.1.0; vorher beendete Abbrechen in den Tools auch ffmpeg laufender Downloads)
+        static readonly Dictionary<Process, CancellationToken> running = new Dictionary<Process, CancellationToken>();
+
+        // Job-Objekt mit KILL_ON_JOB_CLOSE: endet STEFFLIX (auch Absturz), beendet Windows alle gestarteten
+        // ffmpeg/ffprobe, statt sie weiterlaufen zu lassen
+        static IntPtr job = IntPtr.Zero;
+        static readonly object jobGate = new object();
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+        static extern IntPtr CreateJobObject(IntPtr attributes, string name);
+
+        [DllImport("kernel32.dll")]
+        static extern bool SetInformationJobObject(IntPtr job, int infoClass, ref JOBOBJECT_EXTENDED_LIMIT_INFORMATION info, int length);
+
+        [DllImport("kernel32.dll")]
+        static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct JOBOBJECT_BASIC_LIMIT_INFORMATION
+        {
+            public long PerProcessUserTimeLimit, PerJobUserTimeLimit;
+            public int LimitFlags;
+            public UIntPtr MinimumWorkingSetSize, MaximumWorkingSetSize;
+            public int ActiveProcessLimit;
+            public UIntPtr Affinity;
+            public int PriorityClass, SchedulingClass;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct IO_COUNTERS { public ulong ReadOps, WriteOps, OtherOps, ReadBytes, WriteBytes, OtherBytes; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+        {
+            public JOBOBJECT_BASIC_LIMIT_INFORMATION Basic;
+            public IO_COUNTERS Io;
+            public UIntPtr ProcessMemoryLimit, JobMemoryLimit, PeakProcessMemoryUsed, PeakJobMemoryUsed;
+        }
+
+        const int JobObjectExtendedLimitInformation = 9, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x2000;
+
+        static void AddToJob(Process p)
+        {
+            try
+            {
+                lock (jobGate)
+                {
+                    if (job == IntPtr.Zero)
+                    {
+                        IntPtr h = CreateJobObject(IntPtr.Zero, null);
+                        if (h == IntPtr.Zero) return;
+                        JOBOBJECT_EXTENDED_LIMIT_INFORMATION info = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION();
+                        info.Basic.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+                        if (!SetInformationJobObject(h, JobObjectExtendedLimitInformation, ref info, Marshal.SizeOf(typeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION)))) return;
+                        job = h;   // bleibt bis zum Programmende offen (Windows schliesst es dann)
+                    }
+                }
+                AssignProcessToJobObject(job, p.Handle);
+            }
+            catch { }
+        }
 
         public static string Quote(string arg)
         {
@@ -648,7 +738,8 @@ namespace Sflix
                 token.ThrowIfCancellationRequested();
                 p.Start();
                 try { p.StandardInput.Close(); } catch { }
-                lock (running) running.Add(p);
+                AddToJob(p);
+                lock (running) running[p] = token;
                 try
                 {
                     p.BeginOutputReadLine();
@@ -681,13 +772,15 @@ namespace Sflix
             }
         }
 
-        public static void KillAll()
+        // Beendet die Prozesse einer Aufgabe (gleiches Abbruch-Token)
+        public static void KillAll(CancellationToken owner)
         {
             lock (running)
             {
-                foreach (Process p in running)
+                foreach (KeyValuePair<Process, CancellationToken> kv in running)
                 {
-                    try { p.Kill(); } catch { }
+                    if (!kv.Value.Equals(owner)) continue;
+                    try { kv.Key.Kill(); } catch { }
                 }
             }
         }

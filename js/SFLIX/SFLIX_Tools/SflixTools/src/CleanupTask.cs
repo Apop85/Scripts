@@ -70,11 +70,6 @@ namespace Sflix
             return result;
         }
 
-        public static void Run(TaskContext ctx, string root)
-        {
-            Run(ctx, new List<string> { root });
-        }
-
         // Durchsucht alle Ordner und zeigt die Ablagen gemeinsam zur Auswahl. Gelöscht wird nur
         // innerhalb des Installationsordners, damit nicht versehentlich andere Daten verschwinden.
         // Rückgabe: Ordner, in die etwas wiederhergestellt wurde (zum Neueinlesen)

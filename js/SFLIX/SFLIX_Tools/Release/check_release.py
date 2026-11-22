@@ -40,6 +40,9 @@ start_html = read("start.html")
 for path in SCRIPT_FILES:
     if f'src="{path}"' not in start_html:
         errors.append(f"start.html lädt {path} nicht")
+# Die Android-App setzt ihre Skripte vor genau diese Zeile ein (BrowserActivity.injectIntoStart; Rückfall vor </body>)
+if '<script src="sflix_sys/js/main.js"' not in start_html:
+    errors.append('start.html: <script src="sflix_sys/js/main.js" fehlt (Einstiegspunkt der Android-App)')
 
 # 4. Platzhalter für Updater vor 2.00 (laden sflix_sys/sflix.js fest herunter)
 if not os.path.exists(os.path.join(base_dir, "sflix_sys/sflix.js")):
@@ -80,6 +83,32 @@ else:
         errors.append("STEFFLIX.exe ist nicht das Programm ab 4.0")
     else:
         print("STEFFLIX.exe Version %d.%d.%d" % version)
+        # Version im Quellcode: weicht sie ab, ist der Quellcode nicht (oder anders) gebaut. Nur Hinweis, weil
+        # release.ps1 diese Prüfung vor dem Bauen bzw. bei absichtlich nicht gebautem Desktop aufruft.
+        program_cs = os.path.join(base_dir, "SFLIX_Tools", "SflixTools", "src", "Program.cs")
+        if os.path.exists(program_cs):
+            m = re.search(r'AssemblyVersion\("(\d+)\.(\d+)\.(\d+)', read(os.path.relpath(program_cs, base_dir)))
+            if m and tuple(int(x) for x in m.groups()) != version:
+                print("Hinweis: Program.cs hat Version %s.%s.%s, STEFFLIX.exe %d.%d.%d" % (m.groups() + version))
+# Android-App: versions.json gegen build.gradle und STEFFLIX.apk (nur Hinweise, release.ps1 schreibt
+# versions.json erst nach dieser Prüfung neu)
+apk = os.path.join(base_dir, "STEFFLIX.apk")
+gradle = os.path.join(base_dir, "SFLIX_Tools", "Android", "app", "build.gradle")
+if os.path.exists(apk) and os.path.exists(os.path.join(base_dir, "versions.json")):
+    import hashlib
+    import json as _json
+    try:
+        android = _json.loads(read("versions.json")).get("android") or {}
+        with open(apk, "rb") as reader:
+            apk_sha = hashlib.sha256(reader.read()).hexdigest()
+        if android.get("sha256") and android["sha256"].lower() != apk_sha:
+            print("Hinweis: versions.json nennt eine andere SHA256 als STEFFLIX.apk (wird beim Release neu geschrieben)")
+        if os.path.exists(gradle):
+            gm = re.search(r"versionName\s+['\"](\d+\.\d+\.\d+)['\"]", read(os.path.relpath(gradle, base_dir)))
+            if gm and android.get("version") and android["version"] != gm.group(1):
+                print("Hinweis: versions.json nennt App %s, build.gradle %s" % (android["version"], gm.group(1)))
+    except (OSError, ValueError) as e:
+        errors.append("versions.json nicht lesbar: %s" % e)
 if not os.path.exists(updater_exe):
     errors.append("updateStefflix.exe fehlt (Kopie von STEFFLIX.exe für Updater bis 3.x)")
 elif os.path.exists(desktop_exe):
@@ -99,6 +128,18 @@ try:
         print(f"ffmpeg {ffmpeg['version']}")
 except (OSError, ValueError):
     errors.append("ffmpeg.json fehlt oder ist kein gültiges JSON")
+
+# 7. Signatur der veröffentlichten checksums.json (DEC-356). Vor dem ersten signierten Release fehlt
+#    checksums.sig noch: dann nur ein Hinweis; release.ps1 signiert und prüft danach streng.
+from update_signature import check as check_signature
+if os.path.exists(os.path.join(base_dir, "checksums.sig")):
+    signature_error = check_signature(base_dir)
+    if signature_error:
+        errors.append(signature_error)
+    else:
+        print("Signatur von checksums.json gültig")
+else:
+    print("Hinweis: checksums.sig fehlt noch (wird beim Release erzeugt)")
 
 if errors:
     print("FEHLER:")

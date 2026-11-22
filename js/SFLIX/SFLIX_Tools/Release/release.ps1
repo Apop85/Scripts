@@ -1,29 +1,29 @@
-﻿# ===================================================================
+# ===================================================================
 #  STEFFLIX - Release bauen und bereitstellen
 #
 #  Start: Doppelklick auf build_release.bat (oder: powershell -ExecutionPolicy Bypass -File release.ps1)
 #
 #  Ordner: Diese Skripte liegen in <Release-Ordner>\SFLIX_Tools\Release. Der Release-Ordner
-#  (start.html, sflix_sys, die Programme, checksums.json, ffmpeg.json) liegt zwei Ebenen darüber,
+#  (start.html, sflix_sys, die Programme, checksums.json, ffmpeg.json) liegt zwei Ebenen darueber,
 #  das Updater-Projekt in <Release-Ordner>\SFLIX_Tools\SflixTools.
 #
-#  Ablauf (mit Rückfragen, Enter übernimmt jeweils den Vorschlag in [eckigen Klammern]):
+#  Ablauf (mit Rueckfragen, Enter uebernimmt jeweils den Vorschlag in [eckigen Klammern]):
 #   1. Desktop    Hat sich der Quellcode im Unterordner "SFLIX_Tools\SflixTools" seit dem letzten Release
-#                 geändert, wird die Versionsnummer erhöht (Vorschlag: nächste Patch-Version,
-#                 änderbar), STEFFLIX.exe gebaut und hierher kopiert, dazu als updateStefflix.exe
-#                 (dieselbe Datei, für Updater bis 3.x).
+#                 geaendert, wird die Versionsnummer erhoeht (Vorschlag: naechste Patch-Version,
+#                 aenderbar), STEFFLIX.exe gebaut und hierher kopiert, dazu als updateStefflix.exe
+#                 (dieselbe Datei, fuer Updater bis 3.x).
 #   2. Android    Hat sich der Quellcode der App ("SFLIX_Tools\Android") oder sflix_sys\splash.svg
-#                 seit dem letzten Release geändert, wird die App-Version erhöht (versionName x.y.z
+#                 seit dem letzten Release geaendert, wird die App-Version erhoeht (versionName x.y.z
 #                 und versionCode in app\build.gradle), STEFFLIX.apk gebaut und hierher kopiert.
 #   3. ffmpeg     Gibt es eine neuere stabile ffmpeg-Version, kann ffmpeg.json aktualisiert werden.
-#   4. STEFFLIX   Wurden Dateien der Weboberfläche geändert, kann die Version in version.js
-#                 erhöht und ein Changelog-Eintrag in news.txt ergänzt werden. Format x.y.z
-#                 (ab 2.5.0), version.js erhält zusätzlich die alte Zahl (siehe versioning.py).
-#   5. Prüfen     check_release.py, create_news.py, create_checksums.py
-#   6. Übersicht  welche Dateien sich geändert haben und gepusht werden müssen
+#   4. STEFFLIX   Wurden Dateien der Weboberflaeche geaendert, kann die Version in version.js
+#                 erhoeht und ein Changelog-Eintrag in news.txt ergaenzt werden. Format x.y.z
+#                 (ab 2.5.0), version.js erhaelt zusaetzlich die alte Zahl (siehe versioning.py).
+#   5. Pruefen     check_release.py, create_news.py, create_checksums.py
+#   6. Uebersicht  welche Dateien sich geaendert haben und gepusht werden muessen
 #
 #  Optionen:
-#   -Auto           alle Vorschläge ohne Rückfrage übernehmen (STEFFLIX-Version bleibt unverändert)
+#   -Auto           alle Vorschlaege ohne Rueckfrage uebernehmen (STEFFLIX-Version bleibt unveraendert)
 #   -MarkReleased   nur merken, dass der aktuelle Quellcode von Desktop und App bereitgestellt ist (ohne Bauen)
 #   -SflixTools P   anderer Pfad zum Projekt von STEFFLIX.exe
 # ===================================================================
@@ -40,7 +40,7 @@ $env:PYTHONIOENCODING = 'utf-8'
 $Scripts = $PSScriptRoot                                                   # SFLIX_Tools\Release
 $Root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path               # Release-Ordner
 if (-not $SflixTools) { $SflixTools = Join-Path $Root 'SFLIX_Tools\SflixTools' }
-# Python findet sflix_update.py im Skriptordner, auch wenn es im Release-Ordner läuft
+# Python findet sflix_update.py im Skriptordner, auch wenn es im Release-Ordner laeuft
 $env:PYTHONPATH = $Scripts
 $Utf8 = New-Object Text.UTF8Encoding $false
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
@@ -71,14 +71,14 @@ function Ask-YesNo([string]$question, [bool]$default) {
     }
 }
 
-# Texteingabe mit Vorschlag und Prüfung per Regex
+# Texteingabe mit Vorschlag und Pruefung per Regex
 function Ask-Text([string]$question, [string]$default, [string]$pattern, [string]$formatHint) {
     if ($Auto) { Info "$question $default (automatisch)"; return $default }
     while ($true) {
         $a = ([string](Read-Host "   $question [$default]")).Trim()
         if ($a -eq '') { return $default }
         if ($a -match $pattern) { return $a }
-        Warn "Ungültig. Erwartet: $formatHint"
+        Warn "Ungueltig. Erwartet: $formatHint"
     }
 }
 
@@ -92,14 +92,14 @@ function Run-Python([string]$script) {
     } finally { Pop-Location }
 }
 
-# Aktuelle Prüfsummen aller Release-Dateien, berechnet wie create_checksums.py (sflix_update.checksum)
+# Aktuelle Pruefsummen aller Release-Dateien, berechnet wie create_checksums.py (sflix_update.checksum)
 function Get-CurrentChecksums {
     Push-Location $Root
     try {
-        # Keine doppelten Anführungszeichen im Code: Windows PowerShell 5.1 gibt sie an Programme falsch weiter
+        # Keine doppelten Anfuehrungszeichen im Code: Windows PowerShell 5.1 gibt sie an Programme falsch weiter
         $code = 'import json,os;from sflix_update import FILES,checksum;print(json.dumps({p:checksum(p,open(p,''rb'').read()) for p in FILES if os.path.exists(p)}))'
         $out = & python -X utf8 -c $code
-        if ($LASTEXITCODE -ne 0) { Fail 'Prüfsummen konnten nicht berechnet werden (ist requests installiert? pip install requests)' }
+        if ($LASTEXITCODE -ne 0) { Fail 'Pruefsummen konnten nicht berechnet werden (Python 3 im Pfad?)' }
         return ($out | ConvertFrom-Json)
     } finally { Pop-Location }
 }
@@ -111,8 +111,8 @@ function Get-FileVersion([string]$path) {
     return [version]"$($v.FileMajorPart).$($v.FileMinorPart).$($v.FileBuildPart)"
 }
 
-# Fingerabdruck des Updater-Quellcodes. Die Versionszeilen zählen nicht, sonst wäre der Code
-# nach jedem Hochzählen "geändert".
+# Fingerabdruck des Updater-Quellcodes. Die Versionszeilen zaehlen nicht, sonst waere der Code
+# nach jedem Hochzaehlen "geaendert".
 function Get-SourceFingerprint {
     $files = @(Get-ChildItem (Join-Path $SflixTools 'src') -Filter *.cs | Sort-Object Name)
     $files += Get-Item (Join-Path $SflixTools 'tools\AssetGen.cs')
@@ -149,7 +149,7 @@ $androidGradle = Join-Path $AndroidDir 'app\build.gradle'
 $androidStateFile = Join-Path $AndroidDir 'release_state.json'
 
 # Fingerabdruck des App-Quellcodes inkl. splash.svg (wird beim Bauen in die App kopiert).
-# Die Versionszeilen zählen nicht, die Kopie von splash.svg in assets auch nicht (zählt über das Original).
+# Die Versionszeilen zaehlen nicht, die Kopie von splash.svg in assets auch nicht (zaehlt ueber das Original).
 function Get-AndroidFingerprint {
     $files = @(Get-ChildItem (Join-Path $AndroidDir 'app\src') -Recurse -File |
         Where-Object { $_.FullName -notlike '*\assets\splash.svg' })
@@ -182,6 +182,8 @@ function Get-AndroidVersion {
 
 function Set-AndroidVersion([version]$v) {
     $text = [IO.File]::ReadAllText($androidGradle)
+    # versionCode = x*10000 + y*100 + z: y und z muessen unter 100 liegen, sonst ueberschneiden sich Versionen
+    if ($v.Minor -gt 99 -or $v.Build -gt 99) { Fail "Android-Version $(Short $v): Minor und Patch muessen unter 100 liegen (versionCode)." }
     $code = $v.Major * 10000 + $v.Minor * 100 + $v.Build
     $text = [regex]::Replace($text, "versionName\s+'[\d.]+'", "versionName '$(Short $v)'")
     $text = [regex]::Replace($text, 'versionCode\s+\d+', "versionCode $code")
@@ -189,12 +191,12 @@ function Set-AndroidVersion([version]$v) {
 }
 
 function Save-AndroidState([string]$version, [string]$fingerprint) {
-    @{ version = $version; sourceHash = $fingerprint; built = (Get-Date).ToString('s') } |
-        ConvertTo-Json | Set-Content $androidStateFile -Encoding UTF8
+    $json = @{ version = $version; sourceHash = $fingerprint; built = (Get-Date).ToString('s') } | ConvertTo-Json
+    [IO.File]::WriteAllText($androidStateFile, $json, $Utf8)   # ohne BOM (Set-Content -Encoding UTF8 schreibt eines)
 }
 
 # STEFFLIX-Versionen (gleiche Regeln wie versioning.py): ab 2.5.0 x.y.z, dazu die alte Zahl
-# x + y/100 + z/10000 für Installationen bis 2.04 ("2.5.0" -> "2.05", "2.5.1" -> "2.0501")
+# x + y/100 + z/10000 fuer Installationen bis 2.04 ("2.5.0" -> "2.05", "2.5.1" -> "2.0501")
 function Convert-LegacyVersion([string]$text) {
     $parts = $text.Trim().Split('.')
     if ($parts.Count -ge 3) { return "$([int]$parts[0]).$([int]$parts[1]).$([int]$parts[2])" }
@@ -226,7 +228,7 @@ function Get-VersionJsText([string]$name) {
     "var versionName = `"$name`";`n"
 }
 
-# Nur HTML-Sonderzeichen kodieren, Umlaute bleiben wie in den bisherigen Einträgen direkt stehen
+# Nur HTML-Sonderzeichen kodieren, Umlaute bleiben wie in den bisherigen Eintraegen direkt stehen
 function Html([string]$s) { $s.Replace('&', '&amp;').Replace('<', '&lt;').Replace('>', '&gt;') }
 
 # ------------------------------------------------------------------
@@ -237,8 +239,8 @@ $programCs = Join-Path $SflixTools 'src\Program.cs'
 $stateFile = Join-Path $SflixTools 'release_state.json'
 
 function Save-State([string]$version, [string]$fingerprint) {
-    @{ version = $version; sourceHash = $fingerprint; built = (Get-Date).ToString('s') } |
-        ConvertTo-Json | Set-Content $stateFile -Encoding UTF8
+    $json = @{ version = $version; sourceHash = $fingerprint; built = (Get-Date).ToString('s') } | ConvertTo-Json
+    [IO.File]::WriteAllText($stateFile, $json, $Utf8)   # ohne BOM
 }
 
 if ($MarkReleased) {
@@ -254,7 +256,7 @@ if ($MarkReleased) {
 }
 $programCsBackup = $null
 $androidGradleBackup = $null
-$released = @()   # Beschreibung der Änderungen für die Übersicht
+$released = @()   # Beschreibung der Aenderungen fuer die Uebersicht
 
 try {
     Write-Host '==================================================================='
@@ -264,7 +266,7 @@ try {
     if (-not (Get-Command python -ErrorAction SilentlyContinue)) { Fail 'Python wurde nicht gefunden.' }
     if (-not (Test-Path (Join-Path $Root 'start.html'))) { Fail "Kein STEFFLIX-Release-Ordner: $Root" }
 
-    # Ausgangslage merken, um am Ende die geänderten Dateien zu zeigen
+    # Ausgangslage merken, um am Ende die geaenderten Dateien zu zeigen
     $before = Get-CurrentChecksums
     $published = @{}
     if (Test-Path (Join-Path $Root 'checksums.json')) {
@@ -279,7 +281,7 @@ try {
     $legacyExe = Join-Path $Root 'updateStefflix.exe'   # Updater bis 3.x laden nur diesen Namen
     if (-not (Test-Path $programCs)) {
         Warn "Projekt nicht gefunden: $SflixTools"
-        Warn 'STEFFLIX.exe bleibt unverändert.'
+        Warn 'STEFFLIX.exe bleibt unveraendert.'
     } else {
         $sourceVersion = Get-ProgramVersion $programCs
         # Vor 4.0 gab es nur updateStefflix.exe
@@ -292,24 +294,24 @@ try {
 
         Info ("Version im Release-Ordner: " + $(if ($releaseVersion) { Short $releaseVersion } else { 'keine' }) +
               "   im Quellcode: " + (Short $sourceVersion))
-        if ($changed) { Info 'Der Quellcode wurde seit dem letzten Release geändert.' }
-        else { Info 'Der Quellcode ist seit dem letzten Release unverändert.' }
+        if ($changed) { Info 'Der Quellcode wurde seit dem letzten Release geaendert.' }
+        else { Info 'Der Quellcode ist seit dem letzten Release unveraendert.' }
 
         if (Ask-YesNo 'STEFFLIX.exe neu bauen und bereitstellen?' $changed) {
-            # Vorschlag: Wurde die Version im Quellcode schon erhöht (höher als die bereitgestellte),
-            # gilt sie. Sonst die nächste Patch-Version nach der höheren der beiden.
+            # Vorschlag: Wurde die Version im Quellcode schon erhoeht (hoeher als die bereitgestellte),
+            # gilt sie. Sonst die naechste Patch-Version nach der hoeheren der beiden.
             if (-not $releaseVersion -or $sourceVersion -gt $releaseVersion) {
                 $suggest = $sourceVersion
                 Info "Vorschlag aus dem Quellcode: $(Short $sourceVersion)."
             } else {
                 $suggest = [version]"$($releaseVersion.Major).$($releaseVersion.Minor).$($releaseVersion.Build + 1)"
             }
-            Info 'Enter übernimmt den Vorschlag, eine andere Nummer kann eingegeben werden.'
-            Info 'Tipp: 3.0.5 = kleine Änderung, 3.1.0 = neue Funktionen, 4.0.0 = grosser Umbau.'
+            Info 'Enter uebernimmt den Vorschlag, eine andere Nummer kann eingegeben werden.'
+            Info 'Tipp: 3.0.5 = kleine Aenderung, 3.1.0 = neue Funktionen, 4.0.0 = grosser Umbau.'
             $newVersion = [version](Ask-Text 'Neue Versionsnummer' (Short $suggest) '^\d+\.\d+\.\d+$' 'z.B. 3.0.5')
             if ($releaseVersion -and $newVersion -le $releaseVersion) {
-                Warn "$(Short $newVersion) ist nicht höher als die bereitgestellte Version $(Short $releaseVersion)."
-                Warn 'Installationen würden diese Version beim Selbst-Update NICHT übernehmen.'
+                Warn "$(Short $newVersion) ist nicht hoeher als die bereitgestellte Version $(Short $releaseVersion)."
+                Warn 'Installationen wuerden diese Version beim Selbst-Update NICHT uebernehmen.'
                 if (-not (Ask-YesNo 'Trotzdem fortfahren?' $false)) { Fail 'Abgebrochen.' }
             }
 
@@ -328,8 +330,8 @@ try {
             Good "STEFFLIX.exe $(Short $newVersion) bereitgestellt (auch als updateStefflix.exe)."
             $released += "Desktop $(Short $newVersion)"
         } else {
-            Info 'STEFFLIX.exe bleibt unverändert.'
-            # Kopie für Updater bis 3.x nachziehen, falls sie fehlt oder abweicht
+            Info 'STEFFLIX.exe bleibt unveraendert.'
+            # Kopie fuer Updater bis 3.x nachziehen, falls sie fehlt oder abweicht
             if ((Test-Path $releaseExe) -and (-not (Test-Path $legacyExe) -or
                 (Get-FileHash $releaseExe).Hash -ne (Get-FileHash $legacyExe).Hash)) {
                 Copy-Item $releaseExe $legacyExe -Force
@@ -345,7 +347,7 @@ try {
     $androidReleased = $false
     if (-not (Test-Path $androidGradle)) {
         Warn "App-Projekt nicht gefunden: $AndroidDir"
-        Warn 'STEFFLIX.apk bleibt unverändert.'
+        Warn 'STEFFLIX.apk bleibt unveraendert.'
     } else {
         $appSourceVersion = Get-AndroidVersion
         $appFingerprint = Get-AndroidFingerprint
@@ -358,30 +360,30 @@ try {
 
         Info ("Zuletzt bereitgestellt: " + $(if ($appReleased) { Short $appReleased } else { 'keine' }) +
               "   im Quellcode: " + (Short $appSourceVersion))
-        if ($appChanged) { Info 'Der Quellcode der App wurde seit dem letzten Release geändert.' }
-        else { Info 'Der Quellcode der App ist seit dem letzten Release unverändert.' }
+        if ($appChanged) { Info 'Der Quellcode der App wurde seit dem letzten Release geaendert.' }
+        else { Info 'Der Quellcode der App ist seit dem letzten Release unveraendert.' }
 
         if (Ask-YesNo 'Android-App neu bauen und bereitstellen?' $appChanged) {
-            # Vorschlag: Version aus dem Quellcode, wenn sie höher als die bereitgestellte ist (schon
-            # erhöht oder allererstes Release). Sonst die nächste Patch-Version.
+            # Vorschlag: Version aus dem Quellcode, wenn sie hoeher als die bereitgestellte ist (schon
+            # erhoeht oder allererstes Release). Sonst die naechste Patch-Version.
             if (-not $appReleased -or $appSourceVersion -gt $appReleased) {
                 $appSuggest = $appSourceVersion
                 Info "Vorschlag aus dem Quellcode: $(Short $appSourceVersion)."
             } else {
                 $appSuggest = [version]"$($appReleased.Major).$($appReleased.Minor).$($appReleased.Build + 1)"
             }
-            Info 'Enter übernimmt den Vorschlag, eine andere Nummer kann eingegeben werden.'
-            Info 'Tipp: 1.0.1 = kleine Änderung, 1.1.0 = neue Funktionen (y und z unter 100).'
+            Info 'Enter uebernimmt den Vorschlag, eine andere Nummer kann eingegeben werden.'
+            Info 'Tipp: 1.0.1 = kleine Aenderung, 1.1.0 = neue Funktionen (y und z unter 100).'
             $newApp = [version](Ask-Text 'Neue App-Version' (Short $appSuggest) '^\d+\.\d{1,2}\.\d{1,2}$' 'z.B. 1.0.1')
             if ($appReleased -and $newApp -le $appReleased) {
-                Warn "$(Short $newApp) ist nicht höher als die bereitgestellte Version $(Short $appReleased)."
-                Warn 'Android würde die neue APK nicht als Update über die alte installieren.'
+                Warn "$(Short $newApp) ist nicht hoeher als die bereitgestellte Version $(Short $appReleased)."
+                Warn 'Android wuerde die neue APK nicht als Update ueber die alte installieren.'
                 if (-not (Ask-YesNo 'Trotzdem fortfahren?' $false)) { Fail 'Abgebrochen.' }
             }
 
             $androidGradleBackup = [IO.File]::ReadAllText($androidGradle)
             Set-AndroidVersion $newApp
-            Info "Baue Android-App $(Short $newApp) (beim ersten Mal wird nach dem Passwort des Signaturschlüssels gefragt) ..."
+            Info "Baue Android-App $(Short $newApp) (beim ersten Mal wird nach dem Passwort des Signaturschluessels gefragt) ..."
             $apkBefore = if (Test-Path $releaseApk) { (Get-Item $releaseApk).LastWriteTimeUtc } else { [datetime]::MinValue }
             & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $AndroidDir 'build.ps1')
             if ($LASTEXITCODE -ne 0) { Fail 'Build der Android-App fehlgeschlagen.' }
@@ -395,7 +397,7 @@ try {
             $released += "Android-App $(Short $newApp)"
             $androidReleased = $true
         } else {
-            Info 'STEFFLIX.apk bleibt unverändert.'
+            Info 'STEFFLIX.apk bleibt unveraendert.'
         }
     }
 
@@ -411,14 +413,14 @@ try {
         $all = Invoke-RestMethod 'https://api.github.com/repos/GyanD/codexffmpeg/releases?per_page=30' -Headers @{ 'User-Agent' = 'STEFFLIX-release' }
         foreach ($r in $all) { if ($r.tag_name -notmatch 'git' -and -not $r.prerelease) { $latest = $r; break } }
     } catch {
-        Warn "Neueste ffmpeg-Version nicht abrufbar ($($_.Exception.Message)). ffmpeg.json bleibt unverändert."
+        Warn "Neueste ffmpeg-Version nicht abrufbar ($($_.Exception.Message)). ffmpeg.json bleibt unveraendert."
     }
     if ($latest) {
         $asset = $latest.assets | Where-Object { $_.name -like '*essentials_build.zip' } | Select-Object -First 1
         if (-not $current -or $current.version -ne $latest.tag_name) {
             Info "Neueste stabile Version: ffmpeg $($latest.tag_name)"
             if (-not $asset -or -not $asset.digest) {
-                Warn 'Für diese Version gibt es keinen essentials-Build mit Prüfsumme. ffmpeg.json bleibt unverändert.'
+                Warn 'Fuer diese Version gibt es keinen essentials-Build mit Pruefsumme. ffmpeg.json bleibt unveraendert.'
             } elseif (Ask-YesNo "ffmpeg.json auf $($latest.tag_name) aktualisieren?" (-not $current)) {
                 $sha = $asset.digest -replace '^sha256:', ''
                 $json = "{`n  `"version`": `"$($latest.tag_name)`",`n  `"url`": `"$($asset.browser_download_url)`",`n  `"sha256`": `"$sha`"`n}`n"
@@ -440,7 +442,7 @@ try {
     $webVersion = Get-WebVersionName $vjs
     if (-not $webVersion) { Fail 'Version in version.js nicht gefunden.' }
 
-    # Geänderte Dateien der Weboberfläche seit dem letzten Release (checksums.json)
+    # Geaenderte Dateien der Weboberflaeche seit dem letzten Release (checksums.json)
     $webChanged = @()
     foreach ($p in $before.PSObject.Properties) {
         if ($p.Name -like '*.exe' -or $p.Name -eq 'ffmpeg.json') { continue }
@@ -448,28 +450,28 @@ try {
     }
     Info "Aktuelle Version: $webVersion"
     if ($webChanged.Count -gt 0) {
-        Info 'Seit dem letzten Release geänderte Dateien der Weboberfläche:'
+        Info 'Seit dem letzten Release geaenderte Dateien der Weboberflaeche:'
         $webChanged | ForEach-Object { Info "  - $_" }
     } else {
-        Info 'Die Dateien der Weboberfläche sind seit dem letzten Release unverändert.'
+        Info 'Die Dateien der Weboberflaeche sind seit dem letzten Release unveraendert.'
     }
 
     $bumpWeb = $false
-    if ($Auto) { Info 'Automatischer Modus: Version und Changelog bleiben unverändert.' }
-    else { $bumpWeb = Ask-YesNo 'STEFFLIX-Version erhöhen und Changelog ergänzen?' ($webChanged.Count -gt 0 -and $webChanged -notcontains 'sflix_sys/version.js') }
+    if ($Auto) { Info 'Automatischer Modus: Version und Changelog bleiben unveraendert.' }
+    else { $bumpWeb = Ask-YesNo 'STEFFLIX-Version erhoehen und Changelog ergaenzen?' ($webChanged.Count -gt 0 -and $webChanged -notcontains 'sflix_sys/version.js') }
     if ($bumpWeb) {
-        # Vorschlag: nächste Minor-Version (2.5.0 -> 2.6.0)
+        # Vorschlag: naechste Minor-Version (2.5.0 -> 2.6.0)
         $cur = [version]$webVersion
         $suggestWeb = "$($cur.Major).$($cur.Minor + 1).0"
         Info 'Tipp: 2.5.1 = kleine Korrektur, 2.6.0 = neue Funktionen, 3.0.0 = grosser Umbau (y und z unter 100).'
         $newWeb = Ask-Text 'Neue STEFFLIX-Version' $suggestWeb '^\d+\.\d{1,2}\.\d{1,2}$' 'z.B. 2.6.0'
         $newWeb = Short ([version]$newWeb)
         if ([version]$newWeb -le $cur) {
-            Warn "$newWeb ist nicht höher als $webVersion."
+            Warn "$newWeb ist nicht hoeher als $webVersion."
             if (-not (Ask-YesNo 'Trotzdem fortfahren?' $false)) { Fail 'Abgebrochen.' }
         }
 
-        # Changelog-Einträge sammeln
+        # Changelog-Eintraege sammeln
         $types = [ordered]@{
             'f' = @('FEATURE', '<span style="color: red">FEATURE</span>')
             'b' = @('BUGFIX', '<span style="color: darkgreen">BUGFIX</span>')
@@ -479,15 +481,15 @@ try {
         }
         $entries = @()
         if (-not $Auto) {
-            Info 'Changelog-Einträge eingeben, ein Eintrag pro Zeile. Leere Zeile = fertig.'
-            Info 'Typ als Kürzel davor: f: FEATURE  b: BUGFIX  o: OPTIMIERUNG  i: INTERFACE  h: HOTFIX'
+            Info 'Changelog-Eintraege eingeben, ein Eintrag pro Zeile. Leere Zeile = fertig.'
+            Info 'Typ als Kuerzel davor: f: FEATURE  b: BUGFIX  o: OPTIMIERUNG  i: INTERFACE  h: HOTFIX'
             Info 'Beispiel:  b: Vorschaubilder werden wieder angezeigt.'
             while ($true) {
                 $line = ([string](Read-Host '   Eintrag')).Trim()
                 if ($line -eq '') { break }
                 $tm = [regex]::Match($line, '^([a-zA-Z])\s*:\s*(.+)$')
                 if (-not $tm.Success -or -not $types.Contains($tm.Groups[1].Value.ToLower())) {
-                    Warn 'Bitte mit Typ-Kürzel beginnen, z.B. "f: Neue Funktion ..."'
+                    Warn 'Bitte mit Typ-Kuerzel beginnen, z.B. "f: Neue Funktion ..."'
                     continue
                 }
                 $t = $types[$tm.Groups[1].Value.ToLower()]
@@ -497,11 +499,11 @@ try {
         }
         if ($entries.Count -eq 0) {
             Warn 'Kein Changelog-Eintrag eingegeben.'
-            if ($Auto -or -not (Ask-YesNo 'Version trotzdem ohne Einträge erhöhen?' $false)) { Fail 'Abgebrochen: ohne Changelog-Eintrag wird die Version nicht erhöht.' }
+            if ($Auto -or -not (Ask-YesNo 'Version trotzdem ohne Eintraege erhoehen?' $false)) { Fail 'Abgebrochen: ohne Changelog-Eintrag wird die Version nicht erhoeht.' }
         }
 
-        # news.txt (CRLF wie in der Datei): Gibt es schon einen Block für diese Version, kommen die
-        # Einträge an dessen Ende. Sonst wird ein neuer Block vor der bisher obersten Version eingefügt.
+        # news.txt (CRLF wie in der Datei): Gibt es schon einen Block fuer diese Version, kommen die
+        # Eintraege an dessen Ende. Sonst wird ein neuer Block vor der bisher obersten Version eingefuegt.
         $news = [IO.File]::ReadAllText($newsTxt)
         $nl = if ($news -match "`r`n") { "`r`n" } else { "`n" }
         $pos = $news.IndexOf('<b>Version ')
@@ -510,35 +512,51 @@ try {
         $existing = [regex]::Match($news, '<b>Version\s+' + [regex]::Escape($newWeb) + '\s*</b>')
         if ($existing.Success) {
             $end = $news.IndexOf('</ul>', $existing.Index)
-            if ($end -lt 0) { Fail "Der Block für Version $newWeb in news.txt hat kein </ul>." }
+            if ($end -lt 0) { Fail "Der Block fuer Version $newWeb in news.txt hat kein </ul>." }
             if ($entries.Count -gt 0) { [IO.File]::WriteAllText($newsTxt, $news.Insert($end, $lines), $Utf8) }
-            Info "news.txt hat schon einen Block für $newWeb, die Einträge wurden dort angehängt."
+            Info "news.txt hat schon einen Block fuer $newWeb, die Eintraege wurden dort angehaengt."
         } else {
             $block = "<b>Version $newWeb</b>:<br>$nl<ul>$nl" + $lines + "</ul>$nl"
             [IO.File]::WriteAllText($newsTxt, $news.Insert($pos, $block), $Utf8)
         }
 
-        # version.js: alte Zahl zuerst (für Installationen bis 2.04), dann x.y.z
+        # version.js: alte Zahl zuerst (fuer Installationen bis 2.04), dann x.y.z
         [IO.File]::WriteAllText($versionJs, (Get-VersionJsText $newWeb), $Utf8)
-        Good "STEFFLIX-Version $newWeb, $($entries.Count) Changelog-Eintrag/Einträge"
+        Good "STEFFLIX-Version $newWeb, $($entries.Count) Changelog-Eintrag/Eintraege"
         $released += "STEFFLIX $newWeb"
     } else {
-        Info 'Version bleibt unverändert.'
+        Info 'Version bleibt unveraendert.'
     }
 
     # --------------------------------------------------------------
-    Step '[5/6] Prüfen, news.json und checksums.json erzeugen'
+    Step '[5/6] Pruefen, news.json und checksums.json erzeugen'
     # --------------------------------------------------------------
     Run-Python 'check_release.py'
-    # Ändert sich news.json beim Erzeugen, wurde der Changelog (news.txt) bearbeitet
+    # Aendert sich news.json beim Erzeugen, wurde der Changelog (news.txt) bearbeitet
     $newsJson = Join-Path $Root 'sflix_sys\news.json'
     $newsBefore = if (Test-Path $newsJson) { (Get-FileHash $newsJson).Hash } else { '' }
     Run-Python 'create_news.py'
     $newsChanged = $newsBefore -ne (Get-FileHash $newsJson).Hash
+    $checksumsJson = Join-Path $Root 'checksums.json'
+    $checksumsSig = Join-Path $Root 'checksums.sig'
+    $checksumsBefore = if (Test-Path $checksumsJson) { (Get-FileHash $checksumsJson).Hash } else { '' }
     Run-Python 'create_checksums.py'
 
-    # versions.json: neueste Versionen von Desktop (Schlüssel "updater") und ffmpeg für die Hilfe und
-    # den Update-Hinweis in STEFFLIX (wird nur von GitHub gelesen, das Programm lädt sie nicht herunter)
+    # Signierte Updates (DEC-356): neue checksums.json signieren (checksums.sig), danach streng pruefen.
+    # Ohne privaten Schluessel bricht der Release ab: unsignierte Pruefsummen installiert der Desktop ab 4.1.0 nicht.
+    $checksumsChanged = $checksumsBefore -ne (Get-FileHash $checksumsJson).Hash
+    if ($checksumsChanged -or -not (Test-Path $checksumsSig)) {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Scripts 'sign_checksums.ps1') -Root $Root
+        if ($LASTEXITCODE -ne 0) { Fail 'checksums.json konnte nicht signiert werden (privater Schluessel in SFLIX_Tools\Release\signing\ fehlt?). Siehe docs\RELEASE.md, Signierte Updates.' }
+    }
+    Push-Location $Root
+    try {
+        & python -X utf8 (Join-Path $Scripts 'update_signature.py') pruefen
+        if ($LASTEXITCODE -ne 0) { Fail 'Die Signatur von checksums.json ist ungueltig.' }
+    } finally { Pop-Location }
+
+    # versions.json: neueste Versionen von Desktop (Schluessel "updater") und ffmpeg fuer die Hilfe und
+    # den Update-Hinweis in STEFFLIX (wird nur von GitHub gelesen, das Programm laedt sie nicht herunter)
     $versionsJson = Join-Path $Root 'versions.json'
     $versionsBefore = if (Test-Path $versionsJson) { [IO.File]::ReadAllText($versionsJson, $Utf8) } else { '' }
     $exeVersion = Get-FileVersion (Join-Path $Root 'STEFFLIX.exe')
@@ -547,7 +565,7 @@ try {
     $ffmpegVersion = ''
     $ffmpegManifest = Join-Path $Root 'ffmpeg.json'
     if (Test-Path $ffmpegManifest) { $ffmpegVersion = [string](Get-Content $ffmpegManifest -Raw -Encoding UTF8 | ConvertFrom-Json).version }
-    # Android-App (ab 1.1.0): Version und SHA256 der STEFFLIX.apk. Die App prüft damit selbst auf
+    # Android-App (ab 1.1.0): Version und SHA256 der STEFFLIX.apk. Die App prueft damit selbst auf
     # Updates und kontrolliert die heruntergeladene Datei vor der Installation.
     $appVersion = ''
     $appSha = ''
@@ -572,21 +590,21 @@ try {
     $versionsChanged = $versionsText -ne $versionsBefore
 
     # --------------------------------------------------------------
-    Step '[6/6] Übersicht'
+    Step '[6/6] Uebersicht'
     # --------------------------------------------------------------
     $after = Get-Content (Join-Path $Root 'checksums.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     $toPush = @()
     foreach ($p in $after.PSObject.Properties) {
         if ($published[$p.Name] -ne $p.Value) { $toPush += $p.Name }
     }
-    if ($toPush.Count -gt 0 -or $released.Count -gt 0) { $toPush += 'checksums.json' }
+    if ($toPush.Count -gt 0 -or $released.Count -gt 0 -or $checksumsChanged) { $toPush += 'checksums.json'; $toPush += 'checksums.sig' }
     if ($newsChanged -or $toPush -contains 'sflix_sys/version.js' -or $released -match '^STEFFLIX') {
         $toPush += 'sflix_sys/news.txt'
         $toPush += 'sflix_sys/news.json'
     }
     if ($versionsChanged) { $toPush += 'versions.json' }
     if ($androidReleased) {
-        # Nicht in checksums.json (der Updater lädt die App nicht), darum hier ergänzen
+        # Nicht in checksums.json (der Updater laedt die App nicht), darum hier ergaenzen
         $toPush += 'STEFFLIX.apk'
         $toPush += 'SFLIX_Tools/Android/ (Quellcode der App, inkl. release_state.json)'
     }
@@ -595,24 +613,24 @@ try {
     Write-Host ''
     Write-Host '==================================================================='
     if ($released.Count -gt 0) { Write-Host " FERTIG - bereitgestellt: $($released -join ', ')" -ForegroundColor Green }
-    else { Write-Host ' FERTIG - geprüft, nichts Neues bereitgestellt' -ForegroundColor Green }
+    else { Write-Host ' FERTIG - geprueft, nichts Neues bereitgestellt' -ForegroundColor Green }
     Write-Host '==================================================================='
     if ($toPush.Count -gt 0) {
-        Write-Host ' Diese Dateien zusammen pushen (STEFFLIX.exe, updateStefflix.exe und checksums.json gehören zusammen):'
+        Write-Host ' Diese Dateien zusammen pushen (STEFFLIX.exe, updateStefflix.exe, checksums.json und checksums.sig gehoeren zusammen):'
         $toPush | ForEach-Object { Write-Host "   $_" }
     } else {
-        Write-Host ' Gegenüber dem letzten Release hat sich nichts geändert.'
+        Write-Host ' Gegenueber dem letzten Release hat sich nichts geaendert.'
     }
     $exitCode = 0
 }
 catch {
     if ($programCsBackup) {
         [IO.File]::WriteAllText($programCs, $programCsBackup, $Utf8)
-        Warn 'Versionsnummer im Quellcode wurde zurückgesetzt.'
+        Warn 'Versionsnummer im Quellcode wurde zurueckgesetzt.'
     }
     if ($androidGradleBackup) {
         [IO.File]::WriteAllText($androidGradle, $androidGradleBackup, $Utf8)
-        Warn 'Versionsnummer der Android-App wurde zurückgesetzt.'
+        Warn 'Versionsnummer der Android-App wurde zurueckgesetzt.'
     }
     Write-Host ''
     Write-Host '===================================================================' -ForegroundColor Red

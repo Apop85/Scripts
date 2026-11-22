@@ -91,7 +91,8 @@ namespace Sflix
             countLabel.Font = new Font("Segoe UI", 8.5f);
             countLabel.Margin = new Padding(0, Theme.S(6), 0, 0);
             // Immer einzeilig, bei wenig Platz mit "…": als AutoSize-Label in der schmalen Spalte brach
-            // der Text bei grosser Skalierung nach jedem Buchstaben um
+            // der Text bei grosser Skalierung nach jedem Buchstaben um. Gekürzt zeigt das Label den ganzen
+            // Text als Tooltip (AutoEllipsis); bewusst so, die Werkzeugknöpfe rechts haben Vorrang (047)
             countLabel.AutoSize = false;
             countLabel.AutoEllipsis = true;
             countLabel.Size = new Size(Theme.S(20), TextRenderer.MeasureText("Ag", countLabel.Font).Height);

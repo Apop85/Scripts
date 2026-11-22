@@ -41,7 +41,7 @@
 ## 3. Datenflüsse
 
 ### 3.1 Medien einlesen → `data.js`
-1. „Daten einlesen“ (`DataTask`) durchsucht den Installationsordner. Ordner mit `__` im Namen (Ablagen wie `__gelöscht`, `__konvertiert`, `Preview\__original`), System- und versteckte Ordner werden übersprungen (`Folders.Ignore`/`IgnoreAny`, für alle Aufgaben gleich).
+1. „Daten einlesen“ (`DataTask`) durchsucht den Installationsordner. Ordner mit `__` im Namen (Ablagen wie `__gelöscht`, `__konvertiert`, `Preview\__original`), System- und versteckte Ordner werden übersprungen (`Folders.Ignore`/`IgnoreAny`). Ausnahme heute: „Ablagen leeren“ erkennt nur Ordner, die mit `__` beginnen (R-09, Angleichung in SFLIX-20261122-050).
 2. Namen mit Zeichen, die `btoa` nicht verarbeiten kann, werden umbenannt; zu grosse Vorschaubilder werden auf 480×270 verkleinert (Original nach `Preview\__original`).
 3. Ergebnis: `sflix_sys\data.js` (Medienbaum) und bei Umbenennungen `sflix_sys\renamed.js` (Paare alt → neu). Teil-Einlesen ersetzt nur die Zweige der gewählten Ordner (byte-gleich für den Rest). Importer, Download und Tools hängen das Einlesen ihrer Zielordner automatisch an (`TaskRunner.DataFolders`).
 4. Der Desktop meldet dem Player `dataChanged`; STEFFLIX lädt neu (DEC-288), bei laufender Wiedergabe erst auf Wunsch.
@@ -53,7 +53,7 @@ Auch „Folgen umbenennen“ (inklusive Rückgängig) und „Duplikate finden“
 `install.js` (vom Desktop beim Start und im Setup geschrieben) enthält eine zufällige `installId`. STEFFLIX speichert damit in der IndexedDB `STEFFLIX-<installId>`; ohne Datei in der gemeinsamen `STEFFLIX`. Beim ersten Start mit eigener Datenbank werden die gemeinsamen Daten einmal übernommen (`sharedDataImported`). Ein kopierter Ordner bekommt eine neue Kennung (der alte Ordner ist noch erreichbar), ein verschobener behält sie (DEC-090). Dieselbe Trennung gilt für die App: Alle Quellen teilen eine Herkunft, getrennt wird über `install.js` der jeweiligen Quelle. Das Player-Fenster hat zusätzlich einen eigenen WebView2-Datenordner je Installation.
 
 ### 3.3 Update (Desktop)
-1. Beim ersten `ready` des Players (bzw. beim Start der Tools ohne Player) prüft `UpdateCheck` gegen GitHub: `checksums.json` (Prüfsummen, `_webFiles`, `_obsoleteFiles`), `version.js` (STEFFLIX-Version), `versions.json` (Desktop, ffmpeg), `ffmpeg.json`.
+1. Beim ersten `ready` des Players (bzw. beim Start der Tools ohne Player) prüft `UpdateCheck` gegen GitHub: `checksums.json` (Prüfsummen, `_webFiles`, `_obsoleteFiles`; künftig mit Signatur `checksums.sig`, siehe 3.7), `version.js` (STEFFLIX-Version), `versions.json` (Desktop, ffmpeg), `ffmpeg.json`.
 2. Web-Dateien: Die Liste kommt aus `checksums.json` (DEC-226), gefiltert mit `Net.IsAllowedWebPath` (nur `start.html` und `sflix_sys/…` mit Endungen der Weboberfläche, nie geschützte Dateien). Jede Datei wird gegen ihre SHA256 geprüft und mit `.old`-Sicherung installiert; schlägt etwas fehl, wird zurückgerollt. Danach werden veraltete Dateien gelöscht (nicht im Release-Ordner).
 3. Desktop selbst: neue EXE laden, Prüfsumme prüfen, Version direkt aus den Bytes lesen (DEC-312), über `.new`/`.old` ersetzen, Neustart mit `--updated`.
 4. ffmpeg: nach `ffmpeg.json` (Version, URL, SHA256) nach `%LOCALAPPDATA%\STEFFLIX\ffmpeg`.
@@ -71,6 +71,25 @@ So kommen neue oder entfallene Dateien der Weboberfläche **ohne neuen Desktop**
 
 ### 3.6 Datenübernahme in das Player-Fenster
 Beim ersten Start des Players bietet der Desktop an, die Daten aus einem Browser zu übernehmen: Er öffnet `start.html?export=app` im Browser, STEFFLIX speichert dort eine Datensicherung in den Download-Ordner, der Desktop findet die Datei (`stefflix-sicherung-*.json`) und übergibt ihren Text mit `importBackup` an den Player; STEFFLIX antwortet mit `importResult`.
+
+### 3.7 Signierte Updates (DEC-356, Umsetzung SFLIX-20261122-055)
+Ziel: Ein Update wird nur installiert, wenn `checksums.json` vom Herausgeber signiert ist. Heute kommen Prüfsummen und Dateien aus demselben Repository; sie schützen nur gegen Übertragungsfehler, nicht gegen ein manipuliertes Repository.
+
+```
+release.ps1                                         STEFFLIX.exe (Net.LoadChecksums)
+  create_checksums.py -> checksums.json               checksums.json + checksums.sig laden
+  Bytes (CRLF -> LF) signieren, RSA-3072/SHA-256      Signatur mit Haupt- ODER Reserveschlüssel prüfen
+  privater Schlüssel: SFLIX_Tools\Release\signing\    ungültig/fehlend -> nichts installieren
+  -> checksums.sig (Base64)                           gültig -> Prüfsummen wie bisher (EXE, Web-Dateien, ffmpeg.json)
+```
+
+- **Eine Stelle:** `Net.LoadChecksums` ist der einzige Weg, auf dem Update (`UpdateTask`), Setup (`InstallTask`) und ffmpeg (`Ffmpeg.LoadManifest`, über `ffmpeg.json` auch das ffmpeg-Archiv) ihre Prüfsummen bekommen. Die Signatur dort deckt alle Installationswege ab.
+- **Format:** `checksums.sig` enthält die Base64-kodierte Signatur (PKCS#1 v1.5, SHA-256) über die Bytes von `checksums.json` mit vereinheitlichten Zeilenenden (CRLF → LF, dieselbe Regel wie bei den Prüfsummen der Textdateien). Signiert und geprüft wird mit .NET-Bordmitteln (`RSACryptoServiceProvider`), ohne neue Abhängigkeiten.
+- **Schlüssel:** Zwei Schlüsselpaare. Der Hauptschlüssel liegt im ignorierten Ordner `SFLIX_Tools\Release\signing\` (gesichert wie `Android\signing\`), der Reserveschlüssel nur offline. Beide öffentlichen Schlüssel stehen in der EXE. Ein Schlüsselwechsel kommt mit einer neuen EXE, die noch mit dem alten Schlüssel signiert ist.
+- **Ohne Übergangsphase:** Die erste EXE mit Prüfung und der erste signierte Release erscheinen zusammen. Eine fehlende Signatur gilt deshalb immer als Fehler; sonst könnte ein Angreifer sie einfach weglassen.
+- **Rückwärtskompatibel:** Ältere Desktops und Updater 3.x laden `checksums.sig` nicht und arbeiten unverändert weiter.
+- **Release:** `checksums.sig` gehört in denselben Push wie `checksums.json` und die EXE; `check_release.py` prüft die Signatur. Passt die Signatur kurz nach einem Push nicht (GitHub liefert teils verzögert aus), meldet der Desktop das als vorübergehend.
+- **Nicht abgedeckt:** die Setup-EXE, die Nutzer im Browser herunterladen (nur ein Authenticode-Zertifikat hilft, ergänzend später möglich), und die App (bereits durch die Android-Signatur geschützt: Updates nur mit demselben Schlüssel).
 
 ## 4. Abläufe in der Weboberfläche
 
@@ -97,23 +116,72 @@ Dauer bis Übergang, Intro und Lautstärke werden je Ordner gespeichert (`transi
 - **Wiedergabe im Hintergrund und Bild-im-Bild:** `inject.js` meldet den Zustand des Mediums (`mediaState`), Android steuert über `sflixAppMedia`; ein Vordergrund-Dienst läuft nur während der Wiedergabe und löst sich nach 15 s Pause (DEC-252). Bild-im-Bild nutzt den vorhandenen Knopf von STEFFLIX; `inject.js` stellt dafür die Bild-im-Bild-Schnittstelle des Browsers nach (DEC-263).
 - **Aufgaben:** `BrowserActivity` ist `singleTask`; die Quellenliste schliesst sich nach dem Öffnen einer Quelle.
 
-## 6. Risiken
-Die vollständige Liste steht je Block in Abschnitt D von `docs/DECISIONS.md` (`decisions.py`). Die wichtigsten für Architekturentscheide:
+## 6. Risikoregister (DEC-357)
+Lebende Liste der technischen Risiken, Erstbestand aus der Gesamtanalyse SFLIX-20261122-049 (22.11.2026, gegen den Code geprüft). Abschnitt D je Block in `docs/DECISIONS.md` bleibt das historische Protokoll und wird nicht geändert. **Pflege:** Architekt. Andere Rollen nennen neue oder erledigte Risiken beim Ticketabschluss (`-Risiken`) oder per Ticket an den Architekten. **Status:** offen · in Arbeit (Ticket) · akzeptiert (bewusst getragen) · behoben (mit Datum, nach Prüfung in den Abschnitt „Behoben“ verschieben).
 
-| Risiko | Wirkung | Absicherung |
-|---|---|---|
-| Namen der Weboberfläche ändern sich | App (`inject.js`, Medienumleitung) oder Desktop (`isDesktopApp`, Brücke) brechen unbemerkt | Liste in `docs/INTERFACES.md` Abschnitt 2 und oben in `inject.js`; Agent `schnittstellen-pruefer` |
-| EXE ohne passende `checksums.json` gepusht | Installationen lehnen das Update ab | `release.ps1` listet beides; immer zusammen pushen |
-| Dateien entfernt, die alte Installationen erwarten | Ältere Updater brechen ab oder schreiben Fehlerseiten in Dateien | Übergangsdateien (`sflix.js`, `updater.exe`, `updateData.exe`, `updateStefflix.exe`) erst entfernen, wenn kein Umstieg mehr nötig ist |
-| Alte Versionszahl falsch umgerechnet | Falsche Update-Hinweise bei alten Installationen | Gleiche Regel in `versioning.py`, `core.js` (`toVersionName`), `UpdateTask.cs` (`WebVersion`) und `release.ps1` |
-| Seitenwechsel ohne Neuladen | Zustand oder Listener aus der vorherigen Seite bleiben übrig | Regel in 4.2 |
-| Vertrauen in das GitHub-Repository | Ein manipuliertes Repository könnte erlaubte Web-Dateien mit beliebigem Inhalt ersetzen | Pfadfilter `IsAllowedWebPath`, geschützte Dateien, Prüfsummen (schützen gegen Übertragungsfehler, nicht gegen das Repository selbst) |
-| Mischstand in der App nach einem Update | Neue `start.html` mit alten Skripten bis zur Prüfung aller Ordner | „STEFFLIX-Dateien neu laden“ (DEC-220) |
-| `MediaServer` auf 127.0.0.1 | Jede App auf dem Gerät kann den Port erreichen | Zufälliger Port und Schlüssel im Pfad |
-| WebView2- und WebView-Versionen | Neue Runtime-Versionen ändern Verhalten (Wiedergabe im Hintergrund, Einstellungen, die eine alte Runtime still ignoriert) | Nach Updates der Runtime gezielt testen (`docs/TESTING.md`) |
-| Lizenzschlüssel | Wer einen Schlüssel hat, kann Feedback senden; Härtung bewusst zurückgestellt (DEC-010) | Schlüssel nie weitergeben, `license.js` nie pushen |
+### 6.1 Datenintegrität
+| ID | Komp. | Risiko und Wirkung | Status | Massnahme |
+|---|---|---|---|---|
+| R-01 | Desktop | Konvertieren mit „Original löschen“ löscht das Original, bevor das Ergebnis an seinem Platz ist; scheitert das Umbenennen, sind beide weg | in Arbeit | SFLIX-20261122-050 |
+| R-02 | Desktop | Ist `downloads.json` beim Start nicht lesbar, gelten alle Zwischenordner als verwaist; Teilstücke pausierter Downloads werden gelöscht | in Arbeit | 050 |
+| R-03 | Desktop | Kopieren über Laufwerksgrenzen (Download, Import) schreibt direkt unter dem Endnamen; ein Abbruch hinterlässt abgeschnittene Dateien in der Mediathek | in Arbeit | 050 |
+| R-04 | Desktop | `data.js` wird nicht atomar geschrieben; ein vorübergehend fehlendes Laufwerk entfernt seinen Zweig ohne Rückfrage. Teil-Einlesen übersieht Änderungen ausserhalb der gewählten Ordner | in Arbeit | 050 |
+| R-05 | Desktop | Beim Start werden alle `*.old` im Installationsordner, `sflix_sys` und `sflix_sys\js` gelöscht, auch fremde Dateien | in Arbeit | 050 |
+| R-06 | Desktop | Vorübergehende Netzwerkfehler werden dauerhaft als „defekt“ gemerkt; „Medien prüfen“ wählt solche Dateien zum Löschen vor | in Arbeit | 050 |
+| R-07 | Desktop | Abbrechen einer Tool-Aufgabe beendet auch ffmpeg laufender Downloads; ffmpeg läuft nach dem Programmende weiter | in Arbeit | 050 |
+| R-08 | Desktop | Download-Nachbearbeitung und „Konvertieren“ können dieselbe Datei gleichzeitig bearbeiten (gleiche Zwischendatei) | in Arbeit | 050 |
+| R-09 | Desktop | Uneinheitliche „__“-Regel: Einlesen und Tools überspringen Ordner mit `__` im Namen, „Ablagen leeren“ nur solche, die damit beginnen | in Arbeit | 050 |
+| R-10 | Desktop | Ordnerdurchläufe folgen Junctions; Schreibzugriffe können ausserhalb des Installationsordners wirken, Zyklen laufen lange | in Arbeit | 050 |
+| R-11 | STEFFLIX | „Alle Daten löschen“ entfernt die Migrationsmarken; beim nächsten Start laufen alte Migrationen erneut (Einstellungen und Gesehen gehen verloren, alte gemeinsame Daten kommen zurück) | in Arbeit | SFLIX-20261122-051 |
+| R-12 | STEFFLIX | „Verwaiste Einträge entfernen“ löscht ohne Sicherung, auch wenn ein Laufwerk nur vorübergehend fehlt | in Arbeit | 051 |
+| R-13 | alle | Favoriten, Fortschritt und Werte je Ordner hängen am Pfad; Umbenennen ausserhalb der Tools mit `renamed.js` (Explorer, Zusammenfügen, Konvertieren, Wiederherstellen) erzeugt verwaiste Einträge; `renamed.js` hält höchstens 5000 Paare | akzeptiert | Paare für Zusammenfügen in 050; übrige bewusst getragen |
+| R-14 | Desktop | Wiederholtes Wiederherstellen oder Importieren mit „Als Kopie speichern“ erzeugt Dubletten (`_1`, `_2`), die „Duplikate finden“ und „Folgen umbenennen“ wieder melden | offen | Namensschema vereinheitlichen (SFLIX-20261122-054) |
+| R-15 | Desktop | Gemerkte Prüfergebnisse erkennen Änderungen nur über Grösse und Änderungszeit | akzeptiert | – |
+| R-16 | Desktop | Heuristiken: „Folgen umbenennen“ (Titel mit kleiner Zahl als Doppelfolge, Staffelordner mit Zusatz, Kategorie als Serienordner), „Duplikate finden“ wählt Sprachfassungen und gleichnamige Dateien zum Aussortieren vor | offen | Vorschläge im Plan sichtbar machen; Vorauswahl nur bei identischen Dateien |
+| R-17 | Desktop | Folgenlisten aus HTML-Seiten (reguläre Ausdrücke) fallen bei einem Umbau der Seite still aus | akzeptiert | Rückfall auf die nächste Quelle |
+
+### 6.2 Update, Release und Repository
+| ID | Komp. | Risiko und Wirkung | Status | Massnahme |
+|---|---|---|---|---|
+| R-18 | Desktop | Prüfsummen und Dateien kommen aus demselben Repository; ein kompromittiertes Konto könnte EXE, Web-Dateien oder ffmpeg ersetzen | in Arbeit | Signierte Updates (3.7, DEC-356, SFLIX-20261122-055) |
+| R-19 | Release | EXE, `checksums.json` (künftig auch `checksums.sig`) müssen im selben Push liegen; GitHub liefert kurz nach einem Push teils verzögert aus | akzeptiert | Push-Liste von `release.ps1` |
+| R-20 | Release | Übergangsdateien für alte Installationen (`sflix.js`, `updater.exe`, `updateData.exe`, `updateStefflix.exe`): wann sie entfallen dürfen, ist nicht festgelegt; zu frühes Entfernen bricht alte Updater | offen | Kriterium festlegen (Architekt mit Benutzer) |
+| R-21 | Release | Die Komponente eines Changelog-Eintrags ergibt sich aus dem Textanfang; Tippfehler landen still bei STEFFLIX. Text wird ohne HTML-Escape übernommen | in Arbeit | SFLIX-20261122-053 |
+| R-22 | Repo | Lokale Testdaten unter `.claude\` sind nicht in `.gitignore`; nur die Auswahl beim Push schützt sie | in Arbeit | 053 |
+| R-23 | Release | `versionCode` der App (x·10000 + y·100 + z) setzt y und z unter 100 voraus, ohne Prüfung | in Arbeit | SFLIX-20261122-052 |
+| R-24 | Release | Der Android-Build lädt JDK, SDK und Gradle ohne Prüfsumme und bestätigt die SDK-Lizenzen automatisch | akzeptiert | nur auf dem Entwicklungs-PC |
+| R-25 | Desktop | Ein Ordner mit `SFLIX_Tools\Release\release.ps1` gilt als Release-Ordner; auch eine Kopie des Repositorys verliert dann bei jedem Start ihre lokalen Dateien | offen (niedrig) | Eigene, nicht gepushte Markierung prüfen |
+| R-26 | alle | Der Lizenzschlüssel enthält den Zugang zum Feedback-Kanal; die Verschleierung schützt ihn nicht (DEC-010) | akzeptiert | Schlüssel je Lizenz, Erwähnungen ausgeschaltet |
+| R-27 | Desktop, App | Die Diagnose im Feedback enthält Installations- und ffmpeg-Pfade, Protokollzeilen bzw. Server, Freigabe und Benutzer der Quelle | offen | Pfade kürzen bzw. maskieren, Vorschau vor dem Senden |
+| R-28 | Desktop | Download: Adressen aus Playlisten werden nicht nach Schema und Ziel geprüft; keine Grössengrenzen für Playlist, Teilstücke und Schlüssel | offen | nur http/https, Grenzen setzen |
+
+### 6.3 Schnittstellen und Laufzeit
+| ID | Komp. | Risiko und Wirkung | Status | Massnahme |
+|---|---|---|---|---|
+| R-29 | App, Desktop | Namen der Weboberfläche ändern sich: `inject.js`, Prototyp-Eingriffe der Medienumleitung, Einfügemarke vor `main.js`, `isDesktopApp`/Brücke brechen unbemerkt | akzeptiert | Liste in `docs/INTERFACES.md` Abschnitt 2 und in `inject.js` vollständig halten; Rückfall für die Einfügemarke in 052; Agent `schnittstellen-pruefer` |
+| R-30 | STEFFLIX | Seitenwechsel ohne Neuladen: Timer und Listener der vorherigen Seite bleiben übrig (Bänder, Player-Menüs, Medien-Rückfall) | in Arbeit | Regel in 4.2; 051 |
+| R-31 | STEFFLIX | Der Autoplay-Countdown wird an seiner Anzeige erkannt; Reste führen zu falschen „Gesehen“-Markierungen | in Arbeit | 051 |
+| R-32 | STEFFLIX | Der Hinweis auf fehlende Programmdateien liegt unter dem Ladescreen; geprüft wird nur je ein Name pro Datei | in Arbeit | 051 |
+| R-33 | App | Der UI-Thread wartet während eines Verbindungsaufbaus auf die SMB-Verbindung (App reagiert nicht) | in Arbeit | 052 |
+| R-34 | App | Ein Fehler eines Threads schliesst die gemeinsame Verbindung eines anderen; Vorausladen kann nach dem Beenden neu verbinden | in Arbeit | 052 |
+| R-35 | App | Bei einem Fehler des Android-Keystores werden beim nächsten Speichern leere Passwörter für alle Quellen geschrieben | in Arbeit | 052 |
+| R-36 | App | Bei pausierter Wiedergabe bleibt die Seite im Hintergrund aktiv (Akku); Fehler beim Start des Vordergrunddienstes werden verschluckt | in Arbeit | 052 |
+| R-37 | App | `MediaServer` auf 127.0.0.1 ist nur durch zufälligen Port und Schlüssel im Pfad geschützt; Pfadteile werden nicht gefiltert | in Arbeit | Pfadfilter in 052, sonst akzeptiert |
+| R-38 | Desktop, App | Neue WebView2- und WebView-Versionen ändern Verhalten (Hintergrundwiedergabe, still ignorierte Einstellungen) | akzeptiert | nach Runtime-Updates gezielt testen (`docs/TESTING.md`) |
+| R-39 | alle | Alte Versionszahl in vier Implementierungen (`versioning.py`, `core.js`, `UpdateTask.cs`, `release.ps1`) | akzeptiert | am 22.11.2026 gleich; bei Änderungen alle vier anpassen |
+| R-40 | App | Mischstand nach einem Update (neue `start.html`, alte Skripte), bis alle Ordner geprüft sind | akzeptiert | „STEFFLIX-Dateien neu laden“ (DEC-220) |
+| R-41 | Desktop | Selbst gezeichnete Listen mit Häkchen: drei Listen (Folgen umbenennen, Albumbilder, Zusammenfügen) sind beim Auf- und Abbau nicht gegen leere Einträge geschützt | offen | Schutz wie in `CompareView` |
+| R-42 | Doku | `decisions.py` legt doppelte Block-Überschriften an, sobald sich Rollen abwechseln | in Arbeit | 053 |
+
+### 6.4 Behoben (geprüft am 22.11.2026)
+- Laden der WebView2-Bibliotheken vor dem ersten WebView2-Typ (`WebViewLibs.Register` zuerst in `Program.Main`).
+- Signaturprüfung des WebView2-Bootstrappers vor dem Start (`Signature.CheckMicrosoft`).
+- Version der neuen EXE direkt aus den Bytes, ohne Temp-Datei (DEC-312).
+- Raster der Kacheln beim Seitenwechsel (`closeCardGrid` in `resetPage`).
+- Laufwerkswurzeln bei der Installationskennung (voller Pfad für Dateizugriffe; Rest: Name der Zweitverknüpfung bei einer Wurzel, 050).
+- Endungslisten von Weboberfläche und Einlesen sind gleich (Rest: „Konvertieren“ weicht ab, 050).
 
 ## 7. Verweise
 - Dateien: `docs/WEB.md`, `docs/DESKTOP.md`, `docs/ANDROID.md`, `docs/RELEASE.md`; Tests: `docs/TESTING.md`.
 - Schnittstellen und Formate: `docs/INTERFACES.md`.
-- Entscheide: `python SFLIX_Tools\Doku\decisions.py suchen <Wort>`; zentrale Entscheide: DEC-090 (Speicher je Installation), DEC-177/DEC-180 (App lädt über abgefangene Anfragen und `MediaServer`), DEC-219/DEC-220 (Zwischenspeicher der App), DEC-226 (Dateilisten aus `checksums.json`), DEC-271 (Release-Ordner gesperrt), DEC-275/DEC-276/DEC-281 (Desktop mit WebView2), DEC-288 (Neuladen nach Änderungen), DEC-306 (Seitenwechsel ohne Neuladen), DEC-312 (Version aus den Bytes).
+- Entscheide: `python SFLIX_Tools\Doku\decisions.py suchen <Wort>`; zentrale Entscheide: DEC-090 (Speicher je Installation), DEC-177/DEC-180 (App lädt über abgefangene Anfragen und `MediaServer`), DEC-219/DEC-220 (Zwischenspeicher der App), DEC-226 (Dateilisten aus `checksums.json`), DEC-271 (Release-Ordner gesperrt), DEC-275/DEC-276/DEC-281 (Desktop mit WebView2), DEC-288 (Neuladen nach Änderungen), DEC-306 (Seitenwechsel ohne Neuladen), DEC-312 (Version aus den Bytes), DEC-356 (signierte Updates), DEC-357 (Risikoregister).

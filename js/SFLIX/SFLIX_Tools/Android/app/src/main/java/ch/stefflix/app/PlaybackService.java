@@ -35,6 +35,7 @@ public class PlaybackService extends Service {
                 startForeground(Playback.NOTIFICATION_ID, n);
             }
         } catch (RuntimeException e) {
+            android.util.Log.w("STEFFLIX", "startForeground fehlgeschlagen", e);
             stopSelf();
             return START_NOT_STICKY;
         }

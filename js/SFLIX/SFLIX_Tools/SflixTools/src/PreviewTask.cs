@@ -20,20 +20,22 @@ namespace Sflix
         const int Width = 480;
         const int Height = 270;
         const long JpegQuality = 80;
-        static readonly HashSet<string> VideoExtensions = new HashSet<string> { ".mp4", ".m4v", ".webm", ".ogv" };
-        static readonly HashSet<string> ImageExtensions = new HashSet<string> { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".bmp" };
-        // Ein Vorschaubild gehört zu einer Datei gleichen Namens mit einer dieser Endungen (oder zu einem Ordner)
-        static readonly string[] MediaExtensions = {
-            ".mp4", ".m4v", ".webm", ".ogv",
-            ".mp3", ".m4a", ".ogg", ".oga", ".opus", ".aac", ".flac", ".wav",
-            ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".bmp",
-        };
-        const string TrashDirName = "__gelöscht";
+        static readonly HashSet<string> VideoExtensions = MediaTypes.ReadyVideo;
+        static readonly HashSet<string> ImageExtensions = MediaTypes.ReadyImage;
+        // Ein Vorschaubild gehört zu einer Datei gleichen Namens mit einer bekannten Medienendung (oder zu
+        // einem Ordner). Seit 4.1.0 auch noch nicht konvertierte Medien (z.B. Film.mkv): deren Vorschaubild
+        // galt vorher als verwaist.
+        static readonly string[] MediaExtensions = AllMediaExtensions();
 
-        public static void Run(TaskContext ctx, string root, bool forVideos, bool forImages)
+        static string[] AllMediaExtensions()
         {
-            Run(ctx, root, forVideos, forImages, false);
+            HashSet<string> s = MediaTypes.AllVideo();
+            s.UnionWith(MediaTypes.AllAudio());
+            s.UnionWith(MediaTypes.ReadyImage);
+            s.UnionWith(MediaTypes.ConvertImage);
+            return new List<string>(s).ToArray();
         }
+        const string TrashDirName = "__gelöscht";
 
         // forMusic (seit 3.4.3): Albumbilder für Musikordner (AlbumCovers)
         public static void Run(TaskContext ctx, string root, bool forVideos, bool forImages, bool forMusic)
@@ -184,8 +186,9 @@ namespace Sflix
             catch (IOException) { }
         }
 
-        // Verschiebt Preview\<name>.jpg nach Preview\__gelöscht, wenn neben dem Preview-Ordner
-        // weder eine Mediendatei <name>.<endung> (Video, Musik, Bild) noch ein Ordner <name> liegt.
+        // Verschiebt Preview\<name>.jpg (seit 4.1.0 auch .jpeg, .png, .webp wie überall sonst) nach
+        // Preview\__gelöscht, wenn neben dem Preview-Ordner weder eine Mediendatei <name>.<endung> noch ein
+        // Ordner <name> liegt.
         static int CleanOrphans(List<string> previewDirs, TaskContext ctx, ref int failed)
         {
             int deleted = 0;
@@ -198,7 +201,7 @@ namespace Sflix
 
                 foreach (string jpg in files)
                 {
-                    if (!string.Equals(Path.GetExtension(jpg), ".jpg", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (Array.IndexOf(MediaTypes.PreviewExtensions, Path.GetExtension(jpg).ToLowerInvariant()) < 0) continue;
                     string baseName = Path.GetFileNameWithoutExtension(jpg);
                     bool keep = Directory.Exists(Path.Combine(parent, baseName));
                     foreach (string ext in MediaExtensions)
@@ -210,7 +213,7 @@ namespace Sflix
                         Directory.CreateDirectory(trash);
                         string dest = Path.Combine(trash, Path.GetFileName(jpg));
                         if (File.Exists(dest))
-                            dest = Path.Combine(trash, baseName + "_" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".jpg");
+                            dest = Path.Combine(trash, baseName + "_" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + Path.GetExtension(jpg));
                         FileOps.Rename(jpg, dest);
                         deleted++;
                         ctx.Log("  VERSCHOBEN  " + jpg + "  ->  " + TrashDirName);
@@ -258,8 +261,15 @@ namespace Sflix
             if (!File.Exists(tmpBmp)) throw new Exception("ffmpeg konnte kein Bild erzeugen");
 
             Directory.CreateDirectory(previewDir);
-            using (Image img = Image.FromFile(tmpBmp))
-                img.Save(target, jpeg, enc);
+            // Erst als Zwischendatei: ein halbes JPG gälte sonst als vorhandenes Vorschaubild (seit 4.1.0)
+            string tmpJpg = target + ".__temp__";
+            try
+            {
+                using (Image img = Image.FromFile(tmpBmp))
+                    img.Save(tmpJpg, jpeg, enc);
+                FileOps.Replace(tmpJpg, target);
+            }
+            catch { FileOps.TryDelete(tmpJpg); throw; }
         }
     }
 }

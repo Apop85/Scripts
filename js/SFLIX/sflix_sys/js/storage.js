@@ -337,10 +337,6 @@ function updateData() {
         setData("v1.33", true);
     }
 
-    // Update 1.38 - Autoupdater. Der damalige Hinweis ist nicht mehr nötig (updateData.exe
-    // lädt updater.exe selbst nach), die Markierung bleibt für die Datensicherung bestehen.
-    setData("v1.38", true);
-
     // Von updateData.exe umbenannte Dateien nachziehen (bei jedem Start prüfen)
     applyRenamedPaths();
 

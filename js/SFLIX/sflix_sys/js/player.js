@@ -1549,7 +1549,7 @@ function loadDecodedMedia(decodedData, pushState) {
         mediaNode.classList.add("autoplaying");
 
         if (node != null && node.tagName == "IMG") {
-            updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
+            updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value);
             if (nextNode.childNodes.length > 0 && nextNode.childNodes[0].textContent != "") {
                 nextNode.style.animation = "none";
                 timeoutArray.push(setTimeout(function () {
@@ -1559,7 +1559,7 @@ function loadDecodedMedia(decodedData, pushState) {
                     clickNavigation("next");
                 }, (autoplayDuration + minTime) * 1000));
             } else {
-                updateOptions(false, 0, document.getElementById("autoplayDuration").value);
+                updateOptions(false, 0);
             }
         }
     } else {
@@ -1926,7 +1926,7 @@ function appendMediafunctions(node) {
             if (this.duration - currentTime <= autoplayDuration + minTime - 10) {
                 nextNode.style.background = "";
                 hideAutoplayCountdown();
-                updateOptions(autoplayChecked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
+                updateOptions(autoplayChecked, document.getElementById("amountOfAutoplay").value);
                 if (nextNode.childNodes.length > 0 && nextNode.childNodes[0].textContent != "") {
                     removeData(timestampKey);
                     // Autoplay springt vor dem Ende weiter: die Folge gilt trotzdem als gesehen
@@ -1935,7 +1935,7 @@ function appendMediafunctions(node) {
                     }
                     clickNavigation("next");
                 } else {
-                    updateOptions(false, 0, document.getElementById("autoplayDuration").value);
+                    updateOptions(false, 0);
                 }
             }
         } else {
@@ -3130,7 +3130,7 @@ function finishCountdownOnNavigation(direction) {
         }
     }
     if (direction == "next") {
-        updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value, document.getElementById("autoplayDuration").value);
+        updateOptions(document.getElementById("autoplayCheckBox").checked, document.getElementById("amountOfAutoplay").value);
     }
 }
 

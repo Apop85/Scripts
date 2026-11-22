@@ -36,7 +36,7 @@ $pruefe = {
 & $pruefe 'Write tief im Projekt'            'Write' (Join-Path $root 'sflix_sys\js\player.js') 'frei'
 & $pruefe 'Write .claude im Projekt'         'Write' (Join-Path $root '.claude\skills\rolle-x\SKILL.md') 'frei'
 & $pruefe 'Write Nachbarordner SFLIX-alt'    'Write' ($root + '-alt\a.md') 'sperre'
-& $pruefe 'Write Sync2PC'                    'Write' 'C:\Users\rbald\Documents\Sync2PC\a.md' 'sperre'
+& $pruefe 'Write Sync2PC'                    'Write' (Join-Path $prof 'Documents\Sync2PC\a.md') 'sperre'
 & $pruefe 'Write in %TMP%'                   'Write' (Join-Path $tmp 'claude\scratch\a.md') 'frei'
 & $pruefe 'Write Memory'                     'Write' (Join-Path $mem 'x.md') 'frei'
 & $pruefe 'Write Desktop'                    'Write' (Join-Path $prof 'Desktop\x.txt') 'sperre'
@@ -53,13 +53,13 @@ $pruefe = {
 # Datei-Werkzeuge lesend
 & $pruefe 'Read im Projekt'                  'Read' (Join-Path $root 'start.html') 'frei'
 & $pruefe 'Read Testumgebung'                'Read' (Join-Path $testenv 'start.html') 'frei'
-& $pruefe 'Read Sync2PC'                     'Read' 'C:\Users\rbald\Documents\Sync2PC\CLAUDE.md' 'sperre'
+& $pruefe 'Read Sync2PC'                     'Read' (Join-Path $prof 'Documents\Sync2PC\CLAUDE.md') 'sperre'
 & $pruefe 'Read Netzlaufwerk'                'Read' 'Z:\Filme\a.mp4' 'sperre'
 & $pruefe 'Read Tool-Ergebnis Claude'        'Read' (Join-Path $prof '.claude\projects\x\tool-results\a.txt') 'frei'
 & $pruefe 'Read csc-Ordner'                  'Read' 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.dll' 'frei'
 & $pruefe 'Read C:\Windows sonst'            'Read' 'C:\Windows\win.ini' 'sperre'
 & $pruefe 'Glob Projekt'                     'Glob' $root 'frei'
-& $pruefe 'Glob Benutzerordner'              'Glob' 'C:\Users\rbald\Documents' 'sperre'
+& $pruefe 'Glob Benutzerordner'              'Glob' (Join-Path $prof 'Documents') 'sperre'
 & $pruefe 'Grep NAS'                         'Grep' 'Y:\' 'sperre'
 
 # PowerShell
@@ -69,16 +69,16 @@ $pruefe = {
 & $pruefe 'Lesen UNC'                        'PowerShell' 'Get-ChildItem \\nas\Filme' 'sperre'
 & $pruefe 'Lokaler SMB-Testserver als Text'  'PowerShell' 'Write-Output "\\127.0.0.1\STEFFLIX"' 'frei'
 & $pruefe 'New-Item im Projekt (relativ)'    'PowerShell' 'New-Item -ItemType Directory docs\neu' 'frei'
-& $pruefe 'New-Item ausserhalb'              'PowerShell' 'New-Item -ItemType Directory C:\Users\rbald\Neu' 'frage'
+& $pruefe 'New-Item ausserhalb'              'PowerShell' ('New-Item -ItemType Directory {0}\Neu' -f $prof) 'frage'
 & $pruefe 'relativ, cwd ausserhalb'          'PowerShell' 'New-Item x.txt' 'frage' (Join-Path $prof 'Desktop')
-& $pruefe 'csc mit Verweisen'                'PowerShell' '& "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /target:library /reference:C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.dll /out:C:\Users\rbald\AppData\Local\Temp\x.dll src\a.cs' 'frei'
+& $pruefe 'csc mit Verweisen'                'PowerShell' ('& "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /target:library /reference:C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.dll /out:{0}\AppData\Local\Temp\x.dll src\a.cs' -f $prof) 'frei'
 & $pruefe 'adb-Screenshot ins Projekt'       'PowerShell' ('& "' + $adb + '" exec-out screencap -p > .claude\testenv\a.png') 'frei'
 & $pruefe 'adb shell input text UNC'         'PowerShell' ('& "' + $adb + '" shell ''input text "\\\\nas\\Fotos"''') 'frei'
 & $pruefe 'Join-Path TestShare'              'PowerShell' 'New-Item -ItemType Directory (Join-Path $env:LOCALAPPDATA ''STEFFLIX-TestShare\venv'')' 'frei'
 & $pruefe 'Join-Path ausserhalb'             'PowerShell' 'Copy-Item a.txt (Join-Path $env:LOCALAPPDATA ''Anderes\a.txt'')' 'frage'
 & $pruefe 'WriteAllText $env:TEMP'           'PowerShell' '[IO.File]::WriteAllText("$env:TEMP\x.txt", ''a'', [Text.UTF8Encoding]::new($false))' 'frei'
 & $pruefe 'WriteAllText %USERPROFILE%'       'PowerShell' '[IO.File]::WriteAllText("$env:USERPROFILE\x.txt", ''a'')' 'frage'
-& $pruefe 'Auftrag.ps1, Pfad in -Risiken'    'PowerShell' 'powershell -NoProfile -File SFLIX_Tools\Auftrag.ps1 abschliessen -Rolle Pruefung -Id 7 -Arbeiten "x" -Tests "ok" -Entscheide keine -Risiken "liegt noch unter C:\Users\rbald\Desktop\x"' 'frei'
+& $pruefe 'Auftrag.ps1, Pfad in -Risiken'    'PowerShell' ('powershell -NoProfile -File SFLIX_Tools\Auftrag.ps1 abschliessen -Rolle Pruefung -Id 7 -Arbeiten "x" -Tests "ok" -Entscheide keine -Risiken "liegt noch unter {0}\Desktop\x"' -f $prof) 'frei'
 & $pruefe 'decisions.py, Pfad im Text'       'PowerShell' 'python SFLIX_Tools\Doku\decisions.py neu --titel "Pfad" --entscheidung "liegt unter D:\x"' 'frei'
 & $pruefe 'Auftrag.ps1 + Folgeanweisung'     'PowerShell' 'powershell -File SFLIX_Tools\Auftrag.ps1 liste -Rolle Pruefung; Remove-Item "C:\Neu\x.txt"' 'frage'
 & $pruefe 'coordination direkt'              'PowerShell' 'Remove-Item coordination\tasks\OPEN\x.md' 'frage'
@@ -96,9 +96,24 @@ $paar1 = '$p = @(@(''a'',''b'')); $t = [IO.File]::ReadAllText("$env:TEMP\x.txt")
 & $pruefe 'EXE ohne SFLIX_DIR (Start-Process)' 'PowerShell' 'Start-Process "SFLIX_Tools\SflixTools\dist\STEFFLIX.exe" -ArgumentList "--tools"' 'sperre'
 & $pruefe 'EXE direkt am Zeilenanfang'       'PowerShell' 'SFLIX_Tools\SflixTools\dist\STEFFLIX.exe --headless data' 'sperre'
 & $pruefe 'EXE mit SFLIX_DIR testenv'        'PowerShell' ('$env:SFLIX_DIR = ''' + $testenv + '''; & "SFLIX_Tools\SflixTools\dist\STEFFLIX.exe" --headless data') 'frei'
-& $pruefe 'EXE mit SFLIX_DIR anderswo'       'PowerShell' '$env:SFLIX_DIR = ''C:\Users\rbald\Videos\Stefflix''; & .\STEFFLIX.exe --headless data' 'sperre'
+& $pruefe 'EXE mit SFLIX_DIR anderswo'       'PowerShell' ('$env:SFLIX_DIR = ''{0}\Videos\Stefflix''; & .\STEFFLIX.exe --headless data' -f $prof) 'sperre'
 & $pruefe 'EXE nur lesen (Hash)'             'PowerShell' 'Get-FileHash STEFFLIX.exe; (Get-Item SFLIX_Tools\SflixTools\dist\STEFFLIX.exe).VersionInfo' 'frei'
 & $pruefe 'EXE kopieren'                     'PowerShell' 'Copy-Item SFLIX_Tools\SflixTools\dist\STEFFLIX.exe STEFFLIX.exe' 'frei'
+
+# GitHub-Klon nur ueber sync_github.py (DEC-363)
+$klon = Join-Path $prof 'Documents\GitHub\Scripts\js\SFLIX'
+if ($env:SFLIX_GITHUB_DIR) { $klon = $env:SFLIX_GITHUB_DIR }
+& $pruefe 'Klon: Write'                      'Write' (Join-Path $klon 'start.html') 'sperre'
+& $pruefe 'Klon: Read'                       'Read' (Join-Path $klon 'README.md') 'sperre'
+& $pruefe 'Klon: Read Repo-Wurzel'           'Read' (Join-Path $prof 'Documents\GitHub\Scripts\.gitignore') 'sperre'
+& $pruefe 'Klon: sync ohne Pfad'             'PowerShell' 'python SFLIX_Tools\Release\sync_github.py' 'frei'
+& $pruefe 'Klon: sync ausfuehren'            'PowerShell' 'python SFLIX_Tools\Release\sync_github.py --ausfuehren --ja' 'frei'
+& $pruefe 'Klon: sync mit --ziel'            'PowerShell' ('python SFLIX_Tools\Release\sync_github.py --ziel "' + $klon + '"') 'frei'
+& $pruefe 'Klon: sync, Ziel Repo-Wurzel'     'PowerShell' ('python SFLIX_Tools\Release\sync_github.py --ziel "' + (Join-Path $prof 'Documents\GitHub\Scripts') + '"') 'sperre'
+& $pruefe 'Klon: sync + Remove-Item'         'PowerShell' ('python SFLIX_Tools\Release\sync_github.py; Remove-Item "' + $klon + '\a.txt"') 'sperre'
+& $pruefe 'Klon: Copy-Item'                  'PowerShell' ('Copy-Item start.html "' + $klon + '\start.html"') 'sperre'
+& $pruefe 'Klon: Get-ChildItem'              'PowerShell' ('Get-ChildItem "' + $klon + '"') 'sperre'
+& $pruefe 'Klon: Arbeitsverzeichnis'         'PowerShell' 'Get-ChildItem' 'sperre' $klon
 
 Write-Output ''
 Write-Output ("Ergebnis: " + $ok + " OK, " + $fehler + " Fehler")

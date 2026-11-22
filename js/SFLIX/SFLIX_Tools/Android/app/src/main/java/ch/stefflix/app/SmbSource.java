@@ -32,6 +32,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** Liest Dateien aus einer SMB-Freigabe (SMB2/3). Die Verbindung wird bei Bedarf neu aufgebaut. */
 final class SmbSource implements Closeable {
@@ -43,16 +44,29 @@ final class SmbSource implements Closeable {
     });
 
     private final ShareStore.Share cfg;
-    private SMBClient client;
-    private Connection connection;
-    private DiskShare disk;
+
+    /** Eine aufgebaute Verbindung (Client, Verbindung, Freigabe), wird als Ganzes ersetzt. */
+    private static final class Link {
+        final SMBClient client;
+        final Connection connection;
+        final DiskShare disk;
+
+        Link(SMBClient client, Connection connection, DiskShare disk) {
+            this.client = client;
+            this.connection = connection;
+            this.disk = disk;
+        }
+    }
+
+    // Aktuelle Verbindung. Lesen ohne Sperre (isConnected im Startbildschirm läuft auf dem UI-Thread alle
+    // 250 ms und darf nie auf einen Verbindungsaufbau warten). Fehler verwerfen nur die eigene, noch aktuelle
+    // Verbindung, nie eine inzwischen von einem anderen Thread neu aufgebaute.
+    private final AtomicReference<Link> current = new AtomicReference<>();
+    // Nur der Aufbau einer Verbindung ist gesperrt (gleichzeitige Anfragen verbinden nicht mehrfach)
+    private final Object connectLock = new Object();
 
     SmbSource(ShareStore.Share cfg) {
         this.cfg = cfg;
-    }
-
-    ShareStore.Share share() {
-        return cfg;
     }
 
     private static SmbConfig config() {
@@ -64,22 +78,47 @@ final class SmbSource implements Closeable {
                 .build();
     }
 
-    private synchronized DiskShare disk() throws IOException {
-        if (disk != null && disk.isConnected()) return disk;
-        close();
+    private DiskShare disk() throws IOException {
+        Link l = current.get();
+        if (l != null && l.disk.isConnected()) return l.disk;
+        synchronized (connectLock) {
+            l = current.get();
+            if (l != null && l.disk.isConnected()) return l.disk;
+            if (l != null && current.compareAndSet(l, null)) closeLater(l);
+            Link fresh = connect();
+            current.set(fresh);
+            return fresh.disk;
+        }
+    }
+
+    private Link connect() throws IOException {
+        SMBClient client = new SMBClient(config());
+        Connection connection = null;
         try {
-            client = new SMBClient(config());
             connection = client.connect(cfg.host);
             Session session = connection.authenticate(auth());
-            disk = (DiskShare) session.connectShare(cfg.share);
-            return disk;
-        } catch (IOException e) {
-            close();
-            throw e;
-        } catch (RuntimeException e) {
-            close();
-            throw new IOException(e.getMessage(), e);
+            return new Link(client, connection, (DiskShare) session.connectShare(cfg.share));
+        } catch (IOException | RuntimeException e) {
+            closeLater(new Link(client, connection, null));
+            throw e instanceof IOException ? (IOException) e : new IOException(e.getMessage(), e);
         }
+    }
+
+    /** Verwirft die Verbindung, mit der eine Anfrage gescheitert ist, aber nur, wenn sie noch aktuell ist. */
+    private void drop(DiskShare failed) {
+        Link l = current.get();
+        if (l == null) return;
+        if ((failed == null || l.disk == failed) && current.compareAndSet(l, null)) closeLater(l);
+    }
+
+    /** Schliesst im Hintergrund, ohne auf den Server zu warten. */
+    private static void closeLater(Link l) {
+        if (l == null) return;
+        closer.execute(() -> {
+            try { if (l.disk != null) l.disk.close(); } catch (Exception ignored) { }
+            try { if (l.connection != null) l.connection.close(true); } catch (Exception ignored) { }
+            try { if (l.client != null) l.client.close(); } catch (Exception ignored) { }
+        });
     }
 
     private AuthenticationContext auth() {
@@ -89,7 +128,19 @@ final class SmbSource implements Closeable {
                 cfg.domain.isEmpty() ? null : cfg.domain);
     }
 
-    private String smbPath(String rel) {
+    /** Relativer Pfad aus einer Anfrage: keine "..", ".", Backslashes oder Steuerzeichen (sonst 403 bzw. nicht gefunden). */
+    static boolean isSafeRel(String rel) {
+        if (rel == null) return false;
+        for (int i = 0; i < rel.length(); i++) {
+            char c = rel.charAt(i);
+            if (c == '\\' || c < 0x20) return false;
+        }
+        for (String part : rel.split("/", -1)) if (part.equals("..") || part.equals(".")) return false;
+        return true;
+    }
+
+    private String smbPath(String rel) throws FileNotFoundException {
+        if (!isSafeRel(rel)) throw new FileNotFoundException(rel);
         String p = rel.replace('/', '\\');
         while (p.startsWith("\\")) p = p.substring(1);
         while (p.endsWith("\\")) p = p.substring(0, p.length() - 1);
@@ -111,17 +162,19 @@ final class SmbSource implements Closeable {
     File open(String rel) throws IOException {
         String path = smbPath(rel);
         for (int attempt = 0; ; attempt++) {
+            DiskShare d = null;
             try {
-                return disk().openFile(path, EnumSet.of(AccessMask.GENERIC_READ), null,
+                d = disk();
+                return d.openFile(path, EnumSet.of(AccessMask.GENERIC_READ), null,
                         SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
             } catch (SMBApiException e) {
                 if (isNotFound(e)) throw new FileNotFoundException(path);
                 if (attempt > 0) throw new IOException(e.getMessage(), e);
-                close();
+                drop(d);
             } catch (IOException | RuntimeException e) {
                 // Verbindung abgebrochen (z.B. nach Standby): einmal neu verbinden
                 if (attempt > 0) throw e instanceof IOException ? (IOException) e : new IOException(e.getMessage(), e);
-                close();
+                drop(d);
             }
         }
     }
@@ -145,8 +198,10 @@ final class SmbSource implements Closeable {
     Map<String, Meta> list(String relFolder) throws IOException {
         String path = smbPath(relFolder);
         for (int attempt = 0; ; attempt++) {
+            DiskShare d = null;
             try {
-                List<FileIdBothDirectoryInformation> entries = disk().list(path);
+                d = disk();
+                List<FileIdBothDirectoryInformation> entries = d.list(path);
                 Map<String, Meta> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
                 for (FileIdBothDirectoryInformation e : entries) {
                     if ((e.getFileAttributes() & FileAttributes.FILE_ATTRIBUTE_DIRECTORY.getValue()) != 0) continue;
@@ -156,10 +211,10 @@ final class SmbSource implements Closeable {
             } catch (SMBApiException e) {
                 if (isNotFound(e)) return new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
                 if (attempt > 0) throw new IOException(e.getMessage(), e);
-                close();
+                drop(d);
             } catch (IOException | RuntimeException e) {
                 if (attempt > 0) throw e instanceof IOException ? (IOException) e : new IOException(e.getMessage(), e);
-                close();
+                drop(d);
             }
         }
     }
@@ -169,11 +224,13 @@ final class SmbSource implements Closeable {
      * schliessen. Ist sie trotzdem weg, wird sofort neu verbunden. true: Verbindung steht.
      */
     boolean keepAlive() {
+        DiskShare d = null;
         try {
-            disk().fileExists(smbPath("start.html"));
+            d = disk();
+            d.fileExists(smbPath("start.html"));
             return true;
         } catch (IOException | RuntimeException e) {
-            close();
+            drop(d);
             try {
                 disk();
                 return true;
@@ -189,20 +246,14 @@ final class SmbSource implements Closeable {
      * die alte Verbindung wird im Hintergrund geschlossen.
      */
     void dropConnection() {
-        final Connection c;
-        final SMBClient cl;
-        synchronized (this) {
-            c = connection;
-            cl = client;
-            disk = null;
-            connection = null;
-            client = null;
-        }
-        if (c == null && cl == null) return;
-        closer.execute(() -> {
-            try { if (c != null) c.close(true); } catch (Exception ignored) { }
-            try { if (cl != null) cl.close(); } catch (Exception ignored) { }
-        });
+        closeLater(current.getAndSet(null));
+    }
+
+    /** Eine Anfrage mit dieser Datei ist gescheitert: deren Verbindung verwerfen, falls sie noch aktuell ist. */
+    void dropFor(File f) {
+        DiskShare d = null;
+        try { if (f != null) d = f.getDiskShare(); } catch (RuntimeException ignored) { }
+        drop(d);
     }
 
     /** Nach einer Pause: alte Verbindung verwerfen und gleich neu verbinden. true: Verbindung steht. */
@@ -221,8 +272,9 @@ final class SmbSource implements Closeable {
     }
 
     /** Verbindung steht gerade (für die Anzeige im Startbildschirm). */
-    synchronized boolean isConnected() {
-        return disk != null && disk.isConnected();
+    boolean isConnected() {
+        Link l = current.get();
+        return l != null && l.disk.isConnected();
     }
 
     /** Meldet beim Lesen grosser Dateien den Fortschritt (z.B. data.js im Startbildschirm). */
@@ -231,10 +283,6 @@ final class SmbSource implements Closeable {
     }
 
     /** Liest size Bytes ab Anfang (Grösse aus der Ordnerliste, ohne eigene Abfrage). */
-    static byte[] readAll(File f, long size) throws IOException {
-        return readAll(f, size, null);
-    }
-
     static byte[] readAll(File f, long size, Progress progress) throws IOException {
         if (size > Integer.MAX_VALUE - 16) throw new IOException("Datei zu gross");
         byte[] data = new byte[(int) size];
@@ -274,7 +322,11 @@ final class SmbSource implements Closeable {
     /** Prüft Schritt für Schritt und nennt den Grund eines Fehlers. Mit speed: zusätzlich Lesegeschwindigkeit. */
     TestResult test(boolean speed) {
         TestResult r = new TestResult();
-        close();
+        dropConnection();
+        SMBClient client = null;
+        Connection connection = null;
+        DiskShare disk = null;
+        boolean adopted = false;
         try {
             client = new SMBClient(config());
             try {
@@ -332,11 +384,15 @@ final class SmbSource implements Closeable {
                 }
                 return r;
             }
+            current.set(new Link(client, connection, disk));
+            adopted = true;
             if (speed) measureSpeed(r);
             return r;
         } catch (Exception e) {
             r.error = "Verbindung fehlgeschlagen: " + reason(e);
             return r;
+        } finally {
+            if (!adopted) closeLater(new Link(client, connection, disk));
         }
     }
 
@@ -386,14 +442,10 @@ final class SmbSource implements Closeable {
         return m == null || m.isEmpty() ? e.getClass().getSimpleName() : m;
     }
 
+    /** Schliesst die aktuelle Verbindung (im Hintergrund, blockiert nie). */
     @Override
-    public synchronized void close() {
-        try { if (disk != null) disk.close(); } catch (Exception ignored) { }
-        try { if (connection != null) connection.close(); } catch (Exception ignored) { }
-        try { if (client != null) client.close(); } catch (Exception ignored) { }
-        disk = null;
-        connection = null;
-        client = null;
+    public void close() {
+        dropConnection();
     }
 
     /** Liest einen Bereich einer Datei in Bloecken (fuer Untertitel und grosse Dateien). */

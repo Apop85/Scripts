@@ -24,6 +24,76 @@ namespace Sflix
             list.DrawColumnHeader += delegate(object s, DrawListViewColumnHeaderEventArgs e) { DrawHeader(list, e); };
             if (sortable) ListSort.Enable(list);
             GuardChecks(list);
+            // Rechts der letzten Spalte zeichnet Windows ein leeres, helles Kopffeld (OwnerDraw erreicht es
+            // nicht): nach jedem Zeichnen des Kopfs dunkel übermalen. Angehängt beim ersten Zeichnen eines
+            // Spaltenkopfs (der Kopf entsteht erst mit den Spalten, nach HandleCreated).
+        }
+
+        // Fängt WM_PAINT des Spaltenkopfs ab und füllt die Fläche rechts der letzten Spalte
+        sealed class HeaderFiller : NativeWindow
+        {
+            const int LVM_GETHEADER = 0x101F, HDM_GETITEMCOUNT = 0x1200, HDM_GETITEMRECT = 0x1207, HDM_ORDERTOINDEX = 0x120F;
+            const int WM_PAINT = 0x000F, WM_PRINT = 0x0317, WM_PRINTCLIENT = 0x0318;
+
+            [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+            struct RECT { public int Left, Top, Right, Bottom; }
+
+            [System.Runtime.InteropServices.DllImport("user32.dll")]
+            static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
+            [System.Runtime.InteropServices.DllImport("user32.dll")]
+            static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref RECT lParam);
+
+            [System.Runtime.InteropServices.DllImport("user32.dll")]
+            static extern bool GetClientRect(IntPtr hWnd, out RECT rect);
+
+            const int WM_NCDESTROY = 0x0082;
+            static readonly HashSet<IntPtr> attached = new HashSet<IntPtr>();
+
+            public static void Ensure(ListView list)
+            {
+                try
+                {
+                    IntPtr header = SendMessage(list.Handle, LVM_GETHEADER, IntPtr.Zero, IntPtr.Zero);
+                    if (header == IntPtr.Zero || attached.Contains(header)) return;
+                    attached.Add(header);
+                    HeaderFiller f = new HeaderFiller();
+                    f.AssignHandle(header);
+                    // Das erste Zeichnen läuft bereits: danach nochmals, damit der Rest dunkel wird
+                    list.BeginInvoke((MethodInvoker)delegate { if (list.IsHandleCreated) InvalidateRect(header, IntPtr.Zero, true); });
+                }
+                catch { }
+            }
+
+            [System.Runtime.InteropServices.DllImport("user32.dll")]
+            static extern bool InvalidateRect(IntPtr hWnd, IntPtr rect, bool erase);
+
+            protected override void WndProc(ref Message m)
+            {
+                if (m.Msg == WM_NCDESTROY) { attached.Remove(Handle); base.WndProc(ref m); return; }   // NativeWindow gibt danach frei
+                base.WndProc(ref m);
+                bool print = m.Msg == WM_PRINT || m.Msg == WM_PRINTCLIENT;   // Bildschirmfoto, Druck
+                if (m.Msg != WM_PAINT && !print) return;
+                try
+                {
+                    RECT client;
+                    if (!GetClientRect(Handle, out client)) return;
+                    int count = SendMessage(Handle, HDM_GETITEMCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
+                    int right = 0;
+                    if (count > 0)
+                    {
+                        int last = SendMessage(Handle, HDM_ORDERTOINDEX, (IntPtr)(count - 1), IntPtr.Zero).ToInt32();
+                        RECT r = new RECT();
+                        SendMessage(Handle, HDM_GETITEMRECT, (IntPtr)last, ref r);
+                        right = r.Right;
+                    }
+                    if (right >= client.Right) return;
+                    using (Graphics g = print ? Graphics.FromHdc(m.WParam) : Graphics.FromHwnd(Handle))
+                    using (SolidBrush b = new SolidBrush(Theme.Input))
+                        g.FillRectangle(b, right, 0, client.Right - right, client.Bottom);
+                }
+                catch { }
+            }
         }
 
         // Listen mit Häkchen: Markieren (Klick, Shift- oder Strg-Klick) ändert nie Häkchen. Mit OwnerDraw
@@ -58,6 +128,7 @@ namespace Sflix
 
         public static void DrawHeader(ListView list, DrawListViewColumnHeaderEventArgs e)
         {
+            HeaderFiller.Ensure(list);
             using (SolidBrush b = new SolidBrush(Theme.Input)) e.Graphics.FillRectangle(b, e.Bounds);
             using (Pen p = new Pen(Theme.Line)) e.Graphics.DrawLine(p, e.Bounds.Right - 1, e.Bounds.Top, e.Bounds.Right - 1, e.Bounds.Bottom);
             // Sortierte Spalte: kleines Dreieck rechts (aufwärts = aufsteigend)

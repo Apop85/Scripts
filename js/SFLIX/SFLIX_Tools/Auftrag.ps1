@@ -1034,7 +1034,17 @@ function Invoke-Aendern {
         Stop-Auftrag 3 ("Auftrag $($t.Id) ist bereits abgeschlossen ($st$am); nichts geaendert. Neue Arbeit als Folgeauftrag. " +
             'Nachfuehrung nur ausnahmsweise: -Erzwingen -Notiz "<Grund>" (nur Anhaengen).')
     }
-    if ($Erzwingen -and -not $abgeschl) { Stop-Auftrag 1 "-Erzwingen nur fuer abgeschlossene Auftraege ($($t.Id) ist $st); ohne -Erzwingen aufrufen." }
+    # In Bearbeitung durch eine andere Rolle: Diese hat die Task-Datei meist schon gelesen und bemerkt die Aenderung
+    # nicht. Darum gesperrt (Exit 3) mit Hinweis auf einen eigenen Auftrag; nur ausnahmsweise mit -Erzwingen -Notiz.
+    $emp = Get-RoleName (Get-Val $t $FN.Empfaenger)
+    $fremd = ($st -eq 'IN_PROGRESS' -and $emp -and $script:RoleN -ne $emp -and $script:RoleN -ne 'Benutzer')
+    if ($fremd -and -not $Erzwingen) {
+        Stop-Auftrag 3 ("Auftrag $($t.Id) ist IN_PROGRESS bei $emp; $emp bekommt die Aenderung eventuell nicht mit (Auftrag ist schon gelesen). Nichts geaendert. " +
+            "Neue Anforderung als eigenen Auftrag erfassen (erstellen -An $emp -Abhaengigkeiten $($t.Id)) und dem Benutzer melden. " +
+            'Nur ausnahmsweise: -Erzwingen -Notiz "<Grund>".')
+    }
+    if ($Erzwingen -and -not $abgeschl -and -not $fremd) { Stop-Auftrag 1 "-Erzwingen nur fuer abgeschlossene Auftraege oder solche in Bearbeitung durch eine andere Rolle ($($t.Id) ist $st); ohne -Erzwingen aufrufen." }
+    if ($fremd) { Add-Warnung "$($t.Id) ist IN_PROGRESS bei $($emp): Aenderung erzwungen; dem Benutzer melden, damit $emp den Auftrag neu liest." }
     $erz = ''
     if ($Erzwingen) { $erz = ' [erzwungen: ' + ($notiz -replace "[\r\n]+", ' ').Trim() + ']' }
     $n = $t
@@ -1462,7 +1472,11 @@ aendern -Rolle <R> -Id <ID> -Abschnitt "<Titel>" -Eingabe <Datei>   (ganzer Inha
   Nicht aenderbar: ID/Titel, Status, Absender, Empfaenger, Erstellt am, Uebernahmebestaetigung, Abgeschlossen am.
   COMPLETED/CANCELLED sind gesperrt (Exit 3 "bereits abgeschlossen"); neue Arbeit als Folgeauftrag.
   Nur ausnahmsweise: -Erzwingen -Notiz "<Grund>" erlaubt Anhaengen und -Abschnitt (Verlauf: [erzwungen: Grund]),
-  nie Ersetzen. Jede Aenderung schreibt eine Verlaufszeile;
+  nie Ersetzen.
+  IN_PROGRESS bei einer anderen Rolle (Empfaenger) ist ebenfalls gesperrt (Exit 3): sie bemerkt die Aenderung
+  eventuell nicht; stattdessen eigenen Auftrag erfassen (erstellen -An <Empfaenger> -Abhaengigkeiten <ID>).
+  Nur ausnahmsweise mit -Erzwingen -Notiz "<Grund>" (Ersetzen erlaubt, Warnung: dem Benutzer melden).
+  Jede Aenderung schreibt eine Verlaufszeile;
   -Feld Bearbeitungsverlauf -Wert "x" ergibt "<Datum> <Rolle>: x". Feldnamen mit Umlaut oder ae/oe/ue;
   Kurznamen: Aufgabe, Ergebnis, Dateien, Kontext, UX, Freigabe, Prio, Arbeiten, Risiken, Fragen, Verlauf, Entscheide.
 Beispiele:

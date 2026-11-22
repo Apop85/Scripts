@@ -34,6 +34,7 @@ SKIP_DIRS = [
 # Einzelne Dateien bzw. Muster ohne eigenen Eintrag
 SKIP_FILES = [
     "*.old", "*.new", "*.tmp-*", "*.pyc", ".claude/*.gif", ".claude/*.mp4", ".claude/settings.local.json",
+    "SFLIX_Tools/Doku/private_patterns.txt",
     "coordination/TASK-INDEX.md", "coordination/.audit.log", "coordination/.lock",
     "SFLIX_Tools/Bilder/ladehintergrund*.jpg",
 ]
@@ -54,9 +55,26 @@ VERBOTEN = [
     (re.compile(r"(?i)discord"), "Discord"),
     (re.compile(r"(?i)netflix"), "Netflix"),
     (re.compile(r"(?i)webhooks?/\d{6,}"), "Webhook-Adresse"),
-    (re.compile(r"SFX2-[A-Z0-9]{4,}"), "Lizenzschlüssel"),
-    (re.compile(r"(?i)rbald|quantentunnel"), "persönliche Daten (Benutzername/Mail)"),
+    # Schlüssel sind Base64 (auch Kleinbuchstaben, + und /), rund 80 Zeichen; "SFX2-Schlüssel" im Text ist keiner
+    (re.compile(r"SFX2-[A-Za-z0-9+/]{16,}"), "Lizenzschlüssel"),
 ]
+
+def private_patterns():
+    """Persönliche Suchmuster (Benutzername, Teil der Mailadresse) aus der lokalen, nie gepushten Datei
+    SFLIX_Tools/Doku/private_patterns.txt (ein regulärer Ausdruck je Zeile, # = Kommentar)."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Doku", "private_patterns.txt")
+    res = []
+    try:
+        with open(path, encoding="utf-8") as reader:
+            for line in reader:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    res.append((re.compile("(?i)" + line), "persönliche Daten"))
+    except OSError:
+        pass
+    return res
+
+VERBOTEN += private_patterns()
 FILE_RX = re.compile(r"`([^`\s]*?([\w.-]+\.(?:js|html|css|cs|java|py|ps1|bat|json|md|txt|xml|gradle|svg|png|jpg|apk|exe|ico)))`")
 
 

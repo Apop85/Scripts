@@ -251,6 +251,13 @@ namespace Sflix
                     ctx.Check();
                     try
                     {
+                        // Als defekt gemeldete Medien vorher neu untersuchen (ohne gemerktes Ergebnis): ein
+                        // Aussetzer des Netzlaufwerks bei der Prüfung darf keine gute Datei löschen
+                        if (StillReadable(ctx, f))
+                        {
+                            ctx.Log("  NICHT GELÖSCHT  " + f + " :: bei erneuter Prüfung lesbar");
+                            continue;
+                        }
                         MoveToDeleted(f);
                         ctx.Log("  GELÖSCHT  " + f + "  ->  " + DeletedFolderName);
                     }
@@ -403,11 +410,11 @@ namespace Sflix
             List<string> empty = new List<string>();
             foreach (DirectoryInfo d in dirs)
             {
+                // Verknüpfung (Junction, symbolischer Link): nie durchsuchen, nie als leerer Ordner melden und den
+                // Ordner darüber nicht als leer werten (vor Folders.Ignore, das Verknüpfungen nur überspringt)
+                if ((d.Attributes & FileAttributes.ReparsePoint) != 0) { hasMedia = true; continue; }
                 if (Folders.Ignore(d)) continue;
                 if (string.Equals(d.Name, "Preview", StringComparison.OrdinalIgnoreCase)) continue;
-                // Verknüpfung (Junction, symbolischer Link): nie als leerer Ordner melden und den Ordner
-                // darüber nicht als leer werten, das Ziel liegt womöglich ausserhalb
-                if ((d.Attributes & FileAttributes.ReparsePoint) != 0) { hasMedia = true; continue; }
                 if (ScanFolder(ctx, d.FullName, extensions, found, appRoot)) hasMedia = true;
                 else empty.Add(d.FullName);
             }
@@ -457,6 +464,23 @@ namespace Sflix
         }
 
         // Datei nach <Ordner>\__gelöscht, ihr Vorschaubild nach Preview\__gelöscht ("Ablagen leeren" löscht endgültig)
+        // Datei mit Inhalt, die ffprobe untersucht (Video, M4A): jetzt lesbar?
+        static bool StillReadable(TaskContext ctx, string file)
+        {
+            if (ctx.Ffmpeg == null || !File.Exists(file)) return false;
+            string ext = Path.GetExtension(file).ToLowerInvariant();
+            string kind = MediaTypes.Kind(ext);
+            if (!(kind == "video" || ext == ".m4a") || MediaTypes.NeedsConversion(ext)) return false;
+            try
+            {
+                if (new FileInfo(file).Length == 0) return false;
+                ctx.Ffmpeg.ProbeFresh(file, ctx.Token);
+                return true;
+            }
+            catch (OperationCanceledException) { throw; }
+            catch { return false; }
+        }
+
         static void MoveToDeleted(string file)
         {
             if (Directory.Exists(file))
@@ -475,7 +499,7 @@ namespace Sflix
                 if (string.Equals(Path.GetFileNameWithoutExtension(other), stem, StringComparison.OrdinalIgnoreCase) &&
                     MediaTypes.Kind(Path.GetExtension(other).ToLowerInvariant()) != null) return;
             string previewDir = Path.Combine(dir, "Preview");
-            foreach (string ext in new string[] { ".jpg", ".jpeg", ".png", ".webp" })
+            foreach (string ext in MediaTypes.PreviewExtensions)
             {
                 string p = Path.Combine(previewDir, stem + ext);
                 if (!File.Exists(p)) continue;

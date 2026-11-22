@@ -56,9 +56,25 @@ VERBOTEN = [
     (re.compile(r"(?i)widmung|dedication|getSplashDedication"), "Widmung (Easteregg)"),
     (re.compile(r"(?i)discord"), "Discord"),
     (re.compile(r"(?i)webhooks?/\d{6,}"), "Webhook-Adresse"),
-    (re.compile(r"SFX2-[A-Z0-9]{4,}"), "Lizenzschlüssel"),
-    (re.compile(r"(?i)rbald|quantentunnel"), "persönliche Daten (Benutzername/Mail)"),
+    (re.compile(r"SFX2-[A-Za-z0-9+/]{16,}"), "Lizenzschlüssel"),
 ]
+
+def private_patterns():
+    """Persönliche Suchmuster (Benutzername, Teil der Mailadresse) aus der lokalen, nie gepushten Datei
+    SFLIX_Tools/Doku/private_patterns.txt (ein regulärer Ausdruck je Zeile, # = Kommentar)."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Doku", "private_patterns.txt")
+    res = []
+    try:
+        with open(path, encoding="utf-8") as reader:
+            for line in reader:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    res.append((re.compile("(?i)" + line), "persönliche Daten"))
+    except OSError:
+        pass
+    return res
+
+VERBOTEN += private_patterns()
 
 ENTRY_RX = re.compile(r"^### (DEC-\d{3,}):\s*(.*?)\s*$")
 FIELD_RX = re.compile(r"^([A-ZÄÖÜ][A-Za-zÄÖÜäöüß ()-]{1,40}?):\s?(.*)$")
@@ -102,6 +118,8 @@ class Doc:
 
     def save(self):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        if not self.intern:
+            update_stats(self)   # Kopf-Statistik immer aktuell halten
         text = self.nl.join(self.lines) + self.nl
         tmp = self.path + ".tmp-%d" % os.getpid()
         with open(tmp, "wb") as f:
@@ -210,6 +228,11 @@ def norm_id(s):
 def ensure_block(doc, block):
     """Liefert (start, ende) des aktuellen Blocks; legt mit --block einen neuen an, wenn der letzte anders heisst."""
     bl = doc.blocks()
+    if block:
+        # Gleichnamigen Block wiederverwenden (wechseln sich Rollen ab, entstanden sonst doppelte Überschriften)
+        same = [b for b in bl if b[0].split(" (Arbeit vom")[0].strip() == block.strip()]
+        if same:
+            return same[-1][1], same[-1][2]
     if block and (not bl or not bl[-1][0].startswith(block)):
         datum = datetime.date.today().strftime("%d.%m.%Y")
         while doc.lines and doc.lines[-1].strip() == "":
@@ -417,6 +440,17 @@ def cmd_ergaenzen(a):
         if f.lower() == name.lower() or f.lower().replace("ä", "ae").replace("ü", "ue") == name.lower():
             name = f
     text = einzeilig(a.text)
+    if name.lower() in ("titel", "title", "ueberschrift", "überschrift"):
+        if not intern:
+            bad = verbotene_begriffe(text)
+            if bad:
+                fehler("Verbotene Begriffe für die öffentliche Datei: " + ", ".join(bad))
+        doc.lines[e.start] = "### %s: %s" % (e.id, text)
+        doc.save()
+        out("%s: Titel geändert" % e.id)
+        return
+    if name not in FELDER:
+        fehler("Unbekanntes Feld: %s (erlaubt: %s, Titel)" % (name, ", ".join(FELDER)))
     if name == "Status":
         text = check_status(text)
     if name == "Kategorie":
@@ -507,8 +541,8 @@ def cmd_intern(a):
         out("Verschoben (intern): " + ", ".join(moved))
 
 
-def cmd_index(a):
-    doc = Doc(PUBLIC)
+def update_stats(doc):
+    """Tabelle unter '## Statistik' neu berechnen; Anzahl Einträge oder None, wenn der Abschnitt fehlt."""
     ents = doc.entries()
     count = {s: 0 for s in STATUS}
     for e in ents:
@@ -525,10 +559,17 @@ def cmd_index(a):
             while k < len(doc.lines) and doc.lines[k].startswith("|"):
                 k += 1
             doc.lines[j:k] = rows
-            doc.save()
-            out("Statistik aktualisiert: %d Einträge" % len(ents))
-            return
-    fehler("Abschnitt '## Statistik' nicht gefunden")
+            return len(ents)
+    return None
+
+
+def cmd_index(a):
+    doc = Doc(PUBLIC)
+    n = update_stats(doc)
+    if n is None:
+        fehler("Abschnitt '## Statistik' nicht gefunden")
+    doc.save()
+    out("Statistik aktualisiert: %d Einträge" % n)
 
 
 def cmd_check(a):

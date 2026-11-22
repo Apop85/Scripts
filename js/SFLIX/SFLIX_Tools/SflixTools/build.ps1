@@ -1,12 +1,12 @@
-﻿# Baut dist\STEFFLIX.exe (STEFFLIX Desktop: Player-Fenster und Tools in einer EXE).
-# Benötigt nur .NET Framework 4.x (auf jedem Windows 10/11 vorhanden), kein Visual Studio.
+# Baut dist\STEFFLIX.exe (STEFFLIX Desktop: Player-Fenster und Tools in einer EXE).
+# Benoetigt nur .NET Framework 4.x (auf jedem Windows 10/11 vorhanden), kein Visual Studio.
 # Das WebView2-SDK (Player-Fenster) wird beim ersten Build von NuGet geladen, mit fester Version
-# und Prüfsumme, und in die EXE eingebettet (eine einzige Datei für die Nutzer).
+# und Pruefsumme, und in die EXE eingebettet (eine einzige Datei fuer die Nutzer).
 #
 # Aufruf:  powershell -ExecutionPolicy Bypass -File build.ps1
 #
-# Version erhöhen: in src\Program.cs AssemblyVersion und AssemblyFileVersion anpassen.
-# Das Selbst-Update installiert nur Versionen, die höher sind als die laufende.
+# Version erhoehen: in src\Program.cs AssemblyVersion und AssemblyFileVersion anpassen.
+# Das Selbst-Update installiert nur Versionen, die hoeher sind als die laufende.
 
 $ErrorActionPreference = 'Stop'
 $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
@@ -33,7 +33,7 @@ if (-not (Test-Path (Join-Path $sdkDir 'lib\net462\Microsoft.Web.WebView2.Core.d
     $hash = (Get-FileHash $pkg -Algorithm SHA256).Hash.ToLower()
     if ($hash -ne $sdkSha256) {
         Remove-Item $pkg -Force
-        throw "WebView2-SDK: Prüfsumme stimmt nicht ($hash)"
+        throw "WebView2-SDK: Pruefsumme stimmt nicht ($hash)"
     }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     if (Test-Path $sdkDir) { Remove-Item $sdkDir -Recurse -Force }

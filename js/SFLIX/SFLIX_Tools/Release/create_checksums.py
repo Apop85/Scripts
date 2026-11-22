@@ -29,18 +29,21 @@ for path in sorted(FILES):
         result[path] = checksum(path, file_reader.read())
     print(f"{path:<30} {result[path]}")
 
+# Erst prüfen, dann schreiben: fehlt eine Datei, bleibt die bisherige checksums.json unverändert
+if missing:
+    print("FEHLER - folgende Dateien fehlen, checksums.json wurde nicht geschrieben:")
+    for path in missing:
+        print(f"  {path}")
+    sys.exit(1)
+
 files_count = len(result)
 result[WEB_FILES_KEY] = sorted(WEB_FILES)
 result[OBSOLETE_FILES_KEY] = sorted(OBSOLETE_FILES)
 
-with open(os.path.join(base_dir, CHECKSUM_FILE), "w", encoding="utf-8") as file_writer:
+# LF wie auf GitHub (Signatur und Prüfsummen vereinheitlichen die Zeilenenden ohnehin)
+with open(os.path.join(base_dir, CHECKSUM_FILE), "w", encoding="utf-8", newline="\n") as file_writer:
     json.dump(result, file_writer, indent=2, sort_keys=True)
     file_writer.write("\n")
 
 print(f"\n{CHECKSUM_FILE} geschrieben ({files_count} Dateien, {len(WEB_FILES)} Programmdateien, "
       f"{len(OBSOLETE_FILES)} veraltete)")
-if missing:
-    print("WARNUNG - folgende Dateien fehlen und haben keine Prüfsumme:")
-    for path in missing:
-        print(f"  {path}")
-    sys.exit(1)

@@ -249,7 +249,7 @@ Fall 3 'Parallele Statuswechsel und Anhaenge: keine verlorene Verlaufszeile' {
         $jobs += Start-Job -ArgumentList $Script, $w, $j, $a -ScriptBlock {
             param($s, $w, $j, $a)
             foreach ($k in 1..3) {
-                & powershell -NoProfile -ExecutionPolicy Bypass -File $s aendern -Wurzel $w -Rolle 'Pruefung' -Id $a -Feld 'Offene Fragen' -Wert "q$j-$k" -Notiz "n$j-$k" | Out-Null
+                & powershell -NoProfile -ExecutionPolicy Bypass -File $s aendern -Wurzel $w -Rolle 'Entwicklung' -Id $a -Feld 'Offene Fragen' -Wert "q$j-$k" -Notiz "n$j-$k" | Out-Null
                 $LASTEXITCODE
             }
         }
@@ -807,6 +807,32 @@ Fall 19 'Abgeschlossene Auftraege gesperrt, Nachfuehrung nur mit -Erzwingen -Not
     $o = MkTask $w 'Architekt' 'Entwicklung' 'Offen'
     $k = Run $w @('aendern', '-Id', $o, '-Rolle', 'Architekt', '-Feld', 'Kontext', '-Wert', 'x', '-Erzwingen', '-Notiz', 'n')
     Check '-Erzwingen auf offenem Auftrag: Exit 1' ($k.Exit -eq 1) $k.Out
+    $c = Run $w @('check')
+    Check 'check danach ohne Befund' ($c.Exit -eq 0) $c.Out
+}
+
+# ------------------------------------------------------------------ Fall 20
+Fall 20 'IN_PROGRESS bei anderer Rolle: aendern gesperrt, nur mit -Erzwingen -Notiz (2026-11-22)' {
+    $w = New-Wurzel 'f20'
+    $id = MkTask $w 'Architekt' 'Entwicklung' 'In Arbeit'
+    $k = Run $w @('aendern', '-Id', $id, '-Rolle', 'Architekt', '-Feld', 'Kontext', '-Wert', 'vor Uebernahme')
+    Check 'OPEN: Absender darf aendern' ($k.Exit -eq 0) $k.Out
+    [void](Run $w @('status', '-Id', $id, '-Rolle', 'Entwicklung', '-Neu', 'IN_PROGRESS'))
+    $f = TaskFile $w $id
+    $vorher = ReadT $f
+    $k = Run $w @('aendern', '-Id', $id, '-Rolle', 'Architekt', '-Feld', 'Aufgabe', '-Wert', 'Zusatz', '-Anhaengen')
+    Check 'IN_PROGRESS bei Entwicklung: Architekt Exit 3, Hinweis auf eigenen Auftrag, nichts geaendert' ($k.Exit -eq 3 -and $k.Out -match 'IN_PROGRESS bei Entwicklung' -and $k.Out -match 'eigenen Auftrag' -and (ReadT $f) -eq $vorher) $k.Out
+    $k = Run $w @('aendern', '-Id', $id, '-Rolle', 'Architekt', '-Feld', 'Verlauf', '-Wert', 'x')
+    Check 'auch Bearbeitungsverlauf gesperrt' ($k.Exit -eq 3 -and (ReadT $f) -eq $vorher) $k.Out
+    $k = Run $w @('aendern', '-Id', $id, '-Rolle', 'Architekt', '-Feld', 'Kontext', '-Wert', 'neu', '-Erzwingen')
+    Check '-Erzwingen ohne -Notiz: Exit 1' ($k.Exit -eq 1 -and (ReadT $f) -eq $vorher) $k.Out
+    $k = Run $w @('aendern', '-Id', $id, '-Rolle', 'Entwicklung', '-Feld', 'Kontext', '-Wert', 'vom Empfaenger')
+    Check 'Empfaenger selbst darf aendern' ($k.Exit -eq 0 -and (ReadT $f).Contains('vom Empfaenger')) $k.Out
+    $k = Run $w @('aendern', '-Id', $id, '-Rolle', 'Entwicklung', '-Feld', 'Kontext', '-Wert', 'x', '-Erzwingen', '-Notiz', 'n')
+    Check '-Erzwingen fuer den Empfaenger selbst: Exit 1' ($k.Exit -eq 1) $k.Out
+    $k = Run $w @('aendern', '-Id', $id, '-Rolle', 'Architekt', '-Feld', 'Kontext', '-Wert', 'ersetzt', '-Erzwingen', '-Notiz', 'mit Benutzer abgesprochen')
+    $nach = ReadT $f
+    Check '-Erzwingen -Notiz: Exit 0, ersetzt, Verlauf [erzwungen: ...], Warnung' ($k.Exit -eq 0 -and $nach.Contains('ersetzt') -and $nach.Contains('[erzwungen: mit Benutzer abgesprochen]') -and $k.Out -match 'dem Benutzer melden') $k.Out
     $c = Run $w @('check')
     Check 'check danach ohne Befund' ($c.Exit -eq 0) $c.Out
 }

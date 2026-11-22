@@ -136,23 +136,34 @@ namespace Sflix
             get { return Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "STEFFLIX"), "downloads"); }
         }
 
-        public static List<DownloadJob> Load()
+        // error != null: Datei vorhanden, aber nicht lesbar (Netzlaufwerk weg, beschädigt). Dann darf weder
+        // die Liste überschrieben noch ein Ordner mit Teilstücken gelöscht werden (seit 4.1.0).
+        public static List<DownloadJob> Load(out string error)
         {
             List<DownloadJob> jobs = new List<DownloadJob>();
-            try
+            error = null;
+            for (int attempt = 0; ; attempt++)
             {
-                if (!File.Exists(FilePath)) return jobs;
-                JsonObject root = Json.Parse(File.ReadAllText(FilePath, Encoding.UTF8)) as JsonObject;
-                List<object> list = root == null ? null : root.Arr("downloads");
-                if (list == null) return jobs;
-                foreach (object o in list)
+                try
                 {
-                    DownloadJob j = DownloadJob.FromJson(o as JsonObject);
-                    if (j != null) jobs.Add(j);
+                    if (!File.Exists(FilePath)) return jobs;
+                    JsonObject root = Json.Parse(File.ReadAllText(FilePath, Encoding.UTF8)) as JsonObject;
+                    List<object> list = root == null ? null : root.Arr("downloads");
+                    if (list == null) throw new InvalidDataException("unbekanntes Format");
+                    foreach (object o in list)
+                    {
+                        DownloadJob j = DownloadJob.FromJson(o as JsonObject);
+                        if (j != null) jobs.Add(j);
+                    }
+                    return jobs;
+                }
+                catch (Exception e)
+                {
+                    jobs.Clear();
+                    if (attempt >= 2) { error = e.Message; return jobs; }
+                    Thread.Sleep(500 * (attempt + 1));
                 }
             }
-            catch { }
-            return jobs;
         }
 
         public static void Save(List<DownloadJob> jobs)
@@ -653,6 +664,7 @@ namespace Sflix
         // werden keine verwaisten Zwischenordner gelöscht (gehörten sonst zu noch nicht geladenen Einträgen).
         volatile bool loaded;
         bool savePending;
+        volatile bool storeBroken;   // downloads.json vorhanden, aber nicht lesbar
         public bool Loaded { get { return loaded; } }
 
         public DownloadManager(Settings settings)
@@ -668,14 +680,23 @@ namespace Sflix
 
         void LoadJobs()
         {
-            List<DownloadJob> stored = DownloadStore.Load();
+            string error;
+            List<DownloadJob> stored = DownloadStore.Load(out error);
             bool save;
             lock (gate)
             {
                 // Vor dem Laden hinzugefügte Downloads bleiben hinten
                 Jobs.InsertRange(0, stored);
+                storeBroken = error != null;
                 loaded = true;
                 save = savePending;
+            }
+            if (error != null)
+            {
+                Write("FEHLER: " + DownloadStore.FileName + " nicht lesbar (" + error + "). Die Liste wird in dieser Sitzung nicht gespeichert, "
+                      + "Zwischendateien bleiben erhalten. STEFFLIX neu starten, sobald die Datei erreichbar ist.");
+                Notify();
+                return;
             }
             if (save) Save();
             Notify();
@@ -701,6 +722,7 @@ namespace Sflix
             lock (gate)
             {
                 if (!loaded) { savePending = true; return; }
+                if (storeBroken) return;   // nicht lesbare Liste nicht überschreiben
                 DownloadStore.Save(new List<DownloadJob>(Jobs));
             }
         }
@@ -824,7 +846,9 @@ namespace Sflix
             bool running;
             lock (gate)
             {
-                running = job.State == DownloadState.Running && job.Cts != null;
+                // Auch in der Nachbearbeitung erst abbrechen: sonst würden die Zwischendateien während
+                // Prüfen bzw. Verschieben gelöscht
+                running = (job.State == DownloadState.Running || job.State == DownloadState.Processing) && job.Cts != null;
                 if (running) { job.RemoveRequested = true; job.Cts.Cancel(); }
                 else Jobs.Remove(job);
             }
@@ -866,7 +890,7 @@ namespace Sflix
             }
             List<DownloadJob> rest;
             lock (gate) rest = new List<DownloadJob>(Jobs);
-            if (loaded) freed += DownloadStore.RemoveOrphans(rest);
+            if (loaded && !storeBroken) freed += DownloadStore.RemoveOrphans(rest);
             Save();
             Notify();
             return freed;
@@ -890,7 +914,8 @@ namespace Sflix
             {
                 foreach (DownloadJob j in Jobs)
                 {
-                    if (j.State == DownloadState.Running && j.Cts != null) { j.PauseRequested = true; j.Cts.Cancel(); }
+                    // Auch in der Nachbearbeitung (Prüfen, Konvertieren): sonst liefe ffmpeg nach dem Beenden weiter
+                    if ((j.State == DownloadState.Running || j.State == DownloadState.Processing) && j.Cts != null) { j.PauseRequested = true; j.Cts.Cancel(); }
                     else if (j.State == DownloadState.Waiting) { j.State = DownloadState.Paused; j.Status = "Pausiert"; }
                 }
             }
@@ -914,6 +939,18 @@ namespace Sflix
                 Directory.CreateDirectory(job.TempDir);
                 FfmpegTools ffmpeg = new FfmpegTools(App.Root, FfmpegLocation.Folder(settings));
                 if (!ffmpeg.Installed) throw new HlsException("ffmpeg ist nicht installiert (Tools › Einstellungen).");
+
+                // Während der Nachbearbeitung pausiert (z.B. Programm beendet): die Datei liegt schon im
+                // Zielordner, nur noch nachbearbeiten (sonst entstünde "Name (2).mp4")
+                string targetDir = job.TargetDir;
+                string target;
+                if (job.ResultPath.Length > 0 && File.Exists(job.ResultPath))
+                {
+                    target = job.ResultPath;
+                    lock (gate) job.State = DownloadState.Processing;
+                    job.AddMessage("Fortgesetzt: Die Datei liegt schon im Zielordner, es folgt nur noch die Nachbearbeitung.");
+                    goto postProcess;
+                }
 
                 // 1. Playlist und Qualität
                 SetStatus(job, "Lade Playlist …");
@@ -982,17 +1019,17 @@ namespace Sflix
 
                 // 5. In den Zielordner (Name schon vergeben: mit Zusatz)
                 SetStatus(job, "Wird in den Zielordner verschoben …");
-                string targetDir = job.TargetDir;
                 string reason;
                 if (!Folders.IsInsideRoot(targetDir, out reason)) throw new HlsException("Der Zielordner liegt nicht im Installationsordner.");
                 Directory.CreateDirectory(targetDir);
-                string target = FileOps.UniquePath(targetDir, job.FileName);
+                target = FileOps.UniquePath(targetDir, job.FileName);
                 if (!string.Equals(Path.GetFileName(target), job.FileName, StringComparison.OrdinalIgnoreCase))
                     job.AddMessage("„" + job.FileName + "“ gab es schon, gespeichert als „" + Path.GetFileName(target) + "“.");
                 FileOps.MoveAcross(output, target, false);
                 job.ResultPath = target;
 
                 // 6. Nachbearbeitung: nicht abspielbar -> konvertieren, Vorschaubild
+            postProcess:
                 SetStatus(job, "Vorschaubild …");
                 PostProcess(job, ffmpeg, target, token);
 

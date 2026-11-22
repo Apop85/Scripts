@@ -2,6 +2,131 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0815",
+      "name": "2.8.15",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.1.0: Signierte Updates: Update, Installation und ffmpeg werden nur noch installiert, wenn die Prüfsummen vom Herausgeber signiert sind. Fehlt die Signatur oder passt sie nicht, wird nichts verändert; kurz nach einer neuen Version kann das vorübergehend sein (später erneut versuchen).",
+          "component": "updater",
+          "componentVersion": "4.1.0",
+          "short": "Signierte Updates: Update, Installation und ffmpeg werden nur noch installiert, wenn die Prüfsummen vom Herausgeber signiert sind. Fehlt die Signatur oder passt sie nicht, wird nichts verändert; kurz nach einer neuen Version kann das vorübergehend sein (später erneut versuchen)."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.1.0: Einheitliche Regeln: Nur Ordner, deren Name mit „__“ beginnt, sind Ablagen (Ordner mit „__“ mitten im Namen werden jetzt eingelesen und im Protokoll genannt). Verknüpfungen auf Ordner (Junction, symbolischer Link) durchsucht kein Werkzeug mehr; Daten einlesen nennt sie im Protokoll. „Konvertieren“ kennt dieselben Videoformate wie Importieren und „Medien prüfen“ (u. a. .m2ts, .mts, .3gp, .vob). Verwaiste Vorschaubilder werden auch als .jpeg, .png und .webp erkannt, Vorschaubilder noch nicht konvertierter Videos gelten nicht mehr als verwaist.",
+          "component": "updater",
+          "componentVersion": "4.1.0",
+          "short": "Einheitliche Regeln: Nur Ordner, deren Name mit „__“ beginnt, sind Ablagen (Ordner mit „__“ mitten im Namen werden jetzt eingelesen und im Protokoll genannt). Verknüpfungen auf Ordner (Junction, symbolischer Link) durchsucht kein Werkzeug mehr; Daten einlesen nennt sie im Protokoll. „Konvertieren“ kennt dieselben Videoformate wie Importieren und „Medien prüfen“ (u. a. .m2ts, .mts, .3gp, .vob). Verwaiste Vorschaubilder werden auch als .jpeg, .png und .webp erkannt, Vorschaubilder noch nicht konvertierter Videos gelten nicht mehr als verwaist."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Interne Aufräumarbeiten ohne sichtbare Änderung.",
+          "component": "stefflix",
+          "componentVersion": "2.8.15",
+          "short": "Interne Aufräumarbeiten ohne sichtbare Änderung."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Android-App 1.3.2: Ungenutzter Programmcode entfernt, ohne sichtbare Änderung.",
+          "component": "app",
+          "componentVersion": "1.3.2",
+          "short": "Ungenutzter Programmcode entfernt, ohne sichtbare Änderung."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Android-App 1.3.2: Wiedergabe im Hintergrund: Ist sie 15 Sekunden pausiert, gibt die App Verbindung und Seite frei (spart Akku); „Abspielen“ in der Benachrichtigung setzt fort. Schriftgrösse, Sprache oder Anzeigegrösse ändern bricht die Wiedergabe nicht mehr ab. Neue Bilder werden zwischengespeichert, Einstellungen und Quellenliste laden ohne Ruckeln.",
+          "component": "app",
+          "componentVersion": "1.3.2",
+          "short": "Wiedergabe im Hintergrund: Ist sie 15 Sekunden pausiert, gibt die App Verbindung und Seite frei (spart Akku); „Abspielen“ in der Benachrichtigung setzt fort. Schriftgrösse, Sprache oder Anzeigegrösse ändern bricht die Wiedergabe nicht mehr ab. Neue Bilder werden zwischengespeichert, Einstellungen und Quellenliste laden ohne Ruckeln."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Android-App 1.3.2: Einstellungen: Knopf „Benachrichtigungen erlauben“, falls die Erlaubnis abgelehnt wurde. App-Update lädt die Prüfsumme frisch und meldet zu wenig Speicher, statt hängen zu bleiben. AVIF-Bilder, OGV-Videos und Opus-Musik werden mit dem richtigen Typ geliefert.",
+          "component": "app",
+          "componentVersion": "1.3.2",
+          "short": "Einstellungen: Knopf „Benachrichtigungen erlauben“, falls die Erlaubnis abgelehnt wurde. App-Update lädt die Prüfsumme frisch und meldet zu wenig Speicher, statt hängen zu bleiben. AVIF-Bilder, OGV-Videos und Opus-Musik werden mit dem richtigen Typ geliefert."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.0: Konvertieren (auch nach einem Download): Das Original wird erst gelöscht bzw. nach „__konvertiert“ verschoben, wenn das Ergebnis an seinem Platz liegt. Scheitert das Umbenennen, bleibt das Original unverändert. Bei einem Abbruch bleibt keine halbe Musikdatei liegen.",
+          "component": "updater",
+          "componentVersion": "4.1.0",
+          "short": "Konvertieren (auch nach einem Download): Das Original wird erst gelöscht bzw. nach „__konvertiert“ verschoben, wenn das Ergebnis an seinem Platz liegt. Scheitert das Umbenennen, bleibt das Original unverändert. Bei einem Abbruch bleibt keine halbe Musikdatei liegen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.0: Download: Ist die Liste der Downloads nicht lesbar (z. B. Netzlaufwerk kurz weg), werden weder die Liste überschrieben noch Teilstücke gelöscht. Beim Beenden halten auch Downloads in der Nachbearbeitung an und setzen später dort fort (keine Kopie „Name (2)“). „Entfernen“ während der Nachbearbeitung bricht diese zuerst ab.",
+          "component": "updater",
+          "componentVersion": "4.1.0",
+          "short": "Download: Ist die Liste der Downloads nicht lesbar (z. B. Netzlaufwerk kurz weg), werden weder die Liste überschrieben noch Teilstücke gelöscht. Beim Beenden halten auch Downloads in der Nachbearbeitung an und setzen später dort fort (keine Kopie „Name (2)“). „Entfernen“ während der Nachbearbeitung bricht diese zuerst ab."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.0: Verschieben auf ein anderes Laufwerk (Download, Importieren): Es wird zuerst unter einem Zwischennamen kopiert, eine vorhandene Datei wird erst durch die vollständige Kopie ersetzt. Ein Abbruch hinterlässt keine abgeschnittene Datei.",
+          "component": "updater",
+          "componentVersion": "4.1.0",
+          "short": "Verschieben auf ein anderes Laufwerk (Download, Importieren): Es wird zuerst unter einem Zwischennamen kopiert, eine vorhandene Datei wird erst durch die vollständige Kopie ersetzt. Ein Abbruch hinterlässt keine abgeschnittene Datei."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.0: Daten einlesen: data.js wird erst vollständig geschrieben und dann ersetzt. Werden deutlich weniger Medien gefunden als bisher oder sind Ordner nicht lesbar (z. B. Laufwerk oder Ziel einer Verknüpfung nicht erreichbar), fragt STEFFLIX vor dem Speichern nach; ohne Oberfläche bleibt data.js unverändert. Ein einzelner kaputter Ordner oder Dateiname bricht das Einlesen nicht mehr ab, Zwischendateien werden nicht eingelesen.",
+          "component": "updater",
+          "componentVersion": "4.1.0",
+          "short": "Daten einlesen: data.js wird erst vollständig geschrieben und dann ersetzt. Werden deutlich weniger Medien gefunden als bisher oder sind Ordner nicht lesbar (z. B. Laufwerk oder Ziel einer Verknüpfung nicht erreichbar), fragt STEFFLIX vor dem Speichern nach; ohne Oberfläche bleibt data.js unverändert. Ein einzelner kaputter Ordner oder Dateiname bricht das Einlesen nicht mehr ab, Zwischendateien werden nicht eingelesen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.0: Medien prüfen: Kurze Aussetzer des Netzlaufwerks werden nicht mehr als „defekt“ gemerkt. Als defekt gemeldete Dateien werden vor dem Löschen neu untersucht und bleiben, wenn sie jetzt lesbar sind.",
+          "component": "updater",
+          "componentVersion": "4.1.0",
+          "short": "Medien prüfen: Kurze Aussetzer des Netzlaufwerks werden nicht mehr als „defekt“ gemerkt. Als defekt gemeldete Dateien werden vor dem Löschen neu untersucht und bleiben, wenn sie jetzt lesbar sind."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.0: Abbrechen einer Aufgabe in den Tools beendet nicht mehr die Downloads. ffmpeg läuft nach dem Beenden von STEFFLIX nicht weiter. Download-Nachbearbeitung und „Konvertieren“ bearbeiten nie gleichzeitig dieselbe Datei.",
+          "component": "updater",
+          "componentVersion": "4.1.0",
+          "short": "Abbrechen einer Aufgabe in den Tools beendet nicht mehr die Downloads. ffmpeg läuft nach dem Beenden von STEFFLIX nicht weiter. Download-Nachbearbeitung und „Konvertieren“ bearbeiten nie gleichzeitig dieselbe Datei."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.0: Beim Start werden nur noch eigene Sicherungen (.old der Programmdateien) gelöscht, nie andere .old-Dateien im Medienordner, und erst, wenn kein anderer Start läuft. Albumbild und Vorschaubilder werden erst fertig erzeugt und dann ersetzt. Zusammenfügen: Favoriten und Zeitstempel des ersten Teils gehen auf die neue Datei über.",
+          "component": "updater",
+          "componentVersion": "4.1.0",
+          "short": "Beim Start werden nur noch eigene Sicherungen (.old der Programmdateien) gelöscht, nie andere .old-Dateien im Medienordner, und erst, wenn kein anderer Start läuft. Albumbild und Vorschaubilder werden erst fertig erzeugt und dann ersetzt. Zusammenfügen: Favoriten und Zeitstempel des ersten Teils gehen auf die neue Datei über."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.0: Importieren mit „Verschieben“ aus einem Ordner in STEFFLIX liest auch den Ordner der Quelle neu ein. Lehnen die Tools das Schliessen ab, bleibt auch der Player offen.",
+          "component": "updater",
+          "componentVersion": "4.1.0",
+          "short": "Importieren mit „Verschieben“ aus einem Ordner in STEFFLIX liest auch den Ordner der Quelle neu ein. Lehnen die Tools das Schliessen ab, bleibt auch der Player offen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Android-App 1.3.2: Der Startbildschirm reagiert auch bei langsamem oder abbrechendem Verbindungsaufbau zum NAS (vorher konnte Android „App reagiert nicht“ melden). Ein Verbindungsfehler schliesst nicht mehr eine eben neu aufgebaute Verbindung.",
+          "component": "app",
+          "componentVersion": "1.3.2",
+          "short": "Der Startbildschirm reagiert auch bei langsamem oder abbrechendem Verbindungsaufbau zum NAS (vorher konnte Android „App reagiert nicht“ melden). Ein Verbindungsfehler schliesst nicht mehr eine eben neu aufgebaute Verbindung."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Android-App 1.3.2: Gespeicherte Passwörter gehen nicht mehr verloren, wenn Android sie kurzzeitig nicht entschlüsseln kann: Die Quelle zeigt dann „Passwort neu eingeben“, das gespeicherte bleibt erhalten. Ein beschädigter Eintrag entfernt keine anderen Quellen.",
+          "component": "app",
+          "componentVersion": "1.3.2",
+          "short": "Gespeicherte Passwörter gehen nicht mehr verloren, wenn Android sie kurzzeitig nicht entschlüsseln kann: Die Quelle zeigt dann „Passwort neu eingeben“, das gespeicherte bleibt erhalten. Ein beschädigter Eintrag entfernt keine anderen Quellen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Android-App 1.3.2: Medienserver der App: Anfragen mit „..“ oder Steuerzeichen im Pfad werden abgewiesen, gleichzeitige Anfragen und der Puffer je Video sind begrenzt, und beim Schliessen der App endet das Vorauslesen.",
+          "component": "app",
+          "componentVersion": "1.3.2",
+          "short": "Medienserver der App: Anfragen mit „..“ oder Steuerzeichen im Pfad werden abgewiesen, gleichzeitige Anfragen und der Puffer je Video sind begrenzt, und beim Schliessen der App endet das Vorauslesen."
+        }
+      ]
+    },
+    {
       "version": "2.0814",
       "name": "2.8.14",
       "items": [
@@ -32,6 +157,13 @@
           "component": "updater",
           "componentVersion": "4.0.12",
           "short": "Protokoll: Die Anzahl Hinweise und Fehler neben „Protokoll“ steht auch bei grosser Bildschirmskalierung in einer Zeile. In der Vorschau von Folgen umbenennen ist die letzte Zeile des Hinweisbereichs nicht mehr abgeschnitten."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.0.13: Tools: Die senkrechte Bildlaufleiste (z. B. auf der Seite Download) verschwindet nach dem Verbreitern des Fensters, sobald der Inhalt passt, erscheint beim Verkleinern wieder und ist dunkel. In Tabellen (Download, Ablagen leeren, Dateien wählen) ist der Spaltenkopf rechts der letzten Spalte auch nach dem Vergrössern dunkel.",
+          "component": "updater",
+          "componentVersion": "4.0.13",
+          "short": "Tools: Die senkrechte Bildlaufleiste (z. B. auf der Seite Download) verschwindet nach dem Verbreitern des Fensters, sobald der Inhalt passt, erscheint beim Verkleinern wieder und ist dunkel. In Tabellen (Download, Ablagen leeren, Dateien wählen) ist der Spaltenkopf rechts der letzten Spalte auch nach dem Vergrössern dunkel."
         }
       ]
     },

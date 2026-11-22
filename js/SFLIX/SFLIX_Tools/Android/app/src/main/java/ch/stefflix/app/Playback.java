@@ -44,7 +44,6 @@ final class Playback {
 
     static final String CMD_PLAY = "play";
     static final String CMD_PAUSE = "pause";
-    static final String CMD_TOGGLE = "toggle";
     static final String CMD_NEXT = "next";
     static final String CMD_PREV = "prev";
     static final String CMD_BACK = "back";
@@ -241,7 +240,7 @@ final class Playback {
             if (CMD_QUIT.equals(cmd)) host.quit();
             return;
         }
-        if (CMD_PLAY.equals(cmd) || CMD_TOGGLE.equals(cmd)) dismissed = false;
+        if (CMD_PLAY.equals(cmd)) dismissed = false;
         host.mediaCommand(cmd, arg);
     }
 
@@ -471,6 +470,7 @@ final class Playback {
                     foreground = true;
                 } catch (RuntimeException e) {
                     // Android erlaubt den Start gerade nicht (App im Hintergrund): nur die Benachrichtigung
+                    android.util.Log.w("STEFFLIX", "Vordergrunddienst nicht gestartet", e);
                 }
             }
             notifications.notify(NOTIFICATION_ID, n);

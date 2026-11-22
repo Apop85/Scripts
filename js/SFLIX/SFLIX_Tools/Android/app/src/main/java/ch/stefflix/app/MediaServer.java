@@ -22,7 +22,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -47,15 +53,21 @@ final class MediaServer implements Closeable {
     private final SmbSource smb;
     private final String token;
     private final ServerSocket server;
-    private final ExecutorService pool = Executors.newCachedThreadPool();
+    // Höchstens 16 Anfragen gleichzeitig, weitere warten (bis 64), danach wird abgewiesen
+    private final ThreadPoolExecutor pool = new ThreadPoolExecutor(16, 16, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(64));
     private final Semaphore budget;
+    private final int perRequest;   // Obergrenze des Puffers je Anfrage (Teil des gemeinsamen Budgets)
+    private final Set<Prefetch> active = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Listener listener;
     private volatile boolean running = true;
 
     MediaServer(SmbSource smb, int bufferMb, Listener listener) throws IOException {
         this.smb = smb;
         this.listener = listener;
-        this.budget = new Semaphore(Math.max(4, bufferMb * 1024 * 1024 / CHUNK));
+        int permits = Math.max(4, bufferMb * 1024 * 1024 / CHUNK);
+        this.budget = new Semaphore(permits);
+        this.perRequest = Math.max(2, permits / 2);
+        pool.allowCoreThreadTimeOut(true);
         byte[] r = new byte[16];
         new SecureRandom().nextBytes(r);
         StringBuilder sb = new StringBuilder();
@@ -76,7 +88,11 @@ final class MediaServer implements Closeable {
         while (running) {
             try {
                 Socket s = server.accept();
-                pool.execute(() -> handle(s));
+                try {
+                    pool.execute(() -> handle(s));
+                } catch (RejectedExecutionException full) {
+                    try { s.close(); } catch (IOException ignored) { }
+                }
             } catch (IOException e) {
                 if (!running) return;
             }
@@ -127,6 +143,10 @@ final class MediaServer implements Closeable {
                 return;
             }
             String rel = Uri.decode(raw.substring(prefix.length()));
+            if (!SmbSource.isSafeRel(rel)) {
+                status(out, 403, "Forbidden");
+                return;
+            }
 
             try {
                 file = smb.open(rel);
@@ -189,6 +209,7 @@ final class MediaServer implements Closeable {
         Prefetch(String rel, File first, long start, long endExclusive) {
             this.rel = rel;
             this.end = endExclusive;
+            active.add(this);
             Thread t = new Thread(() -> produce(first, start), "stefflix-prefetch");
             t.setDaemon(true);
             t.start();
@@ -198,7 +219,11 @@ final class MediaServer implements Closeable {
             File f = first;
             long pos = start;
             try {
-                while (!closed && pos < end) {
+                while (!closed && running && pos < end) {
+                    // Eine Anfrage belegt höchstens perRequest Blöcke, damit andere (z.B. nach einem Sprung) weiterkommen
+                    synchronized (this) {
+                        if (held >= perRequest) { wait(200); continue; }
+                    }
                     if (!budget.tryAcquire(500, TimeUnit.MILLISECONDS)) continue;
                     synchronized (this) {
                         held++;
@@ -210,6 +235,7 @@ final class MediaServer implements Closeable {
                         n = f.read(b, pos, 0, want);
                     } catch (RuntimeException e) {
                         release(1);
+                        smb.dropFor(f);   // nur diese Verbindung, nicht eine inzwischen neue
                         SmbSource.closeLater(f);
                         f = reconnect(e);
                         if (f == null) return;
@@ -224,6 +250,7 @@ final class MediaServer implements Closeable {
                 }
             } catch (InterruptedException ignored) {
             } finally {
+                active.remove(this);
                 if (f != null) SmbSource.closeLater(f);
                 queue.offer(EOF);
                 if (closed) {
@@ -239,8 +266,7 @@ final class MediaServer implements Closeable {
         private File reconnect(Exception cause) throws InterruptedException {
             long until = System.currentTimeMillis() + RETRY_MS;
             Exception last = cause;
-            while (!closed && System.currentTimeMillis() < until) {
-                smb.close();
+            while (!closed && running && System.currentTimeMillis() < until) {
                 try {
                     return smb.open(rel);
                 } catch (IOException e) {
@@ -248,7 +274,7 @@ final class MediaServer implements Closeable {
                     Thread.sleep(2000);
                 }
             }
-            if (!closed) {
+            if (!closed && running) {
                 error = new IOException(SmbSource.reason(last), last);
                 if (listener != null) listener.onMediaConnectionLost(last);
             }
@@ -259,6 +285,7 @@ final class MediaServer implements Closeable {
             int n = Math.min(count, held);
             held -= n;
             if (n > 0) budget.release(n);
+            notifyAll();
         }
 
         private boolean next() throws IOException {
@@ -314,6 +341,8 @@ final class MediaServer implements Closeable {
     public void close() {
         running = false;
         try { server.close(); } catch (IOException ignored) { }
+        // Vorausleser beenden: sonst verbinden sie nach dem Schliessen der App neu und bleiben offen
+        for (Prefetch p : active.toArray(new Prefetch[0])) p.close();
         pool.shutdownNow();
     }
 }

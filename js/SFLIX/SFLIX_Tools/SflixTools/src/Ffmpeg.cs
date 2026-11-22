@@ -416,7 +416,20 @@ namespace Sflix
             string e = err.ToLowerInvariant();
             return e.Contains("permission denied") || e.Contains("no such file") || e.Contains("input/output error")
                 || e.Contains("resource temporarily unavailable") || e.Contains("i/o error") || e.Contains("network")
-                || e.Contains("invalid argument") || e.Length == 0;
+                || e.Contains("invalid argument") || e.Contains("connection reset") || e.Contains("connection refused")
+                || e.Contains("timed out") || e.Contains("host is down") || e.Contains("stale file handle")
+                || e.Contains("broken pipe") || e.Contains("device not configured") || e.Contains("operation not permitted")
+                || e.Length == 0;
+        }
+
+        // Ohne gemerkte Ergebnisse neu untersuchen (z.B. vor dem Löschen einer als defekt gemeldeten Datei)
+        public MediaInfo ProbeFresh(string path, CancellationToken token)
+        {
+            MediaCache.Forget(this, path);
+            List<string> stale = new List<string>();
+            foreach (string k in probeCache.Keys) if (k.StartsWith(path + "|", StringComparison.OrdinalIgnoreCase)) stale.Add(k);
+            foreach (string k in stale) { MediaInfo dummy; probeCache.TryRemove(k, out dummy); }
+            return Probe(path, token);
         }
 
         static string LastLine(string s)

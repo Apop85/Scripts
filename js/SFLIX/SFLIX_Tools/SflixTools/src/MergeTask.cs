@@ -36,7 +36,7 @@ namespace Sflix
     {
         public const string PartsFolderName = "__teile";
         const double ToleranceSeconds = 2.0;
-        static readonly HashSet<string> VideoExtensions = new HashSet<string> { ".mp4", ".m4v", ".webm", ".ogv" };
+        static readonly HashSet<string> VideoExtensions = MediaTypes.ReadyVideo;
         static readonly Regex PartRe = new Regex(@"^(?<titel>.*?)[\s._-]*(?:pt|part)[\s._-]*(?<nr>[0-9]{1,2})$",
                                                  RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
@@ -276,13 +276,33 @@ namespace Sflix
             }
 
             ctx.Log("  fertig: " + Path.GetFileName(g.Target) + " (" + Fmt.Time(newDuration) + ", " + Fmt.Size(new FileInfo(g.Target).Length) + ")");
+            // Favoriten, Zeitstempel und "Weiterschauen" des ersten Teils gehen auf die zusammengefügte Datei über
+            string fromRel = DataTask.ToRelative(g.Parts[0]), toRel = DataTask.ToRelative(g.Target);
+            if (fromRel != null && toRel != null && !string.Equals(fromRel, toRel, StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    DataTask.AppendRenamedPairs(new List<object> {
+                        new List<object> { "./" + fromRel.Replace('\\', '/'), "./" + toRel.Replace('\\', '/') } });
+                }
+                catch (Exception e) { ctx.Log("  Hinweis: renamed.js nicht ergänzt (" + e.Message + ")"); }
+            }
             if (moveParts)
             {
+                // Die zusammengefügte Datei ist fertig: scheitert das Verschieben eines Teils, bleibt es liegen
                 string storage = Path.Combine(Path.GetDirectoryName(g.Target), PartsFolderName);
-                Directory.CreateDirectory(storage);
-                foreach (string p in g.Parts)
-                    FileOps.Rename(p, FileOps.UniquePath(storage, Path.GetFileName(p)));
-                ctx.Log("  Teile verschoben nach " + PartsFolderName + "\\");
+                int moved = 0;
+                try
+                {
+                    Directory.CreateDirectory(storage);
+                    foreach (string p in g.Parts)
+                    {
+                        try { FileOps.Rename(p, FileOps.UniquePath(storage, Path.GetFileName(p))); moved++; }
+                        catch (Exception e) { ctx.Log("  Hinweis: Teil nicht verschoben (" + e.Message + "): " + p); }
+                    }
+                }
+                catch (Exception e) { ctx.Log("  Hinweis: Ablage " + PartsFolderName + " nicht angelegt (" + e.Message + ")"); }
+                if (moved > 0) ctx.Log("  " + moved + " Teile verschoben nach " + PartsFolderName + "\\");
             }
             return "ok";
         }

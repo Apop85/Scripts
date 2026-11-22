@@ -18,6 +18,7 @@ Aufruf (Projektwurzel):  python SFLIX_Tools\\Release\\news.py <Befehl> [Optionen
 Die Reihenfolge im Block ist egal (create_news.py gruppiert beim Release nach Typ).
 """
 import argparse
+import html
 import os
 import re
 import sys
@@ -123,7 +124,7 @@ def komponentenversion(k):
         m = re.search(r'AssemblyVersion\("(\d+)\.(\d+)\.(\d+)', open(PROGRAM_CS, encoding="utf-8-sig").read())
         return "%s.%s.%s" % m.groups() if m else None
     if k == "app":
-        m = re.search(r'versionName\s+"(\d+\.\d+\.\d+)"', open(BUILD_GRADLE, encoding="utf-8-sig").read())
+        m = re.search(r'versionName\s+["\'](\d+\.\d+\.\d+)["\']', open(BUILD_GRADLE, encoding="utf-8-sig").read())
         return m.group(1) if m else None
     return None
 
@@ -169,7 +170,8 @@ def cmd_eintrag(a):
         k = "desktop"
     if k not in PRAEFIX:
         fehler("Komponente ungültig: %s (stefflix, desktop, app)" % a.komponente)
-    text = re.sub(r"\s*[\r\n]+\s*", " ", a.text).strip()
+    # HTML-Sonderzeichen kodieren ("<Medien>" verschwände sonst in news.json, "&" bliebe roh)
+    text = html.escape(re.sub(r"\s*[\r\n]+\s*", " ", a.text).strip(), quote=False)
     if re.match(r"^(Desktop|Updater|Android-App)\s+\d", text):
         fehler("Text ohne Präfix angeben; das Präfix setzt --komponente")
     for rx, name in VERBOTEN:
@@ -203,7 +205,7 @@ def cmd_anpassen(a):
     m = re.match(r"^(\[[^\]]*?(?:</span>)?\]\s*)((?:Desktop|Updater|Android-App)\s+\d+\.\d+\.\d+:\s*)?", li)
     kopf = m.group(1) if m else ""
     pre = (m.group(2) or "") if m else ""
-    text = re.sub(r"\s*[\r\n]+\s*", " ", a.text).strip()
+    text = html.escape(re.sub(r"\s*[\r\n]+\s*", " ", a.text).strip(), quote=False)
     for rx, name in VERBOTEN:
         if rx.search(text):
             fehler("Verbotener Begriff im Changelog: " + name)
@@ -259,6 +261,16 @@ def cmd_check(a):
                     err.append("Zeile %d: Typ fehlt oder unbekannt: %s" % (k + 1, p[:60]))
                 if re.search(r"\]\s*(Desktop|Updater|Android-App)(?!\s+\d+\.\d+\.\d+:)", p):
                     err.append("Zeile %d: Präfix ohne Version x.y.z:" % (k + 1))
+                rest = re.sub(r"^\[[A-Za-z]+\]\s*", "", p)
+                gueltig = re.match(r"(Desktop|Updater|Android-App) (\d+\.\d+\.\d+):", rest)
+                # Tippfehler im Präfix ("Desktp 4.0.1:", "desktop 4.0.1:", "Android App 1.3.2:") gingen still an STEFFLIX
+                if not gueltig and re.match(r"(?i)\W*(desk|andr|app\b|upd)[\w-]*\s*\d+\.\d+(\.\d+)?\s*:", rest):
+                    err.append("Zeile %d: ungültiges Komponenten-Präfix (Desktop x.y.z: bzw. Android-App x.y.z:): %s" % (k + 1, rest[:40]))
+                if gueltig and b is bl[0]:
+                    komp = "app" if gueltig.group(1) == "Android-App" else "desktop"
+                    aktuell = komponentenversion(komp)
+                    if aktuell and tuple(map(int, gueltig.group(2).split("."))) > tuple(map(int, aktuell.split("."))):
+                        err.append("Zeile %d: %s %s ist höher als die Version im Quellcode (%s)" % (k + 1, gueltig.group(1), gueltig.group(2), aktuell))
             if "</ul>" in n.lines[b[3]] and n.lines[b[3]].strip() != "</ul>":
                 err.append("Zeile %d: </ul> auf eigener Zeile" % (b[3] + 1))
     for i, l in enumerate(n.lines):

@@ -2,7 +2,20 @@
 sflix_sys/install.js
 sflix_sys/license.js
 SFLIX_Tools/Lizenz/lizenzen.json
+SFLIX_Tools/Doku/private_patterns.txt
 SFLIX_Tools/Android/signing/
+# Signaturschluessel der App und sein Passwort: zusaetzlich die Dateinamen (ohne Pfad, greifen in jedem
+# Ordner, auch wenn sich die Ordnerstruktur aendert)
+stefflix.jks
+keystore.properties
+*.jks
+*.keystore
+# Private Schluessel fuer signierte Updates (DEC-356): Ordner und zusaetzlich die Dateinamen
+# (ohne Pfad, greifen in jedem Ordner, auch wenn sich die Ordnerstruktur aendert)
+SFLIX_Tools/Release/signing/
+update_key.xml
+update_key_reserve.xml
+update_key*.xml
 
 # Lokale Dateien des Updaters
 sflix_sys/renamed.js
@@ -14,8 +27,18 @@ sflix_sys/updater.log
 sflix_sys/medien_cache.json
 sflix_sys/downloads.json
 sflix_sys/ffmpeg/
+sflix_sys/*.bak
+sflix_sys/*.tmp
 *.old
 *.new
+
+# VORLAEUFIG (DEC-364): ganzer Ordner .claude ausgeschlossen, bis das Regelwerk fuer die
+# Veroeffentlichung bereinigt ist; danach diese Zeile entfernen (die Zeilen darunter bleiben)
+.claude/
+# Testumgebung (license.js, downloads.json, Pfade mit Benutzernamen) und lokale Claude-Einstellungen
+.claude/testenv/
+.claude/settings.local.json
+SFLIX_Tools/PreviewMaker/make-previews.log
 
 # Build der Android-App
 SFLIX_Tools/Android/.gradle/

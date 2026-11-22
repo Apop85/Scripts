@@ -53,6 +53,11 @@ final class ShareEditor {
             s.name = name.getText().toString().trim();
             s.user = user.getText().toString().trim();
             s.password = password.getText().toString();
+            // Nicht entschlüsselbares Passwort und keines neu eingegeben: das gespeicherte bleibt erhalten
+            if (existing != null && existing.passwordLost && s.password.isEmpty()) {
+                s.storedPassword = existing.storedPassword;
+                s.passwordLost = true;
+            }
             s.domain = domain.getText().toString().trim();
             if (!s.setLocation(location.getText().toString())) {
                 location.setError("Bitte als \\\\Server\\Freigabe\\Ordner angeben");
@@ -126,7 +131,10 @@ final class ShareEditor {
             }
         }
         if (!replaced) list.add(s);
-        store.save(list);
+        if (!store.save(list)) {
+            android.widget.Toast.makeText(a, "Das Passwort konnte nicht sicher gespeichert werden. Bitte später erneut eingeben.",
+                    android.widget.Toast.LENGTH_LONG).show();
+        }
     }
 
     static void confirmDelete(Activity a, ShareStore.Share s, Runnable deleted) {

@@ -32,7 +32,8 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__
 source =sys.argv[1] if len(sys.argv) > 1 else os.path.join(base_dir, "sflix_sys", "news.txt")
 target = sys.argv[2] if len(sys.argv) > 2 else os.path.join(base_dir, "sflix_sys", "news.json")
 
-TYPE_ORDER = ["FEATURE", "INTERFACE", "OPTIMIERUNG", "BUGFIX", "HOTFIX", "BUG"]
+# "stabil" (alte Einträge) wird zu STABIL und gehört wie die anderen Typen in die Reihenfolge
+TYPE_ORDER = ["FEATURE", "INTERFACE", "OPTIMIERUNG", "BUGFIX", "HOTFIX", "STABIL", "BUG"]
 
 
 def item_type_of(line):
@@ -92,7 +93,7 @@ with open(source, encoding="utf-8", newline="") as reader:
     original = reader.read()
 grouped = group_by_type(original)
 if grouped != original:
-    with open(source, "w", encoding="utf-8", newline="") as writer:
+    with open(source, "w", encoding="utf-8", newline="") as writer:   # Zeilenenden wie gelesen
         writer.write(grouped)
     print("news.txt nach Typ gruppiert")
 
@@ -114,6 +115,9 @@ for line in grouped.splitlines():
         current_name = name
         continue
     item = re.match(r"<li>\[(.*?)\]\s*(.*)</li>$", line)
+    if item is None and line.startswith("<li>") and current is not None:
+        # Mehrzeiliger Eintrag: wird nicht übernommen (news.py check meldet ihn ebenfalls)
+        print("Warnung: unvollständige <li>-Zeile übersprungen (" + (current_name or "Bekannte Fehler") + "): " + line[:80])
     if item and current is not None:
         item_type = re.sub(r"<[^>]+>", "", item.group(1)).strip().upper()
         raw_text = item.group(2)
@@ -132,7 +136,7 @@ for line in grouped.splitlines():
             entry["short"] = short
         current.append(entry)
 
-with open(target, "w", encoding="utf-8") as writer:
+with open(target, "w", encoding="utf-8", newline="\n") as writer:   # LF wie auf GitHub
     json.dump(result, writer, ensure_ascii=False, indent=2)
     writer.write("\n")
 

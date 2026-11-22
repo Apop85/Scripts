@@ -38,8 +38,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX: Mediathek im eigenen Fenster, Update, Daten einlesen, Importer und Tools")]
-[assembly: AssemblyVersion("4.0.12.0")]
-[assembly: AssemblyFileVersion("4.0.12.0")]
+[assembly: AssemblyVersion("4.1.0.0")]
+[assembly: AssemblyFileVersion("4.1.0.0")]
 
 namespace Sflix
 {
@@ -138,7 +138,6 @@ namespace Sflix
             if (!headless && installTo == null && !App.IsReleaseFolder && string.IsNullOrEmpty(dir)
                 && ExeMigration.RunsAsLegacyName && ExeMigration.Run(args)) return 0;
 
-            SelfUpdate.CleanupOld();
             string releaseNote = App.IsReleaseFolder ? ReleaseFolder.RemoveGenerated(App.Root) : null;
             if (App.IsReleaseFolder && (headless || licenseKey != null || licenseRemove))
             {
@@ -172,6 +171,9 @@ namespace Sflix
                 }
                 try
                 {
+                    // Erst mit der Instanz-Sperre: ein zweiter Start löschte sonst .old-Sicherungen eines
+                    // laufenden Updates (seit 4.1.0)
+                    SelfUpdate.CleanupOld();
                     // Im Release-Ordner nur im Speicher (gilt bis zum Schliessen)
                     Settings settings = Settings.Load(App.IsReleaseFolder ? null : Path.Combine(App.SysDir, "updater_settings.json"));
                     // Bis 3.2 wurde das Protokoll immer geschrieben: alte Datei einmal löschen

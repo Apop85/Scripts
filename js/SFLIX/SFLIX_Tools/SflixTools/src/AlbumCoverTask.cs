@@ -198,7 +198,7 @@ namespace Sflix
 
         static bool HasPreview(string previewDir, string name)
         {
-            foreach (string ext in new string[] { ".jpg", ".jpeg", ".png", ".webp" })
+            foreach (string ext in MediaTypes.PreviewExtensions)
                 if (File.Exists(Path.Combine(previewDir, name + ext))) return true;
             return false;
         }
@@ -249,11 +249,20 @@ namespace Sflix
             Directory.CreateDirectory(originals);
             string ext = embedded ? ".jpg" : Path.GetExtension(a.Chosen).ToLowerInvariant();
             string original = FileOps.UniquePath(originals, a.Name + ext);
-            if (embedded) File.Copy(a.Embedded, original);
-            else FileOps.MoveAcross(a.Chosen, original, false);
-
             string target = Path.Combine(a.PreviewDir, a.Name + ".jpg");
-            RenderPadded(ctx, original, target);
+
+            // Erst rendern (in eine Zwischendatei), dann das Bild sichern und ersetzen (seit 4.1.0): scheitert
+            // das Rendern, bleibt alles, wie es war. Das gewählte Bild kann selbst das Ziel sein.
+            string rendered = target + ".__temp__.jpg";
+            try { RenderPadded(ctx, a.Chosen, rendered); }
+            catch { FileOps.TryDelete(rendered); throw; }
+            try
+            {
+                if (embedded) File.Copy(a.Embedded, original);
+                else FileOps.MoveAcross(a.Chosen, original, false);
+                FileOps.Replace(rendered, target);
+            }
+            catch { FileOps.TryDelete(rendered); throw; }
 
             int removed = 0;
             if (a.DeleteRest)
@@ -332,8 +341,12 @@ namespace Sflix
                     enc.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 85L);
                     // Erst als Zwischendatei, damit nie ein halbes Bild im Preview-Ordner liegt
                     string temp = Path.Combine(Path.GetDirectoryName(target), Path.GetFileNameWithoutExtension(target) + ".__temp__.jpg");
-                    canvas.Save(temp, jpeg, enc);
-                    FileOps.Replace(temp, target);
+                    try
+                    {
+                        canvas.Save(temp, jpeg, enc);
+                        FileOps.Replace(temp, target);
+                    }
+                    catch { FileOps.TryDelete(temp); throw; }
                 }
             }
         }

@@ -232,8 +232,6 @@ function applyDisplaySettings() {
 // Datensicherung). "" steht für alle Ordner. Es gilt der Wert des nächsten Ordners darüber,
 // der einen eigenen Wert hat, sonst 0.
 // ===================================================================
-var transitionKey = "transitionByFolder";
-
 var transitionMax = 3600;
 
 // Werte je Ordner (gleicher Aufbau für Übergang, Intro und Lautstärke): { "": 5, "Serien/Show": 85 }.
@@ -352,10 +350,6 @@ function getFolderValueAt(kindName, scope) {
 
 function getTransitionMap() {
     return getFolderValueMap("transition");
-}
-
-function saveTransitionMap(map) {
-    saveFolderValueMap("transition", map);
 }
 
 // seconds = null entfernt den Eintrag (der Ordner erbt dann wieder)

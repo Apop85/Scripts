@@ -142,14 +142,12 @@ public class ShareListActivity extends Activity {
         layout.addView(add, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
 
         setContentView(layout);
+        // Erst nach dem Laden der Liste (im Hintergrund) entscheiden: letzte Quelle öffnen oder neue anlegen
+        startupChoice = state == null && !handle(getIntent());
         refresh();
-
-        if (state == null && !handle(getIntent())) {
-            ShareStore.Share last = store.find(store.getLast());
-            if (last != null) open(last);
-            else if (shares.isEmpty()) ShareEditor.edit(this, null, null, this::onSaved);
-        }
     }
+
+    private boolean startupChoice;
 
     @Override
     protected void onNewIntent(Intent intent) {
@@ -194,10 +192,27 @@ public class ShareListActivity extends Activity {
     }
 
     private void refresh() {
-        shares = store.load();
-        adapter.clear();
-        for (ShareStore.Share s : shares) adapter.add(s.label());
-        empty.setVisibility(shares.isEmpty() ? View.VISIBLE : View.GONE);
+        // Laden entschlüsselt die Passwörter (Keystore): im Hintergrund, Liste danach auf dem UI-Thread
+        new Thread(() -> {
+            java.util.List<ShareStore.Share> loaded = store.load();
+            runOnUiThread(() -> {
+                if (isFinishing()) return;
+                shares = loaded;
+                adapter.clear();
+                for (ShareStore.Share s : shares) adapter.add(s.label());
+                empty.setVisibility(shares.isEmpty() ? View.VISIBLE : View.GONE);
+                onRefreshed();
+            });
+        }, "stefflix-shares").start();
+    }
+
+    /** Nach dem ersten Laden der Liste: letzte Quelle öffnen bzw. ohne Quellen gleich eine anlegen. */
+    private void onRefreshed() {
+        if (!startupChoice) return;
+        startupChoice = false;
+        String lastId = store.getLast();
+        for (ShareStore.Share s : shares) if (s.id.equals(lastId)) { open(s); return; }
+        if (shares.isEmpty()) ShareEditor.edit(this, null, null, this::onSaved);
     }
 
     private void onSaved(ShareStore.Share s, boolean connected) {

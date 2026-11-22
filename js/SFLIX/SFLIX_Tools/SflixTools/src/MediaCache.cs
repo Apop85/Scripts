@@ -157,6 +157,17 @@ namespace Sflix
             Store(ff, path, e);
         }
 
+        // Gemerktes Ergebnis einer Datei verwerfen (erneute Prüfung)
+        public static void Forget(FfmpegTools ff, string path)
+        {
+            string version = ff.CachedVersion() ?? "";
+            lock (sync)
+            {
+                EnsureLoaded(version);
+                if (entries.Remove(KeyOf(path))) dirty = true;
+            }
+        }
+
         static void Store(FfmpegTools ff, string path, JsonObject e)
         {
             string version = ff.CachedVersion() ?? "";

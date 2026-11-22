@@ -25,8 +25,6 @@ namespace Sflix
                                     // und Items darf dann nicht gelesen werden (NullReferenceException)
         CleanupChoice result;
 
-        public CleanupDialog(List<CleanupFolder> folders, string root) : this(folders, root, null) { }
-
         public CleanupDialog(List<CleanupFolder> folders, string root, FfmpegTools ff)
         {
             this.root = root;
@@ -280,6 +278,8 @@ namespace Sflix
                 shown = true;
                 UpdateTotal();
             };
+            // Letzte Spalte füllt die Liste auch nach dem Vergrössern (sonst bleibt rechts ein leerer Kopf)
+            list.Resize += delegate { if (shown && list.Columns.Count > 0) list.Columns[list.Columns.Count - 1].Width = -2; };
             ShowDialog(owner);
             return result;
         }

@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -26,9 +27,15 @@ final class ShareStore {
     static final class Share {
         String id = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         String name = "", host = "", share = "", path = "", user = "", domain = "", password = "";
+        // Gespeichertes, verschlüsseltes Passwort, wie geladen. Liess es sich nicht entschlüsseln (Keystore-Fehler,
+        // z.B. nach einer Sicherung auf ein neues Gerät), bleibt es beim Speichern erhalten, bis ein neues
+        // eingegeben wird, statt still durch ein leeres ersetzt zu werden.
+        String storedPassword = "";
+        boolean passwordLost;
 
         String label() {
-            return name.isEmpty() ? location() : name;
+            String l = name.isEmpty() ? location() : name;
+            return passwordLost ? l + " (Passwort neu eingeben)" : l;
         }
 
         String location() {
@@ -52,17 +59,25 @@ final class ShareStore {
     }
 
     private static final String KEY_ALIAS = "stefflix-shares";
+    private static final String TAG = "STEFFLIX";
     private final SharedPreferences prefs;
 
     ShareStore(Context context) {
         prefs = context.getSharedPreferences("shares", Context.MODE_PRIVATE);
     }
 
+    /** Einträge einzeln: ein defekter Eintrag kürzt die Liste nicht (er bleibt beim Speichern erhalten). */
     List<Share> load() {
         List<Share> list = new ArrayList<>();
+        JSONArray a;
         try {
-            JSONArray a = new JSONArray(prefs.getString("list", "[]"));
-            for (int i = 0; i < a.length(); i++) {
+            a = new JSONArray(prefs.getString("list", "[]"));
+        } catch (Exception e) {
+            Log.w(TAG, "Freigaben nicht lesbar", e);
+            return list;
+        }
+        for (int i = 0; i < a.length(); i++) {
+            try {
                 JSONObject o = a.getJSONObject(i);
                 Share s = new Share();
                 s.id = o.getString("id");
@@ -72,18 +87,25 @@ final class ShareStore {
                 s.path = o.optString("path");
                 s.user = o.optString("user");
                 s.domain = o.optString("domain");
-                s.password = decrypt(o.optString("pw"));
+                s.storedPassword = o.optString("pw");
+                String plain = decrypt(s.storedPassword);
+                s.passwordLost = plain == null;
+                s.password = plain == null ? "" : plain;
                 list.add(s);
+            } catch (Exception e) {
+                Log.w(TAG, "Freigabe " + i + " nicht lesbar, bleibt unverändert gespeichert", e);
             }
-        } catch (Exception ignored) {
         }
         return list;
     }
 
-    void save(List<Share> list) {
+    /** false: ein Passwort liess sich nicht verschlüsseln (das bisherige bleibt gespeichert). Wirft nie. */
+    boolean save(List<Share> list) {
+        boolean ok = true;
         JSONArray a = new JSONArray();
-        try {
-            for (Share s : list) {
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (Share s : list) {
+            try {
                 JSONObject o = new JSONObject();
                 o.put("id", s.id);
                 o.put("name", s.name);
@@ -92,13 +114,39 @@ final class ShareStore {
                 o.put("path", s.path);
                 o.put("user", s.user);
                 o.put("domain", s.domain);
-                o.put("pw", encrypt(s.password));
+                String pw;
+                if (s.passwordLost && s.password.isEmpty()) {
+                    pw = s.storedPassword;   // nicht entschlüsselbar und nicht neu eingegeben: unverändert lassen
+                } else {
+                    try {
+                        pw = encrypt(s.password);
+                        s.storedPassword = pw;
+                        s.passwordLost = false;
+                    } catch (Exception e) {
+                        Log.w(TAG, "Passwort nicht verschlüsselbar", e);
+                        pw = s.storedPassword;
+                        ok = false;
+                    }
+                }
+                o.put("pw", pw);
                 a.put(o);
+                ids.add(s.id);
+            } catch (Exception e) {
+                Log.w(TAG, "Freigabe nicht speicherbar", e);
+                ok = false;
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        }
+        // Defekte Einträge aus der gespeicherten Liste beibehalten (nicht stillschweigend löschen)
+        try {
+            JSONArray old = new JSONArray(prefs.getString("list", "[]"));
+            for (int i = 0; i < old.length(); i++) {
+                JSONObject o = old.optJSONObject(i);
+                if (o == null || !o.has("id")) a.put(old.get(i));
+            }
+        } catch (Exception ignored) {
         }
         prefs.edit().putString("list", a.toString()).apply();
+        return ok;
     }
 
     Share find(String id) {
@@ -135,6 +183,7 @@ final class ShareStore {
         return Base64.encodeToString(c.getIV(), Base64.NO_WRAP) + ":" + Base64.encodeToString(ct, Base64.NO_WRAP);
     }
 
+    /** null: nicht entschlüsselbar (Keystore-Fehler oder beschädigt), "" = kein Passwort. */
     private static String decrypt(String text) {
         if (text == null || text.isEmpty()) return "";
         try {
@@ -143,7 +192,8 @@ final class ShareStore {
             c.init(Cipher.DECRYPT_MODE, key(), new GCMParameterSpec(128, Base64.decode(p[0], Base64.NO_WRAP)));
             return new String(c.doFinal(Base64.decode(p[1], Base64.NO_WRAP)), StandardCharsets.UTF_8);
         } catch (Exception e) {
-            return "";
+            Log.w(TAG, "Passwort nicht entschlüsselbar", e);
+            return null;
         }
     }
 }

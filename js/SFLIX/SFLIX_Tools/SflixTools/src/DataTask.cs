@@ -17,11 +17,15 @@ namespace Sflix
     public class DataTask
     {
         // Muss mit den Listen in sflix_sys/js/core.js übereinstimmen (mediaTypes, musicTypes, imageTypes)
-        static readonly HashSet<string> AllowedFileTypes = new HashSet<string> {
-            "mp4", "m4v", "webm", "ogv",
-            "mp3", "m4a", "ogg", "oga", "opus", "aac", "flac", "wav",
-            "jpg", "jpeg", "png", "gif", "webp", "avif", "bmp",
-        };
+        // Abspielbare Endungen aus MediaTypes, ohne Punkt
+        static readonly HashSet<string> AllowedFileTypes = Bare(MediaTypes.ReadyVideo, MediaTypes.ReadyAudio, MediaTypes.ReadyImage);
+
+        static HashSet<string> Bare(params HashSet<string>[] sets)
+        {
+            HashSet<string> s = new HashSet<string>();
+            foreach (HashSet<string> set in sets) foreach (string e in set) s.Add(e.TrimStart('.').ToLowerInvariant());
+            return s;
+        }
 
         // Zu grosse Vorschaubilder werden auf 480x270 zugeschnitten (16:9). Das Original
         // kommt nach Preview\__original\<Dateiname>.
@@ -52,6 +56,9 @@ namespace Sflix
         readonly List<object> renamedPairs = new List<object>();
         readonly List<string> errorList = new List<string>();
         readonly List<string> skippedFolders = new List<string>();
+        readonly List<string> innerUnderscore = new List<string>();   // Ordner mit "__" mitten im Namen
+        readonly List<string> unreadableFolders = new List<string>(); // Lesefehler (nicht fehlende Rechte)
+        readonly List<string> skippedLinks = new List<string>();      // ausgelassene Verknüpfungen
         int shrinkCounter;
         int notShrinkable;
         int migratedOriginals;
@@ -62,11 +69,6 @@ namespace Sflix
         {
             this.ctx = ctx;
             homeDir = App.Root;
-        }
-
-        public static void Run(TaskContext ctx)
-        {
-            new DataTask(ctx).Execute();
         }
 
         // Nur diese Ordner einlesen (absolute Pfade im STEFFLIX-Ordner). Ihr Zweig in der
@@ -124,7 +126,9 @@ namespace Sflix
             StringBuilder result = new StringBuilder();
             for (int i = 0; i < name.Length; i++)
             {
-                // Zeichen ausserhalb der BMP (z.B. Emojis) bestehen aus zwei char
+                // Zeichen ausserhalb der BMP (z.B. Emojis) bestehen aus zwei char. Ein einzelnes Surrogat
+                // (kaputter Name) wird entfernt; ConvertToUtf32 würde sonst das ganze Einlesen abbrechen.
+                if (char.IsSurrogate(name[i]) && !char.IsSurrogatePair(name, i)) continue;
                 string ch = char.IsSurrogatePair(name, i) ? name.Substring(i++, 2) : name[i].ToString();
                 int code = char.ConvertToUtf32(ch, 0);
                 if (code < 0x20 || (code >= 0x7F && code <= 0x9F)) continue;
@@ -516,9 +520,13 @@ namespace Sflix
             {
                 entries = new DirectoryInfo(path).GetFileSystemInfos();
             }
-            catch (UnauthorizedAccessException)
+            catch (Exception e)
             {
+                // Kein Zugriff, Pfad zu lang, Verknüpfung ohne Ziel, Netzlaufwerk weg: Ordner melden
+                // (vorher brach bei allem ausser fehlenden Rechten das ganze Einlesen ab)
+                if (!(e is UnauthorizedAccessException || e is IOException || e is System.Security.SecurityException)) throw;
                 skippedFolders.Add(path);
+                if (e is IOException) unreadableFolders.Add(path + " (" + e.Message + ")");
                 return data;
             }
 
@@ -528,6 +536,11 @@ namespace Sflix
                 string fullPath = Path.Combine(path, item);
                 bool isFile = entry is FileInfo;
                 bool isDir = entry is DirectoryInfo;
+                // Zwischendateien (Konvertieren, Download, Kopieren) und macOS-Begleitdateien nie einlesen
+                if (isFile && MediaTypes.IsWorkFile(item)) continue;
+                if (isDir && Folders.HasInnerDoubleUnderscore(item) && innerUnderscore.Count < 50) innerUnderscore.Add(fullPath);
+                // Verknüpfungen auf Ordner werden seit 4.1.0 ausgelassen (DEC-359): im Protokoll nennen
+                if (isDir && (entry.Attributes & FileAttributes.ReparsePoint) != 0) { if (skippedLinks.Count < 50) skippedLinks.Add(fullPath); continue; }
                 string fileExtension = item.Substring(item.LastIndexOf('.') + 1).ToLowerInvariant();
 
                 if (isFile && isPreviewFolder && item.EndsWith(OriginalSuffix, StringComparison.OrdinalIgnoreCase))
@@ -621,11 +634,27 @@ namespace Sflix
             catch { return null; }
         }
 
+        // Erst vollständig in data.js.tmp schreiben, dann ersetzen (vorher: data.js nach .bak umbenannt und
+        // direkt geschrieben; ein Abbruch dazwischen hinterliess keine bzw. eine halbe data.js)
         void SaveData(JsonObject filelist)
         {
             string dataFile = DataFile;
-            if (File.Exists(dataFile)) FileOps.Replace(dataFile, dataFile + ".bak");
-            File.WriteAllText(dataFile, DataPrefix + Json.Write(filelist) + ";", FileOps.Utf8NoBom);
+            string tmp = dataFile + ".tmp";
+            try
+            {
+                File.WriteAllText(tmp, DataPrefix + Json.Write(filelist) + ";", FileOps.Utf8NoBom);
+                if (File.Exists(dataFile))
+                {
+                    try { File.Copy(dataFile, dataFile + ".bak", true); }
+                    catch (Exception e) { ctx.Log("Hinweis: Sicherung data.js.bak nicht erstellt (" + e.Message + ")"); }
+                }
+                FileOps.Replace(tmp, dataFile);
+            }
+            catch
+            {
+                FileOps.TryDelete(tmp);
+                throw;
+            }
             ctx.Log("data.js gespeichert (Sicherung: data.js.bak)");
 
             try { WriteRenamedPaths(); }
@@ -642,7 +671,7 @@ namespace Sflix
                 string rel = ToRelative(ToAbsolute(f));
                 if (rel == null) { ctx.Log("Liegt nicht im STEFFLIX-Ordner, übersprungen: " + f); continue; }
                 if (rel.Length == 0) { ctx.Log("Der ganze STEFFLIX-Ordner ist gewählt: alles wird eingelesen."); return false; }
-                if (Folders.IgnoreAny(homeDir, rel)) { ctx.Log("Ablage-, System- oder versteckter Ordner, übersprungen: " + rel); continue; }
+                if (Folders.IgnoreAny(homeDir, rel)) { ctx.Log("Ablage-, System- oder versteckter Ordner bzw. Verknüpfung, übersprungen: " + rel); continue; }
                 relFolders.Add(rel);
             }
             // Doppelte weglassen, ebenso Ordner, die in einem anderen gewählten Ordner liegen
@@ -702,8 +731,8 @@ namespace Sflix
             }
         }
 
-        static readonly HashSet<string> VideoTypes = new HashSet<string> { "mp4", "m4v", "webm", "ogv" };
-        static readonly HashSet<string> MusicTypes = new HashSet<string> { "mp3", "m4a", "ogg", "oga", "opus", "aac", "flac", "wav" };
+        static readonly HashSet<string> VideoTypes = Bare(MediaTypes.ReadyVideo);
+        static readonly HashSet<string> MusicTypes = Bare(MediaTypes.ReadyAudio);
 
         static void CountNode(JsonObject node, Counts c)
         {
@@ -791,6 +820,15 @@ namespace Sflix
                 bool last = i == segments.Length - 1;
                 if (!Directory.Exists(Path.Combine(dir, name)))
                 {
+                    // Zweig mit Medien entfernen nur nach Rückfrage (Laufwerk oder Verknüpfungsziel evtl. nur weg)
+                    JsonObject gone = node.Obj(name);
+                    int media = gone == null ? 0 : CountMedia(gone);
+                    if (media > 0 && (ctx.Confirm == null || !ctx.Confirm("Der Ordner „" + Relative(Path.Combine(dir, name)) + "“ ist nicht erreichbar. "
+                            + media + " Medien daraus aus der Mediathek entfernen?")))
+                    {
+                        ctx.Log("  " + Relative(Path.Combine(dir, name)) + ": nicht erreichbar, Einträge bleiben (" + media + " Medien)");
+                        return;
+                    }
                     if (node.Remove(name)) ctx.Log("  " + Relative(Path.Combine(dir, name)) + ": nicht mehr vorhanden, entfernt");
                     else ctx.Log("  " + Relative(Path.Combine(dir, name)) + ": nicht gefunden");
                     RefreshPreview(node, dir);
@@ -863,6 +901,13 @@ namespace Sflix
             ctx.Log("Ordner durchsucht: " + counter + " Medien gefunden");
 
             ctx.Summary = counter + " Medien";
+            if (filelist.Count > 0 && !PlausibleFullScan())
+            {
+                ctx.Log("data.js bleibt unverändert.");
+                ctx.Summary = "abgebrochen, data.js unverändert";
+                LogSummary();
+                return;
+            }
             if (filelist.Count > 0)
             {
                 SaveData(filelist);
@@ -883,8 +928,53 @@ namespace Sflix
             LogSummary();
         }
 
+        // Medien (Dateien) in einem Zweig von data.js
+        static int CountMedia(JsonObject node)
+        {
+            int n = 0;
+            foreach (KeyValuePair<string, object> kv in node)
+            {
+                JsonObject child = kv.Value as JsonObject;
+                if (child != null) n += CountMedia(child);
+                else n++;
+            }
+            return n;
+        }
+
+        // Vollständiges Einlesen: deutlich weniger Medien als in der bisherigen data.js oder nicht lesbare
+        // Ordner (z.B. Netzlaufwerk oder Ziel einer Verknüpfung nicht erreichbar) -> nachfragen, bevor die
+        // Einträge aus der Mediathek verschwinden. Ohne Oberfläche: nicht speichern.
+        bool PlausibleFullScan()
+        {
+            JsonObject old = LoadExistingData();
+            int before = old == null ? 0 : CountMedia(old);
+            bool drop = before >= 50 && counter < before / 2;
+            if (!drop && unreadableFolders.Count == 0) return true;
+            StringBuilder text = new StringBuilder();
+            if (drop) text.Append("Es wurden nur " + counter + " Medien gefunden, in der bisherigen data.js sind es " + before + ".\n");
+            if (unreadableFolders.Count > 0)
+            {
+                text.Append(unreadableFolders.Count + " Ordner waren nicht lesbar, z.B.:\n");
+                for (int i = 0; i < Math.Min(5, unreadableFolders.Count); i++) text.Append("  " + unreadableFolders[i] + "\n");
+            }
+            text.Append("\nIst ein Laufwerk oder das Ziel einer Verknüpfung nicht erreichbar, fehlen diese Medien danach in STEFFLIX " +
+                        "(Favoriten und Zeitstempel bleiben erhalten).\n\ndata.js trotzdem speichern?");
+            ctx.Log("Hinweis: " + text.ToString().Replace("\n", " ").Trim());
+            return ctx.Confirm != null && ctx.Confirm(text.ToString());
+        }
+
         void LogSummary()
         {
+            if (skippedLinks.Count > 0)
+            {
+                ctx.Log("Hinweis: Verknüpfungen auf Ordner (Junction, symbolischer Link) werden nicht eingelesen:");
+                foreach (string d in skippedLinks) ctx.Log("  " + d);
+            }
+            if (innerUnderscore.Count > 0)
+            {
+                ctx.Log("Hinweis: Ordner mit „__“ mitten im Namen werden seit Desktop 4.1.0 eingelesen (nur „__“ am Anfang ist eine Ablage):");
+                foreach (string d in innerUnderscore) ctx.Log("  " + d);
+            }
             if (shrinkCounter > 0)
                 ctx.Log(shrinkCounter + " Vorschaubilder verkleinert (Original in Preview\\" + OriginalFolder + " gesichert)");
             if (migratedOriginals > 0)

@@ -1,4 +1,4 @@
-// Lizenz (seit 3.3): Der Schlüssel "SFX2-…" enthält einen Discord-Webhook (ID und Token), über den
+// Lizenz (seit 3.3): Der Schlüssel "SFX2-…" enthält einen Webhook des Feedback-Dienstes (ID und Token), über den
 // das Feedback verschickt wird. Jede Lizenz hat ihren eigenen Webhook; wird einer missbraucht,
 // wird nur er gelöscht.
 //
@@ -25,7 +25,7 @@ namespace Sflix
     public class LicenseData
     {
         public string WebhookId, Token;
-        public string Url { get { return "https://discord.com/api/webhooks/" + WebhookId + "/" + Token; } }
+        public string Url { get { return FeedbackChannel.WebhookBase + WebhookId + "/" + Token; } }
     }
 
     public static class LicenseKey
@@ -94,9 +94,12 @@ namespace Sflix
         }
     }
 
-    // Nachrichten an den Discord-Webhook (Text und Dateien als multipart/form-data)
-    public static class Discord
+    // Nachrichten an den Webhook des Feedback-Dienstes (Text und Dateien als multipart/form-data)
+    public static class FeedbackChannel
     {
+        // Adresse der Webhooks des Feedback-Dienstes (Base64, damit der Dienst im Quellcode nicht genannt wird)
+        public static readonly string WebhookBase = Encoding.ASCII.GetString(Convert.FromBase64String("aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3Mv"));
+
         public class Attachment
         {
             public string Name;
@@ -109,7 +112,7 @@ namespace Sflix
         {
             error = null;
             try { ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072; } catch { }
-            // Discord nimmt höchstens 2000 Zeichen, längere Texte zusätzlich als Datei
+            // Der Feedback-Dienst nimmt höchstens 2000 Zeichen, längere Texte zusätzlich als Datei
             if (files == null) files = new List<Attachment>();
             if (content.Length > 1900)
             {
@@ -264,7 +267,7 @@ namespace Sflix
 
         static int SendNotice(string root, LicenseData d, string title, out string error)
         {
-            return Discord.Send(d.Url, "**" + title + "**\n" + Header(root), null, out error);
+            return FeedbackChannel.Send(d.Url, "**" + title + "**\n" + Header(root), null, out error);
         }
 
         public static bool Save(string key, out string message) { return Save(App.Root, key, out message); }
@@ -283,7 +286,7 @@ namespace Sflix
             if (d == null) { message = error; return false; }
             string normalized = Normalize(key);
             int status = SendNotice(root, d, "Lizenz eingelöst", out error);
-            if (Discord.IsGone(status)) { message = Discord.Describe(status); return false; }
+            if (FeedbackChannel.IsGone(status)) { message = FeedbackChannel.Describe(status); return false; }
             bool sent = status >= 200 && status < 300;
             try { Write(root, normalized, sent ? InstallIdOf(root) : ""); }
             catch (Exception e) { message = "Der Lizenzschlüssel konnte nicht gespeichert werden: " + e.Message; return false; }
@@ -306,7 +309,7 @@ namespace Sflix
                 LicenseData d = LicenseKey.Decode(key, out error);
                 if (d == null) return "Hinweis: Der hinterlegte Lizenzschlüssel ist ungültig (" + error + ")";
                 int status = SendNotice(App.Root, d, "Lizenz eingelöst", out error);
-                if (Discord.IsGone(status)) return "Hinweis: " + Discord.Describe(status);
+                if (FeedbackChannel.IsGone(status)) return "Hinweis: " + FeedbackChannel.Describe(status);
                 if (status < 200 || status >= 300) return null;   // ohne Verbindung: beim nächsten Start
                 Write(App.Root, key, id);
                 return "Lizenz bestätigt, das Feedback ist verfügbar.";
@@ -331,7 +334,7 @@ namespace Sflix
                 string error;
                 int status = SendNotice(App.Root, d, "Lizenz entfernt", out error);
                 bool sent = status >= 200 && status < 300;
-                if (!sent && !Discord.IsGone(status) && offlineFails && !force)
+                if (!sent && !FeedbackChannel.IsGone(status) && offlineFails && !force)
                 {
                     message = "Die Abmeldung konnte nicht gesendet werden (" + error + ")";
                     return false;
@@ -344,16 +347,16 @@ namespace Sflix
         }
 
         // Feedback senden. Anhänge: Diagnose, Protokoll. Gibt eine Meldung zurück, ok = zugestellt.
-        public static bool SendFeedback(string sender, string text, List<Discord.Attachment> files, out string message)
+        public static bool SendFeedback(string sender, string text, List<FeedbackChannel.Attachment> files, out string message)
         {
             LicenseData d = Current(App.Root);
             if (d == null) { message = "Kein gültiger Lizenzschlüssel hinterlegt."; return false; }
             string content = Header(App.Root).Split('\n')[0] + " · Desktop " + App.VersionText + "\n" +
                              "**Absender:** " + sender + "\n**Nachricht:**\n" + text;
             string error;
-            int status = Discord.Send(d.Url, content, files, out error);
+            int status = FeedbackChannel.Send(d.Url, content, files, out error);
             if (status >= 200 && status < 300) { message = "Danke! Die Nachricht wurde verschickt."; return true; }
-            message = error ?? Discord.Describe(status);
+            message = error ?? FeedbackChannel.Describe(status);
             return false;
         }
 

@@ -187,13 +187,13 @@ namespace Sflix
                 return;
             }
             // Anhänge auf dem UI-Thread zusammenstellen
-            List<Discord.Attachment> files = new List<Discord.Attachment>();
+            List<FeedbackChannel.Attachment> files = new List<FeedbackChannel.Attachment>();
             bool withDiagnosis = attachDiagnosis.Checked;
-            if (attachLog.Checked && SessionLog != null) files.Add(new Discord.Attachment("protokoll.txt", SessionLog()));
+            if (attachLog.Checked && SessionLog != null) files.Add(new FeedbackChannel.Attachment("protokoll.txt", SessionLog()));
             RunBusy(sendButton, sendStatus, "Nachricht wird gesendet …", delegate
             {
                 // Diagnose im Hintergrund (prüft u.a. den Encoder von ffmpeg)
-                if (withDiagnosis && Diagnosis != null) files.Insert(0, new Discord.Attachment("diagnose.txt", Diagnosis()));
+                if (withDiagnosis && Diagnosis != null) files.Insert(0, new FeedbackChannel.Attachment("diagnose.txt", Diagnosis()));
                 string message;
                 bool ok = LicenseStore.SendFeedback(sender, text, files, out message);
                 return new object[] { ok, message };

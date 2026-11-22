@@ -250,6 +250,16 @@ namespace Sflix
             scroller.AutoScroll = true;
             scroller.Margin = new Padding(Theme.S(16), Theme.S(12), Theme.S(6), 0);
             scroller.BackColor = Theme.Back;
+            scroller.HandleCreated += delegate { try { SetWindowTheme(scroller.Handle, "DarkMode_Explorer", null); } catch { } };   // dunkle Leiste
+            // Breiter: Inhalt bricht weniger um und wird niedriger, die Leiste bliebe aber stehen
+            scroller.SizeChanged += delegate
+            {
+                if (scrollerWidth == scroller.Width) return;
+                scrollerWidth = scroller.Width;
+                if (scrollCheckPending || !scroller.IsHandleCreated) return;
+                scrollCheckPending = true;
+                BeginInvoke((MethodInvoker)delegate { scrollCheckPending = false; RefreshScrollbar(); });
+            };
 
             // Inhalt | Splitter | Protokoll (eingeklappt: nur der Inhalt)
             body = new TableLayoutPanel();
@@ -569,6 +579,32 @@ namespace Sflix
             // Eine beim Vergrössern kurz nötige Scrollleiste bliebe sonst stehen
             tasksScroller.AutoScroll = false;
             tasksScroller.AutoScroll = true;
+        }
+
+        int scrollerWidth;
+        bool scrollCheckPending;
+
+        [System.Runtime.InteropServices.DllImport("uxtheme.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        static extern int SetWindowTheme(IntPtr hwnd, string appName, string idList);
+
+        // Nach einer Breitenänderung: Windows berechnet die Leiste, bevor die Seite ihre neue Höhe hat
+        // (Umbruch). Leiste entfernen, wenn die Seite ohne sie passt, bzw. zeigen, wenn sie nicht passt.
+        void RefreshScrollbar()
+        {
+            if (IsDisposed) return;
+            Control page = null;
+            foreach (Control c in tasksScroller.Controls) if (c.Visible) page = c;
+            if (page == null) return;
+            page.PerformLayout();
+            bool shown = tasksScroller.VerticalScroll.Visible;
+            int width = tasksScroller.ClientSize.Width + (shown ? SystemInformation.VerticalScrollBarWidth : 0);
+            int need = page.GetPreferredSize(new Size(width, 0)).Height + page.Margin.Vertical;
+            bool wanted = need > tasksScroller.ClientSize.Height;
+            if (wanted == shown) return;
+            Point pos = tasksScroller.AutoScrollPosition;
+            tasksScroller.AutoScroll = false;
+            tasksScroller.AutoScroll = true;
+            if (wanted) tasksScroller.AutoScrollPosition = new Point(-pos.X, -pos.Y);
         }
 
         // ---------------------------------------------------------------
@@ -2425,8 +2461,22 @@ namespace Sflix
             }
             else if (import != null)
             {
-                // Importer: nur der Zielordner
-                dataScope = new List<string> { Path.Combine(App.Root, import.Category, import.SubFolder) };
+                // Importer: der Zielordner; beim Verschieben aus STEFFLIX auch der Ordner der Quelle (sonst
+                // stünden die verschobenen Dateien dort weiter in data.js)
+                List<string> scope = new List<string> { Path.Combine(App.Root, import.Category, import.SubFolder) };
+                if (import.Move)
+                {
+                    foreach (string s in import.Sources)
+                    {
+                        // Übergeordneter Ordner (ein verschobener Ordner selbst existiert danach nicht mehr)
+                        string parent = Path.GetDirectoryName(s.TrimEnd('\\'));
+                        string rel = string.IsNullOrEmpty(parent) ? null : DataTask.ToRelative(parent);
+                        if (rel == null) continue;
+                        if (rel.Length == 0) { scope = null; break; }   // aus dem Hauptordner: alles einlesen
+                        scope.Add(parent);
+                    }
+                }
+                dataScope = scope == null ? null : Folders.WithoutNested(scope);
             }
             else if (preset == null && page == PageTools)
             {
@@ -2562,6 +2612,13 @@ namespace Sflix
                     using (ConflictDialog dlg = new ConflictDialog(source, target, ctx.Ffmpeg)) return dlg.Ask(this);
                 });
             };
+            ctx.Confirm = delegate(string text)
+            {
+                return (bool)Invoke((Func<bool>)delegate
+                {
+                    return MessageBox.Show(this, text, App.Title, MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes;
+                });
+            };
             ctx.ChooseAlbumCovers = delegate(List<AlbumCandidate> albums)
             {
                 return (bool)Invoke((Func<bool>)delegate
@@ -2616,7 +2673,7 @@ namespace Sflix
             cancelButton.Enabled = false;
             statusLabel.Text = "Wird abgebrochen ...";
             cts.Cancel();
-            Proc.KillAll();
+            Proc.KillAll(cts.Token);   // nur Prozesse dieser Aufgabe, nicht die der Downloads
         }
 
         void Finished(TaskRunResult result)

@@ -842,7 +842,7 @@ function showSearchPage(searchTerm) {
     setData("playlist-searchResults", results.media.join(listSeperator));
 
     var total = results.folders.length + results.media.length;
-    var section = createResultSection(total + (total == 1 ? " Treffer" : " Treffer") + " für «" + searchTerm + "»");
+    var section = createResultSection(total + " Treffer für «" + searchTerm + "»");
     section.insertBefore(createSearchRefineForm(searchTerm), section.firstChild);
     if (total == 0) {
         var hint = document.createElement("p");

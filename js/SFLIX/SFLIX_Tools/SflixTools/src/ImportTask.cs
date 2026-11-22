@@ -75,9 +75,34 @@ namespace Sflix
         public static readonly HashSet<string> ConvertAudio = Set(".wma", ".aiff", ".aif", ".ape", ".ac3", ".dts", ".amr", ".mka", ".wv");
         public static readonly HashSet<string> ConvertImage = Set(".tif", ".tiff", ".heic", ".heif", ".jfif");
 
+        // Vorschaubilder neben einem Medium ("Name.jpg" usw.), überall dieselbe Liste
+        public static readonly string[] PreviewExtensions = { ".jpg", ".jpeg", ".png", ".webp" };   // nie ändern (geteilt)
+
         static HashSet<string> Set(params string[] items)
         {
             return new HashSet<string>(items, StringComparer.OrdinalIgnoreCase);
+        }
+
+        // Alle Videoendungen (abspielbar und zu konvertieren), neue Menge je Aufruf
+        public static HashSet<string> AllVideo()
+        {
+            HashSet<string> s = new HashSet<string>(ReadyVideo, StringComparer.OrdinalIgnoreCase);
+            s.UnionWith(ConvertVideo);
+            return s;
+        }
+
+        public static HashSet<string> AllAudio()
+        {
+            HashSet<string> s = new HashSet<string>(ReadyAudio, StringComparer.OrdinalIgnoreCase);
+            s.UnionWith(ConvertAudio);
+            return s;
+        }
+
+        // Temporäre und versteckte Dateien, die kein Werkzeug als Medium behandelt (macOS "._Name",
+        // eigene Zwischendateien "Name.__temp__.ext" bzw. "Name.ext.__temp__")
+        public static bool IsWorkFile(string fileName)
+        {
+            return fileName.StartsWith("._") || fileName.IndexOf(".__temp__", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         public static string Kind(string ext)

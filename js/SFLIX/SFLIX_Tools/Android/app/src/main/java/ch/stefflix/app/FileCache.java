@@ -211,8 +211,17 @@ final class FileCache {
             }
             return new Found(listing(folder, PROGRAM_TTL_MS, true).files.get(name), false);
         }
-        return new Found(listing(folder, Long.MAX_VALUE, true).files.get(name), false);
+        Listing l = listing(folder, Long.MAX_VALUE, true);
+        SmbSource.Meta m = l.files.get(name);
+        // Neu hinzugekommene Datei (z.B. ein neues Bild) fehlt in einer älteren Liste: Liste einmal neu holen
+        // (höchstens alle 30 s je Ordner), damit sie zwischengespeichert wird statt bei jedem Aufruf vom NAS
+        if (m == null && System.currentTimeMillis() - l.fetched > NEW_FILE_RECHECK_MS) {
+            m = listing(folder, NEW_FILE_RECHECK_MS, true).files.get(name);
+        }
+        return new Found(m, false);
     }
+
+    private static final long NEW_FILE_RECHECK_MS = 30_000;
 
     private void revalidate(String folder) {
         final String key = folder.toLowerCase(Locale.ROOT);

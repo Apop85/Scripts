@@ -32,7 +32,7 @@
         <!-- singleTask: Antippen der Benachrichtigung öffnet die laufende Seite. Bild-im-Bild ohne Neuaufbau. -->
         <activity
             android:name=".BrowserActivity"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|fontScale|density|locale|layoutDirection"
             android:exported="false"
             android:launchMode="singleTask"
             android:resizeableActivity="true"
@@ -40,7 +40,7 @@
 
         <activity
             android:name=".SettingsActivity"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|fontScale|density|locale|layoutDirection"
             android:exported="false" />
 
         <receiver

@@ -1,60 +1,19 @@
-"""Dateiliste und Prüffunktionen für das Release (create_checksums.py, check_release.py).
+"""Dateilisten und Prüffunktionen für das Release (create_checksums.py, check_release.py, release.ps1).
 
-Ab Version 3.0 ist updateStefflix.exe der STEFFLIX Updater mit Oberfläche (C#, Quellcode in
-"SFLIX_Tools\\SflixTools"). Er installiert auch, setup.exe gibt es nicht mehr.
-Ab 4.0 heisst das Programm STEFFLIX.exe (Player-Fenster und Tools, "Desktop"). Dieselbe Datei liegt
-vorerst auch als updateStefflix.exe im Repo: Updater bis 3.x laden nur diesen Namen, die neue
-Version benennt sich beim ersten Start mit Oberfläche um. updater.exe und
-updateData.exe sind eingefroren und werden nur noch für den Umstieg älterer Installationen
-bereitgestellt. Ihre Python-Quellen (updater.py, getfilepath.py) liegen nicht mehr hier. Die
-Download-Funktionen unten waren in diese Programme eingebaut und bleiben als Referenz erhalten.
+Seit 4.0 ist STEFFLIX.exe das Programm für Player, Tools, Installation und Updates (C#, Quellcode in
+"SFLIX_Tools\\SflixTools"); es lädt selbst herunter und prüft. Dieselbe Datei liegt vorerst auch als
+updateStefflix.exe im Repository (Updater bis 3.x laden nur diesen Namen). updater.exe und updateData.exe
+sind eingefroren und werden nur noch für den Umstieg älterer Installationen bereitgestellt.
 
-Die Release-Skripte liegen in "SFLIX_Tools\\Release". Der Release-Ordner (start.html,
-sflix_sys, die Programme, checksums.json) liegt zwei Ebenen darüber: RELEASE_DIR.
-
-Jede heruntergeladene Datei wird geprüft:
-  1. HTTP-Status 200 und nicht leer
-  2. .exe-Dateien müssen echte Windows-Programme sein (MZ- und PE-Kennung)
-  3. Textdateien müssen gültiges UTF-8 sein
-  4. Die SHA256-Prüfsumme muss mit checksums.json übereinstimmen
-
-Erst wenn alle Prüfungen bestanden sind, wird die vorhandene Datei ersetzt.
+Seit 4.1.0 nur noch Listen und Prüffunktionen (ohne Download, ohne das Paket requests).
+Der Release-Ordner (start.html, sflix_sys, die Programme, checksums.json) liegt zwei Ebenen über
+diesem Skript: RELEASE_DIR.
 """
 import hashlib
-import json
 import os
-import sys
-
-import requests
 
 # Release-Ordner (dieses Skript liegt in <Release-Ordner>\SFLIX_Tools\Release)
 RELEASE_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-
-def program_dir():
-    """Ordner, in dem das laufende Programm liegt (bei den .exe-Dateien der STEFFLIX-Ordner).
-
-    Das Arbeitsverzeichnis ist dafür nicht zuverlässig: Startet ein Programm ein anderes über
-    die Kommandozeile (z.B. updateStefflix.exe vor 2.00 mit os.system) und liegt STEFFLIX auf
-    einem Netzwerkpfad (\\\\server\\freigabe), setzt Windows das Arbeitsverzeichnis auf C:\\Windows.
-    Beim Ausführen als Python-Skript (Entwicklung, Tests) gilt weiterhin das Arbeitsverzeichnis.
-    """
-    if getattr(sys, "frozen", False):
-        return os.path.dirname(os.path.abspath(sys.executable))
-    return os.getcwd()
-
-
-def enter_stefflix_dir():
-    """Wechselt in den Programmordner und bricht ab, wenn das kein STEFFLIX-Ordner ist
-    (Schutz davor, in einem fremden Ordner Dateien zu installieren oder umzubenennen)."""
-    folder = program_dir()
-    os.chdir(folder)
-    if not os.path.isfile(os.path.join(folder, "start.html")) or not os.path.isdir(os.path.join(folder, "sflix_sys")):
-        print(f"Dieser Ordner ist kein STEFFLIX-Ordner (start.html oder sflix_sys fehlt):\n{folder}")
-        print("Bitte das Programm im STEFFLIX-Ordner starten.")
-        print()
-        input("Enter zum Beenden")
-        sys.exit(1)
-    return folder
 
 RAW_URL = "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/"
 BIN_URL = "https://github.com/Apop85/Scripts/raw/master/js/SFLIX/"
@@ -113,24 +72,7 @@ WEB_FILES = [name for name in INSTALL_FILES if not name.endswith(".exe") and nam
 OBSOLETE_FILES = ["sflix_sys/sflix.js", "sflix_sys/sflix_bg.jpg"]
 
 
-def remove_obsolete_files(base_dir="."):
-    for name in OBSOLETE_FILES:
-        path = os.path.join(base_dir, name)
-        try:
-            if os.path.isfile(path):
-                os.remove(path)
-                print(f"Veraltete Datei entfernt: {name}")
-        except OSError:
-            pass
-
-
 TEXT_EXTENSIONS = (".js", ".css", ".html", ".txt", ".json", ".svg")
-TIMEOUT = 120
-
-
-class DownloadError(Exception):
-    pass
-
 
 def is_text_file(path):
     return path.lower().endswith(TEXT_EXTENSIONS)
@@ -150,171 +92,3 @@ def is_windows_exe(data):
         return False
     pe_offset = int.from_bytes(data[0x3C:0x40], "little")
     return data[pe_offset:pe_offset + 4] == b"PE\0\0"
-
-
-def load_checksums():
-    """Lädt checksums.json von GitHub. Ohne Prüfsummen wird nichts installiert."""
-    try:
-        answer = requests.get(RAW_URL + CHECKSUM_FILE, timeout=TIMEOUT)
-    except requests.RequestException as error:
-        raise DownloadError(f"Prüfsummen nicht erreichbar ({error.__class__.__name__})")
-    if answer.status_code != 200:
-        raise DownloadError(f"Prüfsummen nicht gefunden (HTTP {answer.status_code})")
-    try:
-        return json.loads(answer.content.decode("utf-8"))
-    except ValueError:
-        raise DownloadError("Prüfsummendatei ist beschädigt")
-
-
-def download_file(path, checksums):
-    """Lädt eine Datei herunter und gibt den geprüften Inhalt zurück."""
-    url = FILES[path]
-    try:
-        answer = requests.get(url, timeout=TIMEOUT)
-    except requests.RequestException as error:
-        raise DownloadError(f"keine Verbindung ({error.__class__.__name__})")
-
-    if answer.status_code != 200:
-        raise DownloadError(f"HTTP {answer.status_code}")
-
-    data = answer.content
-    if not data:
-        raise DownloadError("leere Datei")
-
-    if path.lower().endswith(".exe") and not is_windows_exe(data):
-        raise DownloadError("keine gültige Programmdatei")
-
-    if is_text_file(path):
-        try:
-            data.decode("utf-8")
-        except UnicodeDecodeError:
-            raise DownloadError("ungültige Textdatei")
-
-    expected = checksums.get(path)
-    if expected is None:
-        raise DownloadError("keine Prüfsumme vorhanden")
-    if checksum(path, data) != expected:
-        raise DownloadError("Prüfsumme stimmt nicht")
-
-    return data
-
-
-def install_file(target, data, backup=True):
-    """Schreibt die Datei zuerst als .new und ersetzt dann das Original.
-    Das Original wird zu .old umbenannt (geht auch bei laufenden Programmen).
-    Gibt zurück, ob eine Sicherung (.old) angelegt wurde."""
-    folder = os.path.dirname(target)
-    if folder:
-        os.makedirs(folder, exist_ok=True)
-
-    temp_file = target + ".new"
-    try:
-        with open(temp_file, "wb") as file_writer:
-            file_writer.write(data)
-    except OSError:
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
-        raise
-
-    old_file = target + ".old"
-    has_backup = False
-    if backup and os.path.exists(target):
-        if os.path.exists(old_file):
-            os.remove(old_file)
-        os.replace(target, old_file)
-        has_backup = True
-
-    try:
-        os.replace(temp_file, target)
-    except OSError:
-        # Original wiederherstellen
-        if has_backup:
-            os.replace(old_file, target)
-        raise
-    return has_backup
-
-
-def is_up_to_date(path, target, checksums):
-    """True, wenn die lokale Datei bereits dem Stand in checksums.json entspricht."""
-    expected = checksums.get(path)
-    if expected is None or not os.path.isfile(target):
-        return False
-    try:
-        with open(target, "rb") as file_reader:
-            return checksum(path, file_reader.read()) == expected
-    except OSError:
-        return False
-
-
-def restore_file(target, has_backup):
-    """Macht eine Installation rückgängig: .old zurück oder neue Datei entfernen."""
-    old_file = target + ".old"
-    if has_backup and os.path.exists(old_file):
-        os.replace(old_file, target)
-    elif not has_backup and os.path.exists(target):
-        os.remove(target)
-
-
-def update_files(paths, base_dir=".", label="Lade", skip_existing=False):
-    """Lädt die angegebenen Dateien herunter und installiert sie nach dem
-    Alles-oder-nichts-Prinzip:
-      1. Alle Dateien herunterladen und prüfen. Schlägt eine fehl, wird nichts verändert.
-      2. Alle Dateien installieren. Schlägt eine fehl, werden die bereits
-         installierten wieder auf den alten Stand zurückgesetzt.
-    Gibt die Anzahl fehlgeschlagener Dateien zurück (0 = Erfolg)."""
-    print(f"{'Lade Prüfsummen...':<50}", end="")
-    try:
-        checksums = load_checksums()
-        print("OK")
-    except DownloadError as error:
-        print(f"FEHLER: {error}")
-        print("Es wurden keine Dateien verändert.")
-        return len(paths)
-
-    # Schritt 1: Herunterladen und prüfen
-    downloads = []
-    failed = 0
-    for path in paths:
-        target = os.path.join(base_dir, path)
-        print(f"{label} {path}...".ljust(50), end="")
-
-        if skip_existing and os.path.exists(target):
-            print("VORHANDEN")
-            continue
-
-        # Unveränderte Dateien (gleiche Prüfsumme) nicht erneut herunterladen
-        if is_up_to_date(path, target, checksums):
-            print("AKTUELL")
-            continue
-
-        try:
-            downloads.append((path, target, download_file(path, checksums)))
-            print("OK")
-        except DownloadError as error:
-            failed += 1
-            print(f"FEHLER: {error}")
-
-    if failed:
-        print(f"{failed} Datei(en) fehlerhaft. Es wurden keine Dateien verändert.")
-        return failed
-
-    # Schritt 2: Installieren, bei einem Fehler alles zurücksetzen
-    installed = []
-    for path, target, data in downloads:
-        print(f"Installiere {path}...".ljust(50), end="")
-        try:
-            installed.append((target, install_file(target, data)))
-            print("OK")
-        except OSError as error:
-            print(f"FEHLER: {error.strerror}")
-            print("Installation wird rückgängig gemacht...".ljust(50), end="")
-            restore_failed = 0
-            for installed_target, has_backup in reversed(installed):
-                try:
-                    restore_file(installed_target, has_backup)
-                except OSError:
-                    restore_failed += 1
-            print("OK" if not restore_failed else f"FEHLER bei {restore_failed} Datei(en)")
-            return len(downloads)
-
-    return 0

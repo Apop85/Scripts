@@ -8,12 +8,12 @@ Getroffene Entscheidungen zu STEFFLIX, Desktop und Android-App mit Begründung, 
 
 | Status | Anzahl |
 |---|---|
-| Proposed | 7 |
-| Accepted | 23 |
-| Implemented | 253 |
-| Rejected | 30 |
-| Superseded | 21 |
-| **Total** | **334** |
+| Proposed | 4 |
+| Accepted | 28 |
+| Implemented | 268 |
+| Rejected | 29 |
+| Superseded | 32 |
+| **Total** | **361** |
 
 ## Block 1: Session STEFFLIX 2.00 (Oktober 2026)
 
@@ -4517,7 +4517,7 @@ Abhängigkeiten: DEC-336
 ## Entscheidungen
 
 ### DEC-341: BiB im Desktop: eigenes Symbol, Hauptfenster minimieren und wiederherstellen
-Status: Accepted
+Status: Implemented
 Datum: 2026-11-20
 Kategorie: UI
 Ticket: SFLIX-20261120-011
@@ -4543,7 +4543,7 @@ Abhängigkeiten: –
 ## Entscheidungen
 
 ### DEC-342: Next/Previous über Media Session überall
-Status: Accepted
+Status: Implemented
 Datum: 2026-11-20
 Kategorie: UI
 Ticket: SFLIX-20261120-013
@@ -4634,7 +4634,7 @@ Abhängigkeiten: DEC-330
 ## Entscheidungen
 
 ### DEC-346: Downloader: Wiederholen beginnt von vorne
-Status: Accepted
+Status: Implemented
 Datum: 2026-11-20
 Kategorie: UI
 Ticket: SFLIX-20261120-025
@@ -4726,7 +4726,7 @@ Abhängigkeiten: DEC-341, DEC-344
 ## Entscheidungen
 
 ### DEC-350: Prototyp-BiB-Fenster ohne Titelleiste
-Status: Accepted
+Status: Implemented
 Datum: 2026-11-21
 Kategorie: UI
 Ticket: SFLIX-20261121-031
@@ -4738,7 +4738,7 @@ Betroffene Komponenten: –
 Abhängigkeiten: DEC-349
 
 ### DEC-351: Desktop: eigenes Bild-im-Bild-Fenster (Document Picture-in-Picture), natives BiB als Rückfall
-Status: Accepted
+Status: Implemented
 Datum: 2026-11-21
 Kategorie: UI
 Ticket: SFLIX-20261121-037
@@ -4751,7 +4751,7 @@ Betroffene Komponenten: sflix_sys\js\player.js, sflix_sys\js\ui.js, sflix_sys\sf
 Abhängigkeiten: DEC-341, DEC-342, DEC-349; DEC-344
 
 ### DEC-352: Duplikate finden bleibt ohne VirtualMode (CompareView mit nativen Häkchen)
-Status: Accepted
+Status: Implemented
 Datum: 2026-11-21
 Kategorie: Performance
 Ticket: SFLIX-20261121-034
@@ -4777,7 +4777,7 @@ Abhängigkeiten: DEC-348
 ## Entscheidungen
 
 ### DEC-353: Eigenes BiB-Fenster: Rueckfall-Wartezeit, Fehlerfall, gemerkte Groesse
-Status: Accepted
+Status: Implemented
 Datum: 2026-11-21
 Kategorie: UI
 Ticket: SFLIX-20261121-038
@@ -4803,7 +4803,7 @@ Abhängigkeiten: DEC-351
 ## Entscheidungen
 
 ### DEC-354: Folgen umbenennen: Quellenwechsel jederzeit, gemerkte Listen nur auf Wunsch
-Status: Accepted
+Status: Implemented
 Datum: 2026-11-21
 Kategorie: UI
 Ticket: SFLIX-20261121-045
@@ -4813,6 +4813,225 @@ Alternativen: –
 Konsequenzen: –
 Betroffene Komponenten: –
 Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# STEFFLIX 2.8.14 (Arbeit vom 21.11.2026)
+
+## Entscheidungen
+
+### DEC-355: Protokoll-Kopf: Zaehler bei wenig Platz gekuerzt mit Tooltip
+Status: Implemented
+Datum: 2026-11-21
+Kategorie: UI
+Ticket: SFLIX-20261121-047
+Entscheidung: Die Anzahl Fehler und Hinweise neben 'Protokoll' bleibt einzeilig und wird bei wenig Platz mit '...' gekuerzt; der ganze Text erscheint als Tooltip (Label.AutoEllipsis). Die Werkzeugknoepfe rechts behalten ihren Platz.
+Begründung: Pruefung 047: bei 1750 px Breite (250 %) gekuerzt. Platz schaffen hiesse Knoepfe verkleinern oder umbrechen; die Zahlen sind per Tooltip und im Protokoll selbst sichtbar.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# Analyse SFLIX-20261122-049 (Architekt) (Arbeit vom 22.11.2026)
+
+## Entscheidungen
+
+## Sicherheit der Updates
+
+### DEC-356: Desktop-Updates mit eigener Signatur über checksums.json absichern
+Status: Accepted
+Datum: 2026-11-22
+Kategorie: Sicherheit
+Ticket: SFLIX-20261122-049
+Entscheidung: release.ps1 signiert checksums.json (Bytes mit vereinheitlichten Zeilenenden CRLF zu LF, wie bei den Prüfsummen der Textdateien) mit einem privaten RSA-3072-Schlüssel (SHA-256, PKCS#1 v1.5) und legt die Signatur Base64-kodiert als checksums.sig daneben. STEFFLIX.exe enthält zwei öffentliche Schlüssel (Haupt- und Reserveschlüssel) und prüft die Signatur in Net.LoadChecksums, der einzigen Stelle, über die Update, Setup (InstallTask) und ffmpeg (ffmpeg.json) ihre Prüfsummen beziehen. Ohne gültige Signatur wird nichts installiert, ab der ersten Version mit Prüfung (keine Übergangsphase). Der private Hauptschlüssel liegt in SFLIX_Tools/Release/signing/ (nie pushen, gesichert wie Android/signing/), der Reserveschlüssel nur offline.
+Begründung: checksums.json kommt vom selben Repository wie die Dateien und schützt nur gegen Übertragungsfehler. Ein kompromittiertes Konto oder Token könnte allen Nutzern per Selbst-Update eine beliebige STEFFLIX.exe oder ein beliebiges ffmpeg ausliefern. Eine Signatur an der zentralen Stelle deckt EXE, Web-Dateien und ffmpeg.json (und damit das ffmpeg-Archiv) ab, ohne Kosten und ohne neue Abhängigkeiten (.NET-Bordmittel in C# 5 und PowerShell 5.1). Freigabe durch den Benutzer am 22.11.2026.
+Alternativen: Authenticode-Zertifikat: jährliche Kosten, hilft zusätzlich bei SmartScreen und Virenscannern und schützt auch die erste Installation; später ergänzend möglich. Signatur je Datei: mehr Dateien ohne Mehrwert. Übergangsphase, in der eine fehlende Signatur akzeptiert wird: verworfen, weil Signierung und Prüfung mit demselben Release kommen und ein Angreifer die Signatur sonst einfach weglassen könnte. GPG oder Python-Paket cryptography: zusätzliche Werkzeuge.
+Konsequenzen: Neue Datei checksums.sig im Repository; sie gehört in denselben Push wie checksums.json und die EXE (Push-Liste von release.ps1). check_release.py prüft die Signatur mit dem öffentlichen Schlüssel. Ältere Desktops und Updater 3.x ignorieren die Datei (rückwärtskompatibel). Schlüsselwechsel nur über eine neue EXE, die noch mit dem alten Schlüssel signiert ist; gehen beide privaten Schlüssel verloren, sind Desktop-Updates nur noch durch Neuinstallation möglich. Die App bleibt über die Android-Signatur abgesichert, versions.json bleibt unsigniert. Die Setup-EXE aus dem Browser bleibt ungeschützt. Neue Funktion: Minor-Version des Desktops. Umsetzung: SFLIX-20261122-055, Beschreibung docs/ARCHITECTURE.md Abschnitt 3.7.
+Risiken: GitHub kann checksums.json und checksums.sig kurz nach einem Push uneinheitlich ausliefern: Meldung als vorübergehend (später erneut) statt als Manipulation. Signierung und Prüfung müssen die Zeilenenden gleich behandeln.
+Betroffene Komponenten: Desktop (Net.cs, UpdateTask.cs, InstallTask.cs, Ffmpeg.cs), Release (release.ps1, check_release.py, create_checksums.py), .gitignore, docs/INTERFACES.md, docs/RELEASE.md, docs/ARCHITECTURE.md
+Abhängigkeiten: DEC-004, DEC-226, DEC-010
+
+## Risiken und Entscheide pflegen
+
+### DEC-357: Lebendes Risikoregister in docs/ARCHITECTURE.md
+Status: Implemented
+Datum: 2026-11-22
+Kategorie: Arbeitsweise
+Ticket: SFLIX-20261122-049
+Entscheidung: Offene technische Risiken stehen konsolidiert in docs/ARCHITECTURE.md Abschnitt 6 (ID R-nn, Komponente, Risiko und Wirkung, Status offen / in Arbeit / akzeptiert / behoben, Massnahme mit Ticket bzw. DEC). Pflege: Architekt. Andere Rollen nennen neue oder erledigte Risiken beim Ticketabschluss (-Risiken) oder per Ticket an den Architekten. Abschnitt D je Block in docs/DECISIONS.md bleibt das historische Protokoll und wird nicht nachträglich geändert.
+Begründung: Die Analyse SFLIX-20261122-049 fand rund 140 Risiken in Abschnitt D über 18 Blöcke, ohne Status; viele bestehen weiter, einige sind behoben, ein Überblick fehlte. Freigabe durch den Benutzer am 22.11.2026.
+Alternativen: Status je Risiko in decisions.py (risiko --status): braucht eine Formatänderung und den Umbau aller Blöcke. Eigene Datei RISKS.md: ARCHITECTURE.md ist bereits für Risiken zuständig.
+Konsequenzen: Erstbestand aus der Analyse (verifizierte offene Risiken aus DECISIONS Abschnitt D und neue Funde). docs/ wird gepusht: keine persönlichen Daten, keine Angriffsdetails, keine verbotenen Begriffe im Register. Eine Pflichtregel für alle Rollen im Regelwerk wäre eine Änderung am Regelwerk und braucht die Freigabe des Benutzers.
+Betroffene Komponenten: docs/ARCHITECTURE.md, docs/DECISIONS.md
+Abhängigkeiten: –
+
+## Ticketsystem
+
+### DEC-358: Aufträge in Bearbeitung einer anderen Rolle gesperrt, Änderung nur erzwungen
+Status: Implemented
+Datum: 2026-11-22
+Kategorie: Arbeitsweise
+Ticket: SFLIX-20261122-049
+Entscheidung: Auftrag.ps1 aendern lehnt Änderungen an einem Auftrag ab, der IN_PROGRESS beim Empfänger ist, wenn eine andere Rolle aufruft (Exit 3, nichts geändert). Die Meldung erklärt, dass der Empfänger die Änderung eventuell nicht mitbekommt, und verweist auf einen eigenen Auftrag (erstellen -An <Empfänger> -Abhaengigkeiten <ID>). Ausnahme mit -Erzwingen -Notiz <Grund>: Ersetzen und Anhängen erlaubt, Verlauf vermerkt [erzwungen: Grund], Warnung, dem Benutzer zu melden. Für OPEN und BLOCKED bleibt alles wie bisher (Antworten auf Offene Fragen); der Empfänger selbst und die Rolle Benutzer sind nicht betroffen.
+Begründung: Eine Rolle liest die Task-Datei bei der Übernahme einmal; spätere Ergänzungen anderer Rollen gehen sonst unbemerkt verloren. Wunsch des Benutzers vom 22.11.2026.
+Alternativen: Nur Warnung ohne Sperre: wird leicht übersehen. Vollständige Sperre ohne Erzwingen: verhindert nötige Korrekturen in Absprache mit dem Benutzer.
+Konsequenzen: Selbsttest Fall 20; Fall 3 hängt Fragen jetzt als Empfänger an. Hilfe von aendern, coordination\README.md (Abschnitt Status und Befehlstabelle) und .claude\skills\ticket\SKILL.md nachgeführt (Freigabe des Benutzers am 22.11.2026).
+Betroffene Komponenten: SFLIX_Tools\Auftrag.ps1, SFLIX_Tools\Auftrag-Selbsttest.ps1
+Abhängigkeiten: DEC-345
+
+## A. Offene Entscheidungen
+
+- Noch als Proposed offen, Entscheid des Benutzers ausstehend: DEC-199 (faststart in „Medien prüfen“, im Code nur bei Konvertieren, Download und Zusammenfügen), DEC-172 (Rechte auf dem NAS, Aufgabe des Benutzers), DEC-274 (alte Updater-Einträge), DEC-040 (Push-Regeln 2.00, vermutlich überholt).
+- Kriterium, ab wann die Übergangsdateien für alte Installationen entfallen dürfen (Risikoregister R-20).
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+- Status nachgeführt: DEC-341, DEC-342, DEC-346, DEC-350, DEC-351, DEC-352, DEC-353, DEC-354, DEC-355 sind im Code umgesetzt (Implemented). Statistik im Kopf neu berechnet.
+- Doppelte Block-Überschriften (STEFFLIX 2.8.8 / Desktop 4.0.6 zweimal, Desktop 4.0.7 dreimal, Desktop 4.0.8 zweimal) und Blöcke, deren Version nicht zum Inhalt passt (z. B. Desktop 4.0.7 vom 21.11.2026 mit DEC-348/349): bleiben als Protokoll stehen; Ursache in decisions.py (neuer Block, sobald der letzte anders heisst) wird in SFLIX-20261122-053 behoben.
+
+## C. Dokumentationsbedarf
+
+- Offene Punkte (A) und Risiken (D) älterer Blöcke werden nicht mehr nachträglich geschlossen: der aktuelle Stand steht im Risikoregister docs/ARCHITECTURE.md Abschnitt 6 (DEC-357). Erledigt seit der Erfassung u. a.: Ordner docs\ in .claude\CLAUDE.md beschrieben.
+
+## D. Technische Risiken
+
+- Erstbestand des Risikoregisters R-01 bis R-42 (Datenintegrität, Update/Release, Schnittstellen/Laufzeit) aus der Analyse SFLIX-20261122-049, siehe docs/ARCHITECTURE.md Abschnitt 6. Höchste Risiken: Datenverlust beim Konvertieren, im Download, beim Schreiben von data.js und nach „Alle Daten löschen“; unsignierte Updates (DEC-356).
+
+---
+
+# Desktop 4.1.0 (Arbeit vom 22.11.2026)
+
+## Entscheidungen
+
+### DEC-359: Tools: Regeln gegen Datenverlust (Ablagen, data.js, defekte Dateien)
+Status: Superseded
+Datum: 2026-11-22
+Kategorie: Datenintegrität
+Ticket: SFLIX-20261122-050
+Entscheidung: 1. Ablage ist nur ein Ordner, dessen Name mit __ beginnt (wie Ablagen leeren); Ordner mit __ mitten im Namen werden eingelesen und im Protokoll genannt. 2. Daten einlesen fragt vor dem Speichern nach, wenn bei mindestens 50 bisherigen Medien weniger als die Hälfte gefunden wird oder Ordner nicht lesbar sind (Lesefehler, nicht fehlende Rechte), und bevor ein nicht erreichbarer Ordner mit Medien aus data.js entfernt wird; ohne Oberfläche wird nicht gespeichert bzw. nicht entfernt. 3. Medien prüfen untersucht als defekt gemeldete Dateien vor dem Löschen ohne gemerktes Ergebnis neu; die Vorauswahl bleibt. 4. Verknüpfungen (Junctions) werden beim Einlesen weiter verfolgt (Mediathek kann Verknüpfungen enthalten), Entscheid zum Überspringen offen.
+Begründung: Funde der Analyse SFLIX-20261122-049: Datenverlust durch NAS-Aussetzer und uneinheitliche Regeln; Vorauswahl beibehalten, damit der Ablauf für den Benutzer gleich bleibt.
+Alternativen: –
+Konsequenzen: Ersetzt durch DEC-361.
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+### DEC-360: Feedback-Dienst im öffentlichen Quellcode neutral benennen
+Status: Accepted
+Datum: 2026-11-22
+Kategorie: Sonstiges
+Ticket: SFLIX-20261122-054
+Entscheidung: Desktop und Weboberfläche nennen den Dienst des Feedback-Kanals nicht mehr: Klasse FeedbackChannel (License.cs, FeedbackPage.cs), Kommentare neutral, die Webhook-Adresse steht als Base64 (FeedbackChannel.WebhookBase, ui.js atob). Ausgenommen bleiben die Prüfwerkzeuge (Suchmuster für verbotene Begriffe) und das Entwicklerwerkzeug Lizenz\\create_license.py.
+Begründung: Benutzer am 22.11.2026 (SFLIX-20261122-054 Punkt 7): Der Dienst soll im gepushten Quellcode nicht erkennbar sein.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+### DEC-361: Tools: Regeln gegen Datenverlust (Ablagen, data.js, defekte Dateien, Verknüpfungen)
+Status: Accepted
+Datum: 2026-11-22
+Kategorie: Datenintegrität
+Ticket: SFLIX-20261122-050
+Entscheidung: 1. Ablage ist nur ein Ordner, dessen Name mit __ beginnt (wie Ablagen leeren); Ordner mit __ mitten im Namen werden eingelesen und im Protokoll genannt. 2. Daten einlesen fragt vor dem Speichern nach, wenn bei mindestens 50 bisherigen Medien weniger als die Hälfte gefunden wird oder Ordner nicht lesbar sind (Lesefehler, nicht fehlende Rechte), und bevor ein nicht erreichbarer Ordner mit Medien aus data.js entfernt wird; ohne Oberfläche wird nicht gespeichert bzw. nicht entfernt. 3. Medien prüfen untersucht als defekt gemeldete Dateien vor dem Löschen ohne gemerktes Ergebnis neu; die Vorauswahl bleibt. 4. Verknüpfungen auf Ordner (Junction, symbolischer Link) durchsucht kein Werkzeug (Folders.Ignore/IsLink); Daten einlesen nennt sie im Protokoll, Medien prüfen meldet sie und den Ordner darüber nie als leer.
+Begründung: Funde der Analyse SFLIX-20261122-049; Benutzer am 22.11.2026: Verknüpfungen dürfen ausgelassen werden (keine bewusst angelegt). Ziel kann ausserhalb des Installationsordners liegen oder fehlen.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: DEC-359
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# Werkzeuge (Arbeit vom 22.11.2026)
+
+## Entscheidungen
+
+### DEC-362: Release: Spiegeln in den GitHub-Klon mit sync_github.py
+Status: Accepted
+Datum: 2026-11-22
+Kategorie: Arbeitsweise
+Ticket: SFLIX-20261122-065
+Entscheidung: Nach einem erfolgreichen Release und nur nach ausdrücklicher Freigabe des Benutzers spiegelt die Rolle Release den Projektordner mit SFLIX_Tools/Release/sync_github.py in den lokalen GitHub-Klon (%USERPROFILE%\Documents\GitHub\Scripts\js\SFLIX): übertragen wird, was .gitignore nicht ausschliesst; im Projekt gelöschte Dateien werden im Ziel entfernt; .git und im Ziel ignorierte Dateien bleiben unberührt. Zusätzliche Sperrliste für geheime Dateien bricht ab. Standard ist ein Probelauf; Ausführen nur nach Bestätigung, zusätzliche Warnung bei vielen Löschungen. Eigener Schritt, nicht in release.ps1.
+Begründung: Benutzerwunsch: Release-Ordner und GitHub-Klon ohne Handarbeit gleich halten, ohne geheime Dateien zu veröffentlichen und ohne Leichen im Repository.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+### DEC-363: Regelwerk: Zielordner GitHub-Klon nur für Release über sync_github.py
+Status: Accepted
+Datum: 2026-11-22
+Kategorie: Arbeitsweise
+Ticket: SFLIX-20261122-065
+Entscheidung: Der Benutzer gibt frei, dass die Rolle Release ausschliesslich über sync_github.py in den lokalen GitHub-Klon (%USERPROFILE%\Documents\GitHub\Scripts\js\SFLIX) schreiben darf. Anzupassen durch die Planung nach Fertigstellung des Skripts: CLAUDE.md Abschnitt 1 (Zugriff), Guard Auftrag-guard.ps1, .claude/roles/RELEASE.md, Skill release-vorbereiten. Andere Rollen und andere Zugriffe auf den Ordner bleiben gesperrt.
+Begründung: Ausdrückliche Benutzerfreigabe vom 22.11.2026 für die Regelwerksänderung.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# STEFFLIX 2.8.15 (Arbeit vom 22.11.2026)
+
+## Entscheidungen
+
+### DEC-364: .claude nicht veroeffentlichen
+Status: Superseded
+Datum: 2026-11-22
+Kategorie: Arbeitsweise
+Ticket: SFLIX-20261122-072
+Entscheidung: Der Ordner .claude (Regelwerk, Rollen, Skills, Agents, Einstellungen, Aufnahmen, Testumgebung) steht als ganzer Ordner in .gitignore und wird weder gepusht noch von sync_github.py in den GitHub-Klon gespiegelt.
+Begründung: Das Regelwerk nennt interne Punkte, die Nutzer nicht lesen sollen, und Pfade aus dem Benutzerordner; die Aufnahmen sind gross und nur Material. Entscheid des Benutzers beim Release Desktop 4.1.0.
+Alternativen: –
+Konsequenzen: Ersetzt durch DEC-365.
+Betroffene Komponenten: –
+Abhängigkeiten: DEC-362
+
+### DEC-365: .claude vorlaeufig nicht veroeffentlichen
+Status: Accepted
+Datum: 2026-11-22
+Kategorie: Arbeitsweise
+Ticket: SFLIX-20261122-072
+Entscheidung: Der Ordner .claude steht vorlaeufig als ganzer Ordner in .gitignore und wird weder gepusht noch von sync_github.py gespiegelt. Er soll spaeter veroeffentlicht werden: vorher Regelwerk, Rollen, Skills und Agents von internen Punkten und Pfaden aus dem Benutzerordner bereinigen und klaeren, ob die Aufnahmen mit sollen; dann die Zeile .claude/ in .gitignore entfernen (testenv, settings.local.json, old, archiv bleiben ausgeschlossen).
+Begründung: Wunsch des Benutzers beim Release Desktop 4.1.0: .claude soll spaeter oeffentlich sein, aber nicht im aktuellen Zustand.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: DEC-362; DEC-364
 
 ## A. Offene Entscheidungen
 

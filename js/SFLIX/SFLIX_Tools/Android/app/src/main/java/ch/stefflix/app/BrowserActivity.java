@@ -106,6 +106,17 @@ public class BrowserActivity extends Activity implements MediaServer.Listener, P
         return t;
     });
     private long pausedAt;
+    // Im Hintergrund pausiert: nach dieser Zeit Sichtbarkeit, Verbindung und WebView freigeben (Akku), wie Playback
+    private static final long BACKGROUND_IDLE_MS = 15_000;
+    private boolean backgroundReleased;
+    private final Runnable backgroundIdle = () -> {
+        if (!backgroundOnPause || playback == null || playback.isPlaying() || web == null) return;
+        backgroundOnPause = false;
+        backgroundReleased = true;
+        web.setKeepVisible(false);
+        if (!isInPictureInPictureMode()) web.onPause();
+        root.removeCallbacks(this.keepAlive);   // qualifiziert: keepAlive steht weiter unten
+    };
     private final Runnable keepAlive = new Runnable() {
         @Override
         public void run() {
@@ -224,6 +235,9 @@ public class BrowserActivity extends Activity implements MediaServer.Listener, P
         web.setKeepVisible(backgroundOnPause);
         if (!backgroundOnPause && !isInPictureInPictureMode()) web.onPause();
         if (!backgroundOnPause) root.removeCallbacks(keepAlive);
+        backgroundReleased = false;
+        root.removeCallbacks(backgroundIdle);
+        if (backgroundOnPause && !playback.isPlaying()) root.postDelayed(backgroundIdle, BACKGROUND_IDLE_MS);
         pausedAt = System.currentTimeMillis();
     }
 
@@ -246,6 +260,8 @@ public class BrowserActivity extends Activity implements MediaServer.Listener, P
         openingSettings = false;
         boolean playedInBackground = backgroundOnPause;
         backgroundOnPause = false;
+        backgroundReleased = false;
+        if (root != null) root.removeCallbacks(backgroundIdle);
         if (web != null) {
             web.setKeepVisible(false);
             web.onResume();
@@ -270,6 +286,7 @@ public class BrowserActivity extends Activity implements MediaServer.Listener, P
     @Override
     protected void onDestroy() {
         if (root != null) root.removeCallbacks(keepAlive);
+        if (root != null) root.removeCallbacks(backgroundIdle);
         if (playback != null) playback.release();
         background.shutdownNow();
         if (connectionDialog != null) connectionDialog.dismiss();
@@ -509,7 +526,10 @@ public class BrowserActivity extends Activity implements MediaServer.Listener, P
     private byte[] injectIntoStart(byte[] html) {
         String s = new String(html, StandardCharsets.UTF_8);
         int i = s.indexOf("<script src=\"sflix_sys/js/main.js\"");
-        if (i < 0) return html;
+        // Rückfall, falls sich die Zeile ändert (z.B. anderes Attribut): vor </body>, sonst ans Ende
+        if (i < 0) i = s.indexOf("<script src=\"sflix_sys/js/main.js");
+        if (i < 0) i = s.lastIndexOf("</body>");
+        if (i < 0) i = s.length();
         String hook = media != null ? mediaHook(media.base()) : "";
         return (s.substring(0, i) + hook + injectScript() + s.substring(i)).getBytes(StandardCharsets.UTF_8);
     }
@@ -621,11 +641,25 @@ public class BrowserActivity extends Activity implements MediaServer.Listener, P
     @Override
     public void mediaCommand(String cmd, long arg) {
         if (web == null) return;
+        // Im Hintergrund nach längerer Pause freigegeben, jetzt wieder abspielen (z.B. aus der Benachrichtigung)
+        if (backgroundReleased && Playback.CMD_PLAY.equals(cmd) && backgroundAllowed()) {
+            backgroundReleased = false;
+            backgroundOnPause = true;
+            web.setKeepVisible(true);
+            web.onResume();
+            root.removeCallbacks(keepAlive);
+            root.postDelayed(keepAlive, KEEP_ALIVE_MS);
+        }
         web.evaluateJavascript("window.sflixAppMedia && sflixAppMedia(" + org.json.JSONObject.quote(cmd) + "," + arg + ")", null);
     }
 
     @Override
     public void playbackChanged() {
+        // Im Hintergrund: pausiert -> nach BACKGROUND_IDLE_MS freigeben, spielt wieder -> nicht freigeben
+        if (backgroundOnPause && root != null && playback != null) {
+            root.removeCallbacks(backgroundIdle);
+            if (!playback.isPlaying()) root.postDelayed(backgroundIdle, BACKGROUND_IDLE_MS);
+        }
         if (playback != null && playback.isVideo() && playback.videoWidth() > 0 && playback.videoHeight() > 0) {
             pipAspect = aspect(playback.videoWidth(), playback.videoHeight());
         }
@@ -988,6 +1022,9 @@ public class BrowserActivity extends Activity implements MediaServer.Listener, P
             case "gif": return "image/gif";
             case "webp": return "image/webp";
             case "bmp": return "image/bmp";
+            case "avif": return "image/avif";
+            case "ogv": return "video/ogg";
+            case "opus": return "audio/ogg";
             case "ico": return "image/x-icon";
             case "mp4": case "m4v": return "video/mp4";
             case "webm": return "video/webm";

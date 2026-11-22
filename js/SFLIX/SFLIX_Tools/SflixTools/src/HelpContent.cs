@@ -78,6 +78,8 @@ namespace Sflix
                 "Falls ja, erscheint ein Fenster mit „Jetzt aktualisieren“ oder „Später“. Nach „Später“ bleibt in den Tools ein gelber Balken stehen.\n\n" +
                 "# Update\n" +
                 "Lädt geänderte Dateien von GitHub, prüft jede über ihre Prüfsumme und ersetzt sie erst danach. Schlägt etwas fehl, bleibt der alte Stand. " +
+                "Die Prüfsummen selbst sind vom Herausgeber signiert (seit Desktop 4.1.0): Fehlt die Signatur oder passt sie nicht, wird nichts installiert. " +
+                "Kurz nach einer neuen Version kann das vorübergehend sein, dann später erneut versuchen. " +
                 "Welche Dateien zu STEFFLIX gehören und welche alten Dateien entfernt werden, kommt mit dem Update. Persönliche Dateien wie Medienliste, Lizenz und Einstellungen bleiben immer unberührt. " +
                 "Ist eine neue Version des Programms verfügbar, ersetzt es sich selbst, startet neu (auch das Fenster von STEFFLIX, falls es offen war) und macht mit den restlichen Aufgaben weiter.\n" +
                 "- ffmpeg ebenfalls aktualisieren: bringt ein installiertes ffmpeg auf die vorgegebene Version.\n\n" +
@@ -90,8 +92,10 @@ namespace Sflix
                 "Dabei werden ungültige Zeichen in Namen korrigiert und zu grosse Vorschaubilder verkleinert (Original in Preview\\__original).\n" +
                 "- Alle Ordner einlesen: ganze Mediathek.\n" +
                 "- Sonst nur die gewählten Ordner, der Rest von data.js bleibt unverändert. Das ist bei grossen Mediatheken deutlich schneller.\n" +
-                "Ablagen (Ordner mit „__“), System- und versteckte Ordner werden übersprungen. Umbenannte Dateien werden in sflix_sys\\renamed.js vermerkt, " +
-                "damit Favoriten, Fortschritt und „Weiterschauen“ in STEFFLIX erhalten bleiben."));
+                "Ablagen (Ordner, deren Name mit „__“ beginnt), System- und versteckte Ordner sowie Verknüpfungen auf Ordner (Junction, symbolischer Link) werden übersprungen. Umbenannte Dateien werden in sflix_sys\\renamed.js vermerkt, " +
+                "damit Favoriten, Fortschritt und „Weiterschauen“ in STEFFLIX erhalten bleiben.\n" +
+                "Werden deutlich weniger Medien gefunden als bisher oder sind Ordner nicht lesbar (z.B. Netzlaufwerk oder Ziel einer Verknüpfung nicht erreichbar), " +
+                "fragt das Programm vor dem Speichern nach; ebenso, bevor ein nicht erreichbarer Ordner aus data.js entfernt wird. Die vorige Fassung bleibt als data.js.bak."));
 
             t.Add(new HelpTopic("Importer",
                 "Übernimmt Videos, Musik und Bilder in die Mediathek. Dateien und Ordner wählst du mit „Dateien …“ und „Ordner …“ oder ziehst sie irgendwo ins Fenster.\n" +
@@ -287,7 +291,7 @@ namespace Sflix
                 "Eine Aufgabe, die noch updateStefflix.exe aufruft, läuft weiter, bis die alte Datei beim nächsten Start mit Oberfläche umbenannt wird. Danach den Pfad auf STEFFLIX.exe ändern."));
 
             t.Add(new HelpTopic("Ablagen und Dateien",
-                "# Ablagen der Tools (Ordner mit „__“)\n" +
+                "# Ablagen der Tools (Ordner, deren Name mit „__“ beginnt)\n" +
                 "- __teile: Teile nach dem Zusammenführen\n" +
                 "- __konvertiert: Originale nach dem Konvertieren oder Importieren\n" +
                 "- __gelöscht: Vorschaubilder ohne Medium, bei „Medien prüfen“ gelöschte Dateien und übrige Bilder von Alben\n" +

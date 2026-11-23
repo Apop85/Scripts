@@ -141,6 +141,19 @@ if os.path.exists(os.path.join(base_dir, "checksums.sig")):
 else:
     print("Hinweis: checksums.sig fehlt noch (wird beim Release erzeugt)")
 
+# 8. Release-Nummer _serial (DEC-372): 14 Ziffern. Die Prüfung läuft vor create_checksums.py; vor dem
+#    ersten Release mit Nummer fehlt sie noch: dann nur ein Hinweis (create_checksums.py setzt sie immer).
+try:
+    serial = json.loads(read("checksums.json")).get("_serial")
+    if serial is None:
+        print("Hinweis: _serial fehlt in checksums.json noch (wird beim Release erzeugt)")
+    elif not (isinstance(serial, str) and len(serial) == 14 and serial.isdigit()):
+        errors.append(f"checksums.json: _serial hat nicht genau 14 Ziffern ({serial!r})")
+    else:
+        print(f"Release-Nummer {serial}")
+except (OSError, ValueError, AttributeError):
+    errors.append("checksums.json fehlt oder ist kein gültiges JSON")
+
 if errors:
     print("FEHLER:")
     for error in errors:

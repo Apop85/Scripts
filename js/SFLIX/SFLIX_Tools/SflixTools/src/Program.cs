@@ -38,8 +38,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX: Mediathek im eigenen Fenster, Update, Daten einlesen, Importer und Tools")]
-[assembly: AssemblyVersion("4.1.0.0")]
-[assembly: AssemblyFileVersion("4.1.0.0")]
+[assembly: AssemblyVersion("4.2.0.0")]
+[assembly: AssemblyFileVersion("4.2.0.0")]
 
 namespace Sflix
 {
@@ -176,6 +176,8 @@ namespace Sflix
                     SelfUpdate.CleanupOld();
                     // Im Release-Ordner nur im Speicher (gilt bis zum Schliessen)
                     Settings settings = Settings.Load(App.IsReleaseFolder ? null : Path.Combine(App.SysDir, "updater_settings.json"));
+                    // Release-Nummer der Prüfsummen (DEC-372) in denselben Einstellungen merken
+                    Net.SerialStore = settings;
                     // Bis 3.2 wurde das Protokoll immer geschrieben: alte Datei einmal löschen
                     LogFile.RemoveLegacyOnce(settings);
                     // ffmpeg vom alten Ort (sflix_sys\ffmpeg) in den Standardordner verschieben

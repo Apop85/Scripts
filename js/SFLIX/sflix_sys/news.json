@@ -2,6 +2,206 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.09",
+      "name": "2.9.0",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Player: Bleibt die Wiedergabe an einer beschädigten Stelle einer Datei hängen und springt immer wieder zurück, springt der Player 5 Sekunden weiter und zeigt einen kurzen Hinweis. Klappt das dreimal nicht, hält er an.",
+          "component": "stefflix",
+          "componentVersion": "2.9.0",
+          "short": "Player: Bleibt die Wiedergabe an einer beschädigten Stelle einer Datei hängen und springt immer wieder zurück, springt der Player 5 Sekunden weiter und zeigt einen kurzen Hinweis. Klappt das dreimal nicht, hält er an."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Einstellungen: Neuer Abschnitt „Beschädigte Dateien“ mit allen Stellen aus Downloads, „Medien prüfen“ und der Wiedergabe, mit „An der Stelle abspielen“ und „Aus Liste entfernen“.",
+          "component": "stefflix",
+          "componentVersion": "2.9.0",
+          "short": "Einstellungen: Neuer Abschnitt „Beschädigte Dateien“ mit allen Stellen aus Downloads, „Medien prüfen“ und der Wiedergabe, mit „An der Stelle abspielen“ und „Aus Liste entfernen“."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.2.0: Download: Jedes Teilstück wird beim Laden und beim Fortsetzen geprüft, fehlerhafte werden neu geladen. Lücken in der fertigen Datei repariert das Programm selbst; bleibt eine, wählst du in der Liste „Lücke behalten“ oder „Datei löschen“.",
+          "component": "updater",
+          "componentVersion": "4.2.0",
+          "short": "Download: Jedes Teilstück wird beim Laden und beim Fortsetzen geprüft, fehlerhafte werden neu geladen. Lücken in der fertigen Datei repariert das Programm selbst; bleibt eine, wählst du in der Liste „Lücke behalten“ oder „Datei löschen“."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.2.0: Medien prüfen: Neue Option „Lücken suchen“ findet lückenhafte Videos mit Stelle und Länge. Das Ergebnis wird gemerkt, der nächste Lauf liest nur neue oder geänderte Dateien.",
+          "component": "updater",
+          "componentVersion": "4.2.0",
+          "short": "Medien prüfen: Neue Option „Lücken suchen“ findet lückenhafte Videos mit Stelle und Länge. Das Ergebnis wird gemerkt, der nächste Lauf liest nur neue oder geänderte Dateien."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.2.0: ffmpeg: Werden die Prüfsummen abgelehnt, installiert das Programm auch die eingebaute Version nicht mehr.",
+          "component": "updater",
+          "componentVersion": "4.2.0",
+          "short": "ffmpeg: Werden die Prüfsummen abgelehnt, installiert das Programm auch die eingebaute Version nicht mehr."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.2.0: Download: Bei den Fehlern 400, 404 und 410 erklärt die Meldung, dass die Adresse vermutlich abgelaufen ist.",
+          "component": "updater",
+          "componentVersion": "4.2.0",
+          "short": "Download: Bei den Fehlern 400, 404 und 410 erklärt die Meldung, dass die Adresse vermutlich abgelaufen ist."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.2.0: Oberfläche: Auswahllisten, Bildlaufleisten der Textfelder und Listen mit Häkchen sind jetzt dunkel, markierte Zeilen ohne Fokus gut lesbar.",
+          "component": "updater",
+          "componentVersion": "4.2.0",
+          "short": "Oberfläche: Auswahllisten, Bildlaufleisten der Textfelder und Listen mit Häkchen sind jetzt dunkel, markierte Zeilen ohne Fokus gut lesbar."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Bänder: Ein Klick auf eine Kachel wird nach einem abgebrochenen Ziehen nicht mehr blockiert.",
+          "component": "stefflix",
+          "componentVersion": "2.9.0",
+          "short": "Bänder: Ein Klick auf eine Kachel wird nach einem abgebrochenen Ziehen nicht mehr blockiert."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.0: Download: Mehrere STEFFLIX-Installationen löschen sich die Zwischendateien nicht mehr gegenseitig, und Hinweise beim Laden der Liste erscheinen im Protokoll.",
+          "component": "updater",
+          "componentVersion": "4.2.0",
+          "short": "Download: Mehrere STEFFLIX-Installationen löschen sich die Zwischendateien nicht mehr gegenseitig, und Hinweise beim Laden der Liste erscheinen im Protokoll."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.0: Bild-im-Bild: Das eigene Bild-im-Bild-Fenster zeigt das Video wieder, auch wenn das Hauptfenster minimiert ist (vorher stand das Bild, nur der Ton lief).",
+          "component": "updater",
+          "componentVersion": "4.2.0",
+          "short": "Bild-im-Bild: Das eigene Bild-im-Bild-Fenster zeigt das Video wieder, auch wenn das Hauptfenster minimiert ist (vorher stand das Bild, nur der Ton lief)."
+        }
+      ]
+    },
+    {
+      "version": "2.0817",
+      "name": "2.8.17",
+      "items": [
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.1.3: Dunkle Bildlaufleisten in allen Listen, Spalten in Albumbilder wählen passen sich der Breite an",
+          "component": "updater",
+          "componentVersion": "4.1.3",
+          "short": "Dunkle Bildlaufleisten in allen Listen, Spalten in Albumbilder wählen passen sich der Breite an"
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.1.4: Updates: Das Programm installiert keinen älteren Stand der Programmdateien und von ffmpeg als den schon angenommenen. Liefert der Server kurz nach einer neuen Version noch den alten Stand, wird nichts installiert und später erneut versucht.",
+          "component": "updater",
+          "componentVersion": "4.1.4",
+          "short": "Updates: Das Programm installiert keinen älteren Stand der Programmdateien und von ffmpeg als den schon angenommenen. Liefert der Server kurz nach einer neuen Version noch den alten Stand, wird nichts installiert und später erneut versucht."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Nach dem Ziehen eines Bandes mit der Maus wird ein folgender Klick per Tastatur nicht mehr verschluckt",
+          "component": "stefflix",
+          "componentVersion": "2.8.17",
+          "short": "Nach dem Ziehen eines Bandes mit der Maus wird ein folgender Klick per Tastatur nicht mehr verschluckt"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.3: Importieren mit Verschieben aus einem Ordner direkt im Installationsordner stürzt nicht mehr ab",
+          "component": "updater",
+          "componentVersion": "4.1.3",
+          "short": "Importieren mit Verschieben aus einem Ordner direkt im Installationsordner stürzt nicht mehr ab"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.3: Medien prüfen meldet eine gesperrte oder nicht lesbare Datei als nicht lesbar statt als defekt und schlägt sie nicht mehr zum Löschen vor",
+          "component": "updater",
+          "componentVersion": "4.1.3",
+          "short": "Medien prüfen meldet eine gesperrte oder nicht lesbare Datei als nicht lesbar statt als defekt und schlägt sie nicht mehr zum Löschen vor"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.3: Folgen umbenennen zählt übersprungene Dateien und Ordner beim Zusammenführen in der Zusammenfassung mit",
+          "component": "updater",
+          "componentVersion": "4.1.3",
+          "short": "Folgen umbenennen zählt übersprungene Dateien und Ordner beim Zusammenführen in der Zusammenfassung mit"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.3: Meldungen bei fehlgeschlagenen Updates enden nicht mehr mit einem doppelten Punkt",
+          "component": "updater",
+          "componentVersion": "4.1.3",
+          "short": "Meldungen bei fehlgeschlagenen Updates enden nicht mehr mit einem doppelten Punkt"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.3: Konvertieren: gleichnamige Videos mit verschiedener Endung im selben Ordner werden nicht mehr gleichzeitig umgewandelt",
+          "component": "updater",
+          "componentVersion": "4.1.3",
+          "short": "Konvertieren: gleichnamige Videos mit verschiedener Endung im selben Ordner werden nicht mehr gleichzeitig umgewandelt"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.3: ffmpeg wird bei einer nicht lesbaren Versionsangabe nicht mehr durch die eingebaute ältere Version ersetzt",
+          "component": "updater",
+          "componentVersion": "4.1.3",
+          "short": "ffmpeg wird bei einer nicht lesbaren Versionsangabe nicht mehr durch die eingebaute ältere Version ersetzt"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.3: Downloads: Liste auf einem nicht erreichbaren Laufwerk wird nicht mehr als leer behandelt, unlesbare Einträge bleiben erhalten",
+          "component": "updater",
+          "componentVersion": "4.1.3",
+          "short": "Downloads: Liste auf einem nicht erreichbaren Laufwerk wird nicht mehr als leer behandelt, unlesbare Einträge bleiben erhalten"
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Android-App 1.3.3: Einstellungen: Benachrichtigungen erlauben verschwindet nach dem Erteilen der Erlaubnis",
+          "component": "app",
+          "componentVersion": "1.3.3",
+          "short": "Einstellungen: Benachrichtigungen erlauben verschwindet nach dem Erteilen der Erlaubnis"
+        }
+      ]
+    },
+    {
+      "version": "2.0816",
+      "name": "2.8.16",
+      "items": [
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Weniger Speicherverbrauch bei vielen Seitenwechseln, Update-Hinweise werden nur einmal je Sitzung abgefragt, und Bänder scrollen nach dem Loslassen der Maus ausserhalb nicht mehr weiter. Fehlt eine Programmdatei oder ist sie beschädigt, ist der Hinweis jetzt sichtbar statt hinter dem Ladescreen.",
+          "component": "stefflix",
+          "componentVersion": "2.8.16",
+          "short": "Weniger Speicherverbrauch bei vielen Seitenwechseln, Update-Hinweise werden nur einmal je Sitzung abgefragt, und Bänder scrollen nach dem Loslassen der Maus ausserhalb nicht mehr weiter. Fehlt eine Programmdatei oder ist sie beschädigt, ist der Hinweis jetzt sichtbar statt hinter dem Ladescreen."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.1.1: Interne Aufräumarbeiten in den Tools (gemeinsame Suche in Ordnern, Verschieben in Ablagen, Erstellen von Vorschaubildern). Verwaiste Vorschaubilder, die in Preview\\__gelöscht schon einen gleichnamigen Eintrag haben, heissen jetzt wie überall Name (2).jpg statt Name mit Datum und Uhrzeit.",
+          "component": "updater",
+          "componentVersion": "4.1.1",
+          "short": "Interne Aufräumarbeiten in den Tools (gemeinsame Suche in Ordnern, Verschieben in Ablagen, Erstellen von Vorschaubildern). Verwaiste Vorschaubilder, die in Preview\\__gelöscht schon einen gleichnamigen Eintrag haben, heissen jetzt wie überall Name (2).jpg statt Name mit Datum und Uhrzeit."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Alle Daten löschen: Einstellungen und Gesehen-Markierungen gehen beim nächsten Start nicht mehr verloren, und alte Daten werden nicht erneut übernommen. Verwaiste Einträge werden erst nach ausdrücklicher Bestätigung entfernt, vorher lässt sich eine Sicherung erstellen.",
+          "component": "stefflix",
+          "componentVersion": "2.8.16",
+          "short": "Alle Daten löschen: Einstellungen und Gesehen-Markierungen gehen beim nächsten Start nicht mehr verloren, und alte Daten werden nicht erneut übernommen. Verwaiste Einträge werden erst nach ausdrücklicher Bestätigung entfernt, vorher lässt sich eine Sicherung erstellen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Seitenwechsel: Bänder eines eben verlassenen Mediums erscheinen nicht mehr verspätet auf der neuen Seite, Zurück im Player springt nicht mehr ungewollt zum Player, und ein abgebrochener Autoplay-Countdown markiert beim nächsten Weiter-Klick nicht mehr als gesehen. Fehlende Vorschaubilder zeigen den Platzhalter statt eines kaputten Bildes.",
+          "component": "stefflix",
+          "componentVersion": "2.8.16",
+          "short": "Seitenwechsel: Bänder eines eben verlassenen Mediums erscheinen nicht mehr verspätet auf der neuen Seite, Zurück im Player springt nicht mehr ungewollt zum Player, und ein abgebrochener Autoplay-Countdown markiert beim nächsten Weiter-Klick nicht mehr als gesehen. Fehlende Vorschaubilder zeigen den Platzhalter statt eines kaputten Bildes."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.1.2: Verknüpfungen auf Ordner (Junction, symbolischer Link) werden auch beim Importieren mit Verschieben und beim Zusammenführen von Staffelordnern in Folgen umbenennen nie mehr betreten: Importieren entfernt keine leeren Ordner im Ziel einer Verknüpfung mehr, Folgen umbenennen überspringt sie und nennt sie im Protokoll.",
+          "component": "updater",
+          "componentVersion": "4.1.2",
+          "short": "Verknüpfungen auf Ordner (Junction, symbolischer Link) werden auch beim Importieren mit Verschieben und beim Zusammenführen von Staffelordnern in Folgen umbenennen nie mehr betreten: Importieren entfernt keine leeren Ordner im Ziel einer Verknüpfung mehr, Folgen umbenennen überspringt sie und nennt sie im Protokoll."
+        }
+      ]
+    },
+    {
       "version": "2.0815",
       "name": "2.8.15",
       "items": [

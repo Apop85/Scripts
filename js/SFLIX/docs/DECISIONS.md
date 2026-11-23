@@ -9,11 +9,11 @@ Getroffene Entscheidungen zu STEFFLIX, Desktop und Android-App mit Begründung, 
 | Status | Anzahl |
 |---|---|
 | Proposed | 4 |
-| Accepted | 28 |
+| Accepted | 38 |
 | Implemented | 268 |
 | Rejected | 29 |
 | Superseded | 32 |
-| **Total** | **361** |
+| **Total** | **371** |
 
 ## Block 1: Session STEFFLIX 2.00 (Oktober 2026)
 
@@ -5032,6 +5032,212 @@ Alternativen: –
 Konsequenzen: –
 Betroffene Komponenten: –
 Abhängigkeiten: DEC-362; DEC-364
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# STEFFLIX 2.8.16 (Arbeit vom 23.11.2026)
+
+## Entscheidungen
+
+### DEC-366: Verwaiste Einträge erst nach Bestätigung entfernen, Sicherung anbieten
+Status: Accepted
+Datum: 2026-11-23
+Kategorie: UI
+Ticket: SFLIX-20261122-051
+Entscheidung: Einstellungen > Fehlerbehebung: Der Knopf 'Verwaiste Einträge entfernen' öffnet eine Rückfrage mit 'Sicherung exportieren', 'Endgültig entfernen' und 'Abbrechen' (wie 'Alle Daten löschen'). Erst 'Endgültig entfernen' entfernt.
+Begründung: Fehlt ein Laufwerk nur vorübergehend, wären die Einträge sonst ohne Rückweg verloren (Risiko R-12).
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+### DEC-367: Alle Daten löschen behält Migrationsmarken; alte Migrationen nur bei Altbestand
+Status: Accepted
+Datum: 2026-11-23
+Kategorie: Datenintegrität
+Ticket: SFLIX-20261122-051
+Entscheidung: modifyLocalData('all') behält alle Schlüssel, für die isMigrationFlag gilt (v1.28, v1.33, v2.00, renamedPathsApplied, sharedDataImported, dataSignature). Die Migrationen 1.28 und 1.33 laufen nur bei Altbestand (keine Marke v2.00, Einträge vorhanden, keine Schlüssel ab 1.28/2.x wie playlist-, seen-, timestamp-./, displaySettings); sonst werden sie nur als erledigt markiert. 1.28 benennt Migrationsmarken nie um.
+Begründung: Sonst benannte die Migration 1.28 nach 'Alle Daten löschen' Einstellungen und Gesehen in playlist-... um und die alte gemeinsame Datenbank wurde erneut übernommen.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# Desktop 4.1.3 (Arbeit vom 23.11.2026)
+
+## Entscheidungen
+
+### DEC-368: Medien prüfen: nicht lesbare Dateien als eigene Art
+Status: Accepted
+Datum: 2026-11-23
+Kategorie: Desktop
+Ticket: SFLIX-20261123-079
+Entscheidung: Scheitert ffprobe und lässt sich die Datei nicht öffnen (oder meldet ffprobe Permission denied), meldet Medien prüfen die Art 'locked' (Nicht lesbar, Hinweisfarbe, eigener Filter) statt 'defekt'. Nicht zum Löschen vorausgewählt; manuell wählbar.
+Begründung: Eine vorübergehend gesperrte Datei wurde als defekt gemeldet und zum Löschen vorgeschlagen (Datenverlustgefahr).
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+### DEC-370: downloads.json und ffmpeg.json: Fehler nie wie fehlende Daten behandeln
+Status: Accepted
+Datum: 2026-11-23
+Kategorie: Datenintegrität
+Ticket: SFLIX-20261123-079
+Entscheidung: Ist sflix_sys nicht erreichbar, gilt downloads.json als nicht lesbar (Liste nicht speichern, keine Teilstücke löschen). Unlesbare Einzeleinträge bleiben unverändert in der Datei und ihre Teilstücke erhalten. Ist ffmpeg.json eingetragen, aber nicht lesbar, bleibt ein installiertes ffmpeg unverändert (kein Rückfall auf die eingebaute Version). Konvertieren sperrt je Ordner und Name ohne Endung.
+Begründung: Sicherheitsbefunde L3, L4, L6 und M2 aus der Prüfung 079.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# STEFFLIX 2.8.17 (Arbeit vom 23.11.2026)
+
+## Entscheidungen
+
+### DEC-369: create_checksums.py schreibt nur mit --schreiben
+Status: Accepted
+Datum: 2026-11-23
+Kategorie: Release
+Ticket: SFLIX-20261123-079
+Entscheidung: create_checksums.py wertet Argumente aus (argparse). Ohne --schreiben werden die Prüfsummen nur angezeigt, checksums.json bleibt unverändert. release.ps1 ruft es mit --schreiben auf.
+Begründung: Ein Aufruf mit --help überschrieb checksums.json, danach passte die Signatur checksums.sig nicht mehr.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+### DEC-371: Signaturschluessel mit DPAPI ablegen
+Status: Accepted
+Datum: 2026-11-23
+Kategorie: Sicherheit
+Ticket: SFLIX-20261123-082
+Entscheidung: Der private Signaturschluessel fuer checksums.sig (signing\update_key.xml) wird mit Windows-DPAPI (Bereich CurrentUser) verschluesselt abgelegt; sign_checksums.ps1 entschluesselt ihn nur im Speicher waehrend des Signierens, release.ps1 -Auto laeuft weiter ohne Eingabe. Eine unverschluesselte Sicherung liegt nur offline beim Benutzer (USB-Stick oder Passwortmanager), nie im Projekt.
+Begründung: Pruefung 079 (M1): Schluessel lag unverschluesselt im Projektordner. DPAPI schuetzt gegen Kopieren der Datei auf andere Rechner oder Konten, ohne den automatischen Release zu brechen. Entscheid des Benutzers am 23.11.2026.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: DEC-356
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# Desktop 4.1.4 (Arbeit vom 23.11.2026)
+
+## Entscheidungen
+
+### DEC-372: Zurückspielen älterer signierter Update-Stände verhindern (Release-Nummer in checksums.json)
+Status: Accepted
+Datum: 2026-11-23
+Kategorie: Sicherheit
+Ticket: SFLIX-20261123-083
+Entscheidung: create_checksums.py schreibt bei jedem Release das Feld "_serial" in checksums.json: Zeichenkette aus 14 Ziffern, Zeitpunkt der Erzeugung in UTC (JJJJMMTThhmmss), mitsigniert über checksums.sig. Ist die bisherige checksums.json im Release-Ordner gleich hoch oder höher (falsche Uhr), nimmt das Skript deren Wert plus 1, damit die Nummer streng steigt. Der Desktop prüft in Net.LoadChecksums nach der Signatur die Nummer und merkt sich die höchste angenommene je Installation in sflix_sys\updater_settings.json (Schlüssel update.serial). Ist die Nummer kleiner als die gespeicherte, oder fehlt sie, obwohl eine gespeichert ist, wird nichts installiert (Update, Setup, ffmpeg); die Meldung nennt es als vorübergehend (später erneut versuchen), das Protokoll nennt beide Nummern. Ohne gespeicherte Nummer (neue Installation, Stände vor der Einführung) wird jeder gültig signierte Stand angenommen. check_release.py prüft, dass _serial vorhanden ist und das Format stimmt. Ein gewolltes Zurücknehmen eines Inhalts (z. B. ffmpeg auf eine ältere Version) bleibt über ein neues Release möglich.
+Begründung: Seit DEC-356 sind die Prüfsummen signiert, aber jeder früher signierte Stand bleibt für immer gültig. Wer das GitHub-Konto übernimmt, könnte so eine ältere Weboberfläche oder ein älteres ffmpeg mit bekannten Lücken einspielen (ffmpeg verarbeitet auch Downloads aus dem Internet). Die EXE ist schon über den Versionsvergleich in SelfUpdate.FindNewer geschützt. Eine Nummer je signiertem Stand deckt alle Dateien einheitlich ab, auch künftige, ohne Versionsformate je Datei vergleichen zu müssen. Befund L1 aus Prüfung SFLIX-20261123-079. Freigabe durch den Benutzer am 23.11.2026.
+Alternativen: Mindestversion je Datei (version.js, Version in ffmpeg.json): hängt vom Versionsformat ab, sperrt gewollte Rücknahmen und erkennt nicht, wenn sich zwischen zwei Ständen nur ffmpeg geändert hat. Ablaufdatum der Signatur (Schutz auch gegen Einfrieren): verworfen, weil Releases unregelmässig kommen und Updates sonst ohne neues Release ausfallen. Bewusst belassen: verworfen, weil das Risiko mit jedem Release wächst und die Lösung klein ist. Speicherort %LOCALAPPDATA%\STEFFLIX: verworfen, weil mehrere Installationen und die Testumgebung sich sonst gegenseitig beeinflussen.
+Konsequenzen: Neues Feld _serial in checksums.json (ältere Desktops und Updater 3.x übergehen es wie _webFiles). Neuer Schlüssel update.serial in updater_settings.json. Wird updater_settings.json gelöscht, beginnt der Schutz neu (erster gültiger Stand wird angenommen). Nicht abgedeckt und bewusst belassen: Einfrieren (ein Angreifer liefert dauerhaft denselben Stand, es kommen keine Updates). Neue Funktion ohne sichtbare Änderung: Patch-Version des Desktops. Umsetzung: Auftrag an Entwicklung aus SFLIX-20261123-083. Umsetzung in Desktop 4.1.4 (SFLIX-20261123-085): create_checksums.py behält die bisherige Nummer, wenn sich der Inhalt nicht geändert hat (gleicher Stand, keine neue Signatur, nichts zu pushen). check_release.py meldet ein fehlendes _serial nur als Hinweis, weil die Prüfung vor create_checksums.py läuft; ein falsches Format bleibt ein Fehler. Nachgeführt in docs/ARCHITECTURE.md 3.7 und docs/INTERFACES.md 5 und 8.2 (SFLIX-20261123-088).
+Risiken: GitHub kann kurz nach einem Push noch die alte checksums.json liefern: dann wird nichts installiert, Meldung als vorübergehend. Die Nummer darf erst gespeichert werden, wenn Signatur und Format gültig sind.
+Betroffene Komponenten: Desktop (Net.cs, Core.cs Settings), Release (create_checksums.py, check_release.py), docs/INTERFACES.md, docs/ARCHITECTURE.md, docs/RELEASE.md
+Abhängigkeiten: DEC-356
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# Lückenhafte Videos (Architekt) (Arbeit vom 23.11.2026)
+
+## Entscheidungen
+
+### DEC-373: Lückenhafte Videos erkennen: Downloader, Medien prüfen und Player
+Status: Accepted
+Datum: 2026-11-23
+Kategorie: Architektur
+Ticket: SFLIX-20261123-094
+Entscheidung: Videos mit Lücken (fehlende oder fehlerhafte Teilstücke eines Downloads) werden an drei Stellen erkannt. (1) Downloader: Jedes Teilstück wird beim Herunterladen und beim Fortsetzen geprüft: nicht leer, Länge gleich Content-Length (falls angegeben), keine Textantwort (HTML, JSON); unverschlüsselte .ts: Sync-Byte 0x47 im 188-Byte-Raster (ein ID3-Kopf am Anfang ist erlaubt); .m4s: lückenlose Box-Kette; verschlüsselte Teilstücke nur Länge (Vielfaches von 16). Sonst neu laden (bestehende Wiederholungen). Nach dem Zusammenfügen Lückensuche über die ganze Datei; die betroffenen Teilstücke werden über die Dauern der Playlist bestimmt, neu geladen und die Datei neu zusammengefügt (höchstens zwei Runden). Bleibt eine Lücke, wird die Datei normal abgelegt, und der Download bleibt mit „Lücke: <Länge> bei <Stelle>“ und den Knöpfen Behalten und Löschen in der Liste, auch bei 1 s und ohne Dialog. Löschen verschiebt die Datei in die Ablage wie „Medien prüfen“. (2) Medien prüfen: neue Option „Lücken suchen“ (Standard aus) und neue Art „lückenhaft“ mit Stelle und Länge, Aktionen wie bei defekten Dateien. Ein Lesevorgang je Datei: Ist die Option an, liefert derselbe ffprobe-Aufruf Format, Spuren und Pakete. Das Ergebnis steht in medien_cache.json; gelesen werden nur neue oder geänderte Dateien (Grösse, Änderungszeit), auch wenn mehrere Aufgaben gleichzeitig laufen. Das Lückenergebnis bleibt bei einem Wechsel der ffmpeg-Version erhalten. (3) Lückensuche: Zeitstempel (DTS) der Pakete der ersten Videospur ohne Dekodieren; eine Lücke ist ein Sprung zwischen zwei Paketen um mindestens 0,5 s (Schwelle mit der Testdatei kalibrieren). Downloader und Medien prüfen nutzen dieselbe Funktion. (4) Player (STEFFLIX, auch in der App): Springt die Wiedergabe ohne Spulen dreimal innerhalb von 60 s an dieselbe Stelle (±3 s) zurück, oder löst sie dort zweimal die Verbindungserkennung aus, gilt die Stelle als beschädigt: 5 s hinter die Stelle springen, kurzer Hinweis „Datei bei <Stelle> beschädigt: 5 s übersprungen“, Fund in die gemeinsame Liste und ins Protokoll. Höchstens drei Sprünge je Stelle, danach Hinweis und anhalten statt weiter zu versuchen. Liste und Protokoll: Schnittstellen-Entscheid zu damaged.js und player.log.
+Begründung: Beobachtung des Benutzers: Heruntergeladene Videos zeigen die volle Länge, bleiben aber an einer Stelle hängen und springen lautlos in einer Endlosschleife zurück. Ursachen im Code: Der Downloader übernimmt jede Antwort des Servers ungeprüft, beim Fortsetzen gilt jede Teildatei mit mehr als 0 Byte als fertig, und nach dem Zusammenfügen gibt es nur drei Stichproben von je 5 s. Weil die Zeitstempel erhalten bleiben, stimmt die Gesamtdauer trotz Lücke. Freigabe durch den Benutzer am 23.11.2026.
+Alternativen: Dauer der Folgen einer Staffel vergleichen (auch Vielfache für Doppelfolgen): vorerst verworfen, weil die Dauer trotz Lücke voll bleibt und Pilot, Finale oder Specials Fehlalarme ergeben. Vollständiges Dekodieren in Medien prüfen: zu langsam (Minuten je Film); bleibt im Downloader als Option „Ganze Datei prüfen“. Dialog im Downloader: verworfen, Downloads laufen im Hintergrund. Kurze Lücken (unter 2 s) ohne Frage behalten: verworfen, der Benutzer will immer entscheiden.
+Konsequenzen: Neue Funktionen: Minor-Version von STEFFLIX und Desktop. Die Lückensuche liest jede Datei ganz (über das NAS etwa so lange wie Kopieren), deshalb Option und Cache. Bitfehler ohne Lücke erkennt nur volles Dekodieren. Tests mit einer künstlich beschädigten Testdatei aus dem Beispielvideo der Testumgebung. Umsetzung in Desktop 4.2.0 und STEFFLIX 2.9.0 (SFLIX-20261123-092/093) mit zwei Abweichungen: Format und Spuren kommen aus dem bestehenden Kopf-Aufruf von ffprobe, die Pakete aus einem zweiten Aufruf mit -select_streams (die Datei wird trotzdem nur einmal ganz gelesen); Funde der Art „lückenhaft“ sind in Medien prüfen nicht zum Löschen vorausgewählt (meist noch brauchbar), gelöscht wird ohne erneute Prüfung. Die Lücke gilt als Abstand zweier Pakete über dem Median-Bildabstand plus 0,5 s (Paketdauer untauglich). Nachgeführt in docs/ARCHITECTURE.md 3.8 und docs/INTERFACES.md (SFLIX-20261123-098).
+Risiken: Das lautlose Zurückspringen kommt vom Browser; wie es sich in WebView2 und in der WebView der App genau zeigt, muss mit der Testdatei geprüft werden. Falsche Treffer beim Player (z. B. echte Verbindungsprobleme an derselben Stelle) sind möglich, deshalb nur Hinweis und Sprung, keine Änderung an der Datei.
+Betroffene Komponenten: STEFFLIX (player.js, Einstellungen), Desktop (DownloadTask.cs, DownloadPage.cs, MediaCheckTask.cs, MediaCache.cs, Ffmpeg.cs), App (über den gemeinsamen Player)
+Abhängigkeiten: –
+
+### DEC-374: Gemeinsame Liste beschädigter Dateien (damaged.js) und player.log
+Status: Accepted
+Datum: 2026-11-23
+Kategorie: Architektur
+Ticket: SFLIX-20261123-094
+Entscheidung: Liste: sflix_sys/damaged.js, vom Desktop geschrieben (atomar über .tmp, UTF-8 ohne BOM) und von start.html wie renamed.js geladen (fehlt sie, ist die Liste leer). Inhalt: var damagedMedia = {"version": 1, "items": [{"path": "./Serien/…/S01E01.mp4", "size": <Bytes>, "gaps": [{"at": <Sekunden>, "length": <Sekunden oder null>, "source": "download"|"check"|"player", "date": "<ISO-Zeit UTC>"}]}]}; Pfad wie in data.js und bei den Zeitstempeln (relativ, ./ und /). Ein Eintrag je Datei, Lücken an derselben Stelle (±3 s) zusammengefasst. Beim Schreiben entfernt der Desktop Einträge, deren Datei fehlt oder deren Grösse sich geändert hat; höchstens 2000 Einträge (die ältesten fallen weg). Brücke Weboberfläche → Desktop: {"cmd": "damaged", "path", "at", "skipped"} (Fund des Players: Liste ergänzen, Zeile in player.log) und {"cmd": "damagedRemove", "path"} (Eintrag entfernen). Ohne Desktop (App, Browser) speichert die Weboberfläche eigene Funde im Speicher-Schlüssel damagedLocal (Liste im Format von items) und ausgeblendete Einträge in damagedDismissed (Pfad → date des jüngsten ausgeblendeten Funds); beide gelten nur für das Gerät und kommen nicht in Sicherungen. Die Liste in den Einstellungen zeigt damaged.js und damagedLocal zusammen, ohne Ausgeblendete und ohne Pfade, die nicht in data.js stehen; je Eintrag Datei, Stelle, Länge, Datum, Herkunft und die Knöpfe „An der Stelle abspielen“ (5 s vor der Stelle) und „Aus Liste entfernen“. Protokoll: sflix_sys/player.log, Text UTF-8 ohne BOM, eine Zeile je Fund des Players im Desktop: „JJJJ-MM-TT hh:mm:ss  Beschädigt: <Pfad> bei <m:ss>, 5 s übersprungen“, vorerst nichts anderes. Über 256 KB fällt die ältere Hälfte weg. Die App schreibt kein player.log. Beide Dateien sind persönliche Dateien der Installation: nie herunterladen, ersetzen oder pushen (Net.ProtectedFiles, ReleaseFolder.GeneratedFiles, .gitignore, check_docs.py).
+Begründung: Der Benutzer will an einer Stelle sehen, welche Dateien betroffen sind, und ein Protokoll mit möglichst wenig Rauschen. Eine Datei im Muster von renamed.js lässt sich über file:// und in der App lesen, ohne neuen Mechanismus. Die App schreibt nicht auf das NAS, deshalb bleiben ihre Funde auf dem Gerät. Freigabe durch den Benutzer am 23.11.2026 (Variante b).
+Alternativen: Nur Liste im Speicher des Geräts (Variante a): verworfen, Funde von Downloader und Medien prüfen fehlten. JSON-Datei: über file:// nicht lesbar. Funde ins updater.log: verworfen, der Benutzer will ein eigenes player.log mit nur diesem Fehler.
+Konsequenzen: Neue Dateien damaged.js und player.log in sflix_sys, neue Brückenbefehle damaged und damagedRemove, neue Speicher-Schlüssel damagedLocal und damagedDismissed. Umbenannte Dateien verlieren ihren Eintrag (Pfad fehlt), das ist hingenommen. Doku: docs/INTERFACES.md (Abschnitte Brücke, Dateiformate, gespeicherte Schlüssel) nach der Umsetzung. Umgesetzt in Desktop 4.2.0 (Damaged.cs) und STEFFLIX 2.9.0; Format, Brücke, Speicher-Schlüssel und player.log in docs/INTERFACES.md Abschnitte 1, 4, 7 und 8 (SFLIX-20261123-098).
+Betroffene Komponenten: STEFFLIX (start.html, player.js, ui.js, Einstellungen), Desktop (PlayerForm.cs OnWebMessage, neue Klasse für die Liste, DownloadTask.cs, MediaCheckTask.cs, Core.cs, Net.cs), Release (.gitignore, check_docs.py)
+Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# Desktop 4.2.0 (Arbeit vom 23.11.2026)
+
+## Entscheidungen
+
+### DEC-375: ffmpeg: abgelehnte Prüfsummen verhindern auch die eingebaute Version
+Status: Accepted
+Datum: 2026-11-23
+Kategorie: Sicherheit
+Ticket: SFLIX-20261123-090
+Entscheidung: Sind die Prüfsummen erreichbar, aber abgelehnt (Signatur ungültig, Datei beschädigt, älterer oder fehlender Stand nach DEC-372), installiert der Desktop kein ffmpeg, auch nicht die im Programm eingebaute Version; die Aufgabe meldet den Grund. Sind Prüfsummen oder Signatur nicht erreichbar (offline, Server-Fehler), wird wie bisher die eingebaute Version geladen: Adresse und SHA-256 stecken in der EXE und sind damit vertrauenswürdig.
+Begründung: Fund 1 der Nachprüfung SFLIX-20261123-081/086: ffmpeg wurde trotz abgelehnter Release-Nummer installiert. Eine abgelehnte Antwort deutet auf einen manipulierten oder veralteten Server hin; ein Ausfall des Servers soll die erste Einrichtung dagegen nicht verhindern.
+Alternativen: –
+Konsequenzen: Umgesetzt in Desktop 4.2.0 (Ffmpeg.ManifestOrBuiltIn, ChecksumsRejectedException). Ohne erreichbare, gültige Prüfsummen bleibt eine neue Installation bis zum nächsten gültigen Stand ohne ffmpeg. Nachgeführt in docs/ARCHITECTURE.md 3.3 und 3.7 (SFLIX-20261123-098).
+Betroffene Komponenten: Desktop (Ffmpeg.cs, Net.cs)
+Abhängigkeiten: DEC-372
 
 ## A. Offene Entscheidungen
 

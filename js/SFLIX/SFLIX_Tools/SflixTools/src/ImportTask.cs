@@ -446,8 +446,11 @@ namespace Sflix
                 if (Directory.Exists(s)) RemoveIfEmpty(Path.GetFullPath(s));
         }
 
+        // Verknüpfungen auf Ordner (Junction, symbolischer Link) werden weder betreten noch gelöscht
+        // (DEC-361): Ihr Ziel liegt ausserhalb der Quelle, der Ordner darüber gilt dann als nicht leer.
         static bool RemoveIfEmpty(string dir)
         {
+            if (Folders.IsLink(dir)) return false;
             bool empty = true;
             try
             {

@@ -524,6 +524,10 @@ function renderMediaContext(mediaPath) {
     }
 
     whenMainMediaReady(function () {
+        // Inzwischen eine andere Seite oder ein anderer Ordner (Rückfall-Timer nach dem Seitenwechsel)
+        if (renderedFolderView !== viewKey) {
+            return;
+        }
         if (renderedBandsView !== viewKey) {
             renderedBandsView = viewKey;
             renderMediaBands(folders, musicList);
@@ -1406,15 +1410,29 @@ function openFavorites() {
 // Versionsprüfung und Hilfeseite (asynchron, blockiert den Start nicht)
 // ===================================================================
 
+// Antworten je Sitzung (bis zum Neuladen) merken: Jeder Wechsel zur Startseite bzw. Hilfe lud
+// version.js, news.json und versions.json sonst neu. Fehlgeschlagene Abrufe werden wiederholt.
+var fetchTextCache = {};
+
 function fetchText(url) {
     if (!window.fetch) {
         return Promise.resolve(null);
     }
-    return fetch(url, { cache: "no-store" }).then(function (response) {
+    if (fetchTextCache.hasOwnProperty(url)) {
+        return fetchTextCache[url];
+    }
+    var request = fetch(url, { cache: "no-store" }).then(function (response) {
         return response.ok ? response.text() : null;
     }).catch(function () {
         return null;
+    }).then(function (text) {
+        if (text == null) {
+            delete fetchTextCache[url];
+        }
+        return text;
     });
+    fetchTextCache[url] = request;
+    return request;
 }
 
 // Version eines Eintrags in news.json als x.y.z ("name" ab 2.5.0, sonst die alte Zahl "version")
@@ -1831,9 +1849,10 @@ function showSettingsPage() {
     document.getElementById("media").style.display = "block";
     document.getElementById("settingsPage").style.display = "grid";
     fillHelpIcons(document.getElementById("settingsPage"));
-    buildSectionPage("settingsPage", "Einstellungen", "Darstellung, Sortierung, Startseite, Wiedergabe, Datensicherung, Fehlerbehebung und Lizenz");
+    buildSectionPage("settingsPage", "Einstellungen", "Darstellung, Sortierung, Startseite, Wiedergabe, beschädigte Dateien, Datensicherung, Fehlerbehebung und Lizenz");
     initSettingsPage();
     initBackup();
+    renderDamagedList();
 }
 
 // Öffne Einstellungen, optional bei einem Abschnitt (z.B. "datensicherung")
@@ -2088,3 +2107,6 @@ function renderNews(container, news) {
         container.appendChild(details);
     });
 }
+
+// Markierung: Datei vollständig geladen (Prüfung am Ende von start.html)
+var sflixFileEndPages = true;

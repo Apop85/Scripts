@@ -1379,6 +1379,10 @@ function canRecoverConnection(node) {
 function recoverConnection(node) {
     var path = node.dataset.mediaPath;
     var state = node.sflixRecovery;
+    // Zweimal an derselben Stelle: eher eine beschädigte Datei (DEC-373)
+    if ((state == null || state.path !== path) && noteDamagedEvent(node, node.sflixLastTime || 0, "recovery")) {
+        return;
+    }
     if (state == null || state.path !== path) {
         state = {
             path: path,
@@ -1408,6 +1412,148 @@ function recoverConnection(node) {
         // Gleiche Adresse neu setzen: der Browser lädt die Datei neu
         node.src = state.src;
     }, connectionRetryDelayMs);
+}
+
+// ===================================================================
+// Beschädigte Stellen (DEC-373, seit 2.9.0)
+// ===================================================================
+
+// Fehlen in einer Datei Bilder (Lücke, z.B. aus einem Download), bleibt die Wiedergabe dort hängen und
+// springt lautlos zurück. Springt sie ohne Spulen dreimal innerhalb von 60 s an dieselbe Stelle (±3 s)
+// zurück, oder löst sie dort zweimal die Verbindungserkennung aus, gilt die Stelle als beschädigt:
+// 5 s dahinter weiter, kurzer Hinweis, Fund melden. Höchstens drei Sprünge je Stelle, danach anhalten.
+// Spulen, Bild-im-Bild und ein Wechsel der Datei setzen die Zählung zurück.
+var damagedJumps = 3;
+var damagedRecoveries = 2;
+var damagedWindowMs = 60000;
+var damagedSpotSeconds = 3;
+var damagedSkipSeconds = 5;
+var damagedMaxSkips = 3;
+var damagedUserInputAt = 0;
+var damagedReported = {};
+
+// Eingaben des Nutzers (Spulen über Leiste, Tasten, Tippen): Rücksprünge danach zählen nicht
+["pointerdown", "keydown", "wheel", "touchstart"].forEach(function (type) {
+    document.addEventListener(type, function () {
+        damagedUserInputAt = Date.now();
+    }, true);
+});
+
+function initDamagedDetection(node) {
+    var reset = function () {
+        node.sflixDamage = null;
+    };
+    node.addEventListener("loadedmetadata", function () {
+        // Kurz nach dem Laden setzt STEFFLIX selbst die Position (Zeitstempel, Weiterspielen)
+        node.sflixDamageReadyAt = Date.now() + 3000;
+        if (node.sflixDamagePath !== node.dataset.mediaPath) {
+            node.sflixDamagePath = node.dataset.mediaPath;
+            node.sflixDamageSkips = {};
+            reset();
+        }
+    });
+    node.addEventListener("enterpictureinpicture", reset);
+    node.addEventListener("leavepictureinpicture", reset);
+    node.addEventListener("timeupdate", function () {
+        var now = node.currentTime;
+        var last = node.sflixDamageLast;
+        node.sflixDamageLast = now;
+        if (last == null || node.sflixDamagePath !== node.dataset.mediaPath || Date.now() < (node.sflixDamageReadyAt || 0)) {
+            return;
+        }
+        if (now >= last - 1) {
+            return;
+        }
+        // Rücksprung: durch den Nutzer (spult) oder von selbst
+        if (Date.now() - damagedUserInputAt < 2000) {
+            reset();
+            return;
+        }
+        noteDamagedEvent(node, last, "jump");
+    });
+}
+
+// Zählt Rücksprünge bzw. Verbindungserkennungen an derselben Stelle. true: Stelle übersprungen
+function noteDamagedEvent(node, spot, kind) {
+    if (node.tagName == "IMG" || !(spot > 0)) {
+        return false;
+    }
+    var state = node.sflixDamage;
+    var time = Date.now();
+    if (state == null || state.path !== node.dataset.mediaPath || Math.abs(state.spot - spot) > damagedSpotSeconds || time - state.first > damagedWindowMs) {
+        state = { path: node.dataset.mediaPath, spot: spot, first: time, jumps: 0, recoveries: 0 };
+        node.sflixDamage = state;
+    }
+    if (kind === "jump") {
+        state.jumps++;
+    } else {
+        state.recoveries++;
+    }
+    if (state.jumps >= damagedJumps || state.recoveries >= damagedRecoveries) {
+        node.sflixDamage = null;
+        skipDamagedSpot(node, state.spot);
+        return true;
+    }
+    return false;
+}
+
+function skipDamagedSpot(node, spot) {
+    var path = node.dataset.mediaPath;
+    var key = String(Math.round(spot / damagedSpotSeconds));
+    var skips = node.sflixDamageSkips || (node.sflixDamageSkips = {});
+    skips[key] = (skips[key] || 0) + 1;
+    // Verbindungserkennung an dieser Stelle beenden: die Datei ist beschädigt, nicht die Verbindung
+    node.sflixRecovery = null;
+    hideMediaMessage();
+    reportDamagedSpot(path, spot);
+    var where = formatMediaTime(spot);
+    var ui = getPlayerUI();
+    if (skips[key] > damagedMaxSkips) {
+        node.pause();
+        showDamagedHint(ui, "Datei bei " + where + " beschädigt: Wiedergabe angehalten. Zum Weiterschauen hinter die Stelle spulen.");
+        return;
+    }
+    var target = spot + damagedSkipSeconds;
+    if (hasMediaDuration(node) && target >= node.duration) {
+        target = Math.max(0, node.duration - 0.5);
+    }
+    node.sflixDamageLast = target;
+    node.currentTime = target;
+    var request = node.play();
+    if (request && request.catch) {
+        request.catch(function () {});
+    }
+    showDamagedHint(ui, "Datei bei " + where + " beschädigt: " + damagedSkipSeconds + " s übersprungen");
+}
+
+function showDamagedHint(ui, text) {
+    if (ui != null && ui.toast) {
+        showPlayerToast(ui, text);
+    } else {
+        showMediaMessage(text);
+    }
+}
+
+// Fund melden, einmal je Datei und Stelle: im Desktop an STEFFLIX.exe (damaged.js, player.log), sonst
+// im Speicher dieses Geräts (damagedLocal, DEC-374)
+function reportDamagedSpot(path, spot) {
+    if (!path) {
+        return;
+    }
+    var key = path + "|" + Math.round(spot / damagedSpotSeconds);
+    if (damagedReported[key]) {
+        return;
+    }
+    damagedReported[key] = true;
+    var at = Math.round(spot * 10) / 10;
+    if (isDesktopApp()) {
+        sendToDesktop({ cmd: "damaged", path: path, at: at, skipped: damagedSkipSeconds });
+        addDamagedGap(getDesktopDamagedItems(), path, at, null, "player");
+        return;
+    }
+    var items = readDamagedLocal();
+    addDamagedGap(items, path, at, null, "player");
+    setData("damagedLocal", JSON.stringify(items));
 }
 
 // ===================================================================
@@ -1494,6 +1640,8 @@ function loadDecodedMedia(decodedData, pushState) {
         }
         node.dataset.mediaPath = medialocation;
         if (node.getAttribute("src") !== medialocation) {
+            // Für onloadedmetadata (läuft erst nach dem Zurücksetzen von isPopStateNavigation)
+            node.sflixPopState = isPopStateNavigation;
             node.src = medialocation;
             if (node.tagName != "IMG") {
                 // Lautstärke des Ordners (bzw. des nächsten darüber) übernehmen
@@ -1821,7 +1969,13 @@ function loadNextDuration() {
 // Funktion, um Subroutinen an das Medienelement anzuhängen
 function appendMediafunctions(node) {
     initConnectionRecovery(node);
+    initDamagedDetection(node);
     node.onloadedmetadata = function () {
+        // Einstellungen › Beschädigte Dateien: "An der Stelle abspielen" (wie ein Weiterspielen)
+        if (pendingDamagedSeek != null && pendingDamagedSeek.path === node.dataset.mediaPath) {
+            node.sflixResume = { path: pendingDamagedSeek.path, time: pendingDamagedSeek.time };
+            pendingDamagedSeek = null;
+        }
         // Nach einem Verbindungsabbruch neu geladen: an der alten Stelle weiter, sonst nichts ändern
         var resume = node.sflixResume;
         node.sflixResume = null;
@@ -1842,7 +1996,9 @@ function appendMediafunctions(node) {
             playRequest.catch(function () {});
         }
         node.setAttribute("preload", "auto");
-        if (!isPopStateNavigation) {
+        var fromPopState = node.sflixPopState === true;
+        node.sflixPopState = false;
+        if (!fromPopState) {
             scrollToPlayer(true);
         }
         // Dauer für den Fortschrittsbalken auf der Startseite speichern
@@ -1919,13 +2075,13 @@ function appendMediafunctions(node) {
             var remaining = this.duration - currentTime;
             var startAnimation = autoplayDuration + minTime;
             var prozent = ((startAnimation - remaining) / minTime) * 100;
+            autoplayCountdownActive = true;
             nextNode.style.background = "linear-gradient(to right, var(--sflix-accent) " + Math.min(100, Math.max(0, prozent)) + "%, var(--sflix-surface) 0%)";
             // Gewechselt wird bei "Dauer bis Übergang" + 1 Sekunde vor dem Ende
             showAutoplayCountdown(Math.ceil(remaining - (autoplayDuration + minTime - 10)), prozent);
 
             if (this.duration - currentTime <= autoplayDuration + minTime - 10) {
-                nextNode.style.background = "";
-                hideAutoplayCountdown();
+                clearAutoplayCountdown();
                 updateOptions(autoplayChecked, document.getElementById("amountOfAutoplay").value);
                 if (nextNode.childNodes.length > 0 && nextNode.childNodes[0].textContent != "") {
                     removeData(timestampKey);
@@ -1938,6 +2094,9 @@ function appendMediafunctions(node) {
                     updateOptions(false, 0);
                 }
             }
+        } else if (autoplayCountdownActive) {
+            // Countdown abgebrochen (Autoplay aus, zurückgespult ...): auch die Füllung von Weiter entfernen
+            clearAutoplayCountdown();
         } else {
             hideAutoplayCountdown();
         }
@@ -2401,6 +2560,33 @@ function buildSettingsMenu(ui) {
     return menu;
 }
 
+// Klick neben das Menü schliesst es. Der Klick selbst wird verschluckt, damit z.B. auf dem
+// Handy nicht die Kachel unter dem abgedunkelten Hintergrund geöffnet wird.
+// Die Menüknöpfe selbst wechseln direkt zum anderen Menü. Nur ein Listener auf document für den
+// jeweils aktuellen Player (früher einer je Player, der nie entfernt wurde).
+var playerMenuOutsideCloseBound = false;
+
+function initPlayerMenuOutsideClose() {
+    if (playerMenuOutsideCloseBound) {
+        return;
+    }
+    playerMenuOutsideCloseBound = true;
+    document.addEventListener("pointerdown", function (event) {
+        var ui = playerUI;
+        if (ui == null) {
+            return;
+        }
+        var open = getOpenPlayerMenu(ui);
+        var onMenuButton = ui.menus.some(function (entry) {
+            return entry.button.contains(event.target);
+        });
+        if (open != null && !open.menu.contains(event.target) && !onMenuButton) {
+            closePlayerMenus(ui);
+            swallowNextClick();
+        }
+    });
+}
+
 function bindPlayerEvents(ui) {
     var media = ui.media;
 
@@ -2454,19 +2640,8 @@ function bindPlayerEvents(ui) {
             togglePlayerMenu(ui, entry.menu, entry.menu.hidden);
         });
     });
-    // Klick neben das Menü schliesst es. Der Klick selbst wird verschluckt, damit z.B. auf dem
-    // Handy nicht die Kachel unter dem abgedunkelten Hintergrund geöffnet wird.
-    // Die Menüknöpfe selbst wechseln direkt zum anderen Menü.
-    document.addEventListener("pointerdown", function (event) {
-        var open = getOpenPlayerMenu(ui);
-        var onMenuButton = ui.menus.some(function (entry) {
-            return entry.button.contains(event.target);
-        });
-        if (open != null && !open.menu.contains(event.target) && !onMenuButton) {
-            closePlayerMenus(ui);
-            swallowNextClick();
-        }
-    });
+    // Klick neben das Menü schliesst es (ein Listener für alle Player, siehe initPlayerMenuOutsideClose)
+    initPlayerMenuOutsideClose();
 
     if (!ui.isAudio) {
         ui.pipButton.addEventListener("click", function () {
@@ -3082,8 +3257,22 @@ function setAutoplayFromPlayer(enabled) {
     checkAutoplayAmount();
     commitAutoplaySettings();
     if (!enabled) {
-        document.getElementById("next").style.background = "";
+        clearAutoplayCountdown();
     }
+}
+
+// true, solange der Autoplay-Countdown läuft (Füllung von Weiter, "Nächstes in … s"). Früher wurde
+// er an #next.style.background erkannt, das nicht überall zurückgesetzt wurde.
+var autoplayCountdownActive = false;
+
+// Countdown beenden: Markierung, Füllung von Weiter und Anzeige im Player
+function clearAutoplayCountdown() {
+    autoplayCountdownActive = false;
+    var nextNode = document.getElementById("next");
+    if (nextNode != null) {
+        nextNode.style.background = "";
+    }
+    hideAutoplayCountdown();
 }
 
 // Countdown bis zum nächsten Medium (secondsLeft, Fortschritt 0-100)
@@ -3112,16 +3301,10 @@ function hideAutoplayCountdown() {
 // als gesehen, die gespeicherte Position wird gelöscht. Weiter zählt zusätzlich die Autoplay-Anzahl
 // herunter (wie der automatische Wechsel), Zurück nicht. Ausserhalb des Countdowns: nichts.
 function finishCountdownOnNavigation(direction) {
-    var ui = getPlayerUI();
-    var nextNode = document.getElementById("next");
-    var active = (ui != null && !ui.countdown.hidden) || (nextNode != null && nextNode.style.background !== "");
-    if (!active) {
+    if (!autoplayCountdownActive) {
         return;
     }
-    if (nextNode != null) {
-        nextNode.style.background = "";
-    }
-    hideAutoplayCountdown();
+    clearAutoplayCountdown();
     var player = document.getElementById("video");
     if (player != null && (player.tagName == "VIDEO" || player.tagName == "AUDIO")) {
         removeData(getTimestampKey(player));
@@ -3144,7 +3327,7 @@ function onPlayerMediaChanged(media) {
     media.playbackRate = 1;
     ui.downloadLink.href = media.getAttribute("src");
     ui.downloadLink.setAttribute("download", getBaseName(media.dataset.mediaPath || ""));
-    hideAutoplayCountdown();
+    clearAutoplayCountdown();
     updateProgress(ui);
     updatePlayButton(ui);
     updatePlayerTitle(document.getElementById("mediaTitle").textContent);
@@ -3370,3 +3553,6 @@ function setImageFullscreen(active) {
         }, 400);
     }
 }
+
+// Markierung: Datei vollständig geladen (Prüfung am Ende von start.html)
+var sflixFileEndPlayer = true;

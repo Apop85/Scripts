@@ -290,7 +290,7 @@ namespace Sflix
             frame.BackColor = Theme.Card;
             frame.Padding = new Padding(Theme.S(16), Theme.S(12), Theme.S(8), Theme.S(12));
             frame.Margin = new Padding(0);
-            RichTextBox box = new RichTextBox();
+            RichTextBox box = new RichTextBox(); DarkWindow.Apply(box);
             box.Dock = DockStyle.Fill;
             box.ReadOnly = true;
             box.BorderStyle = BorderStyle.None;

@@ -57,7 +57,8 @@ function initEventListeners() {
     window.addEventListener("popstate", function (event) {
         var decodedData = getDecodedUrlDataFromWindow();
         if (decodedData != null && decodedData.includes("MEDIA:") && currentMediaLocation != null) {
-            // Im Player von Medium zu Medium: nur das Medium wechseln
+            // Im Player von Medium zu Medium: nur das Medium wechseln. onloadedmetadata läuft erst
+            // später, darum merkt sich das Medienelement die Art des Wechsels (sflixPopState)
             isPopStateNavigation = true;
             loadDecodedMedia(decodedData, false);
             isPopStateNavigation = false;
@@ -147,6 +148,9 @@ function stopCurrentMedia() {
         exitBrowserFullscreen();
     }
     timeoutArray = cancelTimeouts();
+    // Ausstehende Aufbauten der Bänder (whenMainMediaReady, auch der Rückfall nach 4 s) verwerfen
+    mediaReadyToken++;
+    autoplayCountdownActive = false;
     currentMediaLocation = null;
     playerUI = null;
     // Medientasten und BiB-Knöpfe ohne Player abmelden
@@ -173,6 +177,8 @@ function resetPage() {
         toggleContainer(["searchFieldContainer"], "none");
     }
     stopCurrentMedia();
+    // Listener und Beobachter der alten Bänder (cards.js)
+    releaseRowBands();
     restorePageTemplate();
     renderedFolderView = null;
     currentFolderLevels = null;
@@ -306,3 +312,6 @@ initDatabase(function () {
         showDesktopExportPage();
     }
 });
+
+// Markierung: Datei vollständig geladen (Prüfung am Ende von start.html)
+var sflixFileEndMain = true;

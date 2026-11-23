@@ -6,7 +6,8 @@
 //
 // Brücke (window.chrome.webview, siehe initDesktopApp in ui.js):
 //   STEFFLIX -> Programm (JSON-Text): {cmd:"ready"}, {cmd:"tools", page}, {cmd:"fullscreen"}, {cmd:"reload"},
-//                                     {cmd:"importResult", ok, message}, {cmd:"pip", on, paused}
+//                                     {cmd:"importResult", ok, message}, {cmd:"pip", on, paused},
+//                                     {cmd:"damaged", path, at, skipped}, {cmd:"damagedRemove", path} (DEC-374)
 //
 // Bild-im-Bild (DEC-341, DEC-344): Das BiB ist das native Fenster von Chromium (gehört dem Prozess
 // msedgewebview2.exe). Beim Start ({cmd:"pip", on:true}) merkt sich das Fenster seinen Zustand und
@@ -151,14 +152,30 @@ namespace Sflix
             InitWebView();
         }
 
+        const string LegacyBrowserArguments = "--autoplay-policy=no-user-gesture-required";
+        const string BrowserArguments = LegacyBrowserArguments + " --disable-features=BackgroundVideoTrackOptimization,BackgroundVideoPauseOptimization";
+
+        static System.Threading.Tasks.Task<CoreWebView2Environment> CreateEnvironment(string arguments)
+        {
+            return CoreWebView2Environment.CreateAsync(null, WebViewLibs.UserDataFolder(), new CoreWebView2EnvironmentOptions(arguments));
+        }
+
         async void InitWebView()
         {
             try
             {
-                // Autoplay ohne vorherigen Klick (nächste Folge, Musik)
-                CoreWebView2EnvironmentOptions options = new CoreWebView2EnvironmentOptions("--autoplay-policy=no-user-gesture-required");
-                CoreWebView2Environment env = await CoreWebView2Environment.CreateAsync(null, WebViewLibs.UserDataFolder(), options);
-                await web.EnsureCoreWebView2Async(env);
+                // Autoplay ohne vorherigen Klick (nächste Folge, Musik). Videospur nicht abschalten, wenn die
+                // Seite verborgen ist: beim eigenen Bild-im-Bild ist das Hauptfenster minimiert, das Video
+                // läuft im BiB-Fenster weiter (sonst nur Ton und ein stehendes Bild, SFLIX-20261123-095)
+                bool legacy = false;
+                try { await web.EnsureCoreWebView2Async(await CreateEnvironment(BrowserArguments)); }
+                catch (ArgumentException) { legacy = true; }   // Umgebung läuft schon mit anderen Argumenten (gleicher Datenordner)
+                catch (COMException e)
+                {
+                    if (e.ErrorCode != unchecked((int)0x8007139F)) throw;   // ERROR_INVALID_STATE: andere Optionen
+                    legacy = true;
+                }
+                if (legacy) await web.EnsureCoreWebView2Async(await CreateEnvironment(LegacyBrowserArguments));
             }
             catch (Exception ex)
             {
@@ -388,6 +405,18 @@ namespace Sflix
                     bool on = msg.Bool("on", false);
                     bool paused = msg.Bool("paused", true);
                     BeginInvoke((Action)delegate { OnPip(on, paused); });
+                    break;
+                case "damaged":
+                    // Player hat eine beschädigte Stelle übersprungen (DEC-373/374): Liste und player.log.
+                    // Datei im Hintergrund (Netzlaufwerk), Pfad nur innerhalb des Installationsordners.
+                    string damagedPath = msg.Str("path");
+                    double at = msg.Num("at", -1), skipped = msg.Num("skipped", 5);
+                    System.Threading.ThreadPool.QueueUserWorkItem(delegate { DamagedList.ReportFromPlayer(damagedPath, at, skipped); });
+                    break;
+                case "damagedRemove":
+                    string removePath = msg.Str("path");
+                    if (DamagedList.FromWebPath(removePath) != null)
+                        System.Threading.ThreadPool.QueueUserWorkItem(delegate { DamagedList.RemoveWeb(removePath); });
                     break;
             }
         }

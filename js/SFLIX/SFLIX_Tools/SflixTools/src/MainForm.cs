@@ -1,4 +1,4 @@
-﻿// Hauptfenster: Aufgaben auswählen, starten, Fortschritt und Protokoll.
+// Hauptfenster: Aufgaben auswählen, starten, Fortschritt und Protokoll.
 
 using System;
 using System.Collections.Concurrent;
@@ -43,7 +43,7 @@ namespace Sflix
         readonly string startNotice;
 
         // Optionen
-        DarkCheckBox optFfmpeg, optMoveParts, optDeleteOriginal, optConvertAudio, optPreviewVideos, optPreviewImages, optPreviewMusic;
+        DarkCheckBox optCheckGaps, optFfmpeg, optMoveParts, optDeleteOriginal, optConvertAudio, optPreviewVideos, optPreviewImages, optPreviewMusic;
         DarkCheckBox optImportStructure, optImportConvert, optImportMove, optImportPreview;
         DarkCheckBox optDataAll;
         ListBox dataFolders;
@@ -325,6 +325,8 @@ namespace Sflix
             optPreviewMusic.Margin = new Padding(Theme.S(20), Theme.S(2), 0, Theme.S(2));
             previewRow.Controls.Add(optPreviewMusic);
 
+            // Medien prüfen: Lücken suchen (DEC-373), liest jedes Video ganz
+            optCheckGaps = SmallCheck("Lücken suchen (liest jedes Video ganz, das Ergebnis wird gemerkt)");
             optMoveParts = SmallCheck("Teile danach nach „" + MergeTask.PartsFolderName + "“ verschieben");
 
             convertParallel = new NumericUpDown();
@@ -406,7 +408,7 @@ namespace Sflix
                 Spec("check", Glyph.Inspect, "Medien prüfen", "Nicht abspielbar, defekt",
                      "Findet Medien, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), defekte und leere Dateien, Medien ohne Vorschaubild " +
                      "(gemäss „Vorschaubilder“: Videos und/oder Bilder) sowie leere Ordner. Im Ergebnis wählst du, was gelöscht, konvertiert bzw. mit Vorschaubild versehen wird.",
-                     pickCheck.Root),
+                     optCheckGaps, pickCheck.Root),
                 Spec("cleanup", Glyph.Trash, "Ablagen leeren", "__-Ordner löschen",
                      "„__teile“, „__konvertiert“, „__gelöscht“, „__original“, „" + EpisodeTask.ReplacedFolderName + "“ und „" + DuplicateTask.FolderName + "“ endgültig löschen. " +
                      "Du siehst vorher, was gelöscht wird. Nur innerhalb des Installationsordners möglich.", cleanupInfo, pickCleanup.Root),
@@ -1441,7 +1443,7 @@ namespace Sflix
             row.WrapContents = false;
             row.Margin = new Padding(0, 0, 0, Theme.S(4));
             row.BackColor = Color.Transparent;
-            toolsParallel = new ComboBox();
+            toolsParallel = new DarkCombo();
             toolsParallel.DropDownStyle = ComboBoxStyle.DropDownList;
             toolsParallel.FlatStyle = FlatStyle.Flat;
             toolsParallel.BackColor = Theme.Input;
@@ -1720,7 +1722,7 @@ namespace Sflix
             target.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             target.Margin = new Padding(0, Theme.S(2), 0, Theme.S(2));
 
-            importCategory = new ComboBox();
+            importCategory = new DarkCombo();
             importCategory.DropDownStyle = ComboBoxStyle.DropDownList;
             importCategory.FlatStyle = FlatStyle.Flat;
             importCategory.BackColor = Theme.Input;
@@ -2178,6 +2180,7 @@ namespace Sflix
             optPreviewVideos.Checked = settings.GetBool("preview.videos", true);
             optPreviewImages.Checked = settings.GetBool("preview.images", false);
             optPreviewMusic.Checked = settings.GetBool("preview.music", false);
+            optCheckGaps.Checked = settings.GetBool("check.gaps", false);
             optImportStructure.Checked = settings.GetBool("import.structure", true);
             optImportConvert.Checked = settings.GetBool("import.convert", false);
             optImportMove.Checked = settings.GetBool("import.move", false);
@@ -2207,6 +2210,7 @@ namespace Sflix
             settings.SetBool("preview.videos", optPreviewVideos.Checked);
             settings.SetBool("preview.images", optPreviewImages.Checked);
             settings.SetBool("preview.music", optPreviewMusic.Checked);
+            settings.SetBool("check.gaps", optCheckGaps.Checked);
             settings.SetBool("import.structure", optImportStructure.Checked);
             // Nur die eigene Wahl merken, nicht das erzwungene Häkchen bei nicht kompatiblen Dateien
             if (optImportConvert.Enabled) settings.SetBool("import.convert", optImportConvert.Checked);
@@ -2548,7 +2552,10 @@ namespace Sflix
             runner.Convert = conv;
             runner.ConvertFolders = toolFolders["convert"];
             // Nach einem Import nur im Zielordner nach fehlenden Vorschaubildern suchen
-            runner.PreviewFolders = import != null ? new List<string> { dataScope[0] } : toolFolders["preview"];
+            // (immer der Zielordner selbst: dataScope kann null sein oder ihn als verschachtelt entfernt haben)
+            runner.PreviewFolders = import != null
+                ? new List<string> { Path.Combine(App.Root, import.Category, import.SubFolder) }
+                : toolFolders["preview"];
             runner.PreviewVideos = previewVideos;
             runner.PreviewImages = previewImages;
             // Albumbilder nur im Tool Vorschaubilder (nicht nach einem Import)
@@ -2556,6 +2563,7 @@ namespace Sflix
             runner.CleanupFolders = toolFolders["cleanup"];
             runner.DupeFolders = toolFolders["dupes"];
             runner.CheckFolders = toolFolders["check"];
+            runner.CheckGaps = optCheckGaps.Checked;
             runner.RenameFolder = renameDir;
             runner.DataFolders = dataScope;
             if (import != null) import.Video = conv;
@@ -2887,6 +2895,7 @@ namespace Sflix
         public ConvertOptions Convert;
         public bool PreviewVideos = true;
         public bool PreviewImages;
+        public bool CheckGaps;
         public bool PreviewMusic;          // Albumbilder (seit 3.4.3)
         public string RenameFolder;        // Folgen umbenennen: Serienordner
         public ImportOptions Import;
@@ -2999,7 +3008,7 @@ namespace Sflix
                     ctx.Summary = "in " + ctx.Ffmpeg.Dir;
                     break;
                 case "dupes": ForEachFolder(ctx, DupeFolders, delegate(string f) { DuplicateTask.Run(ctx, f); }); break;
-                case "check": MediaCheckTask.Run(ctx, CheckFolders, Convert, PreviewVideos, PreviewImages); break;
+                case "check": MediaCheckTask.Run(ctx, CheckFolders, Convert, PreviewVideos, PreviewImages, CheckGaps); break;
                 case "merge": ForEachFolder(ctx, MergeFolders, delegate(string f) { MergeTask.Run(ctx, f, MoveParts); }); break;
                 case "convert": ForEachFolder(ctx, ConvertFolders, delegate(string f) { Convert.Folder = f; ConvertTask.Run(ctx, Convert); }); break;
                 case "preview":

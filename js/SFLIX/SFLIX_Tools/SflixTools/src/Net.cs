@@ -22,6 +22,13 @@ namespace Sflix
         public DownloadException(string message) : base(message) { }
     }
 
+    // Prüfsummen geladen, aber abgelehnt (Signatur ungültig, Datei beschädigt, älterer Stand). Anders als
+    // "nicht erreichbar" darf danach auch keine eingebaute ffmpeg-Version installiert werden (SFLIX-20261123-090).
+    public class ChecksumsRejectedException : DownloadException
+    {
+        public ChecksumsRejectedException(string message) : base(message) { }
+    }
+
     public static class Net
     {
         public static string RawUrl = "https://raw.githubusercontent.com/Apop85/Scripts/master/js/SFLIX/";
@@ -79,7 +86,7 @@ namespace Sflix
             "sflix_sys/data.js", "sflix_sys/install.js", "sflix_sys/license.js", "sflix_sys/renamed.js",
             "sflix_sys/updater_info.js", "sflix_sys/updater_settings.json", "sflix_sys/folgen_cache.json",
             "sflix_sys/folgen_rueckgaengig.json", "sflix_sys/updater.log", "sflix_sys/" + MediaCache.FileName,
-            "sflix_sys/" + DownloadStore.FileName,
+            "sflix_sys/" + DownloadStore.FileName, "sflix_sys/" + DamagedList.FileName, "sflix_sys/" + DamagedList.LogName,
         };
 
         // Endungen, die zur Weboberfläche gehören dürfen (keine Programme, keine Medien)
@@ -318,9 +325,61 @@ namespace Sflix
             return ms.ToArray();
         }
 
+        // Release-Nummer in checksums.json (DEC-372): 14 Ziffern, streng steigend, mitsigniert. Die höchste
+        // angenommene merkt sich jede Installation in updater_settings.json.
+        public const string SerialKey = "_serial", SerialSetting = "update.serial";
+
+        // Einstellungen der laufenden Installation (setzt Program.cs). Dort merkt sich LoadChecksums die
+        // Release-Nummer; das Setup in einen anderen Ordner übergibt die Einstellungen der Zielinstallation.
+        public static Settings SerialStore;
+        static readonly object serialGate = new object();
+
+        public static JsonObject LoadChecksums(CancellationToken token)
+        {
+            return LoadChecksums(token, SerialStore);
+        }
+
         // Lädt checksums.json und prüft die Signatur (checksums.sig, seit 4.1.0). Ohne gültige Signatur
         // wird nichts installiert: das gilt für Update, Setup und ffmpeg (alle holen die Prüfsummen hier).
-        public static JsonObject LoadChecksums(CancellationToken token)
+        // Danach die Release-Nummer: kein Stand, der älter ist als ein schon angenommener (seit 4.1.4).
+        public static JsonObject LoadChecksums(CancellationToken token, Settings serialStore)
+        {
+            JsonObject checksums = LoadSignedChecksums(token);
+            CheckSerial(checksums, serialStore);
+            return checksums;
+        }
+
+        // 14 Ziffern, sonst null (ungültiges Format gilt wie fehlend)
+        static string ValidSerial(string s)
+        {
+            if (s == null || s.Length != 14) return null;
+            foreach (char c in s) if (c < '0' || c > '9') return null;
+            return s;
+        }
+
+        // Erst nach gültiger Signatur und erfolgreichem Lesen: kleiner als die gespeicherte Nummer oder
+        // fehlend, obwohl eine gespeichert ist -> nichts installieren. Höher -> speichern.
+        // Ohne gespeicherte Nummer wird jeder gültig signierte Stand angenommen.
+        static void CheckSerial(JsonObject checksums, Settings store)
+        {
+            if (store == null) return;
+            string remote = ValidSerial(checksums.Str(SerialKey));
+            lock (serialGate)
+            {
+                string known = ValidSerial(store.GetString(SerialSetting, null));
+                if (known != null && (remote == null || string.CompareOrdinal(remote, known) < 0))
+                    throw new ChecksumsRejectedException("Der Server liefert einen älteren Stand der Prüfsummen, als hier schon angenommen wurde "
+                        + "(Release-Nummer " + (remote ?? "fehlt") + ", angenommen " + known + "): es wird nichts installiert. "
+                        + "Kurz nach einer neuen Version kann das vorübergehend sein: später erneut versuchen.");
+                if (remote != null && (known == null || string.CompareOrdinal(remote, known) > 0))
+                {
+                    store.SetString(SerialSetting, remote);
+                    store.Save();
+                }
+            }
+        }
+
+        static JsonObject LoadSignedChecksums(CancellationToken token)
         {
             byte[] data;
             try
@@ -344,7 +403,7 @@ namespace Sflix
                     + "Kurz nach einer neuen Version kann das vorübergehend sein: später erneut versuchen.");
             }
             if (!VerifyChecksums(data, signature, UpdateKeys.PublicKeys))
-                throw new DownloadException("Die Signatur der Prüfsummen ist ungültig: es wird nichts installiert. "
+                throw new ChecksumsRejectedException("Die Signatur der Prüfsummen ist ungültig: es wird nichts installiert. "
                     + "Meist ist das vorübergehend (der Server liefert kurz nach einer neuen Version noch alte Dateien): später erneut versuchen.");
             try
             {
@@ -354,7 +413,7 @@ namespace Sflix
             }
             catch (Exception)
             {
-                throw new DownloadException("Prüfsummendatei ist beschädigt");
+                throw new ChecksumsRejectedException("Prüfsummendatei ist beschädigt");
             }
         }
 

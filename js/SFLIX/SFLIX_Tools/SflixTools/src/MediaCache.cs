@@ -3,6 +3,7 @@
 // ffprobe (defekte Datei). Stimmen Grösse und Zeit, braucht "Medien prüfen", "Duplikate finden",
 // "Vorschaubilder" usw. kein ffprobe mehr. Eine andere ffmpeg-Version verwirft alles, ebenso der
 // Knopf "Gemerkte Prüfergebnisse löschen". Einträge, die 180 Tage nicht gebraucht wurden, fallen weg.
+// Seit 4.2.0 zusätzlich die Ergebnisse der Lückensuche (Abschnitt "gaps", bleibt bei anderer ffmpeg-Version).
 // Thread-sicher (die Tools prüfen parallel). Persönliche Datei: nie pushen, der Updater lädt sie nie.
 
 using System;
@@ -43,31 +44,90 @@ namespace Sflix
             return key.ToLowerInvariant();
         }
 
+        // Ergebnisse der Lückensuche (seit 4.2.0, DEC-373) im Abschnitt "gaps": je Datei Grösse, Änderungszeit
+        // und Lücken [[Stelle, Länge], …]. Sie hängen nicht von der ffmpeg-Version ab und bleiben bei einem
+        // Wechsel erhalten (die Suche liest jede Datei ganz).
+        static Dictionary<string, JsonObject> gapEntries;
+
         static void EnsureLoaded(string ffmpegVersion)
         {
             if (entries != null && loadedFor == ffmpegVersion) return;
+            bool first = gapEntries == null;
             entries = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
-            dirty = loadedFor != null;   // Wechsel der ffmpeg-Version: leere Datei schreiben
+            if (first) gapEntries = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
+            dirty = loadedFor != null;   // Wechsel der ffmpeg-Version: Ergebnisse von ffprobe verwerfen
             loadedFor = ffmpegVersion;
             try
             {
                 if (!File.Exists(FilePath)) return;
                 JsonObject root = Json.Parse(File.ReadAllText(FilePath, Encoding.UTF8)) as JsonObject;
-                if (root == null || root.Str("ffmpeg") != ffmpegVersion)
+                if (root == null)
                 {
-                    discarded = root == null ? "Datei beschädigt" : "andere ffmpeg-Version";
+                    discarded = "Datei beschädigt";
                     dirty = true;
                     return;
                 }
-                JsonObject files = root.Obj("files");
-                if (files == null) return;
-                foreach (KeyValuePair<string, object> p in files)
+                if (first) Fill(gapEntries, root.Obj("gaps"));
+                if (root.Str("ffmpeg") != ffmpegVersion)
                 {
-                    JsonObject e = p.Value as JsonObject;
-                    if (e != null) entries[p.Key] = e;
+                    discarded = "andere ffmpeg-Version";
+                    dirty = true;
+                    return;
                 }
+                Fill(entries, root.Obj("files"));
             }
             catch { entries.Clear(); dirty = true; }
+        }
+
+        static void Fill(Dictionary<string, JsonObject> target, JsonObject section)
+        {
+            if (section == null) return;
+            foreach (KeyValuePair<string, object> p in section)
+            {
+                JsonObject e = p.Value as JsonObject;
+                if (e != null) target[p.Key] = e;
+            }
+        }
+
+        // Gemerkte Lücken für diese Datei (gleiche Grösse und Änderungszeit)?
+        public static bool TryGetGaps(FfmpegTools ff, string path, long size, long ticks, out List<MediaGap> gaps)
+        {
+            gaps = null;
+            string version = ff.CachedVersion() ?? "";
+            lock (sync)
+            {
+                EnsureLoaded(version);
+                JsonObject e;
+                if (!gapEntries.TryGetValue(KeyOf(path), out e)) { misses++; return false; }
+                if ((long)e.Num("s", -1) != size || e.Str("m") != ticks.ToString()) { misses++; return false; }
+                hits++;
+                gaps = new List<MediaGap>();
+                List<object> list = e.Arr("g");
+                if (list != null)
+                    foreach (object o in list)
+                    {
+                        List<object> pair = o as List<object>;
+                        if (pair != null && pair.Count == 2 && pair[0] is double && pair[1] is double)
+                            gaps.Add(new MediaGap((double)pair[0], (double)pair[1]));
+                    }
+                if ((int)e.Num("t", 0) != Today) { e["t"] = (double)Today; dirty = true; }
+                return true;
+            }
+        }
+
+        public static void PutGaps(FfmpegTools ff, string path, long size, long ticks, List<MediaGap> gaps)
+        {
+            JsonObject e = NewEntry(size, ticks);
+            List<object> list = new List<object>();
+            foreach (MediaGap g in gaps) list.Add(new List<object> { Math.Round(g.At, 2), Math.Round(g.Length, 2) });
+            e["g"] = list;
+            string version = ff.CachedVersion() ?? "";
+            lock (sync)
+            {
+                EnsureLoaded(version);
+                gapEntries[KeyOf(path)] = e;
+                dirty = true;
+            }
         }
 
         // Gemerktes Ergebnis für diese Datei (gleiche Grösse und Änderungszeit)? error: Fehler von ffprobe
@@ -187,13 +247,17 @@ namespace Sflix
                 if (entries == null || !dirty) return;
                 try
                 {
-                    JsonObject files = new JsonObject();
+                    JsonObject files = new JsonObject(), gaps = new JsonObject();
                     int today = Today;
                     foreach (KeyValuePair<string, JsonObject> p in entries)
                         if (today - (int)p.Value.Num("t", today) <= MaxUnusedDays) files[p.Key] = p.Value;
+                    if (gapEntries != null)
+                        foreach (KeyValuePair<string, JsonObject> p in gapEntries)
+                            if (today - (int)p.Value.Num("t", today) <= MaxUnusedDays) gaps[p.Key] = p.Value;
                     JsonObject root = new JsonObject();
                     root["ffmpeg"] = loadedFor ?? "";
                     root["files"] = files;
+                    root["gaps"] = gaps;
                     string tmp = FilePath + ".tmp";
                     File.WriteAllText(tmp, Json.Write(root, 0), FileOps.Utf8NoBom);
                     FileOps.Replace(tmp, FilePath);
@@ -231,6 +295,7 @@ namespace Sflix
             lock (sync)
             {
                 entries = null;
+                gapEntries = null;
                 loadedFor = null;
                 dirty = false;
                 try { FileOps.Delete(FilePath); } catch { }

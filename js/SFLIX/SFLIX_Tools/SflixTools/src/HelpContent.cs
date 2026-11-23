@@ -79,6 +79,7 @@ namespace Sflix
                 "# Update\n" +
                 "Lädt geänderte Dateien von GitHub, prüft jede über ihre Prüfsumme und ersetzt sie erst danach. Schlägt etwas fehl, bleibt der alte Stand. " +
                 "Die Prüfsummen selbst sind vom Herausgeber signiert (seit Desktop 4.1.0): Fehlt die Signatur oder passt sie nicht, wird nichts installiert. " +
+                "Ebenso, wenn der Server einen älteren Stand liefert als den, der hier schon angenommen wurde (seit Desktop 4.1.4). " +
                 "Kurz nach einer neuen Version kann das vorübergehend sein, dann später erneut versuchen. " +
                 "Welche Dateien zu STEFFLIX gehören und welche alten Dateien entfernt werden, kommt mit dem Update. Persönliche Dateien wie Medienliste, Lizenz und Einstellungen bleiben immer unberührt. " +
                 "Ist eine neue Version des Programms verfügbar, ersetzt es sich selbst, startet neu (auch das Fenster von STEFFLIX, falls es offen war) und macht mit den restlichen Aufgaben weiter.\n" +
@@ -120,8 +121,12 @@ namespace Sflix
                 "- Ganze Datei prüfen: dekodiert die ganze Datei statt kurzer Stichproben (dauert länger).\n" +
                 "- Erweitert: Referer und User-Agent, falls der Server ohne diese Angaben nichts liefert.\n\n" +
                 "# Ablauf\n" +
-                "STEFFLIX.exe lädt die Teilstücke einzeln nach %LOCALAPPDATA%\\STEFFLIX\\downloads und wiederholt fehlerhafte Teilstücke. ffmpeg fügt sie danach zu einer MP4 zusammen. " +
-                "Geprüft wird, ob die Dauer zur Playlist passt, dazu ein kurzer Dekodiertest. Erst dann kommt die Datei in den Zielordner (gibt es den Namen schon, mit Zusatz). " +
+                "STEFFLIX.exe lädt die Teilstücke einzeln nach %LOCALAPPDATA%\\STEFFLIX\\downloads. Jedes Teilstück wird geprüft (vollständig, keine Fehlerseite des Servers, " +
+                "gültiger Aufbau), auch beim Fortsetzen; fehlerhafte werden neu geladen. ffmpeg fügt sie danach zu einer MP4 zusammen. " +
+                "Danach sucht das Programm Lücken in der Datei (Stellen, an denen Bilder fehlen; das Video bliebe dort hängen). Die betroffenen Teilstücke werden neu geladen " +
+                "und die Datei neu zusammengefügt, höchstens zweimal. Bleibt eine Lücke, kommt die Datei trotzdem in den Zielordner, und der Download zeigt „Lücke: Länge bei Stelle“ " +
+                "mit den Knöpfen „Lücke behalten“ und „Datei löschen“ (nach „__gelöscht“). Die Stelle steht auch in STEFFLIX unter Einstellungen › Beschädigte Dateien.\n" +
+                "Geprüft wird ausserdem, ob die Dauer zur Playlist passt, dazu ein kurzer Dekodiertest. Erst dann kommt die Datei in den Zielordner (gibt es den Namen schon, mit Zusatz). " +
                 "Kann der Browser sie nicht abspielen, wird sie konvertiert, danach entsteht ein Vorschaubild. " +
                 "Sobald für einen Zielordner kein Download mehr wartet oder läuft, wird er eingelesen (läuft gerade eine andere Aufgabe, danach).\n\n" +
                 "# Bedienen\n" +
@@ -129,10 +134,11 @@ namespace Sflix
                 "- Pausieren und Fortsetzen: Bereits geladene Teilstücke bleiben, auch nach dem Schliessen des Programms. Laufende Downloads werden beim Schliessen pausiert.\n" +
                 "- Wiederholen (bei Fehler): verwirft alle geladenen Teilstücke des Downloads und lädt ihn komplett neu, so werden auch beschädigte Teilstücke ersetzt. " +
                 "Ist nur die Adresse abgelaufen, besser mit „URL bearbeiten“ eine neue einfügen: Dann geht es an derselben Stelle weiter.\n" +
-                "- URL bearbeiten: neue Adresse, z.B. wenn sie abgelaufen ist (Fehler 403). Hat die Playlist gleich viele Teilstücke, geht es an derselben Stelle weiter.\n" +
+                "- URL bearbeiten: neue Adresse, z.B. wenn sie abgelaufen ist (Fehler 403, 404, 410 oder 400). Hat die Playlist gleich viele Teilstücke, geht es an derselben Stelle weiter.\n" +
                 "- Entfernen: bricht ab und löscht die geladenen Teilstücke. Fertige Dateien im Zielordner bleiben.\n" +
                 "- Meldungen (Doppelklick): Hinweise von ffmpeg und der Prüfung. Die Spalte Ergebnis zeigt OK, Warnung oder Fehler.\n" +
-                "- Aufräumen: entfernt fertige und fehlgeschlagene Downloads aus der Liste samt ihren Zwischendateien. Verwaiste Zwischendateien löscht das Programm auch beim Start."));
+                "- Aufräumen: entfernt fertige und fehlgeschlagene Downloads aus der Liste samt ihren Zwischendateien (Downloads mit offener Lücke bleiben). " +
+                "Verwaiste Zwischendateien dieser Installation löscht das Programm auch beim Start; die anderer STEFFLIX-Installationen bleiben."));
 
             t.Add(new HelpTopic("Vorschaubilder",
                 "Erstellt fehlende Vorschaubilder (480×270) im Ordner Preview neben den Medien: für Videos ein Bild aus der Mitte, für Bilder eine verkleinerte Kopie. " +
@@ -204,6 +210,10 @@ namespace Sflix
                 "Prüft die Medien in den gewählten Ordnern und listet Probleme auf:\n" +
                 "- Nicht abspielbar: Format oder Codec, den der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3/DTS-Ton, WMA, ALAC).\n" +
                 "- Defekt: ffprobe kann die Datei nicht lesen.\n" +
+                "- Nicht lesbar: die Datei lässt sich gerade nicht öffnen (von einem anderen Programm gesperrt, keine Berechtigung). Nicht zum Löschen vorgemerkt; später erneut prüfen.\n" +
+                "- Lückenhaft (nur mit der Option „Lücken suchen“): im Video fehlen Bilder, es bleibt dort hängen; mit Stelle und Länge. Nicht zum Löschen vorgemerkt. " +
+                "Die Option liest jedes Video ganz (über ein Netzlaufwerk etwa so lange wie Kopieren). Das Ergebnis wird gemerkt, der nächste Lauf liest nur neue oder geänderte Dateien. " +
+                "Funde stehen auch in STEFFLIX unter Einstellungen › Beschädigte Dateien.\n" +
                 "- Leer: Datei mit 0 Byte.\n" +
                 "- Ohne Vorschaubild.\n" +
                 "- Leere Ordner: Ordner ohne Medien, auch nicht in Unterordnern (Vorschaubilder und Ablagen zählen nicht). Gemeldet wird nur der oberste solche Ordner, nie der gewählte Ordner selbst und nie eine Kategorie wie „Filme“.\n" +
@@ -308,7 +318,9 @@ namespace Sflix
                 "- updater.log: Protokoll (nur auf Wunsch bzw. ohne Oberfläche)\n" +
                 "- folgen_cache.json, folgen_rueckgaengig.json: Folgen umbenennen\n" +
                 "- medien_cache.json: gemerkte Prüfergebnisse der Tools (siehe „Schneller prüfen“)\n" +
-                "- downloads.json: Liste der Downloads (die Teilstücke liegen in %LOCALAPPDATA%\\STEFFLIX\\downloads)"));
+                "- downloads.json: Liste der Downloads (die Teilstücke liegen in %LOCALAPPDATA%\\STEFFLIX\\downloads)\n" +
+                "- damaged.js: beschädigte Dateien (Lücken aus Downloads, „Medien prüfen“ und dem Player)\n" +
+                "- player.log: Protokoll des Players (übersprungene beschädigte Stellen)"));
 
             return t;
         }

@@ -169,6 +169,8 @@
     <script src="sflix_sys/data.js"></script>
     <!-- Von STEFFLIX.exe (Daten einlesen) erstellt: umbenannte Dateien (fehlt bei Erstinstallation, wird dann ignoriert) -->
     <script src="sflix_sys/renamed.js"></script>
+    <!-- Von STEFFLIX.exe erstellt: beschädigte Dateien (Lücken; fehlt sie, ist die Liste leer) -->
+    <script src="sflix_sys/damaged.js"></script>
     <!-- Von STEFFLIX.exe erstellt: Kennung dieser Installation, damit mehrere STEFFLIX-Ordner
          ihre Daten im Browser getrennt speichern (fehlt sie, gilt der gemeinsame Speicher) -->
     <script src="sflix_sys/install.js"></script>
@@ -309,6 +311,7 @@
                 <li><b>Vollbild</b>: Das Video füllt den Bildschirm. Darunter kann weiterhin gescrollt und ein anderes Medium gewählt werden. Auf dem iPhone bleibt die Browserleiste sichtbar.</li>
                 <li><b>Browser-Steuerung</b>: Wer die bisherige Steuerung des Browsers bevorzugt, schaltet sie im Zahnradmenü oder unter <a onclick="openSettings()">Einstellungen</a> ein.</li>
                 <li><b>Verbindungsabbruch</b>: Bricht die Verbindung zu einem laufenden Video oder Musikstück ab (z.B. NAS oder WLAN kurz weg), lädt der Player die Datei neu und spielt an derselben Stelle weiter. Gelingt das 30 Sekunden lang nicht, erscheint ein Hinweis.</li>
+                <li><b>Beschädigte Stelle</b>: Fehlen in einer Datei Bilder (Lücke, z.B. aus einem fehlerhaften Download), bleibt die Wiedergabe dort hängen und springt zurück. Erkennt der Player das an derselben Stelle mehrmals, springt er 5 Sekunden weiter und zeigt kurz "Datei bei … beschädigt: 5 s übersprungen". Klappt das dreimal nicht, hält er an. Die Stelle steht danach unter <a onclick="openSettings('beschaedigt')">Einstellungen › Beschädigte Dateien</a>.</li>
             </ul>
 
             <h3>Tastenkürzel</h3>
@@ -391,7 +394,7 @@
             <p>Ein Doppelklick auf <span class="highlighted">STEFFLIX.exe</span> im STEFFLIX-Ordner (oder auf die Verknüpfung auf dem Desktop bzw. im Startmenü) öffnet STEFFLIX in einem eigenen Fenster, ohne Adresszeile und ohne Browser. Der Startbildschirm erscheint dort bei jedem Start. <span class="highlighted">start.html</span> lässt sich weiterhin im Browser öffnen.</p>
             <ul class="helpOptions">
                 <li><b>Tools</b>: Der Menüeintrag "Tools" öffnet ein zweites Fenster mit Updates, Importer, Download, Tools, Lizenz und Hilfe (beginnt bei "Tools"). Nach "Daten einlesen" lädt STEFFLIX die Medien selbst neu, während einer Wiedergabe erst auf Wunsch.</li>
-                <li><b>Download</b>: Lädt Videos aus einer m3u8-Adresse (HLS) direkt in einen Ordner von STEFFLIX, auch mehrere gleichzeitig. Downloads lassen sich pausieren, nach einem Neustart fortsetzen und mit einer neuen Adresse weiterführen. "Wiederholen" nach einem Fehler lädt den Download komplett neu. Danach wird die Datei geprüft, bei Bedarf konvertiert, mit Vorschaubild versehen und der Ordner eingelesen. Nur Streams ohne Kopierschutz.</li>
+                <li><b>Download</b>: Lädt Videos aus einer m3u8-Adresse (HLS) direkt in einen Ordner von STEFFLIX, auch mehrere gleichzeitig. Downloads lassen sich pausieren, nach einem Neustart fortsetzen und mit einer neuen Adresse weiterführen. "Wiederholen" nach einem Fehler lädt den Download komplett neu. Jedes Teilstück wird geprüft, Lücken in der fertigen Datei repariert das Programm selbst; bleibt eine, wählst du in der Liste "Lücke behalten" oder "Datei löschen". Danach wird die Datei geprüft, bei Bedarf konvertiert, mit Vorschaubild versehen und der Ordner eingelesen. Nur Streams ohne Kopierschutz.</li>
                 <li><b>Vollbild</b>: F11 schaltet das Fenster in den Vollbildmodus und zurück. Auch das Vollbild eines Videos füllt den ganzen Bildschirm, beim Verlassen kehrt das Fenster in den vorherigen Zustand zurück. F5 lädt STEFFLIX neu.</li>
                 <li><b>Bild-im-Bild</b>: Ein eigenes kleines Fenster über allen anderen, mit dem Videotitel und dem STEFFLIX-Logo mit Bild-im-Bild-Zeichen in der Taskleiste; das Fenster von STEFFLIX wird dabei minimiert. Die Bedienelemente erscheinen bei Mausbewegung: oben "Zurück zum Player", Titel und Schliessen, in der Mitte vorheriges Video, 10 s zurück, Abspielen/Pause, 10 s vor und nächstes Video, unten Fortschritt, Zeit, Ton und Lautstärke. Klick ins Bild pausiert, Ziehen verschiebt das Fenster, am Rand lässt sich die Grösse ändern; Lage und Grösse werden gemerkt. Die Tastenkürzel des Players und der Autoplay-Countdown gelten auch dort. "Zurück zum Player" öffnet STEFFLIX wieder wie zuvor (normal, maximiert oder Vollbild), Schliessen hält das Video an und lässt es minimiert.</li>
                 <li><b>Daten aus dem Browser</b>: Beim ersten Start bietet STEFFLIX.exe an, Favoriten, Fortschritte, "Weiterschauen" und Einstellungen aus dem bisherigen Browser zu übernehmen. Dafür öffnet sich STEFFLIX kurz im Browser und speichert eine Datensicherung im Download-Ordner, die das Fenster dann übernimmt. Browser und Fenster speichern danach getrennt.</li>
@@ -412,7 +415,7 @@
                     <li><b>Duplikate finden</b>: Identische Dateien, gleiche Folgen einer Serie (S01E01 = 1x01 = S1E1) und gleiche Dateinamen finden, mit Vergleich von Grösse, Auflösung und Dauer. Aussortierte Dateien kommen nach __duplikate.</li>
                     <li><b>Gesplittete Medien zusammenführen</b>: Videos wie "Titel pt1" und "Titel pt2" zu einer Datei zusammenfügen. Die Teile werden vorher in einer Liste ausgewählt, auf Wunsch wird neu kodiert. Die Teile können danach nach __teile verschoben werden.</li>
                     <li><b>Konvertieren</b>: Videos in browserkompatible MP4 (H.264/AAC) umwandeln, auf Wunsch auch nicht abspielbare Musik (z.B. WMA, AIFF, ALAC) in MP3. Das Ergebnis ersetzt das Original im selben Ordner, das Original kommt nach __konvertiert (oder wird auf Wunsch gelöscht). Die Grafikkarte wird automatisch genutzt.</li>
-                    <li><b>Medien prüfen</b>: Medien finden, die der Browser nicht abspielen kann, dazu defekte und leere Dateien, Medien ohne Vorschaubild sowie leere Ordner (ohne Medien). Im Ergebnis wählst du je Datei Löschen (nach __gelöscht), Konvertieren und/oder Vorschaubild erstellen; leere Ordner lassen sich löschen (als Ganzes nach __gelöscht im Ordner darüber). Defekte und leere Dateien sowie leere Ordner sind zum Löschen vorgemerkt. "Ausführen" erledigt alles in einem Durchgang.</li>
+                    <li><b>Medien prüfen</b>: Medien finden, die der Browser nicht abspielen kann, dazu defekte und leere Dateien, Medien ohne Vorschaubild sowie leere Ordner (ohne Medien). Im Ergebnis wählst du je Datei Löschen (nach __gelöscht), Konvertieren und/oder Vorschaubild erstellen; leere Ordner lassen sich löschen (als Ganzes nach __gelöscht im Ordner darüber). Defekte und leere Dateien sowie leere Ordner sind zum Löschen vorgemerkt; gerade nicht lesbare (z.B. gesperrte) Dateien werden eigens gemeldet und nicht vorgemerkt. Mit der Option "Lücken suchen" findet es auch lückenhafte Videos (fehlende Bilder) mit Stelle und Länge; sie stehen danach auch unter Einstellungen › Beschädigte Dateien. "Ausführen" erledigt alles in einem Durchgang.</li>
                     <li><b>Vorschaubilder erstellen</b>: Für jedes Video ohne Vorschaubild ein Bild aus der Mitte des Videos (480x270) im Preview-Ordner erstellen. Vorschaubilder ohne zugehöriges Video kommen nach Preview\__gelöscht. Mit "für Musik" erhalten Alben ohne Vorschaubild ein Albumbild aus einem Bild im Album oder dem Cover der Musikdateien; bei mehreren Bildern wählst du eines mit Vorschau aus.</li>
                     <li><b>Daten einlesen</b>: Medien neu einlesen, ungültige Zeichen in Datei- und Ordnernamen korrigieren und zu grosse Vorschaubilder verkleinern. Ordner, deren Name mit __ beginnt, System- und versteckte Ordner sowie Verknüpfungen auf Ordner werden ignoriert. Werden deutlich weniger Medien gefunden als bisher oder sind Ordner nicht erreichbar, fragt STEFFLIX.exe vor dem Speichern nach.</li>
                 </ul>
@@ -492,6 +495,13 @@
                 <div id="transitionStatus" role="status"></div>
             </details>
 
+            <h3 id="beschaedigt">Beschädigte Dateien</h3>
+            <p>Dateien mit Lücken: An diesen Stellen fehlen Bilder, die Wiedergabe bleibt dort hängen. Gefunden haben sie STEFFLIX.exe beim Download und mit "Medien prüfen" oder der Player, als er eine beschädigte Stelle übersprungen hat. Die Dateien selbst werden nicht verändert; ersetzen lassen sie sich z.B. mit einem neuen Download. Funde des Players in der App oder im Browser gelten nur für dieses Gerät.</p>
+            <details class="repairDetails" id="damagedDetails">
+                <summary><span class="whenClosed">Einträge anzeigen (<span id="damagedCount">0</span>)</span><span class="whenOpen">Einträge ausblenden</span></summary>
+                <div id="damagedList"></div>
+            </details>
+
             <h3 id="datensicherung">Datensicherung</h3>
             <p>Favoriten, Fortschritt, Gesehen-Markierungen, "Weiterschauen", Einstellungen, Intro, Abspann und Lautstärke je Ordner sowie die Sortierung der Startseite werden nur in diesem Browser gespeichert. Mit einer Sicherung lassen sie sich auf einen anderen Browser oder PC übertragen oder nach dem Löschen der Browserdaten wiederherstellen.</p>
             <div class="backupActions">
@@ -504,7 +514,7 @@
             <p>Lädt STEFFLIX nicht richtig, stimmen die Vor- und Zurück-Buttons nicht oder setzen Videos an der falschen Stelle fort, helfen meist diese Schritte. Die Medien selbst werden dabei nicht verändert.</p>
             <div class="repairItem">
                 <h5>Gespeicherte Daten prüfen</h5>
-                <p>Zeigt, wie viele Einträge gespeichert sind und wie viele davon auf Medien oder Ordner zeigen, die es nicht mehr gibt (z.B. nach dem Umbenennen oder Verschieben im Explorer). Nur diese verwaisten Einträge lassen sich danach entfernen.</p>
+                <p>Zeigt, wie viele Einträge gespeichert sind und wie viele davon auf Medien oder Ordner zeigen, die es nicht mehr gibt (z.B. nach dem Umbenennen oder Verschieben im Explorer). Nur diese verwaisten Einträge lassen sich danach entfernen, und erst nach einer Bestätigung; vorher lässt sich eine Sicherung erstellen.</p>
                 <button type="button" id="checkDataButton" class="sflixButton ghost">Jetzt prüfen</button>
                 <div id="checkDataResult" role="status"></div>
             </div>
@@ -611,14 +621,30 @@
     <script src="sflix_sys/js/ui.js"></script>
     <script src="sflix_sys/js/main.js"></script>
     <script>
-        // Fehlt eine Programmdatei (z.B. nach einem unvollständigen Update), Hinweis statt leerer Seite
-        if ([typeof compareNatural, typeof getData, typeof createCard, typeof renderFolderPage,
-            typeof loadDecodedMedia, typeof toggleContainer, typeof startApplication].indexOf("undefined") >= 0) {
+        // Fehlt eine Programmdatei oder ist sie abgeschnitten (z.B. nach einem unvollständigen Update),
+        // Hinweis statt leerer Seite. Jede Programmdatei setzt in ihrer letzten Zeile eine Markierung.
+        (function () {
+            var programMissing = [typeof compareNatural, typeof getData, typeof createCard, typeof renderFolderPage,
+                typeof loadDecodedMedia, typeof toggleContainer, typeof startApplication,
+                typeof sflixFileEndCore, typeof sflixFileEndStorage, typeof sflixFileEndCards, typeof sflixFileEndPages,
+                typeof sflixFileEndPlayer, typeof sflixFileEndUi, typeof sflixFileEndMain].indexOf("undefined") >= 0;
+            var dataMissing = typeof data !== "object" || data == null;
+            if (!programMissing && !dataMissing) {
+                return;
+            }
+            // Der Ladescreen liegt sonst über dem Hinweis und verschwindet nie
+            var loadingScreen = document.getElementById("loadingScreen");
+            if (loadingScreen != null) {
+                loadingScreen.style.display = "none";
+            }
             var missingNotice = document.createElement("div");
-            missingNotice.style.cssText = "position:fixed;inset:auto 16px 16px 16px;z-index:5000;padding:16px;border-radius:8px;background:#3a1d22;color:#f0d4d7;font:16px sans-serif";
-            missingNotice.textContent = "STEFFLIX ist unvollständig installiert: Programmdateien im Ordner sflix_sys/js fehlen. Bitte in STEFFLIX.exe (bis Version 3.5 updateStefflix.exe) das Update erneut ausführen.";
+            missingNotice.setAttribute("role", "alert");
+            missingNotice.style.cssText = "position:fixed;inset:auto 16px 16px 16px;z-index:10001;padding:16px;border-radius:8px;background:#3a1d22;color:#f0d4d7;font:16px sans-serif";
+            missingNotice.textContent = programMissing
+                ? "STEFFLIX ist unvollständig installiert: Programmdateien im Ordner sflix_sys/js fehlen oder sind beschädigt. Bitte in STEFFLIX.exe (bis Version 3.5 updateStefflix.exe) das Update erneut ausführen."
+                : "Die eingelesenen Daten (sflix_sys/data.js) fehlen oder sind beschädigt. Bitte in STEFFLIX.exe \"Daten einlesen\" ausführen.";
             document.body.appendChild(missingNotice);
-        }
+        })();
     </script>
 </footer>
 </html>

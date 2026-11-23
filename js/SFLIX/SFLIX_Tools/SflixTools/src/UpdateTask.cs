@@ -399,7 +399,7 @@ namespace Sflix
             }
             catch (DownloadException e)
             {
-                throw new TaskFailedException(e.Message + ". Es wurden keine Dateien verändert.");
+                throw new TaskFailedException(e.Message.TrimEnd('.') + ". Es wurden keine Dateien verändert.");
             }
 
             ctx.Log("STEFFLIX-Dateien:");

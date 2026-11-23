@@ -134,7 +134,7 @@ namespace Sflix
         // Auswahlliste aller Quellen ("Name (Sprache)"), Index wie EpisodeSource.All
         public static ComboBox SourceBox()
         {
-            ComboBox box = new ComboBox();
+            ComboBox box = new DarkCombo();
             box.DropDownStyle = ComboBoxStyle.DropDownList;
             box.FlatStyle = FlatStyle.Flat;
             box.BackColor = Theme.Input;
@@ -422,7 +422,7 @@ namespace Sflix
             if (info.Count == 0) info.Add("Alle Folgen der Liste sind vorhanden, alle Dateien wurden zugeordnet.");
             info.Add("");
             info.Add("Tipp: Eine gelbe Zeile (mehrere Dateien für eine Folge) oder eine Zeile mit vorhandenem Ziel anklicken, um die Dateien zu vergleichen.");
-            details = new TextBox();
+            details = new TextBox(); DarkWindow.Apply(details);
             details.Multiline = true;
             details.ReadOnly = true;
             details.ScrollBars = ScrollBars.Vertical;

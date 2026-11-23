@@ -1146,7 +1146,7 @@ namespace Sflix
                         }
                         else if (op.Kind == "merge")
                         {
-                            int moved = MergeFolder(ctx, op.Source, op.Target, plan.SeriesDir, journal, ref remembered);
+                            int moved = MergeFolder(ctx, op.Source, op.Target, plan.SeriesDir, journal, ref remembered, ref skipped);
                             folderMap[op.Source] = op.Target;
                             // Staffelbild nur übernehmen, wenn der Zielordner noch keines hat
                             MoveFolderPreview(plan.SeriesDir, Path.GetFileName(op.Source), Path.GetFileName(op.Target), journal);
@@ -1260,7 +1260,7 @@ namespace Sflix
 
         // Inhalt eines Ordners in einen anderen verschieben (Unterordner wie Preview werden
         // zusammengeführt). Der leere Ordner wird danach entfernt.
-        static int MergeFolder(TaskContext ctx, string source, string target, string seriesDir, Journal journal, ref ConflictAnswer remembered)
+        static int MergeFolder(TaskContext ctx, string source, string target, string seriesDir, Journal journal, ref ConflictAnswer remembered, ref int skipped)
         {
             int moved = 0;
             EnsureDir(target, journal);
@@ -1271,7 +1271,7 @@ namespace Sflix
                 if (File.Exists(dest))
                 {
                     string chosen = ConflictAnswer.Resolve(ctx, file, dest, ref remembered);
-                    if (chosen == null) { ctx.Log("  ÜBERSPRUNGEN  " + Path.GetFileName(file) + " (in „" + Path.GetFileName(target) + "“ vorhanden)"); continue; }
+                    if (chosen == null) { ctx.Log("  ÜBERSPRUNGEN  " + Path.GetFileName(file) + " (in „" + Path.GetFileName(target) + "“ vorhanden)"); skipped++; continue; }
                     if (string.Equals(chosen, dest, StringComparison.OrdinalIgnoreCase)) SetAside(dest, seriesDir, journal);
                     dest = chosen;
                 }
@@ -1282,12 +1282,20 @@ namespace Sflix
             foreach (string sub in Directory.GetDirectories(source))
             {
                 string dest = Path.Combine(target, Path.GetFileName(sub));
+                // Verknüpfungen auf Ordner (Junction, symbolischer Link) nie verschieben oder betreten (DEC-361),
+                // weder in der Quelle noch im Ziel; die Quelle bleibt dann bestehen
+                if (Folders.IsLink(sub) || Folders.IsLink(dest))
+                {
+                    ctx.Log("  ÜBERSPRUNGEN  Ordner " + sub + " (Verknüpfung" + (Folders.IsLink(sub) ? "" : " im Ziel") + ", wird nicht zusammengeführt)");
+                    skipped++;
+                    continue;
+                }
                 if (!Directory.Exists(dest))
                 {
                     FileOps.Rename(sub, dest);
                     journal.Move(sub, dest);
                 }
-                else moved += MergeFolder(ctx, sub, dest, seriesDir, journal, ref remembered);
+                else moved += MergeFolder(ctx, sub, dest, seriesDir, journal, ref remembered, ref skipped);
             }
             if (Directory.GetFileSystemEntries(source).Length == 0)
             {

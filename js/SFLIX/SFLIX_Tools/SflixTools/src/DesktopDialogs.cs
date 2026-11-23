@@ -221,7 +221,7 @@ namespace Sflix
             row.Margin = new Padding(0, Theme.S(14), 0, 0);
             Label l = Theme.MakeLabel("Bisheriger Browser:", false);
             l.Margin = new Padding(0, Theme.S(5), Theme.S(8), 0);
-            browserBox = new ComboBox();
+            browserBox = new DarkCombo();
             browserBox.DropDownStyle = ComboBoxStyle.DropDownList;
             browserBox.FlatStyle = FlatStyle.Flat;
             browserBox.BackColor = Theme.Input;

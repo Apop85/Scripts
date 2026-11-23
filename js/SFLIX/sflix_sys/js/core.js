@@ -924,3 +924,6 @@ function collectMediaPaths(node, result) {
     }
     return result;
 }
+
+// Markierung: Datei vollständig geladen (Prüfung am Ende von start.html)
+var sflixFileEndCore = true;

@@ -4074,6 +4074,35 @@ table.versionInfo td.versionNewer {
     flex: 1 1 260px;
 }
 
+/* Einstellungen › Beschädigte Dateien (DEC-374) */
+.damagedRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--sflix-border);
+}
+
+.damagedInfo {
+    flex: 1 1 260px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.damagedInfo small {
+    display: block;
+    color: var(--sflix-text-muted);
+    font-size: 0.8rem;
+}
+
+.damagedActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
 #transitionStatus:empty, #checkDataResult:empty {
     display: none;
 }

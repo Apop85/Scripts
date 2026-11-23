@@ -1,9 +1,10 @@
 {
-  "STEFFLIX.exe": "c2a9cfa8eecc0997002785dfce370ab4d9cb41edec21a1c5c0e24b40419774f4",
+  "STEFFLIX.exe": "e10d85d63637388617ab8ed453d42f5cf47f1989cb7d25cf1efc0de33b574955",
   "_obsoleteFiles": [
     "sflix_sys/sflix.js",
     "sflix_sys/sflix_bg.jpg"
   ],
+  "_serial": "20261123215053",
   "_webFiles": [
     "sflix_sys/js/cards.js",
     "sflix_sys/js/core.js",
@@ -21,20 +22,20 @@
   ],
   "ffmpeg.json": "0f27f5f4c33ad50a3ff996675b8206131905dbd9f5b3108e7292beabdb2f03ff",
   "sflix_sys/data.js": "b7a3c43132b75a4bd426da860939f00950a2da688f8139db4ea5193d9f4fb700",
-  "sflix_sys/js/cards.js": "cd351c081b3bdf13cd8ad75fb7db5b0a662dac6ee50b9ef45fa0c7176d40b6c4",
-  "sflix_sys/js/core.js": "1c6362ce9165c681895ba9c3b1511cc40427406b65d1ef85e4d8d1f0968e2541",
-  "sflix_sys/js/main.js": "55e7137899b6e46adda12f849fe6d790023c457e61fef4433893008514a3815c",
-  "sflix_sys/js/pages.js": "e952099ca1cf3e4b70ad817a30f318361f13d70a5f0adeec93b05f7040fa1039",
-  "sflix_sys/js/player.js": "f193f82697e8d8c28b88d9626e9a54967411436c556a6270b1c29380f8a31510",
-  "sflix_sys/js/storage.js": "a69519a48fe76d7da45ed397403a3788530dae7b092e9883a92a67f8af5edb7a",
-  "sflix_sys/js/ui.js": "2ef49f746b295e7af36b0d8db6b78c8ba9c05f3b3f4ba58d948bd7f655a561d7",
-  "sflix_sys/sflix.css": "2bf5d238469771d087bb45811825cf08591ccb32399ef43fff7ee41b5e07099c",
+  "sflix_sys/js/cards.js": "2892be8f3e5d326b27c147f0502f7ee7de6aa9bea0bc9f8c8a27ce132fb928c8",
+  "sflix_sys/js/core.js": "7b98de755cc108b0a7192e3129424b05896936139b557f33b007c68ea60904b4",
+  "sflix_sys/js/main.js": "becd8ac9155657329240b9aabb8251ee7a7dd088c967574a1f1e16ce75ac3b98",
+  "sflix_sys/js/pages.js": "2fe50a35785cda12e897ea83db82bc598397cf96169fe64cbdae117f746a121f",
+  "sflix_sys/js/player.js": "30ca7938620551bde6934919f6a116f9ea54e035229f1732bea064d9797ad4ae",
+  "sflix_sys/js/storage.js": "74082585cd29ffe6315ef05abdc3107d8964be1c51fc20672c83663e009d8e97",
+  "sflix_sys/js/ui.js": "31df6b6102a1178c2bc90139035e4cffe5f0f6ae8b11d1ccf1fc8b159b9bff60",
+  "sflix_sys/sflix.css": "448a1411435e0a2e1916ad8f09550d0df96082bff9599f6beef02df1c08d1f07",
   "sflix_sys/sflixLogo.png": "fc1b02036258918ab7ada672613ddfc992ac38bdd99bc7611c1a5feca503c0b5",
   "sflix_sys/sflixLogo.svg": "87e9de4e2aa7c6c078a8e5d2ec789654691a32fd14e6ed30b5d289e596ad3286",
   "sflix_sys/splash.svg": "03b4592f93aebe12ec7e7dee800823aa5046bee4027b7ce77a80e32886f98c9d",
-  "sflix_sys/version.js": "ed0d49a97783c565fe130c935b9e92980ab07d3f8c7e2c2a2280947cbc96aad9",
-  "start.html": "5101c6c1a9a207687b4a4804de607cf02cb8a88c7272b7d425b623624584b285",
+  "sflix_sys/version.js": "290dc094f394a57309cf477fb2a21c93b0c97a7a8d5cfd9ce9f290671d04db64",
+  "start.html": "4855014075416342baf5bcd71dd429a4d3c39d90e408df5e3244b551d834c3b1",
   "updateData.exe": "0224e1b26854a2a80715122adaf42edbe3de494127d7955fe65f281a2a8eac15",
-  "updateStefflix.exe": "c2a9cfa8eecc0997002785dfce370ab4d9cb41edec21a1c5c0e24b40419774f4",
+  "updateStefflix.exe": "e10d85d63637388617ab8ed453d42f5cf47f1989cb7d25cf1efc0de33b574955",
   "updater.exe": "bbe88b952de3e6976a971132cb0ba3035b554eb47c770f681cc63dc59509ab7d"
 }

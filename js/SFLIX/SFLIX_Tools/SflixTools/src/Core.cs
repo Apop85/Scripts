@@ -57,6 +57,7 @@ namespace Sflix
         {
             "install.js", "updater_info.js", "updater_settings.json", "updater.log", "renamed.js",
             "folgen_cache.json", "medien_cache.json", "folgen_rueckgaengig.json", "downloads.json",
+            "damaged.js", "player.log",
         };
 
         // Löscht die erzeugten Dateien in sflix_sys. Ergebnis: Hinweis für das Protokoll oder null.
@@ -330,6 +331,55 @@ namespace Sflix
             return false;
         }
 
+        public static bool IsPreviewFolder(string name)
+        {
+            return string.Equals(name, "Preview", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Gemeinsamer Walker (seit 4.1.1): besucht dir und rekursiv alle Unterordner, die nicht übersprungen
+        // werden (Ignore: Ablagen, System, versteckt, Verknüpfung; mit skipPreview auch Preview-Ordner).
+        // visit bekommt den Ordner, seine Dateien und seine Unterordner (aus einer Auflistung, ohne weiteren
+        // Zugriff je Eintrag; die Unterordner ungefiltert) und darf mit false das Absteigen in diesen
+        // Ordner verhindern. Reihenfolge: erst der Ordner, dann die Unterordner. Nicht lesbare Ordner:
+        // ohne Recht still übersprungen, sonst (Pfad zu lang, Netzlaufwerk weg) mit Hinweis im Protokoll.
+        public static void Walk(string dir, bool skipPreview, CancellationToken token, Func<DirectoryInfo, List<FileInfo>, List<DirectoryInfo>, bool> visit)
+        {
+            token.ThrowIfCancellationRequested();
+            FileSystemInfo[] entries;
+            DirectoryInfo self;
+            try
+            {
+                self = new DirectoryInfo(dir);
+                entries = self.GetFileSystemInfos();
+            }
+            catch (UnauthorizedAccessException) { return; }
+            catch (Exception e)
+            {
+                // Pfad zu lang, Verknüpfung ohne Ziel, Netzlaufwerk weg: Ordner melden, weiter mit dem Rest
+                if (!(e is IOException || e is System.Security.SecurityException || e is ArgumentException)) throw;
+                Action<string> notice = FileOps.Notice;
+                if (notice != null) notice("  Hinweis: Ordner nicht lesbar, übersprungen (" + e.Message + "): " + dir);
+                return;
+            }
+
+            List<FileInfo> files = new List<FileInfo>();
+            List<DirectoryInfo> dirs = new List<DirectoryInfo>();
+            foreach (FileSystemInfo e in entries)
+            {
+                DirectoryInfo d = e as DirectoryInfo;
+                if (d != null) { dirs.Add(d); continue; }
+                FileInfo f = e as FileInfo;
+                if (f != null) files.Add(f);
+            }
+            if (!visit(self, files, dirs)) return;
+            foreach (DirectoryInfo d in dirs)
+            {
+                if (Ignore(d)) continue;
+                if (skipPreview && IsPreviewFolder(d.Name)) continue;
+                Walk(d.FullName, skipPreview, token, visit);
+            }
+        }
+
         // Rekursiv alle Dateien mit passender Endung. Preview-Ordner optional überspringen.
         public static void CollectFiles(string dir, ICollection<string> extensions, bool skipPreview, List<string> result, CancellationToken token)
         {
@@ -343,33 +393,42 @@ namespace Sflix
         // weiteren Zugriff je Datei. Reihenfolge wie bisher: erst die Dateien, dann die Unterordner.
         public static void CollectFiles(string dir, ICollection<string> extensions, bool skipPreview, List<FileInfo> result, CancellationToken token)
         {
-            token.ThrowIfCancellationRequested();
-            FileSystemInfo[] entries;
-            try { entries = new DirectoryInfo(dir).GetFileSystemInfos(); }
-            catch (UnauthorizedAccessException) { return; }
-            catch (Exception e)
+            Walk(dir, skipPreview, token, delegate(DirectoryInfo self, List<FileInfo> files, List<DirectoryInfo> subs)
             {
-                // Pfad zu lang, Verknüpfung ohne Ziel, Netzlaufwerk weg: Ordner melden, weiter mit dem Rest
-                if (!(e is IOException || e is System.Security.SecurityException || e is ArgumentException)) throw;
-                Action<string> notice = FileOps.Notice;
-                if (notice != null) notice("  Hinweis: Ordner nicht lesbar, übersprungen (" + e.Message + "): " + dir);
-                return;
-            }
+                foreach (FileInfo f in files)
+                    if (extensions.Contains(f.Extension.ToLowerInvariant())) result.Add(f);
+                return true;
+            });
+        }
+    }
 
-            List<DirectoryInfo> dirs = new List<DirectoryInfo>();
-            foreach (FileSystemInfo e in entries)
+    // Vorschaubilder (seit 4.1.1 an einer Stelle): Grösse 480×270, JPEG-Qualität, JPEG-Encoder
+    public static class Previews
+    {
+        public const int Width = 480;
+        public const int Height = 270;
+        public const long Quality = 80;          // Vorschaubilder (Daten einlesen, Vorschaubilder erstellen)
+        public const long AlbumQuality = 85;     // Albumbilder mit unscharfem Rand
+
+        static System.Drawing.Imaging.ImageCodecInfo jpegCodec;
+
+        public static System.Drawing.Imaging.ImageCodecInfo JpegCodec
+        {
+            get
             {
-                DirectoryInfo d = e as DirectoryInfo;
-                if (d != null) { dirs.Add(d); continue; }
-                FileInfo f = e as FileInfo;
-                if (f != null && extensions.Contains(f.Extension.ToLowerInvariant())) result.Add(f);
+                if (jpegCodec == null)
+                    foreach (System.Drawing.Imaging.ImageCodecInfo c in System.Drawing.Imaging.ImageCodecInfo.GetImageEncoders())
+                        if (c.MimeType == "image/jpeg") jpegCodec = c;
+                return jpegCodec;
             }
-            foreach (DirectoryInfo d in dirs)
-            {
-                if (Ignore(d)) continue;
-                if (skipPreview && string.Equals(d.Name, "Preview", StringComparison.OrdinalIgnoreCase)) continue;
-                CollectFiles(d.FullName, extensions, skipPreview, result, token);
-            }
+        }
+
+        // Neue Parameter je Aufruf (EncoderParameters sind nicht für gleichzeitige Nutzung gedacht)
+        public static System.Drawing.Imaging.EncoderParameters JpegParameters(long quality)
+        {
+            System.Drawing.Imaging.EncoderParameters enc = new System.Drawing.Imaging.EncoderParameters(1);
+            enc.Param[0] = new System.Drawing.Imaging.EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
+            return enc;
         }
     }
 
@@ -394,31 +453,42 @@ namespace Sflix
             return s;
         }
 
+        // Datei der Einstellungen (null im Release-Ordner)
+        public string FilePath { get { return path; } }
+
         // Ohne Pfad (Release-Ordner) gelten die Einstellungen nur bis zum Schliessen
         public void Save()
         {
             if (path == null) return;
-            try
+            // Auch aus Hintergrund-Threads (Release-Nummer in Net.CheckSerial): Lesen, Schreiben und
+            // Speichern laufen unter derselben Sperre
+            lock (gate)
             {
-                string tmp = path + ".tmp";
-                File.WriteAllText(tmp, Json.Write(data, 2), FileOps.Utf8NoBom);
-                FileOps.Replace(tmp, path);
+                try
+                {
+                    string tmp = path + ".tmp";
+                    File.WriteAllText(tmp, Json.Write(data, 2), FileOps.Utf8NoBom);
+                    FileOps.Replace(tmp, path);
+                }
+                catch { }
             }
-            catch { }
         }
 
-        public bool GetBool(string key, bool fallback) { return data.Bool(key, fallback); }
-        public void SetBool(string key, bool value) { data[key] = value; }
+        readonly object gate = new object();
 
-        public int GetInt(string key, int fallback) { return (int)data.Num(key, fallback); }
-        public void SetInt(string key, int value) { data[key] = (double)value; }
+        public bool GetBool(string key, bool fallback) { lock (gate) return data.Bool(key, fallback); }
+        public void SetBool(string key, bool value) { lock (gate) data[key] = value; }
+
+        public int GetInt(string key, int fallback) { lock (gate) return (int)data.Num(key, fallback); }
+        public void SetInt(string key, int value) { lock (gate) data[key] = (double)value; }
 
         public string GetString(string key, string fallback)
         {
-            string s = data.Str(key);
+            string s;
+            lock (gate) s = data.Str(key);
             return string.IsNullOrEmpty(s) ? fallback : s;
         }
-        public void SetString(string key, string value) { data[key] = value; }
+        public void SetString(string key, string value) { lock (gate) data[key] = value; }
     }
 
     // Wird jeder Aufgabe übergeben: Protokoll, Fortschritt, Abbruch, Rückfragen an die Oberfläche.

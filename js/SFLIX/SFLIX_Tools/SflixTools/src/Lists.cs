@@ -19,14 +19,103 @@ namespace Sflix
         public static void Apply(ListView list, bool sortable)
         {
             list.OwnerDraw = true;
-            list.DrawItem += delegate(object s, DrawListViewItemEventArgs e) { e.DrawDefault = true; };
-            list.DrawSubItem += delegate(object s, DrawListViewSubItemEventArgs e) { e.DrawDefault = true; };
+            // Listen mit Häkchen: Zellen selbst zeichnen (Windows zeichnet die Kästchen weiss und markierte
+            // Zeilen ohne Fokus kaum lesbar, SFLIX-20261123-090); sonst wie Windows
+            list.DrawItem += delegate(object s, DrawListViewItemEventArgs e) { e.DrawDefault = !list.CheckBoxes; };
+            list.DrawSubItem += delegate(object s, DrawListViewSubItemEventArgs e)
+            {
+                if (list.CheckBoxes) DrawCheckCell(list, e);
+                else e.DrawDefault = true;
+            };
             list.DrawColumnHeader += delegate(object s, DrawListViewColumnHeaderEventArgs e) { DrawHeader(list, e); };
             if (sortable) ListSort.Enable(list);
             GuardChecks(list);
+            // Dunkles Windows-Design: Bildlaufleisten (auch die waagrechte) und Markierung ohne Fokus dunkel
+            // (SFLIX-20261123-079); der Spaltenkopf bleibt selbst gezeichnet
+            list.HandleCreated += delegate { DarkTheme(list); };
+            if (list.IsHandleCreated) DarkTheme(list);
             // Rechts der letzten Spalte zeichnet Windows ein leeres, helles Kopffeld (OwnerDraw erreicht es
             // nicht): nach jedem Zeichnen des Kopfs dunkel übermalen. Angehängt beim ersten Zeichnen eines
             // Spaltenkopfs (der Kopf entsteht erst mit den Spalten, nach HandleCreated).
+        }
+
+        [System.Runtime.InteropServices.DllImport("uxtheme.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        static extern int SetWindowTheme(IntPtr hwnd, string appName, string idList);
+
+        static void DarkTheme(ListView list)
+        {
+            try { SetWindowTheme(list.Handle, "DarkMode_Explorer", null); } catch { }
+        }
+
+        static readonly Color SelectedFocused = Color.FromArgb(0x4a, 0x4a, 0x54), SelectedUnfocused = Color.FromArgb(0x3a, 0x3a, 0x42);
+
+        // Zelle einer Liste mit Häkchen: Hintergrund, in der ersten Spalte ein Kästchen wie DarkCheckBox,
+        // Text in der Farbe der Zeile. Das Kästchen liegt dort, wo Windows es erwartet (Klick bleibt gleich).
+        static void DrawCheckCell(ListView list, DrawListViewSubItemEventArgs e)
+        {
+            e.DrawDefault = false;
+            Graphics g = e.Graphics;
+            Color back = e.Item.Selected ? (list.Focused ? SelectedFocused : SelectedUnfocused)
+                       : (e.Item.BackColor != list.BackColor && e.Item.BackColor != Color.Empty ? e.Item.BackColor : list.BackColor);
+            using (SolidBrush b = new SolidBrush(back)) g.FillRectangle(b, e.Bounds);
+            int x = e.Bounds.Left + Theme.S(4);
+            if (e.ColumnIndex == 0)
+            {
+                int size = Theme.S(14);
+                Rectangle box = new Rectangle(x, e.Bounds.Top + (e.Bounds.Height - size) / 2, size, size);
+                SmoothingModeScope(g, delegate
+                {
+                    if (e.Item.Checked)
+                    {
+                        using (SolidBrush b = new SolidBrush(Theme.Red)) g.FillRectangle(b, box);
+                        using (Pen pen = new Pen(Color.White, Math.Max(2f, size / 8f)))
+                        {
+                            pen.StartCap = pen.EndCap = System.Drawing.Drawing2D.LineCap.Round;
+                            g.DrawLines(pen, new PointF[] {
+                                new PointF(box.Left + box.Width * 0.22f, box.Top + box.Height * 0.52f),
+                                new PointF(box.Left + box.Width * 0.42f, box.Top + box.Height * 0.72f),
+                                new PointF(box.Left + box.Width * 0.78f, box.Top + box.Height * 0.30f) });
+                        }
+                    }
+                    else
+                    {
+                        using (SolidBrush b = new SolidBrush(Theme.Input)) g.FillRectangle(b, box);
+                        using (Pen pen = new Pen(Theme.Muted, 1f)) g.DrawRectangle(pen, box);
+                    }
+                });
+                x += size + Theme.S(6);
+            }
+            HorizontalAlignment align = list.Columns.Count > e.ColumnIndex ? list.Columns[e.ColumnIndex].TextAlign : HorizontalAlignment.Left;
+            TextFormatFlags flags = TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix
+                | (align == HorizontalAlignment.Right ? TextFormatFlags.Right : align == HorizontalAlignment.Center ? TextFormatFlags.HorizontalCenter : TextFormatFlags.Left);
+            Rectangle text = new Rectangle(x, e.Bounds.Top, Math.Max(0, e.Bounds.Right - x - Theme.S(4)), e.Bounds.Height);
+            Color fore = e.ColumnIndex == 0 || e.Item.UseItemStyleForSubItems ? e.Item.ForeColor : e.SubItem.ForeColor;
+            TextRenderer.DrawText(g, e.SubItem.Text, e.Item.Font ?? list.Font, text, fore, flags);
+        }
+
+        static void SmoothingModeScope(Graphics g, Action draw)
+        {
+            System.Drawing.Drawing2D.SmoothingMode old = g.SmoothingMode;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            try { draw(); }
+            finally { g.SmoothingMode = old; }
+        }
+
+        // Erste Spalte füllt die Breite der Liste (keine waagrechte Bildlaufleiste, letzte Spalte nicht abgeschnitten).
+        // min: kleinste Breite der ersten Spalte, darunter darf die Liste waagrecht scrollen.
+        public static void FillFirstColumn(ListView list, int min)
+        {
+            EventHandler fit = delegate
+            {
+                if (list.Columns.Count == 0 || !list.IsHandleCreated) return;
+                int others = 0;
+                for (int i = 1; i < list.Columns.Count; i++) others += list.Columns[i].Width;
+                // Platz für die senkrechte Leiste immer freihalten (sie erscheint erst mit vielen Zeilen, ohne Resize)
+                int w = Math.Max(min, list.Width - others - SystemInformation.VerticalScrollBarWidth - 2);
+                if (list.Columns[0].Width != w) list.Columns[0].Width = w;
+            };
+            list.Resize += fit;
+            list.HandleCreated += fit;
         }
 
         // Fängt WM_PAINT des Spaltenkopfs ab und füllt die Fläche rechts der letzten Spalte

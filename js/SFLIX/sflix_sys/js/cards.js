@@ -67,6 +67,23 @@ function getMediaProgress(mediaPath) {
 // Erstellt eine Kachel. Alle Kacheln sind gleich gross: Vorschau immer 16:9
 // (Bild oder Farbverlauf mit Symbol), Titel max. 2 Zeilen, Untertitel 1 Zeile.
 // options: href, title, subtitle, previewSrc, placeholderIcon, progress (0-1), seed
+// Farbverlauf mit Symbol und Titel (ohne Vorschaubild oder wenn es nicht lädt)
+function createCardPlaceholder(options) {
+    var hue = hashString(options.seed || options.title) % 360;
+    var placeholder = document.createElement("div");
+    placeholder.className = "cardPlaceholder";
+    placeholder.style.background = "linear-gradient(135deg, hsl(" + hue + ", 45%, 32%), hsl(" + ((hue + 50) % 360) + ", 55%, 13%))";
+    var icon = document.createElement("span");
+    icon.className = "cardPlaceholderIcon";
+    icon.appendChild(createIcon(options.placeholderIcon || "video"));
+    var label = document.createElement("span");
+    label.className = "cardPlaceholderText";
+    label.textContent = options.title;
+    placeholder.appendChild(icon);
+    placeholder.appendChild(label);
+    return placeholder;
+}
+
 function createCard(container, options) {
     var card = document.createElement("a");
     card.className = "card";
@@ -83,24 +100,18 @@ function createCard(container, options) {
         // "lazy" vor src setzen, sonst kann der Browser das Bild sofort laden
         image.loading = "lazy";
         image.decoding = "async";
+        // Vorschaubild fehlt oder ist beschädigt: Platzhalter statt kaputtem Bild
+        image.addEventListener("error", function () {
+            if (image.parentNode === mediaNode) {
+                mediaNode.replaceChild(createCardPlaceholder(options), image);
+            }
+        }, { once: true });
         image.src = options.previewSrc;
         image.alt = "";
         image.draggable = false;
         mediaNode.appendChild(image);
     } else {
-        var hue = hashString(options.seed || options.title) % 360;
-        var placeholder = document.createElement("div");
-        placeholder.className = "cardPlaceholder";
-        placeholder.style.background = "linear-gradient(135deg, hsl(" + hue + ", 45%, 32%), hsl(" + ((hue + 50) % 360) + ", 55%, 13%))";
-        var icon = document.createElement("span");
-        icon.className = "cardPlaceholderIcon";
-        icon.appendChild(createIcon(options.placeholderIcon || "video"));
-        var label = document.createElement("span");
-        label.className = "cardPlaceholderText";
-        label.textContent = options.title;
-        placeholder.appendChild(icon);
-        placeholder.appendChild(label);
-        mediaNode.appendChild(placeholder);
+        mediaNode.appendChild(createCardPlaceholder(options));
     }
 
     if (options.progress != null) {
@@ -413,6 +424,26 @@ function observeTrackForPreload(track) {
     bandPreloadObserver.observe(track);
 }
 
+// Beobachter je Band (startTrackPreload) und resize-Listener (initRowScrolling); resetPage gibt sie frei
+var trackPreloadObservers = [];
+var rowResizeHandlers = [];
+
+// Beim Seitenwechsel: Listener und Beobachter der alten Bänder entfernen (sonst bleiben die
+// Bänder samt Kacheln im Speicher, bis die Fenstergrösse sich ändert)
+function releaseRowBands() {
+    trackPreloadObservers.forEach(function (observer) {
+        observer.disconnect();
+    });
+    trackPreloadObservers = [];
+    if (bandPreloadObserver != null) {
+        bandPreloadObserver.disconnect();
+    }
+    rowResizeHandlers.forEach(function (handler) {
+        window.removeEventListener("resize", handler);
+    });
+    rowResizeHandlers = [];
+}
+
 function startTrackPreload(track) {
     var observer = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
@@ -427,6 +458,7 @@ function startTrackPreload(track) {
     track.querySelectorAll("img.cardImage").forEach(function (image) {
         observer.observe(image);
     });
+    trackPreloadObservers.push(observer);
 }
 
 // ===================================================================
@@ -519,14 +551,20 @@ function initRowScrolling(viewport, track, previousButton, nextButton) {
     track.updateArrows = updateArrows;
     track.addEventListener("scroll", updateArrows, { passive: true });
     // Nach einem Seitenwechsel (ohne Neuladen) ist das Band weg: Listener entfernen
+    // (zusätzlich gibt resetPage über releaseRowBands alle frei)
     var onResize = function () {
         if (!track.isConnected && !document.body.classList.contains("gridOpen")) {
             window.removeEventListener("resize", onResize);
+            var index = rowResizeHandlers.indexOf(onResize);
+            if (index >= 0) {
+                rowResizeHandlers.splice(index, 1);
+            }
             return;
         }
         updateArrows();
     };
     window.addEventListener("resize", onResize);
+    rowResizeHandlers.push(onResize);
 
     previousButton.addEventListener("click", function () {
         track.scrollBy({ left: -track.clientWidth * 0.9, behavior: "smooth" });
@@ -543,10 +581,17 @@ function initRowScrolling(viewport, track, previousButton, nextButton) {
             return;
         }
         suppressClick = false;
+        // Reste eines Ziehens, dessen Ende nicht ankam (ohne Capture ausserhalb losgelassen), blockierten sonst Klicks
+        track.classList.remove("dragging");
         drag = { x: event.clientX, scrollLeft: track.scrollLeft, moved: false, pointerId: event.pointerId };
     });
     track.addEventListener("pointermove", function (event) {
         if (drag == null) {
+            return;
+        }
+        // Maustaste ausserhalb des Bandes losgelassen: nicht mehr ziehen
+        if ((event.buttons & 1) === 0) {
+            endDrag(true);
             return;
         }
         var distance = event.clientX - drag.x;
@@ -563,18 +608,19 @@ function initRowScrolling(viewport, track, previousButton, nextButton) {
             track.scrollLeft = drag.scrollLeft - distance;
         }
     });
-    var endDrag = function () {
+    // releasedOutside: Taste ausserhalb des Bandes losgelassen, es folgt kein Klick, der zu schlucken wäre
+    var endDrag = function (releasedOutside) {
         if (drag != null && drag.moved) {
             track.classList.remove("dragging");
-            suppressClick = true;
+            suppressClick = releasedOutside !== true;
         }
         drag = null;
     };
-    track.addEventListener("pointerup", endDrag);
-    track.addEventListener("pointercancel", endDrag);
-    // Nach dem Ziehen keinen Klick auf die Kachel auslösen
+    track.addEventListener("pointerup", function () { endDrag(false); });
+    track.addEventListener("pointercancel", function () { endDrag(false); });
+    // Nach dem Ziehen keinen Klick auf die Kachel auslösen (nur Mausklicks; Tastatur-Klicks haben detail 0)
     track.addEventListener("click", function (event) {
-        if (suppressClick) {
+        if (suppressClick && event.detail !== 0) {
             event.preventDefault();
             event.stopPropagation();
             suppressClick = false;
@@ -624,3 +670,6 @@ function handleRowNavigation(event) {
     }
     return true;
 }
+
+// Markierung: Datei vollständig geladen (Prüfung am Ende von start.html)
+var sflixFileEndCards = true;

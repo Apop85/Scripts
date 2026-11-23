@@ -541,6 +541,8 @@ function commitAutoplaySettings() {
     if (!autoplay) {
         mediaNode.classList.remove("autoplaying");
         nextNode.style.animation = null;
+        // Laufenden Countdown beenden (sonst gälte der nächste Weiter-Klick als Ende des Countdowns)
+        clearAutoplayCountdown();
         // Lösche alle gesetzten Timeouts
         timeoutArray = cancelTimeouts();
     } else {
@@ -1414,7 +1416,8 @@ function initSettingsMenu() {
 // Desktop-Programm STEFFLIX.exe (seit 2.8.0): STEFFLIX im eigenen Fenster (WebView2).
 // Brücke über window.chrome.webview, Gegenstück in PlayerForm.cs:
 //   an das Programm (JSON-Text): {cmd:"ready"}, {cmd:"tools", page}, {cmd:"fullscreen"}, {cmd:"reload"},
-//                                {cmd:"importResult", ok, message}, {cmd:"pip", on, paused} (player.js)
+//                                {cmd:"importResult", ok, message}, {cmd:"pip", on, paused} (player.js),
+//                                {cmd:"damaged", path, at, skipped} (player.js), {cmd:"damagedRemove", path} (DEC-374)
 //   vom Programm (Objekt):       {event:"dataChanged"}, {event:"importBackup", text}, {event:"toolsShown"}
 // Im Browser und in der Android-App passiert hier nichts.
 // ===================================================================
@@ -1646,3 +1649,211 @@ function showDesktopExportPage() {
     overlay.appendChild(box);
     document.body.appendChild(overlay);
 }
+
+// ===================================================================
+// Beschädigte Dateien (DEC-374, seit 2.9.0): sflix_sys/damaged.js (von STEFFLIX.exe: Downloader,
+// "Medien prüfen", Funde des Players im Fenster) und damagedLocal (Funde des Players in der App oder im
+// Browser, nur auf diesem Gerät). Ausgeblendete Einträge aus damaged.js ohne Desktop: damagedDismissed
+// (Pfad -> Datum des jüngsten ausgeblendeten Funds). Beide Schlüssel kommen nicht in Sicherungen.
+// ===================================================================
+
+var damagedSourceNames = { download: "Download", check: "Medien prüfen", player: "Wiedergabe" };
+// Beim nächsten Laden dieser Datei an diese Stelle springen ("An der Stelle abspielen")
+var pendingDamagedSeek = null;
+
+function getDesktopDamagedItems() {
+    if (typeof damagedMedia === "undefined" || damagedMedia == null || typeof damagedMedia !== "object") {
+        window.damagedMedia = { version: 1, items: [] };
+    }
+    if (!Array.isArray(damagedMedia.items)) {
+        damagedMedia.items = [];
+    }
+    return damagedMedia.items;
+}
+
+function readDamagedJson(key, fallback) {
+    try {
+        var value = JSON.parse(getData(key) || "null");
+        return value != null && typeof value === "object" ? value : fallback;
+    } catch (error) {
+        return fallback;
+    }
+}
+
+function readDamagedLocal() {
+    var items = readDamagedJson("damagedLocal", []);
+    return Array.isArray(items) ? items : [];
+}
+
+// Fund eintragen: ein Eintrag je Datei, Funde an derselben Stelle (±3 s) zusammengefasst
+function addDamagedGap(items, path, at, length, source) {
+    var item = null;
+    items.forEach(function (entry) {
+        if (entry && entry.path === path) {
+            item = entry;
+        }
+    });
+    if (item == null) {
+        item = { path: path, size: null, gaps: [] };
+        items.push(item);
+    }
+    if (!Array.isArray(item.gaps)) {
+        item.gaps = [];
+    }
+    var gap = null;
+    item.gaps.forEach(function (entry) {
+        if (entry && Math.abs(entry.at - at) <= 3) {
+            gap = entry;
+        }
+    });
+    if (gap == null) {
+        gap = { at: at, length: null };
+        item.gaps.push(gap);
+    }
+    gap.at = at;
+    if (length != null) {
+        gap.length = length;
+    }
+    gap.source = source;
+    gap.date = new Date().toISOString().replace(/\.\d+Z$/, "Z");
+    // Höchstens 2000 Einträge wie damaged.js (die ältesten fallen weg)
+    if (items.length > 2000) {
+        items.sort(function (a, b) { return latestDamagedDate(b).localeCompare(latestDamagedDate(a)); });
+        items.length = 2000;
+    }
+}
+
+function latestDamagedDate(item) {
+    var latest = "";
+    (item.gaps || []).forEach(function (gap) {
+        if (gap && typeof gap.date === "string" && gap.date > latest) {
+            latest = gap.date;
+        }
+    });
+    return latest;
+}
+
+// Einträge für die Liste: damaged.js und damagedLocal, ohne Ausgeblendete und ohne Pfade, die nicht in
+// data.js stehen. local: Eintrag aus dem Speicher dieses Geräts
+function collectDamagedEntries() {
+    var dismissed = readDamagedJson("damagedDismissed", {});
+    var entries = [];
+    var add = function (item, local) {
+        if (item == null || typeof item.path !== "string" || !Array.isArray(item.gaps) || item.gaps.length == 0) {
+            return;
+        }
+        if (!mediaExists(item.path)) {
+            return;
+        }
+        if (!local && !isDesktopApp() && typeof dismissed[item.path] === "string" && dismissed[item.path] >= latestDamagedDate(item)) {
+            return;
+        }
+        item.gaps.forEach(function (gap) {
+            if (gap != null && typeof gap.at === "number") {
+                entries.push({ path: item.path, gap: gap, local: local, item: item });
+            }
+        });
+    };
+    getDesktopDamagedItems().forEach(function (item) { add(item, false); });
+    readDamagedLocal().forEach(function (item) { add(item, true); });
+    entries.sort(function (a, b) {
+        var byDate = String(b.gap.date || "").localeCompare(String(a.gap.date || ""));
+        return byDate !== 0 ? byDate : a.path.localeCompare(b.path);
+    });
+    return entries;
+}
+
+function renderDamagedList() {
+    var list = document.getElementById("damagedList");
+    if (list == null) {
+        return;
+    }
+    list.replaceChildren();
+    var entries = collectDamagedEntries();
+    document.getElementById("damagedCount").textContent = String(entries.length);
+    if (entries.length == 0) {
+        var empty = document.createElement("p");
+        empty.className = "transitionEmpty";
+        empty.textContent = "Keine beschädigten Dateien bekannt.";
+        list.appendChild(empty);
+        return;
+    }
+    entries.forEach(function (entry) {
+        var row = document.createElement("div");
+        row.className = "damagedRow";
+        var info = document.createElement("div");
+        info.className = "damagedInfo";
+        var name = document.createElement("span");
+        name.className = "damagedName";
+        name.textContent = getDisplayName(entry.path);
+        var folder = document.createElement("small");
+        folder.textContent = getMediaFolders(entry.path).join(" › ");
+        var details = document.createElement("small");
+        var parts = ["bei " + formatMediaTime(entry.gap.at)];
+        if (typeof entry.gap.length === "number" && entry.gap.length > 0) {
+            parts.push("Länge " + entry.gap.length.toFixed(1).replace(".0", "") + " s");
+        }
+        var date = entry.gap.date ? new Date(entry.gap.date) : null;
+        if (date != null && !isNaN(date.getTime())) {
+            parts.push(date.toLocaleDateString("de-CH") + " " + date.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" }));
+        }
+        parts.push(damagedSourceNames[entry.gap.source] || "Wiedergabe");
+        details.textContent = parts.join(" · ");
+        info.append(name, folder, details);
+        var actions = document.createElement("div");
+        actions.className = "damagedActions";
+        var play = document.createElement("button");
+        play.type = "button";
+        play.className = "sflixButton ghost small";
+        play.textContent = "An der Stelle abspielen";
+        play.addEventListener("click", function () {
+            playDamagedSpot(entry.path, entry.gap.at);
+        });
+        var remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "sflixButton ghost small";
+        remove.textContent = "Aus Liste entfernen";
+        remove.addEventListener("click", function () {
+            removeDamagedEntry(entry);
+            renderDamagedList();
+        });
+        actions.append(play, remove);
+        row.append(info, actions);
+        list.appendChild(row);
+    });
+}
+
+// 5 s vor der Stelle abspielen
+function playDamagedSpot(path, at) {
+    pendingDamagedSeek = { path: path, time: Math.max(0, at - 5) };
+    navigateTo(buildStartUrl(buildMediaData(path)));
+}
+
+// Eintrag einer Datei entfernen: im Desktop aus damaged.js, sonst aus damagedLocal bzw. ausblenden
+function removeDamagedEntry(entry) {
+    if (entry.local) {
+        var local = readDamagedLocal().filter(function (item) { return item && item.path !== entry.path; });
+        if (local.length > 0) {
+            setData("damagedLocal", JSON.stringify(local));
+        } else {
+            removeData("damagedLocal");
+        }
+        return;
+    }
+    if (isDesktopApp()) {
+        sendToDesktop({ cmd: "damagedRemove", path: entry.path });
+        var items = getDesktopDamagedItems();
+        for (var i = items.length - 1; i >= 0; i--) {
+            if (items[i] && items[i].path === entry.path) {
+                items.splice(i, 1);
+            }
+        }
+        return;
+    }
+    var dismissed = readDamagedJson("damagedDismissed", {});
+    dismissed[entry.path] = latestDamagedDate(entry.item);
+    setData("damagedDismissed", JSON.stringify(dismissed));
+}
+
+// Markierung: Datei vollständig geladen (Prüfung am Ende von start.html)
+var sflixFileEndUi = true;

@@ -43,6 +43,12 @@ namespace Sflix
         public List<string> Messages = new List<string>();
         public string ResultPath = "";
         public DateTime Added = DateTime.Now;
+        // Lücken, die nach den Reparaturrunden blieben (DEC-373). GapPending: der Benutzer hat noch nicht
+        // zwischen Behalten und Löschen gewählt (Knöpfe in der Liste, kein Dialog)
+        public List<MediaGap> Gaps = new List<MediaGap>();
+        public bool GapPending;
+
+        public string GapText { get { return "Lücke: " + MediaGap.Describe(Gaps); } }
 
         // Laufzeit (nicht gespeichert)
         internal CancellationTokenSource Cts;
@@ -85,6 +91,13 @@ namespace Sflix
             o["messages"] = messages;
             o["resultPath"] = ResultPath;
             o["added"] = Added.ToString("o", CultureInfo.InvariantCulture);
+            if (Gaps.Count > 0)
+            {
+                List<object> gaps = new List<object>();
+                foreach (MediaGap g in Gaps) gaps.Add(new List<object> { Math.Round(g.At, 2), Math.Round(g.Length, 2) });
+                o["gaps"] = gaps;
+                o["gapPending"] = GapPending;
+            }
             return o;
         }
 
@@ -114,6 +127,14 @@ namespace Sflix
             j.ResultPath = o.Str("resultPath") ?? "";
             DateTime added;
             if (DateTime.TryParse(o.Str("added") ?? "", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out added)) j.Added = added;
+            List<object> gaps = o.Arr("gaps");
+            if (gaps != null)
+                foreach (object g in gaps)
+                {
+                    List<object> pair = g as List<object>;
+                    if (pair != null && pair.Count == 2 && pair[0] is double && pair[1] is double) j.Gaps.Add(new MediaGap((double)pair[0], (double)pair[1]));
+                }
+            j.GapPending = j.Gaps.Count > 0 && o.Bool("gapPending", false);
             // Beim letzten Beenden lief er noch: kann fortgesetzt werden
             if (j.State == DownloadState.Running || j.State == DownloadState.Processing)
             {
@@ -136,6 +157,11 @@ namespace Sflix
             get { return Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "STEFFLIX"), "downloads"); }
         }
 
+        // Einträge aus downloads.json, die sich nicht lesen liessen (z.B. ohne id/url): bleiben unverändert erhalten
+        static readonly List<object> Unreadable = new List<object>();
+
+        public static int UnreadableCount { get { lock (Unreadable) return Unreadable.Count; } }
+
         // error != null: Datei vorhanden, aber nicht lesbar (Netzlaufwerk weg, beschädigt). Dann darf weder
         // die Liste überschrieben noch ein Ordner mit Teilstücken gelöscht werden (seit 4.1.0).
         public static List<DownloadJob> Load(out string error)
@@ -146,15 +172,22 @@ namespace Sflix
             {
                 try
                 {
+                    // Ordner nicht erreichbar (Netzlaufwerk weg): nicht wie "keine Liste" behandeln (SFLIX-20261123-079)
+                    if (!Directory.Exists(App.SysDir)) throw new DirectoryNotFoundException("Ordner sflix_sys nicht erreichbar");
                     if (!File.Exists(FilePath)) return jobs;
                     JsonObject root = Json.Parse(File.ReadAllText(FilePath, Encoding.UTF8)) as JsonObject;
                     List<object> list = root == null ? null : root.Arr("downloads");
                     if (list == null) throw new InvalidDataException("unbekanntes Format");
+                    List<object> unreadable = new List<object>();
                     foreach (object o in list)
                     {
                         DownloadJob j = DownloadJob.FromJson(o as JsonObject);
                         if (j != null) jobs.Add(j);
+                        else unreadable.Add(o);
                     }
+                    // Unlesbare Einträge nicht still verwerfen: unverändert merken und beim Speichern wieder
+                    // mitschreiben, ihre Teilstücke nicht als verwaist löschen (SFLIX-20261123-079)
+                    lock (Unreadable) { Unreadable.Clear(); Unreadable.AddRange(unreadable); }
                     return jobs;
                 }
                 catch (Exception e)
@@ -173,11 +206,12 @@ namespace Sflix
             JsonObject root = new JsonObject();
             List<object> list = new List<object>();
             foreach (DownloadJob j in jobs) list.Add(j.ToJson());
+            lock (Unreadable) list.AddRange(Unreadable);
             root["downloads"] = list;
             string tmp = FilePath + ".tmp";
             try
             {
-                if (jobs.Count == 0)
+                if (list.Count == 0)
                 {
                     if (File.Exists(FilePath)) FileOps.TryDelete(FilePath);
                     return;
@@ -186,6 +220,33 @@ namespace Sflix
                 FileOps.Replace(tmp, FilePath);
             }
             catch { FileOps.TryDelete(tmp); }
+        }
+
+        // Der Zwischenordner liegt für alle Installationen gemeinsam unter %LOCALAPPDATA%. Jeder Ordner
+        // eines Downloads merkt sich seine Installation; verwaist gelöscht werden nur eigene Ordner und
+        // ältere ohne Markierung nach 30 Tagen (SFLIX-20261123-090).
+        const string OwnerFile = "stefflix_installation.txt";
+        const int UnmarkedDays = 30;
+
+        static string OwnerKey { get { return Path.GetFullPath(App.Root).TrimEnd('\\'); } }
+
+        public static void MarkOwner(string dir)
+        {
+            try
+            {
+                string file = Path.Combine(dir, OwnerFile);
+                if (!File.Exists(file)) File.WriteAllText(file, OwnerKey, new UTF8Encoding(false));
+            }
+            catch { }
+        }
+
+        // Darf ein Ordner ohne Eintrag in der eigenen Liste gelöscht werden?
+        static bool IsOwnOrphan(string dir)
+        {
+            string file = Path.Combine(dir, OwnerFile);
+            if (File.Exists(file))
+                return string.Equals(File.ReadAllText(file, Encoding.UTF8).Trim(), OwnerKey, StringComparison.OrdinalIgnoreCase);
+            return (DateTime.UtcNow - Directory.GetLastWriteTimeUtc(dir)).TotalDays > UnmarkedDays;
         }
 
         // Ordner mit Teilstücken ohne Eintrag in der Liste (z.B. nach einem Absturz) löschen
@@ -197,9 +258,18 @@ namespace Sflix
                 if (!Directory.Exists(TempRoot)) return 0;
                 HashSet<string> known = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (DownloadJob j in jobs) known.Add(j.Id);
+                lock (Unreadable)
+                    foreach (object o in Unreadable)
+                    {
+                        JsonObject u = o as JsonObject;
+                        string id = u != null ? u.Str("id") : null;
+                        if (!string.IsNullOrEmpty(id)) known.Add(id);
+                    }
                 foreach (string dir in Directory.GetDirectories(TempRoot))
                 {
                     if (known.Contains(Path.GetFileName(dir))) continue;
+                    try { if (!IsOwnOrphan(dir)) continue; }
+                    catch { continue; }
                     freed += FolderSize(dir);
                     DeleteTemp(dir);
                 }
@@ -276,6 +346,8 @@ namespace Sflix
         public double Duration;
         public string Line;          // #EXTINF-Zeile wie im Original
         public List<string> Before = new List<string>();   // Tags davor (Schlüssel, Init, Diskontinuität), schon umgeschrieben
+        public bool Encrypted;       // AES-128: nur die Länge lässt sich prüfen
+        public double Start;         // Beginn in Sekunden (Summe der Dauern davor)
     }
 
     public class HlsPlaylist
@@ -415,7 +487,7 @@ namespace Sflix
             string pendingInf = null;
             double pendingDuration = 0;
             int keyCount = 0, mapCount = 0;
-            bool first = true;
+            bool first = true, encrypted = false;
             foreach (string line in Lines(text))
             {
                 if (first)
@@ -440,6 +512,7 @@ namespace Sflix
                     if (method != "NONE" && method != "AES-128")
                         throw new HlsException("Der Stream ist kopiergeschützt (" + method + ") und kann nicht geladen werden.");
                     if (upper.StartsWith("#EXT-X-SESSION-KEY:")) continue;
+                    encrypted = method != "NONE";
                     if (method == "NONE") { pendingTags.Add("#EXT-X-KEY:METHOD=NONE"); continue; }
                     if (!a.TryGetValue("URI", out uri) || uri.Length == 0) throw new HlsException("Schlüssel ohne Adresse in der Playlist.");
                     string local = prefix + "key" + (keyCount++) + ".bin";
@@ -486,6 +559,8 @@ namespace Sflix
                 HlsSegment seg = new HlsSegment();
                 seg.Url = Resolve(baseUrl, line);
                 seg.Duration = pendingDuration;
+                seg.Encrypted = encrypted;
+                seg.Start = p.Duration;
                 seg.Line = pendingInf ?? "#EXTINF:" + Fmt.Inv(pendingDuration, "0.###") + ",";
                 seg.Before.AddRange(pendingTags);
                 pendingTags.Clear();
@@ -510,6 +585,79 @@ namespace Sflix
         {
             foreach (string name in p.Extras.Keys) if (name.Contains("init")) return true;
             return false;
+        }
+
+        // Prüft ein geladenes Teilstück (DEC-373): nicht leer, keine Textantwort (HTML, JSON, XML),
+        // unverschlüsseltes .ts mit Sync-Byte 0x47 im 188-Byte-Raster (ID3-Kopf am Anfang erlaubt),
+        // .m4s mit lückenloser Box-Kette, verschlüsselt nur die Länge (Vielfaches von 16).
+        // Ergebnis: Problem in Worten oder null.
+        public static string SegmentProblem(byte[] data, bool fmp4, bool encrypted)
+        {
+            if (data == null || data.Length == 0) return "leer";
+            if (LooksLikeText(data)) return "Textantwort statt Video";
+            if (encrypted) return data.Length % 16 == 0 ? null : "unvollständig (verschlüsselt, Länge passt nicht)";
+            if (fmp4) return BoxChainOk(data, 0) ? null : "unvollständig (MP4-Boxen brechen ab)";
+            int offset = Id3Length(data);
+            if (offset >= data.Length) return "kein Video (nur ID3)";
+            if ((data.Length - offset) % 188 != 0) return "unvollständig (Länge kein Vielfaches von 188 Byte)";
+            for (int i = offset; i < data.Length; i += 188)
+                if (data[i] != 0x47) return "beschädigt (Sync-Byte fehlt bei Byte " + i + ")";
+            return null;
+        }
+
+        // Init-Segment (fMP4): Box-Kette; Schlüssel: genau 16 Byte
+        public static string ExtraProblem(string name, byte[] data)
+        {
+            if (data == null || data.Length == 0) return "leer";
+            if (name.EndsWith(".bin", StringComparison.OrdinalIgnoreCase)) return data.Length == 16 ? null : "Schlüssel hat nicht 16 Byte";
+            if (LooksLikeText(data)) return "Textantwort statt Video";
+            return BoxChainOk(data, 0) ? null : "unvollständig (MP4-Boxen brechen ab)";
+        }
+
+        static bool LooksLikeText(byte[] data)
+        {
+            int i = 0;
+            if (data.Length >= 3 && data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF) i = 3;   // UTF-8-BOM
+            while (i < data.Length && i < 64 && (data[i] == ' ' || data[i] == '\t' || data[i] == '\r' || data[i] == '\n')) i++;
+            if (i >= data.Length) return true;   // nur Leerzeichen
+            if (data[i] != '<' && data[i] != '{' && data[i] != '[') return false;
+            string head = Encoding.ASCII.GetString(data, i, Math.Min(32, data.Length - i)).ToLowerInvariant();
+            return head.StartsWith("<!doctype") || head.StartsWith("<html") || head.StartsWith("<?xml") || head.StartsWith("<head")
+                || head.StartsWith("<body") || head.StartsWith("{\"") || head.StartsWith("{ \"") || head.StartsWith("[{") || head.StartsWith("{}");
+        }
+
+        // Länge eines ID3v2-Kopfs am Anfang (0 ohne)
+        static int Id3Length(byte[] d)
+        {
+            if (d.Length < 10 || d[0] != 'I' || d[1] != 'D' || d[2] != '3') return 0;
+            int size = (d[6] & 0x7f) << 21 | (d[7] & 0x7f) << 14 | (d[8] & 0x7f) << 7 | (d[9] & 0x7f);
+            return 10 + size + ((d[5] & 0x10) != 0 ? 10 : 0);
+        }
+
+        // MP4-Boxen lückenlos bis zum Ende
+        static bool BoxChainOk(byte[] d, int offset)
+        {
+            long pos = offset;
+            int boxes = 0;
+            while (pos < d.Length)
+            {
+                if (pos + 8 > d.Length) return false;
+                long size = (long)d[pos] << 24 | (long)d[pos + 1] << 16 | (long)d[pos + 2] << 8 | d[pos + 3];
+                for (int k = 4; k < 8; k++) { byte c = d[pos + k]; if (c < 0x20 || c > 0x7e) return false; }   // Typ: 4 Zeichen
+                if (size == 1)
+                {
+                    if (pos + 16 > d.Length) return false;
+                    size = 0;
+                    for (int k = 8; k < 16; k++) size = (size << 8) | d[pos + k];
+                    if (size < 16) return false;
+                }
+                else if (size == 0) return true;   // bis zum Ende
+                else if (size < 8) return false;
+                if (size > d.Length - pos) return false;   // Box reicht über das Ende (auch: riesige 64-Bit-Grösse)
+                pos += size;
+                boxes++;
+            }
+            return pos == d.Length && boxes > 0;
         }
 
         // Playlist mit lokalen Dateien für ffmpeg
@@ -587,7 +735,7 @@ namespace Sflix
                 catch (HttpStatusException e)
                 {
                     // 403/404/410: Adresse abgelaufen oder falsch, Wiederholen hilft selten
-                    bool hopeless = e.Code == 403 || e.Code == 404 || e.Code == 410 || e.Code == 401;
+                    bool hopeless = e.Code == 403 || e.Code == 404 || e.Code == 410 || e.Code == 401 || e.Code == 400;
                     if (hopeless && attempt >= 1 || attempt >= retries) throw;
                 }
                 catch (OperationCanceledException) { throw; }
@@ -617,6 +765,10 @@ namespace Sflix
                             token.ThrowIfCancellationRequested();
                             ms.Write(buf, 0, n);
                         }
+                        // Abgebrochene Antwort (kürzer als angekündigt) nicht als fertig übernehmen (DEC-373).
+                        // Komprimiert übertragen: Content-Length gilt für die komprimierten Bytes.
+                        if (resp.ContentLength >= 0 && string.IsNullOrEmpty(resp.ContentEncoding) && ms.Length != resp.ContentLength)
+                            throw new IOException("unvollständig (" + ms.Length + " von " + resp.ContentLength + " Byte)");
                         return ms.ToArray();
                     }
                 }
@@ -674,7 +826,15 @@ namespace Sflix
             MaxParallel = Math.Max(1, Math.Min(4, settings.GetInt("download.parallel", 2)));
             // Viele gleichzeitige Verbindungen zum selben Server (Standard in .NET: 2)
             if (ServicePointManager.DefaultConnectionLimit < 32) ServicePointManager.DefaultConnectionLimit = 32;
-            // downloads.json liegt im Installationsordner (oft Netzlaufwerk): im Hintergrund lesen
+        }
+
+        // downloads.json liegt im Installationsordner (oft Netzlaufwerk): im Hintergrund lesen. Erst nach dem
+        // Setzen von Log, Changed und FolderReady aufrufen, sonst gehen Hinweise beim Laden verloren
+        // (SFLIX-20261123-090).
+        int started;
+        public void Start()
+        {
+            if (Interlocked.Exchange(ref started, 1) != 0) return;
             ThreadPool.QueueUserWorkItem(delegate { LoadJobs(); });
         }
 
@@ -698,6 +858,9 @@ namespace Sflix
                 Notify();
                 return;
             }
+            int unreadable = DownloadStore.UnreadableCount;
+            if (unreadable > 0)
+                Write("Hinweis: " + unreadable + " Eintrag/Einträge in " + DownloadStore.FileName + " nicht lesbar. Sie bleiben unverändert in der Datei, ihre Zwischendateien werden nicht gelöscht.");
             if (save) Save();
             Notify();
             // Verwaiste Zwischendateien (z.B. nach einem Absturz)
@@ -873,13 +1036,81 @@ namespace Sflix
             Notify();
         }
 
+        // Lücke nach den Reparaturrunden (DEC-373): Datei behalten. Der Eintrag in damaged.js bleibt.
+        public void KeepGap(DownloadJob job)
+        {
+            lock (gate)
+            {
+                if (!job.GapPending) return;
+                job.GapPending = false;
+                job.Status = "Fertig, " + job.GapText + " (behalten)";
+                job.AddMessage("Datei mit Lücke behalten.");
+            }
+            Write(job.FileName + ": Datei mit Lücke behalten");
+            Save();
+            Notify();
+        }
+
+        // Lücke: Datei in die Ablage „__gelöscht“ wie bei „Medien prüfen“, Eintrag aus damaged.js entfernen.
+        // Im Hintergrund (Netzlaufwerk), danach wird der Zielordner neu eingelesen.
+        public void DeleteGapFile(DownloadJob job)
+        {
+            string file;
+            lock (gate)
+            {
+                if (!job.GapPending) return;
+                job.GapPending = false;
+                job.Status = "Wird in die Ablage verschoben …";
+                file = job.ResultPath;
+            }
+            Notify();
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                string message;
+                try
+                {
+                    string reason;
+                    if (string.IsNullOrEmpty(file) || !File.Exists(file)) message = "Datei nicht mehr vorhanden";
+                    else if (!Folders.IsInsideRoot(Path.GetDirectoryName(file), out reason)) message = "Datei liegt nicht im Installationsordner";
+                    else
+                    {
+                        MediaCheckTask.MoveToDeleted(file);
+                        message = null;
+                    }
+                    DamagedList.Remove(file);
+                }
+                catch (Exception e) { message = e.Message; }
+                lock (gate)
+                {
+                    if (message == null)
+                    {
+                        job.Result = "Fehler";
+                        job.Status = "Gelöscht (" + job.GapText + ")";
+                        job.AddMessage("Datei mit Lücke nach „" + MediaCheckTask.DeletedFolderName + "“ verschoben.");
+                        unreadFolders.Add(job.TargetDir);
+                    }
+                    else
+                    {
+                        job.GapPending = true;
+                        job.Status = job.GapText;
+                        job.AddMessage("Löschen nicht möglich: " + message);
+                    }
+                }
+                Write(job.FileName + (message == null ? ": Datei mit Lücke nach „" + MediaCheckTask.DeletedFolderName + "“ verschoben" : ": Löschen nicht möglich (" + message + ")"));
+                Save();
+                Notify();
+                CheckFolderReady(job);
+            });
+        }
+
         // Aufräumen: fehlgeschlagene und fertige Einträge entfernen, ihre Zwischendateien löschen
+        // (fertige mit offener Entscheidung zur Lücke bleiben)
         public long Cleanup()
         {
             List<DownloadJob> removed = new List<DownloadJob>();
             lock (gate)
             {
-                foreach (DownloadJob j in Jobs) if (j.State == DownloadState.Failed || j.State == DownloadState.Done) removed.Add(j);
+                foreach (DownloadJob j in Jobs) if ((j.State == DownloadState.Failed || j.State == DownloadState.Done) && !j.GapPending) removed.Add(j);
                 foreach (DownloadJob j in removed) Jobs.Remove(j);
             }
             long freed = 0;
@@ -903,7 +1134,7 @@ namespace Sflix
             List<DownloadJob> jobs;
             lock (gate) jobs = new List<DownloadJob>(Jobs);
             foreach (DownloadJob j in jobs)
-                if (j.State == DownloadState.Failed || j.State == DownloadState.Done) size += DownloadStore.FolderSize(j.TempDir);
+                if ((j.State == DownloadState.Failed || j.State == DownloadState.Done) && !j.GapPending) size += DownloadStore.FolderSize(j.TempDir);
             return size;
         }
 
@@ -937,6 +1168,7 @@ namespace Sflix
             try
             {
                 Directory.CreateDirectory(job.TempDir);
+                DownloadStore.MarkOwner(job.TempDir);
                 FfmpegTools ffmpeg = new FfmpegTools(App.Root, FfmpegLocation.Folder(settings));
                 if (!ffmpeg.Installed) throw new HlsException("ffmpeg ist nicht installiert (Tools › Einstellungen).");
 
@@ -982,6 +1214,7 @@ namespace Sflix
                     job.AddMessage("Die Playlist hat jetzt " + total + " statt " + job.SegmentsTotal + " Teilstücke: Download beginnt von vorne.");
                     DownloadStore.DeleteTemp(job.TempDir);
                     Directory.CreateDirectory(job.TempDir);
+                    DownloadStore.MarkOwner(job.TempDir);
                     job.Bytes = 0;
                 }
                 job.SegmentsTotal = total;
@@ -991,26 +1224,37 @@ namespace Sflix
                 // 2. Schlüssel, Init-Segmente und Teilstücke
                 FetchExtras(job, video, token);
                 if (sound != null) FetchExtras(job, sound, token);
-                List<KeyValuePair<string, string>> todo = new List<KeyValuePair<string, string>>();
+                // Vorhandene Teilstücke (Fortsetzen) werden geprüft, fehlerhafte neu geladen (DEC-373)
+                SetStatus(job, "Prüft geladene Teilstücke …");
+                List<SegmentFile> todo = new List<SegmentFile>();
                 int done = 0;
                 AddSegments(job, video, "v", todo, ref done);
                 if (sound != null) AddSegments(job, sound, "a", todo, ref done);
                 job.SegmentsDone = done;
                 DownloadSegments(job, todo, token);
 
-                // 3. Zusammenfügen
-                SetStatus(job, "Wird zusammengefügt …");
-                string videoList = Path.Combine(job.TempDir, "video.m3u8");
-                File.WriteAllText(videoList, Hls.LocalPlaylist(video, "v"), new UTF8Encoding(false));
-                string audioList = null;
-                if (sound != null)
-                {
-                    audioList = Path.Combine(job.TempDir, "audio.m3u8");
-                    File.WriteAllText(audioList, Hls.LocalPlaylist(sound, "a"), new UTF8Encoding(false));
-                }
+                // 3. Zusammenfügen, Lücken suchen; betroffene Teilstücke neu laden (höchstens GapRounds Runden)
                 string output = Path.Combine(job.TempDir, "ergebnis.mp4");
-                FileOps.TryDelete(output);
-                Join(job, ffmpeg, videoList, audioList, output, token);
+                List<MediaGap> gaps = JoinAndScan(job, ffmpeg, video, sound, output, token);
+                for (int round = 1; gaps.Count > 0 && round <= GapRounds; round++)
+                {
+                    List<SegmentFile> again = SegmentsAt(job, video, "v", gaps);
+                    if (sound != null) again.AddRange(SegmentsAt(job, sound, "a", gaps));
+                    job.AddMessage("Lücke " + MediaGap.Describe(gaps) + ": " + again.Count + " Teilstück(e) werden neu geladen (Runde " + round + " von " + GapRounds + ").");
+                    Write(tag + "Lücke " + MediaGap.Describe(gaps) + ", lade " + again.Count + " Teilstück(e) neu");
+                    foreach (SegmentFile s in again) FileOps.TryDelete(s.Path);
+                    job.SegmentsDone = Math.Max(0, job.SegmentsDone - again.Count);
+                    DownloadSegments(job, again, token);
+                    gaps = JoinAndScan(job, ffmpeg, video, sound, output, token);
+                }
+                job.Gaps = gaps;
+                job.GapPending = gaps.Count > 0;
+                if (gaps.Count > 0)
+                {
+                    job.Result = "Warnung";
+                    job.AddMessage("Die Lücke bleibt nach " + GapRounds + " Runden (" + MediaGap.Describe(gaps) + "). Die Datei wird trotzdem abgelegt: "
+                                   + "in der Liste „Lücke behalten“ oder „Datei löschen“ wählen.");
+                }
 
                 // 4. Prüfen
                 lock (gate) job.State = DownloadState.Processing;
@@ -1033,15 +1277,19 @@ namespace Sflix
                 SetStatus(job, "Vorschaubild …");
                 PostProcess(job, ffmpeg, target, token);
 
+                // Verbliebene Lücke: in die gemeinsame Liste beschädigter Dateien (DEC-374), mit der Datei
+                // nach dem Konvertieren
+                if (job.Gaps.Count > 0 && File.Exists(job.ResultPath)) DamagedList.Add(job.ResultPath, job.Gaps, DamagedList.SourceDownload);
+
                 DownloadStore.DeleteTemp(job.TempDir);
                 lock (gate)
                 {
                     job.State = DownloadState.Done;
                     if (job.Result != "Warnung") job.Result = "OK";
-                    job.Status = job.Result == "OK" ? "Fertig" : "Fertig mit Warnungen";
+                    job.Status = job.GapPending ? job.GapText : job.Result == "OK" ? "Fertig" : "Fertig mit Warnungen";
                     unreadFolders.Add(targetDir);
                 }
-                Write(tag + "fertig (" + Fmt.Size(SafeLength(target)) + ")" + (job.Result == "Warnung" ? ", mit Warnungen" : ""));
+                Write(tag + "fertig (" + Fmt.Size(SafeLength(target)) + ")" + (job.GapPending ? ", " + job.GapText : job.Result == "Warnung" ? ", mit Warnungen" : ""));
             }
             catch (OperationCanceledException)
             {
@@ -1054,9 +1302,7 @@ namespace Sflix
             }
             catch (Exception e)
             {
-                string message = e is Http.HttpStatusException && (((Http.HttpStatusException)e).Code == 403 || ((Http.HttpStatusException)e).Code == 410)
-                    ? "Der Server verweigert den Zugriff (" + e.Message + "). Die Adresse ist vermutlich abgelaufen: mit „URL bearbeiten“ eine neue einfügen und fortsetzen."
-                    : e.Message;
+                string message = HttpMessage(e);
                 lock (gate)
                 {
                     if (job.RemoveRequested) Jobs.Remove(job);
@@ -1081,38 +1327,135 @@ namespace Sflix
             }
         }
 
+        // Verständliche Meldung zu HTTP-Fehlern (SFLIX-20261123-090: 400, 404, 410 wie 403 erklären)
+        static string HttpMessage(Exception e)
+        {
+            Http.HttpStatusException h = e as Http.HttpStatusException;
+            if (h == null) return e.Message;
+            const string renew = "Die Adresse ist vermutlich abgelaufen: mit „URL bearbeiten“ eine neue einfügen und fortsetzen.";
+            switch (h.Code)
+            {
+                case 401:
+                case 403:
+                    return "Der Server verweigert den Zugriff (" + e.Message + "). " + renew;
+                case 400:
+                case 404:
+                case 410:
+                    return "Der Server kennt die Adresse nicht (mehr) (" + e.Message + "). " + renew;
+                default:
+                    return e.Message;
+            }
+        }
+
         static long SafeLength(string path)
         {
             try { return new FileInfo(path).Length; } catch { return 0; }
         }
 
+        // Ein Teilstück im Zwischenordner
+        class SegmentFile
+        {
+            public string Path, Url;
+            public int Number;            // 1-basiert, für Meldungen
+            public bool Fmp4, Encrypted;
+        }
+
+        const int GapRounds = 2;
+
+        // Schlüssel und Init-Segmente; vorhandene werden geprüft, fehlerhafte neu geladen (DEC-373)
         void FetchExtras(DownloadJob job, HlsPlaylist p, CancellationToken token)
         {
             foreach (KeyValuePair<string, string> kv in p.Extras)
             {
                 string path = Path.Combine(job.TempDir, kv.Key);
-                if (File.Exists(path) && new FileInfo(path).Length > 0) continue;
-                byte[] data = Http.Get(kv.Value, job, token, SegmentRetries);
-                File.WriteAllBytes(path, data);
+                if (File.Exists(path) && Hls.ExtraProblem(kv.Key, File.ReadAllBytes(path)) == null) continue;
+                for (int attempt = 0; ; attempt++)
+                {
+                    byte[] data = Http.Get(kv.Value, job, token, SegmentRetries);
+                    string problem = Hls.ExtraProblem(kv.Key, data);
+                    if (problem == null) { File.WriteAllBytes(path, data); break; }
+                    if (attempt >= SegmentRetries) throw new HlsException("„" + kv.Key + "“ ist fehlerhaft (" + problem + ") und liess sich nicht korrekt laden.");
+                    job.AddMessage(kv.Key + ": " + problem + ", wird neu geladen.");
+                    token.WaitHandle.WaitOne(1000 * (attempt + 1));
+                    token.ThrowIfCancellationRequested();
+                }
             }
         }
 
-        static void AddSegments(DownloadJob job, HlsPlaylist p, string prefix, List<KeyValuePair<string, string>> todo, ref int done)
+        // Fehlende und fehlerhafte Teilstücke in todo, gültige zählen als fertig (bisher galt jede Datei
+        // über 0 Byte als fertig; DEC-373)
+        static void AddSegments(DownloadJob job, HlsPlaylist p, string prefix, List<SegmentFile> todo, ref int done)
         {
             bool fmp4 = Hls.IsFragmentedMp4(p);
+            int broken = 0;
             for (int i = 0; i < p.Segments.Count; i++)
             {
-                string name = Hls.SegmentName(prefix, i, fmp4);
-                string path = Path.Combine(job.TempDir, name);
-                if (File.Exists(path) && new FileInfo(path).Length > 0) done++;
-                else todo.Add(new KeyValuePair<string, string>(path, p.Segments[i].Url));
+                SegmentFile s = Segment(job, p, prefix, i, fmp4);
+                if (File.Exists(s.Path) && new FileInfo(s.Path).Length > 0)
+                {
+                    if (Hls.SegmentProblem(File.ReadAllBytes(s.Path), fmp4, s.Encrypted) == null) { done++; continue; }
+                    FileOps.TryDelete(s.Path);
+                    broken++;
+                }
+                todo.Add(s);
+            }
+            if (broken > 0) job.AddMessage(broken + " geladene(s) Teilstück(e) fehlerhaft, werden neu geladen.");
+        }
+
+        static SegmentFile Segment(DownloadJob job, HlsPlaylist p, string prefix, int i, bool fmp4)
+        {
+            SegmentFile s = new SegmentFile();
+            s.Path = Path.Combine(job.TempDir, Hls.SegmentName(prefix, i, fmp4));
+            s.Url = p.Segments[i].Url;
+            s.Number = i + 1;
+            s.Fmp4 = fmp4;
+            s.Encrypted = p.Segments[i].Encrypted;
+            return s;
+        }
+
+        // Teilstücke, die eine Lücke berühren (über die Dauern der Playlist, mit 1 s Spielraum)
+        static List<SegmentFile> SegmentsAt(DownloadJob job, HlsPlaylist p, string prefix, List<MediaGap> gaps)
+        {
+            bool fmp4 = Hls.IsFragmentedMp4(p);
+            List<SegmentFile> list = new List<SegmentFile>();
+            for (int i = 0; i < p.Segments.Count; i++)
+            {
+                HlsSegment seg = p.Segments[i];
+                foreach (MediaGap g in gaps)
+                    if (seg.Start <= g.At + g.Length + 1 && seg.Start + seg.Duration >= g.At - 1) { list.Add(Segment(job, p, prefix, i, fmp4)); break; }
+            }
+            return list;
+        }
+
+        // Zusammenfügen und Lücken suchen. Scheitert die Suche, gilt die Datei als ohne Lücke (die
+        // Prüfung danach meldet weiter Abweichungen der Dauer)
+        List<MediaGap> JoinAndScan(DownloadJob job, FfmpegTools ffmpeg, HlsPlaylist video, HlsPlaylist sound, string output, CancellationToken token)
+        {
+            SetStatus(job, "Wird zusammengefügt …");
+            string videoList = Path.Combine(job.TempDir, "video.m3u8");
+            File.WriteAllText(videoList, Hls.LocalPlaylist(video, "v"), new UTF8Encoding(false));
+            string audioList = null;
+            if (sound != null)
+            {
+                audioList = Path.Combine(job.TempDir, "audio.m3u8");
+                File.WriteAllText(audioList, Hls.LocalPlaylist(sound, "a"), new UTF8Encoding(false));
+            }
+            FileOps.TryDelete(output);
+            Join(job, ffmpeg, videoList, audioList, output, token);
+            SetStatus(job, "Sucht Lücken …");
+            try { return ffmpeg.ScanGaps(output, -1, token); }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception e)
+            {
+                job.AddMessage("Lückensuche nicht möglich: " + e.Message);
+                return new List<MediaGap>();
             }
         }
 
-        void DownloadSegments(DownloadJob job, List<KeyValuePair<string, string>> todo, CancellationToken token)
+        void DownloadSegments(DownloadJob job, List<SegmentFile> todo, CancellationToken token)
         {
             if (todo.Count == 0) return;
-            ConcurrentQueue<KeyValuePair<string, string>> queue = new ConcurrentQueue<KeyValuePair<string, string>>(todo);
+            ConcurrentQueue<SegmentFile> queue = new ConcurrentQueue<SegmentFile>(todo);
             Exception failure = null;
             object failGate = new object();
             DateTime lastNotify = DateTime.MinValue;
@@ -1123,15 +1466,27 @@ namespace Sflix
                 {
                     Thread t = new Thread(delegate()
                     {
-                        KeyValuePair<string, string> item;
+                        SegmentFile item;
                         while (!inner.IsCancellationRequested && queue.TryDequeue(out item))
                         {
                             try
                             {
-                                byte[] data = Http.Get(item.Value, job, inner.Token, SegmentRetries);
-                                string part = item.Key + ".part";
+                                // Jedes Teilstück prüfen, fehlerhafte neu laden (DEC-373)
+                                byte[] data;
+                                for (int attempt = 0; ; attempt++)
+                                {
+                                    data = Http.Get(item.Url, job, inner.Token, SegmentRetries);
+                                    string problem = Hls.SegmentProblem(data, item.Fmp4, item.Encrypted);
+                                    if (problem == null) break;
+                                    if (attempt >= SegmentRetries)
+                                        throw new HlsException("Teilstück " + item.Number + " ist fehlerhaft (" + problem + ") und liess sich nicht korrekt laden.");
+                                    job.AddMessage("Teilstück " + item.Number + ": " + problem + ", wird neu geladen.");
+                                    inner.Token.WaitHandle.WaitOne(1000 * (attempt + 1));
+                                    inner.Token.ThrowIfCancellationRequested();
+                                }
+                                string part = item.Path + ".part";
                                 File.WriteAllBytes(part, data);
-                                FileOps.Replace(part, item.Key);
+                                FileOps.Replace(part, item.Path);
                                 lock (failGate)
                                 {
                                     job.SegmentsDone++;

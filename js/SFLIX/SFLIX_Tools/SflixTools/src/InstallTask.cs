@@ -47,8 +47,10 @@ namespace Sflix
 
             ctx.Progress(-1, "Lade Prüfsummen ...");
             JsonObject checksums;
-            try { checksums = Net.LoadChecksums(ctx.Token); }
-            catch (DownloadException e) { throw new TaskFailedException(e.Message + ". Bitte Internetverbindung prüfen und erneut versuchen."); }
+            // Release-Nummer (DEC-372) in den Einstellungen der Zielinstallation merken
+            Settings targetSettings = SettingsFor(target);
+            try { checksums = Net.LoadChecksums(ctx.Token, targetSettings); }
+            catch (DownloadException e) { throw new TaskFailedException(e.Message.TrimEnd('.') + ". Bitte Internetverbindung prüfen und erneut versuchen."); }
 
             // Wie setup.py: alles ausser den Programmen, vorhandene Dateien überspringen
             List<string> files = new List<string>();
@@ -90,6 +92,9 @@ namespace Sflix
             string renamed = Path.Combine(target, "sflix_sys", "renamed.js");
             if (!File.Exists(renamed))
                 File.WriteAllText(renamed, "var renamedPaths = {\"id\": \"\", \"pairs\": []};", FileOps.Utf8NoBom);
+            // Leere Liste beschädigter Dateien (DEC-374; start.html kommt auch ohne aus)
+            string damaged = Path.Combine(target, "sflix_sys", DamagedList.FileName);
+            if (!File.Exists(damaged)) File.WriteAllText(damaged, DamagedList.EmptyContent, FileOps.Utf8NoBom);
 
             // Eigene Kennung, damit diese Installation ihre Daten im Browser getrennt speichert
             string idNote = InstallId.Ensure(target);
@@ -121,7 +126,7 @@ namespace Sflix
             if (failed > 0)
                 throw new TaskFailedException(failed + " Datei(en) konnten nicht installiert werden. Bitte die Installation erneut ausführen.");
 
-            if (options != null) InstallExtras(ctx, target, options);
+            if (options != null) InstallExtras(ctx, target, options, targetSettings);
             ctx.Log("");
             ctx.Log("Anleitung zum Hinzufügen von Medien (in STEFFLIX unter Hilfe, oder im Browser öffnen):");
             ctx.Log("  " + GuideUrl(target));
@@ -129,9 +134,20 @@ namespace Sflix
 
         // ffmpeg und Lizenz. Fehler hier brechen die Installation nicht ab (beides geht auch später
         // im Updater), sie stehen als Hinweis im Protokoll.
-        static void InstallExtras(TaskContext ctx, string target, InstallOptions options)
+        // Einstellungen der Zielinstallation; ist es die laufende, dieselbe Instanz (sonst überschreibt
+        // ein späteres Speichern des Programms die Werte des Setups)
+        static Settings SettingsFor(string target)
         {
-            Settings settings = Settings.Load(Path.Combine(target, "sflix_sys", "updater_settings.json"));
+            string file = Path.Combine(target, "sflix_sys", "updater_settings.json");
+            Settings running = Net.SerialStore;
+            if (running != null && running.FilePath != null
+                && string.Equals(Path.GetFullPath(running.FilePath), Path.GetFullPath(file), StringComparison.OrdinalIgnoreCase))
+                return running;
+            return Settings.Load(file);
+        }
+
+        static void InstallExtras(TaskContext ctx, string target, InstallOptions options, Settings settings)
+        {
             if (options.Ffmpeg)
             {
                 string folder = string.IsNullOrEmpty(options.FfmpegFolder) ? FfmpegLocation.DefaultFolder : options.FfmpegFolder;
@@ -145,7 +161,7 @@ namespace Sflix
                 if (ff.Installed) ctx.Log("  bereits vorhanden (" + (ff.InstalledVersionName() ?? "Version unbekannt") + ")");
                 else
                 {
-                    try { ff.InstallNow(ctx); }
+                    try { ff.InstallNow(ctx, settings); }
                     catch (Exception e) { ctx.Log("Hinweis: ffmpeg konnte nicht installiert werden (" + e.Message + "). Es wird beim ersten Bedarf geladen."); }
                 }
                 UpdaterInfo.Write(target, folder);

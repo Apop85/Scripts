@@ -16,6 +16,10 @@ SFLIX_Tools/Release/signing/
 update_key.xml
 update_key_reserve.xml
 update_key*.xml
+# mit DPAPI verschluesselter Hauptschluessel (DEC-371) und seine Zwischendatei
+update_key*.dpapi
+*.dpapi
+*.dpapi.neu
 
 # Lokale Dateien des Updaters
 sflix_sys/renamed.js
@@ -26,6 +30,8 @@ sflix_sys/folgen_rueckgaengig.json
 sflix_sys/updater.log
 sflix_sys/medien_cache.json
 sflix_sys/downloads.json
+sflix_sys/damaged.js
+sflix_sys/player.log
 sflix_sys/ffmpeg/
 sflix_sys/*.bak
 sflix_sys/*.tmp

@@ -71,6 +71,25 @@ namespace Sflix
         public string Signature = "";
     }
 
+    // Lücke in einem Video (DEC-373): Stelle und Länge in Sekunden
+    public class MediaGap
+    {
+        public double At, Length;
+
+        public MediaGap(double at, double length) { At = at; Length = length; }
+
+        // "1.2 s bei 12:34"
+        public string Text { get { return Fmt.Inv(Length, "0.0") + " s bei " + Fmt.Time(At); } }
+
+        public static string Describe(List<MediaGap> gaps)
+        {
+            if (gaps == null || gaps.Count == 0) return "";
+            List<string> parts = new List<string>();
+            foreach (MediaGap g in gaps) { if (parts.Count == 3) { parts.Add("…"); break; } parts.Add(g.Text); }
+            return string.Join(", ", parts.ToArray());
+        }
+    }
+
     public class AudioStream
     {
         public int Index;
@@ -212,10 +231,27 @@ namespace Sflix
         {
             if (Installed) return;
             ctx.Log("ffmpeg ist noch nicht vorhanden und wird einmalig heruntergeladen.");
-            FfmpegManifest m = null;
-            try { m = LoadManifest(Net.LoadChecksums(ctx.Token), ctx); }
-            catch (DownloadException) { }
-            Install(m ?? FfmpegManifest.BuiltIn(), ctx);
+            Install(ManifestOrBuiltIn(ctx, Net.SerialStore), ctx);
+        }
+
+        // ffmpeg.json vom Server; ist der Server nicht erreichbar, die eingebaute Version (steckt in der EXE).
+        // Sind die Prüfsummen erreichbar, aber abgelehnt (Signatur, älterer Stand): nichts installieren
+        // (SFLIX-20261123-090, DEC-375).
+        static FfmpegManifest ManifestOrBuiltIn(TaskContext ctx, Settings serialStore)
+        {
+            JsonObject checksums;
+            try { checksums = Net.LoadChecksums(ctx.Token, serialStore); }
+            catch (ChecksumsRejectedException e)
+            {
+                ctx.Log("  " + e.Message);
+                throw new TaskFailedException("ffmpeg wurde nicht installiert: " + e.Message.TrimEnd('.') + ".");
+            }
+            catch (DownloadException e)
+            {
+                ctx.Log("  " + e.Message + " Es wird die im Programm eingebaute ffmpeg-Version geladen.");
+                return FfmpegManifest.BuiltIn();
+            }
+            return LoadManifest(checksums, ctx) ?? FfmpegManifest.BuiltIn();
         }
 
         // ffmpeg.json vom Server (geprüft über checksums.json). null, wenn nicht vorhanden.
@@ -225,7 +261,9 @@ namespace Sflix
             try
             {
                 byte[] data = Net.DownloadFile(Net.FfmpegManifest, checksums, ctx.Token);
-                return FfmpegManifest.FromJson(Json.Parse(Encoding.UTF8.GetString(data)) as JsonObject);
+                FfmpegManifest m = FfmpegManifest.FromJson(Json.Parse(Encoding.UTF8.GetString(data)) as JsonObject);
+                if (m == null) ctx.Log("  ffmpeg.json ist unvollständig");
+                return m;
             }
             catch (DownloadException e)
             {
@@ -242,7 +280,18 @@ namespace Sflix
         // Aktualisiert ffmpeg, falls der Server eine andere Version vorgibt.
         public void Update(JsonObject checksums, TaskContext ctx)
         {
-            FfmpegManifest m = LoadManifest(checksums, ctx) ?? FfmpegManifest.BuiltIn();
+            FfmpegManifest m = LoadManifest(checksums, ctx);
+            if (m == null)
+            {
+                // ffmpeg.json ist eingetragen, aber nicht lesbar: ein installiertes ffmpeg nicht durch die
+                // eingebaute (womöglich ältere) Version ersetzen (SFLIX-20261123-079)
+                if (Installed && checksums.Str(Net.FfmpegManifest) != null)
+                {
+                    ctx.Log("  ffmpeg bleibt unverändert (ffmpeg.json nicht lesbar)");
+                    return;
+                }
+                m = FfmpegManifest.BuiltIn();
+            }
             if (Installed && string.Equals(InstalledVersion(), m.Sha256, StringComparison.OrdinalIgnoreCase))
             {
                 ctx.Log("  ffmpeg " + m.Version + " ist aktuell");
@@ -260,10 +309,13 @@ namespace Sflix
         // Installiert ffmpeg (Setup, Knopf "Installieren"). Lädt die Version aus ffmpeg.json.
         public void InstallNow(TaskContext ctx)
         {
-            FfmpegManifest m = null;
-            try { m = LoadManifest(Net.LoadChecksums(ctx.Token), ctx); }
-            catch (DownloadException) { }
-            Install(m ?? FfmpegManifest.BuiltIn(), ctx);
+            InstallNow(ctx, Net.SerialStore);
+        }
+
+        // serialStore: Einstellungen der Installation, in der die Release-Nummer gemerkt wird (DEC-372)
+        public void InstallNow(TaskContext ctx, Settings serialStore)
+        {
+            Install(ManifestOrBuiltIn(ctx, serialStore), ctx);
         }
 
         void Install(FfmpegManifest m, TaskContext ctx)
@@ -408,6 +460,77 @@ namespace Sflix
             probeCache[key] = info;
             MediaCache.Put(this, path, size, ticks, info);
             return info;
+        }
+
+        // ---------------------------------------------------------------
+        // Lückensuche (DEC-373): Zeitstempel (DTS) der Pakete der Videospur ohne Dekodieren. Eine Lücke
+        // ist ein Abstand zweier Pakete, der den üblichen Bildabstand (Median) um mindestens GapThreshold
+        // übersteigt. Die Paketdauer taugt nicht: der MP4-Muxer verlängert das letzte Bild vor einer Lücke
+        // bis zum nächsten (mit SFLIX_Tools\Test\make_gap_video.py kalibriert).
+        // ---------------------------------------------------------------
+
+        public const double GapThreshold = 0.5;
+        static readonly ConcurrentDictionary<string, object> gapLocks = new ConcurrentDictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+        // Mit gemerktem Ergebnis (medien_cache.json, überlebt einen Wechsel der ffmpeg-Version). Dieselbe
+        // Datei wird auch bei gleichzeitigen Aufgaben nur einmal gelesen.
+        public List<MediaGap> Gaps(string path, CancellationToken token)
+        {
+            object gate = gapLocks.GetOrAdd(Path.GetFullPath(path), delegate { return new object(); });
+            lock (gate)
+            {
+                FileInfo fi = new FileInfo(path);
+                long size = fi.Length, ticks = fi.LastWriteTimeUtc.Ticks;
+                List<MediaGap> gaps;
+                if (MediaCache.TryGetGaps(this, path, size, ticks, out gaps)) return gaps;
+                int video = -1;
+                try { video = Probe(path, token).VideoIndex; }
+                catch (OperationCanceledException) { throw; }
+                catch { }
+                gaps = ScanGaps(path, video, token);
+                MediaCache.PutGaps(this, path, size, ticks, gaps);
+                return gaps;
+            }
+        }
+
+        // Ohne gemerktes Ergebnis (Downloader: Datei ist gerade entstanden). videoIndex < 0: erste Videospur.
+        public List<MediaGap> ScanGaps(string path, int videoIndex, CancellationToken token)
+        {
+            string streams = videoIndex >= 0 ? videoIndex.ToString(CultureInfo.InvariantCulture) : "v:0";
+            ProcResult r = Proc.Run(FfprobePath, new string[] {
+                "-v", "error", "-select_streams", streams, "-show_entries", "packet=dts_time", "-of", "csv=p=0", path }, token, null);
+            if (r.ExitCode != 0)
+            {
+                string err = r.StdErr.Trim();
+                throw new Exception("ffprobe: " + (err.Length > 0 ? LastLine(err) : "Fehler " + r.ExitCode));
+            }
+            return FindGaps(r.StdOut);
+        }
+
+        // Ausgabe von ffprobe (eine Zeit je Zeile) -> Lücken
+        public static List<MediaGap> FindGaps(string packetTimes)
+        {
+            List<double> times = new List<double>();
+            foreach (string raw in (packetTimes ?? "").Split('\n'))
+            {
+                string line = raw.Trim();
+                int comma = line.IndexOf(',');
+                if (comma >= 0) line = line.Substring(0, comma);
+                double t;
+                if (double.TryParse(line, NumberStyles.Float, CultureInfo.InvariantCulture, out t)) times.Add(t);
+            }
+            List<MediaGap> gaps = new List<MediaGap>();
+            List<double> diffs = new List<double>();
+            for (int i = 1; i < times.Count; i++) if (times[i] > times[i - 1]) diffs.Add(times[i] - times[i - 1]);
+            if (diffs.Count == 0) return gaps;
+            diffs.Sort();
+            double step = diffs[diffs.Count / 2];
+            for (int i = 1; i < times.Count; i++)
+            {
+                double extra = times[i] - times[i - 1] - step;
+                if (extra >= GapThreshold) gaps.Add(new MediaGap(times[i - 1] + step, extra));
+            }
+            return gaps;
         }
 
         // Lesefehler, die beim nächsten Mal weg sein können: nicht als "defekt" merken

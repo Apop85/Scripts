@@ -17,9 +17,9 @@ namespace Sflix
 {
     public static class PreviewTask
     {
-        const int Width = 480;
-        const int Height = 270;
-        const long JpegQuality = 80;
+        const int Width = Previews.Width;
+        const int Height = Previews.Height;
+        const long JpegQuality = Previews.Quality;
         static readonly HashSet<string> VideoExtensions = MediaTypes.ReadyVideo;
         static readonly HashSet<string> ImageExtensions = MediaTypes.ReadyImage;
         // Ein Vorschaubild gehört zu einer Datei gleichen Namens mit einer bekannten Medienendung (oder zu
@@ -94,11 +94,8 @@ namespace Sflix
         // Das Protokoll erscheint in der Reihenfolge der Dateien, auch wenn sie anders fertig werden.
         static void MakeMany(TaskContext ctx, List<string> files, out int created, out int skipped, out int failed)
         {
-            ImageCodecInfo jpeg = null;
-            foreach (ImageCodecInfo c in ImageCodecInfo.GetImageEncoders())
-                if (c.MimeType == "image/jpeg") jpeg = c;
-            EncoderParameters enc = new EncoderParameters(1);
-            enc.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, JpegQuality);
+            ImageCodecInfo jpeg = Previews.JpegCodec;
+            EncoderParameters enc = Previews.JpegParameters(JpegQuality);
 
             string tmpBase = Path.Combine(Path.GetTempPath(), "sflix-preview-" + Process.GetCurrentProcess().Id + "-");
             string[] logLines = new string[files.Count];
@@ -163,27 +160,19 @@ namespace Sflix
             }
         }
 
-        static void Collect(string dir, HashSet<string> wanted, List<string> result, List<string> previewDirs, TaskContext ctx)
+        // Gemeinsamer Walker (Folders.Walk): __teile, __konvertiert, __gelöscht usw. bekommen keine Vorschaubilder
+        static void Collect(string root, HashSet<string> wanted, List<string> result, List<string> previewDirs, TaskContext ctx)
         {
-            ctx.Check();
-            try
+            Folders.Walk(root, false, ctx.Token, delegate(DirectoryInfo dir, List<FileInfo> files, List<DirectoryInfo> subs)
             {
                 // Die Bilder in Preview-Ordnern sind selbst Vorschaubilder und bekommen keine
-                bool isPreview = string.Equals(Path.GetFileName(dir), "Preview", StringComparison.OrdinalIgnoreCase);
-                if (!isPreview)
-                    foreach (string f in Directory.GetFiles(dir))
-                        if (wanted.Contains(Path.GetExtension(f).ToLowerInvariant())) result.Add(f);
-                foreach (string d in Directory.GetDirectories(dir))
-                {
-                    string name = Path.GetFileName(d);
-                    // __teile, __konvertiert, __gelöscht usw. bekommen keine Vorschaubilder
-                    if (Folders.Ignore(d)) continue;
-                    if (string.Equals(name, "Preview", StringComparison.OrdinalIgnoreCase)) previewDirs.Add(d);
-                    Collect(d, wanted, result, previewDirs, ctx);
-                }
-            }
-            catch (UnauthorizedAccessException) { }
-            catch (IOException) { }
+                if (!Folders.IsPreviewFolder(dir.Name))
+                    foreach (FileInfo f in files)
+                        if (wanted.Contains(f.Extension.ToLowerInvariant())) result.Add(f.FullName);
+                foreach (DirectoryInfo d in subs)
+                    if (!Folders.Ignore(d) && Folders.IsPreviewFolder(d.Name)) previewDirs.Add(d.FullName);
+                return true;
+            });
         }
 
         // Verschiebt Preview\<name>.jpg (seit 4.1.0 auch .jpeg, .png, .webp wie überall sonst) nach
@@ -210,11 +199,8 @@ namespace Sflix
 
                     try
                     {
-                        Directory.CreateDirectory(trash);
-                        string dest = Path.Combine(trash, Path.GetFileName(jpg));
-                        if (File.Exists(dest))
-                            dest = Path.Combine(trash, baseName + "_" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + Path.GetExtension(jpg));
-                        FileOps.Rename(jpg, dest);
+                        // Freier Name wie überall: "Name (2).jpg" (bis 4.1.0: "Name_<Datum-Zeit>.jpg")
+                        FileOps.MoveIntoFolder(jpg, trash);
                         deleted++;
                         ctx.Log("  VERSCHOBEN  " + jpg + "  ->  " + TrashDirName);
                     }

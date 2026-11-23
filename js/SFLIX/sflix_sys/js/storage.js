@@ -26,9 +26,10 @@ function modifyLocalData(dataType) {
     }
 
     getAllDataKeys().forEach(function (key) {
-        // Bleibt immer erhalten, sonst würden beim nächsten Start die alten gemeinsamen Daten
-        // wieder übernommen
-        if (key === sharedDataImportedKey) {
+        // Markierungen erledigter Migrationen bleiben immer erhalten (auch "sharedDataImported"),
+        // sonst liefen beim nächsten Start alte Migrationen erneut (1.28 benennt alle Schlüssel
+        // in "playlist-..." um) und die alten gemeinsamen Daten würden wieder übernommen
+        if (isMigrationFlag(key)) {
             return;
         }
         // "Zeitstempel löschen" entfernt auch die Gesehen-Markierungen
@@ -40,6 +41,13 @@ function modifyLocalData(dataType) {
             counter += 1;
         }
     });
+
+    // Zwischengespeicherte Werte verwerfen, sonst gälten bis zum Neuladen die gelöschten
+    if (dataType == "all") {
+        displaySettingsCache = null;
+        shuffleState = null;
+        applyDisplaySettings();
+    }
 
     var label = repairLabels[dataType] || dataType;
     var status = document.getElementById("repairStatus");
@@ -248,6 +256,37 @@ function showDataCheck() {
     removeButton.className = "sflixButton danger small";
     removeButton.textContent = "Verwaiste Einträge entfernen (" + totalOrphans + ")";
     removeButton.addEventListener("click", function () {
+        confirmRemoveOrphanedData(container, actions, totalOrphans);
+    });
+    actions.appendChild(removeButton);
+    container.appendChild(actions);
+}
+
+// Vor dem Entfernen ausdrücklich bestätigen lassen und eine Sicherung anbieten (wie bei
+// "Alle Daten löschen"): Fehlt ein Laufwerk nur vorübergehend, lassen sich die Einträge so zurückholen
+function confirmRemoveOrphanedData(container, actions, totalOrphans) {
+    var question = document.createElement("p");
+    question.textContent = totalOrphans + " verwaiste Einträge endgültig entfernen? Das lässt sich nur mit einer Sicherung rückgängig machen.";
+    var exportButton = document.createElement("button");
+    exportButton.type = "button";
+    exportButton.className = "sflixButton primary small";
+    exportButton.textContent = "Sicherung exportieren";
+    var confirmButton = document.createElement("button");
+    confirmButton.type = "button";
+    confirmButton.className = "sflixButton danger small";
+    confirmButton.textContent = "Endgültig entfernen";
+    var cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.className = "sflixButton ghost small";
+    cancelButton.textContent = "Abbrechen";
+    actions.replaceChildren(exportButton, confirmButton, cancelButton);
+    actions.before(question);
+    exportButton.addEventListener("click", function () {
+        downloadBackup();
+        exportButton.textContent = "Sicherung erstellt";
+        exportButton.disabled = true;
+    });
+    confirmButton.addEventListener("click", function () {
         var removed = removeOrphanedData();
         showDataCheck();
         var done = document.createElement("p");
@@ -255,8 +294,7 @@ function showDataCheck() {
         done.textContent = removed + " Einträge entfernt.";
         container.prepend(done);
     });
-    actions.appendChild(removeButton);
-    container.appendChild(actions);
+    cancelButton.addEventListener("click", showDataCheck);
 }
 
 function initDataCheck() {
@@ -264,12 +302,43 @@ function initDataCheck() {
 }
 
 // Funktion, um gespeicherte Daten mit der aktuellen Version kompatibel zu machen
+// Schlüssel, die erst ab 1.28 ("playlist-...") bzw. 2.x entstehen: Mit ihnen ist der Bestand kein Altbestand
+function isModernDataKey(key) {
+    return key.startsWith("playlist-") || key.startsWith("seen-") || key.startsWith("timestamp-./") ||
+        key.startsWith("timestampDuration-") || key === displaySettingsKey || key === "lastSplashVersion";
+}
+
+// Echter Altbestand aus der Zeit vor 2.00: gespeicherte Einträge, aber keine Markierung "v2.00"
+// und keine neueren Schlüssel. Neue Installationen (nur Markierungen wie "sharedDataImported") und
+// Bestände nach "Alle Daten löschen" einer älteren Version gelten nicht als Altbestand.
+function hasLegacyData() {
+    if (getData("v2.00") != null) {
+        return false;
+    }
+    var keys = getAllDataKeys().filter(function (key) {
+        return !isMigrationFlag(key);
+    });
+    return keys.length > 0 && !keys.some(isModernDataKey);
+}
+
 function updateData() {
+    // Ohne Altbestand die alten Migrationen nur als erledigt markieren (sie würden sonst z.B.
+    // Einstellungen in "playlist-..." umbenennen bzw. "Weiterschauen" leeren)
+    var legacy = hasLegacyData();
+    if (!legacy || getData("v1.33") != null) {
+        if (getData("v1.28") == null) {
+            setData("v1.28", true);
+        }
+    }
+    if (!legacy && getData("v1.33") == null) {
+        setData("v1.33", true);
+    }
+
     // Update 1.28 - Anpassen Listenseperator
     if (getData("v1.28") == null) {
         var ignoreList = ["mediaVolume", "timestamp", "favorites", "currentPrefix", "playlast"];
         getAllDataKeys().forEach(function (key) {
-            if (getData(key) == null) {
+            if (getData(key) == null || isMigrationFlag(key)) {
                 return;
             }
             // Ersetze Listenseperator
@@ -577,23 +646,42 @@ function setData(key, value) {
     value = String(value);
     storageCache[key] = value;
 
-    if (!db) {
-        return;
-    }
-
-    var transaction = db.transaction(["storage"], "readwrite");
-    transaction.objectStore("storage").put(value, key);
+    writeToDatabase("Speichern", key, function (store) {
+        store.put(value, key);
+    });
 }
 
 function removeData(key) {
     delete storageCache[key];
+    writeToDatabase("Löschen", key, function (store) {
+        store.delete(key);
+    });
+}
 
+// Schreibt in die Datenbank. Fehler (Speicher voll, Datenbank geschlossen ...) werden nur
+// protokolliert: Der Wert bleibt im Cache und gilt bis zum Neuladen weiter.
+function writeToDatabase(action, key, operation) {
     if (!db) {
         return;
     }
-
-    var transaction = db.transaction(["storage"], "readwrite");
-    transaction.objectStore("storage").delete(key);
+    var report = function (error) {
+        console.error("IndexedDB: " + action + " von \"" + key + "\" fehlgeschlagen", error);
+    };
+    try {
+        var transaction = db.transaction(["storage"], "readwrite");
+        transaction.onerror = function (event) {
+            event.preventDefault();
+            report(transaction.error || event);
+        };
+        transaction.onabort = function () {
+            if (transaction.error) {
+                report(transaction.error);
+            }
+        };
+        operation(transaction.objectStore("storage"));
+    } catch (error) {
+        report(error);
+    }
 }
 
 function getAllDataKeys() {
@@ -664,8 +752,26 @@ function requestPersistentStorage() {
 
 function loadDatabaseCache(callback) {
     storageCache = {};
+    // Genau einmal weiter (Fehler, Abbruch oder Erfolg), sonst hinge der Start
+    var finished = false;
+    var finish = function () {
+        if (finished) {
+            return;
+        }
+        finished = true;
+        if (callback) {
+            callback();
+        }
+    };
 
-    var transaction = db.transaction(["storage"], "readonly");
+    var transaction;
+    try {
+        transaction = db.transaction(["storage"], "readonly");
+    } catch (error) {
+        console.error("IndexedDB Cache konnte nicht geladen werden", error);
+        finish();
+        return;
+    }
     var request = transaction.objectStore("storage").openCursor();
 
     request.onsuccess = function (event) {
@@ -676,17 +782,16 @@ function loadDatabaseCache(callback) {
         }
     };
 
-    transaction.oncomplete = function () {
-        if (callback) {
-            callback();
-        }
-    };
+    transaction.oncomplete = finish;
 
     transaction.onerror = function (event) {
         console.error("IndexedDB Cache konnte nicht geladen werden", event);
-        if (callback) {
-            callback();
-        }
+        finish();
+    };
+
+    transaction.onabort = function (event) {
+        console.error("IndexedDB: Laden des Caches abgebrochen", event);
+        finish();
     };
 }
 
@@ -831,10 +936,11 @@ function migrateBackupData(data, backupVersion) {
     return result;
 }
 
-// Nicht in die Sicherung: der alte Lizenzschlüssel (bis 2.04 im Browser gespeichert) und die
-// Version, für die der Startbildschirm zuletzt kam (gehört zur installierten Version)
+// Nicht in die Sicherung: der alte Lizenzschlüssel (bis 2.04 im Browser gespeichert), die
+// Version, für die der Startbildschirm zuletzt kam (gehört zur installierten Version), und die
+// beschädigten Stellen dieses Geräts (DEC-374: gelten nur für das Gerät)
 function isExcludedFromBackup(key) {
-    return key === "serial" || key === "lastSplashVersion";
+    return key === "serial" || key === "lastSplashVersion" || key === "damagedLocal" || key === "damagedDismissed";
 }
 
 // Markierungen erledigter Migrationen ("v2.00") und umbenannter Pfade
@@ -1031,3 +1137,6 @@ function initBackup() {
         }
     });
 }
+
+// Markierung: Datei vollständig geladen (Prüfung am Ende von start.html)
+var sflixFileEndStorage = true;

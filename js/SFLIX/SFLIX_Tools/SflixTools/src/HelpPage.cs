@@ -64,7 +64,7 @@ namespace Sflix
             left.Controls.Add(list, 0, 1);
             left.Controls.Add(noHits, 0, 2);
 
-            view = new RichTextBox();
+            view = new RichTextBox(); DarkWindow.Apply(view);
             view.Dock = DockStyle.Fill;
             view.ReadOnly = true;
             view.BorderStyle = BorderStyle.None;

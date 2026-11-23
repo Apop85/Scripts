@@ -42,6 +42,64 @@ namespace Sflix
         }
     }
 
+    // Dunkles Windows-Design für ein Steuerelement (Bildlaufleisten, Markierung). Wird bei jedem neuen
+    // Handle wiederholt. Auf älteren Windows ohne dunkles Design bleibt es beim hellen.
+    public static class DarkWindow
+    {
+        [System.Runtime.InteropServices.DllImport("uxtheme.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        static extern int SetWindowTheme(IntPtr hwnd, string appName, string idList);
+
+        [System.Runtime.InteropServices.DllImport("uxtheme.dll", EntryPoint = "#133")]
+        static extern bool AllowDarkModeForWindow(IntPtr hwnd, bool allow);
+
+        public static void Apply(Control c)
+        {
+            c.HandleCreated += delegate { Set(c); };
+            if (c.IsHandleCreated) Set(c);
+        }
+
+        public static void Set(Control c)
+        {
+            try { AllowDarkModeForWindow(c.Handle, true); } catch { }
+            try { SetWindowTheme(c.Handle, "DarkMode_Explorer", null); } catch { }
+        }
+    }
+
+    // Auswahlliste mit dunklem Pfeil-Knopf. Mit FlatStyle.Flat zeichnet Windows Forms den Knopf hell;
+    // nach jedem Zeichnen wird er dunkel übermalt (SFLIX-20261123-090).
+    public class DarkCombo : ComboBox
+    {
+        public DarkCombo()
+        {
+            FlatStyle = FlatStyle.Flat;
+            BackColor = Theme.Input;
+            ForeColor = Theme.Text;
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+            if (m.Msg != 0x000F || !IsHandleCreated) return;   // WM_PAINT
+            try
+            {
+                using (Graphics g = Graphics.FromHwnd(Handle))
+                {
+                    int w = SystemInformation.VerticalScrollBarWidth;
+                    Rectangle r = new Rectangle(Width - w - 1, 1, w, Height - 2);
+                    using (SolidBrush b = new SolidBrush(BackColor)) g.FillRectangle(b, r);
+                    int cx = r.Left + r.Width / 2, cy = r.Top + r.Height / 2, s = Math.Max(3, w / 4);
+                    SmoothingMode old = g.SmoothingMode;
+                    g.SmoothingMode = SmoothingMode.AntiAlias;
+                    using (SolidBrush b = new SolidBrush(Enabled ? Theme.Text : Theme.Muted))
+                        g.FillPolygon(b, new Point[] { new Point(cx - s, cy - s / 2), new Point(cx + s + 1, cy - s / 2), new Point(cx, cy + s / 2 + 1) });
+                    g.SmoothingMode = old;
+                    using (Pen p = new Pen(Theme.Line)) g.DrawRectangle(p, 0, 0, Width - 1, Height - 1);
+                }
+            }
+            catch { }
+        }
+    }
+
     public static class Theme
     {
         public static readonly Color Back = Color.FromArgb(0x18, 0x18, 0x1c);
@@ -82,6 +140,7 @@ namespace Sflix
             t.BackColor = Input;
             t.ForeColor = Text;
             t.BorderStyle = BorderStyle.FixedSingle;
+            DarkWindow.Apply(t);   // Bildlaufleisten mehrzeiliger Felder dunkel (SFLIX-20261123-090)
             return t;
         }
 

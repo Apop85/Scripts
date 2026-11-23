@@ -84,10 +84,10 @@ function Ask-Text([string]$question, [string]$default, [string]$pattern, [string
 
 function Fail([string]$text) { throw $text }
 
-function Run-Python([string]$script) {
+function Run-Python([string]$script, [string[]]$pyArgs = @()) {
     Push-Location $Root
     try {
-        & python -X utf8 (Join-Path $Scripts $script)
+        & python -X utf8 (Join-Path $Scripts $script) @pyArgs
         if ($LASTEXITCODE -ne 0) { Fail "$script ist fehlgeschlagen (Exit-Code $LASTEXITCODE)" }
     } finally { Pop-Location }
 }
@@ -445,7 +445,7 @@ try {
     # Geaenderte Dateien der Weboberflaeche seit dem letzten Release (checksums.json)
     $webChanged = @()
     foreach ($p in $before.PSObject.Properties) {
-        if ($p.Name -like '*.exe' -or $p.Name -eq 'ffmpeg.json') { continue }
+        if ($p.Name -like '*.exe' -or $p.Name -eq 'ffmpeg.json' -or $p.Name.StartsWith('_')) { continue }
         if ($published[$p.Name] -ne $p.Value) { $webChanged += $p.Name }
     }
     Info "Aktuelle Version: $webVersion"
@@ -540,14 +540,14 @@ try {
     $checksumsJson = Join-Path $Root 'checksums.json'
     $checksumsSig = Join-Path $Root 'checksums.sig'
     $checksumsBefore = if (Test-Path $checksumsJson) { (Get-FileHash $checksumsJson).Hash } else { '' }
-    Run-Python 'create_checksums.py'
+    Run-Python 'create_checksums.py' @('--schreiben')
 
     # Signierte Updates (DEC-356): neue checksums.json signieren (checksums.sig), danach streng pruefen.
     # Ohne privaten Schluessel bricht der Release ab: unsignierte Pruefsummen installiert der Desktop ab 4.1.0 nicht.
     $checksumsChanged = $checksumsBefore -ne (Get-FileHash $checksumsJson).Hash
     if ($checksumsChanged -or -not (Test-Path $checksumsSig)) {
         & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Scripts 'sign_checksums.ps1') -Root $Root
-        if ($LASTEXITCODE -ne 0) { Fail 'checksums.json konnte nicht signiert werden (privater Schluessel in SFLIX_Tools\Release\signing\ fehlt?). Siehe docs\RELEASE.md, Signierte Updates.' }
+        if ($LASTEXITCODE -ne 0) { Fail 'checksums.json konnte nicht signiert werden (signing\update_key.dpapi fehlt oder laesst sich nicht entschluesseln? Meldung oben, update_key.ps1 -Schuetzen). Siehe docs\RELEASE.md, Signierte Updates.' }
     }
     Push-Location $Root
     try {
@@ -595,6 +595,8 @@ try {
     $after = Get-Content (Join-Path $Root 'checksums.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     $toPush = @()
     foreach ($p in $after.PSObject.Properties) {
+        # Schluessel mit fuehrendem Unterstrich (_webFiles, _obsoleteFiles aus create_checksums.py) sind Listen, keine Dateien
+        if ($p.Name.StartsWith('_')) { continue }
         if ($published[$p.Name] -ne $p.Value) { $toPush += $p.Name }
     }
     if ($toPush.Count -gt 0 -or $released.Count -gt 0 -or $checksumsChanged) { $toPush += 'checksums.json'; $toPush += 'checksums.sig' }

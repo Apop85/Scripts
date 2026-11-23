@@ -30,8 +30,8 @@ namespace Sflix
         // Zu grosse Vorschaubilder werden auf 480x270 zugeschnitten (16:9). Das Original
         // kommt nach Preview\__original\<Dateiname>.
         const string PreviewFolder = "Preview";
-        const int PreviewWidth = 480, PreviewHeight = 270;
-        const long PreviewQuality = 80;
+        const int PreviewWidth = Previews.Width, PreviewHeight = Previews.Height;
+        const long PreviewQuality = Previews.Quality;
         const string OriginalFolder = "__original";   // Preview\__original\<Datei>; "Ablagen leeren" räumt ihn auf
         const string OriginalSuffix = ".original";    // Ablage bis Version 3.0.3 ("<Datei>.original")
 
@@ -204,8 +204,6 @@ namespace Sflix
         // Vorschaubilder verkleinern
         // ---------------------------------------------------------------
 
-        static ImageCodecInfo jpegCodec;
-
         void ShrinkPreview(string fullPath)
         {
             string ext = fullPath.Substring(fullPath.LastIndexOf('.') + 1).ToLowerInvariant();
@@ -235,12 +233,7 @@ namespace Sflix
                     if (result == null) return;
                     if (format == ImageFormat.Jpeg)
                     {
-                        if (jpegCodec == null)
-                            foreach (ImageCodecInfo c in ImageCodecInfo.GetImageEncoders())
-                                if (c.MimeType == "image/jpeg") jpegCodec = c;
-                        EncoderParameters enc = new EncoderParameters(1);
-                        enc.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, PreviewQuality);
-                        result.Save(tempPath, jpegCodec, enc);
+                        result.Save(tempPath, Previews.JpegCodec, Previews.JpegParameters(PreviewQuality));
                     }
                     else
                     {

@@ -42,6 +42,7 @@ SKIP_FILES = [
 GENERATED = {
     "install.js", "license.js", "renamed.js", "updater_settings.json", "updater_info.js", "folgen_cache.json",
     "folgen_rueckgaengig.json", "medien_cache.json", "downloads.json", "updater.log", "lizenzen.json",
+    "damaged.js", "player.log",
     "keystore.properties", "stefflix.jks", "STEFFLIX-debug.apk", "STEFFLIX-test.apk", "local.properties",
     "app.ico", "AssetGen.exe", "banner.png", "logo256.png", "stefflix.ico", "version.json", "news.json",
     "TASK-INDEX.md", "DECISIONS-intern.md", "settings.local.json", "make-previews.log", "data.js",

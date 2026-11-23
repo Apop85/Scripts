@@ -43,6 +43,21 @@ public class SettingsActivity extends Activity {
     private LinearLayout sources;
     private TextView cacheValue, bufferValue, testResult, updateStatus;
     private Button updateButton;
+    private Button notifyButton;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateNotifyButton();
+    }
+
+    /** Knopf "Benachrichtigungen erlauben" nur zeigen, solange die Erlaubnis fehlt (ab Android 13). */
+    private void updateNotifyButton() {
+        if (notifyButton == null || android.os.Build.VERSION.SDK_INT < 33) return;
+        boolean granted = checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        notifyButton.setVisibility(granted ? View.GONE : View.VISIBLE);
+    }
 
     @Override
     protected void onCreate(Bundle state) {
@@ -84,16 +99,18 @@ public class SettingsActivity extends Activity {
                 prefs.backgroundPlayback(), prefs::setBackgroundPlayback);
         // Ab Android 13 braucht die Steuerung in der Benachrichtigung eine Erlaubnis. Nach einer Ablehnung fragt
         // Android nicht mehr nach: deshalb hier der Weg zu den Benachrichtigungs-Einstellungen der App
-        if (android.os.Build.VERSION.SDK_INT >= 33
-                && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            page.addView(button("Benachrichtigungen erlauben", false, v -> {
+        // Sichtbar nur ohne Erlaubnis; nach der Rückkehr aus den Einstellungen in onResume neu geprüft
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            notifyButton = button("Benachrichtigungen erlauben", false, v -> {
                 try {
                     startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                             .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName()));
                 } catch (RuntimeException e) {
                     Toast.makeText(this, "Bitte in den Android-Einstellungen unter Apps › STEFFLIX › Benachrichtigungen erlauben.", Toast.LENGTH_LONG).show();
                 }
-            }));
+            });
+            page.addView(notifyButton);
+            updateNotifyButton();
         }
         switchRow(page, "Bild-im-Bild", "Knopf im Player: Video in einem kleinen Fenster über anderen Apps",
                 prefs.pictureInPicture(), prefs::setPictureInPicture);

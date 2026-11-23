@@ -193,21 +193,10 @@ namespace Sflix
         // Datei und Vorschaubild nach <Ordner>\__duplikate (bzw. __duplikate\Preview)
         static void MoveAside(string file)
         {
-            string dir = Path.GetDirectoryName(file);
-            string storage = Path.Combine(dir, FolderName);
-            Directory.CreateDirectory(storage);
-            string dest = FileOps.UniquePath(storage, Path.GetFileName(file));
-            FileOps.Rename(file, dest);
-            string stem = Path.GetFileNameWithoutExtension(file);
-            foreach (string ext in MediaTypes.PreviewExtensions)
-            {
-                string preview = Path.Combine(Path.Combine(dir, "Preview"), stem + ext);
-                if (!File.Exists(preview)) continue;
-                string previewStore = Path.Combine(storage, "Preview");
-                Directory.CreateDirectory(previewStore);
-                try { FileOps.Rename(preview, FileOps.UniquePath(previewStore, Path.GetFileNameWithoutExtension(dest) + ext)); }
-                catch { }
-            }
+            string storage = Path.Combine(Path.GetDirectoryName(file), FolderName);
+            string dest = FileOps.MoveIntoFolder(file, storage);
+            // Vorschaubild unter dem Namen in der Ablage (z.B. "Film (2).jpg" zu "Film (2).mp4")
+            FileOps.MovePreviewsInto(file, Path.Combine(storage, "Preview"), Path.GetFileNameWithoutExtension(dest));
         }
 
         // Gleiche Grösse, dann gleiche Prüfsumme

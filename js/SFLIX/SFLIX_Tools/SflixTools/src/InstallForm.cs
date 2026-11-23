@@ -241,7 +241,7 @@ namespace Sflix
             prog.Controls.Add(detailsButton, 1, 1);
             root.Controls.Add(prog, 0, 3);
 
-            logBox = new TextBox();
+            logBox = new TextBox(); DarkWindow.Apply(logBox);
             logBox.Multiline = true;
             logBox.ReadOnly = true;
             logBox.ScrollBars = ScrollBars.Vertical;

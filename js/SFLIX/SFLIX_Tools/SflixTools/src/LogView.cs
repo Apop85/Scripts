@@ -153,7 +153,7 @@ namespace Sflix
             filter.Controls.Add(search, 0, 0);
             filter.Controls.Add(onlyProblems, 1, 0);
 
-            box = new RichTextBox();
+            box = new RichTextBox(); DarkWindow.Apply(box);
             box.ReadOnly = true;
             box.DetectUrls = false;
             box.BorderStyle = BorderStyle.None;

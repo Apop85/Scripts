@@ -42,8 +42,9 @@ DEFAULT_SOURCE = os.path.normpath(os.path.join(HERE, "..", ".."))
 # Geheime und persönliche Dateien (gitignore-Muster): nie übertragen, auch wenn .gitignore sie nicht ausschliesst
 SPERRLISTE = [
     "sflix_sys/install.js", "sflix_sys/license.js", "sflix_sys/downloads.json", "lizenzen.json",
+    "sflix_sys/damaged.js", "sflix_sys/player.log",
     "SFLIX_Tools/Android/signing/", "SFLIX_Tools/Release/signing/", "*.jks", "*.keystore", "keystore.properties",
-    "update_key*.xml", "coordination/", "docs/intern/", ".claude/testenv/", ".claude/settings.local.json",
+    "update_key*.xml", "*.dpapi", "*.dpapi.neu", "coordination/", "docs/intern/", ".claude/testenv/", ".claude/settings.local.json",
     ".claude/old/", ".claude/archiv/", "SFLIX_Tools/Doku/private_patterns.txt", "tmp/",
     # auch Kopien an anderen Orten und Varianten
     "install*.js", "license*.js", "downloads*.json", "lizenzen*.json", "local.properties",
@@ -232,6 +233,15 @@ def inside(child, parent):
     c = os.path.normcase(os.path.abspath(child)).rstrip("\\/")
     p = os.path.normcase(os.path.abspath(parent)).rstrip("\\/")
     return c == p or c.startswith(p + os.sep)
+
+
+# Private Schlüssel im Inhalt (immer geprüft, auch mit --ohne-suchmuster; SFLIX-20261123-079): PEM-Block und
+# RSA-Schlüssel als XML (.NET ToXmlString(true), privater Exponent <D>). So geschrieben, dass diese Datei selbst
+# nicht passt.
+KEY_PATTERNS = [
+    re.compile(r"-{5}BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-{5}"),
+    re.compile(r"<D>[A-Za-z0-9+/=\s]{40,}</D>"),
+]
 
 
 def private_patterns(source):
@@ -441,6 +451,7 @@ def main():
         out("FEHLER: SFLIX_Tools/Doku/private_patterns.txt fehlt oder ist leer: ohne persönliche Suchmuster wird nicht gespiegelt "
             "(Ausnahme: --ohne-suchmuster).")
         return 1
+    pats = (pats or []) + KEY_PATTERNS
     out("Quelle: " + source)
     out("Ziel:   " + target + "  (Klon: " + git_root + ")")
 

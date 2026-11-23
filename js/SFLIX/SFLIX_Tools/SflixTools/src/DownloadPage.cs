@@ -13,12 +13,46 @@ namespace Sflix
     public class DownloadPage : TableLayoutPanel
     {
         public readonly DownloadManager Manager;
-        public Action<string> Log;            // Protokoll (beliebiger Thread)
         public Action<string> FolderReady;    // Zielordner fertig: einlesen (UI-Thread)
+
+        // Protokoll (beliebiger Thread). Zeilen vor dem Setzen (Laden von downloads.json) werden
+        // gepuffert und beim Setzen ausgegeben (SFLIX-20261123-090).
+        Action<string> log;
+        readonly List<string> pendingLog = new List<string>();
+        public Action<string> Log
+        {
+            get { return log; }
+            set
+            {
+                List<string> pending;
+                lock (pendingLog)
+                {
+                    log = value;
+                    pending = new List<string>(pendingLog);
+                    pendingLog.Clear();
+                }
+                if (value != null) foreach (string line in pending) value(line);
+            }
+        }
+
+        void WriteLog(string line)
+        {
+            Action<string> target;
+            lock (pendingLog)
+            {
+                target = log;
+                if (target == null)
+                {
+                    if (pendingLog.Count < 100) pendingLog.Add(line);
+                    return;
+                }
+            }
+            target(line);
+        }
 
         readonly Settings settings;
         readonly ListView list;
-        readonly Button addButton, pauseButton, resumeButton, editButton, removeButton, messagesButton, cleanupButton;
+        readonly Button addButton, pauseButton, resumeButton, editButton, removeButton, messagesButton, cleanupButton, keepGapButton, deleteGapButton;
         readonly ComboBox parallelBox;
         readonly Label summary;
         readonly System.Windows.Forms.Timer refreshTimer = new System.Windows.Forms.Timer();
@@ -40,11 +74,12 @@ namespace Sflix
 
             Manager = new DownloadManager(settings);
             Manager.Changed = delegate { dirty = true; };
-            Manager.Log = delegate(string line) { if (Log != null) Log("Download: " + line); };
+            Manager.Log = delegate(string line) { WriteLog("Download: " + line); };
             Manager.FolderReady = delegate(string folder)
             {
                 Ui.Post(this, delegate { if (FolderReady != null) FolderReady(folder); });
             };
+            Manager.Start();
 
             Label intro = Theme.MakeLabel("Videos aus einer m3u8-Adresse (HLS) laden, z.B. aus den Entwicklertools des Browsers. Die Teilstücke werden einzeln " +
                                           "geladen: Downloads lassen sich pausieren und nach einem Neustart fortsetzen. Ist die Adresse abgelaufen, mit „URL bearbeiten“ " +
@@ -71,11 +106,17 @@ namespace Sflix
             removeButton = SmallButton("Entfernen");
             messagesButton = SmallButton("Meldungen …");
             cleanupButton = SmallButton("Aufräumen");
+            // Lücke nach den Reparaturrunden (DEC-373): nur sichtbar, wenn ein gewählter Download darauf wartet
+            keepGapButton = SmallButton("Lücke behalten");
+            deleteGapButton = SmallButton("Datei löschen …");
+            keepGapButton.Visible = deleteGapButton.Visible = false;
+            tips.SetToolTip(keepGapButton, "Die Datei mit der Lücke bleibt im Zielordner. Die Stelle steht in STEFFLIX unter Einstellungen › Beschädigte Dateien.");
+            tips.SetToolTip(deleteGapButton, "Verschiebt die Datei mit der Lücke nach „" + MediaCheckTask.DeletedFolderName + "“ (wie „Medien prüfen“).");
             addButton.Margin = new Padding(0, 0, Theme.S(10), 0);
-            foreach (Control c in new Control[] { addButton, pauseButton, resumeButton, editButton, removeButton, messagesButton, cleanupButton }) bar.Controls.Add(c);
+            foreach (Control c in new Control[] { addButton, pauseButton, resumeButton, editButton, removeButton, messagesButton, cleanupButton, keepGapButton, deleteGapButton }) bar.Controls.Add(c);
             Label parallelLabel = Theme.MakeLabel("Gleichzeitig:", true);
             parallelLabel.Margin = new Padding(Theme.S(16), Theme.S(7), Theme.S(6), 0);
-            parallelBox = new ComboBox();
+            parallelBox = new DarkCombo();
             parallelBox.DropDownStyle = ComboBoxStyle.DropDownList;
             parallelBox.FlatStyle = FlatStyle.Flat;
             parallelBox.BackColor = Theme.Input;
@@ -145,6 +186,8 @@ namespace Sflix
             removeButton.Click += delegate { RemoveSelected(); };
             messagesButton.Click += delegate { ShowMessages(); };
             cleanupButton.Click += delegate { Cleanup(); };
+            keepGapButton.Click += delegate { foreach (DownloadJob j in Selected()) if (j.GapPending) Manager.KeepGap(j); };
+            deleteGapButton.Click += delegate { DeleteGapFiles(); };
 
             if (App.IsReleaseFolder)
             {
@@ -200,6 +243,18 @@ namespace Sflix
             editButton.Enabled = canEdit && !locked;
             removeButton.Enabled = sel.Count > 0 && !locked;
             messagesButton.Enabled = hasMessages;
+            bool gap = !locked && sel.Exists(delegate(DownloadJob j) { return j.GapPending; });
+            if (keepGapButton.Visible != gap) { keepGapButton.Visible = gap; deleteGapButton.Visible = gap; }
+        }
+
+        void DeleteGapFiles()
+        {
+            List<DownloadJob> sel = Selected().FindAll(delegate(DownloadJob j) { return j.GapPending; });
+            if (sel.Count == 0) return;
+            string text = (sel.Count == 1 ? "„" + Path.GetFileName(sel[0].ResultPath) + "“ (" + sel[0].GapText + ")" : sel.Count + " Dateien mit Lücke")
+                        + " nach „" + MediaCheckTask.DeletedFolderName + "“ verschieben?\n\n„Ablagen leeren“ löscht sie später endgültig.";
+            if (MessageBox.Show(FindForm(), text, App.Title, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+            foreach (DownloadJob j in sel) Manager.DeleteGapFile(j);
         }
 
         static bool IsRetry(List<DownloadJob> sel)
@@ -254,7 +309,7 @@ namespace Sflix
                     it.Tag = j;
                     for (int c = 0; c < cells.Length; c++) if (it.SubItems[c].Text != cells[c]) it.SubItems[c].Text = cells[c];
                     Color color = j.Result == "Fehler" ? Color.FromArgb(0xff, 0x8a, 0x80)
-                                : j.Result == "Warnung" ? Color.FromArgb(0xf0, 0xc0, 0x60)
+                                : j.Result == "Warnung" || j.GapPending ? Color.FromArgb(0xf0, 0xc0, 0x60)
                                 : j.Result == "OK" ? Color.FromArgb(0x8c, 0xd9, 0x8c) : Theme.Text;
                     if (it.ForeColor != color) it.ForeColor = color;
                     bool sel = selected.Contains(j.Id);
@@ -294,7 +349,7 @@ namespace Sflix
                 List<DownloadJob> jobs = dlg.Ask(FindForm());
                 if (jobs == null) return;
                 foreach (DownloadJob j in jobs) Manager.Add(j);
-                if (Log != null) Log("Download: " + jobs.Count + " hinzugefügt (Ziel: " + jobs[0].Folder + ")");
+                WriteLog("Download: " + jobs.Count + " hinzugefügt (Ziel: " + jobs[0].Folder + ")");
             }
         }
 
@@ -338,13 +393,13 @@ namespace Sflix
         {
             long size = Manager.CleanupSize();
             int count = 0;
-            foreach (DownloadJob j in Manager.Snapshot()) if (j.State == DownloadState.Failed || j.State == DownloadState.Done) count++;
+            foreach (DownloadJob j in Manager.Snapshot()) if ((j.State == DownloadState.Failed || j.State == DownloadState.Done) && !j.GapPending) count++;
             string text = "Entfernt " + count + " fertige oder fehlgeschlagene Downloads aus der Liste und löscht ihre Zwischendateien"
                         + (size > 0 ? " (" + Fmt.Size(size) + ")" : "") + " sowie verwaiste Zwischendateien.\n\n"
                         + "Pausierte Downloads bleiben, fertige Dateien im Zielordner ebenfalls. Fortfahren?";
             if (MessageBox.Show(FindForm(), text, App.Title, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
             long freed = Manager.Cleanup();
-            if (Log != null) Log("Download: aufgeräumt" + (freed > 0 ? ", " + Fmt.Size(freed) + " freigegeben" : ""));
+            WriteLog("Download: aufgeräumt" + (freed > 0 ? ", " + Fmt.Size(freed) + " freigegeben" : ""));
         }
 
         protected override void Dispose(bool disposing)
@@ -396,7 +451,7 @@ namespace Sflix
 
             root.Controls.Add(Caption("Zielordner im Installationsordner (neue Ordner werden angelegt):"));
             FlowLayoutPanel folderRow = Row();
-            folder = new ComboBox();
+            folder = new DarkCombo();
             folder.DropDownStyle = ComboBoxStyle.DropDown;
             folder.FlatStyle = FlatStyle.Flat;
             folder.BackColor = Theme.Input;
@@ -450,7 +505,7 @@ namespace Sflix
 
             root.Controls.Add(Caption("Qualität:"));
             FlowLayoutPanel qualityRow = Row();
-            quality = new ComboBox();
+            quality = new DarkCombo();
             quality.DropDownStyle = ComboBoxStyle.DropDownList;
             quality.FlatStyle = FlatStyle.Flat;
             quality.BackColor = Theme.Input;

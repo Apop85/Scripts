@@ -54,7 +54,7 @@ namespace Sflix
             ".jpg", ".jpeg", ".jfif", ".png", ".gif", ".bmp", ".tif", ".tiff"
         };
         const double MusicShare = 0.9;
-        const int Width = 480, Height = 270;
+        const int Width = Previews.Width, Height = Previews.Height;
         const string DeletedFolderName = "__gelöscht";
 
         public static void Run(TaskContext ctx, string root)
@@ -134,18 +134,24 @@ namespace Sflix
 
         // Alben suchen: Musik (ohne Bilder gezählt) zu mindestens 90 %, kein Vorschaubild im Ordner darüber.
         // Kategorien direkt im Installationsordner (z.B. "Musik") sind keine Alben.
-        static void Find(TaskContext ctx, string dir, List<AlbumCandidate> result)
+        // Gemeinsamer Walker (Folders.Walk) ohne Preview-Ordner
+        static void Find(TaskContext ctx, string root, List<AlbumCandidate> result)
         {
-            ctx.Check();
-            string[] files, dirs;
-            try
+            Folders.Walk(root, true, ctx.Token, delegate(DirectoryInfo dirInfo, List<FileInfo> fileInfos, List<DirectoryInfo> subInfos)
             {
-                files = Directory.GetFiles(dir);
-                dirs = Directory.GetDirectories(dir);
-            }
-            catch (UnauthorizedAccessException) { return; }
-            catch (IOException) { return; }
+                List<string> files = new List<string>();
+                foreach (FileInfo f in fileInfos) files.Add(f.FullName);
+                // Unterordner wie beim Absteigen: ohne Ablagen, versteckte, Verknüpfungen und Preview
+                List<string> dirs = new List<string>();
+                foreach (DirectoryInfo d in subInfos)
+                    if (!Folders.Ignore(d) && !Folders.IsPreviewFolder(d.Name)) dirs.Add(d.FullName);
+                CheckAlbum(dirInfo.FullName, files, dirs, result);
+                return true;
+            });
+        }
 
+        static void CheckAlbum(string dir, List<string> files, List<string> dirs, List<AlbumCandidate> result)
+        {
             int music = 0, video = 0;
             List<string> musicFiles = new List<string>();
             foreach (string f in files)
@@ -172,7 +178,6 @@ namespace Sflix
                     AddImages(a.Images, files);
                     foreach (string sub in dirs)
                     {
-                        if (Folders.Ignore(sub) || string.Equals(Path.GetFileName(sub), "Preview", StringComparison.OrdinalIgnoreCase)) continue;
                         try { AddImages(a.Images, Directory.GetFiles(sub)); } catch { }
                     }
                     musicFiles.Sort(ListSort.Natural);
@@ -180,14 +185,9 @@ namespace Sflix
                     result.Add(a);
                 }
             }
-            foreach (string sub in dirs)
-            {
-                if (Folders.Ignore(sub) || string.Equals(Path.GetFileName(sub), "Preview", StringComparison.OrdinalIgnoreCase)) continue;
-                Find(ctx, sub, result);
-            }
         }
 
-        static void AddImages(List<string> list, string[] files)
+        static void AddImages(List<string> list, IEnumerable<string> files)
         {
             List<string> found = new List<string>();
             foreach (string f in files)
@@ -275,8 +275,7 @@ namespace Sflix
                     string sub = Path.GetDirectoryName(img);
                     if (!string.Equals(sub, a.AlbumDir, StringComparison.OrdinalIgnoreCase))
                         storage = Path.Combine(storage, Path.GetFileName(sub));
-                    Directory.CreateDirectory(storage);
-                    FileOps.Rename(img, FileOps.UniquePath(storage, Path.GetFileName(img)));
+                    FileOps.MoveIntoFolder(img, storage);
                     removed++;
                 }
             }
@@ -335,15 +334,11 @@ namespace Sflix
                 {
                     using (Graphics g = Graphics.FromImage(canvas))
                         DrawPadded(g, src);
-                    ImageCodecInfo jpeg = null;
-                    foreach (ImageCodecInfo c in ImageCodecInfo.GetImageEncoders()) if (c.MimeType == "image/jpeg") jpeg = c;
-                    EncoderParameters enc = new EncoderParameters(1);
-                    enc.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 85L);
                     // Erst als Zwischendatei, damit nie ein halbes Bild im Preview-Ordner liegt
                     string temp = Path.Combine(Path.GetDirectoryName(target), Path.GetFileNameWithoutExtension(target) + ".__temp__.jpg");
                     try
                     {
-                        canvas.Save(temp, jpeg, enc);
+                        canvas.Save(temp, Previews.JpegCodec, Previews.JpegParameters(Previews.AlbumQuality));
                         FileOps.Replace(temp, target);
                     }
                     catch { FileOps.TryDelete(temp); throw; }
@@ -457,6 +452,9 @@ namespace Sflix
             imageList.Columns.Add("Grösse", Theme.S(80), HorizontalAlignment.Right);
             imageList.Columns.Add("", Theme.S(70));
             imageList.SelectedIndexChanged += OnImageSelected;
+            // Erste Spalte passt sich an, damit „Grösse“ und „gewählt“ nicht abgeschnitten werden
+            DarkList.FillFirstColumn(albumList, Theme.S(120));
+            DarkList.FillFirstColumn(imageList, Theme.S(120));
 
             preview = new PictureBox();
             preview.Dock = DockStyle.Top;

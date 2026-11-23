@@ -468,12 +468,15 @@ namespace Sflix
         // ---------------------------------------------------------------
 
         // Eine Datei wird nie von zwei Aufgaben gleichzeitig konvertiert (Download-Nachbearbeitung und Tool
-        // "Konvertieren" nutzen dieselben Zwischennamen "Name.__temp__.mp4"), seit 4.1.0
+        // "Konvertieren" nutzen dieselben Zwischennamen "Name.__temp__.mp4"), seit 4.1.0.
+        // Gesperrt wird je Ordner und Name ohne Endung: a.mkv und a.avi ergeben dieselben Zwischen- und
+        // Zieldateien (a.__temp__.mp4, a.mp4) und dürfen nicht parallel laufen (SFLIX-20261123-079)
         static readonly Dictionary<string, object> fileLocks = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
         static object LockFor(string path)
         {
-            string key = Path.GetFullPath(path);
+            string full = Path.GetFullPath(path);
+            string key = Path.Combine(Path.GetDirectoryName(full), Path.GetFileNameWithoutExtension(full));
             lock (fileLocks)
             {
                 object o;

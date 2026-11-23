@@ -528,6 +528,37 @@ namespace Sflix
             return candidate;
         }
 
+        // In eine Ablage verschieben (seit 4.1.1 gemeinsam für Medien prüfen, Duplikate, Albumbilder ...):
+        // Ordner anlegen, freien Namen wählen (UniquePath), umbenennen. Ergebnis: neuer Pfad.
+        // Nur auf demselben Laufwerk (Rename); Ablagen liegen immer neben bzw. unter der Quelle.
+        public static string MoveIntoFolder(string path, string folder)
+        {
+            Directory.CreateDirectory(folder);
+            string dest = UniquePath(folder, Path.GetFileName(path));
+            Rename(path, dest);
+            return dest;
+        }
+
+        // Vorschaubilder der Mediendatei (<Ordner>\Preview\<Name>.jpg, .jpeg, .png, .webp) nach previewStore
+        // mitnehmen, unter newStem (null = alter Name) mit freiem Namen. previewStore wird nur angelegt, wenn
+        // es ein Vorschaubild gibt. Fehler beim Verschieben eines Vorschaubilds werden ignoriert.
+        public static void MovePreviewsInto(string mediaFile, string previewStore, string newStem)
+        {
+            string stem = Path.GetFileNameWithoutExtension(mediaFile);
+            string previewDir = Path.Combine(Path.GetDirectoryName(mediaFile), "Preview");
+            foreach (string ext in MediaTypes.PreviewExtensions)
+            {
+                string preview = Path.Combine(previewDir, stem + ext);
+                if (!File.Exists(preview)) continue;
+                try
+                {
+                    Directory.CreateDirectory(previewStore);
+                    Rename(preview, UniquePath(previewStore, (newStem ?? stem) + ext));
+                }
+                catch { }
+            }
+        }
+
         public static void TryDelete(string path)
         {
             try { Delete(path); } catch { }

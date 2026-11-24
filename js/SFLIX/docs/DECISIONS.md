@@ -9,11 +9,11 @@ Getroffene Entscheidungen zu STEFFLIX, Desktop und Android-App mit Begründung, 
 | Status | Anzahl |
 |---|---|
 | Proposed | 4 |
-| Accepted | 43 |
+| Accepted | 47 |
 | Implemented | 268 |
 | Rejected | 29 |
 | Superseded | 32 |
-| **Total** | **376** |
+| **Total** | **380** |
 
 ## Block 1: Session STEFFLIX 2.00 (Oktober 2026)
 
@@ -5340,6 +5340,64 @@ Alternativen: –
 Konsequenzen: Umgesetzt in STEFFLIX 2.9.2 (player.js: handleDecodeError, skipDamagedSpot, findKnownDamagedGap, reloadMediaAt). Gemeldet wird weiterhin einmal je Datei und Stelle, mit den Sekunden des ersten Sprungs (Brücke damaged.skipped, player.log). Nachgeführt in docs/ARCHITECTURE.md 3.8 und R-48 sowie docs/INTERFACES.md Abschnitte 1 und 4 (SFLIX-20261124-124).
 Betroffene Komponenten: STEFFLIX (player.js), auch App; Desktop unverändert (player.log übernimmt skipped)
 Abhängigkeiten: DEC-373
+
+### DEC-381: Player: Position alle 5 Sekunden und bei Pause, Wechsel, Schliessen speichern
+Status: Accepted
+Datum: 2026-11-24
+Kategorie: UI
+Entscheidung: Der Player speichert die Position im Medium alle 5 statt 10 Sekunden und zusaetzlich beim Pausieren, beim Wechsel zum naechsten Medium und beim Schliessen des Players (Web, Desktop und App ueber den gemeinsamen Player).
+Begründung: Nach Pause und Schliessen soll die Stelle moeglichst genau stimmen; der 10-Sekunden-Takt verlor bis zu 9 Sekunden.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+### DEC-384: Player: Vorschaubild beim Ueberfahren der Zeitleiste (Versuch, live)
+Status: Accepted
+Datum: 2026-11-24
+Kategorie: UI
+Entscheidung: Versuchsweise Variante A: Beim Ueberfahren der Zeitleiste zeigt der Player ein Vorschaubild aus einem zweiten, unsichtbaren Video derselben Datei (gedrosselt), ca. 160 px breit mit Zeit darunter; bei Musik nur die Zeit. In der App erscheint die Vorschau beim Ziehen auf der Zeitleiste. Nicht im eigenen Bild-in-Bild. Keine vorbereiteten Bildraster (Variante B) und keine neuen Dateien in Medienordnern. Geaenderte Dateien werden vorher gesichert, damit der Versuch schnell rueckgaengig gemacht werden kann.
+Begründung: Kleine Aenderung nur in STEFFLIX ohne neue Dateien; Wirkung soll zuerst ausprobiert werden. Variante B (ffmpeg-Bildraster) bleibt als spaetere Ergaenzung, falls die Verzoegerung auf dem NAS stoert.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# Desktop 4.2.7 (Arbeit vom 24.11.2026)
+
+## Entscheidungen
+
+### DEC-382: Tools: Ergebnis- und Auswahlfenster sperren den Player nicht
+Status: Accepted
+Datum: 2026-11-24
+Kategorie: UI
+Entscheidung: Ergebnis- und Auswahlfenster der Tools (z. B. Duplikate, Medien pruefen, Folgen umbenennen, Rueckfragen) sperren nur das Tools-Fenster. Der Player bleibt bedienbar, auch waehrend ein Tool arbeitet, im eigenen Bild-in-Bild und im Vollbild; ein Tools-Fenster draengt sich nicht vor den Player im Vollbild. Das Tools-Fenster bleibt gesperrt, solange ein Auswahlfenster offen ist.
+Begründung: Der Benutzer will waehrend laengerer Tool-Laeufe weiter schauen; ein zweites Tool parallel zu starten wuerde Konflikte erzeugen.
+Alternativen: –
+Konsequenzen: Umsetzung Desktop 4.2.8 (SFLIX-20261124-128): Player und Tools bleiben im selben Thread; die Tools arbeiten schon im eigenen Arbeits-Thread. Ursache war ShowDialog, das alle Fenster des Threads sperrt. ToolModal (PlayerForm.cs) gibt Player und eigenes BiB wieder frei, sobald das modale Fenster nicht dem Player gehört. Schliessen des Players bei offenem Auswahlfenster der Tools: Hinweis, und das Auswahlfenster kommt nach vorne. Ein Klick auf Tools im Player holt ebenfalls das offene Auswahlfenster. Im Vollbild holt sich der Player den Vordergrund zurück, das Auswahlfenster blinkt. Eigene Dialoge des Players sperren weiterhin alles.
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+### DEC-383: Duplikate finden wird Teil von Medien pruefen
+Status: Accepted
+Datum: 2026-11-24
+Kategorie: UI
+Entscheidung: Das Tool Duplikate finden faellt weg. Medien pruefen erhaelt den Schalter Duplikate (beim ersten Start aus). Ist er an, oeffnet sich nach dem Ergebnis von Medien pruefen das bekannte Duplikat-Fenster mit allen Funktionen (inkl. doppelte Ordner, DEC-379). Ist nur Duplikate eingeschaltet, laeuft nur die Duplikatsuche.
+Begründung: Gleiche Kategorie von Dateioperationen, ein Tool statt zwei, Ordner nur einmal durchsuchen; Pruefsummen kosten Zeit, daher standardmaessig aus.
+Alternativen: –
+Konsequenzen: Umsetzung Desktop 4.2.8 (SFLIX-20261124-129): Die Einstellung check.dupes ist beim ersten Start aus. War das frühere Tool gewählt (task.dupes), wird es einmalig als Medien prüfen mit Duplikate übernommen. Die Aufgabe dupes bleibt für die Befehlszeile (--run, --headless) als Medien prüfen nur mit Duplikate. Die Duplikatsuche übernimmt die Dateiliste der Prüfung, ausser im Ergebnis wurde gelöscht oder konvertiert. Mit mehreren gewählten Ordnern läuft sie je Ordner.
+Betroffene Komponenten: –
+Abhängigkeiten: DEC-379
 
 ## A. Offene Entscheidungen
 

@@ -2,6 +2,47 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0903",
+      "name": "2.9.3",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.2.8: Duplikate finden ist jetzt Teil von „Medien prüfen“: Schalter „Duplikate“ (beim ersten Start aus). Danach öffnet sich die bekannte Auswahl der Duplikate; ist nur „Duplikate“ an, läuft nur die Duplikatsuche. Die Ordner werden nur einmal durchsucht.",
+          "component": "updater",
+          "componentVersion": "4.2.8",
+          "short": "Duplikate finden ist jetzt Teil von „Medien prüfen“: Schalter „Duplikate“ (beim ersten Start aus). Danach öffnet sich die bekannte Auswahl der Duplikate; ist nur „Duplikate“ an, läuft nur die Duplikatsuche. Die Ordner werden nur einmal durchsucht."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Player: Beim Überfahren der Zeitleiste zeigt ein Vorschaubild die Stelle unter dem Zeiger mit der Zeit (bei Musik nur die Zeit). Auf dem Touchscreen erscheint die Vorschau beim Ziehen, das Video springt beim Loslassen dorthin.",
+          "component": "stefflix",
+          "componentVersion": "2.9.3",
+          "short": "Player: Beim Überfahren der Zeitleiste zeigt ein Vorschaubild die Stelle unter dem Zeiger mit der Zeit (bei Musik nur die Zeit). Auf dem Touchscreen erscheint die Vorschau beim Ziehen, das Video springt beim Loslassen dorthin."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.2.8: Während ein Tool arbeitet oder ein Auswahl- bzw. Ergebnisfenster der Tools offen ist, bleibt der Player bedienbar (Wiedergabe, Tastatur, Bild im Bild). Gesperrt ist nur das Fenster der Tools; im Vollbild bleibt der Player vorne.",
+          "component": "updater",
+          "componentVersion": "4.2.8",
+          "short": "Während ein Tool arbeitet oder ein Auswahl- bzw. Ergebnisfenster der Tools offen ist, bleibt der Player bedienbar (Wiedergabe, Tastatur, Bild im Bild). Gesperrt ist nur das Fenster der Tools; im Vollbild bleibt der Player vorne."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Player: Die Position wird alle 5 Sekunden sowie beim Pausieren, beim Wechsel zum nächsten Medium und beim Schliessen gespeichert. Weiterschauen beginnt dadurch näher an der letzten Stelle.",
+          "component": "stefflix",
+          "componentVersion": "2.9.3",
+          "short": "Player: Die Position wird alle 5 Sekunden sowie beim Pausieren, beim Wechsel zum nächsten Medium und beim Schliessen gespeichert. Weiterschauen beginnt dadurch näher an der letzten Stelle."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.8: Folgen umbenennen und andere Listen mit Häkchen: Markieren mit Umschalt- oder Strg-Klick entfernt keine Häkchen mehr. Häkchen ändern sich nur mit einem Klick aufs Kästchen.",
+          "component": "updater",
+          "componentVersion": "4.2.8",
+          "short": "Folgen umbenennen und andere Listen mit Häkchen: Markieren mit Umschalt- oder Strg-Klick entfernt keine Häkchen mehr. Häkchen ändern sich nur mit einem Klick aufs Kästchen."
+        }
+      ]
+    },
+    {
       "version": "2.0902",
       "name": "2.9.2",
       "items": [

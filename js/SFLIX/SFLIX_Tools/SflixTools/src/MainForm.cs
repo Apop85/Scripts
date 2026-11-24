@@ -18,8 +18,9 @@ namespace Sflix
         // und Konvertieren, damit frisch gesicherte Originale nicht im selben Lauf gelöscht werden.
         // Folgen umbenennen vor Zusammenführen, Konvertieren und Vorschaubildern: diese arbeiten
         // dann schon mit den neuen Namen.
-        // Duplikate vor Zusammenführen und Konvertieren (keine Arbeit an Dateien, die gleich aussortiert
-        // werden), Medien prüfen nach dem Konvertieren (prüft dann schon die neuen Dateien).
+        // Medien prüfen nach dem Konvertieren (prüft dann schon die neuen Dateien), mit dem Schalter
+        // „Duplikate“ auch die Duplikatsuche (DEC-383, seit 4.2.8). "dupes" gibt es nur noch für die
+        // Befehlszeile (--run/--headless): Medien prüfen nur mit Duplikate.
         public static readonly string[] TaskIds = { "update", "ffmpeg", "cleanup", "import", "rename", "renameundo", "dupes", "merge", "convert", "check", "preview", "data" };
 
         static readonly Dictionary<string, string> TaskTitles = new Dictionary<string, string> {
@@ -43,7 +44,7 @@ namespace Sflix
         readonly string startNotice;
 
         // Optionen
-        DarkCheckBox optCheckFormat, optCheckDamaged, optCheckPreview, optCheckFolders;   // Medien prüfen: Prüfungen (SFLIX-20261123-100)
+        DarkCheckBox optCheckFormat, optCheckDamaged, optCheckPreview, optCheckFolders, optCheckDupes;   // Medien prüfen: Prüfungen (SFLIX-20261123-100, DEC-383)
         Label checkNoneHint;
         DarkCheckBox optCheckGaps, optFfmpeg, optMoveParts, optDeleteOriginal, optConvertAudio, optPreviewVideos, optPreviewImages, optPreviewMusic;
         DarkCheckBox optImportStructure, optImportConvert, optImportMove, optImportPreview;
@@ -51,7 +52,7 @@ namespace Sflix
         ListBox dataFolders;
         Control dataFoldersRow;
         TextBox installFolderBox, importSub, renameFolder;
-        FolderPick pickPreview, pickMerge, pickConvert, pickCleanup, pickDupes, pickCheck;
+        FolderPick pickPreview, pickMerge, pickConvert, pickCleanup, pickCheck;
         Label renameUndoInfo;
         Button renameUndoButton;
         NumericUpDown convertParallel;
@@ -69,7 +70,7 @@ namespace Sflix
         readonly List<string> pendingDataFolders = new List<string>();
         FlowLayoutPanel buttonsRow;
         Label ffmpegInfo;
-        static readonly string[] ToolIds = { "cleanup", "rename", "dupes", "merge", "convert", "check", "preview" };
+        static readonly string[] ToolIds = { "cleanup", "rename", "merge", "convert", "check", "preview" };
         TabStrip tabs;
         Control[] pages;
         TableLayoutPanel rootLayout;
@@ -333,6 +334,7 @@ namespace Sflix
             optCheckGaps = SmallCheck("Lücken suchen (liest jedes Video ganz, das Ergebnis wird gemerkt)");
             optCheckPreview = SmallCheck("Fehlende Vorschaubilder (gemäss „Vorschaubilder“: Videos und/oder Bilder)");
             optCheckFolders = SmallCheck("Ordner ohne Medien");
+            optCheckDupes = SmallCheck("Duplikate (gleicher Inhalt, gleiche Folge, gleicher Name; Prüfsummen brauchen Zeit)");
             checkNoneHint = Theme.MakeLabel("Mindestens eine Prüfung wählen, sonst lässt sich „Medien prüfen“ nicht starten.", true);
             checkNoneHint.MaximumSize = new Size(TextWidth, 0);
             checkNoneHint.ForeColor = Color.FromArgb(0xf0, 0xc0, 0x60);
@@ -387,7 +389,6 @@ namespace Sflix
             cleanupInfo = Theme.MakeLabel("", true);
             cleanupInfo.MaximumSize = new Size(TextWidth, 0);
             cleanupInfo.Margin = new Padding(0, Theme.S(4), 0, Theme.S(2));
-            pickDupes = MakeFolderPick("Duplikate finden", false);
             pickCheck = MakeFolderPick("Medien prüfen", false);
 
             // Folgen umbenennen: ein Serienordner, darunter "Rückgängig"
@@ -413,20 +414,18 @@ namespace Sflix
                      "Folgen einer Serie anhand der Folgenliste von serienjunkies.de (sonst fernsehserien.de oder TVmaze) umbenennen: „Serie - S01E02 - Titel“ " +
                      "im Ordner „Staffel 01“. Erkannt werden S01E02 und 1x02. Du wählst die Serie und siehst vorher alle Änderungen.",
                      renameRow, undoRow),
-                Spec("dupes", Glyph.Duplicate, "Duplikate finden", "Dateien, Folgen, Namen",
-                     "Identische Dateien (gleicher Inhalt), gleiche Folgen einer Serie (S01E01 = 1x01 = S1E1) und gleiche Dateinamen finden. Du vergleichst Grösse, Auflösung " +
-                     "und Dauer und wählst, was nach „" + DuplicateTask.FolderName + "“ kommt. Favoriten und Fortschritt gehen auf die behaltene Datei über.",
-                     pickDupes.Root),
                 Spec("merge", Glyph.Merge, "Zusammenführen", "pt1, pt2 … zu einer Datei",
                      "Gesplittete Videos wie „Titel pt1“, „Titel pt2“ zu einer Datei zusammenfügen. Du wählst vorher aus, welche.", optMoveParts, pickMerge.Root),
                 Spec("convert", Glyph.Convert, "Konvertieren", "Video MP4, Musik MP3",
                      "Videos in browserkompatible MP4 (H.264/AAC) umwandeln, auf Wunsch auch nicht abspielbare Musik in MP3. " +
                      "Das Original kommt nach „" + ConvertTask.OriginalsFolderName + "“.",
                      parallelRow, optConvertAudio, optDeleteOriginal, pickConvert.Root),
-                Spec("check", Glyph.Inspect, "Medien prüfen", "Nicht abspielbar, defekt",
+                Spec("check", Glyph.Inspect, "Medien prüfen", "Nicht abspielbar, defekt, doppelt",
                      "Findet je nach gewählten Prüfungen Medien, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), leere, defekte und lückenhafte Dateien, " +
-                     "Medien ohne Vorschaubild sowie Ordner ohne Medien. Im Ergebnis wählst du, was gelöscht, konvertiert bzw. mit Vorschaubild versehen wird.",
-                     optCheckFormat, optCheckDamaged, optCheckGaps, optCheckPreview, optCheckFolders, checkNoneHint, pickCheck.Root),
+                     "Medien ohne Vorschaubild sowie Ordner ohne Medien. Im Ergebnis wählst du, was gelöscht, konvertiert bzw. mit Vorschaubild versehen wird. " +
+                     "Mit „Duplikate“ folgt danach die Auswahl doppelter Dateien und Ordner (identisch, gleiche Folge, gleicher Name); was du wählst, kommt nach „" +
+                     DuplicateTask.FolderName + "“, Favoriten und Fortschritt gehen auf die behaltene Datei über.",
+                     optCheckFormat, optCheckDamaged, optCheckGaps, optCheckPreview, optCheckFolders, optCheckDupes, checkNoneHint, pickCheck.Root),
                 Spec("cleanup", Glyph.Trash, "Ablagen leeren", "__-Ordner löschen",
                      "„__teile“, „__konvertiert“, „__gelöscht“, „__original“, „" + EpisodeTask.ReplacedFolderName + "“ und „" + DuplicateTask.FolderName + "“ endgültig löschen. " +
                      "Du siehst vorher, was gelöscht wird. Nur innerhalb des Installationsordners möglich.", cleanupInfo, pickCleanup.Root),
@@ -818,7 +817,6 @@ namespace Sflix
                 case "merge": return pickMerge;
                 case "convert": return pickConvert;
                 case "cleanup": return pickCleanup;
-                case "dupes": return pickDupes;
                 case "check": return pickCheck;
             }
             return null;
@@ -1417,7 +1415,7 @@ namespace Sflix
         // Medien prüfen: die fünf Prüfungen (SFLIX-20261123-100)
         DarkCheckBox[] CheckKindBoxes()
         {
-            return new DarkCheckBox[] { optCheckFormat, optCheckDamaged, optCheckGaps, optCheckPreview, optCheckFolders };
+            return new DarkCheckBox[] { optCheckFormat, optCheckDamaged, optCheckGaps, optCheckPreview, optCheckFolders, optCheckDupes };
         }
 
         bool AnyCheckKind()
@@ -1440,6 +1438,7 @@ namespace Sflix
             k.Gaps = optCheckGaps.Checked;
             k.Preview = optCheckPreview.Checked;
             k.Folders = optCheckFolders.Checked;
+            k.Dupes = optCheckDupes.Checked;
             return k;
         }
 
@@ -1507,7 +1506,7 @@ namespace Sflix
                 settings.Save();
             };
             row.Controls.Add(toolsParallel);
-            Label hint = Theme.MakeLabel("Wie viele Dateien „Medien prüfen“, „Duplikate finden“ und „Vorschaubilder“ gleichzeitig bearbeiten. " +
+            Label hint = Theme.MakeLabel("Wie viele Dateien „Medien prüfen“ (auch Duplikate) und „Vorschaubilder“ gleichzeitig bearbeiten. " +
                                          "Automatisch: 4 beim Prüfen, 2 bei Vorschaubildern. Bei einer langsamen externen Festplatte 1 wählen. " +
                                          "Die volle Prüfsumme bei Duplikaten liest immer eine Datei nach der anderen.", true);
             hint.MaximumSize = new Size(TextWidth, 0);
@@ -2234,6 +2233,17 @@ namespace Sflix
             optCheckGaps.Checked = settings.GetBool("check.gaps", false);
             optCheckPreview.Checked = settings.GetBool("check.preview", true);
             optCheckFolders.Checked = settings.GetBool("check.folders", false);
+            // Duplikate (DEC-383): beim ersten Start aus. War das frühere Tool „Duplikate finden“ gewählt,
+            // einmalig übernehmen: Medien prüfen mit Duplikate
+            bool dupesSaved = settings.GetBool("check.dupes", true) == settings.GetBool("check.dupes", false);
+            bool oldDupesTool = settings.GetBool("task.dupes", false);
+            optCheckDupes.Checked = dupesSaved ? settings.GetBool("check.dupes", false) : oldDupesTool;
+            if (!dupesSaved && oldDupesTool && autoRun == null && checks.ContainsKey("check")) checks["check"].Checked = true;
+            if (autoRun != null && autoRun.Contains("dupes") && checks.ContainsKey("check"))
+            {
+                checks["check"].Checked = true;
+                optCheckDupes.Checked = true;
+            }
             checkNoneHint.Visible = !AnyCheckKind();
             optImportStructure.Checked = settings.GetBool("import.structure", true);
             optImportConvert.Checked = settings.GetBool("import.convert", false);
@@ -2269,6 +2279,8 @@ namespace Sflix
             settings.SetBool("check.gaps", optCheckGaps.Checked);
             settings.SetBool("check.preview", optCheckPreview.Checked);
             settings.SetBool("check.folders", optCheckFolders.Checked);
+            settings.SetBool("check.dupes", optCheckDupes.Checked);
+            settings.SetBool("task.dupes", false);   // früheres Tool (DEC-383), übernommen in Medien prüfen
             settings.SetBool("import.structure", optImportStructure.Checked);
             // Nur die eigene Wahl merken, nicht das erzwungene Häkchen bei nicht kompatiblen Dateien
             if (optImportConvert.Enabled) settings.SetBool("import.convert", optImportConvert.Checked);
@@ -2431,7 +2443,7 @@ namespace Sflix
             if (selected.Contains("import") && !previewVideos && !previewImages) previewVideos = true;
             // Ordner der Tools (Standard "Alles" = Installationsordner)
             Dictionary<string, List<string>> toolFolders = new Dictionary<string, List<string>>();
-            foreach (string id in new string[] { "preview", "merge", "convert", "cleanup", "dupes", "check" })
+            foreach (string id in new string[] { "preview", "merge", "convert", "cleanup", "check" })
             {
                 List<string> list = PickOf(id).Folders();
                 if (selected.Contains(id) && preset == null && page == PageTools)
@@ -2545,7 +2557,7 @@ namespace Sflix
                 // Tools: nur die Ordner, in denen sich etwas geändert haben kann und die im
                 // Installationsordner liegen. "Alles" liest alles ein. Ablagen leeren ändert data.js nicht.
                 List<string> touched = new List<string>();
-                foreach (string id in new string[] { "preview", "merge", "convert", "dupes", "check" })
+                foreach (string id in new string[] { "preview", "merge", "convert", "check" })
                     if (selected.Contains(id)) touched.AddRange(toolFolders[id]);
                 if (renameDir != null) touched.Add(renameDir);
                 bool all = false;
@@ -2619,7 +2631,6 @@ namespace Sflix
             // Albumbilder nur im Tool Vorschaubilder (nicht nach einem Import)
             runner.PreviewMusic = previewMusic && import == null;
             runner.CleanupFolders = toolFolders["cleanup"];
-            runner.DupeFolders = toolFolders["dupes"];
             runner.CheckFolders = toolFolders["check"];
             runner.CheckKinds = CurrentCheckKinds();
             runner.RenameFolder = renameDir;
@@ -3078,7 +3089,10 @@ namespace Sflix
                     else ctx.Ffmpeg.InstallNow(ctx);
                     ctx.Summary = "in " + ctx.Ffmpeg.Dir;
                     break;
-                case "dupes": ForEachFolder(ctx, DupeFolders, delegate(string f) { DuplicateTask.Run(ctx, f); }); break;
+                case "dupes":
+                    // Nur noch über die Befehlszeile (DEC-383): Medien prüfen nur mit Duplikate
+                    MediaCheckTask.Run(ctx, DupeFolders ?? CheckFolders, Convert, PreviewVideos, PreviewImages, MediaCheckKinds.OnlyDupes());
+                    break;
                 case "check":
                     // Ohne gewählte Prüfung (z.B. automatisch nach dem Konvertieren): Schritt überspringen
                     MediaCheckKinds kinds = CheckKinds ?? new MediaCheckKinds();

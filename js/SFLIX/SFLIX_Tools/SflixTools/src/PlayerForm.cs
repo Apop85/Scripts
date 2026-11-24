@@ -641,6 +641,18 @@ namespace Sflix
         // Vollbild
         // ---------------------------------------------------------------
 
+        public bool IsFullscreen { get { return fullscreen; } }
+
+        // Ein Auswahl- oder Ergebnisfenster der Tools (ShowDialog) sperrt alle Fenster des Threads, auch den
+        // Player. ToolModal gibt ihn wieder frei, wenn das Fenster zu den Tools gehört (DEC-382).
+        const int WM_ENABLE = 0x000A;
+
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+            if (m.Msg == WM_ENABLE && m.WParam == IntPtr.Zero) ToolModal.Schedule(this);
+        }
+
         void SetFullscreen(bool on)
         {
             if (on == fullscreen) return;
@@ -887,5 +899,166 @@ namespace Sflix
             }
             base.Dispose(disposing);
         }
+    }
+
+    // ---------------------------------------------------------------
+    // Fenster der Tools sperren den Player nicht (DEC-382, seit 4.2.8). Player und Tools laufen im selben
+    // Thread; ShowDialog sperrt dort alle Fenster. Wird der Player gesperrt, sucht ToolModal kurz danach
+    // das offene modale Fenster: Gehört es zum Player (Eigentümer Player bzw. eigenes BiB), bleibt alles
+    // gesperrt; sonst (Tools) werden Player und eigenes BiB wieder freigegeben. Das Tools-Fenster bleibt
+    // gesperrt, bis das Auswahlfenster zu ist. Im Vollbild holt sich der Player den Vordergrund zurück,
+    // die Tools blinken in der Taskleiste.
+    // ---------------------------------------------------------------
+    static class ToolModal
+    {
+        static Timer timer;
+        static PlayerForm waiting;
+        static int ticks;
+        static bool keepFront;
+
+        public static void Schedule(PlayerForm player)
+        {
+            if (player.IsDisposed || !player.IsHandleCreated) return;
+            if (waiting == null) keepFront = player.IsFullscreen && GetForegroundWindow() == player.Handle;
+            waiting = player;
+            ticks = 0;
+            if (timer == null)
+            {
+                timer = new Timer();
+                timer.Interval = 40;
+                timer.Tick += delegate { Check(); };
+            }
+            timer.Start();
+        }
+
+        static void Stop()
+        {
+            timer.Stop();
+            waiting = null;
+        }
+
+        static void Check()
+        {
+            PlayerForm player = waiting;
+            if (player == null || player.IsDisposed || !player.IsHandleCreated || IsWindowEnabled(player.Handle)) { Stop(); return; }
+            int kind = Classify();
+            if (kind == 0)
+            {
+                if (++ticks >= 25) Stop();   // kein modales Fenster gefunden: nichts ändern
+                return;
+            }
+            Stop();
+            if (kind != 1) return;
+            IntPtr dialog = FindToolDialog();
+            foreach (IntPtr h in Family()) EnableWindow(h, true);
+            if (keepFront && player.IsFullscreen)
+            {
+                player.Activate();
+                if (dialog != IntPtr.Zero) FlashWindow(dialog, true);
+            }
+        }
+
+        // Handles von Player und eigenem BiB
+        static System.Collections.Generic.List<IntPtr> Family()
+        {
+            System.Collections.Generic.List<IntPtr> list = new System.Collections.Generic.List<IntPtr>();
+            foreach (Form f in Application.OpenForms)
+                if ((f is PlayerForm || f is DocPipWindow) && !f.IsDisposed && f.IsHandleCreated) list.Add(f.Handle);
+            return list;
+        }
+
+        // 0 = noch kein modales Fenster, 1 = Fenster der Tools, 2 = Fenster des Players
+        static int Classify()
+        {
+            System.Collections.Generic.List<IntPtr> family = Family();
+            int result = 0;
+            foreach (IntPtr h in Candidates())
+            {
+                if (family.Contains(h)) continue;
+                if (OwnedBy(h, family)) return 2;
+                result = 1;
+            }
+            return result;
+        }
+
+        static IntPtr FindToolDialog()
+        {
+            System.Collections.Generic.List<IntPtr> family = Family();
+            foreach (IntPtr h in Candidates())
+                if (!family.Contains(h) && !OwnedBy(h, family)) return h;
+            return IntPtr.Zero;
+        }
+
+        static bool OwnedBy(IntPtr h, System.Collections.Generic.List<IntPtr> family)
+        {
+            IntPtr owner = GetWindow(h, GW_OWNER);
+            for (int i = 0; owner != IntPtr.Zero && i < 20; i++)
+            {
+                if (family.Contains(owner)) return true;
+                owner = GetWindow(owner, GW_OWNER);
+            }
+            return false;
+        }
+
+        // Sichtbare, freigegebene Fenster der obersten Ebene dieses Threads: Formulare und Dialoge von
+        // Windows (Meldungen, Datei wählen), keine Tooltips u. ä.
+        static System.Collections.Generic.List<IntPtr> Candidates()
+        {
+            System.Collections.Generic.List<IntPtr> list = new System.Collections.Generic.List<IntPtr>();
+            EnumThreadWindows(GetCurrentThreadId(), delegate(IntPtr h, IntPtr l)
+            {
+                if (!IsWindowVisible(h) || !IsWindowEnabled(h)) return true;
+                if (Control.FromHandle(h) is Form) { list.Add(h); return true; }
+                StringBuilder cls = new StringBuilder(64);
+                GetClassName(h, cls, cls.Capacity);
+                if (cls.ToString() == "#32770") list.Add(h);
+                return true;
+            }, IntPtr.Zero);
+            return list;
+        }
+
+        const uint GW_OWNER = 4;
+        delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        static extern bool EnumThreadWindows(uint threadId, EnumWindowsProc callback, IntPtr lParam);
+        [DllImport("kernel32.dll")]
+        static extern uint GetCurrentThreadId();
+        [DllImport("user32.dll")]
+        static extern bool IsWindowVisible(IntPtr hwnd);
+        [DllImport("user32.dll")]
+        static extern bool IsWindowEnabled(IntPtr hwnd);
+        [DllImport("user32.dll")]
+        static extern bool EnableWindow(IntPtr hwnd, bool enable);
+        [DllImport("user32.dll")]
+        static extern IntPtr GetWindow(IntPtr hwnd, uint cmd);
+        [DllImport("user32.dll")]
+        static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll")]
+        static extern bool FlashWindow(IntPtr hwnd, bool invert);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        static extern int GetClassName(IntPtr hwnd, StringBuilder name, int max);
+
+        public static bool IsEnabled(Form f)
+        {
+            return f != null && !f.IsDisposed && f.IsHandleCreated && IsWindowEnabled(f.Handle);
+        }
+
+        // Tools sollen nach vorne, sind aber gesperrt: das offene Fenster der Tools nach vorne holen
+        public static bool BringToolDialog()
+        {
+            IntPtr dialog = FindToolDialog();
+            if (dialog == IntPtr.Zero) return false;
+            if (IsIconic(dialog)) ShowWindow(dialog, 9);   // SW_RESTORE
+            SetForegroundWindow(dialog);
+            return true;
+        }
+
+        [DllImport("user32.dll")]
+        static extern bool SetForegroundWindow(IntPtr hwnd);
+        [DllImport("user32.dll")]
+        static extern bool IsIconic(IntPtr hwnd);
+        [DllImport("user32.dll")]
+        static extern bool ShowWindow(IntPtr hwnd, int cmd);
     }
 }

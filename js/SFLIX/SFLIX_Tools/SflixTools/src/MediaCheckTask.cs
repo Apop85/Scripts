@@ -176,8 +176,20 @@ namespace Sflix
         public bool Gaps;              // Lücken suchen (gaps, DEC-373)
         public bool Preview = true;    // fehlende Vorschaubilder (preview)
         public bool Folders;           // Ordner ohne Medien (folder)
+        public bool Dupes;             // Duplikate (DEC-383): danach das Duplikat-Fenster, beim ersten Start aus
 
-        public bool Any { get { return Format || Damaged || Gaps || Preview || Folders; } }
+        public bool Any { get { return AnyCheck || Dupes; } }
+        // Prüfungen mit eigener Ergebnisliste (ohne Duplikate)
+        public bool AnyCheck { get { return Format || Damaged || Gaps || Preview || Folders; } }
+
+        public static MediaCheckKinds OnlyDupes()
+        {
+            MediaCheckKinds k = new MediaCheckKinds();
+            k.Format = false;
+            k.Preview = false;
+            k.Dupes = true;
+            return k;
+        }
         // ffprobe nötig (Video und M4A untersuchen)
         public bool NeedsProbe { get { return Format || Damaged; } }
         public bool NeedsFfmpeg { get { return Format || Damaged || Gaps; } }
@@ -190,6 +202,7 @@ namespace Sflix
             k.Gaps = settings.GetBool("check.gaps", false);
             k.Preview = settings.GetBool("check.preview", true);
             k.Folders = settings.GetBool("check.folders", false);
+            k.Dupes = settings.GetBool("check.dupes", false);
             return k;
         }
     }
@@ -202,11 +215,39 @@ namespace Sflix
         // kinds: gewählte Prüfungen; nur diese laufen (ohne Format/Defekt kein ffprobe). "Lücken suchen" (DEC-373)
         // liest jedes Video ganz; das Ergebnis wird gemerkt (medien_cache.json), der nächste Lauf liest nur
         // neue oder geänderte Dateien.
+        // Mit "Duplikate" (DEC-383) folgt nach der Prüfung (bzw. allein) die Duplikatsuche je Ordner. Sie
+        // übernimmt die Dateiliste der Prüfung, ausser die Prüfung hat Dateien gelöscht oder verändert.
         public static void Run(TaskContext ctx, List<string> folders, ConvertOptions convert, bool previewVideos, bool previewImages, MediaCheckKinds kinds)
         {
+            List<string> roots = Folders.WithoutNested(folders != null && folders.Count > 0 ? folders : new List<string> { App.Root });
+            List<FileInfo> listed = null;
+            bool changed = false;
+            List<string> summary = new List<string>();
+            if (kinds.AnyCheck)
+            {
+                changed = RunChecks(ctx, roots, convert, previewVideos, previewImages, kinds, out listed);
+                if (!string.IsNullOrEmpty(ctx.Summary)) summary.Add(ctx.Summary);
+            }
+            if (!kinds.Dupes) return;
+            foreach (string root in roots)
+            {
+                ctx.Token.ThrowIfCancellationRequested();
+                ctx.Log("");
+                ctx.Log("Duplikate" + (roots.Count > 1 ? " in " + root : "") + ":");
+                ctx.Summary = null;
+                DuplicateTask.Run(ctx, root, changed ? null : listed);
+                if (!string.IsNullOrEmpty(ctx.Summary)) summary.Add("Duplikate" + (roots.Count > 1 ? " (" + Path.GetFileName(root.TrimEnd('\\')) + ")" : "") + ": " + ctx.Summary);
+            }
+            ctx.Summary = string.Join("; ", summary.ToArray());
+        }
+
+        // Die Prüfungen mit eigener Ergebnisliste. true: Dateien wurden gelöscht, konvertiert o. ä.
+        static bool RunChecks(TaskContext ctx, List<string> roots, ConvertOptions convert, bool previewVideos, bool previewImages,
+                              MediaCheckKinds kinds, out List<FileInfo> listed)
+        {
+            listed = null;
             bool gaps = kinds.Gaps;
             if (kinds.NeedsFfmpeg) ctx.Ffmpeg.EnsureInstalled(ctx);
-            List<string> roots = Folders.WithoutNested(folders != null && folders.Count > 0 ? folders : new List<string> { App.Root });
             HashSet<string> extensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (HashSet<string> set in new HashSet<string>[] { MediaTypes.ReadyVideo, MediaTypes.ReadyAudio, MediaTypes.ReadyImage,
                                                                     MediaTypes.ConvertVideo, MediaTypes.ConvertAudio, MediaTypes.ConvertImage })
@@ -216,13 +257,17 @@ namespace Sflix
             // Dauer je Schritt fürs Protokoll (Vergleich am Netzlaufwerk: welcher Schritt bremst)
             System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
             MediaCache.TakeStats();
-            List<string> files = new List<string>();
+            // Mit Grösse und Änderungszeit aus der Auflistung: die Duplikatsuche übernimmt sie (DEC-383)
+            List<FileInfo> infos = new List<FileInfo>();
             foreach (string root in roots)
             {
                 if (!Directory.Exists(root)) throw new TaskFailedException("Ordner nicht gefunden: " + root);
-                Folders.CollectFiles(root, extensions, true, files, ctx.Token);
+                Folders.CollectFiles(root, extensions, true, infos, ctx.Token);
             }
-            files.RemoveAll(delegate(string f) { string n = Path.GetFileName(f); return n.StartsWith("._") || n.Contains(".__temp__"); });
+            infos.RemoveAll(delegate(FileInfo f) { string n = f.Name; return n.StartsWith("._") || n.Contains(".__temp__"); });
+            listed = infos;
+            List<string> files = new List<string>(infos.Count);
+            foreach (FileInfo f in infos) files.Add(f.FullName);
             ctx.Log(files.Count + " Mediendateien gefunden in " + string.Join(", ", roots.ToArray()));
             double tList = clock.Elapsed.TotalSeconds;
 
@@ -290,12 +335,12 @@ namespace Sflix
             if (kinds.Folders) { counts.Add("Leere Ordner: " + emptyFolders); summary.Add(emptyFolders + " leere Ordner"); }
             ctx.Log(string.Join("   ", counts.ToArray()));
             ctx.Summary = files.Count + " geprüft, " + string.Join(", ", summary.ToArray());
-            if (items.Count == 0 || ctx.ChooseMediaCheck == null) return;
+            if (items.Count == 0 || ctx.ChooseMediaCheck == null) return false;
 
             System.Diagnostics.Stopwatch wait = System.Diagnostics.Stopwatch.StartNew();
             MediaCheckChoice choice = ctx.ChooseMediaCheck(items);
             ctx.WaitSeconds += wait.Elapsed.TotalSeconds;
-            if (choice == null || choice.Count == 0) return;
+            if (choice == null || choice.Count == 0) return false;
             // Löschen (erneute Prüfung) und Konvertieren brauchen ffmpeg, auch wenn die Prüfung ohne lief
             ctx.Ffmpeg.EnsureInstalled(ctx);
             // Konvertieren setzt seine eigene Zusammenfassung: danach wieder die der Prüfung, mit den Aktionen
@@ -310,6 +355,8 @@ namespace Sflix
                 if (choice.Preview.Count > 0) done.Add(choice.Preview.Count + " Vorschaubild(er)");
                 ctx.Summary = own + (done.Count > 0 ? "; gewählt: " + string.Join(", ", done.ToArray()) : "");
             }
+            // Vorschaubilder ändern keine Mediendateien; Löschen und Konvertieren schon
+            return choice.Delete.Count > 0 || choice.Convert.Count > 0;
         }
 
         // Reihenfolge: löschen, konvertieren, dann Vorschaubilder (für konvertierte Dateien vom Ergebnis)

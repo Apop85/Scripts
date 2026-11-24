@@ -158,7 +158,7 @@ namespace Sflix
             ffmpegCheck.Margin = new Padding(0, Theme.S(14), 0, Theme.S(2));
             ffmpegCheck.FitText();
             card.Controls.Add(ffmpegCheck);
-            Label ffmpegHint = Theme.MakeLabel("ffmpeg wird für Vorschaubilder, Konvertieren, den Importer, „Medien prüfen“ und „Duplikate finden“ " +
+            Label ffmpegHint = Theme.MakeLabel("ffmpeg wird für Vorschaubilder, Konvertieren, den Importer, „Medien prüfen“ samt Duplikaten " +
                                                "gebraucht (Download ca. 100 MB). Ohne wird es beim ersten Bedarf geladen.", true);
             ffmpegHint.MaximumSize = new Size(Theme.S(840), 0);
             ffmpegHint.Margin = new Padding(0, 0, 0, Theme.S(4));

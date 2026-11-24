@@ -2,6 +2,14 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.9.3</b>:<br>
+<ul>
+    <li>[<span style="color: red">FEATURE</span>] Desktop 4.2.8: Duplikate finden ist jetzt Teil von „Medien prüfen“: Schalter „Duplikate“ (beim ersten Start aus). Danach öffnet sich die bekannte Auswahl der Duplikate; ist nur „Duplikate“ an, läuft nur die Duplikatsuche. Die Ordner werden nur einmal durchsucht.</li>
+    <li>[<span style="color: red">FEATURE</span>] Player: Beim Überfahren der Zeitleiste zeigt ein Vorschaubild die Stelle unter dem Zeiger mit der Zeit (bei Musik nur die Zeit). Auf dem Touchscreen erscheint die Vorschau beim Ziehen, das Video springt beim Loslassen dorthin.</li>
+    <li>[OPTIMIERUNG] Desktop 4.2.8: Während ein Tool arbeitet oder ein Auswahl- bzw. Ergebnisfenster der Tools offen ist, bleibt der Player bedienbar (Wiedergabe, Tastatur, Bild im Bild). Gesperrt ist nur das Fenster der Tools; im Vollbild bleibt der Player vorne.</li>
+    <li>[OPTIMIERUNG] Player: Die Position wird alle 5 Sekunden sowie beim Pausieren, beim Wechsel zum nächsten Medium und beim Schliessen gespeichert. Weiterschauen beginnt dadurch näher an der letzten Stelle.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.2.8: Folgen umbenennen und andere Listen mit Häkchen: Markieren mit Umschalt- oder Strg-Klick entfernt keine Häkchen mehr. Häkchen ändern sich nur mit einem Klick aufs Kästchen.</li>
+</ul>
 <b>Version 2.9.2</b>:<br>
 <ul>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Player: Bei einer beschädigten Stelle (fehlende Bilder) spielt das Video hinter der Stelle weiter, statt stehen zu bleiben. Längere Lücken werden ganz übersprungen, bekannte Lücken aus „Medien prüfen“ direkt. Die irreführende Meldung „Verbindung unterbrochen“ erscheint dabei nicht mehr.</li>

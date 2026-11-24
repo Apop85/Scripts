@@ -201,11 +201,24 @@ namespace Sflix
         // eine Maustaste gedrückt ist, gilt eine Änderung nur, wenn der Zeiger auf einem Kästchen steht
         // (Folgeänderungen im Code, z.B. andere Zeilen derselben Folge abhaken, laufen dann mit).
         // Leertaste: schaltet alle markierten Zeilen gemeinsam um.
+        // Die ListView wertet einen Klick in einer eigenen Schleife aus (DragDetect) und ändert die Auswahl oft
+        // erst nach dem Loslassen der Taste; dann meldet Control.MouseButtons nichts mehr und die Häkchen der
+        // Bereichsauswahl gingen verloren (SFLIX-20261124-126). ClickGuard merkt sich deshalb für die ganze
+        // Verarbeitung von WM_LBUTTONDOWN/-DBLCLK, ob der Klick auf einem Kästchen lag.
         static void GuardChecks(ListView list)
         {
+            ClickGuard guard = new ClickGuard(list);
+            list.HandleCreated += delegate { guard.Attach(); };
+            if (list.IsHandleCreated) guard.Attach();
             list.ItemCheck += delegate(object s, ItemCheckEventArgs e)
             {
-                if (!list.CheckBoxes || list.VirtualMode || Control.MouseButtons == MouseButtons.None) return;
+                if (!list.CheckBoxes || list.VirtualMode) return;
+                if (guard.InClick)
+                {
+                    if (!guard.OnBox) e.NewValue = e.CurrentValue;
+                    return;
+                }
+                if (Control.MouseButtons == MouseButtons.None) return;
                 Point p = list.PointToClient(Control.MousePosition);
                 ListViewHitTestInfo hit = list.HitTest(p);
                 if (hit.Location != ListViewHitTestLocations.StateImage) e.NewValue = e.CurrentValue;
@@ -224,6 +237,37 @@ namespace Sflix
                 e.Handled = true;
                 e.SuppressKeyPress = true;
             };
+        }
+
+        sealed class ClickGuard : NativeWindow
+        {
+            const int WM_LBUTTONDOWN = 0x0201, WM_LBUTTONDBLCLK = 0x0203;
+            readonly ListView list;
+            public bool InClick, OnBox;
+
+            public ClickGuard(ListView list) { this.list = list; }
+
+            public void Attach()
+            {
+                try { if (Handle != list.Handle) { if (Handle != IntPtr.Zero) ReleaseHandle(); AssignHandle(list.Handle); } }
+                catch { }
+            }
+
+            protected override void WndProc(ref Message m)
+            {
+                if (m.Msg != WM_LBUTTONDOWN && m.Msg != WM_LBUTTONDBLCLK) { base.WndProc(ref m); return; }
+                bool outer = !InClick;
+                if (outer)
+                {
+                    int lp = m.LParam.ToInt32();
+                    Point p = new Point((short)(lp & 0xFFFF), (short)((lp >> 16) & 0xFFFF));
+                    try { OnBox = list.HitTest(p).Location == ListViewHitTestLocations.StateImage; }
+                    catch { OnBox = false; }
+                    InClick = true;
+                }
+                try { base.WndProc(ref m); }
+                finally { if (outer) { InClick = false; OnBox = false; } }
+            }
         }
 
         public static void DrawHeader(ListView list, DrawListViewColumnHeaderEventArgs e)

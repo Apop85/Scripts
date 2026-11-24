@@ -865,6 +865,8 @@ namespace Sflix
             if (p != null) p.ShowIfHiddenForPip();
             if (f.WindowState == FormWindowState.Minimized) f.WindowState = FormWindowState.Normal;
             f.Show();
+            // Tools mit offenem Auswahlfenster (gesperrt, DEC-382): dieses Fenster nach vorne holen
+            if (p == null && f.Visible && !ToolModal.IsEnabled(f) && ToolModal.BringToolDialog()) return;
             f.Activate();
         }
 
@@ -883,6 +885,14 @@ namespace Sflix
         public bool ConfirmPlayerClose(Form owner)
         {
             if (tools == null || restarting) return true;
+            // Auswahlfenster der Tools offen (Player bleibt bedienbar, DEC-382): erst dort entscheiden
+            if (tools.Visible && !ToolModal.IsEnabled(tools))
+            {
+                MessageBox.Show(owner, "In den Tools ist noch ein Fenster offen. Bitte zuerst dort wählen bzw. das Fenster schliessen.",
+                                App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ToolModal.BringToolDialog();
+                return false;
+            }
             if (tools.IsRunning)
             {
                 if (MessageBox.Show(owner, "In den Tools läuft noch eine Aufgabe. Abbrechen und STEFFLIX beenden?", App.Title,

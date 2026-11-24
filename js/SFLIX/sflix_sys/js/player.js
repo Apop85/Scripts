@@ -1663,6 +1663,50 @@ function getTimestampKey(player) {
     return "timestamp-" + (player.dataset.mediaPath || "");
 }
 
+// Position speichern (DEC-381): alle 5 s, beim Pausieren, vor dem Wechsel des Mediums und beim Schliessen
+// bzw. Ausblenden der Seite (Fenster, App im Hintergrund). Nicht bei Position 0, nicht bevor die Datei
+// geladen ist (die Position gehört sonst zu einer anderen Datei) und nicht, nachdem Autoplay bzw. Weiter
+// im Countdown die Position gelöscht hat.
+function savePlaybackPosition(node) {
+    if (node == null || (node.tagName != "VIDEO" && node.tagName != "AUDIO")) {
+        return;
+    }
+    var path = node.dataset.mediaPath;
+    if (!path || node.ended || node.sflixLoadedPath !== path || node.sflixPositionCleared === path || !hasMediaDuration(node)) {
+        return;
+    }
+    var time = parseInt(node.currentTime, 10);
+    if (!(time > 0)) {
+        return;
+    }
+    var key = getTimestampKey(node);
+    if (String(getData(key)) !== String(time)) {
+        setData(key, time);
+    }
+}
+
+function clearPlaybackPosition(node) {
+    node.sflixPositionCleared = node.dataset.mediaPath;
+    removeData(getTimestampKey(node));
+}
+
+// Seite wird geschlossen oder ausgeblendet (Fenster schliessen, App in den Hintergrund)
+(function () {
+    var saveAll = function () {
+        savePlaybackPosition(document.getElementById("video"));
+        if (typeof docPip !== "undefined" && docPip != null) {
+            savePlaybackPosition(docPip.media);
+        }
+    };
+    window.addEventListener("pagehide", saveAll);
+    window.addEventListener("beforeunload", saveAll);
+    document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "hidden") {
+            saveAll();
+        }
+    });
+})();
+
 // Bis Version 1.42 wurde nur der Dateiname ohne Endung verwendet
 function getLegacyTimestampKey(player) {
     return "timestamp-" + stripExtension(getBaseName(replaceSpecialChars(player.src)).split("#")[0]);
@@ -1728,6 +1772,8 @@ function loadDecodedMedia(decodedData, pushState) {
 
     var startUrl = buildStartUrl(decodedData);
     var node = null;
+    // Position des bisherigen Mediums vor dem Wechsel speichern (DEC-381)
+    savePlaybackPosition(docPip != null ? docPip.media : document.getElementById("video"));
 
     if (mediaExists(medialocation)) {
         // Liegt das Video im eigenen BiB-Fenster, dort weiterverwenden (nächste Folge im BiB)
@@ -2068,6 +2114,7 @@ function appendMediafunctions(node) {
     initConnectionRecovery(node);
     initDamagedDetection(node);
     node.onloadedmetadata = function () {
+        node.sflixPositionCleared = null;
         // Einstellungen › Beschädigte Dateien: "An der Stelle abspielen" (wie ein Weiterspielen)
         if (pendingDamagedSeek != null && pendingDamagedSeek.path === node.dataset.mediaPath) {
             node.sflixResume = { path: pendingDamagedSeek.path, time: pendingDamagedSeek.time };
@@ -2136,6 +2183,11 @@ function appendMediafunctions(node) {
         }
     });
 
+    // Position beim Pausieren speichern (auch beim Schliessen des Players: stopCurrentMedia pausiert)
+    node.addEventListener("pause", function () {
+        savePlaybackPosition(node);
+    });
+
     // Zu Ende abgespielte Videos gelten als gesehen
     node.addEventListener("ended", function () {
         if (node.tagName == "VIDEO") {
@@ -2153,13 +2205,9 @@ function appendMediafunctions(node) {
         var timestampKey = getTimestampKey(player);
 
         var currentTime = parseInt(this.currentTime, 10);
-        var currentTimestamp = getData(timestampKey);
-        if (currentTimestamp == null) {
-            currentTimestamp = 0;
-        }
-        // Speichere Videoposition alle 10 Sek
-        if (currentTime != 0 && currentTimestamp != currentTime && currentTime % 10 == 0) {
-            setData(timestampKey, currentTime);
+        // Speichere Position alle 5 Sek (DEC-381; dazu bei Pause, Wechsel und Schliessen)
+        if (currentTime % 5 == 0) {
+            savePlaybackPosition(player);
         }
 
         // Videos ab 95 % als gesehen markieren
@@ -2184,7 +2232,7 @@ function appendMediafunctions(node) {
                 clearAutoplayCountdown();
                 updateOptions(autoplayChecked, document.getElementById("amountOfAutoplay").value);
                 if (nextNode.childNodes.length > 0 && nextNode.childNodes[0].textContent != "") {
-                    removeData(timestampKey);
+                    clearPlaybackPosition(player);
                     // Autoplay springt vor dem Ende weiter: die Folge gilt trotzdem als gesehen
                     if (player.tagName == "VIDEO") {
                         markSeen(player.dataset.mediaPath);
@@ -2335,6 +2383,10 @@ function buildPlayerShell(media) {
     ui.progressThumb = createPlayerElement("div", "progressThumb");
     track.append(ui.progressBuffered, ui.progressPlayed, ui.progressThumb);
     ui.progressTooltip = createPlayerElement("div", "progressTooltip");
+    ui.progressPreview = document.createElement("canvas");
+    ui.progressPreview.className = "progressPreview";
+    ui.progressTime = createPlayerElement("span", "progressTime");
+    ui.progressTooltip.append(ui.progressPreview, ui.progressTime);
     ui.progress.append(track, ui.progressTooltip);
 
     var row = createPlayerElement("div", "controlRow");
@@ -2950,10 +3002,22 @@ function bindProgressEvents(ui) {
             return;
         }
         var ratio = ratioFromEvent(event);
-        ui.progressTooltip.textContent = formatMediaTime(ratio * ui.media.duration);
-        ui.progressTooltip.style.left = (ratio * 100) + "%";
+        var time = ratio * ui.media.duration;
+        ui.progressTime.textContent = formatMediaTime(time);
+        var preview = wantsTimelinePreview(ui);
+        ui.progressTooltip.classList.toggle("hasPreview", preview);
+        if (preview) {
+            requestTimelinePreview(ui, time);
+        }
+        // Am Rand nicht über den Player hinaus (Tooltip ist mittig über dem Zeiger)
+        var width = progress.getBoundingClientRect().width;
+        var half = ui.progressTooltip.offsetWidth / 2;
+        var left = Math.min(Math.max(ratio * width, half), Math.max(half, width - half));
+        ui.progressTooltip.style.left = left + "px";
         progress.classList.add("showTooltip");
     };
+    // Touch (App, Tablet): beim Ziehen nur Vorschau und Zeit, gesprungen wird beim Loslassen (DEC-384)
+    var touchDrag = false;
 
     progress.addEventListener("pointerdown", function (event) {
         if (event.button !== 0) {
@@ -2961,20 +3025,27 @@ function bindProgressEvents(ui) {
         }
         event.preventDefault();
         ui.dragging = true;
+        touchDrag = event.pointerType == "touch";
         progress.classList.add("dragging");
         progress.setPointerCapture(event.pointerId);
-        seekToEvent(event);
+        if (!touchDrag) {
+            seekToEvent(event);
+        }
         showTooltip(event);
     });
     progress.addEventListener("pointermove", function (event) {
-        if (ui.dragging) {
+        if (ui.dragging && !touchDrag) {
             seekToEvent(event);
         }
         if (ui.dragging || event.pointerType == "mouse") {
             showTooltip(event);
         }
     });
-    var stopDragging = function () {
+    var stopDragging = function (event) {
+        if (ui.dragging && touchDrag && event && event.type == "pointerup") {
+            seekToEvent(event);
+        }
+        touchDrag = false;
         ui.dragging = false;
         progress.classList.remove("dragging");
         progress.classList.remove("showTooltip");
@@ -3000,6 +3071,139 @@ function bindProgressEvents(ui) {
             ui.media.currentTime = ui.media.duration;
         }
     });
+}
+
+// ===================================================================
+// Vorschaubild auf der Zeitleiste (DEC-384, Versuch seit 2.9.2)
+// ===================================================================
+
+// Ein zweites, unsichtbares Video derselben Datei springt an die Stelle unter dem Zeiger; das Bild kommt
+// in ein Canvas über der Zeitleiste. Angelegt beim ersten Überfahren, freigegeben beim Wechsel und
+// Schliessen. Höchstens ein Sprung gleichzeitig (der nächste erst nach seeked, frühestens nach
+// timelinePreviewGapMs), damit die Wiedergabe nicht stockt. Nicht bei Musik, nicht abspielbaren
+// Formaten und nicht im eigenen Bild-im-Bild-Fenster.
+var timelinePreviewWidth = 160;
+var timelinePreviewGapMs = 150;
+
+function wantsTimelinePreview(ui) {
+    if (ui.isAudio || ui.media.tagName != "VIDEO" || ui.shell.ownerDocument !== document) {
+        return false;
+    }
+    var src = ui.media.getAttribute("src");
+    return !!src && !(ui.preview != null && ui.preview.src === src && ui.preview.failed);
+}
+
+function requestTimelinePreview(ui, time) {
+    var src = ui.media.getAttribute("src");
+    var state = ui.preview;
+    if (state == null || state.src !== src) {
+        releaseTimelinePreview(ui);
+        state = createTimelinePreview(ui, src);
+    }
+    state.pending = time;
+    pumpTimelinePreview(ui, state);
+}
+
+function createTimelinePreview(ui, src) {
+    var video = document.createElement("video");
+    video.muted = true;
+    video.preload = "metadata";
+    video.playsInline = true;
+    video.setAttribute("aria-hidden", "true");
+    var state = { src: src, video: video, ready: false, busy: false, failed: false, pending: null, shown: null, last: 0, timer: null };
+    ui.preview = state;
+    var canvas = ui.progressPreview;
+    canvas.width = timelinePreviewWidth;
+    canvas.height = Math.round(timelinePreviewWidth * 9 / 16);
+    clearTimelinePreview(canvas);
+    video.addEventListener("loadedmetadata", function () {
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
+            canvas.height = Math.max(40, Math.min(200, Math.round(timelinePreviewWidth * video.videoHeight / video.videoWidth)));
+            clearTimelinePreview(canvas);
+        }
+        state.ready = true;
+        pumpTimelinePreview(ui, state);
+    });
+    video.addEventListener("seeked", function () {
+        if (ui.preview !== state) {
+            return;
+        }
+        clearTimeout(state.timer);
+        try {
+            canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+        } catch (error) {
+            // Bild nicht lesbar: nur die Zeit
+        }
+        state.busy = false;
+        state.last = Date.now();
+        pumpTimelinePreview(ui, state);
+    });
+    video.addEventListener("error", function () {
+        state.failed = true;
+        state.busy = false;
+        if (ui.preview === state) {
+            ui.progressTooltip.classList.remove("hasPreview");
+        }
+    });
+    video.src = src;
+    return state;
+}
+
+function pumpTimelinePreview(ui, state) {
+    if (ui.preview !== state || !state.ready || state.busy || state.failed || state.pending == null) {
+        return;
+    }
+    var target = state.pending;
+    if (state.shown != null && Math.abs(target - state.shown) < 0.5) {
+        return;
+    }
+    var wait = timelinePreviewGapMs - (Date.now() - state.last);
+    if (wait > 0) {
+        clearTimeout(state.timer);
+        state.timer = setTimeout(function () {
+            pumpTimelinePreview(ui, state);
+        }, wait);
+        return;
+    }
+    state.busy = true;
+    state.shown = target;
+    // Bleibt seeked aus (Datei hängt), nach 3 s einen neuen Versuch zulassen
+    clearTimeout(state.timer);
+    state.timer = setTimeout(function () {
+        if (state.busy) {
+            state.busy = false;
+            state.shown = null;
+            pumpTimelinePreview(ui, state);
+        }
+    }, 3000);
+    var video = state.video;
+    if (typeof video.fastSeek === "function") {
+        video.fastSeek(target);
+    } else {
+        video.currentTime = target;
+    }
+}
+
+function clearTimelinePreview(canvas) {
+    var context = canvas.getContext("2d");
+    context.fillStyle = "#000";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+// Zweites Video freigeben (Verbindung zur Datei schliessen)
+function releaseTimelinePreview(ui) {
+    if (ui == null || ui.preview == null) {
+        return;
+    }
+    var state = ui.preview;
+    ui.preview = null;
+    clearTimeout(state.timer);
+    try {
+        state.video.removeAttribute("src");
+        state.video.load();
+    } catch (error) {
+        // schon freigegeben
+    }
 }
 
 function togglePlayback(ui) {
@@ -3407,7 +3611,7 @@ function finishCountdownOnNavigation(direction) {
     clearAutoplayCountdown();
     var player = document.getElementById("video");
     if (player != null && (player.tagName == "VIDEO" || player.tagName == "AUDIO")) {
-        removeData(getTimestampKey(player));
+        clearPlaybackPosition(player);
         if (player.tagName == "VIDEO") {
             markSeen(player.dataset.mediaPath);
         }
@@ -3423,6 +3627,7 @@ function onPlayerMediaChanged(media) {
     if (ui == null || ui.media !== media) {
         return;
     }
+    releaseTimelinePreview(ui);
     media.defaultPlaybackRate = 1;
     media.playbackRate = 1;
     ui.downloadLink.href = media.getAttribute("src");

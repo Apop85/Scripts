@@ -25,12 +25,14 @@ namespace Sflix
                 "# Zwei Fenster\n" +
                 "- STEFFLIX: die Mediathek selbst (Doppelklick auf STEFFLIX.exe), siehe „STEFFLIX-Fenster“.\n" +
                 "- Tools: dieses Fenster. Es öffnet sich im Menü von STEFFLIX mit „Tools“ (beim Reiter Tools) oder mit --tools. " +
-                "Wird das Fenster von STEFFLIX geschlossen, schliessen sich auch die Tools.\n\n" +
+                "Wird das Fenster von STEFFLIX geschlossen, schliessen sich auch die Tools.\n" +
+                "Während ein Tool arbeitet oder ein Auswahl- bzw. Ergebnisfenster der Tools offen ist, lässt sich STEFFLIX weiter bedienen (Wiedergabe, Tastatur, Bild im Bild). " +
+                "Gesperrt ist nur das Fenster der Tools, bis du im Auswahlfenster entschieden hast. Im Vollbild bleibt STEFFLIX vorne, die Tools blinken dann in der Taskleiste.\n\n" +
                 "# Registerkarten\n" +
                 "- Updates: STEFFLIX und das Programm aktualisieren, Medien einlesen, Versionen.\n" +
                 "- Importer: Videos, Musik und Bilder in die Mediathek übernehmen.\n" +
                 "- Download: Videos aus einer m3u8-Adresse (HLS) laden.\n" +
-                "- Tools: Vorschaubilder, Folgen umbenennen, Duplikate finden, Zusammenführen, Konvertieren, Medien prüfen, Ablagen leeren.\n" +
+                "- Tools: Vorschaubilder, Folgen umbenennen, Zusammenführen, Konvertieren, Medien prüfen (auch Duplikate), Ablagen leeren.\n" +
                 "- Lizenz bzw. Feedback: Lizenzschlüssel eingeben, danach Nachrichten an den Entwickler schicken.\n" +
                 "- Hilfe: diese Seite (auch mit F1).\n\n" +
                 "# Kacheln und Start\n" +
@@ -154,17 +156,17 @@ namespace Sflix
                 "- Ohne Oberfläche (--headless) entstehen nur Albumbilder mit genau einem möglichen Bild, gelöscht wird nichts."));
 
             t.Add(new HelpTopic("Schneller prüfen",
-                "„Medien prüfen“, „Duplikate finden“ und „Vorschaubilder“ bearbeiten mehrere Dateien gleichzeitig und merken sich, was sie über eine Datei herausgefunden haben.\n" +
+                "„Medien prüfen“ (auch die Duplikate) und „Vorschaubilder“ bearbeiten mehrere Dateien gleichzeitig und merken sich, was sie über eine Datei herausgefunden haben.\n" +
                 "# Gleichzeitig\n" +
                 "Einstellbar unter Tools › Einstellungen › Gleichzeitig. Automatisch: 4 Dateien beim Prüfen, 2 bei Vorschaubildern. " +
                 "Bei einer langsamen externen USB-Festplatte 1 wählen, dann arbeiten die Tools wie früher eine Datei nach der anderen. " +
-                "Die volle Prüfsumme bei „Duplikate finden“ liest immer eine Datei nach der anderen.\n" +
+                "Die volle Prüfsumme bei den Duplikaten liest immer eine Datei nach der anderen.\n" +
                 "# Gemerkte Prüfergebnisse\n" +
                 "Dauer, Auflösung, Video und Ton jeder untersuchten Datei stehen in sflix_sys\\medien_cache.json. Ist eine Datei unverändert (gleiche Grösse und Änderungszeit), " +
                 "wird sie beim nächsten Mal nicht neu untersucht. Ein zweiter Lauf von „Medien prüfen“ ist dadurch fast sofort fertig. " +
                 "Eine neue ffmpeg-Version verwirft die gemerkten Ergebnisse, ebenso der Knopf „Gemerkte Prüfergebnisse löschen“ in den Einstellungen.\n" +
                 "# Duplikate: Schnelltest\n" +
-                "Bei gleich grossen Dateien vergleicht „Duplikate finden“ zuerst je 1 MB vom Anfang, aus der Mitte und vom Ende. " +
+                "Bei gleich grossen Dateien vergleicht die Duplikatsuche zuerst je 1 MB vom Anfang, aus der Mitte und vom Ende. " +
                 "Nur wenn das übereinstimmt, liest es die ganzen Dateien für die Prüfsumme. Das spart bei Filmen auf dem NAS viel Zeit."));
 
             t.Add(new HelpTopic("Folgen umbenennen",
@@ -181,8 +183,10 @@ namespace Sflix
                 "Gespeichert wird die Folgenliste, mit der umbenannt wird (sflix_sys\\folgen_cache.json), nur angesehene Listen nicht. Beim nächsten Mal wird sie angeboten: " +
                 "„Gespeicherte verwenden“, „Liste aktualisieren“ (lädt sie nochmals von derselben Webseite) oder „Neu suchen“ (Suche wieder ab serienjunkies.de)."));
 
-            t.Add(new HelpTopic("Duplikate finden",
-                "Sucht doppelte Medien in den gewählten Ordnern:\n" +
+            t.Add(new HelpTopic("Duplikate",
+                "Teil von „Medien prüfen“: Schalter „Duplikate“ (beim ersten Start aus, die Prüfsummen brauchen Zeit). Ist er an, öffnet sich nach dem Ergebnis " +
+                "von „Medien prüfen“ die Auswahl der Duplikate; ist nur „Duplikate“ an, läuft nur die Duplikatsuche. Die Ordner werden dabei nur einmal aufgelistet.\n" +
+                "Gesucht wird in den Ordnern von „Medien prüfen“:\n" +
                 "- Identische Dateien: gleiche Grösse und gleicher Inhalt (Prüfsumme), auch mit anderem Namen.\n" +
                 "- Gleiche Folge: dieselbe Staffel und Folge innerhalb einer Serie, egal ob S01E01, 1x01, S1E1 oder S01E1. Meist verschiedene Fassungen, z.B. SD und HD. " +
                 "Als Serie gilt der Ordner über dem Staffelordner („Staffel 1“, „Season 01 HD“ …), sonst der Ordner der Folge. Serien in Unterordnern " +
@@ -227,6 +231,7 @@ namespace Sflix
                 "Funde stehen auch in STEFFLIX unter Einstellungen › Beschädigte Dateien.\n" +
                 "- Fehlende Vorschaubilder: gemäss „Vorschaubilder“ für Videos und/oder Bilder. Allein oder mit „Ordner ohne Medien“ werden die Videos nicht gelesen, das geht schnell.\n" +
                 "- Ordner ohne Medien: auch nicht in Unterordnern (Vorschaubilder und Ablagen zählen nicht). Gemeldet wird nur der oberste solche Ordner, nie der gewählte Ordner selbst und nie eine Kategorie wie „Filme“.\n" +
+                "- Duplikate: nach dem Ergebnis öffnet sich die Auswahl doppelter Dateien und Ordner (siehe „Duplikate“). Standard aus, die Prüfsummen brauchen Zeit.\n" +
                 "Läuft „Medien prüfen“ in einer Kette mit (z.B. nach dem Konvertieren) und ist keine Prüfung gewählt, wird der Schritt übersprungen und im Protokoll vermerkt.\n" +
                 "Im Ergebnis steht jede Datei bzw. jeder Ordner einmal. In den ersten drei Spalten wählst du die Aktionen:\n" +
                 "- Papierkorb: löschen. Die Datei kommt samt Vorschaubild nach „__gelöscht“, ein Ordner als Ganzes nach „__gelöscht“ im Ordner darüber. Endgültig löscht sie „Ablagen leeren“. Schliesst die anderen Aktionen aus.\n" +
@@ -265,7 +270,7 @@ namespace Sflix
                 "- Nur einzelne Dateien: Doppelklick auf eine Ablage oder „Dateien wählen …“. Die Vergleichstabelle zeigt die Datei in der Ablage neben einer vorhandenen am Ziel."));
 
             t.Add(new HelpTopic("ffmpeg",
-                "ffmpeg wird für Vorschaubilder, Konvertieren, den Importer, Downloads, „Medien prüfen“, „Duplikate finden“ und die Vergleichstabellen gebraucht. " +
+                "ffmpeg wird für Vorschaubilder, Konvertieren, den Importer, Downloads, „Medien prüfen“ (auch Duplikate) und die Vergleichstabellen gebraucht. " +
                 "Es wird im Setup oder beim ersten Bedarf geladen (ca. 100 MB) und über eine Prüfsumme kontrolliert.\n" +
                 "- Standardordner: %LOCALAPPDATA%\\STEFFLIX\\ffmpeg (je Benutzer und PC, auch wenn STEFFLIX auf einem NAS liegt).\n" +
                 "- Unter Tools › Einstellungen stehen Ordner und Version, mit „Ändern …“ und „Installieren“.\n" +

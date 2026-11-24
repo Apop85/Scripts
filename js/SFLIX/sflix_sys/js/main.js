@@ -117,6 +117,8 @@ function stopCurrentMedia() {
     var media = document.getElementById("video");
     // Läuft das Video im BiB, das BiB schliessen (sonst bleibt es verwaist offen)
     reportPipRemoved();
+    // Vorschau der Zeitleiste freigeben (zweites Video derselben Datei)
+    releaseTimelinePreview(getPlayerUI());
     if (media != null && (media.tagName == "VIDEO" || media.tagName == "AUDIO")) {
         clearTimeout(media.sflixStallTimer);
         if (media.sflixRecovery != null && media.sflixRecovery.timer != null) {

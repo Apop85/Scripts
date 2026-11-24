@@ -1,4 +1,4 @@
-// Tool "Duplikate finden" (seit 3.3):
+// Duplikate (seit 3.3, seit Desktop 4.2.8 Teil von "Medien prüfen", DEC-383):
 //   - identische Dateien: gleiche Grösse und gleiche SHA256-Prüfsumme
 //   - gleiche Folge: dieselbe Staffel und Folge innerhalb einer Serie (S01E01 = 1x01 = S1E1 = S01E1),
 //     erkannt mit EpisodeTask.ParseEpisodes. Serie = Ordner direkt unter der Kategorie
@@ -41,6 +41,12 @@ namespace Sflix
 
         public static void Run(TaskContext ctx, string folder)
         {
+            Run(ctx, folder, null);
+        }
+
+        // known: Dateiliste aus „Medien prüfen“ (DEC-383, alle Medien der geprüften Ordner); null = selbst auflisten
+        public static void Run(TaskContext ctx, string folder, List<FileInfo> known)
+        {
             if (!Directory.Exists(folder)) throw new TaskFailedException("Ordner nicht gefunden: " + folder);
             ctx.Ffmpeg.EnsureInstalled(ctx);
 
@@ -54,7 +60,13 @@ namespace Sflix
             MediaCache.TakeStats();
             // Grösse und Änderungszeit aus der Auflistung (kein FileInfo je Datei)
             List<FileInfo> infos = new List<FileInfo>();
-            Folders.CollectFiles(folder, extensions, true, infos, ctx.Token);
+            if (known != null)
+            {
+                string prefix = folder.TrimEnd('\\') + "\\";
+                foreach (FileInfo f in known)
+                    if (f.FullName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && extensions.Contains(f.Extension)) infos.Add(f);
+            }
+            else Folders.CollectFiles(folder, extensions, true, infos, ctx.Token);
             infos.RemoveAll(delegate(FileInfo f) { string n = f.Name; return n.StartsWith("._") || n.Contains(".__temp__"); });
             List<string> files = new List<string>();
             Dictionary<string, FileInfo> infoOf = new Dictionary<string, FileInfo>(StringComparer.OrdinalIgnoreCase);
@@ -79,8 +91,8 @@ namespace Sflix
             int probedCount = 0;
             Workers.ForEach(toProbe, Workers.Degree(ctx, 4), ctx.Token, delegate(int i, string f)
             {
-                FileInfo known;
-                MediaFacts facts = infoOf.TryGetValue(f, out known) ? MediaFacts.Basic(known) : MediaFacts.Basic(f);
+                FileInfo listedInfo;
+                MediaFacts facts = infoOf.TryGetValue(f, out listedInfo) ? MediaFacts.Basic(listedInfo) : MediaFacts.Basic(f);
                 facts.Probe(ctx.Ffmpeg, ctx.Token);
                 probed[i] = facts;
                 int n = System.Threading.Interlocked.Increment(ref probedCount);
@@ -524,7 +536,7 @@ namespace Sflix
         {
             this.groups = groups;
             bool withFolders = folderPairs != null && folderPairs.Count > 0;
-            Text = "Duplikate finden – Auswahl";
+            Text = "Duplikate – Auswahl";
             BackColor = Theme.Back;
             ForeColor = Theme.Text;
             Font = new Font("Segoe UI", 9.5f);

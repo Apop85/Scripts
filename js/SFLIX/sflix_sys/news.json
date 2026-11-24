@@ -2,6 +2,19 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0902",
+      "name": "2.9.2",
+      "items": [
+        {
+          "type": "BUGFIX",
+          "text": "Player: Bei einer beschädigten Stelle (fehlende Bilder) spielt das Video hinter der Stelle weiter, statt stehen zu bleiben. Längere Lücken werden ganz übersprungen, bekannte Lücken aus „Medien prüfen“ direkt. Die irreführende Meldung „Verbindung unterbrochen“ erscheint dabei nicht mehr.",
+          "component": "stefflix",
+          "componentVersion": "2.9.2",
+          "short": "Player: Bei einer beschädigten Stelle (fehlende Bilder) spielt das Video hinter der Stelle weiter, statt stehen zu bleiben. Längere Lücken werden ganz übersprungen, bekannte Lücken aus „Medien prüfen“ direkt. Die irreführende Meldung „Verbindung unterbrochen“ erscheint dabei nicht mehr."
+        }
+      ]
+    },
+    {
       "version": "2.0901",
       "name": "2.9.1",
       "items": [

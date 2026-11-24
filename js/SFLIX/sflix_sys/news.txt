@@ -2,6 +2,10 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.9.2</b>:<br>
+<ul>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Player: Bei einer beschädigten Stelle (fehlende Bilder) spielt das Video hinter der Stelle weiter, statt stehen zu bleiben. Längere Lücken werden ganz übersprungen, bekannte Lücken aus „Medien prüfen“ direkt. Die irreführende Meldung „Verbindung unterbrochen“ erscheint dabei nicht mehr.</li>
+</ul>
 <b>Version 2.9.1</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Desktop 4.2.1: Medien prüfen: Jede Prüfung lässt sich einzeln ein- und ausschalten (Nicht abspielbar, Defekt oder nicht lesbar, Lücken suchen, Fehlende Vorschaubilder, Ordner ohne Medien). Standard sind „Nicht abspielbar“ und „Fehlende Vorschaubilder“. Nur mit Vorschaubildern oder Ordnern werden die Videos nicht gelesen, das geht deutlich schneller.</li>

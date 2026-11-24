@@ -9,11 +9,11 @@ Getroffene Entscheidungen zu STEFFLIX, Desktop und Android-App mit Begründung, 
 | Status | Anzahl |
 |---|---|
 | Proposed | 4 |
-| Accepted | 42 |
+| Accepted | 43 |
 | Implemented | 268 |
 | Rejected | 29 |
 | Superseded | 32 |
-| **Total** | **375** |
+| **Total** | **376** |
 
 ## Block 1: Session STEFFLIX 2.00 (Oktober 2026)
 
@@ -5314,6 +5314,32 @@ Alternativen: –
 Konsequenzen: Gleiche Folge wird auch zwischen gleich benannten Serienordnern an verschiedenen Orten erkannt (Kopien), solche Gruppen ohne Vorauswahl (SFLIX-20261124-119). Ineinander liegende Ordner (Filme und Filme\Sammlung) bilden kein Paar, dafür Rechtsklick im Unterordner. Die Reihenfolge der Paare bleibt beim Umschalten der Option gleich (keine springenden Zeilen). Kontextmenü auch über Kontextmenütaste und Umschalt+F10.
 Betroffene Komponenten: –
 Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# STEFFLIX 2.9.2 (Arbeit vom 24.11.2026)
+
+## Entscheidungen
+
+### DEC-380: Player: beschädigte Stelle bei Decodierfehler und langen Lücken
+Status: Accepted
+Datum: 2026-11-24
+Kategorie: UI
+Ticket: SFLIX-20261124-122
+Entscheidung: Ergänzt DEC-373 Teil 4. (1) MediaError 3 (Decodierfehler) einer Datei, die schon lief, ist kein Verbindungsabbruch: kein Hinweis „Verbindung unterbrochen“, erster Fehler an einer Stelle lädt die Datei still neu, der zweite gilt als beschädigte Stelle. Netzwerkfehler und Hänger bleiben bei der Verbindungserkennung. (2) Sprungziel: Ist die Lücke mit Länge aus der gemeinsamen Liste bekannt (Medien prüfen, Downloader), direkt dahinter plus 1 s; sonst 5 s und bei erneutem Fehler kurz hinter dem letzten Ziel 10 bzw. 20 s weiter (dieselbe Lücke). Der Hinweis nennt die tatsächlich übersprungenen Sekunden, ebenso die Brücke damaged (player.log). Höchstens drei Sprünge je Lücke, danach anhalten wie bisher. (3) Steht das Element im Fehlerzustand, lädt der Sprung die Datei neu (Position über sflixResume); beim Anhalten wird vor der Stelle angehalten neu geladen, damit Spulen wieder geht.
+Begründung: Prüfung A3 mit der Testdatei des Benutzers (Lücke 10 s): Nach dem Sprung blieb der Player im Fehlerzustand stehen, 5 s reichten nicht, und die Meldung zur Verbindung war irreführend. Freigabe durch den Benutzer am 24.11.2026.
+Alternativen: –
+Konsequenzen: Umgesetzt in STEFFLIX 2.9.2 (player.js: handleDecodeError, skipDamagedSpot, findKnownDamagedGap, reloadMediaAt). Gemeldet wird weiterhin einmal je Datei und Stelle, mit den Sekunden des ersten Sprungs (Brücke damaged.skipped, player.log). Nachgeführt in docs/ARCHITECTURE.md 3.8 und R-48 sowie docs/INTERFACES.md Abschnitte 1 und 4 (SFLIX-20261124-124).
+Betroffene Komponenten: STEFFLIX (player.js), auch App; Desktop unverändert (player.log übernimmt skipped)
+Abhängigkeiten: DEC-373
 
 ## A. Offene Entscheidungen
 

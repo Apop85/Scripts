@@ -1309,6 +1309,10 @@ function handleMediaError(event) {
     if (player.dataset.mediaPath !== currentMediaLocation) {
         return;
     }
+    // Decodierfehler in einer laufenden Datei: fehlende Bilder, kein Verbindungsabbruch
+    if (player.error != null && player.error.code === 3 && handleDecodeError(player)) {
+        return;
+    }
     // Lief die Datei schon, ist eher die Verbindung weg (NAS, WLAN): neu laden statt überspringen
     if (canRecoverConnection(player)) {
         recoverConnection(player);
@@ -1419,16 +1423,20 @@ function recoverConnection(node) {
 // ===================================================================
 
 // Fehlen in einer Datei Bilder (Lücke, z.B. aus einem Download), bleibt die Wiedergabe dort hängen und
-// springt lautlos zurück. Springt sie ohne Spulen dreimal innerhalb von 60 s an dieselbe Stelle (±3 s)
-// zurück, oder löst sie dort zweimal die Verbindungserkennung aus, gilt die Stelle als beschädigt:
-// 5 s dahinter weiter, kurzer Hinweis, Fund melden. Höchstens drei Sprünge je Stelle, danach anhalten.
+// springt lautlos zurück oder meldet einen Decodierfehler. Springt sie ohne Spulen dreimal innerhalb von
+// 60 s an dieselbe Stelle (±3 s) zurück, oder scheitert sie dort zweimal (Verbindungserkennung oder
+// Decodierfehler), gilt die Stelle als beschädigt: hinter die Lücke springen, kurzer Hinweis, Fund melden.
+// Ist die Lücke mit Länge bekannt (Medien prüfen, Downloader), direkt dahinter, sonst 5 s und bei
+// erneutem Fehler kurz dahinter 10 bzw. 20 s weiter. Höchstens drei Sprünge je Lücke, danach anhalten.
 // Spulen, Bild-im-Bild und ein Wechsel der Datei setzen die Zählung zurück.
 var damagedJumps = 3;
 var damagedRecoveries = 2;
 var damagedWindowMs = 60000;
 var damagedSpotSeconds = 3;
 var damagedSkipSeconds = 5;
+var damagedSkipSteps = [5, 10, 20];
 var damagedMaxSkips = 3;
+var damagedReloadDelayMs = 500;
 var damagedUserInputAt = 0;
 var damagedReported = {};
 
@@ -1449,8 +1457,12 @@ function initDamagedDetection(node) {
         if (node.sflixDamagePath !== node.dataset.mediaPath) {
             node.sflixDamagePath = node.dataset.mediaPath;
             node.sflixDamageSkips = {};
+            node.sflixDamageChain = null;
             reset();
         }
+    });
+    node.addEventListener("playing", function () {
+        node.sflixDamageHold = null;
     });
     node.addEventListener("enterpictureinpicture", reset);
     node.addEventListener("leavepictureinpicture", reset);
@@ -1497,33 +1509,118 @@ function noteDamagedEvent(node, spot, kind) {
     return false;
 }
 
+// Decodierfehler (MediaError 3) in einer Datei, die schon lief: erster Fehler an einer Stelle still neu
+// laden, zweiter überspringt die Stelle. false: Datei lief noch nicht, normale Fehlerbehandlung
+function handleDecodeError(node) {
+    var spot = node.sflixLastTime || 0;
+    if (node.sflixDamageHold === node.dataset.mediaPath) {
+        return true;
+    }
+    if (!canRecoverConnection(node) || !(spot > 0)) {
+        return false;
+    }
+    if (noteDamagedEvent(node, spot, "recovery")) {
+        return true;
+    }
+    node.sflixRecovery = null;
+    var path = node.dataset.mediaPath;
+    clearTimeout(node.sflixDecodeTimer);
+    node.sflixDecodeTimer = setTimeout(function () {
+        if (node.dataset.mediaPath === path) {
+            reloadMediaAt(node, spot, false);
+        }
+    }, damagedReloadDelayMs);
+    return true;
+}
+
+// Datei neu laden und an time weiterspielen (bzw. angehalten bleiben): ein Element im Fehlerzustand
+// spielt nach einem Setzen der Position allein nicht weiter
+function reloadMediaAt(node, time, keepPaused) {
+    var src = node.getAttribute("src");
+    if (!src) {
+        return;
+    }
+    node.sflixResume = { path: node.dataset.mediaPath, time: time, paused: keepPaused === true };
+    node.src = src;
+}
+
+// Bekannte Lücke mit Länge (Medien prüfen, Downloader) an dieser Stelle, sonst null
+function findKnownDamagedGap(path, spot) {
+    var found = null;
+    var check = function (item) {
+        if (item == null || item.path !== path || !Array.isArray(item.gaps)) {
+            return;
+        }
+        item.gaps.forEach(function (gap) {
+            if (gap == null || typeof gap.at !== "number" || typeof gap.length !== "number" || !(gap.length > 0)) {
+                return;
+            }
+            if (spot >= gap.at - damagedSpotSeconds && spot < gap.at + gap.length &&
+                (found == null || gap.at + gap.length > found.at + found.length)) {
+                found = gap;
+            }
+        });
+    };
+    getDesktopDamagedItems().forEach(check);
+    readDamagedLocal().forEach(check);
+    return found;
+}
+
 function skipDamagedSpot(node, spot) {
     var path = node.dataset.mediaPath;
-    var key = String(Math.round(spot / damagedSpotSeconds));
+    // Scheitert die Wiedergabe kurz hinter dem letzten Ziel erneut, ist es dieselbe Lücke: weiter springen
+    var now = Date.now();
+    var chain = node.sflixDamageChain;
+    if (chain != null && chain.path === path && now - chain.at < damagedWindowMs &&
+        spot >= chain.origin - damagedSpotSeconds && spot <= chain.target + damagedSpotSeconds) {
+        chain.step++;
+    } else {
+        chain = { path: path, origin: spot, target: spot, step: 0 };
+        node.sflixDamageChain = chain;
+    }
+    chain.at = now;
+    var key = String(Math.round(chain.origin / damagedSpotSeconds));
     var skips = node.sflixDamageSkips || (node.sflixDamageSkips = {});
     skips[key] = (skips[key] || 0) + 1;
     // Verbindungserkennung an dieser Stelle beenden: die Datei ist beschädigt, nicht die Verbindung
     node.sflixRecovery = null;
     hideMediaMessage();
-    reportDamagedSpot(path, spot);
-    var where = formatMediaTime(spot);
+    var where = formatMediaTime(chain.origin);
     var ui = getPlayerUI();
+    var failed = node.error != null;
     if (skips[key] > damagedMaxSkips) {
+        node.sflixDamageChain = null;
+        reportDamagedSpot(path, chain.origin, damagedSkipSeconds);
         node.pause();
+        // Im Fehlerzustand vor der Stelle neu laden (angehalten), damit Spulen hinter die Stelle wieder
+        // geht; weitere Decodierfehler bis zum nächsten Abspielen nicht mehr behandeln
+        if (failed) {
+            node.sflixDamageHold = path;
+            reloadMediaAt(node, Math.max(0, chain.origin - 2), true);
+        }
         showDamagedHint(ui, "Datei bei " + where + " beschädigt: Wiedergabe angehalten. Zum Weiterschauen hinter die Stelle spulen.");
         return;
     }
-    var target = spot + damagedSkipSeconds;
+    var known = findKnownDamagedGap(path, spot);
+    var target = known != null ? known.at + known.length + 1 :
+        spot + damagedSkipSteps[Math.min(chain.step, damagedSkipSteps.length - 1)];
     if (hasMediaDuration(node) && target >= node.duration) {
         target = Math.max(0, node.duration - 0.5);
     }
+    chain.target = target;
     node.sflixDamageLast = target;
-    node.currentTime = target;
-    var request = node.play();
-    if (request && request.catch) {
-        request.catch(function () {});
+    if (failed) {
+        reloadMediaAt(node, target, false);
+    } else {
+        node.currentTime = target;
+        var request = node.play();
+        if (request && request.catch) {
+            request.catch(function () {});
+        }
     }
-    showDamagedHint(ui, "Datei bei " + where + " beschädigt: " + damagedSkipSeconds + " s übersprungen");
+    var skipped = Math.max(1, Math.round(target - chain.origin));
+    reportDamagedSpot(path, chain.origin, skipped);
+    showDamagedHint(ui, "Datei bei " + where + " beschädigt: " + skipped + " s übersprungen");
 }
 
 function showDamagedHint(ui, text) {
@@ -1536,7 +1633,7 @@ function showDamagedHint(ui, text) {
 
 // Fund melden, einmal je Datei und Stelle: im Desktop an STEFFLIX.exe (damaged.js, player.log), sonst
 // im Speicher dieses Geräts (damagedLocal, DEC-374)
-function reportDamagedSpot(path, spot) {
+function reportDamagedSpot(path, spot, skipped) {
     if (!path) {
         return;
     }
@@ -1547,7 +1644,7 @@ function reportDamagedSpot(path, spot) {
     damagedReported[key] = true;
     var at = Math.round(spot * 10) / 10;
     if (isDesktopApp()) {
-        sendToDesktop({ cmd: "damaged", path: path, at: at, skipped: damagedSkipSeconds });
+        sendToDesktop({ cmd: "damaged", path: path, at: at, skipped: skipped });
         addDamagedGap(getDesktopDamagedItems(), path, at, null, "player");
         return;
     }
@@ -1982,6 +2079,9 @@ function appendMediafunctions(node) {
         if (resume != null && resume.path === node.dataset.mediaPath) {
             if (resume.time > 0 && resume.time < this.duration) {
                 node.currentTime = resume.time;
+            }
+            if (resume.paused) {
+                return;
             }
             var resumeRequest = node.play();
             if (resumeRequest && resumeRequest.catch) {

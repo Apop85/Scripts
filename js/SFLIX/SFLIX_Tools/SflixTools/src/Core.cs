@@ -503,7 +503,7 @@ namespace Sflix
         // Zieldatei vorhanden: (neue Datei bzw. Quelle, vorhandene Zieldatei) -> Antwort; null = überspringen
         public Func<string, string, ConflictAnswer> AskConflict;
         public Func<List<MediaCheckItem>, MediaCheckChoice> ChooseMediaCheck;  // Medien prüfen: null = nur protokollieren
-        public Func<List<DupeGroup>, DupeChoice> ChooseDuplicates;             // Duplikate: null = nur protokollieren
+        public Func<List<DupeGroup>, List<DupeFolderPair>, DupeChoice> ChooseDuplicates;   // Duplikate (mit doppelten Ordnern): null = nur protokollieren
         public Func<List<AlbumCandidate>, bool> ChooseAlbumCovers;            // Albumbilder: Auswahl in den Kandidaten, false = abgebrochen
         // Folgen umbenennen: (Suchbegriff, Quelle für den Anfang oder null) -> Liste, null = abgebrochen
         public Func<string, string, EpisodeList> ChooseEpisodeList;
@@ -515,6 +515,7 @@ namespace Sflix
         public Func<string, bool> Confirm;
         public bool RestartRequested;                  // Programm wurde aktualisiert -> neu starten
         public string Summary;                         // kurzes Ergebnis der Aufgabe für die Zusammenfassung
+        public double WaitSeconds;                     // Wartezeit auf den Benutzer (Dialoge), zählt nicht zur Dauer
 
         public FfmpegTools Ffmpeg;
 

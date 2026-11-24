@@ -43,6 +43,8 @@ namespace Sflix
         readonly string startNotice;
 
         // Optionen
+        DarkCheckBox optCheckFormat, optCheckDamaged, optCheckPreview, optCheckFolders;   // Medien prüfen: Prüfungen (SFLIX-20261123-100)
+        Label checkNoneHint;
         DarkCheckBox optCheckGaps, optFfmpeg, optMoveParts, optDeleteOriginal, optConvertAudio, optPreviewVideos, optPreviewImages, optPreviewMusic;
         DarkCheckBox optImportStructure, optImportConvert, optImportMove, optImportPreview;
         DarkCheckBox optDataAll;
@@ -325,8 +327,24 @@ namespace Sflix
             optPreviewMusic.Margin = new Padding(Theme.S(20), Theme.S(2), 0, Theme.S(2));
             previewRow.Controls.Add(optPreviewMusic);
 
-            // Medien prüfen: Lücken suchen (DEC-373), liest jedes Video ganz
+            // Medien prüfen: jede Prüfung einzeln (SFLIX-20261123-100); Lücken suchen (DEC-373) liest jedes Video ganz
+            optCheckFormat = SmallCheck("Nicht abspielbar (Formate zum Konvertieren, leere Dateien)");
+            optCheckDamaged = SmallCheck("Defekt oder nicht lesbar");
             optCheckGaps = SmallCheck("Lücken suchen (liest jedes Video ganz, das Ergebnis wird gemerkt)");
+            optCheckPreview = SmallCheck("Fehlende Vorschaubilder (gemäss „Vorschaubilder“: Videos und/oder Bilder)");
+            optCheckFolders = SmallCheck("Ordner ohne Medien");
+            checkNoneHint = Theme.MakeLabel("Mindestens eine Prüfung wählen, sonst lässt sich „Medien prüfen“ nicht starten.", true);
+            checkNoneHint.MaximumSize = new Size(TextWidth, 0);
+            checkNoneHint.ForeColor = Color.FromArgb(0xf0, 0xc0, 0x60);
+            checkNoneHint.Margin = new Padding(0, Theme.S(2), 0, Theme.S(2));
+            checkNoneHint.Visible = false;
+            foreach (DarkCheckBox c in CheckKindBoxes())
+                c.CheckedChanged += delegate
+                {
+                    bool none = !AnyCheckKind();
+                    if (checkNoneHint.Visible != none) { checkNoneHint.Visible = none; Relayout(); }
+                    UpdateStartText();
+                };
             optMoveParts = SmallCheck("Teile danach nach „" + MergeTask.PartsFolderName + "“ verschieben");
 
             convertParallel = new NumericUpDown();
@@ -406,9 +424,9 @@ namespace Sflix
                      "Das Original kommt nach „" + ConvertTask.OriginalsFolderName + "“.",
                      parallelRow, optConvertAudio, optDeleteOriginal, pickConvert.Root),
                 Spec("check", Glyph.Inspect, "Medien prüfen", "Nicht abspielbar, defekt",
-                     "Findet Medien, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), defekte und leere Dateien, Medien ohne Vorschaubild " +
-                     "(gemäss „Vorschaubilder“: Videos und/oder Bilder) sowie leere Ordner. Im Ergebnis wählst du, was gelöscht, konvertiert bzw. mit Vorschaubild versehen wird.",
-                     optCheckGaps, pickCheck.Root),
+                     "Findet je nach gewählten Prüfungen Medien, die der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3-Ton), leere, defekte und lückenhafte Dateien, " +
+                     "Medien ohne Vorschaubild sowie Ordner ohne Medien. Im Ergebnis wählst du, was gelöscht, konvertiert bzw. mit Vorschaubild versehen wird.",
+                     optCheckFormat, optCheckDamaged, optCheckGaps, optCheckPreview, optCheckFolders, checkNoneHint, pickCheck.Root),
                 Spec("cleanup", Glyph.Trash, "Ablagen leeren", "__-Ordner löschen",
                      "„__teile“, „__konvertiert“, „__gelöscht“, „__original“, „" + EpisodeTask.ReplacedFolderName + "“ und „" + DuplicateTask.FolderName + "“ endgültig löschen. " +
                      "Du siehst vorher, was gelöscht wird. Nur innerhalb des Installationsordners möglich.", cleanupInfo, pickCleanup.Root),
@@ -1393,6 +1411,36 @@ namespace Sflix
                 text = n == 2 ? "Aktualisieren und einlesen" : checks["update"].Checked ? "Aktualisieren" : checks["data"].Checked ? "Daten einlesen" : "Start";
             }
             startButton.Text = text;
+            if (!running && !App.IsReleaseFolder) startButton.Enabled = !CheckWithoutKinds();
+        }
+
+        // Medien prüfen: die fünf Prüfungen (SFLIX-20261123-100)
+        DarkCheckBox[] CheckKindBoxes()
+        {
+            return new DarkCheckBox[] { optCheckFormat, optCheckDamaged, optCheckGaps, optCheckPreview, optCheckFolders };
+        }
+
+        bool AnyCheckKind()
+        {
+            foreach (DarkCheckBox c in CheckKindBoxes()) if (c != null && c.Checked) return true;
+            return false;
+        }
+
+        // Tools-Karte mit gewähltem „Medien prüfen“, aber ohne Prüfung: Start ausgegraut
+        bool CheckWithoutKinds()
+        {
+            return tabs != null && tabs.Selected == PageTools && checks.ContainsKey("check") && checks["check"].Checked && !AnyCheckKind();
+        }
+
+        MediaCheckKinds CurrentCheckKinds()
+        {
+            MediaCheckKinds k = new MediaCheckKinds();
+            k.Format = optCheckFormat.Checked;
+            k.Damaged = optCheckDamaged.Checked;
+            k.Gaps = optCheckGaps.Checked;
+            k.Preview = optCheckPreview.Checked;
+            k.Folders = optCheckFolders.Checked;
+            return k;
         }
 
         // ---------------------------------------------------------------
@@ -2180,7 +2228,13 @@ namespace Sflix
             optPreviewVideos.Checked = settings.GetBool("preview.videos", true);
             optPreviewImages.Checked = settings.GetBool("preview.images", false);
             optPreviewMusic.Checked = settings.GetBool("preview.music", false);
+            // Standard ohne gespeicherte Einstellung: nur „Nicht abspielbar“ und „Fehlende Vorschaubilder“
+            optCheckFormat.Checked = settings.GetBool("check.format", true);
+            optCheckDamaged.Checked = settings.GetBool("check.damaged", false);
             optCheckGaps.Checked = settings.GetBool("check.gaps", false);
+            optCheckPreview.Checked = settings.GetBool("check.preview", true);
+            optCheckFolders.Checked = settings.GetBool("check.folders", false);
+            checkNoneHint.Visible = !AnyCheckKind();
             optImportStructure.Checked = settings.GetBool("import.structure", true);
             optImportConvert.Checked = settings.GetBool("import.convert", false);
             optImportMove.Checked = settings.GetBool("import.move", false);
@@ -2210,7 +2264,11 @@ namespace Sflix
             settings.SetBool("preview.videos", optPreviewVideos.Checked);
             settings.SetBool("preview.images", optPreviewImages.Checked);
             settings.SetBool("preview.music", optPreviewMusic.Checked);
+            settings.SetBool("check.format", optCheckFormat.Checked);
+            settings.SetBool("check.damaged", optCheckDamaged.Checked);
             settings.SetBool("check.gaps", optCheckGaps.Checked);
+            settings.SetBool("check.preview", optCheckPreview.Checked);
+            settings.SetBool("check.folders", optCheckFolders.Checked);
             settings.SetBool("import.structure", optImportStructure.Checked);
             // Nur die eigene Wahl merken, nicht das erzwungene Häkchen bei nicht kompatiblen Dateien
             if (optImportConvert.Enabled) settings.SetBool("import.convert", optImportConvert.Checked);
@@ -2563,12 +2621,13 @@ namespace Sflix
             runner.CleanupFolders = toolFolders["cleanup"];
             runner.DupeFolders = toolFolders["dupes"];
             runner.CheckFolders = toolFolders["check"];
-            runner.CheckGaps = optCheckGaps.Checked;
+            runner.CheckKinds = CurrentCheckKinds();
             runner.RenameFolder = renameDir;
             runner.DataFolders = dataScope;
             if (import != null) import.Video = conv;
             runner.Import = import;
             lastRunImported = import != null;
+            lastRunDownloadRead = dataOverride != null;
 
             cts = new CancellationTokenSource();
             TaskContext ctx = new TaskContext();
@@ -2642,12 +2701,12 @@ namespace Sflix
                     using (MediaCheckDialog dlg = new MediaCheckDialog(items)) return dlg.Choose(this);
                 });
             };
-            ctx.ChooseDuplicates = delegate(List<DupeGroup> groups)
+            ctx.ChooseDuplicates = delegate(List<DupeGroup> groups, List<DupeFolderPair> folderPairs)
             {
                 return (DupeChoice)Invoke((Func<DupeChoice>)delegate
                 {
                     ShowPreparing();
-                    using (DuplicateDialog dlg = new DuplicateDialog(groups, ctx.Ffmpeg)) return dlg.Choose(this);
+                    using (DuplicateDialog dlg = new DuplicateDialog(groups, folderPairs, ctx.Ffmpeg)) return dlg.Choose(this);
                 });
             };
 
@@ -2661,13 +2720,13 @@ namespace Sflix
             worker.Start();
         }
 
-        bool lastRunImported, lastRunUpdated;
+        bool lastRunImported, lastRunUpdated, lastRunDownloadRead;
 
         void SetRunning(bool value)
         {
             running = value;
             bool locked = App.IsReleaseFolder;   // Release-Ordner: Optionen gesperrt (Hinweis im Balken)
-            startButton.Enabled = !value && !locked;
+            startButton.Enabled = !value && !locked && !CheckWithoutKinds();
             cancelButton.Enabled = value;
             updateButton.Enabled = !value && !locked;
             foreach (TileButton c in checks.Values) c.Enabled = !value && !locked;
@@ -2703,7 +2762,10 @@ namespace Sflix
                 importList.Items.Clear();
                 UpdateImportHint();
             }
+            // Nach Downloads gilt der Lauf nur dem Einlesen; ob ein Download Warnungen hatte, steht auf
+            // der Seite Download (SFLIX-20261123-101)
             statusLabel.Text = result.Cancelled ? "Vorgang abgebrochen."
+                             : result.Success && lastRunDownloadRead ? "Zielordner der Downloads eingelesen (Ergebnis je Download auf der Seite Download)."
                              : result.Success ? "Vorgang beendet – alles erfolgreich."
                              : "Vorgang beendet – mit Fehlern (siehe Details).";
             WriteLogFile();
@@ -2895,7 +2957,7 @@ namespace Sflix
         public ConvertOptions Convert;
         public bool PreviewVideos = true;
         public bool PreviewImages;
-        public bool CheckGaps;
+        public MediaCheckKinds CheckKinds;   // null = Standard (gespeicherte Einstellung)
         public bool PreviewMusic;          // Albumbilder (seit 3.4.3)
         public string RenameFolder;        // Folgen umbenennen: Serienordner
         public ImportOptions Import;
@@ -2921,6 +2983,13 @@ namespace Sflix
             return id;
         }
 
+        // Name in der Zusammenfassung: Spalte 36 breit, längere Namen mit zwei Leerzeichen Abstand
+        static string SummaryName(string id)
+        {
+            string t = Title(id);
+            return t.Length >= 35 ? t + "  " : t.PadRight(36);
+        }
+
         public TaskRunResult Run(TaskContext ctx)
         {
             TaskRunResult result = new TaskRunResult();
@@ -2936,6 +3005,7 @@ namespace Sflix
                 ctx.Log("=== " + Title(id) + " ===");
                 ctx.Progress(-1, Title(id) + " ...");
                 ctx.Summary = null;
+                ctx.WaitSeconds = 0;
                 DateTime taskStart = DateTime.Now;
                 string outcome;
                 try
@@ -2946,7 +3016,7 @@ namespace Sflix
                 catch (OperationCanceledException)
                 {
                     ctx.Log("Abgebrochen.");
-                    summary.Add(Title(id).PadRight(36) + "abgebrochen");
+                    summary.Add(SummaryName(id) + "abgebrochen");
                     result.Cancelled = true;
                     result.Success = false;
                     break;
@@ -2964,9 +3034,10 @@ namespace Sflix
                     result.Success = false;
                 }
                 // z.B. "Daten einlesen    OK  –  1234 Medien  (12 s)"
-                summary.Add(Title(id).PadRight(36) + outcome +
+                // Dauer ohne die Wartezeit in Dialogen (z.B. Ergebnis von „Medien prüfen“)
+                summary.Add(SummaryName(id) + outcome +
                             (string.IsNullOrEmpty(ctx.Summary) ? "" : "  –  " + ctx.Summary) +
-                            "  (" + Fmt.Time((DateTime.Now - taskStart).TotalSeconds) + ")");
+                            "  (" + Fmt.Time(Math.Max(0, (DateTime.Now - taskStart).TotalSeconds - ctx.WaitSeconds)) + ")");
 
                 if (ctx.RestartRequested)
                 {
@@ -3008,7 +3079,17 @@ namespace Sflix
                     ctx.Summary = "in " + ctx.Ffmpeg.Dir;
                     break;
                 case "dupes": ForEachFolder(ctx, DupeFolders, delegate(string f) { DuplicateTask.Run(ctx, f); }); break;
-                case "check": MediaCheckTask.Run(ctx, CheckFolders, Convert, PreviewVideos, PreviewImages, CheckGaps); break;
+                case "check":
+                    // Ohne gewählte Prüfung (z.B. automatisch nach dem Konvertieren): Schritt überspringen
+                    MediaCheckKinds kinds = CheckKinds ?? new MediaCheckKinds();
+                    if (!kinds.Any)
+                    {
+                        ctx.Log("Übersprungen: Bei „Medien prüfen“ ist keine Prüfung gewählt.");
+                        ctx.Summary = "übersprungen, keine Prüfung gewählt";
+                        break;
+                    }
+                    MediaCheckTask.Run(ctx, CheckFolders, Convert, PreviewVideos, PreviewImages, kinds);
+                    break;
                 case "merge": ForEachFolder(ctx, MergeFolders, delegate(string f) { MergeTask.Run(ctx, f, MoveParts); }); break;
                 case "convert": ForEachFolder(ctx, ConvertFolders, delegate(string f) { Convert.Folder = f; ConvertTask.Run(ctx, Convert); }); break;
                 case "preview":

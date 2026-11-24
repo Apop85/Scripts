@@ -167,21 +167,45 @@ namespace Sflix
         public int Count { get { return Delete.Count + Convert.Count + Preview.Count; } }
     }
 
+    // Gewählte Prüfungen von "Medien prüfen" (SFLIX-20261123-100). Standard ohne gespeicherte Einstellung:
+    // nur Nicht abspielbar und Fehlende Vorschaubilder.
+    public class MediaCheckKinds
+    {
+        public bool Format = true;     // nicht abspielbar und leere Dateien (Kind format, empty)
+        public bool Damaged;           // defekt oder nicht lesbar (broken, locked)
+        public bool Gaps;              // Lücken suchen (gaps, DEC-373)
+        public bool Preview = true;    // fehlende Vorschaubilder (preview)
+        public bool Folders;           // Ordner ohne Medien (folder)
+
+        public bool Any { get { return Format || Damaged || Gaps || Preview || Folders; } }
+        // ffprobe nötig (Video und M4A untersuchen)
+        public bool NeedsProbe { get { return Format || Damaged; } }
+        public bool NeedsFfmpeg { get { return Format || Damaged || Gaps; } }
+
+        public static MediaCheckKinds FromSettings(Settings settings)
+        {
+            MediaCheckKinds k = new MediaCheckKinds();
+            k.Format = settings.GetBool("check.format", true);
+            k.Damaged = settings.GetBool("check.damaged", false);
+            k.Gaps = settings.GetBool("check.gaps", false);
+            k.Preview = settings.GetBool("check.preview", true);
+            k.Folders = settings.GetBool("check.folders", false);
+            return k;
+        }
+    }
+
     public static class MediaCheckTask
     {
         // Ablage für gelöschte Medien (im Ordner der Datei, das Vorschaubild in Preview\__gelöscht)
         public const string DeletedFolderName = "__gelöscht";
 
-        public static void Run(TaskContext ctx, List<string> folders, ConvertOptions convert, bool previewVideos, bool previewImages)
+        // kinds: gewählte Prüfungen; nur diese laufen (ohne Format/Defekt kein ffprobe). "Lücken suchen" (DEC-373)
+        // liest jedes Video ganz; das Ergebnis wird gemerkt (medien_cache.json), der nächste Lauf liest nur
+        // neue oder geänderte Dateien.
+        public static void Run(TaskContext ctx, List<string> folders, ConvertOptions convert, bool previewVideos, bool previewImages, MediaCheckKinds kinds)
         {
-            Run(ctx, folders, convert, previewVideos, previewImages, false);
-        }
-
-        // gaps: Option "Lücken suchen" (DEC-373). Liest jedes Video ganz; das Ergebnis wird gemerkt
-        // (medien_cache.json), der nächste Lauf liest nur neue oder geänderte Dateien.
-        public static void Run(TaskContext ctx, List<string> folders, ConvertOptions convert, bool previewVideos, bool previewImages, bool gaps)
-        {
-            ctx.Ffmpeg.EnsureInstalled(ctx);
+            bool gaps = kinds.Gaps;
+            if (kinds.NeedsFfmpeg) ctx.Ffmpeg.EnsureInstalled(ctx);
             List<string> roots = Folders.WithoutNested(folders != null && folders.Count > 0 ? folders : new List<string> { App.Root });
             HashSet<string> extensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (HashSet<string> set in new HashSet<string>[] { MediaTypes.ReadyVideo, MediaTypes.ReadyAudio, MediaTypes.ReadyImage,
@@ -208,7 +232,7 @@ namespace Sflix
             Workers.ForEach(files, Workers.Degree(ctx, 4), ctx.Token, delegate(int i, string file)
             {
                 List<MediaCheckItem> found = new List<MediaCheckItem>();
-                CheckFile(ctx, file, previewVideos, previewImages, gaps, found);
+                CheckFile(ctx, file, previewVideos, previewImages, kinds, found);
                 perFile[i] = found;
                 int n = System.Threading.Interlocked.Increment(ref checkedCount);
                 if (n % 5 == 0 || n == files.Count) ctx.Progress((double)n / Math.Max(1, files.Count), "Prüfe " + n + " / " + files.Count);
@@ -217,8 +241,11 @@ namespace Sflix
             double tProbe = clock.Elapsed.TotalSeconds;
             List<MediaCheckItem> items = new List<MediaCheckItem>();
             foreach (List<MediaCheckItem> found in perFile) if (found != null) items.AddRange(found);
-            ctx.Progress(-1, "Suche leere Ordner ...");
-            foreach (string root in roots) FindEmptyFolders(ctx, root, extensions, items);
+            if (kinds.Folders)
+            {
+                ctx.Progress(-1, "Suche leere Ordner ...");
+                foreach (string root in roots) FindEmptyFolders(ctx, root, extensions, items);
+            }
             double tCheck = clock.Elapsed.TotalSeconds;
 
             int format = 0, broken = 0, locked = 0, gapped = 0, empty = 0, preview = 0, emptyFolders = 0, logged = 0;
@@ -246,13 +273,43 @@ namespace Sflix
                     tList, tProbe - tList, tCheck - tProbe, tCheck));
             string stats = MediaCache.TakeStats();
             if (stats != null) ctx.Log(stats);
-            ctx.Log("Nicht abspielbar: " + format + "   Defekt: " + broken + (locked > 0 ? "   Nicht lesbar: " + locked : "") + (gaps ? "   Lückenhaft: " + gapped : "") + "   Leer: " + empty + "   Ohne Vorschaubild: " + preview + "   Leere Ordner: " + emptyFolders);
-            ctx.Summary = files.Count + " geprüft, " + format + " nicht abspielbar, " + broken + " defekt, " + (locked > 0 ? locked + " nicht lesbar, " : "") + (gaps ? gapped + " lückenhaft, " : "") + empty + " leer, " + preview + " ohne Vorschaubild, " + emptyFolders + " leere Ordner";
+            // Nur die gewählten Prüfungen nennen
+            List<string> counts = new List<string>(), summary = new List<string>();
+            if (kinds.Format)
+            {
+                counts.Add("Nicht abspielbar: " + format); counts.Add("Leer: " + empty);
+                summary.Add(format + " nicht abspielbar"); summary.Add(empty + " leer");
+            }
+            if (kinds.Damaged)
+            {
+                counts.Add("Defekt: " + broken); if (locked > 0) counts.Add("Nicht lesbar: " + locked);
+                summary.Add(broken + " defekt"); if (locked > 0) summary.Add(locked + " nicht lesbar");
+            }
+            if (gaps) { counts.Add("Lückenhaft: " + gapped); summary.Add(gapped + " lückenhaft"); }
+            if (kinds.Preview) { counts.Add("Ohne Vorschaubild: " + preview); summary.Add(preview + " ohne Vorschaubild"); }
+            if (kinds.Folders) { counts.Add("Leere Ordner: " + emptyFolders); summary.Add(emptyFolders + " leere Ordner"); }
+            ctx.Log(string.Join("   ", counts.ToArray()));
+            ctx.Summary = files.Count + " geprüft, " + string.Join(", ", summary.ToArray());
             if (items.Count == 0 || ctx.ChooseMediaCheck == null) return;
 
+            System.Diagnostics.Stopwatch wait = System.Diagnostics.Stopwatch.StartNew();
             MediaCheckChoice choice = ctx.ChooseMediaCheck(items);
+            ctx.WaitSeconds += wait.Elapsed.TotalSeconds;
             if (choice == null || choice.Count == 0) return;
-            Execute(ctx, roots, choice, convert);
+            // Löschen (erneute Prüfung) und Konvertieren brauchen ffmpeg, auch wenn die Prüfung ohne lief
+            ctx.Ffmpeg.EnsureInstalled(ctx);
+            // Konvertieren setzt seine eigene Zusammenfassung: danach wieder die der Prüfung, mit den Aktionen
+            string own = ctx.Summary;
+            try { Execute(ctx, roots, choice, convert); }
+            finally
+            {
+                List<string> done = new List<string>();
+                // Gewählte Aktionen (Ergebnis je Datei steht im Protokoll)
+                if (choice.Delete.Count > 0) done.Add(choice.Delete.Count + " löschen");
+                if (choice.Convert.Count > 0) done.Add(choice.Convert.Count + " konvertieren");
+                if (choice.Preview.Count > 0) done.Add(choice.Preview.Count + " Vorschaubild(er)");
+                ctx.Summary = own + (done.Count > 0 ? "; gewählt: " + string.Join(", ", done.ToArray()) : "");
+            }
         }
 
         // Reihenfolge: löschen, konvertieren, dann Vorschaubilder (für konvertierte Dateien vom Ergebnis)
@@ -332,38 +389,59 @@ namespace Sflix
         }
 
         // Prüft eine Datei (läuft parallel in mehreren Threads, nur lokale Ergebnisse in "found")
-        static void CheckFile(TaskContext ctx, string file, bool previewVideos, bool previewImages, bool gaps, List<MediaCheckItem> found)
+        // Nur die gewählten Prüfungen; ffprobe nur für Nicht abspielbar oder Defekt (SFLIX-20261123-100)
+        static void CheckFile(TaskContext ctx, string file, bool previewVideos, bool previewImages, MediaCheckKinds kinds, List<MediaCheckItem> found)
         {
             ctx.Check();
             string ext = Path.GetExtension(file).ToLowerInvariant();
             string kind = MediaTypes.Kind(ext);
             MediaFacts facts = MediaFacts.Basic(file);
-            if (facts.Size == 0) { found.Add(Item(file, "empty", "leere Datei (0 Byte)", facts)); return; }
+            if (facts.Size == 0)
+            {
+                if (kinds.Format) found.Add(Item(file, "empty", "leere Datei (0 Byte)", facts));
+                return;
+            }
+            bool previewWanted = kinds.Preview && ((kind == "video" && previewVideos) || (kind == "image" && previewImages));
             if (MediaTypes.NeedsConversion(ext))
             {
-                if (kind == "video") facts.Probe(ctx.Ffmpeg, ctx.Token);
-                found.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
+                if (kinds.Format)
+                {
+                    if (kind == "video") facts.Probe(ctx.Ffmpeg, ctx.Token);
+                    found.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
+                }
                 // Das Vorschaubild gilt auch nach dem Konvertieren (gleicher Name, andere Endung)
-                if (((kind == "video" && previewVideos) || (kind == "image" && previewImages)) && !HasPreview(file))
-                    found.Add(Item(file, "preview", "kein Vorschaubild", facts));
+                if (previewWanted && !HasPreview(file)) found.Add(Item(file, "preview", "kein Vorschaubild", facts));
                 return;
             }
             if (kind == "video")
             {
-                facts.Probe(ctx.Ffmpeg, ctx.Token);
-                if (facts.ProbeError != null) { found.Add(ProbeFailed(file, facts)); return; }
-                if (!MediaCheck.IsPlayable(facts, ext)) found.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
-                if (gaps) CheckGaps(ctx, file, facts, found);
-                if (previewVideos && !HasPreview(file)) found.Add(Item(file, "preview", "kein Vorschaubild", facts));
+                if (kinds.NeedsProbe)
+                {
+                    facts.Probe(ctx.Ffmpeg, ctx.Token);
+                    if (facts.ProbeError != null)
+                    {
+                        // Nicht lesbar: ohne Prüfung "Defekt" nicht melden, auch keine Lückensuche
+                        if (kinds.Damaged) found.Add(ProbeFailed(file, facts));
+                        return;
+                    }
+                    if (kinds.Format && !MediaCheck.IsPlayable(facts, ext)) found.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
+                }
+                if (kinds.Gaps) CheckGaps(ctx, file, facts, found);
+                if (previewWanted && !HasPreview(file)) found.Add(Item(file, "preview", "kein Vorschaubild", facts));
             }
             else if (kind == "audio" && ext == ".m4a")
             {
                 // M4A kann ALAC enthalten, das der Browser nicht abspielt
+                if (!kinds.NeedsProbe) return;
                 facts.Probe(ctx.Ffmpeg, ctx.Token);
-                if (facts.ProbeError != null) { found.Add(ProbeFailed(file, facts)); return; }
-                if (!MediaCheck.IsPlayable(facts, ext)) found.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
+                if (facts.ProbeError != null)
+                {
+                    if (kinds.Damaged) found.Add(ProbeFailed(file, facts));
+                    return;
+                }
+                if (kinds.Format && !MediaCheck.IsPlayable(facts, ext)) found.Add(Item(file, "format", MediaCheck.Reason(facts, ext), facts));
             }
-            else if (kind == "image" && previewImages && !HasPreview(file))
+            else if (kind == "image" && previewWanted && !HasPreview(file))
             {
                 found.Add(Item(file, "preview", "kein Vorschaubild", facts));
             }
@@ -827,7 +905,7 @@ namespace Sflix
             e.DrawDefault = false;
             MediaCheckFile f = e.Item.Tag as MediaCheckFile;
             bool selected = e.Item.Selected;
-            using (SolidBrush b = new SolidBrush(selected ? (list.Focused ? SystemColors.Highlight : Theme.Input) : list.BackColor))
+            using (SolidBrush b = new SolidBrush(selected ? DarkList.SelectionBack(list) : list.BackColor))
                 e.Graphics.FillRectangle(b, e.Bounds);
             if (f == null || !Applicable(f, e.ColumnIndex)) return;
             int size = Theme.S(15);

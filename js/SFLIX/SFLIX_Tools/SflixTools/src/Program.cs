@@ -38,8 +38,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("STEFFLIX")]
 [assembly: AssemblyProduct("STEFFLIX")]
 [assembly: AssemblyDescription("STEFFLIX: Mediathek im eigenen Fenster, Update, Daten einlesen, Importer und Tools")]
-[assembly: AssemblyVersion("4.2.0.0")]
-[assembly: AssemblyFileVersion("4.2.0.0")]
+[assembly: AssemblyVersion("4.2.7.0")]
+[assembly: AssemblyFileVersion("4.2.7.0")]
 
 namespace Sflix
 {
@@ -302,6 +302,7 @@ namespace Sflix
             runner.PreviewFolders = all;
             runner.PreviewVideos = settings.GetBool("preview.videos", true);
             runner.PreviewImages = settings.GetBool("preview.images", false);
+            runner.CheckKinds = MediaCheckKinds.FromSettings(settings);
             runner.CleanupFolders = all;   // ohne Oberfläche: alle Ablagen im Installationsordner löschen
             // Ohne --data-folder wird wie bisher alles eingelesen
             runner.DataFolders = dataFolders.Count > 0 ? dataFolders : null;

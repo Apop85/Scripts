@@ -474,7 +474,12 @@ namespace Sflix
             all.Click += delegate
             {
                 adjusting = true;
-                foreach (ListViewItem i in list.Items) if (((EpisodeOp)i.Tag).Group == null) i.Checked = true;
+                // Ohne Gruppe und ohne belegtes Ziel (SFLIX-20261124-116)
+                foreach (ListViewItem i in list.Items)
+                {
+                    EpisodeOp candidate = (EpisodeOp)i.Tag;
+                    if (candidate.Group == null && !candidate.TargetTaken) i.Checked = true;
+                }
                 adjusting = false;
             };
             none.Click += delegate

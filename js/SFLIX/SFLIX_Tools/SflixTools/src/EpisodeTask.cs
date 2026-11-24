@@ -542,6 +542,7 @@ namespace Sflix
         // Vom Arbeitsthread ermittelt (Plan), damit der Dialog keine Dateien abfragt
         public long Size = -1;        // Grösse der Quelldatei, -1 = keine Datei
         public bool TargetExists;     // Ziel gibt es schon (und ist nicht die Quelle)
+        public bool TargetTaken;      // Ziel bleibt belegt (wird nicht selbst umbenannt): Konflikt, nicht vorausgewählt
     }
 
     public class EpisodePlan
@@ -821,6 +822,10 @@ namespace Sflix
             }
             HashSet<string> sources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (string f in files) sources.Add(MapPath(f, folderMap));
+            // Quellen, die selbst umbenannt oder verschoben werden (ihr Platz wird frei). Eine Quelle ohne
+            // eigene Änderung (heisst schon richtig) belegt ihr Ziel weiterhin (SFLIX-20261124-116).
+            HashSet<string> movedAway = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (EpisodeOp op in fileOps) movedAway.Add(MapPath(op.Source, folderMap));
             foreach (EpisodeOp op in fileOps)
             {
                 List<EpisodeOp> same = byTarget[op.Target];
@@ -843,8 +848,9 @@ namespace Sflix
                     op.Note = "E" + overlap.ToString("00") + " steckt in mehreren Dateien (Doppelfolge und Einzelfolge): eine wählen" +
                               (op.Note.Length > 0 ? ", " + op.Note : "");
                 }
-                else if (File.Exists(op.Target) && !sources.Contains(op.Target))
+                else if (sources.Contains(op.Target) ? !movedAway.Contains(op.Target) : File.Exists(op.Target))
                 {
+                    op.TargetTaken = true;
                     op.Selected = false;
                     op.Note = "Ziel gibt es schon (wird beim Umbenennen nachgefragt)" + (op.Note.Length > 0 ? ", " + op.Note : "");
                 }
@@ -1213,6 +1219,8 @@ namespace Sflix
             string dest = FileOps.UniquePath(folder, Path.GetFileName(file));
             FileOps.Rename(file, dest);
             journal.Ops.Add(new List<object> { "move", file, dest });
+            // Vorschaubild mitnehmen (nach __ersetzt\Preview), sonst gälte es für die neue Datei (SFLIX-20261124-116)
+            MovePreview(file, dest, journal);
         }
 
         static void EnsureDir(string dir, Journal journal)

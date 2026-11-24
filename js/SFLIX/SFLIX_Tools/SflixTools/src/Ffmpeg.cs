@@ -78,8 +78,8 @@ namespace Sflix
 
         public MediaGap(double at, double length) { At = at; Length = length; }
 
-        // "1.2 s bei 12:34"
-        public string Text { get { return Fmt.Inv(Length, "0.0") + " s bei " + Fmt.Time(At); } }
+        // "1.2 s bei 0:12:34"; Stelle abgerundet wie in der Weboberfläche (formatMediaTime), nie nach dem Beginn
+        public string Text { get { return Fmt.Inv(Length, "0.0") + " s bei " + Fmt.Time(Math.Floor(At)); } }
 
         public static string Describe(List<MediaGap> gaps)
         {
@@ -248,7 +248,7 @@ namespace Sflix
             }
             catch (DownloadException e)
             {
-                ctx.Log("  " + e.Message + " Es wird die im Programm eingebaute ffmpeg-Version geladen.");
+                ctx.Log("  " + e.Message.TrimEnd('.') + ". Es wird die im Programm eingebaute ffmpeg-Version geladen.");
                 return FfmpegManifest.BuiltIn();
             }
             return LoadManifest(checksums, ctx) ?? FfmpegManifest.BuiltIn();

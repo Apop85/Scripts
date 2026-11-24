@@ -2,6 +2,89 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0901",
+      "name": "2.9.1",
+      "items": [
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.2.1: Medien prüfen: Jede Prüfung lässt sich einzeln ein- und ausschalten (Nicht abspielbar, Defekt oder nicht lesbar, Lücken suchen, Fehlende Vorschaubilder, Ordner ohne Medien). Standard sind „Nicht abspielbar“ und „Fehlende Vorschaubilder“. Nur mit Vorschaubildern oder Ordnern werden die Videos nicht gelesen, das geht deutlich schneller.",
+          "component": "updater",
+          "componentVersion": "4.2.1",
+          "short": "Medien prüfen: Jede Prüfung lässt sich einzeln ein- und ausschalten (Nicht abspielbar, Defekt oder nicht lesbar, Lücken suchen, Fehlende Vorschaubilder, Ordner ohne Medien). Standard sind „Nicht abspielbar“ und „Fehlende Vorschaubilder“. Nur mit Vorschaubildern oder Ordnern werden die Videos nicht gelesen, das geht deutlich schneller."
+        },
+        {
+          "type": "FEATURE",
+          "text": "Desktop 4.2.5: Duplikate finden: Liegen ganze Ordner doppelt vor, zeigt ein neuer Block „Doppelte Ordner“ die Ordnerpaare mit dem Anteil doppelter Dateien. „links behalten“ oder „rechts behalten“ wählt mit einem Klick alle Duplikate des Paars, aussortiert werden nur doppelte Dateien. Per Rechtsklick oder Kontextmenütaste lässt sich alles aus einem Ordner aussortieren oder behalten. Gleiche Folgen werden auch zwischen einer Serie und ihrer Kopie an einem anderen Ort erkannt (ohne Vorauswahl).",
+          "component": "updater",
+          "componentVersion": "4.2.5",
+          "short": "Duplikate finden: Liegen ganze Ordner doppelt vor, zeigt ein neuer Block „Doppelte Ordner“ die Ordnerpaare mit dem Anteil doppelter Dateien. „links behalten“ oder „rechts behalten“ wählt mit einem Klick alle Duplikate des Paars, aussortiert werden nur doppelte Dateien. Per Rechtsklick oder Kontextmenütaste lässt sich alles aus einem Ordner aussortieren oder behalten. Gleiche Folgen werden auch zwischen einer Serie und ihrer Kopie an einem anderen Ort erkannt (ohne Vorauswahl)."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.1: Player: Im Bild-im-Bild-Fenster bleibt das Video sichtbar, das Hauptfenster wird ausgeblendet statt minimiert. Zuvor wurde das Bild nach dem Minimieren schwarz.",
+          "component": "updater",
+          "componentVersion": "4.2.1",
+          "short": "Player: Im Bild-im-Bild-Fenster bleibt das Video sichtbar, das Hauptfenster wird ausgeblendet statt minimiert. Zuvor wurde das Bild nach dem Minimieren schwarz."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.1: Albumbilder wählen und andere Listen: Die markierte Zeile ist mit und ohne Fokus gut lesbar (helle Schrift auf dunkler Markierung), ihr Text steht an derselben Stelle wie in den übrigen Zeilen.",
+          "component": "updater",
+          "componentVersion": "4.2.1",
+          "short": "Albumbilder wählen und andere Listen: Die markierte Zeile ist mit und ohne Fokus gut lesbar (helle Schrift auf dunkler Markierung), ihr Text steht an derselben Stelle wie in den übrigen Zeilen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.1: Medien prüfen: Die Stelle einer Lücke wird wie in STEFFLIX abgerundet angegeben.",
+          "component": "updater",
+          "componentVersion": "4.2.1",
+          "short": "Medien prüfen: Die Stelle einer Lücke wird wie in STEFFLIX abgerundet angegeben."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.1: Download: Ein unvollständig empfangenes Teilstück wird in den Meldungen genannt. Nach Downloads meldet die Statuszeile nicht mehr „alles erfolgreich“, sondern verweist auf das Ergebnis je Download.",
+          "component": "updater",
+          "componentVersion": "4.2.1",
+          "short": "Download: Ein unvollständig empfangenes Teilstück wird in den Meldungen genannt. Nach Downloads meldet die Statuszeile nicht mehr „alles erfolgreich“, sondern verweist auf das Ergebnis je Download."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Einstellungen und Player: Toolnamen in typografischen Anführungszeichen.",
+          "component": "stefflix",
+          "componentVersion": "2.9.1",
+          "short": "Einstellungen und Player: Toolnamen in typografischen Anführungszeichen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.2: Zusammenfassung der Tools: „Medien prüfen“ zeigt nach dem Ausführen aus dem Ergebnis das eigene Ergebnis mit den gewählten Aktionen, die Dauer ohne die Zeit im Ergebnisfenster. Lange Toolnamen stehen mit Abstand zum Ergebnis.",
+          "component": "updater",
+          "componentVersion": "4.2.2",
+          "short": "Zusammenfassung der Tools: „Medien prüfen“ zeigt nach dem Ausführen aus dem Ergebnis das eigene Ergebnis mit den gewählten Aktionen, die Dauer ohne die Zeit im Ergebnisfenster. Lange Toolnamen stehen mit Abstand zum Ergebnis."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.4: Duplikate finden: „aussortieren“ steht ungekürzt neben dem Kästchen.",
+          "component": "updater",
+          "componentVersion": "4.2.4",
+          "short": "Duplikate finden: „aussortieren“ steht ungekürzt neben dem Kästchen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.5: Duplikate finden: Die fett hervorgehobenen Werte haben dieselbe Schriftgrösse wie der übrige Text.",
+          "component": "updater",
+          "componentVersion": "4.2.5",
+          "short": "Duplikate finden: Die fett hervorgehobenen Werte haben dieselbe Schriftgrösse wie der übrige Text."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.6: Folgen umbenennen: Gibt es das Ziel schon als richtig benannte Datei, ist eine zweite Datei derselben Folge nicht mehr vorausgewählt und als Konflikt markiert, auch „Alle ohne Konflikt“ lässt sie aus. Beim Ersetzen kommt das Vorschaubild der ersetzten Datei mit nach „__ersetzt“.",
+          "component": "updater",
+          "componentVersion": "4.2.6",
+          "short": "Folgen umbenennen: Gibt es das Ziel schon als richtig benannte Datei, ist eine zweite Datei derselben Folge nicht mehr vorausgewählt und als Konflikt markiert, auch „Alle ohne Konflikt“ lässt sie aus. Beim Ersetzen kommt das Vorschaubild der ersetzten Datei mit nach „__ersetzt“."
+        }
+      ]
+    },
+    {
       "version": "2.09",
       "name": "2.9.0",
       "items": [

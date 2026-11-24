@@ -861,6 +861,8 @@ namespace Sflix
 
         static void Bring(Form f)
         {
+            PlayerForm p = f as PlayerForm;
+            if (p != null) p.ShowIfHiddenForPip();
             if (f.WindowState == FormWindowState.Minimized) f.WindowState = FormWindowState.Normal;
             f.Show();
             f.Activate();

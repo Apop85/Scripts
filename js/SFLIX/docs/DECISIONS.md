@@ -9,11 +9,11 @@ Getroffene Entscheidungen zu STEFFLIX, Desktop und Android-App mit Begründung, 
 | Status | Anzahl |
 |---|---|
 | Proposed | 4 |
-| Accepted | 38 |
+| Accepted | 42 |
 | Implemented | 268 |
 | Rejected | 29 |
 | Superseded | 32 |
-| **Total** | **371** |
+| **Total** | **375** |
 
 ## Block 1: Session STEFFLIX 2.00 (Oktober 2026)
 
@@ -5109,6 +5109,18 @@ Konsequenzen: –
 Betroffene Komponenten: –
 Abhängigkeiten: –
 
+### DEC-376: Medien prüfen: Prüfungen einzeln schaltbar
+Status: Accepted
+Datum: 2026-11-23
+Kategorie: UI
+Ticket: SFLIX-20261123-100
+Entscheidung: Medien prüfen hat je einen Schalter für: Nicht abspielbar (Formate zum Konvertieren und leere Dateien), Defekt oder nicht lesbar, Lücken suchen, Fehlende Vorschaubilder, Ordner ohne Medien. Beim ersten Start sind nur Nicht abspielbar und Fehlende Vorschaubilder an; die Auswahl wird gespeichert. Nur gewählte Prüfungen laufen (unnötiges Lesen der Videos entfällt). Ohne Schalter lässt sich das Tool nicht starten; der automatische Schritt nach Konvertieren wird dann übersprungen und protokolliert.
+Begründung: Benutzerwunsch: nur prüfen, was gerade interessiert, und dadurch schneller.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: DEC-373
+
 ## A. Offene Entscheidungen
 
 ## B. Änderungsbedarf an bestehenden Entscheidungen
@@ -5238,6 +5250,70 @@ Alternativen: –
 Konsequenzen: Umgesetzt in Desktop 4.2.0 (Ffmpeg.ManifestOrBuiltIn, ChecksumsRejectedException). Ohne erreichbare, gültige Prüfsummen bleibt eine neue Installation bis zum nächsten gültigen Stand ohne ffmpeg. Nachgeführt in docs/ARCHITECTURE.md 3.3 und 3.7 (SFLIX-20261123-098).
 Betroffene Komponenten: Desktop (Ffmpeg.cs, Net.cs)
 Abhängigkeiten: DEC-372
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# STEFFLIX 2.9.1 (Arbeit vom 24.11.2026)
+
+## Entscheidungen
+
+### DEC-377: Medien prüfen: Prüfungen einzeln schaltbar
+Status: Accepted
+Datum: 2026-11-24
+Kategorie: UI
+Ticket: SFLIX-20261123-100
+Entscheidung: Fünf Schalter (Nicht abspielbar inkl. leer, Defekt/nicht lesbar, Lücken suchen, Fehlende Vorschaubilder, Ordner ohne Medien), Schlüssel check.format/check.damaged/check.gaps/check.preview/check.folders. Standard ohne gespeicherte Einstellung: nur format und preview. ffprobe nur bei format/damaged. Ohne Schalter: Start ausgegraut mit Hinweis, Kettenschritt übersprungen mit Protokollzeile. Ohne Defekt-Prüfung werden nicht lesbare Videos nicht gemeldet und nicht auf Lücken untersucht.
+Begründung: Benutzerentscheide 23.11.2026: schnelle Läufe ohne Lesen der Videos, wenn nur Vorschaubilder/Ordner gefragt sind.
+Alternativen: –
+Konsequenzen: Schlüssel check.format, check.damaged, check.gaps, check.preview, check.folders in docs/INTERFACES.md 8.2 nachgeführt (SFLIX-20261124-102).
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+### DEC-378: Beschädigte Dateien: Herkunft eines Funds an derselben Stelle
+Status: Accepted
+Datum: 2026-11-24
+Kategorie: Datenintegrität
+Ticket: SFLIX-20261123-101
+Entscheidung: Ein späterer Fund an derselben Stelle (±3 s) überschreibt Herkunft (source) und Datum des bestehenden Eintrags in damaged.js bzw. damagedLocal; die Liste zeigt den jüngsten Fund. Gilt gleich im Desktop (DamagedList) und im Web (addDamagedGap).
+Begründung: Benutzerentscheid 24.11.2026 (SFLIX-20261123-101 Punkt 5): zeigt, wer die Lücke zuletzt bestätigt hat, mit passendem Datum; Desktop und Web verhalten sich bereits so. Verworfen: Herkunft Download behalten (Änderung an zwei Stellen ohne erkennbaren Nutzen).
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: DEC-374
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# Desktop 4.2.5 (Arbeit vom 24.11.2026)
+
+## Entscheidungen
+
+### DEC-379: Duplikate finden: Auswahl nach doppelten Ordnern
+Status: Accepted
+Datum: 2026-11-24
+Kategorie: UI
+Ticket: SFLIX-20261124-113
+Entscheidung: Duplikate finden zeigt oben einen Block 'Doppelte Ordner': Ordnerpaare ab 3 gemeinsamen Duplikaten, Prozentanteil je Ordner, vollständig enthaltene zuoberst, Paare so weit nach oben zusammengefasst wie die Ordner übereinstimmen (Unterordner aufklappbar). Je Paar 'links behalten', 'rechts behalten', 'einzeln entscheiden'; setzt die Häkchen in allen betroffenen Gruppen, Einzelliste bleibt umstellbar. Gleiche-Folge-Gruppen nur auf ausdrückliche Wahl, mit Hinweis bei besserer Auflösung im aussortierten Ordner. Rechtsklick in der Einzelliste: alles aus diesem Ordner aussortieren/behalten. Aussortiert werden nur echte Duplikate nach __duplikate; Dateien ohne Duplikat bleiben, ganze Ordner werden nicht verschoben.
+Begründung: Ganze Ordnerinhalte liegen oft doppelt vor; die Einzelprüfung jeder Gruppe ist zu aufwendig. Nur Duplikate zu verschieben verhindert Datenverlust bei Teilüberschneidungen.
+Alternativen: –
+Konsequenzen: Gleiche Folge wird auch zwischen gleich benannten Serienordnern an verschiedenen Orten erkannt (Kopien), solche Gruppen ohne Vorauswahl (SFLIX-20261124-119). Ineinander liegende Ordner (Filme und Filme\Sammlung) bilden kein Paar, dafür Rechtsklick im Unterordner. Die Reihenfolge der Paare bleibt beim Umschalten der Option gleich (keine springenden Zeilen). Kontextmenü auch über Kontextmenütaste und Umschalt+F10.
+Betroffene Komponenten: –
+Abhängigkeiten: –
 
 ## A. Offene Entscheidungen
 

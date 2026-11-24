@@ -2,7 +2,8 @@
 //   - identische Dateien: gleiche Grösse und gleiche SHA256-Prüfsumme
 //   - gleiche Folge: dieselbe Staffel und Folge innerhalb einer Serie (S01E01 = 1x01 = S1E1 = S01E1),
 //     erkannt mit EpisodeTask.ParseEpisodes. Serie = Ordner direkt unter der Kategorie
-//     (z.B. Serien\Meine Serie); verglichen wird nie über verschiedene Serien hinweg.
+//     (z.B. Serien\Meine Serie); verglichen wird nie über verschiedene Serien hinweg. Gleich benannte
+//     Serienordner an verschiedenen Orten (Kopien) gelten als dieselbe Serie, ohne Vorauswahl.
 // Im Dialog sind die auszusortierenden Dateien angehakt (Vorauswahl: höhere Auflösung bzw. grössere
 // Datei bleibt, bei identischen der kürzeste Pfad; Doppelfolgen-Überschneidungen ohne Vorauswahl).
 // Sie kommen samt Vorschaubild nach "__duplikate" neben der Datei. renamed.js führt Favoriten und
@@ -22,6 +23,7 @@ namespace Sflix
         public bool Identical;
         public bool SameName;                                 // gleicher Dateiname (ohne Endung)
         public bool Overlap;                                  // Doppelfolge überschneidet Einzelfolge
+        public bool OtherFolders;                             // gleiche Folge aus gleich benannten Serienordnern an verschiedenen Orten
         public List<string> Files = new List<string>();
         public List<MediaFacts> Facts = new List<MediaFacts>();
         public HashSet<string> Remove = new HashSet<string>(StringComparer.OrdinalIgnoreCase);   // Vorauswahl
@@ -114,9 +116,19 @@ namespace Sflix
             if (groups.Count > maxLogged) ctx.Log("  … und " + (groups.Count - maxLogged) + " weitere Gruppen (alle stehen in der Auswahl)");
             ctx.Log("Gruppen: " + identical + " mit identischen Dateien, " + episodes + " mit gleicher Folge, " + names + " mit gleichem Namen");
             ctx.Summary = identical + " identisch, " + episodes + " gleiche Folge, " + names + " gleicher Name";
+
+            // Doppelte Ordner (DEC-379): Paare mit mindestens 3 gemeinsamen Gruppen
+            List<DupeFolderPair> folderPairs = DupeFolders.Find(folder, files, groups);
+            if (folderPairs.Count > 0)
+            {
+                ctx.Log("Doppelte Ordner: " + folderPairs.Count);
+                foreach (DupeFolderPair p in folderPairs)
+                    ctx.Log("  " + DupeFolders.Display(p.Left) + " (" + p.Percent(true) + " %)  <->  " + DupeFolders.Display(p.Right) + " (" + p.Percent(false) + " %), " +
+                            p.Identical.Count + " identisch" + (p.Similar.Count > 0 ? ", " + p.Similar.Count + " gleiche Folge oder gleicher Name" : ""));
+            }
             if (groups.Count == 0 || ctx.ChooseDuplicates == null) return;
 
-            DupeChoice choice = ctx.ChooseDuplicates(groups);
+            DupeChoice choice = ctx.ChooseDuplicates(groups, folderPairs);
             if (choice == null) { ctx.Log("Keine Dateien aussortiert."); return; }
 
             // Aussortieren
@@ -329,11 +341,17 @@ namespace Sflix
             Dictionary<string, List<string>> byEpisode = new Dictionary<string, List<string>>();
             Dictionary<string, List<int>> episodesOf = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
             Dictionary<string, int> seasonOf = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, string> seriesOf = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (string f in files)
             {
                 if (MediaTypes.Kind(Path.GetExtension(f).ToLowerInvariant()) != "video") continue;
-                string series = SeriesKey(root, f);
-                if (series == null) continue;
+                string seriesPath = SeriesKey(root, f);
+                if (seriesPath == null) continue;
+                // Verglichen wird über den Namen des Serienordners: auch Kopien an anderem Ort
+                // (Serien\Polarstern und Serien\Kopie\Polarstern) gelten als dieselbe Serie (SFLIX-20261124-119).
+                // Verschiedene Serien heissen verschieden (Star Trek\TOS und Star Trek\TNG bleiben getrennt).
+                string series = Path.GetFileName(seriesPath);
+                seriesOf[f] = seriesPath;
                 int season;
                 List<int> eps;
                 if (!EpisodeTask.ParseEpisodes(Path.GetFileName(f), out season, out eps) || eps == null || eps.Count == 0) continue;
@@ -397,12 +415,15 @@ namespace Sflix
                 {
                     string set = string.Join(",", episodesOf[f].ConvertAll(delegate(int e) { return e.ToString(); }).ToArray());
                     if (set != firstSet || seasonOf[f] != seasonOf[c[0]]) g.Overlap = true;
+                    // Gleich benannte Serienordner an verschiedenen Orten: keine Vorauswahl (könnten verschiedene Serien sein)
+                    if (!string.Equals(seriesOf[f], seriesOf[c[0]], StringComparison.OrdinalIgnoreCase)) g.OtherFolders = true;
                 }
                 List<int> all = new List<int>();
                 foreach (string f in c) foreach (int e in episodesOf[f]) if (!all.Contains(e)) all.Add(e);
                 all.Sort();
                 g.Title = "Gleiche Folge " + EpisodeTask.EpisodeLabel(seasonOf[c[0]], all) + ": " +
-                          Path.GetFileName(Path.GetDirectoryName(c[0])) + (g.Overlap ? " (Doppelfolge, bitte selbst wählen)" : "");
+                          Path.GetFileName(Path.GetDirectoryName(c[0])) + (g.Overlap ? " (Doppelfolge, bitte selbst wählen)" :
+                          g.OtherFolders ? " (Serienordner an verschiedenen Orten, bitte selbst wählen)" : "");
                 g.Files.AddRange(c);
                 groups.Add(g);
             }
@@ -463,7 +484,7 @@ namespace Sflix
         static void Preselect(DupeGroup g)
         {
             g.Remove.Clear();
-            if (g.Overlap || g.Files.Count < 2) return;
+            if (g.Overlap || g.OtherFolders || g.Files.Count < 2) return;
             int best = 0;
             for (int i = 1; i < g.Files.Count; i++)
             {
@@ -499,22 +520,26 @@ namespace Sflix
         DupeChoice result;
         bool syncing;
 
-        public DuplicateDialog(List<DupeGroup> groups, FfmpegTools ff)
+        public DuplicateDialog(List<DupeGroup> groups, List<DupeFolderPair> folderPairs, FfmpegTools ff)
         {
             this.groups = groups;
+            bool withFolders = folderPairs != null && folderPairs.Count > 0;
             Text = "Duplikate finden – Auswahl";
             BackColor = Theme.Back;
             ForeColor = Theme.Text;
             Font = new Font("Segoe UI", 9.5f);
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(Theme.S(1180), Theme.S(640));
+            ClientSize = new Size(Theme.S(1180), Theme.S(withFolders ? 820 : 640));
             MinimumSize = new Size(Theme.S(760), Theme.S(420));
             MinimizeBox = false;
             ShowInTaskbar = false;
 
             Label intro = Theme.MakeLabel(groups.Count + " Gruppe(n) gefunden. Angehakte Dateien kommen samt Vorschaubild nach „" + DuplicateTask.FolderName +
                                           "“ („Ablagen leeren“ löscht sie später). Vorausgewählt ist die Datei mit höherer Auflösung bzw. die grössere, " +
-                                          "bessere Werte sind grün. Bei Doppelfolgen bitte selbst wählen.", true);
+                                          "bessere Werte sind grün. Bei Doppelfolgen bitte selbst wählen." +
+                                          (withFolders ? " Liegen ganze Ordner doppelt vor, wählst du oben je Ordnerpaar, welche Seite bleibt; " +
+                                                         "aussortiert werden nur die doppelten Dateien." : "") +
+                                          " Rechtsklick auf eine Datei: alles aus ihrem Ordner aussortieren oder behalten.", true);
             intro.Dock = DockStyle.Top;
             intro.AutoSize = true;
             intro.MaximumSize = new Size(ClientSize.Width - Theme.S(24), 0);
@@ -529,6 +554,8 @@ namespace Sflix
             HashSet<string> keptAnywhere = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (DupeGroup g in groups) foreach (string f in g.Files) if (!g.Remove.Contains(f)) keptAnywhere.Add(f);
             foreach (DupeGroup g in groups) g.Remove.RemoveWhere(delegate(string f) { return keptAnywhere.Contains(f); });
+            // Vorauswahl für "einzeln entscheiden"
+            foreach (DupeGroup g in groups) initialRemove.UnionWith(g.Remove);
             foreach (DupeGroup g in groups)
             {
                 view.GroupTitles.Add(g.Title);
@@ -615,9 +642,295 @@ namespace Sflix
 
             Controls.Add(host);
             Controls.Add(buttons);
+            if (withFolders) Controls.Add(BuildFolderBlock(folderPairs));
             Controls.Add(intro);
+            BuildFolderMenu();
             CancelButton = cancel;
             Shown += delegate { ready = true; UpdateInfo(); };
+        }
+
+        readonly HashSet<string> initialRemove = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        Font boldFont;
+        bool fitting;
+
+        // Block "Doppelte Ordner" (DEC-379): je Paar die Ordner mit Anteil doppelter Dateien, Knöpfe
+        // "links behalten", "rechts behalten", "einzeln entscheiden", Wahl für gleiche Folgen und die
+        // aufklappbaren Unterordner. Höchstens etwa ein Drittel der Höhe, sonst mit Bildlauf.
+        Control BuildFolderBlock(List<DupeFolderPair> pairs)
+        {
+            Panel outer = new Panel();
+            outer.Dock = DockStyle.Top;
+            outer.Padding = new Padding(Theme.S(12), 0, Theme.S(12), Theme.S(8));
+            boldFont = new Font(Font, FontStyle.Bold);
+            Disposed += delegate { boldFont.Dispose(); };
+            Label title = Theme.MakeLabel("Doppelte Ordner (" + pairs.Count + ")", false);
+            title.Font = boldFont;
+            title.Dock = DockStyle.Top;
+            title.Padding = new Padding(0, 0, 0, Theme.S(4));
+            Panel scroll = new Panel();
+            scroll.Dock = DockStyle.Fill;
+            scroll.AutoScroll = true;
+            FlowLayoutPanel rows = new FlowLayoutPanel();
+            rows.FlowDirection = FlowDirection.TopDown;
+            rows.WrapContents = false;
+            rows.AutoSize = true;
+            rows.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            rows.Margin = new Padding(0);
+            List<FlowLayoutPanel> rowPanels = new List<FlowLayoutPanel>();
+            Action relayout = delegate { FitFolderBlock(outer, title, scroll, rows, rowPanels); };
+            foreach (DupeFolderPair pair in pairs)
+            {
+                FlowLayoutPanel row = BuildPairRow(pair, relayout);
+                rowPanels.Add(row);
+                rows.Controls.Add(row);
+            }
+            scroll.Controls.Add(rows);
+            outer.Controls.Add(scroll);
+            outer.Controls.Add(title);
+            scroll.Resize += delegate { relayout(); };
+            Load += delegate { relayout(); };
+            return outer;
+        }
+
+        void FitFolderBlock(Panel outer, Label title, Panel scroll, FlowLayoutPanel rows, List<FlowLayoutPanel> rowPanels)
+        {
+            if (fitting) return;
+            fitting = true;
+            try
+            {
+                int width = Math.Max(Theme.S(300), scroll.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - Theme.S(2));
+                foreach (FlowLayoutPanel row in rowPanels)
+                {
+                    row.MinimumSize = new Size(width, 0);
+                    row.MaximumSize = new Size(width, 0);
+                    foreach (Control c in row.Controls)
+                        if (c is Label) c.MaximumSize = new Size(width - row.Padding.Horizontal, 0);
+                }
+                int wanted = rows.PreferredSize.Height + title.PreferredHeight + outer.Padding.Vertical;
+                outer.Height = Math.Min(wanted, Math.Max(Theme.S(140), ClientSize.Height / 3));
+            }
+            finally { fitting = false; }
+        }
+
+        FlowLayoutPanel BuildPairRow(DupeFolderPair pair, Action relayout)
+        {
+            FlowLayoutPanel row = new FlowLayoutPanel();
+            row.FlowDirection = FlowDirection.TopDown;
+            row.WrapContents = false;
+            row.AutoSize = true;
+            row.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            row.BackColor = Theme.Card;
+            row.Padding = new Padding(Theme.S(10), Theme.S(8), Theme.S(10), Theme.S(8));
+            row.Margin = new Padding(0, 0, 0, Theme.S(6));
+
+            Label left = Theme.MakeLabel("", false);
+            Label right = Theme.MakeLabel("", false);
+            Label status = Theme.MakeLabel("", true);
+            status.Visible = false;
+            status.Margin = new Padding(0, Theme.S(6), 0, 0);
+            Action refresh = delegate
+            {
+                left.Text = "Links: " + DupeFolders.Display(pair.Left) + "  –  " + SideText(pair, true);
+                right.Text = "Rechts: " + DupeFolders.Display(pair.Right) + "  –  " + SideText(pair, false);
+            };
+            refresh();
+
+            FlowLayoutPanel actions = new FlowLayoutPanel();
+            actions.AutoSize = true;
+            actions.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            actions.WrapContents = true;
+            actions.Margin = new Padding(0, Theme.S(6), 0, 0);
+            Button keepLeft = Theme.MakeButton("links behalten", false);
+            Button keepRight = Theme.MakeButton("rechts behalten", false);
+            Button single = Theme.MakeButton("einzeln entscheiden", false);
+            Action<string> show = delegate(string text)
+            {
+                status.Text = text;
+                status.Visible = text.Length > 0;
+                relayout();
+            };
+            keepLeft.Click += delegate { show(ApplyPair(pair, true)); };
+            keepRight.Click += delegate { show(ApplyPair(pair, false)); };
+            single.Click += delegate
+            {
+                Dictionary<string, bool> want = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+                foreach (DupeGroup g in pair.Groups()) foreach (string f in g.Files) want[f] = initialRemove.Contains(f);
+                ApplyChecks(want);
+                show("Vorauswahl wiederhergestellt, bitte in der Liste unten je Datei wählen.");
+            };
+            actions.Controls.Add(keepLeft);
+            actions.Controls.Add(keepRight);
+            actions.Controls.Add(single);
+            Action updateButtons = delegate
+            {
+                bool any = pair.Groups().Count > 0;
+                keepLeft.Enabled = keepRight.Enabled = single.Enabled = any;
+            };
+            if (pair.Similar.Count > 0)
+            {
+                DarkCheckBox similar = new DarkCheckBox();
+                similar.Text = "Gleiche Folge und gleichen Namen einbeziehen (" + pair.Similar.Count + " Gruppe(n), verschiedene Dateien)";
+                similar.ForeColor = Theme.Text;
+                similar.Checked = false;
+                similar.FitText();
+                similar.Margin = new Padding(Theme.S(8), Theme.S(6), 0, 0);
+                similar.CheckedChanged += delegate
+                {
+                    pair.IncludeSimilar = similar.Checked;
+                    refresh();
+                    updateButtons();
+                    relayout();
+                };
+                actions.Controls.Add(similar);
+            }
+            updateButtons();
+
+            Label subs = null;
+            bool showSubs = pair.SubFolders.Count > 1 || (pair.SubFolders.Count == 1 &&
+                !(string.Equals(pair.SubFolders[0].Left, pair.Left, StringComparison.OrdinalIgnoreCase) &&
+                  string.Equals(pair.SubFolders[0].Right, pair.Right, StringComparison.OrdinalIgnoreCase)));
+            if (showSubs)
+            {
+                subs = Theme.MakeLabel("", true);
+                List<string> lines = new List<string>();
+                foreach (DupeSubFolder sf in pair.SubFolders)
+                    lines.Add(RelativeTo(sf.Left, pair.Left) + "  ↔  " + RelativeTo(sf.Right, pair.Right) + "  (" + sf.Shared + ")");
+                subs.Text = string.Join("\n", lines.ToArray());
+                subs.Visible = false;
+                subs.Margin = new Padding(Theme.S(8), Theme.S(6), 0, 0);
+                Button toggle = Theme.MakeButton("Unterordner (" + pair.SubFolders.Count + ")", false);
+                Label target = subs;
+                toggle.Click += delegate
+                {
+                    target.Visible = !target.Visible;
+                    toggle.Text = target.Visible ? "Unterordner ausblenden" : "Unterordner (" + pair.SubFolders.Count + ")";
+                    relayout();
+                };
+                actions.Controls.Add(toggle);
+            }
+
+            row.Controls.Add(left);
+            row.Controls.Add(right);
+            row.Controls.Add(actions);
+            if (subs != null) row.Controls.Add(subs);
+            row.Controls.Add(status);
+            return row;
+        }
+
+        static string SideText(DupeFolderPair pair, bool left)
+        {
+            int total = left ? pair.LeftFiles : pair.RightFiles;
+            return pair.Dupes(left) + " von " + total + " Datei(en) doppelt (" + pair.Percent(left) + " %)";
+        }
+
+        // Unterordner relativ zum Ordner des Paars ("." = der Ordner selbst)
+        static string RelativeTo(string folder, string top)
+        {
+            string f = folder.TrimEnd('\\'), t = top.TrimEnd('\\');
+            if (string.Equals(f, t, StringComparison.OrdinalIgnoreCase)) return ".";
+            return f.StartsWith(t + "\\", StringComparison.OrdinalIgnoreCase) ? f.Substring(t.Length + 1) : DupeFolders.Display(f);
+        }
+
+        string ApplyPair(DupeFolderPair pair, bool keepLeft)
+        {
+            Dictionary<string, bool> want = pair.Keep(keepLeft);
+            ApplyChecks(want);
+            int removed = 0;
+            foreach (bool r in want.Values) if (r) removed++;
+            string text = (keepLeft ? "Links behalten: " : "Rechts behalten: ") + removed + " doppelte Datei(en) " +
+                          (keepLeft ? "rechts" : "links") + " zum Aussortieren angehakt.";
+            int better = pair.BetterRemoved(keepLeft);
+            if (better > 0) text += " Hinweis: In " + better + " Gruppe(n) hat die aussortierte Datei die höhere Auflösung.";
+            return text;
+        }
+
+        // Häkchen setzen (true = aussortieren), in allen Zeilen der Datei
+        void ApplyChecks(Dictionary<string, bool> want)
+        {
+            bulk = true;
+            syncing = true;
+            view.List.BeginUpdate();
+            try
+            {
+                foreach (ListViewItem it in view.List.Items)
+                {
+                    CompareEntry ce = it.Tag as CompareEntry;
+                    bool c;
+                    if (ce == null || !want.TryGetValue(ce.Path, out c)) continue;
+                    if (it.Checked != c) it.Checked = c;
+                }
+            }
+            finally { view.List.EndUpdate(); syncing = false; bulk = false; }
+            UpdateInfo();
+        }
+
+        // Rechtsklick in der Einzelliste: alles aus dem Ordner der Datei aussortieren oder behalten,
+        // in allen Gruppen, in denen der Ordner vorkommt
+        void BuildFolderMenu()
+        {
+            ContextMenuStrip menu = DarkMenu.Create();
+            string menuFolder = null;
+            ToolStripMenuItem remove = new ToolStripMenuItem("Alles aus diesem Ordner aussortieren");
+            ToolStripMenuItem keep = new ToolStripMenuItem("Alles aus diesem Ordner behalten");
+            remove.Click += delegate { if (menuFolder != null) FolderChoice(menuFolder, true); };
+            keep.Click += delegate { if (menuFolder != null) FolderChoice(menuFolder, false); };
+            menu.Items.Add(remove);
+            menu.Items.Add(keep);
+            Disposed += delegate { menu.Dispose(); };
+            view.List.MouseUp += delegate(object s, MouseEventArgs e)
+            {
+                if (e.Button != MouseButtons.Right) return;
+                ListViewItem hit = view.List.GetItemAt(e.X, e.Y);
+                CompareEntry ce = hit != null ? hit.Tag as CompareEntry : null;
+                if (ce == null) return;
+                menuFolder = Path.GetDirectoryName(ce.Path);
+                menu.Show(view.List, e.Location);
+            };
+            // Auch über die Tastatur: Kontextmenütaste oder Umschalt+F10 an der markierten Zeile (SFLIX-20261124-119)
+            view.List.KeyDown += delegate(object s, KeyEventArgs e)
+            {
+                if (e.KeyCode != Keys.Apps && !(e.KeyCode == Keys.F10 && e.Shift)) return;
+                ListViewItem it = view.List.FocusedItem;
+                if (it == null && view.List.SelectedItems.Count > 0) it = view.List.SelectedItems[0];
+                CompareEntry ce = it != null ? it.Tag as CompareEntry : null;
+                if (ce == null) return;
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                menuFolder = Path.GetDirectoryName(ce.Path);
+                Rectangle r = it.Bounds;
+                menu.Show(view.List, new Point(r.Left + Theme.S(24), r.Bottom));
+            };
+        }
+
+        void FolderChoice(string folder, bool remove)
+        {
+            Dictionary<string, bool> current = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            foreach (CompareEntry e in view.Entries) current[e.Path] = e.Tag is bool && (bool)e.Tag;
+            Dictionary<string, bool> want = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            int skipped = 0;
+            foreach (DupeGroup g in groups)
+            {
+                List<string> inFolder = g.Files.FindAll(delegate(string f) { return string.Equals(Path.GetDirectoryName(f), folder, StringComparison.OrdinalIgnoreCase); });
+                if (inFolder.Count == 0) continue;
+                if (remove)
+                {
+                    // Mindestens eine Datei der Gruppe ausserhalb des Ordners muss bleiben
+                    bool otherKept = false;
+                    foreach (string f in g.Files)
+                    {
+                        if (inFolder.Contains(f)) continue;
+                        bool r, w;
+                        bool removed = want.TryGetValue(f, out w) ? w : (current.TryGetValue(f, out r) && r);
+                        if (!removed) otherKept = true;
+                    }
+                    if (!otherKept) { skipped++; continue; }
+                }
+                foreach (string f in inFolder) want[f] = remove;
+            }
+            ApplyChecks(want);
+            if (skipped > 0)
+                MessageBox.Show(this, "In " + skipped + " Gruppe(n) bliebe keine Datei übrig. Dort ist die Auswahl unverändert.",
+                                App.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         // Zeilen je Datei (eine Datei kann in mehreren Gruppen stehen), nach jedem Neuaufbau

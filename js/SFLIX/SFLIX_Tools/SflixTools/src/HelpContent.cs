@@ -186,13 +186,23 @@ namespace Sflix
                 "- Identische Dateien: gleiche Grösse und gleicher Inhalt (Prüfsumme), auch mit anderem Namen.\n" +
                 "- Gleiche Folge: dieselbe Staffel und Folge innerhalb einer Serie, egal ob S01E01, 1x01, S1E1 oder S01E1. Meist verschiedene Fassungen, z.B. SD und HD. " +
                 "Als Serie gilt der Ordner über dem Staffelordner („Staffel 1“, „Season 01 HD“ …), sonst der Ordner der Folge. Serien in Unterordnern " +
-                "(z.B. Serien\\Star Trek\\TOS und Serien\\Star Trek\\TNG) bleiben so getrennt.\n" +
+                "(z.B. Serien\\Star Trek\\TOS und Serien\\Star Trek\\TNG) bleiben so getrennt. Gleich benannte Serienordner an verschiedenen Orten " +
+                "(z.B. eine Kopie der Serie in einem anderen Ordner) gelten als dieselbe Serie; dort ist nichts vorausgewählt.\n" +
                 "- Gleicher Name: gleicher Dateiname ohne Endung, z.B. in zwei Ordnern oder „Film.mp4“ neben „Film.mkv“. Folgen werden dabei nur innerhalb derselben Serie verglichen. " +
                 "Preview- und Ablage-Ordner zählen nicht.\n" +
                 "Ein Fenster zeigt jede Gruppe mit dem Grund (Datei, Folge oder Dateiname), Grösse, Auflösung, Dauer, Video/Ton und Datum. " +
                 "Steht eine Datei in mehreren Gruppen, gilt ihr Häkchen überall. Vorausgewählt bleibt die Datei mit der höheren Auflösung, " +
                 "bei gleicher Auflösung die grössere (bei identischen Dateien die mit dem kürzesten Pfad). Überschneiden sich Doppelfolgen, ist nichts vorausgewählt. " +
-                "Die übrigen Dateien kommen samt Vorschaubild nach „__duplikate“; „Ablagen leeren“ löscht sie später endgültig."));
+                "Die übrigen Dateien kommen samt Vorschaubild nach „__duplikate“; „Ablagen leeren“ löscht sie später endgültig.\n" +
+                "Doppelte Ordner: Haben zwei Ordner mindestens 3 Duplikate gemeinsam, stehen sie oben als Paar, mit dem Anteil doppelter Dateien je Ordner " +
+                "(vollständig enthaltene zuoberst). Gleich benannte Unterordner werden zusammengefasst (z.B. „Serie“ und „Kopie\\Serie“ statt je Staffel), " +
+                "„Unterordner“ klappt sie auf. „links behalten“ bzw. „rechts behalten“ hakt in allen Gruppen des Paars die Dateien der anderen Seite an, " +
+                "„einzeln entscheiden“ stellt die Vorauswahl wieder her; die Liste darunter bleibt je Datei umstellbar. Gruppen mit gleicher Folge oder gleichem Namen " +
+                "(verschiedene Dateien) zählen nur, wenn du sie am Paar einbeziehst; hat dann die aussortierte Datei die höhere Auflösung, steht ein Hinweis. " +
+                "Aussortiert werden nur doppelte Dateien, Dateien ohne Duplikat und die Ordner selbst bleiben.\n" +
+                "Rechtsklick auf eine Datei (oder Kontextmenütaste bzw. Umschalt+F10): „Alles aus diesem Ordner aussortieren“ oder „… behalten“, gültig für alle Gruppen mit diesem Ordner. " +
+                "Aus jeder Gruppe bleibt mindestens eine Datei. Liegen Kopien in einem Unterordner desselben Ordners, bilden die beiden kein Paar: " +
+                "dafür im Unterordner „Alles aus diesem Ordner aussortieren“ wählen."));
 
             t.Add(new HelpTopic("Zusammenführen",
                 "Fügt gesplittete Videos wie „Titel pt1“, „Titel pt2“ zu einer Datei zusammen. Vorher wählst du aus, welche.\n" +
@@ -207,16 +217,17 @@ namespace Sflix
                 "- Originale löschen statt verschieben."));
 
             t.Add(new HelpTopic("Medien prüfen",
-                "Prüft die Medien in den gewählten Ordnern und listet Probleme auf:\n" +
-                "- Nicht abspielbar: Format oder Codec, den der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3/DTS-Ton, WMA, ALAC).\n" +
-                "- Defekt: ffprobe kann die Datei nicht lesen.\n" +
-                "- Nicht lesbar: die Datei lässt sich gerade nicht öffnen (von einem anderen Programm gesperrt, keine Berechtigung). Nicht zum Löschen vorgemerkt; später erneut prüfen.\n" +
-                "- Lückenhaft (nur mit der Option „Lücken suchen“): im Video fehlen Bilder, es bleibt dort hängen; mit Stelle und Länge. Nicht zum Löschen vorgemerkt. " +
-                "Die Option liest jedes Video ganz (über ein Netzlaufwerk etwa so lange wie Kopieren). Das Ergebnis wird gemerkt, der nächste Lauf liest nur neue oder geänderte Dateien. " +
+                "Prüft die Medien in den gewählten Ordnern und listet Probleme auf. Jede Prüfung lässt sich einzeln ein- und ausschalten " +
+                "(Standard: „Nicht abspielbar“ und „Fehlende Vorschaubilder“); es läuft nur, was gewählt ist. Ohne gewählte Prüfung lässt sich das Tool nicht starten.\n" +
+                "- Nicht abspielbar: Format oder Codec, den der Browser nicht abspielen kann (z.B. MKV, HEVC, AC3/DTS-Ton, WMA, ALAC), dazu leere Dateien (0 Byte).\n" +
+                "- Defekt oder nicht lesbar: ffprobe kann die Datei nicht lesen (defekt) oder sie lässt sich gerade nicht öffnen (von einem anderen Programm gesperrt, keine Berechtigung). " +
+                "Nicht lesbare Dateien sind nicht zum Löschen vorgemerkt; später erneut prüfen.\n" +
+                "- Lücken suchen: im Video fehlen Bilder, es bleibt dort hängen; mit Stelle und Länge. Nicht zum Löschen vorgemerkt. " +
+                "Liest jedes Video ganz (über ein Netzlaufwerk etwa so lange wie Kopieren). Das Ergebnis wird gemerkt, der nächste Lauf liest nur neue oder geänderte Dateien. " +
                 "Funde stehen auch in STEFFLIX unter Einstellungen › Beschädigte Dateien.\n" +
-                "- Leer: Datei mit 0 Byte.\n" +
-                "- Ohne Vorschaubild.\n" +
-                "- Leere Ordner: Ordner ohne Medien, auch nicht in Unterordnern (Vorschaubilder und Ablagen zählen nicht). Gemeldet wird nur der oberste solche Ordner, nie der gewählte Ordner selbst und nie eine Kategorie wie „Filme“.\n" +
+                "- Fehlende Vorschaubilder: gemäss „Vorschaubilder“ für Videos und/oder Bilder. Allein oder mit „Ordner ohne Medien“ werden die Videos nicht gelesen, das geht schnell.\n" +
+                "- Ordner ohne Medien: auch nicht in Unterordnern (Vorschaubilder und Ablagen zählen nicht). Gemeldet wird nur der oberste solche Ordner, nie der gewählte Ordner selbst und nie eine Kategorie wie „Filme“.\n" +
+                "Läuft „Medien prüfen“ in einer Kette mit (z.B. nach dem Konvertieren) und ist keine Prüfung gewählt, wird der Schritt übersprungen und im Protokoll vermerkt.\n" +
                 "Im Ergebnis steht jede Datei bzw. jeder Ordner einmal. In den ersten drei Spalten wählst du die Aktionen:\n" +
                 "- Papierkorb: löschen. Die Datei kommt samt Vorschaubild nach „__gelöscht“, ein Ordner als Ganzes nach „__gelöscht“ im Ordner darüber. Endgültig löscht sie „Ablagen leeren“. Schliesst die anderen Aktionen aus.\n" +
                 "- Pfeile: konvertieren (Videos zu MP4, Musik zu MP3).\n" +

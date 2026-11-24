@@ -172,7 +172,8 @@ namespace Sflix
             // Sortieren innerhalb der Gruppen, die Gruppen nach ihrem ersten Eintrag
             sort = ListSort.Of(List);
             sort.Custom = delegate { if (groups != null) Render(); };
-            if (withLabelColumn) List.Columns.Add("", Theme.S(90));
+            // Breite für Kästchen und „aussortieren“ (SFLIX-20261124-109)
+            if (withLabelColumn) List.Columns.Add("", Theme.S(115));
             if (withReasonColumn) List.Columns.Add("Grund", Theme.S(80));
             List.Columns.Add("Datei", Theme.S(300));
             List.Columns.Add("Grösse", Theme.S(80));
@@ -200,6 +201,8 @@ namespace Sflix
 
             Controls.Add(List, 0, 0);
             Controls.Add(ffmpegRow, 0, 1);
+            // Neue Schrift vom Fenster: fette Werte und Gruppenköpfe mit passender fetter Schrift neu aufbauen
+            List.FontChanged += delegate { if (entries.Count > 0) Render(); };
             // Überschriftzeilen der Gruppen lassen sich nicht anhaken
             List.ItemCheck += delegate(object s, ItemCheckEventArgs e)
             {
@@ -210,13 +213,31 @@ namespace Sflix
         readonly bool labelColumn, reasonColumn;
         readonly ListSort sort;
         Font boldFont;
+        readonly List<Font> oldBoldFonts = new List<Font>();
 
-        // Für sehr viele Zeilen nur eine fette Schrift (jede Schrift belegt ein GDI-Handle)
+        // Für sehr viele Zeilen nur eine fette Schrift (jede Schrift belegt ein GDI-Handle). Die Liste erhält
+        // ihre endgültige Schrift erst vom Fenster (nach dem ersten Aufbau): dann neu ableiten, sonst ist die
+        // fette Schrift kleiner und steht höher (SFLIX-20261124-111). Alte Schriften erst beim Schliessen
+        // freigeben, Zeilen können sie noch verwenden.
         Font Bold
         {
             get
             {
-                if (boldFont == null) { boldFont = new Font(List.Font, FontStyle.Bold); Disposed += delegate { boldFont.Dispose(); }; }
+                Font f = List.Font;
+                if (boldFont != null && (boldFont.Size != f.Size || boldFont.FontFamily.Name != f.FontFamily.Name || boldFont.Unit != f.Unit))
+                {
+                    oldBoldFonts.Add(boldFont);
+                    boldFont = null;
+                }
+                if (boldFont == null)
+                {
+                    if (oldBoldFonts.Count == 0) Disposed += delegate
+                    {
+                        if (boldFont != null) boldFont.Dispose();
+                        foreach (Font old in oldBoldFonts) old.Dispose();
+                    };
+                    boldFont = new Font(f, FontStyle.Bold);
+                }
                 return boldFont;
             }
         }

@@ -1316,7 +1316,7 @@ function handleMediaError(event) {
     }
     showMediaMessage("«" + stripExtension(getBaseName(currentMediaLocation)) + "» konnte nicht geladen werden. " +
         "Die Datei wurde eventuell verschoben, umbenannt oder gelöscht, oder das Format wird vom Browser nicht unterstützt. " +
-        "Bitte in STEFFLIX.exe \"Daten einlesen\" ausführen. Nicht abspielbare Dateien findet und konvertiert dort das Tool \"Medien prüfen\".");
+        "Bitte in STEFFLIX.exe „Daten einlesen“ ausführen. Nicht abspielbare Dateien findet und konvertiert dort das Tool „Medien prüfen“.");
     skipAfterError();
 }
 

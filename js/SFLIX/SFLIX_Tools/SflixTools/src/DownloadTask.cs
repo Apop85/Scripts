@@ -701,6 +701,13 @@ namespace Sflix
             public HttpStatusException(int code) : base("HTTP " + code) { Code = code; }
         }
 
+        // Antwort kürzer als Content-Length (Verbindungsabbruch); wird wie die HTML-Antwort gemeldet
+        public class IncompleteResponseException : IOException
+        {
+            public IncompleteResponseException(long got, long expected)
+                : base("unvollständig (" + got + " von " + expected + " Byte)") { }
+        }
+
         static HttpWebRequest Request(string url, DownloadJob job)
         {
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
@@ -722,6 +729,17 @@ namespace Sflix
             return req;
         }
 
+        // Dateiname aus der Adresse für Meldungen (ohne Abfrage, sie kann Schlüssel enthalten)
+        static string FileNameOf(string url)
+        {
+            try
+            {
+                string name = Path.GetFileName(new Uri(url).AbsolutePath);
+                return string.IsNullOrEmpty(name) ? "Teilstück" : "„" + name + "“";
+            }
+            catch { return "Teilstück"; }
+        }
+
         // Ganze Antwort; bei Netzfehlern bis retries Mal wiederholt
         public static byte[] Get(string url, DownloadJob job, CancellationToken token, int retries)
         {
@@ -739,6 +757,11 @@ namespace Sflix
                     if (hopeless && attempt >= 1 || attempt >= retries) throw;
                 }
                 catch (OperationCanceledException) { throw; }
+                catch (IncompleteResponseException e)
+                {
+                    if (attempt >= retries) throw;
+                    if (job != null) job.AddMessage(FileNameOf(url) + ": Antwort " + e.Message + ", wird neu geladen.");
+                }
                 catch (Exception)
                 {
                     if (attempt >= retries) throw;
@@ -768,7 +791,7 @@ namespace Sflix
                         // Abgebrochene Antwort (kürzer als angekündigt) nicht als fertig übernehmen (DEC-373).
                         // Komprimiert übertragen: Content-Length gilt für die komprimierten Bytes.
                         if (resp.ContentLength >= 0 && string.IsNullOrEmpty(resp.ContentEncoding) && ms.Length != resp.ContentLength)
-                            throw new IOException("unvollständig (" + ms.Length + " von " + resp.ContentLength + " Byte)");
+                            throw new IncompleteResponseException(ms.Length, resp.ContentLength);
                         return ms.ToArray();
                     }
                 }

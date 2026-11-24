@@ -436,10 +436,23 @@ namespace Sflix
                 stateBeforePip = WindowState == FormWindowState.Minimized ? FormWindowState.Normal : WindowState;
                 // Eigenes BiB-Fenster hat sein Symbol schon; nur im Rückfall das native Fenster von Chromium suchen
                 if (docPipWindow == null) StartPipIconSearch();
-                WindowState = FormWindowState.Minimized;
+                if (docPipWindow != null && !docPipWindow.IsDisposed)
+                {
+                    // Eigenes BiB: Hauptfenster ausblenden statt minimieren. Minimiert friert die Darstellung
+                    // des BiB-WebView2 ein und wird schwarz (SFLIX-20261123-101). Nur das Fenster, nicht die
+                    // WebView2 (Visible = false würde die Seite als verborgen melden). Taskleiste: BiB-Symbol.
+                    hiddenForPip = true;
+                    ShowWindow(Handle, SW_HIDE);
+                }
+                else WindowState = FormWindowState.Minimized;
                 return;
             }
             if (!pipActive) return;
+            if (hiddenForPip && !paused)
+            {
+                hiddenForPip = false;
+                ShowWindow(Handle, SW_SHOW);   // im Zustand vor dem BiB (normal, maximiert, Vollbild)
+            }
             ResetPip();
             if (paused) return;   // X: Benutzer will etwas anderes tun, Fenster bleibt minimiert
             if (WindowState == FormWindowState.Minimized) WindowState = stateBeforePip;
@@ -451,7 +464,26 @@ namespace Sflix
         {
             pipActive = false;
             if (pipIconTimer != null) pipIconTimer.Stop();
+            // Ausgeblendetes Hauptfenster nie verloren gehen lassen: minimiert zurück in die Taskleiste
+            if (hiddenForPip)
+            {
+                hiddenForPip = false;
+                if (IsHandleCreated && !IsDisposed) ShowWindow(Handle, SW_SHOWMINNOACTIVE);
+            }
         }
+
+        // Zweiter Start oder Tools holen den Player nach vorne, auch während des eigenen BiB
+        public void ShowIfHiddenForPip()
+        {
+            if (!hiddenForPip) return;
+            hiddenForPip = false;
+            ShowWindow(Handle, SW_SHOW);
+        }
+
+        bool hiddenForPip;
+        const int SW_HIDE = 0, SW_SHOWMINNOACTIVE = 7, SW_SHOW = 5;
+        [DllImport("user32.dll")]
+        static extern bool ShowWindow(IntPtr hwnd, int cmd);
 
         // Das BiB-Fenster erscheint erst kurz nach enterpictureinpicture: einige Versuche bis etwa 2 s
         void StartPipIconSearch()

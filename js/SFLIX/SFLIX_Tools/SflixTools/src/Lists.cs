@@ -20,13 +20,14 @@ namespace Sflix
         {
             list.OwnerDraw = true;
             // Listen mit Häkchen: Zellen selbst zeichnen (Windows zeichnet die Kästchen weiss und markierte
-            // Zeilen ohne Fokus kaum lesbar, SFLIX-20261123-090); sonst wie Windows
-            list.DrawItem += delegate(object s, DrawListViewItemEventArgs e) { e.DrawDefault = !list.CheckBoxes; };
-            list.DrawSubItem += delegate(object s, DrawListViewSubItemEventArgs e)
-            {
-                if (list.CheckBoxes) DrawCheckCell(list, e);
-                else e.DrawDefault = true;
-            };
+            // Zeilen ohne Fokus kaum lesbar, SFLIX-20261123-090)
+            // Markierte Zeilen auch in Listen ohne Häkchen selbst zeichnen: Windows zeichnet ihre Schrift mit dem
+            // dunklen Design schwarz (ohne Fokus auf Dunkelgrau, mit Fokus auf Blau, SFLIX-20261124-105). Die
+            // Zeile muss schon in DrawItem übernommen werden, sonst kommt DrawSubItem nicht zum Zug.
+            // Alle Zeilen selbst zeichnen, nicht nur die markierten: Windows setzt den Text mit anderen Abständen,
+            // markierte Zeilen sprangen sonst um einige Pixel (SFLIX-20261124-107).
+            list.DrawItem += delegate(object s, DrawListViewItemEventArgs e) { e.DrawDefault = false; };
+            list.DrawSubItem += delegate(object s, DrawListViewSubItemEventArgs e) { DrawCheckCell(list, e); };
             list.DrawColumnHeader += delegate(object s, DrawListViewColumnHeaderEventArgs e) { DrawHeader(list, e); };
             if (sortable) ListSort.Enable(list);
             GuardChecks(list);
@@ -49,17 +50,23 @@ namespace Sflix
 
         static readonly Color SelectedFocused = Color.FromArgb(0x4a, 0x4a, 0x54), SelectedUnfocused = Color.FromArgb(0x3a, 0x3a, 0x42);
 
+        // Hintergrund einer markierten Zeile (auch für eigene Zellen, z.B. Aktionsspalten von „Medien prüfen“)
+        public static Color SelectionBack(ListView list)
+        {
+            return list.Focused ? SelectedFocused : SelectedUnfocused;
+        }
+
         // Zelle einer Liste mit Häkchen: Hintergrund, in der ersten Spalte ein Kästchen wie DarkCheckBox,
         // Text in der Farbe der Zeile. Das Kästchen liegt dort, wo Windows es erwartet (Klick bleibt gleich).
         static void DrawCheckCell(ListView list, DrawListViewSubItemEventArgs e)
         {
             e.DrawDefault = false;
             Graphics g = e.Graphics;
-            Color back = e.Item.Selected ? (list.Focused ? SelectedFocused : SelectedUnfocused)
+            Color back = e.Item.Selected ? SelectionBack(list)
                        : (e.Item.BackColor != list.BackColor && e.Item.BackColor != Color.Empty ? e.Item.BackColor : list.BackColor);
             using (SolidBrush b = new SolidBrush(back)) g.FillRectangle(b, e.Bounds);
             int x = e.Bounds.Left + Theme.S(4);
-            if (e.ColumnIndex == 0)
+            if (e.ColumnIndex == 0 && list.CheckBoxes)
             {
                 int size = Theme.S(14);
                 Rectangle box = new Rectangle(x, e.Bounds.Top + (e.Bounds.Height - size) / 2, size, size);
@@ -88,9 +95,13 @@ namespace Sflix
             HorizontalAlignment align = list.Columns.Count > e.ColumnIndex ? list.Columns[e.ColumnIndex].TextAlign : HorizontalAlignment.Left;
             TextFormatFlags flags = TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix
                 | (align == HorizontalAlignment.Right ? TextFormatFlags.Right : align == HorizontalAlignment.Center ? TextFormatFlags.HorizontalCenter : TextFormatFlags.Left);
-            Rectangle text = new Rectangle(x, e.Bounds.Top, Math.Max(0, e.Bounds.Right - x - Theme.S(4)), e.Bounds.Height);
+            // Die erste Zelle meldet die Breite der ganzen Zeile: Text auf die Spaltenbreite begrenzen
+            int right = e.ColumnIndex == 0 && list.Columns.Count > 0 ? Math.Min(e.Bounds.Right, e.Bounds.Left + list.Columns[0].Width) : e.Bounds.Right;
+            Rectangle text = new Rectangle(x, e.Bounds.Top, Math.Max(0, right - x - Theme.S(4)), e.Bounds.Height);
             Color fore = e.ColumnIndex == 0 || e.Item.UseItemStyleForSubItems ? e.Item.ForeColor : e.SubItem.ForeColor;
-            TextRenderer.DrawText(g, e.SubItem.Text, e.Item.Font ?? list.Font, text, fore, flags);
+            // Schrift wie die Farbe je Zelle (z.B. fette bessere Werte in „Duplikate finden“, SFLIX-20261124-109)
+            Font font = (e.ColumnIndex == 0 || e.Item.UseItemStyleForSubItems ? e.Item.Font : e.SubItem.Font) ?? list.Font;
+            TextRenderer.DrawText(g, e.SubItem.Text, font, text, fore, flags);
         }
 
         static void SmoothingModeScope(Graphics g, Action draw)
@@ -479,6 +490,35 @@ namespace Sflix
         internal void EnsureSelectionVisible()
         {
             if (list.SelectedIndices.Count > 0) list.EnsureVisible(list.SelectedIndices[0]);
+        }
+    }
+
+    // Dunkles Kontextmenü (z.B. Rechtsklick in „Duplikate finden“)
+    static class DarkMenu
+    {
+        public static ContextMenuStrip Create()
+        {
+            ContextMenuStrip m = new ContextMenuStrip();
+            m.Renderer = new ToolStripProfessionalRenderer(new MenuColors());
+            m.BackColor = Theme.Input;
+            m.ForeColor = Theme.Text;
+            m.ShowImageMargin = false;
+            return m;
+        }
+
+        class MenuColors : ProfessionalColorTable
+        {
+            public override Color MenuItemSelected { get { return Theme.Line; } }
+            public override Color MenuItemSelectedGradientBegin { get { return Theme.Line; } }
+            public override Color MenuItemSelectedGradientEnd { get { return Theme.Line; } }
+            public override Color MenuItemBorder { get { return Theme.Line; } }
+            public override Color MenuBorder { get { return Theme.Line; } }
+            public override Color ToolStripDropDownBackground { get { return Theme.Input; } }
+            public override Color ImageMarginGradientBegin { get { return Theme.Input; } }
+            public override Color ImageMarginGradientMiddle { get { return Theme.Input; } }
+            public override Color ImageMarginGradientEnd { get { return Theme.Input; } }
+            public override Color SeparatorDark { get { return Theme.Line; } }
+            public override Color SeparatorLight { get { return Theme.Input; } }
         }
     }
 }

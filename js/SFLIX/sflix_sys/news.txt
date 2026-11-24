@@ -2,6 +2,20 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.9.1</b>:<br>
+<ul>
+    <li>[<span style="color: red">FEATURE</span>] Desktop 4.2.1: Medien prüfen: Jede Prüfung lässt sich einzeln ein- und ausschalten (Nicht abspielbar, Defekt oder nicht lesbar, Lücken suchen, Fehlende Vorschaubilder, Ordner ohne Medien). Standard sind „Nicht abspielbar“ und „Fehlende Vorschaubilder“. Nur mit Vorschaubildern oder Ordnern werden die Videos nicht gelesen, das geht deutlich schneller.</li>
+    <li>[<span style="color: red">FEATURE</span>] Desktop 4.2.5: Duplikate finden: Liegen ganze Ordner doppelt vor, zeigt ein neuer Block „Doppelte Ordner“ die Ordnerpaare mit dem Anteil doppelter Dateien. „links behalten“ oder „rechts behalten“ wählt mit einem Klick alle Duplikate des Paars, aussortiert werden nur doppelte Dateien. Per Rechtsklick oder Kontextmenütaste lässt sich alles aus einem Ordner aussortieren oder behalten. Gleiche Folgen werden auch zwischen einer Serie und ihrer Kopie an einem anderen Ort erkannt (ohne Vorauswahl).</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.2.1: Player: Im Bild-im-Bild-Fenster bleibt das Video sichtbar, das Hauptfenster wird ausgeblendet statt minimiert. Zuvor wurde das Bild nach dem Minimieren schwarz.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.2.1: Albumbilder wählen und andere Listen: Die markierte Zeile ist mit und ohne Fokus gut lesbar (helle Schrift auf dunkler Markierung), ihr Text steht an derselben Stelle wie in den übrigen Zeilen.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.2.1: Medien prüfen: Die Stelle einer Lücke wird wie in STEFFLIX abgerundet angegeben.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.2.1: Download: Ein unvollständig empfangenes Teilstück wird in den Meldungen genannt. Nach Downloads meldet die Statuszeile nicht mehr „alles erfolgreich“, sondern verweist auf das Ergebnis je Download.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Einstellungen und Player: Toolnamen in typografischen Anführungszeichen.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.2.2: Zusammenfassung der Tools: „Medien prüfen“ zeigt nach dem Ausführen aus dem Ergebnis das eigene Ergebnis mit den gewählten Aktionen, die Dauer ohne die Zeit im Ergebnisfenster. Lange Toolnamen stehen mit Abstand zum Ergebnis.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.2.4: Duplikate finden: „aussortieren“ steht ungekürzt neben dem Kästchen.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.2.5: Duplikate finden: Die fett hervorgehobenen Werte haben dieselbe Schriftgrösse wie der übrige Text.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.2.6: Folgen umbenennen: Gibt es das Ziel schon als richtig benannte Datei, ist eine zweite Datei derselben Folge nicht mehr vorausgewählt und als Konflikt markiert, auch „Alle ohne Konflikt“ lässt sie aus. Beim Ersetzen kommt das Vorschaubild der ersetzten Datei mit nach „__ersetzt“.</li>
+</ul>
 <b>Version 2.9.0</b>:<br>
 <ul>
     <li>[<span style="color: red">FEATURE</span>] Player: Bleibt die Wiedergabe an einer beschädigten Stelle einer Datei hängen und springt immer wieder zurück, springt der Player 5 Sekunden weiter und zeigt einen kurzen Hinweis. Klappt das dreimal nicht, hält er an.</li>

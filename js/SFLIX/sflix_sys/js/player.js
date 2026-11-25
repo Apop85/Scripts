@@ -240,9 +240,16 @@ function ensurePlaylistExists(decodedData) {
 
     var storedPlaylist = getData("playlist-" + playlistName);
     if (storedPlaylist != null && storedPlaylist !== "") {
-        return sortNatural(storedPlaylist.split(listSeperator).filter(function (entry) {
+        // Bei tausenden Bildern kostet das Sortieren bei jedem Bild spürbar Zeit: gleiche gespeicherte
+        // Liste -> gleiche sortierte Liste (DEC-385). Aufrufer ändern die Liste nicht.
+        if (sortedPlaylistCache.name === playlistName && sortedPlaylistCache.raw === storedPlaylist) {
+            return sortedPlaylistCache.list;
+        }
+        var sorted = sortNatural(storedPlaylist.split(listSeperator).filter(function (entry) {
             return entry !== "";
         }));
+        sortedPlaylistCache = { name: playlistName, raw: storedPlaylist, list: sorted };
+        return sorted;
     }
 
     var playlist = buildFolderPlaylist(decodedData);
@@ -250,10 +257,34 @@ function ensurePlaylistExists(decodedData) {
     return playlist;
 }
 
+var sortedPlaylistCache = { name: null, raw: null, list: null };
+
+// Pfade einer Playliste mit Nachschlagetabelle, je Playliste einmal berechnet (DEC-385)
+var playlistPathCache = typeof WeakMap === "function" ? new WeakMap() : null;
+
+function getPlaylistPaths(playlist) {
+    var cached = playlistPathCache != null ? playlistPathCache.get(playlist) : null;
+    if (cached == null) {
+        var paths = playlist.map(function (entry) {
+            return normalizeMediaLocation(entry.split("|")[0]);
+        });
+        var index = new Map();
+        paths.forEach(function (path, position) {
+            if (!index.has(path)) {
+                index.set(path, position);
+            }
+        });
+        cached = { paths: paths, index: index };
+        if (playlistPathCache != null) {
+            playlistPathCache.set(playlist, cached);
+        }
+    }
+    return cached;
+}
+
 function getPlaylistIndex(playlist, mediaPath) {
-    return playlist.map(function (entry) {
-        return normalizeMediaLocation(entry.split("|")[0]);
-    }).indexOf(mediaPath);
+    var position = getPlaylistPaths(playlist).index.get(mediaPath);
+    return position === undefined ? -1 : position;
 }
 
 // Gibt die URL-Daten eines Playlisteneintrags zurück
@@ -329,34 +360,90 @@ function getNeighbourData(decodedData, playlist, currentIndex, direction, ignore
 // Zufallswiedergabe
 // ===================================================================
 
-// Verlauf der laufenden Zufalls-Playliste. Jedes Medium steht nur einmal darin, "position"
-// zeigt auf das laufende. "Zurück"/"Weiter" bewegen sich im Verlauf; am Ende des Verlaufs
-// kommt ein noch nicht gespieltes Medium. Sind alle gespielt, ist die Playliste zu Ende.
-// Der Verlauf wird gespeichert, damit auch nach einem Neuladen nichts doppelt kommt.
+// Zufallswiedergabe mit einmal gemischter Reihenfolge (DEC-385). "order" enthält jedes Medium der
+// Playliste genau einmal: zuerst die schon gezeigten (Verlauf), dann die noch kommenden in zufälliger
+// Reihenfolge. "position" zeigt auf das laufende. "Zurück"/"Weiter" folgen der Reihenfolge; am Ende
+// ist die Playliste zu Ende. Gespeichert werden die Lage (shuffleState, klein, bei jedem Medium) und
+// die Reihenfolge (shuffleOrder, nur wenn sie sich ändert), damit auch nach einem Neuladen nichts
+// doppelt kommt. Bis 2.9.3 stand in shuffleState ein Verlauf ("history"); er wird übernommen.
 var shuffleState = null;
+var shuffleOrderIndex = null;   // Pfad -> Stelle in shuffleState.order
+var shuffleCheckedPlaylist = null;   // Playliste, gegen die die Reihenfolge zuletzt ergänzt wurde
 
 function getShuffleState(playlistName) {
     if (shuffleState == null) {
+        shuffleOrderIndex = null;
+        shuffleCheckedPlaylist = null;
         try {
-            shuffleState = JSON.parse(getData("shuffleState"));
+            var stored = JSON.parse(getData("shuffleState"));
+            if (stored != null) {
+                var order = Array.isArray(stored.history) ? stored.history : JSON.parse(getData("shuffleOrder") || "[]");
+                shuffleState = { playlist: stored.playlist, position: stored.position, order: Array.isArray(order) ? order : [] };
+            }
         } catch (error) {
             shuffleState = null;
         }
     }
-    if (shuffleState == null || shuffleState.playlist !== playlistName || !Array.isArray(shuffleState.history)) {
-        shuffleState = { playlist: playlistName, history: [], position: -1 };
+    if (shuffleState == null || shuffleState.playlist !== playlistName || !Array.isArray(shuffleState.order)) {
+        shuffleState = { playlist: playlistName, order: [], position: -1 };
+        shuffleOrderIndex = null;
+        shuffleCheckedPlaylist = null;
     }
     return shuffleState;
 }
 
-function saveShuffleState() {
-    setData("shuffleState", JSON.stringify(shuffleState));
+function getShuffleOrderIndex() {
+    if (shuffleOrderIndex == null) {
+        shuffleOrderIndex = new Map();
+        shuffleState.order.forEach(function (path, position) {
+            if (!shuffleOrderIndex.has(path)) {
+                shuffleOrderIndex.set(path, position);
+            }
+        });
+    }
+    return shuffleOrderIndex;
+}
+
+function saveShuffleState(orderChanged) {
+    setData("shuffleState", JSON.stringify({ playlist: shuffleState.playlist, position: shuffleState.position }));
+    if (orderChanged) {
+        setData("shuffleOrder", JSON.stringify(shuffleState.order));
+    }
+}
+
+// Noch nicht enthaltene Medien der Playliste in zufälliger Reihenfolge anhängen (neuer Durchgang,
+// übernommener Verlauf, neu hinzugekommene Dateien). Je Playliste nur einmal.
+function extendShuffleOrder(state, playlist) {
+    if (shuffleCheckedPlaylist === playlist) {
+        return;
+    }
+    shuffleCheckedPlaylist = playlist;
+    var index = getShuffleOrderIndex();
+    var missing = getPlaylistPaths(playlist).paths.filter(function (path) {
+        return !index.has(path);
+    });
+    if (missing.length == 0) {
+        return;
+    }
+    for (var i = missing.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var swap = missing[i];
+        missing[i] = missing[j];
+        missing[j] = swap;
+    }
+    missing.forEach(function (path) {
+        index.set(path, state.order.length);
+        state.order.push(path);
+    });
+    saveShuffleState(true);
 }
 
 // Neuer Durchgang, optional mit dem laufenden Medium als erstem Eintrag
 function resetShuffleHistory(playlistName, currentPath) {
-    shuffleState = { playlist: playlistName, history: currentPath ? [currentPath] : [], position: currentPath ? 0 : -1 };
-    saveShuffleState();
+    shuffleState = { playlist: playlistName, order: currentPath ? [currentPath] : [], position: currentPath ? 0 : -1 };
+    shuffleOrderIndex = null;
+    shuffleCheckedPlaylist = null;
+    saveShuffleState(true);
 }
 
 function isShuffleEnabled() {
@@ -368,55 +455,53 @@ function setShuffleEnabled(enabled) {
     updateShuffleButton();
 }
 
-// Merkt sich das laufende Medium. Ist es schon im Verlauf (Zurück/Weiter, Browser-Zurück),
-// wird nur die Position verschoben.
+// Merkt sich das laufende Medium. Schon gezeigt (Zurück, Browser-Zurück): nur die Position verschieben.
+// Ein noch kommendes Medium (z.B. Klick auf eine Kachel) rückt direkt hinter das bisherige, damit die
+// dazwischen liegenden nicht als gezeigt gelten.
 function recordShuffleHistory(mediaPath, playlistName) {
     if (!isShuffleEnabled() || mediaPath == null) {
         return;
     }
     var state = getShuffleState(playlistName);
-    var index = state.history.indexOf(mediaPath);
-    if (index < 0) {
-        state.history.push(mediaPath);
-        index = state.history.length - 1;
+    var index = getShuffleOrderIndex().get(mediaPath);
+    var orderChanged = false;
+    if (index === undefined || index > state.position + 1) {
+        if (index !== undefined) {
+            state.order.splice(index, 1);
+        }
+        index = Math.max(0, state.position + 1);
+        state.order.splice(index, 0, mediaPath);
+        shuffleOrderIndex = null;
+        orderChanged = true;
+    }
+    if (state.position === index && !orderChanged) {
+        return;
     }
     state.position = index;
-    saveShuffleState();
+    saveShuffleState(orderChanged);
 }
 
 function getShuffleNeighbour(playlist, currentIndex, direction, playlistName) {
-    var paths = playlist.map(function (entry) {
-        return normalizeMediaLocation(entry.split("|")[0]);
-    });
+    var info = getPlaylistPaths(playlist);
     var state = getShuffleState(playlistName);
-    var position = state.history.indexOf(paths[currentIndex]);
-    if (position < 0) {
-        recordShuffleHistory(paths[currentIndex], playlistName);
-        position = state.history.indexOf(paths[currentIndex]);
-    }
-
-    // Im Verlauf zurück bzw. wieder vorwärts
-    var step = state.history[position + direction];
-    var stepIndex = step === undefined ? -1 : paths.indexOf(step);
-    if (stepIndex >= 0) {
-        return getPlaylistEntryData(playlist[stepIndex], playlistName);
-    }
-    if (direction < 0) {
-        return null;
-    }
-
-    // Neues, in diesem Durchgang noch nicht gespieltes Medium
-    var candidates = [];
-    paths.forEach(function (path, index) {
-        if (index !== currentIndex && state.history.indexOf(path) < 0) {
-            candidates.push(index);
+    var position = getShuffleOrderIndex().get(info.paths[currentIndex]);
+    if (position === undefined) {
+        recordShuffleHistory(info.paths[currentIndex], playlistName);
+        position = getShuffleOrderIndex().get(info.paths[currentIndex]);
+        if (position === undefined) {
+            return null;
         }
-    });
-    if (candidates.length == 0) {
-        return null;
     }
-    var pick = candidates[Math.floor(Math.random() * candidates.length)];
-    return getPlaylistEntryData(playlist[pick], playlistName);
+    extendShuffleOrder(state, playlist);
+
+    // In der Reihenfolge weiter bzw. zurück; Medien, die nicht (mehr) in der Playliste sind, überspringen
+    for (var step = position + direction; step >= 0 && step < state.order.length; step += direction) {
+        var stepIndex = info.index.get(state.order[step]);
+        if (stepIndex !== undefined && stepIndex !== currentIndex) {
+            return getPlaylistEntryData(playlist[stepIndex], playlistName);
+        }
+    }
+    return null;
 }
 
 // Zufall-Schalter in der Player-Leiste
@@ -563,6 +648,15 @@ function updatePlaylistNavigation(decodedData, playlist, currentIndex) {
     if (nextData != null) {
         createNavigationLink("next", nextData, 1);
         lastNavigation.nextPath = normalizeMediaLocation(getMediaLocationFromDecodedData(nextData));
+        // Übernächstes Medium derselben Playliste (Vorrat des Bildbetrachters, DEC-385)
+        var nextIndex = getPlaylistIndex(playlist, lastNavigation.nextPath);
+        if (nextIndex >= 0 && isImage(lastNavigation.nextPath)) {
+            var secondData = getNeighbourData(decodedData, playlist, nextIndex, 1);
+            var secondPath = secondData == null ? null : normalizeMediaLocation(getMediaLocationFromDecodedData(secondData));
+            if (secondPath != null && getPlaylistIndex(playlist, secondPath) >= 0) {
+                lastNavigation.next2Path = secondPath;
+            }
+        }
     }
 
     updateViewerArrows();
@@ -578,47 +672,137 @@ function updatePlaylistNavigation(decodedData, playlist, currentIndex) {
 // Hintergrund geladen und dekodiert, damit sie beim Weiter- bzw. Zurückschalten sofort aus dem
 // Speicher des Browsers kommen. Aufruf erst, wenn das laufende Medium angezeigt wird
 // (renderMediaContext), damit das Vorladen dem laufenden Bild keine Zeit wegnimmt.
-// Zuerst das nächste Bild (häufigere Richtung), dann das vorherige. Höchstens diese zwei.
+// Vorrat (DEC-385): das nächste, das übernächste und das vorherige Bild, fertig dekodiert. Sie werden
+// nacheinander geladen (nicht gleichzeitig), damit das nächste Bild die ganze Bandbreite bekommt
+// (Netzlaufwerk, App). Nicht mehr benötigte werden freigegeben (Speicher der App).
 var preloadedImages = {};
+var preloadOrder = [];
 
 function startImagePreload(path) {
     var image = new Image();
     image.decoding = "async";
-    image.fetchPriority = "low";
+    var finish = function () {
+        image.sflixDone = true;
+        pumpImagePreload();
+    };
     image.addEventListener("load", function () {
-        if (preloadedImages[path] === image && image.decode) {
-            image.decode().catch(function () {});
+        if (image.decode) {
+            image.decode().then(finish, finish);
+        } else {
+            finish();
         }
     });
+    image.addEventListener("error", finish);
     // Gleiche Schreibweise wie node.src in loadDecodedMedia, damit der Browser die Datei wiedererkennt
     image.src = path;
     return image;
 }
 
+// Nächstes Bild des Vorrats starten, sobald das vorige fertig ist. Wartet, solange das angezeigte
+// Bild selbst noch lädt.
+function pumpImagePreload() {
+    var player = document.getElementById("video");
+    if (player != null && player.sflixPending) {
+        return;
+    }
+    for (var i = 0; i < preloadOrder.length; i++) {
+        var path = preloadOrder[i];
+        var image = preloadedImages[path];
+        if (image == null) {
+            preloadedImages[path] = startImagePreload(path);
+            return;
+        }
+        if (!image.sflixDone) {
+            return;
+        }
+    }
+}
+
 function preloadNeighbourImages() {
     var wanted = [];
     if (lastNavigation != null) {
-        [lastNavigation.nextPath, lastNavigation.prevPath].forEach(function (path) {
+        [lastNavigation.nextPath, lastNavigation.next2Path, lastNavigation.prevPath].forEach(function (path) {
             if (path != null && path !== currentMediaLocation && wanted.indexOf(path) < 0 && isImage(path) && mediaExists(path)) {
                 wanted.push(path);
             }
         });
     }
+    // Das angezeigte Bild bleibt im Vorrat: Nach dem Weiterblättern ist es das vorherige und muss nicht
+    // neu geladen werden (SFLIX-20261125-148, sonst zwei Ladevorgänge je Schritt bei langsamer Quelle)
+    var keep = wanted.slice();
+    var current = currentMediaLocation;
+    if (current != null && isImage(current) && isImageShown()) {
+        keep.push(current);
+        if (preloadedImages[current] == null) {
+            // Kommt aus dem Speicher des Browsers (gleiche Datei wie im Betrachter)
+            preloadedImages[current] = startImagePreload(current);
+        }
+    }
     // Nicht mehr benötigte Vorladungen abbrechen. Ein Bild, das inzwischen angezeigt wird,
     // nicht abbrechen (gleiche Datei wie im Player).
     Object.keys(preloadedImages).forEach(function (path) {
-        if (wanted.indexOf(path) < 0) {
+        if (keep.indexOf(path) < 0) {
             if (path !== currentMediaLocation) {
                 preloadedImages[path].removeAttribute("src");
             }
             delete preloadedImages[path];
         }
     });
-    wanted.forEach(function (path) {
-        if (preloadedImages[path] == null) {
-            preloadedImages[path] = startImagePreload(path);
+    preloadOrder = wanted;
+    pumpImagePreload();
+}
+
+// Bild im Betrachter wechseln (DEC-385): Ist das neue Bild noch nicht geladen, bleibt das bisherige
+// stehen (kein schwarzer Bildschirm) und ein dezenter Ladeindikator erscheint, bis das neue fertig
+// dekodiert ist. Wurde inzwischen ein anderes Bild gewählt, gilt nur das zuletzt gewählte.
+function showImageWhenReady(node, path) {
+    var mediaNode = document.getElementById("media");
+    var ready = preloadedImages[path];
+    if (!node.getAttribute("src") || (ready != null && ready.sflixDone && ready.naturalWidth > 0)) {
+        node.sflixPending = null;
+        mediaNode.classList.remove("imageLoading");
+        node.src = path;
+        return;
+    }
+    node.sflixPending = path;
+    mediaNode.classList.add("imageLoading");
+    var done = false;
+    var show = function () {
+        if (done) {
+            return;
         }
-    });
+        done = true;
+        if (node.sflixPending !== path) {
+            return;
+        }
+        node.sflixPending = null;
+        mediaNode.classList.remove("imageLoading");
+        node.src = path;
+        preloadNeighbourImages();
+    };
+    var loader = ready != null ? ready : new Image();
+    var decoded = function () {
+        if (loader.decode) {
+            loader.decode().then(show, show);
+        } else {
+            show();
+        }
+    };
+    if (ready != null && ready.complete && ready.getAttribute("src")) {
+        decoded();
+    } else {
+        loader.addEventListener("load", decoded, { once: true });
+        loader.addEventListener("error", show, { once: true });
+        if (ready == null) {
+            loader.decoding = "async";
+            loader.src = path;
+            // Im Vorrat merken: nach dem Weiterblättern ist es das vorherige Bild
+            preloadedImages[path] = loader;
+            loader.addEventListener("load", function () { loader.sflixDone = true; }, { once: true });
+        }
+    }
+    // Sicherung: spätestens nach 20 s die Quelle direkt setzen
+    setTimeout(show, 20000);
 }
 
 // ===================================================================
@@ -1049,10 +1233,32 @@ function fillDocPip(ui, win) {
         target.addEventListener(type, handler);
         state.listeners.push([target, type, handler]);
     };
+    // Unsichtbarer Rand zum Vergrössern (DEC-388): Das Fenster hat nur eine feine Linie, den Rand
+    // erkennt die Seite selbst und meldet ihn ({cmd:"pipResize", edge}); STEFFLIX.exe vergrössert wie
+    // an einem Fensterrand.
+    var edgeAt = function (event) {
+        var size = 6;
+        var w = win.innerWidth, h = win.innerHeight;
+        var top = event.clientY < size, bottom = event.clientY >= h - size;
+        var left = event.clientX < size, right = event.clientX >= w - size;
+        return (top ? "top" : bottom ? "bottom" : "") + (left ? "left" : right ? "right" : "");
+    };
+    var edgeCursors = { top: "ns-resize", bottom: "ns-resize", left: "ew-resize", right: "ew-resize",
+        topleft: "nwse-resize", bottomright: "nwse-resize", topright: "nesw-resize", bottomleft: "nesw-resize" };
     listen(frame, "mousedown", function (event) {
+        var edge = event.button === 0 ? edgeAt(event) : "";
+        if (edge !== "") {
+            press = null;
+            event.preventDefault();
+            sendToDesktop({ cmd: "pipResize", edge: edge });
+            return;
+        }
         press = event.button === 0 && !isControl(event.target) ? { x: event.screenX, y: event.screenY, dragged: false } : null;
     });
     listen(frame, "mousemove", function (event) {
+        if ((event.buttons & 1) === 0) {
+            frame.style.cursor = edgeCursors[edgeAt(event)] || "";
+        }
         showControls();
         if (press == null || press.dragged || (event.buttons & 1) === 0) {
             return;
@@ -1782,10 +1988,18 @@ function loadDecodedMedia(decodedData, pushState) {
             node.alt = stripExtension(mediaName);
         }
         node.dataset.mediaPath = medialocation;
+        if (node.tagName != "IMG") {
+            node.sflixPending = null;
+            document.getElementById("media").classList.remove("imageLoading");
+        }
         if (node.getAttribute("src") !== medialocation) {
             // Für onloadedmetadata (läuft erst nach dem Zurücksetzen von isPopStateNavigation)
             node.sflixPopState = isPopStateNavigation;
-            node.src = medialocation;
+            if (node.tagName == "IMG") {
+                showImageWhenReady(node, medialocation);
+            } else {
+                node.src = medialocation;
+            }
             if (node.tagName != "IMG") {
                 // Lautstärke des Ordners (bzw. des nächsten darüber) übernehmen
                 node.volume = getVolumeFor(medialocation);
@@ -1807,14 +2021,33 @@ function loadDecodedMedia(decodedData, pushState) {
     }
 
     if (pushState) {
-        // Zurück zur Ordnerseite landet wieder an derselben Stelle
-        saveScrollPosition(scrollBefore);
-        history.pushState({}, "", startUrl);
+        if (wasShowingMedia && isOverlayHistoryEntry()) {
+            // Menü oder Autoplay-Fenster offen: schliessen und dessen Eintrag entfernen, damit ein Zurück zur
+            // Seite vor dem Player führt und die Adresse zum Medium passt (SFLIX-20261125-159)
+            replaceOverlayWithMedia(startUrl);
+        } else if (wasShowingMedia || isOverlayHistoryEntry()) {
+            // Im Player blättern (Weiter/Zurück, Wischen, Autoplay, Kachel unter dem Player) ersetzt den
+            // Eintrag: Ein Zurück führt zur Seite vor dem Player, nicht Medium für Medium (SFLIX-20261125-154)
+            history.replaceState({}, "", startUrl);
+            if (pendingOverlayReplaceUrl != null) {
+                pendingOverlayReplaceUrl = startUrl;
+            }
+        } else {
+            // Zurück zur Ordnerseite landet wieder an derselben Stelle
+            saveScrollPosition(scrollBefore);
+            history.pushState({}, "", startUrl);
+        }
     }
 
     if (playlistName != null) {
-        setData("currentPrefix", playlistName);
-        setData("playlist-" + playlistName, localPlaylist.join(listSeperator));
+        if (getData("currentPrefix") !== playlistName) {
+            setData("currentPrefix", playlistName);
+        }
+        // Nur bei Änderung schreiben: bei tausenden Bildern sind das hunderte KB je Bild (DEC-385)
+        var joinedPlaylist = localPlaylist.join(listSeperator);
+        if (getData("playlist-" + playlistName) !== joinedPlaylist) {
+            setData("playlist-" + playlistName, joinedPlaylist);
+        }
     }
 
     updateFavoriteButtonState(medialocation);
@@ -1822,6 +2055,11 @@ function loadDecodedMedia(decodedData, pushState) {
     document.getElementById("favorite").style.visibility = node == null ? "hidden" : "";
     document.getElementById("mediaNav").style.display = "flex";
     updatePlaylistNavigation(decodedData, localPlaylist, currentIndex);
+    // Bild kam fertig aus dem Vorrat: den Vorrat gleich nachführen, nicht erst nach dem Zeichnen
+    // (whenMainMediaReady); bei langsamer Quelle zählt jede Sekunde (SFLIX-20261125-148)
+    if (node != null && node.tagName == "IMG" && !node.sflixPending && node.complete) {
+        preloadNeighbourImages();
+    }
     // Musik: Playliste neben dem Player
     renderMusicPlaylist(localPlaylist, playlistName, node != null && node.tagName == "AUDIO" ? medialocation : null);
 
@@ -2725,7 +2963,9 @@ function initPlayerMenuOutsideClose() {
     playerMenuOutsideCloseBound = true;
     document.addEventListener("pointerdown", function (event) {
         var ui = playerUI;
-        if (ui == null) {
+        // Nur die Haupttaste (bzw. Finger) gilt als "daneben": Die Maus-Zurück-Taste schliesst das Menü
+        // über den Verlauf, sonst wären es zwei Schritte zurück (SFLIX-20261125-159)
+        if (ui == null || event.button !== 0) {
             return;
         }
         var open = getOpenPlayerMenu(ui);
@@ -3283,7 +3523,9 @@ function revealPlayerControls() {
 }
 
 // Öffnet "menu" (und schliesst das andere) oder schliesst bei open=false alle Menüs
-function togglePlayerMenu(ui, menu, open) {
+// fromHistory: durch Zurück ausgelöst (main.js popstate)
+function togglePlayerMenu(ui, menu, open, fromHistory) {
+    var wasOpen = isPlayerMenuOpen(ui);
     if (open) {
         refreshPlayerMenu(ui);
     }
@@ -3299,6 +3541,23 @@ function togglePlayerMenu(ui, menu, open) {
     } else {
         scheduleHideControls(ui);
     }
+    // Eigener Verlaufseintrag: Zurück schliesst zuerst das Menü (SFLIX-20261125-156)
+    if (open && !wasOpen) {
+        pushOverlayHistory("playerMenu");
+    } else if (!open && wasOpen && fromHistory !== true) {
+        popOverlayHistory("playerMenu");
+    }
+}
+
+// Zurück bei offenem Player-Menü (main.js popstate); true, wenn eines offen war
+function closePlayerMenuFromHistory() {
+    // playerUI statt getPlayerUI(): Beim Medienwechsel gehört das Menü noch zum bisherigen Medium
+    var ui = playerUI;
+    if (ui == null || !isPlayerMenuOpen(ui)) {
+        return false;
+    }
+    togglePlayerMenu(ui, null, false, true);
+    return true;
 }
 
 function closePlayerMenus(ui) {

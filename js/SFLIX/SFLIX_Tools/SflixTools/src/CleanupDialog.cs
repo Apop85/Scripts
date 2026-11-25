@@ -330,21 +330,6 @@ namespace Sflix
             list.Columns.Add("Am Ziel", Theme.S(120));
             string parent = Path.GetDirectoryName(folder.Path.TrimEnd('\\'));
             string basePath = Path.GetFullPath(folder.Path).TrimEnd('\\') + "\\";
-            HashSet<string> chosen = folder.OnlyFiles != null ? new HashSet<string>(folder.OnlyFiles, StringComparer.OrdinalIgnoreCase) : null;
-            foreach (string file in CleanupTask.FilesIn(folder.Path))
-            {
-                string rel = Path.GetFullPath(file).Substring(basePath.Length);
-                ListViewItem item = new ListViewItem(rel);
-                long size = 0;
-                try { size = new FileInfo(file).Length; } catch { }
-                sizes[file] = size;
-                TotalFiles++;
-                ListSort.Add(item, Fmt.Size(size), size);
-                item.SubItems.Add(File.Exists(Path.Combine(parent, rel)) ? "vorhanden" : "");
-                item.Tag = file;
-                item.Checked = chosen == null || chosen.Contains(file);
-                list.Items.Add(item);
-            }
 
             compare = new CompareView(ff, true);
             compare.Dock = DockStyle.Bottom;
@@ -366,8 +351,10 @@ namespace Sflix
             Button cancel = Theme.MakeButton("Abbrechen", false);
             Button all = Theme.MakeButton("Alle", false);
             Button none = Theme.MakeButton("Keine", false);
+            ok.Enabled = false;   // erst wenn die Liste geladen ist
             ok.Click += delegate
             {
+                if (!loaded) return;
                 Selected = new List<string>();
                 SelectedSize = 0;
                 foreach (ListViewItem i in list.Items)
@@ -393,8 +380,68 @@ namespace Sflix
             Controls.Add(intro);
             CancelButton = cancel;
             // Letzte Spalte bis zum Rand: sonst bleibt rechts im Spaltenkopf ein ungestalteter Streifen
-            Shown += delegate { list.Columns[list.Columns.Count - 1].Width = -2; };
+            Shown += delegate
+            {
+                list.Columns[list.Columns.Count - 1].Width = -2;
+                LoadFiles(parent, basePath, ok);
+            };
             list.Resize += delegate { if (list.Columns.Count > 0 && Visible) list.Columns[list.Columns.Count - 1].Width = -2; };
+        }
+
+        bool loaded;
+
+        // Dateien im Hintergrund auflisten (Grösse, gleichnamige Datei am Ziel): Auf dem Netzlaufwerk dauert das
+        // bei vielen Dateien Sekunden; im UI-Thread wären Player, BiB und Fenster so lange blockiert (SFLIX-20261124-142).
+        void LoadFiles(string parent, string basePath, Button ok)
+        {
+            string oldTitle = Text;
+            Text = oldTitle + " (lade Dateien …)";
+            HashSet<string> chosen = folder.OnlyFiles != null ? new HashSet<string>(folder.OnlyFiles, StringComparer.OrdinalIgnoreCase) : null;
+            System.Threading.Thread t = new System.Threading.Thread(delegate()
+            {
+                List<ListViewItem> items = new List<ListViewItem>();
+                Dictionary<string, long> found = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+                try
+                {
+                    foreach (string file in CleanupTask.FilesIn(folder.Path))
+                    {
+                        if (IsDisposed) return;
+                        string rel = Path.GetFullPath(file).Substring(basePath.Length);
+                        ListViewItem item = new ListViewItem(rel);
+                        long size = 0;
+                        try { size = new FileInfo(file).Length; } catch { }
+                        found[file] = size;
+                        ListSort.Add(item, Fmt.Size(size), size);
+                        bool exists = false;
+                        try { exists = File.Exists(Path.Combine(parent, rel)); } catch { }
+                        item.SubItems.Add(exists ? "vorhanden" : "");
+                        item.Tag = file;
+                        item.Checked = chosen == null || chosen.Contains(file);
+                        items.Add(item);
+                    }
+                }
+                catch { }
+                try
+                {
+                    BeginInvoke((Action)delegate
+                    {
+                        foreach (KeyValuePair<string, long> p in found) sizes[p.Key] = p.Value;
+                        TotalFiles = items.Count;
+                        list.BeginUpdate();
+                        list.Items.AddRange(items.ToArray());
+                        ListSort sort = ListSort.Of(list);
+                        if (sort != null) sort.Apply();
+                        list.EndUpdate();
+                        list.Columns[list.Columns.Count - 1].Width = -2;
+                        Text = oldTitle;
+                        loaded = true;
+                        ok.Enabled = true;
+                    });
+                }
+                catch { }   // Fenster inzwischen geschlossen
+            });
+            t.IsBackground = true;
+            t.Start();
         }
 
         void ShowCompare(string parent, string basePath)

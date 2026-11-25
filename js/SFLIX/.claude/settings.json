@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(/coordination/tasks/**)",
+      "Edit(/coordination/inbox/**)",
+      "Edit(/coordination/TASK-INDEX.md)",
+      "Edit(/coordination/.history/**)",
+      "Edit(/coordination/.audit.log)",
+      "Edit(/coordination/.lock)",
+      "Read(/.claude/old/**)",
+      "Read(/.claude/archiv/**)"
+    ]
+  }
+}

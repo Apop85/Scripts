@@ -893,6 +893,11 @@ public class BrowserActivity extends Activity implements MediaServer.Listener, P
             for (Map.Entry<String, String> h : request.getRequestHeaders().entrySet()) {
                 if ("range".equalsIgnoreCase(h.getKey())) range = h.getValue();
             }
+            // Kachel eines Fotos ohne Vorschaubild (cards.js hängt ?sflixThumb=<Breite> an): verkleinert
+            if (range == null && !request.isForMainFrame() && u.getQueryParameter("sflixThumb") != null) {
+                WebResourceResponse thumb = serveThumbnail(rel, u.getQueryParameter("sflixThumb"));
+                if (thumb != null) return thumb;
+            }
             return serve(rel, range, request.isForMainFrame());
         }
     }
@@ -903,6 +908,23 @@ public class BrowserActivity extends Activity implements MediaServer.Listener, P
         h.put("Cache-Control", "no-cache");
         h.put("Content-Length", String.valueOf(data.length));
         return new WebResourceResponse(mime, charset, 200, "OK", h, new ByteArrayInputStream(data));
+    }
+
+    /** Verkleinertes Foto für eine Kachel (SFLIX-20261125-148); null: Original wie gewohnt. */
+    private WebResourceResponse serveThumbnail(String rel, String widthText) {
+        if (!mimeType(rel).startsWith("image/") || rel.toLowerCase(java.util.Locale.ROOT).endsWith(".svg")) return null;
+        int width;
+        try {
+            width = Math.max(160, Math.min(960, Integer.parseInt(widthText)));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+        try {
+            byte[] data = cache.thumbnail(rel, width);
+            return data == null ? null : bytesResponse("image/jpeg", null, data);
+        } catch (IOException | RuntimeException e) {
+            return null;
+        }
     }
 
     private WebResourceResponse serve(String rel, String range, boolean mainFrame) {

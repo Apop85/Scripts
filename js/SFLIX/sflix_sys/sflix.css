@@ -860,6 +860,33 @@ html.inDesktop .settingRow:has(input[data-setting="skipSplash"]) {
     height: 72vh;
 }
 
+/* Seit 2.9.4 (DEC-385): Das nächste Bild lädt noch, das bisherige bleibt stehen. Dezenter Ladeindikator
+   oben rechts, erst nach einer kurzen Wartezeit (kein Flackern bei schnellem Laden). */
+#media.imageLoading #imageLink {
+    position: relative;
+}
+
+#media.imageLoading #imageLink::after {
+    content: "";
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 22px;
+    height: 22px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: rgba(255, 255, 255, 0.85);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    animation: imageLoadingIn 0.2s ease 0.25s forwards, playerSpin 0.9s linear infinite;
+}
+
+@keyframes imageLoadingIn {
+    to {
+        opacity: 1;
+    }
+}
+
 /* Das Audio-Element selbst ist unsichtbar, bedient wird über die eigene Leiste */
 .audioPlayer {
     display: none;
@@ -3036,6 +3063,13 @@ body.gridOpen {
 .rowTrack > .card {
     flex: 0 0 var(--card-width);
     scroll-snap-align: start;
+}
+
+/* Seit 2.9.4 (DEC-385): Bänder mit sehr vielen Kacheln zeichnen nur die sichtbaren. Die Höhe der übrigen
+   schätzt der Browser (16:9-Bild plus Text), danach merkt er sich die echte. */
+.rowTrack.manyCards > .card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto var(--card-width) auto calc(var(--card-width) * 9 / 16 + 64px);
 }
 
 /* "Kacheln pro Zeile automatisch": Auf Handy und Tablet passen nur ganze Kacheln in die Zeile,

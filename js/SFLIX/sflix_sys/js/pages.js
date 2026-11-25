@@ -551,6 +551,9 @@ function renderMediaBands(folders, musicList) {
     if (children.media.length > 0 && !musicList) {
         var folderUrl = folders.length > 0 ? buildStartUrl(buildLevelPath(folders)) : null;
         var mediaTrack = createCardRow(bands, "Mehr aus " + folderName, folderUrl);
+        // Viele Kacheln (z.B. tausende Fotos): Kacheln ausserhalb des sichtbaren Bereichs zeichnet der
+        // Browser nicht (sflix.css, DEC-385); das Band war sonst rund 1 s mit Layout beschäftigt
+        mediaTrack.classList.toggle("manyCards", children.media.length > 150);
         children.media.forEach(function (path) {
             createPlayableCard(mediaTrack, path);
         });

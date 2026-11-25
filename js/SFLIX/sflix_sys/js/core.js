@@ -796,19 +796,41 @@ function getOriginalPreviewPath(path) {
 
 // Sucht im Preview-Ordner eines Datenknotens nach einem passenden Bild.
 // Zuerst wird ein exakter Namenstreffer gesucht, danach (optional) ein Teiltreffer.
+var previewIndexCache = typeof WeakMap === "function" ? new WeakMap() : null;
+
+function getPreviewIndex(previewNode) {
+    var entry = previewIndexCache != null ? previewIndexCache.get(previewNode) : null;
+    if (entry == null) {
+        var previews = Object.keys(previewNode).map(getOriginalPreviewPath);
+        var byName = new Map();
+        previews.forEach(function (path) {
+            var displayName = getDisplayName(path);
+            if (!byName.has(displayName)) {
+                byName.set(displayName, path);
+            }
+        });
+        entry = { previews: previews, byName: byName };
+        if (previewIndexCache != null && typeof previewNode === "object") {
+            previewIndexCache.set(previewNode, entry);
+        }
+    }
+    return entry;
+}
+
 function findPreviewInFolder(folderData, names, exactOnly) {
     if (folderData == null || typeof folderData !== "object" || folderData["Preview"] == null) {
         return null;
     }
-    var previews = Object.keys(folderData["Preview"]).map(getOriginalPreviewPath);
+    // Vorschaubilder eines Ordners mit Nachschlagetabelle nach Anzeigename, je Ordner einmal berechnet:
+    // Bei tausenden Bildern mit Vorschaubildern suchte sonst jede Kachel alle Vorschaubilder ab (DEC-385)
+    var entry = getPreviewIndex(folderData["Preview"]);
+    var previews = entry.previews;
     var index, name, previewIndex;
 
     for (index = 0; index < names.length; index++) {
         name = names[index];
-        for (previewIndex = 0; previewIndex < previews.length; previewIndex++) {
-            if (name != null && getDisplayName(previews[previewIndex]) === name) {
-                return previews[previewIndex];
-            }
+        if (name != null && entry.byName.has(name)) {
+            return entry.byName.get(name);
         }
     }
 

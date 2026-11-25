@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- Startbildschirm der App: zuerst die Animation (splash.svg). Dauert das Laden vom NAS länger,
+<!-- Startbildschirm der App: zuerst die Animation (splash.svg, im Hochformat splash_portrait.svg). Dauert das Laden vom NAS länger,
      ruft die App showLoader() und setStatus() auf: Logo mit Ring wie im Ladescreen von STEFFLIX
      (ab 2.6.1), dahinter die unscharfe Plakatwand (loading_backdrop.jpg, aus ladehintergrund.py). -->
 <style>
@@ -28,7 +28,12 @@ body.loading #intro { opacity: 0; }
 </style>
 </head>
 <body>
-<img id="intro" src="splash.svg" alt="">
+<!-- Hochformat: eigene Fassung bis an den oberen und unteren Rand (DEC-389), Querformat und fast quadratische
+     Bildschirme: splash.svg -->
+<picture>
+  <source media="(orientation: portrait) and (max-aspect-ratio: 4/5)" srcset="splash_portrait.svg">
+  <img id="intro" src="splash.svg" alt="">
+</picture>
 <div id="loader">
   <div id="backdrop"></div>
   <div id="content">

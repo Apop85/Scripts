@@ -401,6 +401,12 @@ namespace Sflix
                     DocPipWindow drag = docPipWindow;
                     if (drag != null) BeginInvoke((Action)drag.BeginDrag);
                     break;
+                case "pipResize":
+                    // Unsichtbarer Rand im BiB-Fenster gedrückt -> Grösse ändern wie an einem Fensterrand (DEC-388)
+                    DocPipWindow sizing = docPipWindow;
+                    string edge = msg.Str("edge") ?? "";
+                    if (sizing != null) BeginInvoke((Action)delegate { sizing.BeginResize(edge); });
+                    break;
                 case "pip":
                     bool on = msg.Bool("on", false);
                     bool paused = msg.Bool("paused", true);
@@ -779,11 +785,14 @@ namespace Sflix
             if (icon != null) Icon = icon;
             TopMost = true;
             ShowInTaskbar = true;
-            BackColor = Color.Black;
             // Ohne Titelleiste: nur Bild und Bedienleiste. Verschieben über das Videobild (player.js meldet
-            // {cmd:"pipDrag"}, BeginDrag), Grösse über einen schmalen Rand (WndProc, WM_NCHITTEST).
+            // {cmd:"pipDrag"}, BeginDrag). Sichtbar ist nur eine feine dunkelgraue Linie (DEC-388): unter
+            // Windows 11 der Rahmen von Windows mit abgerundeten Ecken, sonst 1 px Rand des Formulars in
+            // derselben Farbe. Vergrössern über einen unsichtbaren Rand im Bild (player.js meldet
+            // {cmd:"pipResize"}, BeginResize) und die Linie selbst (WndProc, WM_NCHITTEST).
+            BackColor = LineColor;
             FormBorderStyle = FormBorderStyle.None;
-            Padding = new Padding(ResizeBorder);
+            Padding = new Padding(Line);
             MinimumSize = new Size(Theme.S(240), Theme.S(150));
             StartPosition = FormStartPosition.Manual;
             ClientSize = new Size(Theme.S(width), Theme.S(height));
@@ -835,7 +844,7 @@ namespace Sflix
                 if (s.WorkingArea.IntersectsWith(wanted)) { screen = s; break; }
             if (screen == null) return;
             Rectangle work = screen.WorkingArea;
-            int border = ResizeBorder * 2;
+            int border = Line * 2;
             int newWidth = Math.Max(MinimumSize.Width, Math.Min(work.Width, w));
             int newHeight = (int)Math.Round((newWidth - border) * (double)height / Math.Max(1, width)) + border;
             newHeight = Math.Max(MinimumSize.Height, Math.Min(work.Height, newHeight));
@@ -857,21 +866,71 @@ namespace Sflix
             base.OnFormClosing(e);
         }
 
-        // Rand, an dem sich das Fenster ohne Titelleiste vergrössern lässt (gehört dem Formular, nicht der WebView2)
+        // Sichtbare Linie (1 px, unter Windows 11 zeichnet Windows sie) und Bereich, in dem die Linie selbst
+        // zum Vergrössern zählt (gehört dem Formular, nicht der WebView2)
+        static int line = 1;
+        static int Line { get { return line; } }
+        static readonly Color LineColor = Color.FromArgb(0x3a, 0x3a, 0x42);
         static int ResizeBorder { get { return Math.Max(4, Theme.S(6)); } }
 
-        const int WM_NCHITTEST = 0x0084, WM_NCLBUTTONDOWN = 0x00A1;
+        const int WM_NCHITTEST = 0x0084, WM_NCLBUTTONDOWN = 0x00A1, WM_ENABLE = 0x000A;
         const int HTCLIENT = 1, HTCAPTION = 2, HTLEFT = 10, HTRIGHT = 11, HTTOP = 12, HTTOPLEFT = 13, HTTOPRIGHT = 14,
                   HTBOTTOM = 15, HTBOTTOMLEFT = 16, HTBOTTOMRIGHT = 17;
+        const int DWMWA_WINDOW_CORNER_PREFERENCE = 33, DWMWA_BORDER_COLOR = 34, DWMWCP_ROUND = 2;
 
         [DllImport("user32.dll")]
         static extern bool ReleaseCapture();
         [DllImport("user32.dll")]
         static extern IntPtr SendMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
+        [DllImport("dwmapi.dll")]
+        static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+
+        // Windows 11: abgerundete Ecken und Rahmenfarbe von Windows (1 px), dann ohne eigenen Rand.
+        // Windows 10 kennt die Attribute nicht (Fehlercode): eigener Rand aus Padding und BackColor.
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            try
+            {
+                int round = DWMWCP_ROUND;
+                int color = LineColor.R | (LineColor.G << 8) | (LineColor.B << 16);   // COLORREF 0x00BBGGRR
+                if (DwmSetWindowAttribute(Handle, DWMWA_WINDOW_CORNER_PREFERENCE, ref round, 4) == 0
+                    && DwmSetWindowAttribute(Handle, DWMWA_BORDER_COLOR, ref color, 4) == 0)
+                {
+                    line = 0;
+                    Padding = new Padding(0);
+                    BackColor = Color.Black;
+                }
+            }
+            catch { }   // dwmapi fehlt (sehr alte Systeme): eigener Rand bleibt
+        }
+
+        // Unsichtbarer Rand im Bild gedrückt (player.js): Grösse ändern wie an einem Fensterrand
+        public void BeginResize(string edge)
+        {
+            if (IsDisposed || (MouseButtons & MouseButtons.Left) == 0) return;
+            int hit;
+            switch (edge)
+            {
+                case "top": hit = HTTOP; break;
+                case "bottom": hit = HTBOTTOM; break;
+                case "left": hit = HTLEFT; break;
+                case "right": hit = HTRIGHT; break;
+                case "topleft": hit = HTTOPLEFT; break;
+                case "topright": hit = HTTOPRIGHT; break;
+                case "bottomleft": hit = HTBOTTOMLEFT; break;
+                case "bottomright": hit = HTBOTTOMRIGHT; break;
+                default: return;
+            }
+            ReleaseCapture();
+            SendMessage(Handle, WM_NCLBUTTONDOWN, (IntPtr)hit, IntPtr.Zero);
+        }
 
         protected override void WndProc(ref Message m)
         {
             base.WndProc(ref m);
+            // Während des eigenen BiB ist der Player ausgeblendet; ein Fenster der Tools sperrt dann nur das BiB
+            if (m.Msg == WM_ENABLE && m.WParam == IntPtr.Zero) { ToolModal.Schedule(this); return; }
             if (m.Msg != WM_NCHITTEST || (int)m.Result != HTCLIENT) return;
             long lp = m.LParam.ToInt64();
             Point p = PointToClient(new Point((short)(lp & 0xFFFF), (short)((lp >> 16) & 0xFFFF)));
@@ -912,14 +971,17 @@ namespace Sflix
     static class ToolModal
     {
         static Timer timer;
-        static PlayerForm waiting;
+        static Form waiting;
         static int ticks;
         static bool keepFront;
 
-        public static void Schedule(PlayerForm player)
+        // Aufruf mit dem gesperrten Fenster: Player oder eigenes BiB. Während des eigenen BiB ist der Player
+        // ausgeblendet; ShowDialog sperrt nur sichtbare Fenster, dann meldet sich nur das BiB (SFLIX-20261124-142).
+        public static void Schedule(Form player)
         {
             if (player.IsDisposed || !player.IsHandleCreated) return;
-            if (waiting == null) keepFront = player.IsFullscreen && GetForegroundWindow() == player.Handle;
+            PlayerForm pf = player as PlayerForm;
+            if (waiting == null) keepFront = pf != null && pf.IsFullscreen && GetForegroundWindow() == player.Handle;
             waiting = player;
             ticks = 0;
             if (timer == null)
@@ -939,21 +1001,24 @@ namespace Sflix
 
         static void Check()
         {
-            PlayerForm player = waiting;
+            Form player = waiting;
             if (player == null || player.IsDisposed || !player.IsHandleCreated || IsWindowEnabled(player.Handle)) { Stop(); return; }
             int kind = Classify();
             if (kind == 0)
             {
-                if (++ticks >= 25) Stop();   // kein modales Fenster gefunden: nichts ändern
+                // Kein modales Fenster sichtbar: nichts ändern. Grosse Auswahllisten brauchen bis zur Anzeige
+                // länger als eine Sekunde, daher bis zu 5 s warten.
+                if (++ticks >= 125) Stop();
                 return;
             }
             Stop();
             if (kind != 1) return;
             IntPtr dialog = FindToolDialog();
             foreach (IntPtr h in Family()) EnableWindow(h, true);
-            if (keepFront && player.IsFullscreen)
+            PlayerForm pf = player as PlayerForm;
+            if (keepFront && pf != null && pf.IsFullscreen)
             {
-                player.Activate();
+                pf.Activate();
                 if (dialog != IntPtr.Zero) FlashWindow(dialog, true);
             }
         }

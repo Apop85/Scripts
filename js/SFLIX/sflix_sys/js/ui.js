@@ -26,21 +26,34 @@ function toggleContainer(idArray, displayMode) {
             if (needsVideoWorkaround) {
                 player.style.pointerEvents = "none";
             }
+            if (nodeId == historyContainerId) {
+                pushOverlayHistory(historyContainerId);
+            }
         } else {
             node.style.display = "none";
             // Video-Interaktion freigeben (Chrome Bug Workaround)
             if (needsVideoWorkaround) {
                 player.style.pointerEvents = null;
             }
+            if (nodeId == historyContainerId) {
+                popOverlayHistory(historyContainerId);
+            }
         }
     }
 }
 
-// Schliesst einen Container (für die Escape-Taste)
-function closeContainer(id) {
+// Autoplay-Fenster (Knopf "Autoplay" im Player): eigener Verlaufseintrag, Zurück schliesst zuerst
+// das Fenster (SFLIX-20261125-156, main.js pushOverlayHistory). Andere Fenster bleiben ohne.
+var historyContainerId = "settingsBox";
+
+// Schliesst einen Container (für die Escape-Taste); fromHistory: durch Zurück ausgelöst
+function closeContainer(id, fromHistory) {
     var node = document.getElementById(id);
     if (node == null || node.style.display == "none") {
         return false;
+    }
+    if (id == historyContainerId && fromHistory !== true) {
+        popOverlayHistory(historyContainerId);
     }
     node.style.display = "none";
     var player = document.getElementById("video");
@@ -1322,6 +1335,11 @@ function initModalOutsideClose() {
     var swallowNextClick = false;
 
     document.addEventListener("pointerdown", function (event) {
+        // Nur die Haupttaste (bzw. Finger): Maus-Zurück schliesst das Autoplay-Fenster über den Verlauf
+        // (SFLIX-20261125-159), mittlere und rechte Taste schliessen nichts
+        if (event.button !== 0) {
+            return;
+        }
         var closedModal = false;
         modalIds.forEach(function (id) {
             var modal = document.getElementById(id);

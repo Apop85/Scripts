@@ -2298,9 +2298,74 @@ namespace Sflix
         // Start
         // ---------------------------------------------------------------
 
+        // Details vor dem Neustart nach einem Update (DEC-387): Die alte Version schreibt sie unmittelbar vor
+        // dem Neustart nach sflix_sys\neustart_details.log, die neue zeigt sie beim Start einmal zuoberst
+        // und löscht die Datei. Ältere (über 30 min) oder unlesbare Sicherungen werden still verworfen.
+        static string RestartDetailsPath { get { return Path.Combine(App.SysDir, "neustart_details.log"); } }
+
+        void SaveDetailsForRestart()
+        {
+            try
+            {
+                FlushUi();
+                WriteLogFile();   // Protokolldatei: auch die letzten Zeilen vor dem Neustart
+                if (App.IsReleaseFolder) return;
+                string text = sessionLog.ToString();
+                const int max = 512 * 1024;
+                if (text.Length > max)
+                {
+                    text = text.Substring(text.Length - max);
+                    int nl = text.IndexOf('\n');
+                    if (nl >= 0) text = text.Substring(nl + 1);
+                }
+                File.WriteAllText(RestartDetailsPath, text, FileOps.Utf8NoBom);
+            }
+            catch { }
+        }
+
+        void ShowDetailsFromBeforeRestart()
+        {
+            string path = RestartDetailsPath;
+            string text = null;
+            try
+            {
+                if (!File.Exists(path)) return;
+                if ((DateTime.Now - File.GetLastWriteTime(path)).TotalMinutes < 30) text = File.ReadAllText(path, Encoding.UTF8);
+            }
+            catch { }
+            try { File.Delete(path); }
+            catch { }
+            if (string.IsNullOrEmpty(text)) return;
+            try
+            {
+                string header = "===== Ausgabe vor dem Neustart (Update auf " + App.VersionText + ") =====";
+                string footer = "===== Ende der Ausgabe vor dem Neustart =====";
+                List<string> lines = new List<string>();
+                lines.Add(header);
+                foreach (string raw in text.Split('\n'))
+                {
+                    string l = raw.TrimEnd('\r');
+                    // Zeilen aus dem Protokoll der Sitzung tragen einen Zeitstempel ("yyyy-MM-dd HH:mm:ss  ")
+                    if (l.Length >= 21 && l[4] == '-' && l[10] == ' ' && l[13] == ':' && l.Substring(19, 2) == "  ") l = l.Substring(21);
+                    lines.Add(l);
+                }
+                if (lines.Count > 1 && lines[lines.Count - 1].Length == 0) lines.RemoveAt(lines.Count - 1);
+                lines.Add(footer);
+                lines.Add("");
+                logPanel.Add(lines);
+                // Ins Protokoll der Sitzung (Speichern unter, Feedback), nicht nochmals in die Protokolldatei:
+                // dort hat sie die alte Version schon geschrieben.
+                sessionLog.Append(LogFile.Stamp(header));
+                sessionLog.Append(text);
+                sessionLog.Append(LogFile.Stamp(footer));
+            }
+            catch { }
+        }
+
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
+            ShowDetailsFromBeforeRestart();
             AppendLog(App.Title + " " + App.VersionText + "  –  " + App.Root);
             if (startNotice != null) AppendLog(startNotice);
             if (App.IsReleaseFolder)
@@ -2795,6 +2860,7 @@ namespace Sflix
                 if (ExtraRestartArgs != null) args += ExtraRestartArgs();
                 try
                 {
+                    SaveDetailsForRestart();
                     SelfUpdate.Restart(args);
                     closeWhenDone = true;
                     if (Restarting != null) Restarting();

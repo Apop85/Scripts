@@ -43,7 +43,8 @@ namespace Sflix
                 "Bei einem Fehler öffnet es sich von selbst. Mit der Suche und „Nur Fehler und Warnungen“ findest du schnell die wichtigen Zeilen.\n" +
                 "- In Datei speichern: schreibt das Protokoll nach sflix_sys\\updater.log, auch alles seit dem Start. Der Schalter ist bei jedem Start aus.\n" +
                 "- Speichern unter …: speichert das Protokoll dieser Sitzung in eine selbst gewählte Datei (wenn die Datei aus ist).\n" +
-                "Die Datei ist begrenzt: Wird sie grösser als 1 MB, bleiben die letzten 256 KB."));
+                "Die Datei ist begrenzt: Wird sie grösser als 1 MB, bleiben die letzten 256 KB.\n" +
+                "Nach einem Update startet STEFFLIX.exe neu; die Details zeigen dann zuoberst einmal die Ausgabe vor dem Neustart."));
 
             t.Add(new HelpTopic("STEFFLIX-Fenster",
                 "Ein Doppelklick auf STEFFLIX.exe (oder die Verknüpfung auf dem Desktop bzw. im Startmenü) öffnet STEFFLIX in einem eigenen Fenster: " +

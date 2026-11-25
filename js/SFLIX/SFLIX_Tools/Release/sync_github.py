@@ -12,17 +12,30 @@ Aufruf (Projektwurzel):
        [--ziel PFAD]             Zielordner (Standard: %USERPROFILE%\\Documents\\GitHub\\Scripts\\js\\SFLIX,
                                  oder Umgebungsvariable SFLIX_GITHUB_DIR)
        [--quelle PFAD]           Release-Ordner (Standard: zwei Ebenen über diesem Skript)
+       [--zeige-bereinigt]       bereinigte Stellen unter .claude/ und docs/ vorher/nachher zeigen
+       [--erzwingen [PFAD ...]]  vorhandene Dateien im Ziel auch bei gleichem Inhalt ersetzen (ohne PFAD alle,
+                                 sonst nur darunter, z. B. --erzwingen docs/ .claude/)
 
 Regeln:
   - Übertragen wird jede Datei, die die .gitignore des Projekts nicht ausschliesst (eigene Auswertung:
     Kommentare, !-Ausnahmen, Ordnerregeln mit /, verankerte Pfade, *, ?, [..], **). .gitignore selbst wird übertragen.
-  - Kopiert wird nur bei anderem Inhalt (Grösse, dann SHA-256), damit GitHub Desktop nichts Unnötiges zeigt.
+  - Kopiert wird nur bei anderem Inhalt (Grösse, dann SHA-256), damit GitHub Desktop nichts Unnötiges zeigt;
+    --erzwingen ersetzt vorhandene Dateien trotzdem (alle oder nur unter den genannten Pfaden).
   - Im Ziel werden Dateien und leere Ordner gelöscht, die es im Projekt nicht (mehr) gibt.
   - Nie angefasst: .git (auch nicht oberhalb), im Ziel laut .gitignore ignorierte Dateien, alles ausserhalb des
     Zielordners. Verknüpfungen (Junction, symbolischer Link) werden weder verfolgt noch übertragen.
   - Sperrliste unabhängig von .gitignore (geheime und persönliche Dateien): würde eine davon übertragen oder
     enthält eine Textdatei ein persönliches Suchmuster (SFLIX_Tools/Doku/private_patterns.txt), bricht das
     Skript ab, bevor etwas geändert wird.
+  - Bereinigung (DEC-394): Dateien unter .claude/ und docs/ werden nur in der Kopie im Ziel bereinigt, die
+    Originale im Projekt bleiben unverändert. Regeln (Zeile entfernen, Begriff ersetzen, verbotene Begriffe) in
+    SFLIX_Tools/Doku/public_redactions.txt (nie übertragen); fehlt sie, werden diese Ordner nicht gespiegelt.
+    Zusätzlich: Benutzername aus %USERNAME% (Pfad C:\\Users\\<Name> -> %USERPROFILE%, sonst <Benutzer>) und
+    IP-Adressen ausser 127.0.0.1 und 0.0.0.0 (-> <IP>; vierteilige Versionsnummern nach "Version" bleiben).
+    Danach wird der bereinigte Inhalt erneut geprüft; bleibt etwas übrig, bricht das Skript vor jeder Änderung
+    ab. Regeln, die in keiner Datei greifen, ergeben eine Warnung. Vergleich und Hash gelten für den bereinigten
+    Inhalt. Der Probelauf zeigt die Anzahl Stellen je Datei, --zeige-bereinigt jede Stelle vorher/nachher
+    (nur lokal in Ausgabe und Protokoll).
   - Protokoll: tmp\\sync_github_<Zeit>.log im Projekt.
 Exit: 0 = in Ordnung (bzw. nichts zu tun), 1 = Abbruch/Fehler, 2 = Bestätigung fehlt.
 """
@@ -45,7 +58,8 @@ SPERRLISTE = [
     "sflix_sys/damaged.js", "sflix_sys/player.log",
     "SFLIX_Tools/Android/signing/", "SFLIX_Tools/Release/signing/", "*.jks", "*.keystore", "keystore.properties",
     "update_key*.xml", "*.dpapi", "*.dpapi.neu", "coordination/", "docs/intern/", ".claude/testenv/", ".claude/settings.local.json",
-    ".claude/old/", ".claude/archiv/", "SFLIX_Tools/Doku/private_patterns.txt", "tmp/",
+    ".claude/old/", ".claude/archiv/", ".claude/*.gif", ".claude/*.mp4", "SFLIX_Tools/Doku/private_patterns.txt", "tmp/",
+    "public_redactions*.txt", "private_patterns*.txt", "DECISIONS-intern*.md",
     # auch Kopien an anderen Orten und Varianten
     "install*.js", "license*.js", "downloads*.json", "lizenzen*.json", "local.properties",
     "*.pfx", "*.p12", "*.pem", "*.snk",
@@ -277,8 +291,166 @@ def file_text(path):
     return text
 
 
+# ---------------------------------------------------------------- Bereinigung (DEC-394)
+# Nur die Kopien unter diesen Ordnern werden bereinigt; die Originale im Projekt bleiben unverändert,
+# alle übrigen Dateien werden 1:1 übertragen.
+REDACT_PREFIXES = (".claude/", "docs/")
+REDACT_RULES_FILE = os.path.join("SFLIX_Tools", "Doku", "public_redactions.txt")
+IP_KEEP = ("127.0.0.1", "0.0.0.0")
+_OCTET = r"(?:25[0-5]|2[0-4]\d|[01]?\d?\d)"   # auch mit führender Null (192.168.001.005)
+IPV4 = re.compile(r"(?<![\w.])" + _OCTET + r"(?:\." + _OCTET + r"){3}(?![\w]|\.\d)")
+IPV6_FULL = re.compile(r"(?<![\w:])(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}(?![\w:])")
+IPV6_SHORT = re.compile(r"(?<![\w:])(?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?::(?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?(?![\w:])")
+# Versionsnummern mit vier Teilen in AssemblyVersion("4.0.7.0") bzw. AssemblyFileVersion("…") sind keine IP-Adressen
+VERSION_BEFORE = re.compile(r"Version\(\s*\"$")
+
+
+def needs_redaction(rel):
+    low = rel.replace("\\", "/").lower()
+    return any(low.startswith(p) for p in REDACT_PREFIXES)
+
+
+class Redactions:
+    """Regeln aus public_redactions.txt plus Benutzername (%USERNAME%) und IP-Adressen."""
+
+    def __init__(self, source):
+        self.remove, self.replace, self.forbidden = [], [], []
+        self.loaded = False
+        path = os.path.join(source, REDACT_RULES_FILE)
+        try:
+            with open(path, encoding="utf-8-sig") as r:
+                for no, line in enumerate(r, 1):
+                    line = line.rstrip("\r\n")
+                    if not line.strip() or line.lstrip().startswith("#"):
+                        continue
+                    kind, body = line[:1], line[2:] if line[1:2] == " " else None
+                    if body is None or kind not in "-=!":
+                        raise SystemExit("FEHLER: %s Zeile %d: unbekanntes Format" % (REDACT_RULES_FILE, no))
+                    if kind == "=":
+                        m = re.match(r"^(.*?)\s->(?:\s(.*))?$", body)
+                        if not m or not m.group(1):
+                            raise SystemExit("FEHLER: %s Zeile %d: Ersetzen braucht 'Muster -> Ersatz'" % (REDACT_RULES_FILE, no))
+                        self.replace.append([re.compile(m.group(1), re.IGNORECASE), m.group(2) or "", no, 0])
+                    elif kind == "-":
+                        self.remove.append([re.compile(body, re.IGNORECASE), None, no, 0])
+                    else:
+                        self.forbidden.append(re.compile(body, re.IGNORECASE))
+            self.loaded = True
+        except OSError:
+            pass
+        except re.error as e:
+            raise SystemExit("FEHLER: ungültiges Muster in %s: %s" % (REDACT_RULES_FILE, e))
+        # Benutzername und Name des Profilordners (können abweichen, z. B. Microsoft-Konto)
+        names = [(os.environ.get("USERNAME") or "").strip(),
+                 os.path.basename((os.environ.get("USERPROFILE") or "").rstrip("\\/")).strip()]
+        names = sorted({n for n in names if n}, key=lambda n: -len(n))
+        long_names = [n for n in names if len(n) >= 3]
+        self.user_short = len(long_names) < len(names)
+        self.user_path = self.user_any = None
+        if names:
+            # C:\Users\<Name> (auch mit / oder \\ wie in JSON) -> %USERPROFILE%, auch bei kurzen Namen
+            self.user_path = re.compile(r"[A-Za-z]:(\\\\|\\|/)Users\1(?:" + "|".join(re.escape(n) for n in names) +
+                                        r")(?=\\|/|\W|$)", re.IGNORECASE)
+        if long_names:
+            self.user_any = re.compile("|".join(re.escape(n) for n in long_names), re.IGNORECASE)
+
+    @staticmethod
+    def _ip_hits(line):
+        hits = []
+        for m in IPV4.finditer(line):
+            if m.group(0) in IP_KEEP or VERSION_BEFORE.search(line[max(0, m.start() - 12):m.start()]):
+                continue
+            hits.append(m.span())
+        for rx in (IPV6_FULL, IPV6_SHORT):
+            for m in rx.finditer(line):
+                groups = [g for g in m.group(0).split(":") if g]
+                if rx is IPV6_SHORT and (len(groups) < 2 or not re.search(r"\d", m.group(0))):
+                    continue   # ::, ::1 und Ähnliches sowie Bezeichner wie Bad::Add bleiben
+                hits.append(m.span())
+        return sorted(set(hits))
+
+    def _replace_ips(self, line):
+        hits = self._ip_hits(line)
+        for start, end in reversed(hits):
+            line = line[:start] + "<IP>" + line[end:]
+        return line, len(hits)
+
+    def clean(self, text):
+        """(bereinigter Text, Änderungen [(Zeilennummer, vorher, nachher oder None)])."""
+        result, changes = [], []
+        for no, full_line in enumerate(text.splitlines(True), 1):
+            # Zeilenende abtrennen, damit $ und .* bei CRLF wie bei LF wirken
+            line = full_line.rstrip("\r\n")
+            ending = full_line[len(line):]
+            removed = False
+            for rule in self.remove:
+                if rule[0].search(line):
+                    rule[3] += 1
+                    removed = True
+            if removed:
+                changes.append((no, line, None))
+                continue
+            new = line
+            for rule in self.replace:
+                new, n = rule[0].subn(rule[1].replace("\\", "\\\\"), new)
+                rule[3] += n
+            if self.user_path is not None:
+                new = self.user_path.sub(lambda m: "%USERPROFILE%", new)
+            if self.user_any is not None:
+                new = self.user_any.sub("<Benutzer>", new)
+            new, _ = self._replace_ips(new)
+            if new != line:
+                changes.append((no, line, new))
+            result.append(new + ending)
+        return "".join(result), changes
+
+    def leftovers(self, text):
+        """Was nach der Bereinigung nicht mehr vorkommen darf: Liste von Beschreibungen. Auch die Muster der
+        Regeln 'Zeile entfernen' und 'Begriff ersetzen' dürfen nicht mehr greifen."""
+        found = []
+        if any(rx.search(text) for rx in self.forbidden):
+            found.append("verbotener Begriff (Regeldatei)")
+        lines = text.splitlines()
+        if any(rule[0].search(line) for rule in self.remove + self.replace for line in lines):
+            found.append("Regel greift nach der Bereinigung noch (Regeldatei)")
+        if (self.user_any is not None and self.user_any.search(text)) or \
+                (self.user_path is not None and self.user_path.search(text)):
+            found.append("Benutzername")
+        if any(self._ip_hits(line) for line in lines):
+            found.append("IP-Adresse")
+        return found
+
+    def unused(self):
+        return [rule[2] for rule in self.remove + self.replace if rule[3] == 0]
+
+
+def redact_bytes(data, red):
+    """Bereinigte Bytes und Änderungen. Nur UTF-8-Text bis MAX_SCAN lässt sich bereinigen; Binärdateien
+    (NUL, z. B. UTF-16, Bilder, PDF) und grössere Dateien unter den bereinigten Ordnern -> RuntimeError (Abbruch)."""
+    if len(data) > MAX_SCAN:
+        raise RuntimeError("grösser als %d MB, wird nicht bereinigt" % (MAX_SCAN // (1024 * 1024)))
+    if b"\0" in data:
+        raise RuntimeError("Binärdatei oder UTF-16, wird nicht bereinigt")
+    bom = data.startswith(b"\xef\xbb\xbf")
+    try:
+        text = data[3:].decode("utf-8") if bom else data.decode("utf-8")
+    except UnicodeDecodeError:
+        raise RuntimeError("nicht als UTF-8 lesbar, kann nicht bereinigt werden")
+    cleaned, changes = red.clean(text)
+    out_data = cleaned.encode("utf-8")
+    return (b"\xef\xbb\xbf" + out_data if bom else out_data), changes
+
+
 # ---------------------------------------------------------------- Ablauf
-def plan(source, target, pats):
+def forced(force, rel):
+    """--erzwingen: None = aus, [] = alle Dateien, sonst Pfade (Ordner oder Datei, ohne Gross/Klein)."""
+    if force is None:
+        return False
+    low = rel.lower()
+    return not force or any(low == f or low.startswith(f + "/") for f in force)
+
+
+def plan(source, target, pats, red, force=None):
     with open(os.path.join(source, ".gitignore"), encoding="utf-8-sig") as r:
         rules = parse_rules(r.readlines())
     src_files, src_dirs, src_links = walk(source, rules, skip_git=True)
@@ -289,25 +461,57 @@ def plan(source, target, pats):
     personal = []
     nested = [rel for rel in src_files.values() if rel.lower().endswith("/.gitignore")]
     hashes = {}
+    # Bereinigte Kopien (DEC-394): rel -> (Bytes, Änderungen); geprüft wird der bereinigte Inhalt
+    redacted, leftover = {}, []
     for rel in src_files.values():
         full = os.path.join(source, rel)
-        if pats and (any(p.search(rel) for p in pats) or any(p.search(file_text(full)) for p in pats)):
+        scan = None
+        if needs_redaction(rel):
+            with open(full, "rb") as f:
+                data = f.read()
+            try:
+                cleaned, changes = redact_bytes(data, red)
+            except RuntimeError as e:
+                leftover.append((rel, str(e)))
+                continue
+            redacted[rel] = (cleaned, changes)
+            scan = cleaned.decode("utf-8", errors="replace")
+            for what in red.leftovers(scan):
+                leftover.append((rel, what))
+        else:
+            scan = file_text(full)
+        if pats and (any(p.search(rel) for p in pats) or any(p.search(scan) for p in pats)):
             personal.append(rel)
+
+    def source_hash(rel):
+        if rel in redacted:
+            return hashlib.sha256(redacted[rel][0]).hexdigest()
+        return sha256(os.path.join(source, rel))
+
+    def unchanged(rel, dst):
+        if rel not in redacted:
+            return same_content(os.path.join(source, rel), dst)
+        data = redacted[rel][0]
+        try:
+            if os.path.getsize(dst) != len(data):
+                return False
+        except OSError:
+            return False
+        return sha256(dst) == hashlib.sha256(data).hexdigest()
 
     copy, replace, delete, case_fix = [], [], [], []
     for key, rel in sorted(src_files.items()):
-        s = os.path.join(source, rel)
         if key not in dst_files:
             copy.append(rel)
-            hashes[rel] = sha256(s)
+            hashes[rel] = source_hash(rel)
             continue
         drel = dst_files[key]
         if drel != rel:
             case_fix.append((drel, rel))
-            hashes[rel] = sha256(s)
-        elif not same_content(s, os.path.join(target, drel)):
+            hashes[rel] = source_hash(rel)
+        elif forced(force, rel) or not unchanged(rel, os.path.join(target, drel)):
             replace.append(rel)
-            hashes[rel] = sha256(s)
+            hashes[rel] = source_hash(rel)
     for key, rel in sorted(dst_files.items()):
         if key not in src_files:
             delete.append(rel)
@@ -317,6 +521,7 @@ def plan(source, target, pats):
         "copy": copy, "replace": replace, "delete": delete, "case_fix": case_fix, "empty_dirs": empty_dirs,
         "blocked": blocked, "personal": personal, "src_links": src_links, "dst_links": dst_links,
         "dst_count": len(dst_files), "nested": nested, "hashes": hashes,
+        "redacted": redacted, "leftover": leftover,
     }
 
 
@@ -339,12 +544,15 @@ def safe_target_path(target, rel):
     return full
 
 
-def write_checked(src, dst, expected, target, remove_first=None):
+def write_checked(src, dst, expected, target, remove_first=None, red=None):
     """Liest die Quelle einmal, prüft den Hash aus dem Probelauf (Datei inzwischen geändert -> Abbruch) und
     schreibt genau diese Bytes über eine Zwischendatei. remove_first: alte Datei (andere Schreibweise),
-    erst nach erfolgreicher Zwischendatei entfernt."""
+    erst nach erfolgreicher Zwischendatei entfernt. red: Datei vorher bereinigen (DEC-394); der Hash
+    gilt dann für den bereinigten Inhalt."""
     with open(src, "rb") as f:
         data = f.read()
+    if red is not None:
+        data = redact_bytes(data, red)[0]
     if hashlib.sha256(data).hexdigest() != expected:
         raise RuntimeError("Datei hat sich seit der Prüfung geändert, bitte erneut starten: " + src)
     os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -362,15 +570,17 @@ def write_checked(src, dst, expected, target, remove_first=None):
     os.replace(tmp, dst)
 
 
-def execute(p, source, target):
+def execute(p, source, target, red):
     for rel in p["copy"] + p["replace"]:
-        write_checked(os.path.join(source, rel), safe_target_path(target, rel), p["hashes"][rel], target)
+        write_checked(os.path.join(source, rel), safe_target_path(target, rel), p["hashes"][rel], target,
+                      red=red if rel in p["redacted"] else None)
         out("  %s  %s" % ("NEU     " if rel in p["copy"] else "ERSETZT ", rel))
     for old, new in p["case_fix"]:
         old_full, new_full = safe_target_path(target, old), safe_target_path(target, new)
         if os.path.dirname(old).lower() == os.path.dirname(new).lower() and os.path.dirname(old) != os.path.dirname(new):
             out("  Hinweis: Ordner im Ziel in anderer Schreibweise, bitte von Hand angleichen: %s -> %s" % (old, new))
-        write_checked(os.path.join(source, new), new_full, p["hashes"][new], target, remove_first=old_full)
+        write_checked(os.path.join(source, new), new_full, p["hashes"][new], target, remove_first=old_full,
+                      red=red if new in p["redacted"] else None)
         out("  SCHREIBUNG  %s -> %s" % (old, new))
     for rel in p["delete"]:
         full = safe_target_path(target, rel)
@@ -403,6 +613,11 @@ def main():
     ap.add_argument("--protokoll", default=None, help="Protokolldatei (Standard: tmp im Projekt)")
     ap.add_argument("--ohne-suchmuster", dest="ohne_suchmuster", action="store_true",
                     help="ohne private_patterns.txt spiegeln (nur ausnahmsweise)")
+    ap.add_argument("--erzwingen", nargs="*", default=None, metavar="PFAD",
+                    help="vorhandene Dateien im Ziel auch bei gleichem Inhalt ersetzen; ohne PFAD alle, "
+                         "sonst nur unter diesen Pfaden (z. B. docs/ .claude/)")
+    ap.add_argument("--zeige-bereinigt", dest="zeige_bereinigt", action="store_true",
+                    help="bereinigte Stellen unter .claude/ und docs/ mit vorher/nachher zeigen (nur lokal)")
     a = ap.parse_args()
     # Aufgelöst (Junctions, Symlinks, Kurznamen), damit die Prüfungen unten nicht umgangen werden
     if is_link(os.path.abspath(a.ziel)):
@@ -455,11 +670,50 @@ def main():
     out("Quelle: " + source)
     out("Ziel:   " + target + "  (Klon: " + git_root + ")")
 
-    p = plan(source, target, pats)
+    red = Redactions(source)
+    if red.user_short:
+        out("WARNUNG: Benutzer- bzw. Profilname kürzer als 3 Zeichen: dafür werden nur Pfade C:\\Users\\<Name> "
+            "ersetzt und geprüft, nicht jedes Vorkommen.")
+    # Originalzeilen (--zeige-bereinigt) nur im Probelauf und das Protokoll nie im Ziel (sonst käme es in den Klon)
+    if a.zeige_bereinigt and a.ausfuehren:
+        out("FEHLER: --zeige-bereinigt nur im Probelauf (ohne --ausfuehren).")
+        return 1
+    if a.protokoll and (inside(a.protokoll, git_root) or
+                        inside(os.path.realpath(os.path.dirname(os.path.abspath(a.protokoll))), git_root)):
+        out("FEHLER: Protokoll darf nicht im GitHub-Klon liegen: " + a.protokoll)
+        return 1
+    force = None
+    if a.erzwingen is not None:
+        force = [x.replace("\\", "/").strip("/").lower() for x in a.erzwingen if x.strip("\\/ ")]
+        out("Erzwingen: vorhandene Dateien werden ersetzt (%s)" % (", ".join(force) if force else "alle"))
+    p = plan(source, target, pats, red, force)
     if p["nested"]:
         out("ABBRUCH: weitere .gitignore unterhalb der Wurzel werden nicht ausgewertet: " + ", ".join(p["nested"]))
         write_log(source, a.protokoll)
         return 1
+    if p["redacted"] and not red.loaded:
+        out("ABBRUCH: %s fehlt: Dateien unter %s werden ohne Regeln nicht gespiegelt (nichts geändert)."
+            % (REDACT_RULES_FILE.replace("\\", "/"), " und ".join(REDACT_PREFIXES)))
+        write_log(source, a.protokoll)
+        return 1
+    if p["leftover"]:
+        out("ABBRUCH: nach der Bereinigung ist noch Sensibles vorhanden (nichts geändert):")
+        for rel, what in p["leftover"]:
+            out("  %s: %s" % (rel, what))
+        out("Regeln in %s ergänzen oder die Datei anpassen." % REDACT_RULES_FILE.replace("\\", "/"))
+        write_log(source, a.protokoll)
+        return 1
+    changed_files = [(rel, ch) for rel, (data, ch) in sorted(p["redacted"].items()) if ch]
+    if changed_files:
+        out("Bereinigt (nur die Kopie, %s): %d Dateien" % (" und ".join(REDACT_PREFIXES), len(changed_files)))
+        for rel, ch in changed_files:
+            out("  %-60s %d Stellen" % (rel, len(ch)))
+            if a.zeige_bereinigt:
+                for no, before, after in ch:
+                    out("    Zeile %d vorher:  %s" % (no, before.rstrip("\r\n")))
+                    out("    Zeile %d nachher: %s" % (no, "(entfernt)" if after is None else after.rstrip("\r\n")))
+    for no in red.unused():
+        out("WARNUNG: Regel in Zeile %d von %s greift in keiner Datei mehr." % (no, REDACT_RULES_FILE.replace("\\", "/")))
     if p["blocked"] or p["personal"]:
         out("ABBRUCH: geheime bzw. persönliche Dateien würden übertragen (nichts geändert):")
         for rel in p["blocked"]:
@@ -523,7 +777,7 @@ def main():
                 write_log(source, a.protokoll)
                 return 2
     try:
-        execute(p, source, target)
+        execute(p, source, target, red)
     except Exception as e:
         out("ABBRUCH mitten im Lauf: %s (bereits Erledigtes steht oben; ein neuer Lauf setzt fort)" % e)
         write_log(source, a.protokoll)

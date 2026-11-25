@@ -9,11 +9,11 @@ Getroffene Entscheidungen zu STEFFLIX, Desktop und Android-App mit Begründung, 
 | Status | Anzahl |
 |---|---|
 | Proposed | 4 |
-| Accepted | 47 |
+| Accepted | 57 |
 | Implemented | 268 |
 | Rejected | 29 |
 | Superseded | 32 |
-| **Total** | **380** |
+| **Total** | **390** |
 
 ## Block 1: Session STEFFLIX 2.00 (Oktober 2026)
 
@@ -497,7 +497,7 @@ Status: Implemented
 Datum: 2026-11-13
 Kategorie: Sicherheit
 Entscheidung: `updater.exe`, `updateStefflix.exe` und `updateData.exe` bestimmen ihren Ordner über den Pfad der eigenen .exe (`program_dir`, bei Python-Skripten weiterhin das Arbeitsverzeichnis). `enter_stefflix_dir` bricht ab, wenn dort `start.html` oder `sflix_sys` fehlt. updateData.exe startet den Updater mit `subprocess` statt `os.system`.
-Begründung: Feldtest des Nutzers mit Installation auf `\\192.168.3.5\...`: Das alte updateStefflix.exe startet den Updater über die Kommandozeile, die Netzwerkpfade nicht unterstützt und nach `C:\Windows` ausweicht. Der Updater versuchte dort zu installieren (von Windows verweigert, Rückabwicklung griff). Danach hätte updateData.exe dort Dateien umbenennen können.
+Begründung: Feldtest des Nutzers mit Installation auf `\\<IP>\...`: Das alte updateStefflix.exe startet den Updater über die Kommandozeile, die Netzwerkpfade nicht unterstützt und nach `C:\Windows` ausweicht. Der Updater versuchte dort zu installieren (von Windows verweigert, Rückabwicklung griff). Danach hätte updateData.exe dort Dateien umbenennen können.
 Alternativen: Weiter dem Arbeitsverzeichnis vertrauen (`os.chdir(os.getcwd())`) – verworfen.
 Konsequenzen: Wirkt erst nach neuem Build und Push. Mit simuliertem Programm und falschem Arbeitsverzeichnis getestet, nicht mit gebauter .exe auf einem echten Netzwerkpfad.
 Betroffene Komponenten: `sflix_update.py` (`program_dir`, `enter_stefflix_dir`), `updater.py`, `updateStefflix.py`, `getfilepath.py`
@@ -1317,7 +1317,7 @@ Kategorie: UI
 Entscheidung: Jedes Band hat „Alle anzeigen“. Hat es eine eigene Seite (Kategorien der Startseite, Staffelbänder), führt der Link dorthin; sonst öffnet ein Knopf die Rasteransicht `#cardGrid` (Titel, Anzahl, Schliessen-Knopf, Esc). Die Rasteransicht verschiebt die echten Kacheln hinein und beim Schliessen zurück; ein Klick auf eine Kachel schliesst sie.
 Begründung: Wunsch des Nutzers; Wahl „Rasteransicht (Empfohlen)“. Das Verschieben der echten Kacheln erhält ihre Ereignisse ohne neuen Aufbau.
 Alternativen: Weitere im Dialog angebotene Varianten sind nicht überliefert.
-Konsequenzen: `closeOverlays` schliesst zuerst die Rasteransicht; im Bearbeitungsmodus ist der Link ausgeblendet.
+Konsequenzen: `closeOverlays` schliesst zuerst die Rasteransicht; im Bearbeitungsmodus ist der Link ausgeblendet. STEFFLIX 2.9.7 (SFLIX-20261125-154, Benutzer): Das Raster hat einen eigenen Verlaufseintrag (history.state.sflixGrid); Zurueck (Android-Taste, Maus, Browser) schliesst zuerst das Raster. X/Esc/Kachel entfernen den Eintrag (history.back, skipGridPopState); ein Seitenwechsel aus dem Raster ersetzt ihn (navigateTo, player.js). STEFFLIX 2.9.8 (SFLIX-20261125-156): Eintrag heisst jetzt {sflixOverlay: grid} (main.js pushOverlayHistory/popOverlayHistory/isOverlayHistoryEntry, gemeinsam mit Player-Menues, DEC-393); closeCardGrid stellt die Scrollposition von vor dem Oeffnen wieder her.
 Betroffene Komponenten: `sflix_sys\js\cards.js` (`createCardRow`, `openCardGrid`, `closeCardGrid`), `sflix_sys\js\ui.js` (`closeOverlays`), `sflix_sys\sflix.css` (`#cardGrid`, `.rowLink`)
 Abhängigkeiten: DEC-105
 
@@ -1929,12 +1929,12 @@ Abhängigkeiten: DEC-145, DEC-174
 
 ## Weboberfläche (STEFFLIX)
 
-### DEC-147: Wärmerer Rotton, kein Bezug zu einem bekannten Streamingdienst
+### DEC-147: Wärmerer Rotton
 Status: Implemented
 Datum: 2026-11-20 (Session: 2026-10-29)
 Kategorie: UI
-Entscheidung: Rot `#e8261a`, dunkel `#a81a0f` (Variante A) in Weboberfläche, Logo, Animation und Updater. Texte für Nutzer sprechen von „bekannten Streamingdiensten“ statt einen Dienst zu nennen. Der Grund der Farbänderung erscheint nicht im Changelog.
-Begründung: Rechtliche Frage des Nutzers zur Ähnlichkeit mit einem bekannten Dienst; Wahl des Nutzers.
+Entscheidung: Rot `#e8261a`, dunkel `#a81a0f` (Variante A) in Weboberfläche, Logo, Animation und Updater.
+Begründung: Wahl des Nutzers.
 Alternativen: Weitere Farbvarianten (nicht gewählt).
 Konsequenzen: Farben sind als CSS-Variable `--sflix-accent` und als `Branding.Red`/`DarkRed` festgelegt.
 Betroffene Komponenten: `sflix.css`, `sflixLogo.svg`/`.png`, `splash.svg`, `Branding.cs`, `InstallForm.cs`, `news.txt`
@@ -5363,6 +5363,28 @@ Konsequenzen: –
 Betroffene Komponenten: –
 Abhängigkeiten: –
 
+### DEC-385: Bildbetrachter: schnelleres Laden bei grossen Bildordnern und Zufallswiedergabe
+Status: Accepted
+Datum: 2026-11-24
+Kategorie: Performance
+Entscheidung: Zufallswiedergabe nutzt eine einmal gemischte Reihenfolge statt bei jedem Schritt die ganze Liste zu durchsuchen. Bilder werden in Bildschirmgroesse dekodiert; Vorrat zwei Bilder voraus, eines zurueck, fertig dekodiert. Ist das naechste Bild noch nicht bereit, bleibt das aktuelle stehen mit dezentem Ladeindikator. Vorschaubilder werden im Betrachter nicht verwendet (anderes Seitenverhaeltnis). Kacheln unter dem Bild: nur sichtbare zeichnen, mit Vorschaubildern, beim Bildwechsel nicht neu aufbauen. Zuerst messen (vorher/nachher).
+Begründung: Bei Ordnern mit tausenden Bildern von 2-3 MB lud das erste Bild sehr lange und jedes weitere mehrere Sekunden (Desktop und App); Grundlage fuer das Karussell.
+Alternativen: –
+Konsequenzen: Umsetzung STEFFLIX 2.9.4 (SFLIX-20261124-136): Reihenfolge der Zufallswiedergabe in shuffleState.order, neuer Speicherschluessel shuffleOrder (nur bei Aenderung geschrieben), Lage klein in shuffleState; alter Verlauf (history) wird uebernommen. Vorrat naechstes, uebernaechstes und vorheriges Bild nacheinander geladen und mit decode() dekodiert (keine eigene Verkleinerung: das Bild bleibt ein img-Element, fuer Zoom und Karussell); nicht bereites Bild ersetzt das laufende erst nach dem Dekodieren, Ladeindikator imageLoading. Kacheln: Vorschaubild-Suche mit Nachschlagetabelle je Preview-Ordner (vorher je Kachel alle Vorschaubilder, 2000 Kacheln 795 ms auf dem PC), Originalfotos ohne Vorschaubild nicht vorgeladen, Baender ueber 150 Medien mit content-visibility. Playliste nur bei Aenderung gespeichert, Sortierung zwischengespeichert. Speicher-Schlüssel shuffleState und shuffleOrder in docs/INTERFACES.md 8.1 nachgeführt (SFLIX-20261124-144). App 1.3.6/STEFFLIX 2.9.6 (SFLIX-20261125-152): Kachelbilder ?sflixThumb laden in der App nur fuer sichtbare Kacheln ueber eine Warteschlange (cards.js queueAppThumbnail, hoechstens 3 gleichzeitig, beim Seitenwechsel geleert); FileCache.makeThumbnail liest Fotos bis 24 MB einmal ganz.
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+### DEC-386: Bildbetrachter: Karussell beim Wischen und Zoom
+Status: Accepted
+Datum: 2026-11-24
+Kategorie: UI
+Entscheidung: Touch: Das Bild folgt dem Finger, das Nachbarbild erscheint erst beim Ziehen (in der Ruhe unsichtbar). Blaettern ab 15 Prozent der Bildbreite oder bei schnellem Wisch, sonst zurueckfedern; senkrechte Wische blaettern nicht; nicht geladenes Nachbarbild als dunkle Flaeche mit Ladeindikator. Pfeiltasten wechseln ohne Animation. Zoom im Betrachter: zwei Finger bis 5-fach, Doppeltipp 2,5-fach bzw. zurueck, gezoomt verschiebt ein Wisch statt zu blaettern, Rand federt zurueck, naechstes Bild ungezoomt, beim Zoomen Original in voller Aufloesung nachladen. Desktop-Maus: Mausrad zoomt an der Mausposition, Ziehen verschiebt, Doppelklick wechselt. Bei Videos bleibt Doppeltipp Vollbild. Umsetzung erst nach DEC-385, wenn ein Wechsel aus dem Vorrat unter 0,3 s liegt.
+Begründung: Wunsch des Benutzers: natuerliches Blaettern auf Touchscreens und Zoomen in der App; beides braucht dieselbe Gestensteuerung, WebView-Seitenzoom ist ungeeignet.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: DEC-385
+
 ## A. Offene Entscheidungen
 
 ## B. Änderungsbedarf an bestehenden Entscheidungen
@@ -5398,6 +5420,169 @@ Alternativen: –
 Konsequenzen: Umsetzung Desktop 4.2.8 (SFLIX-20261124-129): Die Einstellung check.dupes ist beim ersten Start aus. War das frühere Tool gewählt (task.dupes), wird es einmalig als Medien prüfen mit Duplikate übernommen. Die Aufgabe dupes bleibt für die Befehlszeile (--run, --headless) als Medien prüfen nur mit Duplikate. Die Duplikatsuche übernimmt die Dateiliste der Prüfung, ausser im Ergebnis wurde gelöscht oder konvertiert. Mit mehreren gewählten Ordnern läuft sie je Ordner.
 Betroffene Komponenten: –
 Abhängigkeiten: DEC-379
+
+### DEC-387: Tools: Details nach Update-Neustart erhalten
+Status: Accepted
+Datum: 2026-11-24
+Kategorie: UI
+Entscheidung: Vor dem Neustart nach einem Update sichert das Programm die Details des laufenden Laufs. Die neue Version zeigt sie beim ersten Start einmal zuoberst in den Details an (Trennzeile 'Ausgabe vor dem Neustart (Update auf <Version>)'), danach folgt die Ausgabe der weiterlaufenden Aufgaben; die Sicherung wird danach geloescht. Ist das Protokoll in eine Datei eingeschaltet, wird die Ausgabe auch dort festgehalten.
+Begründung: Nach dem automatischen Neustart waren die Details leer, die Ausgabe des Updates war nie zu sehen.
+Alternativen: –
+Konsequenzen: Umsetzung Desktop 4.2.9 (SFLIX-20261124-137): Sicherung in sflix_sys/neustart_details.log (Installationsordner, je Installation getrennt, gitignored, hoechstens 512 KB, nicht im Release-Ordner), geschrieben unmittelbar vor SelfUpdate.Restart; die neue Version zeigt sie in OnShown zuoberst mit Trenn- und Schlusszeile und loescht sie; aelter als 30 min oder unlesbar: still verworfen. updater.log erhaelt sie nicht doppelt (die alte Version schreibt sie vor dem Neustart dorthin). Datei neustart_details.log in docs/INTERFACES.md Abschnitt 4 nachgeführt (SFLIX-20261124-144).
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+### DEC-388: Eigenes Bild-in-Bild: dezenter Rand
+Status: Accepted
+Datum: 2026-11-24
+Kategorie: UI
+Entscheidung: Das eigene BiB-Fenster (DocPipWindow) erhaelt statt des sichtbaren Rands aus Form-Padding (ResizeBorder, 6 px skaliert) einen unsichtbaren Vergroesserungsbereich von 6 px innerhalb des Fensters (ueber dem Bildrand). Sichtbar bleibt nur eine 1-px-Linie in dezentem Dunkelgrau, mit abgerundeten Ecken unter Windows 11. Vergroessern und Verschieben bleiben wie bisher moeglich.
+Begründung: Der Rand wirkte bei hoher Bildschirmskalierung (9-12 px) zu dick.
+Alternativen: Vergroesserungsbereich ausserhalb der sichtbaren Flaeche wie bei normalen Windows-11-Fenstern: verworfen (Benutzer 25.11.2026, SFLIX-20261125-148), da nur mit echtem Fensterrahmen moeglich, den die WebView2-Bildflaeche abfaengt.
+Konsequenzen: Umsetzung Desktop 4.2.9 (SFLIX-20261124-140): Windows 11: DWMWA_WINDOW_CORNER_PREFERENCE (rund) und DWMWA_BORDER_COLOR (dunkelgrau 3a3a42), ohne eigenen Rand; Windows 10: Padding 1 px in derselben Farbe. Unsichtbarer Vergroesserungsbereich: player.js erkennt 6 px am Rand des BiB-Dokuments (Cursor), meldet pipResize mit edge, STEFFLIX.exe startet die Groessenaenderung mit WM_NCLBUTTONDOWN (statt WS_THICKFRAME/WM_NCCALCSIZE, da WebView2 die Fensterflaeche ganz belegt). Gemessen bei 250 %: 3 Bildpunkte statt 15. Brücke pipResize in docs/INTERFACES.md Abschnitt 1 nachgeführt (SFLIX-20261124-144).
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# App 1.3.4 (Arbeit vom 25.11.2026)
+
+## Entscheidungen
+
+### DEC-389: App: Start-Animation im Hochformat bildschirmfuellend
+Status: Accepted
+Datum: 2026-11-25
+Kategorie: UI
+Entscheidung: Die App erhaelt eine eigene Hochformat-Fassung der Start-Animation (9:16) neben splash.svg. Ablauf, Logo und Farben gleich; nur Hintergrund, Lichtschein und Verlauf reichen bis an die Raender, keine neuen Elemente; Logo etwas groesser (ca. 70 Prozent der Bildschirmbreite). Auswahl nach Ausrichtung: Hochformat neue Fassung, Querformat und quadratnahe Bildschirme die bisherige. Ladebildschirm mit Ring unveraendert.
+Begründung: Im Hochformat fuellte die quadratische Animation nur die Mitte, oben und unten blieben dunkle Streifen.
+Alternativen: –
+Konsequenzen: Umsetzung App 1.3.4 (SFLIX-20261125-145): assets/splash_portrait.svg im Format 9:20 (deckt 9:16 bis 9:21 ab, Rest in Hintergrundfarbe), Ablauf und Farben wie splash.svg, Logo 1.55 statt 0.92, Schriftzug 12 % groesser; Auswahl in splash.html per picture/source (orientation: portrait und max-aspect-ratio 4/5). splash.svg wird nicht aus einer Vorlage erzeugt; die Hochformat-Fassung wird bei Aenderungen von Hand nachgefuehrt. Benutzer 25.11.2026 (SFLIX-20261125-152): Auch Tablets im Hochformat (z. B. 1600x2560, 5:8) erhalten die Hochformat-Fassung (Grenze Seitenverhaeltnis unter 4:5), so gewollt.
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# Regelwerk (Arbeit vom 25.11.2026)
+
+## Entscheidungen
+
+### DEC-390: Planung erstellt ihr eigenes Ticket vor den ausgeloesten Auftraegen
+Status: Accepted
+Datum: 2026-11-25
+Kategorie: Arbeitsweise
+Ticket: SFLIX-20261125-147
+Entscheidung: Loest die Planung Auftraege an andere Rollen aus, erstellt sie zuerst ihr eigenes Ticket (erstellen -An Planung, IN_PROGRESS), erfasst Entscheide mit --ticket auf dieses Ticket, erstellt dann die Auftraege und schliesst das eigene Ticket zuletzt mit abschliessen ab. erledigt nur fuer eigene Arbeit ohne Folgeauftraege.
+Begründung: Bisher hatte das ausloesende Ticket eine hoehere Nummer als die ausgeloesten Auftraege; fuer Menschen schwer nachvollziehbar.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# STEFFLIX 2.9.6 (Arbeit vom 25.11.2026)
+
+## Entscheidungen
+
+### DEC-391: App: aktuelle Android System WebView als Mindestanforderung
+Status: Accepted
+Datum: 2026-11-25
+Kategorie: Android
+Ticket: SFLIX-20261125-152
+Entscheidung: Die App setzt neben Android 8 (minSdk 26) eine aktuelle Android System WebView voraus (Chrome 85 oder neuer). Aeltere, nicht aktualisierte WebViews (z. B. AVD API 29 mit Chrome 74, dort fehlt String.replaceAll) werden nicht unterstuetzt; der Code der Weboberflaeche bleibt unveraendert. Festgehalten in README.md und docs/ANDROID.md.
+Begründung: Auf echten Geraeten wird die WebView ueber den Play Store aktualisiert; Rueckportierung fuer alte WebViews gaebe keine Garantie (weitere neuere Sprachmittel) und kostete Aufwand. Alternative replaceAll an 4 Stellen ersetzen verworfen.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# STEFFLIX 2.9.7 (Arbeit vom 25.11.2026)
+
+## Entscheidungen
+
+### DEC-392: Blaettern im Player ersetzt den Verlaufseintrag
+Status: Accepted
+Datum: 2026-11-25
+Kategorie: UI
+Ticket: SFLIX-20261125-154
+Entscheidung: Ein Medienwechsel im Player (Weiter/Zurueck, Wischen, Autoplay, Kachel unter dem Player) ersetzt den Verlaufseintrag (history.replaceState) statt einen neuen anzulegen. Ein Zurueck fuehrt direkt zur Seite vor dem Player. Gilt fuer Bilder, Videos und Musik.
+Begründung: Nach vielen Bildern brauchte es ebenso viele Zurueck bis zur Ordnerseite (Pruefung SFLIX-20261125-153). Benutzerwahl Ein Eintrag (Empfohlen); verworfen: so lassen, nur Bilder.
+Alternativen: –
+Konsequenzen: –
+Betroffene Komponenten: –
+Abhängigkeiten: –
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# STEFFLIX 2.9.8 (Arbeit vom 25.11.2026)
+
+## Entscheidungen
+
+### DEC-393: Zurueck schliesst zuerst Player-Menues und das Autoplay-Fenster
+Status: Accepted
+Datum: 2026-11-25
+Kategorie: UI
+Ticket: SFLIX-20261125-156
+Entscheidung: Wie die Rasteransicht (DEC-106) erhalten die Player-Menues (Autoplay- und Zahnrad-Menue der Steuerleiste) und das Autoplay-Fenster (#settingsBox, Knopf Autoplay im Player) einen eigenen Verlaufseintrag {sflixOverlay: Art} mit derselben Adresse. Zurueck (Android-Taste, Maus, Browser) schliesst zuerst das offene Menue bzw. Fenster. Schliessen ueber X, Esc oder Antippen entfernt den Eintrag (history.back, skipOverlayPopState); Seiten- und Medienwechsel ersetzen ihn. Andere Fenster (Einstellungen, Suche, Feedback, Hilfe) bleiben ohne Eintrag.
+Begründung: Pruefung SFLIX-20261125-155: Android-Zurueck bei offenem Autoplay-Dialog verliess den Player. Benutzerwahl Player-Menues (Empfohlen); verworfen: alle Fenster, so lassen.
+Alternativen: –
+Konsequenzen: STEFFLIX 2.9.9 (SFLIX-20261125-159): Klick daneben (player.js initPlayerMenuOutsideClose, ui.js initModalOutsideClose) nur mit der Haupttaste, damit die Maus-Zurueck-Taste wie die Android-Taste nur das Menue schliesst. Medienwechsel bei offenem Menue oder Autoplay-Fenster schliesst es und entfernt dessen Eintrag (main.js replaceOverlayWithMedia: Overlay-Eintrag auf neue Adresse, history.back, danach Player-Eintrag per replaceState auf das neue Medium, pendingOverlayReplaceUrl); ein Zurueck fuehrt zur Seite vor dem Player.
+Betroffene Komponenten: –
+Abhängigkeiten: DEC-106
+
+### DEC-394: .claude beim Spiegeln in den GitHub-Klon bereinigen
+Status: Accepted
+Datum: 2026-11-25
+Kategorie: Arbeitsweise
+Ticket: SFLIX-20261122-073
+Entscheidung: sync_github.py bereinigt Dateien unter .claude nur in der Kopie im GitHub-Klon; Originale im Projekt und App-Code (start.html, sflix_sys, SFLIX_Tools, docs) werden 1:1 uebertragen. Regeln (Zeile entfernen, Begriff ersetzen) in SFLIX_Tools\Doku\public_redactions.txt, ueberall per .gitignore und Sperrliste gesperrt. Benutzername aus %USERNAME% zur Laufzeit (Pfade C:\Users\<Name>\ -> %USERPROFILE%\, sonst <Benutzer>), IP-Adressen ausser 127.0.0.1/0.0.0.0 -> <IP>. Nach der Bereinigung erneute Pruefung (persoenliche Suchmuster, verbotene Begriffe, IP), Rest -> Abbruch; nicht greifende Regel -> Warnung. Probelauf zeigt Anzahl je Datei, --zeige-bereinigt Vorher/Nachher. .gitignore schliesst statt .claude/ nur testenv, settings.local.json, old, archiv, GIFs und Beispielvideo aus.
+Begründung: Das Regelwerk soll oeffentlich werden, ohne dass interne Regeln, Benutzername oder Netzwerkadressen sichtbar sind und ohne eine zweite, abweichende Fassung pflegen zu muessen.
+Alternativen: Bereinigte Fassung direkt im Projekt pflegen (verworfen: Regelwerk waere fuer die Rollen unvollstaendig); Regeln im Skript (verworfen: Skript ist oeffentlich).
+Konsequenzen: Umsetzung SFLIX-20261125-158: Auf Wunsch des Benutzers (25.11.2026) wird neben .claude auch docs bereinigt (REDACT_PREFIXES). Regeldatei-Format: - Muster (Zeile entfernen), = Muster -> Ersatz, ! Muster (verboten, Sicherheitsnetz). Vierteilige Versionsnummern nach 'Version' gelten nicht als IP. Neue Option --erzwingen [PFAD ...] ersetzt vorhandene Dateien im Ziel auch bei gleichem Inhalt (Benutzerwunsch, docs ist im Klon bereits vorhanden). Eine fehlende Regeldatei bricht ab, wenn Dateien unter .claude oder docs uebertragen wuerden. Nach security-auditor (SFLIX-20261125-158): .gitignore fuehrt .claude als Positivliste (.claude/* mit Ausnahmen CLAUDE.md, settings.json, launch.json, agents/, roles/, skills/); Binaerdateien, UTF-16 und Dateien ueber 5 MB unter .claude/docs brechen ab; Sicherheitsnetz prueft auch die Muster der Entfernen-/Ersetzen-Regeln; Benutzername zusaetzlich aus dem Profilordner; --zeige-bereinigt nur im Probelauf, Protokoll nie im Klon; private_patterns*.txt und DECISIONS-intern*.md zusaetzlich unverankert gesperrt.
+Betroffene Komponenten: Werkzeuge
+Abhängigkeiten: DEC-362, DEC-363, DEC-365
 
 ## A. Offene Entscheidungen
 

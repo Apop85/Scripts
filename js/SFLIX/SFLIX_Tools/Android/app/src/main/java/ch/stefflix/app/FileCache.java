@@ -291,7 +291,7 @@ final class FileCache {
             // Nicht in der Liste (z.B. andere Unicode-Schreibweise eines Umlauts): direkt versuchen
             return readDirect(rel);
         }
-        if (meta.size > MAX_FILE) return null;
+        if (meta.size > maxFor(rel)) return null;
         String memKey = shareId + "/" + rel.toLowerCase(Locale.ROOT);
         Entry e = memory.get(memKey);
         if (e != null && e.meta.same(meta)) {
@@ -332,11 +332,139 @@ final class FileCache {
         File f = smb.open(rel);
         try {
             long size = SmbSource.size(f);
-            if (size > MAX_FILE) return null;
+            if (size > maxFor(rel)) return null;
             final Listener l = listener;
             byte[] data = SmbSource.readAll(f, size, l == null ? null : (done, total) -> l.onNetworkRead(rel, done, total));
             LoadStats.network(data.length);
             return data;
+        } finally {
+            SmbSource.closeLater(f);
+        }
+    }
+
+    /**
+     * Mediendateien ausserhalb der Programmordner (Fotos, Musik …) über 1 MB nicht in den Speicher lesen,
+     * sondern streamen (SFLIX-20261125-148): Eine Ordnerseite mit tausenden 3-MB-Fotos forderte viele
+     * gleichzeitig an, die Puffer füllten den Java-Speicher (OutOfMemoryError). Vorschaubilder sind klein.
+     */
+    static final long MEDIA_MEMORY_MAX = 1024L * 1024;
+
+    private static long maxFor(String rel) {
+        int slash = rel.lastIndexOf('/');
+        return isProgramFolder(slash < 0 ? "" : rel.substring(0, slash)) ? MAX_FILE : MEDIA_MEMORY_MAX;
+    }
+
+    // ---- Kachelbilder (verkleinerte Fotos) ----
+
+    /** Höchstens zwei Fotos gleichzeitig verkleinern (Speicher, Bandbreite). */
+    private static final java.util.concurrent.Semaphore thumbSlots = new java.util.concurrent.Semaphore(2);
+
+    /**
+     * Verkleinertes Foto für eine Kachel (Breite mindestens width, JPEG), auf dem Gerät zwischengespeichert.
+     * Für Fotos ohne Vorschaubild, deren Kachel sonst das Original (oft mehrere MB) zeigt. null: nicht
+     * möglich (dann das Original).
+     */
+    byte[] thumbnail(String rel, int width) throws IOException {
+        Found found = lookup(rel);
+        SmbSource.Meta meta = found.meta;
+        if (meta == null) return null;
+        String key = rel + "#thumb" + width;
+        String memKey = shareId + "/" + key.toLowerCase(Locale.ROOT);
+        Entry e = memory.get(memKey);
+        if (e != null && e.meta.same(meta)) return e.data;
+        java.io.File file = new java.io.File(dir, fileName(key, meta));
+        if (file.isFile() && file.length() > 0) {
+            byte[] data = readFile(file, (int) file.length());
+            if (data != null) {
+                //noinspection ResultOfMethodCallIgnored
+                file.setLastModified(System.currentTimeMillis());
+                remember(memKey, meta, data);
+                return data;
+            }
+        }
+        try {
+            thumbSlots.acquire();
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
+        byte[] data;
+        try {
+            data = makeThumbnail(rel, meta.size, width);
+        } finally {
+            thumbSlots.release();
+        }
+        if (data == null) return null;
+        LoadStats.network(meta.size);
+        remember(memKey, meta, data);
+        store(file, data);
+        return data;
+    }
+
+    /**
+     * Fotos bis zu dieser Grösse für die Verkleinerung einmal ganz in den Speicher lesen (SFLIX-20261125-152):
+     * Abmessungen, EXIF und Bild kommen dann aus demselben Puffer, statt Anfang und Datei mehrmals über das
+     * Netz zu lesen (rund ein Viertel weniger Daten je Kachel). Grössere werden gestreamt.
+     */
+    private static final long THUMB_READ_MAX = 24L * 1024 * 1024;
+
+    private byte[] makeThumbnail(String rel, long size, int width) throws IOException {
+        android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+        int rotation = 0;
+        File f = smb.open(rel);
+        try {
+            byte[] whole = null;
+            if (size > 0 && size <= THUMB_READ_MAX) {
+                whole = new byte[(int) size];
+                java.io.InputStream all = new SmbSource.RangeStream(f, 0, size);
+                int off = 0;
+                while (off < whole.length) {
+                    int n = all.read(whole, off, whole.length - off);
+                    if (n <= 0) break;
+                    off += n;
+                }
+                if (off < whole.length) return null;
+            }
+            // Abmessungen und Ausrichtung (EXIF) aus dem Anfang der Datei
+            o.inJustDecodeBounds = true;
+            if (whole != null) android.graphics.BitmapFactory.decodeByteArray(whole, 0, whole.length, o);
+            else android.graphics.BitmapFactory.decodeStream(new SmbSource.RangeStream(f, 0, size), null, o);
+            if (o.outWidth <= 0 || o.outHeight <= 0) return null;
+            // RangeStream nicht schliessen: close() schlösse die Datei für das Dekodieren danach
+            try {
+                java.io.InputStream in = whole != null ? new java.io.ByteArrayInputStream(whole, 0, (int) Math.min(size, 256 * 1024))
+                        : new SmbSource.RangeStream(f, 0, Math.min(size, 256 * 1024));
+                int orientation = new android.media.ExifInterface(in).getAttributeInt(
+                        android.media.ExifInterface.TAG_ORIENTATION, android.media.ExifInterface.ORIENTATION_NORMAL);
+                if (orientation == android.media.ExifInterface.ORIENTATION_ROTATE_90) rotation = 90;
+                else if (orientation == android.media.ExifInterface.ORIENTATION_ROTATE_180) rotation = 180;
+                else if (orientation == android.media.ExifInterface.ORIENTATION_ROTATE_270) rotation = 270;
+            } catch (IOException | RuntimeException ignored) {
+                // Ohne EXIF: wie gespeichert
+            }
+            int sample = 1;
+            int shorter = Math.min(o.outWidth, o.outHeight);
+            while (shorter / (sample * 2) >= width * 9 / 16) sample *= 2;
+            o.inJustDecodeBounds = false;
+            o.inSampleSize = sample;
+            android.graphics.Bitmap bmp = whole != null
+                    ? android.graphics.BitmapFactory.decodeByteArray(whole, 0, whole.length, o)
+                    : android.graphics.BitmapFactory.decodeStream(new SmbSource.RangeStream(f, 0, size), null, o);
+            whole = null;
+            if (bmp == null) return null;
+            if (rotation != 0) {
+                android.graphics.Matrix m = new android.graphics.Matrix();
+                m.postRotate(rotation);
+                android.graphics.Bitmap rotated = android.graphics.Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), m, true);
+                if (rotated != bmp) bmp.recycle();
+                bmp = rotated;
+            }
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 82, out);
+            bmp.recycle();
+            return out.toByteArray();
+        } catch (OutOfMemoryError oom) {
+            return null;
         } finally {
             SmbSource.closeLater(f);
         }

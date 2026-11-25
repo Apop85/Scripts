@@ -3,6 +3,10 @@ sflix_sys/install.js
 sflix_sys/license.js
 SFLIX_Tools/Lizenz/lizenzen.json
 SFLIX_Tools/Doku/private_patterns.txt
+# Regeln fuer die bereinigten Kopien beim Spiegeln (sync_github.py, DEC-394), an jedem Ort
+public_redactions*.txt
+private_patterns*.txt
+DECISIONS-intern*.md
 SFLIX_Tools/Android/signing/
 # Signaturschluessel der App und sein Passwort: zusaetzlich die Dateinamen (ohne Pfad, greifen in jedem
 # Ordner, auch wenn sich die Ordnerstruktur aendert)
@@ -28,6 +32,7 @@ sflix_sys/updater_info.js
 sflix_sys/folgen_cache.json
 sflix_sys/folgen_rueckgaengig.json
 sflix_sys/updater.log
+sflix_sys/neustart_details.log
 sflix_sys/medien_cache.json
 sflix_sys/downloads.json
 sflix_sys/damaged.js
@@ -38,12 +43,21 @@ sflix_sys/*.tmp
 *.old
 *.new
 
-# VORLAEUFIG (DEC-364): ganzer Ordner .claude ausgeschlossen, bis das Regelwerk fuer die
-# Veroeffentlichung bereinigt ist; danach diese Zeile entfernen (die Zeilen darunter bleiben)
-.claude/
-# Testumgebung (license.js, downloads.json, Pfade mit Benutzernamen) und lokale Claude-Einstellungen
+# Regelwerk .claude wird veroeffentlicht und beim Spiegeln bereinigt (DEC-394). Nur diese Teile
+# (Positivliste, neue Ordner von Claude Code bleiben so automatisch privat):
+.claude/*
+!.claude/CLAUDE.md
+!.claude/settings.json
+!.claude/launch.json
+!.claude/agents/
+!.claude/roles/
+!.claude/skills/
+# zusaetzlich ausgeschlossen: Testumgebung (license.js, downloads.json, Pfade mit Benutzernamen),
+# lokale Claude-Einstellungen, Bildschirmaufnahmen und Beispielvideos
 .claude/testenv/
 .claude/settings.local.json
+.claude/*.gif
+.claude/*.mp4
 SFLIX_Tools/PreviewMaker/make-previews.log
 
 # Build der Android-App
@@ -66,7 +80,7 @@ __pycache__/
 # Arbeitsordner der Rollen fuer temporaere Dateien (Messungen, Vergleiche; Ausnahme im Virenscanner)
 /tmp/
 
-# Zusammenarbeit der Rollen (Tickets) und interne Dokumentation (Eastereggs), nie pushen
+# Zusammenarbeit der Rollen (Tickets) und interne Dokumentation, nie pushen
 coordination/
 docs/intern/
 

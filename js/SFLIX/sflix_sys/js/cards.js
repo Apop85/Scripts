@@ -106,7 +106,21 @@ function createCard(container, options) {
                 mediaNode.replaceChild(createCardPlaceholder(options), image);
             }
         }, { once: true });
-        image.src = options.previewSrc;
+        var previewSrc = options.previewSrc;
+        if (options.originalPreview) {
+            if (window.StefflixApp) {
+                // App: verkleinertes Foto von der App statt des Originals (SFLIX-20261125-148)
+                previewSrc += (previewSrc.indexOf("?") < 0 ? "?" : "&") + "sflixThumb=640";
+            } else {
+                image.dataset.original = "true";
+            }
+        }
+        if (options.originalPreview && window.StefflixApp && window.IntersectionObserver) {
+            // Erst laden, wenn die Kachel sichtbar wird, sichtbare zuerst (SFLIX-20261125-152)
+            queueAppThumbnail(image, previewSrc);
+        } else {
+            image.src = previewSrc;
+        }
         image.alt = "";
         image.draggable = false;
         mediaNode.appendChild(image);
@@ -177,7 +191,9 @@ function createMediaCard(container, mediaPath, href, options) {
         placeholderIcon: getMediaIconName(mediaPath),
         // Gesehene Videos zeigen einen Haken statt des Fortschrittsbalkens
         progress: seen ? null : options.progress,
-        seed: mediaPath
+        seed: mediaPath,
+        // Foto ohne Vorschaubild: die Kachel zeigt das Original (oft mehrere MB)
+        originalPreview: previewSrc === mediaPath
     });
     card.dataset.media = mediaPath;
     setCardFavorite(card, getFavorites().includes(mediaPath));
@@ -224,14 +240,20 @@ function createFolderCard(container, folderLevels, options) {
         return null;
     }
     var node = getDataNode(folderLevels);
+    // Ohne eigenes Vorschaubild: bei Bilderordnern das erste Bild, sonst ein Vorschaubild von weiter unten
+    var previewSrc = resolvePreviewSrc(levelPath, "normal");
+    var firstImage = previewSrc == null ? getFirstImageInFolder(node) : null;
+    previewSrc = previewSrc || firstImage || getPreviewFromSubfolders(node, levelPath);
     var card = createCard(container, {
         href: href,
         title: folderLevels[folderLevels.length - 1],
         subtitle: options.subtitle != null ? options.subtitle : describeFolder(node),
-        // Ohne eigenes Vorschaubild: bei Bilderordnern das erste Bild, sonst ein Vorschaubild von weiter unten
-        previewSrc: resolvePreviewSrc(levelPath, "normal") || getFirstImageInFolder(node) || getPreviewFromSubfolders(node, levelPath),
+        previewSrc: previewSrc,
         placeholderIcon: getFolderIconName(node),
-        seed: levelPath
+        seed: levelPath,
+        // Erstes Foto als Titelbild ist ein Original (oft mehrere MB): in der App verkleinert, sonst
+        // nicht vorladen (SFLIX-20261125-154)
+        originalPreview: firstImage != null && previewSrc === firstImage
     });
     if (getSetting("showMarkers") && isFolderSeen(node)) {
         addCardLabel(card, "Gesehen", true);
@@ -442,6 +464,72 @@ function releaseRowBands() {
         window.removeEventListener("resize", handler);
     });
     rowResizeHandlers = [];
+    releaseAppThumbnails();
+}
+
+// ===================================================================
+// App: Kachelbilder von Fotos ohne Vorschaubild (?sflixThumb, SFLIX-20261125-152). Die App liest dafür
+// jedes Original ganz von der Quelle. Darum lädt nur, was sichtbar ist (oder knapp davor), höchstens
+// APP_THUMB_PARALLEL gleichzeitig. Wer wegscrollt, verlässt die Warteschlange; beim Seitenwechsel
+// (z. B. Bildbetrachter) wird sie geleert, damit die Bandbreite dem Betrachter gehört.
+// ===================================================================
+var APP_THUMB_PARALLEL = 3;
+var appThumbQueue = [];
+var appThumbActive = 0;
+var appThumbGeneration = 0;
+var appThumbObserver = null;
+
+function queueAppThumbnail(image, src) {
+    image.dataset.thumbSrc = src;
+    if (appThumbObserver == null) {
+        appThumbObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                var index = appThumbQueue.indexOf(entry.target);
+                if (entry.isIntersecting) {
+                    if (index < 0) {
+                        appThumbQueue.push(entry.target);
+                    }
+                } else if (index >= 0) {
+                    appThumbQueue.splice(index, 1);
+                }
+            });
+            pumpAppThumbnails();
+        }, { rootMargin: "150px" });
+    }
+    appThumbObserver.observe(image);
+}
+
+function pumpAppThumbnails() {
+    while (appThumbActive < APP_THUMB_PARALLEL && appThumbQueue.length > 0) {
+        startAppThumbnail(appThumbQueue.shift());
+    }
+}
+
+function startAppThumbnail(image) {
+    var generation = appThumbGeneration;
+    appThumbObserver.unobserve(image);
+    appThumbActive++;
+    var finish = function () {
+        image.removeEventListener("load", finish);
+        image.removeEventListener("error", finish);
+        if (generation === appThumbGeneration) {
+            appThumbActive--;
+            pumpAppThumbnails();
+        }
+    };
+    image.addEventListener("load", finish);
+    image.addEventListener("error", finish);
+    image.loading = "eager";
+    image.src = image.dataset.thumbSrc;
+}
+
+function releaseAppThumbnails() {
+    if (appThumbObserver != null) {
+        appThumbObserver.disconnect();
+    }
+    appThumbQueue = [];
+    appThumbActive = 0;
+    appThumbGeneration++;
 }
 
 function startTrackPreload(track) {
@@ -455,7 +543,9 @@ function startTrackPreload(track) {
             }
         });
     }, { root: track, rootMargin: "0px 200%" });
-    track.querySelectorAll("img.cardImage").forEach(function (image) {
+    // Originalfotos (ohne Vorschaubild) nicht vorladen: Sie lädt der Browser erst kurz vor dem Sichtbarwerden,
+    // sonst nähmen sie dem Bildbetrachter die Bandbreite weg (Netzlaufwerk, App; DEC-385)
+    track.querySelectorAll("img.cardImage:not([data-original])").forEach(function (image) {
         observer.observe(image);
     });
     trackPreloadObservers.push(observer);
@@ -470,7 +560,10 @@ function startTrackPreload(track) {
 var openGrid = null;
 
 function openCardGrid(section, title) {
-    closeCardGrid();
+    closeCardGrid(true);
+    // Vor dem Verschieben der Kacheln: Danach ist die Seite oft kürzer als das Fenster und der
+    // Browser setzt die Scrollposition auf 0 (SFLIX-20261125-156)
+    var scrollTop = window.scrollY;
     var overlay = document.createElement("div");
     overlay.id = "cardGrid";
     overlay.setAttribute("role", "dialog");
@@ -511,14 +604,21 @@ function openCardGrid(section, title) {
     overlay.appendChild(grid);
     document.body.appendChild(overlay);
     document.body.classList.add("gridOpen");
-    openGrid = { overlay: overlay, moved: moved, section: section };
+    openGrid = { overlay: overlay, moved: moved, section: section, scrollTop: scrollTop };
     closeButton.focus({ preventScroll: true });
+    // Eigener Verlaufseintrag: Zurück (Android-Taste, Maus, Browser) schliesst zuerst das Raster
+    // (main.js pushOverlayHistory, DEC-106)
+    pushOverlayHistory("grid", scrollTop);
 }
 
-// Schliesst die Rasteransicht; true, wenn eine offen war
-function closeCardGrid() {
+// Schliesst die Rasteransicht; true, wenn eine offen war. fromHistory: durch Zurück ausgelöst
+function closeCardGrid(fromHistory) {
     if (openGrid == null) {
         return false;
+    }
+    if (fromHistory !== true) {
+        // X, Esc, Kachel: eigenen Verlaufseintrag entfernen
+        popOverlayHistory("grid");
     }
     var current = openGrid;
     openGrid = null;
@@ -527,6 +627,8 @@ function closeCardGrid() {
     });
     current.overlay.remove();
     document.body.classList.remove("gridOpen");
+    // Scrollposition von vor dem Öffnen (SFLIX-20261125-156)
+    window.scrollTo(0, current.scrollTop);
     refreshRowArrows(current.section);
     return true;
 }

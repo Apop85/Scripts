@@ -55,6 +55,25 @@ function initEventListeners() {
 
     // Zurück/Vorwärts im Browser
     window.addEventListener("popstate", function (event) {
+        // Overlays mit eigenem Verlaufseintrag (Rasteransicht, Player-Menüs): Eintrag selbst entfernt
+        // → nichts tun; Zurück bei offenem Overlay → nur dieses schliessen, die Seite bleibt
+        if (skipOverlayPopState) {
+            skipOverlayPopState = false;
+            // Medienwechsel bei offenem Overlay: jetzt den Eintrag des Players auf das neue Medium setzen
+            if (pendingOverlayReplaceUrl != null) {
+                history.replaceState({}, "", pendingOverlayReplaceUrl);
+                pendingOverlayReplaceUrl = null;
+            }
+            return;
+        }
+        if (!isOverlayHistoryEntry()) {
+            if (closeCardGrid(true) || closePlayerMenuFromHistory() || closeContainer(historyContainerId, true)) {
+                return;
+            }
+        } else {
+            // Vorwärts auf einen Overlay-Eintrag: das Overlay ist zu, die Seite bleibt
+            return;
+        }
         var decodedData = getDecodedUrlDataFromWindow();
         if (decodedData != null && decodedData.includes("MEDIA:") && currentMediaLocation != null) {
             // Im Player von Medium zu Medium: nur das Medium wechseln. onloadedmetadata läuft erst
@@ -205,10 +224,68 @@ function saveScrollPosition(scrollTop) {
     }
 }
 
+// ===================================================================
+// Overlays mit eigenem Verlaufseintrag (Rasteransicht DEC-106, Player-Menüs und Autoplay-Fenster
+// SFLIX-20261125-156):
+// Zurück (Android-Taste, Maus, Browser) schliesst zuerst das Overlay. Der Eintrag ist
+// { sflixOverlay: "<Art>" } mit derselben Adresse. Ein Seiten- oder Medienwechsel aus dem Overlay
+// ersetzt ihn (navigateTo, loadDecodedMedia), sonst bräuchte es danach zweimal Zurück.
+// ===================================================================
+var skipOverlayPopState = false;
+
+function isOverlayHistoryEntry(kind) {
+    var state = history.state;
+    return state != null && typeof state === "object" && state.sflixOverlay != null &&
+        (kind == null || state.sflixOverlay === kind);
+}
+
+// Beim Öffnen; scrollTop: Position der Seite darunter (für Zurück zur Seite)
+function pushOverlayHistory(kind, scrollTop) {
+    try {
+        if (isOverlayHistoryEntry()) {
+            history.replaceState({ sflixOverlay: kind }, "");
+            return;
+        }
+        saveScrollPosition(scrollTop);
+        history.pushState({ sflixOverlay: kind }, "");
+    } catch (error) {
+        // ohne eigenen Eintrag
+    }
+}
+
+// Medienwechsel im Player bei offenem Overlay (SFLIX-20261125-159): Overlay schliessen, dessen Eintrag
+// entfernen und den Eintrag des Players darunter (nach dem popstate) auf das neue Medium setzen. Bis dahin
+// zeigt schon der Overlay-Eintrag die neue Adresse.
+var pendingOverlayReplaceUrl = null;
+
+function replaceOverlayWithMedia(url) {
+    closeCardGrid(true);
+    closePlayerMenuFromHistory();
+    closeContainer(historyContainerId, true);
+    history.replaceState({}, "", url);
+    pendingOverlayReplaceUrl = url;
+    skipOverlayPopState = true;
+    history.back();
+}
+
+// Beim Schliessen über X, Esc, Antippen daneben …: den eigenen Eintrag entfernen; das folgende
+// popstate wird ignoriert
+function popOverlayHistory(kind) {
+    if (isOverlayHistoryEntry(kind)) {
+        skipOverlayPopState = true;
+        history.back();
+    }
+}
+
 // Öffnet eine Seite von STEFFLIX (z.B. buildStartUrl("HELP")) ohne Neuladen
 function navigateTo(url) {
-    saveScrollPosition();
-    history.pushState({}, "", url);
+    if (isOverlayHistoryEntry()) {
+        // Aus der Rasteransicht: deren Eintrag ersetzen, Zurück führt zur Seite darunter
+        history.replaceState({}, "", url);
+    } else {
+        saveScrollPosition();
+        history.pushState({}, "", url);
+    }
     showPage(null);
 }
 

@@ -2,6 +2,147 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0909",
+      "name": "2.9.9",
+      "items": [
+        {
+          "type": "BUGFIX",
+          "text": "Die Zurück-Taste der Maus schliesst im Player wie die anderen Zurück-Tasten zuerst ein offenes Menü bzw. das Autoplay-Fenster, statt den Player gleich zu verlassen.",
+          "component": "stefflix",
+          "componentVersion": "2.9.9",
+          "short": "Die Zurück-Taste der Maus schliesst im Player wie die anderen Zurück-Tasten zuerst ein offenes Menü bzw. das Autoplay-Fenster, statt den Player gleich zu verlassen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Wechselt der Player bei offenem Menü zum nächsten Medium, schliesst sich das Menü. Die Adresse passt zum laufenden Medium, und ein Zurück führt zur Seite vor dem Player.",
+          "component": "stefflix",
+          "componentVersion": "2.9.9",
+          "short": "Wechselt der Player bei offenem Menü zum nächsten Medium, schliesst sich das Menü. Die Adresse passt zum laufenden Medium, und ein Zurück führt zur Seite vor dem Player."
+        }
+      ]
+    },
+    {
+      "version": "2.0908",
+      "name": "2.9.8",
+      "items": [
+        {
+          "type": "INTERFACE",
+          "text": "Zurück schliesst im Player zuerst ein offenes Menü (Autoplay, Zahnrad) bzw. das Autoplay-Fenster im Bildbetrachter, statt den Player zu verlassen.",
+          "component": "stefflix",
+          "componentVersion": "2.9.8",
+          "short": "Zurück schliesst im Player zuerst ein offenes Menü (Autoplay, Zahnrad) bzw. das Autoplay-Fenster im Bildbetrachter, statt den Player zu verlassen."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Rasteransicht („Alle anzeigen“): Nach dem Schliessen steht die Seite wieder an derselben Stelle wie vorher, statt ganz oben.",
+          "component": "stefflix",
+          "componentVersion": "2.9.8",
+          "short": "Rasteransicht („Alle anzeigen“): Nach dem Schliessen steht die Seite wieder an derselben Stelle wie vorher, statt ganz oben."
+        }
+      ]
+    },
+    {
+      "version": "2.0907",
+      "name": "2.9.7",
+      "items": [
+        {
+          "type": "INTERFACE",
+          "text": "Zurück schliesst eine offene Rasteransicht („Alle anzeigen“) zuerst, statt die Seite zu verlassen. Gilt für die Zurück-Taste von Android, die Maus und den Browser.",
+          "component": "stefflix",
+          "componentVersion": "2.9.7",
+          "short": "Zurück schliesst eine offene Rasteransicht („Alle anzeigen“) zuerst, statt die Seite zu verlassen. Gilt für die Zurück-Taste von Android, die Maus und den Browser."
+        },
+        {
+          "type": "INTERFACE",
+          "text": "Blättern im Player (Bilder, Videos, Musik) legt keine eigenen Verlaufseinträge mehr an: Ein Zurück führt direkt zur Seite vor dem Player.",
+          "component": "stefflix",
+          "componentVersion": "2.9.7",
+          "short": "Blättern im Player (Bilder, Videos, Musik) legt keine eigenen Verlaufseinträge mehr an: Ein Zurück führt direkt zur Seite vor dem Player."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Ordner ohne eigenes Vorschaubild, deren Titelbild das erste Foto ist: In der App wird eine verkleinerte Fassung geladen statt des Originals.",
+          "component": "stefflix",
+          "componentVersion": "2.9.7",
+          "short": "Ordner ohne eigenes Vorschaubild, deren Titelbild das erste Foto ist: In der App wird eine verkleinerte Fassung geladen statt des Originals."
+        }
+      ]
+    },
+    {
+      "version": "2.0906",
+      "name": "2.9.6",
+      "items": [
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Android-App 1.3.6: Ordner mit vielen Fotos ohne Vorschaubild: Die App lädt die Kachelbilder nur noch für sichtbare Kacheln, sichtbare zuerst und mit weniger Netzverkehr. Die ersten Kacheln erscheinen schneller, und beim Öffnen eines Bildes bremsen die Kacheln den Bildbetrachter nicht mehr.",
+          "component": "app",
+          "componentVersion": "1.3.6",
+          "short": "Ordner mit vielen Fotos ohne Vorschaubild: Die App lädt die Kachelbilder nur noch für sichtbare Kacheln, sichtbare zuerst und mit weniger Netzverkehr. Die ersten Kacheln erscheinen schneller, und beim Öffnen eines Bildes bremsen die Kacheln den Bildbetrachter nicht mehr."
+        }
+      ]
+    },
+    {
+      "version": "2.0905",
+      "name": "2.9.5",
+      "items": [
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Bildbetrachter: Bei langsamer Quelle (z. B. NAS über WLAN) kommt das nächste Bild öfter sofort. Das gerade gezeigte Bild bleibt als vorheriges im Vorrat, je Bild muss nur noch eines nachgeladen werden.",
+          "component": "stefflix",
+          "componentVersion": "2.9.5",
+          "short": "Bildbetrachter: Bei langsamer Quelle (z. B. NAS über WLAN) kommt das nächste Bild öfter sofort. Das gerade gezeigte Bild bleibt als vorheriges im Vorrat, je Bild muss nur noch eines nachgeladen werden."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Android-App 1.3.5: Ordner mit tausenden grossen Fotos ohne Vorschaubild: Die App stürzt beim Öffnen nicht mehr ab. Grosse Dateien werden direkt von der Quelle gelesen, die Kacheln zeigen eine verkleinerte Fassung, die auf dem Gerät gespeichert bleibt.",
+          "component": "app",
+          "componentVersion": "1.3.5",
+          "short": "Ordner mit tausenden grossen Fotos ohne Vorschaubild: Die App stürzt beim Öffnen nicht mehr ab. Grosse Dateien werden direkt von der Quelle gelesen, die Kacheln zeigen eine verkleinerte Fassung, die auf dem Gerät gespeichert bleibt."
+        }
+      ]
+    },
+    {
+      "version": "2.0904",
+      "name": "2.9.4",
+      "items": [
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Bildbetrachter: Grosse Bildordner mit tausenden Fotos laden deutlich schneller. Die Zufallswiedergabe mischt die Reihenfolge einmal, zwei Bilder voraus und eines zurück werden vorgeladen, und die Kacheln unter dem Bild finden ihre Vorschaubilder ohne Wartezeit. Lädt das nächste Bild noch, bleibt das bisherige mit einem kleinen Ladeindikator stehen.",
+          "component": "stefflix",
+          "componentVersion": "2.9.4",
+          "short": "Bildbetrachter: Grosse Bildordner mit tausenden Fotos laden deutlich schneller. Die Zufallswiedergabe mischt die Reihenfolge einmal, zwei Bilder voraus und eines zurück werden vorgeladen, und die Kacheln unter dem Bild finden ihre Vorschaubilder ohne Wartezeit. Lädt das nächste Bild noch, bleibt das bisherige mit einem kleinen Ladeindikator stehen."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.2.9: Eigenes Bild im Bild: Statt des schwarzen Rands nur noch eine feine dunkelgraue Linie, unter Windows 11 mit abgerundeten Ecken. Vergrössern geht weiterhin an allen Rändern und Ecken.",
+          "component": "updater",
+          "componentVersion": "4.2.9",
+          "short": "Eigenes Bild im Bild: Statt des schwarzen Rands nur noch eine feine dunkelgraue Linie, unter Windows 11 mit abgerundeten Ecken. Vergrössern geht weiterhin an allen Rändern und Ecken."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Desktop 4.2.9: Tools: Nach einem Update mit automatischem Neustart zeigen die Details zuoberst die Ausgabe vor dem Neustart.",
+          "component": "updater",
+          "componentVersion": "4.2.9",
+          "short": "Tools: Nach einem Update mit automatischem Neustart zeigen die Details zuoberst die Ausgabe vor dem Neustart."
+        },
+        {
+          "type": "OPTIMIERUNG",
+          "text": "Android-App 1.3.4: Start-Animation: Im Hochformat füllt sie jetzt den ganzen Bildschirm, mit grösserem Logo. Im Querformat bleibt sie wie bisher.",
+          "component": "app",
+          "componentVersion": "1.3.4",
+          "short": "Start-Animation: Im Hochformat füllt sie jetzt den ganzen Bildschirm, mit grösserem Logo. Im Querformat bleibt sie wie bisher."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.9: Eigenes Bild im Bild: Es bleibt bedienbar, während ein Auswahl- oder Ergebnisfenster der Tools offen ist (z. B. „Ablagen leeren“). „Dateien wählen …“ lädt die Dateiliste im Hintergrund, Player und Fenster reagieren dabei weiter.",
+          "component": "updater",
+          "componentVersion": "4.2.9",
+          "short": "Eigenes Bild im Bild: Es bleibt bedienbar, während ein Auswahl- oder Ergebnisfenster der Tools offen ist (z. B. „Ablagen leeren“). „Dateien wählen …“ lädt die Dateiliste im Hintergrund, Player und Fenster reagieren dabei weiter."
+        }
+      ]
+    },
+    {
       "version": "2.0903",
       "name": "2.9.3",
       "items": [

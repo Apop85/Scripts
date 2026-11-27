@@ -57,7 +57,8 @@ namespace Sflix
                 "vorheriges Video, 10 s zurück, Abspielen/Pause, 10 s vor und nächstes Video, unten Fortschritt, Zeit, Ton und Lautstärke. " +
                 "Klick ins Bild pausiert, Ziehen verschiebt das Fenster, am Rand lässt sich die Grösse ändern; Lage und Grösse werden gemerkt. " +
                 "Die Tastenkürzel des Players und der Autoplay-Countdown gelten auch dort. " +
-                "„Zurück zum Player“ öffnet STEFFLIX wieder wie zuvor (normal, maximiert oder Vollbild), Schliessen hält das Video an und lässt es minimiert.\n" +
+                "„Zurück zum Player“ öffnet STEFFLIX wieder wie zuvor (normal, maximiert oder Vollbild), Schliessen hält das Video an und lässt es minimiert. " +
+                "Ein zweiter Start von STEFFLIX wirkt wie „Zurück zum Player“.\n" +
                 "- Menü: „Tools“ öffnet das Fenster der Tools beim Reiter Tools (ist es schon offen, kommt es nach vorne). Es erscheint erst fertig aufgebaut, bis dahin zeigt STEFFLIX „Tools werden geöffnet …“.\n" +
                 "- Nach „Daten einlesen“, dem Importer oder einem Update lädt STEFFLIX die Medien selbst neu. Läuft gerade ein Video oder Musik, erst auf Knopfdruck.\n" +
                 "- Ein zweiter Start von STEFFLIX.exe holt das offene Fenster nach vorne.\n" +

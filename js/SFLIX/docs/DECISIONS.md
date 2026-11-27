@@ -9,11 +9,11 @@ Getroffene Entscheidungen zu STEFFLIX, Desktop und Android-App mit Begründung, 
 | Status | Anzahl |
 |---|---|
 | Proposed | 4 |
-| Accepted | 57 |
+| Accepted | 59 |
 | Implemented | 268 |
 | Rejected | 29 |
 | Superseded | 32 |
-| **Total** | **390** |
+| **Total** | **392** |
 
 ## Block 1: Session STEFFLIX 2.00 (Oktober 2026)
 
@@ -497,7 +497,7 @@ Status: Implemented
 Datum: 2026-11-13
 Kategorie: Sicherheit
 Entscheidung: `updater.exe`, `updateStefflix.exe` und `updateData.exe` bestimmen ihren Ordner über den Pfad der eigenen .exe (`program_dir`, bei Python-Skripten weiterhin das Arbeitsverzeichnis). `enter_stefflix_dir` bricht ab, wenn dort `start.html` oder `sflix_sys` fehlt. updateData.exe startet den Updater mit `subprocess` statt `os.system`.
-Begründung: Feldtest des Nutzers mit Installation auf `\\<IP>\...`: Das alte updateStefflix.exe startet den Updater über die Kommandozeile, die Netzwerkpfade nicht unterstützt und nach `C:\Windows` ausweicht. Der Updater versuchte dort zu installieren (von Windows verweigert, Rückabwicklung griff). Danach hätte updateData.exe dort Dateien umbenennen können.
+Begründung: Feldtest des Nutzers mit Installation auf `<Freigabe>...`: Das alte updateStefflix.exe startet den Updater über die Kommandozeile, die Netzwerkpfade nicht unterstützt und nach `C:\Windows` ausweicht. Der Updater versuchte dort zu installieren (von Windows verweigert, Rückabwicklung griff). Danach hätte updateData.exe dort Dateien umbenennen können.
 Alternativen: Weiter dem Arbeitsverzeichnis vertrauen (`os.chdir(os.getcwd())`) – verworfen.
 Konsequenzen: Wirkt erst nach neuem Build und Push. Mit simuliertem Programm und falschem Arbeitsverzeichnis getestet, nicht mit gebauter .exe auf einem echten Netzwerkpfad.
 Betroffene Komponenten: `sflix_update.py` (`program_dir`, `enter_stefflix_dir`), `updater.py`, `updateStefflix.py`, `getfilepath.py`
@@ -1213,8 +1213,8 @@ Abhängigkeiten: DEC-092
 Status: Implemented
 Datum: 2026-11-20 (Session: 2026-10-27)
 Kategorie: Sonstiges (Datenintegrität)
-Entscheidung: Pfade werden nur noch für Vergleiche am Ende gekürzt (`TrimEnd('\\')`); für Dateioperationen bleibt der volle Pfad (`D:\`). Betroffen: `UpdateBranch`, `InstallId.Ensure`, Quellordner des Importers.
-Begründung: Liegt STEFFLIX an einer Laufwerkswurzel, wurde aus `D:\` durch Kürzen `D:` und mit `Path.Combine` ein laufwerksrelativer Pfad. Nach einem Import standen in `data.js` falsche Pfade (`./ilme/…` statt `./Filme/…`), und Vorschaubilder fehlten auch nach vollständigem Einlesen. Mit `subst` nachgestellt und behoben.
+Entscheidung: Pfade werden nur noch für Vergleiche am Ende gekürzt (`TrimEnd('\\')`); für Dateioperationen bleibt der volle Pfad (`<Netzlaufwerk>`). Betroffen: `UpdateBranch`, `InstallId.Ensure`, Quellordner des Importers.
+Begründung: Liegt STEFFLIX an einer Laufwerkswurzel, wurde aus `<Netzlaufwerk>` durch Kürzen `D:` und mit `Path.Combine` ein laufwerksrelativer Pfad. Nach einem Import standen in `data.js` falsche Pfade (`./ilme/…` statt `./Filme/…`), und Vorschaubilder fehlten auch nach vollständigem Einlesen. Mit `subst` nachgestellt und behoben.
 Alternativen: –
 Konsequenzen: Ein betroffenes `data.js` repariert ein vollständiges Einlesen mit dem neuen Updater.
 Betroffene Komponenten: `DataTask.cs` (`UpdateBranch`), `Core.cs` (`InstallId.Ensure`), `ImportTask.cs`
@@ -1449,7 +1449,7 @@ Abhängigkeiten: DEC-090
 
 ## D. Technische Risiken
 
-1. **Laufwerkswurzeln**: Jedes `TrimEnd('\\')` auf einem Pfad, der danach in `Path.Combine` oder einer Dateioperation landet, macht aus `D:\` einen laufwerksrelativen Pfad.
+1. **Laufwerkswurzeln**: Jedes `TrimEnd('\\')` auf einem Pfad, der danach in `Path.Combine` oder einer Dateioperation landet, macht aus `<Netzlaufwerk>` einen laufwerksrelativen Pfad.
 2. **Teil-Einlesen** übersieht Änderungen ausserhalb der gewählten Ordner; eine veraltete `data.js` fällt erst beim vollständigen Einlesen auf.
 3. **Kopierte Installationen**: Die Unterscheidung Kopie/Verschiebung hängt davon ab, dass der alte Ordner noch erreichbar ist; wird `install.js` von Hand in eine andere Installation kopiert, teilen sich beide den Speicher.
 4. **Versteckte Ordner**: Nutzer, die Medien bewusst in versteckten Ordnern ablegen, sehen sie nicht mehr.
@@ -2049,7 +2049,7 @@ Status: Implemented
 Datum: 2026-11-20 (Session: 2026-10-29)
 Kategorie: Sicherheit
 Entscheidung: `FileOps.Rename`/`Replace`/`MoveAcross`/`Delete`/`DeleteEmptyDirectory` entfernen bei „Zugriff verweigert“ den Schreibschutz und setzen ihn am Ziel wieder, wiederholen bei gesperrten Dateien bis zu dreimal (zusammen etwa 2,4 s) und liefern Fehlertexte mit der wahrscheinlichen Ursache. Direkte Aufrufe von `File.Delete`, `File.Move`, `Directory.Delete` in den Tools wurden ersetzt.
-Begründung: Der Nutzer erhielt im Updater auf dem NAS „Zugriff verweigert“. Im Test unter `Y:\Claude` liessen sich schreibgeschützte Dateien verschieben, aber nicht löschen.
+Begründung: Der Nutzer erhielt im Updater auf dem NAS „Zugriff verweigert“. Im Test unter `<Netzlaufwerk>` liessen sich schreibgeschützte Dateien verschieben, aber nicht löschen.
 Alternativen: Fehler unverändert melden.
 Konsequenzen: Ein echter Rechtefehler verzögert jede betroffene Datei um die Wiederholungen. Regel für neuen Code in CLAUDE.md und Entwickler-README.
 Betroffene Komponenten: `Util.cs` (`FileOps`), `ConvertTask.cs`, `CleanupTask.cs`, `PreviewTask.cs`, `ImportTask.cs`, `EpisodeTask.cs`
@@ -2083,7 +2083,7 @@ Unsicherheit: Ergebnis nicht zurückgemeldet.
 Status: Accepted
 Datum: 2026-11-20 (Session: 2026-10-29)
 Kategorie: Sicherheit
-Entscheidung: Auf `M:`, `Y:`, `Z:` arbeitet der Agent nur in Ordnern, die der Nutzer nennt (z.B. `M:\Claude`), und darunter. Kein Durchsuchen, Auflisten, Stichproben oder Abfragen von Rechten anderswo, auch nicht lesend. Für die Diagnose nach Pfad oder Protokollzeile fragen.
+Entscheidung: Auf `M:`, `Y:`, `Z:` arbeitet der Agent nur in Ordnern, die der Nutzer nennt (z.B. `<Netzlaufwerk>`), und darunter. Kein Durchsuchen, Auflisten, Stichproben oder Abfragen von Rechten anderswo, auch nicht lesend. Für die Diagnose nach Pfad oder Protokollzeile fragen.
 Begründung: Der Agent hatte bei der Fehlersuche Freigaben durchsucht; der Nutzer widersprach.
 Alternativen: Keine.
 Konsequenzen: Als Memory gespeichert; Testordner wurden nach den Tests entfernt. Präzisiert durch DEC-305.
@@ -2240,7 +2240,7 @@ Abhängigkeiten: DEC-122, DEC-166
 
 ## A. Offene Entscheidungen (diese Session)
 
-- Ob die Rechte auf `M:` nach der Korrektur im NAS (DEC-172) ausreichen, ist nicht zurückgemeldet. Der Agent bat um eine betroffene Datei in `M:\Claude` bzw. die Protokollzeile.
+- Ob die Rechte auf `M:` nach der Korrektur im NAS (DEC-172) ausreichen, ist nicht zurückgemeldet. Der Agent bat um eine betroffene Datei in `<Netzlaufwerk>` bzw. die Protokollzeile.
 - Ob `TryGrantDelete` (DEC-170) bleiben soll, nachdem es auf dem NAS des Nutzers wirkungslos ist, wurde nicht erneut besprochen.
 - Ob Einträge mit „Updater:“ innerhalb eines Typs getrennt von STEFFLIX stehen sollen: nur erwähnt, nicht entschieden.
 - Die neuen Dialoge (Aktionsspalten, Sortierung, Speicheranzeige, Warte-Mauszeiger) sind in der gebauten EXE nicht getestet.
@@ -2354,7 +2354,7 @@ Abhängigkeiten: DEC-001, DEC-177, DEC-178, DEC-179
 Status: Implemented
 Datum: 2026-11-20 (Session: 2026-10-29)
 Kategorie: Sicherheit
-Entscheidung: Die App verwaltet mehrere Freigaben (Wunsch des Nutzers: „Es dürfen mehrere wählbar sein“). Eingabe: Name, ein Feld `\\Server\Freigabe\Ordner` (auch `//…` und `smb://…`), Benutzer (leer = Gast), Passwort, Domäne. Beim Speichern prüft die App die Verbindung und ob `start.html` vorhanden ist; bei Fehlern „Ändern“, „Trotzdem speichern“ oder „Abbrechen“. Gespeichert in SharedPreferences, das Passwort mit AES-GCM und einem Schlüssel im Android-Keystore, Sicherung durch Android abgeschaltet (`allowBackup="false"`). Beim Start öffnet die App die zuletzt genutzte Freigabe; die Liste erreicht man über die Zurück-Taste, langer Druck bearbeitet oder löscht. Das Passwortfeld verdeckt die Eingabe (nach einem Fehler: `setSingleLine` nach dem Eingabetyp hob die Verdeckung auf).
+Entscheidung: Die App verwaltet mehrere Freigaben (Wunsch des Nutzers: „Es dürfen mehrere wählbar sein“). Eingabe: Name, ein Feld `<Freigabe>` (auch `//…` und `smb://…`), Benutzer (leer = Gast), Passwort, Domäne. Beim Speichern prüft die App die Verbindung und ob `start.html` vorhanden ist; bei Fehlern „Ändern“, „Trotzdem speichern“ oder „Abbrechen“. Gespeichert in SharedPreferences, das Passwort mit AES-GCM und einem Schlüssel im Android-Keystore, Sicherung durch Android abgeschaltet (`allowBackup="false"`). Beim Start öffnet die App die zuletzt genutzte Freigabe; die Liste erreicht man über die Zurück-Taste, langer Druck bearbeitet oder löscht. Das Passwortfeld verdeckt die Eingabe (nach einem Fehler: `setSingleLine` nach dem Eingabetyp hob die Verdeckung auf).
 Begründung: Vorgaben des Nutzers; Passwörter nicht im Klartext auf dem Gerät.
 Alternativen: Getrennte Felder für Server, Freigabe und Pfad (verworfen zugunsten eines Felds, weniger Eingaben).
 Konsequenzen: Wird die App neu installiert, sind die Passwörter weg (Schlüssel im Keystore). Die Liste der Freigaben ist schwer zu finden (siehe DEC-198).
@@ -3864,7 +3864,7 @@ Status: Implemented
 Datum: 2026-11-20 (Session: 01.11.–04.11.2026)
 Kategorie: Sonstiges
 Entscheidung: Das Programm legt sein Symbol als `%LOCALAPPDATA%\STEFFLIX\stefflix.ico` ab. Neue und umgebogene Verknüpfungen verweisen darauf; bestehende Verknüpfungen auf die eigene EXE (Desktop, Startmenü, Taskleiste) passt es bei jedem Start im Hintergrund an (nicht im Release-Ordner).
-Begründung: Liegt die EXE auf einem Netzlaufwerk (`M:\`), zeigt die Taskleiste beim Start über eine Verknüpfung nur das Standardsymbol; beim direkten Start stimmte es. Vom Nutzer bestätigt („ok“).
+Begründung: Liegt die EXE auf einem Netzlaufwerk (`<Netzlaufwerk>`), zeigt die Taskleiste beim Start über eine Verknüpfung nur das Standardsymbol; beim direkten Start stimmte es. Vom Nutzer bestätigt („ok“).
 Alternativen: Feste App-Kennung (DEC-296, verworfen).
 Konsequenzen: Bei bereits angehefteten Verknüpfungen kann das Symbol erst nach einer neuen Anmeldung stimmen. Version 4.0.4.
 Betroffene Komponenten: `src\Desktop.cs` (`Shortcuts.IconLocation`, `RefreshIconsInBackground`), `src\Program.cs`
@@ -5583,6 +5583,44 @@ Alternativen: Bereinigte Fassung direkt im Projekt pflegen (verworfen: Regelwerk
 Konsequenzen: Umsetzung SFLIX-20261125-158: Auf Wunsch des Benutzers (25.11.2026) wird neben .claude auch docs bereinigt (REDACT_PREFIXES). Regeldatei-Format: - Muster (Zeile entfernen), = Muster -> Ersatz, ! Muster (verboten, Sicherheitsnetz). Vierteilige Versionsnummern nach 'Version' gelten nicht als IP. Neue Option --erzwingen [PFAD ...] ersetzt vorhandene Dateien im Ziel auch bei gleichem Inhalt (Benutzerwunsch, docs ist im Klon bereits vorhanden). Eine fehlende Regeldatei bricht ab, wenn Dateien unter .claude oder docs uebertragen wuerden. Nach security-auditor (SFLIX-20261125-158): .gitignore fuehrt .claude als Positivliste (.claude/* mit Ausnahmen CLAUDE.md, settings.json, launch.json, agents/, roles/, skills/); Binaerdateien, UTF-16 und Dateien ueber 5 MB unter .claude/docs brechen ab; Sicherheitsnetz prueft auch die Muster der Entfernen-/Ersetzen-Regeln; Benutzername zusaetzlich aus dem Profilordner; --zeige-bereinigt nur im Probelauf, Protokoll nie im Klon; private_patterns*.txt und DECISIONS-intern*.md zusaetzlich unverankert gesperrt.
 Betroffene Komponenten: Werkzeuge
 Abhängigkeiten: DEC-362, DEC-363, DEC-365
+
+### DEC-395: coordination bereinigt veröffentlichen (nur README und abgeschlossene Tickets)
+Status: Accepted
+Datum: 2026-11-25
+Kategorie: Arbeitsweise
+Ticket: SFLIX-20261125-164
+Entscheidung: sync_github.py überträgt aus coordination bereinigt nur README.md und tasks/COMPLETED/; TASK-INDEX.md, übrige Status-Ordner, .history, .audit.log, .lock und Posteingänge bleiben gesperrt (.gitignore und Sperrliste). Es gelten die Bereinigungsregeln aus DEC-394. Neu für alle bereinigten Ordner: Pfade auf Laufwerken ausser C: -> <Netzlaufwerk>, UNC-Pfade -> <Freigabe>, beides im Sicherheitsnetz. Neue Regelart 'Ticket auslassen' (Ticket-ID) in public_redactions.txt; verbotener Begriff im Titel eines nicht ausgelassenen Tickets -> Abbruch. CLAUDE.md Abschnitt 10 entsprechend nachführen.
+Begründung: Benutzerwunsch: Nachvollziehbarkeit der Arbeit öffentlich zeigen, ohne offene Sicherheitsbefunde, interne Themen, Netzlaufwerkspfade oder persönliche Daten preiszugeben.
+Alternativen: Alle Status-Ordner veröffentlichen (verworfen: offene Sicherheitsbefunde); einzelne Zeilen in internen Tickets streichen (verworfen: unverständliche Reste).
+Konsequenzen: Umsetzung SFLIX-20261125-165: REDACT_PREFIXES mit coordination/, COORD_ALLOWED (README.md, tasks/COMPLETED/SFLIX-<Datum>-<Nr>.md) zusaetzlich zu .gitignore-Positivliste und Sperrliste; Regelart 't <Ticket-ID>' (Nummer numerisch, ohne Treffer -> Abbruch); verbotener Begriff im Ticket-Titel -> Abbruch; DRIVE_PATH (Laufwerk A, B, D-Z gross) -> <Netzlaufwerk>, UNC_PATH -> <Freigabe> (ausser 127.0.0.1/localhost); Sicherheitsnetz bricht zusaetzlich bei Laufwerken in Kleinbuchstaben, Pfadresten nach Leerzeichen und smb://, file://, // oder \?\UNC mit Rechnernamen ab. Anfangs 3 Tickets ausgelassen (Liste nur in der Regeldatei). security-auditor: 1 mittel, 2 niedrig, behoben. Offen: CLAUDE.md Abschnitt 10 (coordination nicht mehr 'nicht gepusht') macht die Planung (SFLIX-20261125-164).
+Betroffene Komponenten: Werkzeuge
+Abhängigkeiten: DEC-394, DEC-363
+
+## A. Offene Entscheidungen
+
+## B. Änderungsbedarf an bestehenden Entscheidungen
+
+## C. Dokumentationsbedarf
+
+## D. Technische Risiken
+
+---
+
+# STEFFLIX 2.9.11 (Arbeit vom 27.11.2026)
+
+## Entscheidungen
+
+### DEC-396: Gesehen und nochmals angefangen: Fortschritt vor „Gesehen“; zweiter Start beendet das eigene BiB
+Status: Accepted
+Datum: 2026-11-27
+Kategorie: UI
+Ticket: SFLIX-20261127-173
+Entscheidung: 1. Liegt die gespeicherte Position einer gesehenen Folge unter seenShare (0,95), zeigt jede Kachel (createMediaCard) den Fortschrittsbalken statt der Markierung „Gesehen“, nicht nur bei Weiterschauen. „Gesehen“ erscheint wieder, sobald die Folge zu Ende ist oder die Position gelöscht wird. 2. Ein zweiter Start von STEFFLIX.exe (bzw. die Tools) bei offenem eigenem BiB beendet das BiB wie „Zurück zum Player“ (neue Brückennachricht pipWindowBack, Desktop -> Seite, closeDocPip(true)); das Video spielt im Hauptfenster weiter.
+Begründung: 1. Passt zur Logik von Weiterschauen (SFLIX-20261127-167), der Benutzer sieht, wo er steht. 2. Solange das BiB-Fenster offen ist, behält die Taskleistengruppe sein Symbol; RefreshTaskbarIcon allein wirkt nicht. Verworfen: BiB offen lassen mit eigener AppUserModelID (aufwendiger, Wirkung unsicher).
+Alternativen: –
+Konsequenzen: Umgesetzt in STEFFLIX 2.9.11 / Desktop 4.2.11 (PlayerForm.ShowIfHiddenForPip, ui.js). Brückennachricht pipWindowBack in docs/INTERFACES.md Abschnitt 1 nachgeführt (SFLIX-20261127-175).
+Betroffene Komponenten: –
+Abhängigkeiten: DEC-351
 
 ## A. Offene Entscheidungen
 

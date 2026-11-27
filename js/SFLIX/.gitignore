@@ -80,8 +80,15 @@ __pycache__/
 # Arbeitsordner der Rollen fuer temporaere Dateien (Messungen, Vergleiche; Ausnahme im Virenscanner)
 /tmp/
 
-# Zusammenarbeit der Rollen (Tickets) und interne Dokumentation, nie pushen
-coordination/
+# Zusammenarbeit der Rollen (Tickets): nur README.md und abgeschlossene Tickets, beim Spiegeln
+# bereinigt (DEC-395); interne Dokumentation nie pushen
+coordination/*
+!coordination/README.md
+!coordination/tasks/
+coordination/tasks/*
+!coordination/tasks/COMPLETED/
+coordination/tasks/COMPLETED/*
+!coordination/tasks/COMPLETED/*.md
 docs/intern/
 
 # Alte Fassungen des Regelwerks (Rollen lesen sie nie)

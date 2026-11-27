@@ -5,9 +5,9 @@ Lokale Mediathek (Weboberfläche über `file://`), Desktop-Programm `STEFFLIX.ex
 ## Stand
 | Komponente | bereitgestellt | umgesetzt, noch nicht gebaut | nächste Version |
 |---|---|---|---|
-| STEFFLIX | 2.9.3 (24.11.2026) | 2.9.9 | 2.9.10 |
-| Desktop (`STEFFLIX.exe`) | 4.2.8 (24.11.2026) | 4.2.9 | 4.2.10 |
-| Android-App | 1.3.3 (23.11.2026) | 1.3.6 | 1.3.7 |
+| STEFFLIX | 2.9.9 (25.11.2026) | 2.9.11 | 2.9.12 |
+| Desktop (`STEFFLIX.exe`) | 4.2.9 (25.11.2026) | 4.2.11 | 4.2.12 |
+| Android-App | 1.3.6 (25.11.2026) | – | 1.3.7 |
 
 Nach jeder Umsetzung bzw. jedem Release diese Tabelle nachführen. Einzelheiten stehen im Changelog (`sflix_sys\news.txt`, über `news.py`).
 
@@ -142,7 +142,7 @@ Werkzeuge einer Rolle, keine Rollen; höchstens die Rechte der aufrufenden Rolle
 | `STEFFLIX.exe`, `updateStefflix.exe`, `STEFFLIX.apk`, `updater.exe`, `updateData.exe`, `checksums.json`, `ffmpeg.json`, `versions.json`, `README.md`, `.gitignore` | Release-Dateien (`docs\RELEASE.md`) |
 | `SFLIX_Tools\` | Entwicklungsordner: `SflixTools\` (Desktop, `docs\DESKTOP.md`), `Android\` (`docs\ANDROID.md`), `Release\`, `Doku\`, `Test\`, Ticketsystem und Guard, alte Werkzeuge (`docs\RELEASE.md`) |
 | `docs\` | Dokumentation (gepusht, ohne `intern\`) |
-| `coordination\` | Tickets der Rollen (nicht gepusht) |
+| `coordination\` | Tickets der Rollen (bereinigt gepusht über `sync_github.py`: nur `README.md` und `tasks\COMPLETED\`; übrige Status-Ordner, `TASK-INDEX.md`, `.history\` und Posteingänge nicht; DEC-395) |
 | `.claude\CLAUDE.md` | diese Datei |
 | `.claude\settings.json` | Sperren für `coordination\` und alte Fassungen (gepusht, ohne persönliche Pfade) |
 | `.claude\settings.local.json` | Hook `SFLIX_Tools\Auftrag-guard.ps1` vor jedem Werkzeugaufruf und Temp-Ordner (Pfade mit Benutzernamen, nicht gepusht; DEC-363) |

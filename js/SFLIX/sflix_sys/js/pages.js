@@ -1029,8 +1029,12 @@ function showContinueWatching(container) {
             return;
         }
         var nextPath = getNextMediaPath(mediaPath);
-        // Fertig geschaut und es gibt eine nächste Folge: stattdessen diese anbieten
-        if (isSeen(mediaPath) && nextPath != null) {
+        // Fertig geschaut und es gibt eine nächste Folge: stattdessen diese anbieten. "Gesehen" bleibt
+        // gespeichert, auch wenn die Folge später nochmals angefangen wird: Steht eine Position unter der
+        // Schwelle "gesehen", gilt die Folge als angefangen und erscheint selbst (SFLIX-20261127-167)
+        var progress = getMediaProgress(mediaPath);
+        var restarted = progress != null && progress < seenShare;
+        if (isSeen(mediaPath) && nextPath != null && !restarted) {
             entries.push({ path: nextPath, url: buildStartUrl(buildMediaData(nextPath)), isNext: true, isLast: getNextMediaPath(nextPath) == null });
             return;
         }

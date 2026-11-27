@@ -181,7 +181,10 @@ function createMediaCard(container, mediaPath, href, options) {
     // Markierungen ("Gesehen", "Letzte Folge") lassen sich in den Einstellungen ausblenden.
     // Gespeichert wird "Gesehen" trotzdem.
     var showMarkers = getSetting("showMarkers");
-    var seen = showMarkers && isVideo(mediaPath) && isSeen(mediaPath);
+    // Gesehen, aber nochmals angefangen (Position unter seenShare): Fortschritt statt "Gesehen",
+    // wie bei Weiterschauen (SFLIX-20261127-173)
+    var restarted = options.progress != null && options.progress < seenShare;
+    var seen = showMarkers && isVideo(mediaPath) && isSeen(mediaPath) && !restarted;
     var label = showMarkers ? options.label : null;
     var card = createCard(container, {
         href: href,
@@ -189,7 +192,7 @@ function createMediaCard(container, mediaPath, href, options) {
         subtitle: options.subtitle != null ? options.subtitle : (folders.length > 1 ? folders.slice(1).join(" › ") : folders.join(" › ")),
         previewSrc: previewSrc,
         placeholderIcon: getMediaIconName(mediaPath),
-        // Gesehene Videos zeigen einen Haken statt des Fortschrittsbalkens
+        // Gesehene Videos zeigen einen Haken statt des Fortschrittsbalkens (ausser nochmals angefangen)
         progress: seen ? null : options.progress,
         seed: mediaPath,
         // Foto ohne Vorschaubild: die Kachel zeigt das Original (oft mehrere MB)

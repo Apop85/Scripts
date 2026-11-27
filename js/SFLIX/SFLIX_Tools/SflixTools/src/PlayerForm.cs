@@ -297,6 +297,8 @@ namespace Sflix
                 {
                     if (docPipWindow == w) docPipWindow = null;
                     PostEvent("pipWindowClosed");   // falls pagehide im BiB-Dokument ausbleibt
+                    // Taskleiste: wieder das normale Symbol (SFLIX-20261127-167)
+                    if (!IsDisposed) BeginInvoke((Action)RefreshTaskbarIcon);
                 };
                 w.Show();
                 await w.Web.EnsureCoreWebView2Async(web.CoreWebView2.Environment);
@@ -460,6 +462,7 @@ namespace Sflix
                 ShowWindow(Handle, SW_SHOW);   // im Zustand vor dem BiB (normal, maximiert, Vollbild)
             }
             ResetPip();
+            RefreshTaskbarIcon();
             if (paused) return;   // X: Benutzer will etwas anderes tun, Fenster bleibt minimiert
             if (WindowState == FormWindowState.Minimized) WindowState = stateBeforePip;
             Activate();
@@ -478,12 +481,34 @@ namespace Sflix
             }
         }
 
-        // Zweiter Start oder Tools holen den Player nach vorne, auch während des eigenen BiB
+        // Zweiter Start oder Tools holen den Player nach vorne, auch während des eigenen BiB.
+        // Das eigene BiB endet dabei wie mit "Zurück zum Player": solange es offen ist, behält die
+        // Taskleistengruppe sein Symbol (SFLIX-20261127-173). Die Seite holt das Video zurück und
+        // meldet pip aus (OnPip).
         public void ShowIfHiddenForPip()
         {
             if (!hiddenForPip) return;
             hiddenForPip = false;
             ShowWindow(Handle, SW_SHOW);
+            if (docPipWindow != null && !docPipWindow.IsDisposed) PostEvent("pipWindowBack");
+            RefreshTaskbarIcon();
+        }
+
+        // Während das Hauptfenster für das eigene BiB ausgeblendet ist, zeigt die Taskleiste (Gruppe des
+        // Programms) das Symbol des BiB-Fensters und behält es, bis das Hauptfenster sein Symbol neu meldet.
+        // Darum nach dem BiB das eigene Symbol erneut setzen (SFLIX-20261127-167).
+        void RefreshTaskbarIcon()
+        {
+            if (IsDisposed || !IsHandleCreated || Icon == null) return;
+            try
+            {
+                // Das Setzen von Form.Icon schickt WM_SETICON (klein und gross) mit den Handles, die
+                // WinForms selbst verwaltet; derselbe Wert würde nichts senden, darum kurz null
+                Icon current = Icon;
+                Icon = null;
+                Icon = current;
+            }
+            catch { }
         }
 
         bool hiddenForPip;

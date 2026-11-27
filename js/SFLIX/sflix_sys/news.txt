@@ -2,6 +2,16 @@
 <ul>
     <li>[<span style="color: #e21af3">BUG</span>] Chrome/Edge Chromium: Bei einigen MP4-Dateien kann kein Audio abgespielt werden. Der Button für die Lautstärke ist ausgegraut. Vermutlich Audio-Codec-Problem.</li>
 </ul>-->
+<b>Version 2.9.11</b>:<br>
+<ul>
+    <li>[<span style="color: blue">INTERFACE</span>] Desktop 4.2.11: Wird STEFFLIX bei offenem Bild-im-Bild ein zweites Mal gestartet, endet das Bild-im-Bild wie mit „Zurück zum Player“: Das Video spielt im Hauptfenster weiter, und die Taskleiste zeigt wieder das normale Symbol.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Kacheln: Eine gesehene Folge, die nochmals angefangen wurde, zeigt ihren Fortschritt statt „Gesehen“, bis sie wieder zu Ende ist.</li>
+</ul>
+<b>Version 2.9.10</b>:<br>
+<ul>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Weiterschauen: Wird eine schon gesehene Folge nochmals angefangen und vor dem Ende verlassen, erscheint sie mit ihrer Position statt gleich der nächsten Folge. Gilt im Browser, im Desktop-Programm und in der App.</li>
+    <li>[<span style="color: darkgreen">BUGFIX</span>] Desktop 4.2.10: Nach dem Bild-im-Bild zeigt die Taskleiste wieder das normale Symbol von STEFFLIX statt des Bild-im-Bild-Symbols.</li>
+</ul>
 <b>Version 2.9.9</b>:<br>
 <ul>
     <li>[<span style="color: darkgreen">BUGFIX</span>] Die Zurück-Taste der Maus schliesst im Player wie die anderen Zurück-Tasten zuerst ein offenes Menü bzw. das Autoplay-Fenster, statt den Player gleich zu verlassen.</li>

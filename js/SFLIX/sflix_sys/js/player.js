@@ -27,6 +27,8 @@ function setMediaLink(link, decodedData) {
 }
 
 // "Gesehen": Videos, die zu mindestens 95 % oder bis zum Ende abgespielt wurden
+var seenShare = 0.95;
+
 function isSeen(mediaPath) {
     return getData("seen-" + mediaPath) != null;
 }
@@ -2449,7 +2451,7 @@ function appendMediafunctions(node) {
         }
 
         // Videos ab 95 % als gesehen markieren
-        if (player.tagName == "VIDEO" && this.currentTime / this.duration >= 0.95) {
+        if (player.tagName == "VIDEO" && this.currentTime / this.duration >= seenShare) {
             markSeen(player.dataset.mediaPath);
         }
 

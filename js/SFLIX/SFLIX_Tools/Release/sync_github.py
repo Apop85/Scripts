@@ -27,11 +27,15 @@ Regeln:
   - Sperrliste unabhängig von .gitignore (geheime und persönliche Dateien): würde eine davon übertragen oder
     enthält eine Textdatei ein persönliches Suchmuster (SFLIX_Tools/Doku/private_patterns.txt), bricht das
     Skript ab, bevor etwas geändert wird.
-  - Bereinigung (DEC-394): Dateien unter .claude/ und docs/ werden nur in der Kopie im Ziel bereinigt, die
-    Originale im Projekt bleiben unverändert. Regeln (Zeile entfernen, Begriff ersetzen, verbotene Begriffe) in
-    SFLIX_Tools/Doku/public_redactions.txt (nie übertragen); fehlt sie, werden diese Ordner nicht gespiegelt.
-    Zusätzlich: Benutzername aus %USERNAME% (Pfad C:\\Users\\<Name> -> %USERPROFILE%, sonst <Benutzer>) und
-    IP-Adressen ausser 127.0.0.1 und 0.0.0.0 (-> <IP>; vierteilige Versionsnummern nach "Version" bleiben).
+  - Bereinigung (DEC-394, DEC-395): Dateien unter .claude/, docs/ und coordination/ werden nur in der Kopie im
+    Ziel bereinigt, die Originale im Projekt bleiben unverändert. Aus coordination/ nur README.md und
+    tasks/COMPLETED/*.md (alles andere ist gesperrt). Regeln (Zeile entfernen, Begriff ersetzen, verbotene
+    Begriffe, Ticket auslassen) in SFLIX_Tools/Doku/public_redactions.txt (nie übertragen); fehlt sie, werden
+    diese Ordner nicht gespiegelt. Ein ausgelassenes Ticket wird im Ziel gelöscht; ein verbotener Begriff im
+    Titel eines übertragenen Tickets bricht ab. Zusätzlich: Benutzername aus %USERNAME% und Profilordner
+    (Pfad C:\\Users\\<Name> -> %USERPROFILE%, sonst <Benutzer>), IP-Adressen ausser 127.0.0.1 und 0.0.0.0
+    (-> <IP>; AssemblyVersion("x.x.x.x") bleibt), Pfade auf Laufwerken ausser C: (-> <Netzlaufwerk>) und
+    UNC-Pfade ausser auf 127.0.0.1/localhost (-> <Freigabe>).
     Danach wird der bereinigte Inhalt erneut geprüft; bleibt etwas übrig, bricht das Skript vor jeder Änderung
     ab. Regeln, die in keiner Datei greifen, ergeben eine Warnung. Vergleich und Hash gelten für den bereinigten
     Inhalt. Der Probelauf zeigt die Anzahl Stellen je Datei, --zeige-bereinigt jede Stelle vorher/nachher
@@ -57,7 +61,12 @@ SPERRLISTE = [
     "sflix_sys/install.js", "sflix_sys/license.js", "sflix_sys/downloads.json", "lizenzen.json",
     "sflix_sys/damaged.js", "sflix_sys/player.log",
     "SFLIX_Tools/Android/signing/", "SFLIX_Tools/Release/signing/", "*.jks", "*.keystore", "keystore.properties",
-    "update_key*.xml", "*.dpapi", "*.dpapi.neu", "coordination/", "docs/intern/", ".claude/testenv/", ".claude/settings.local.json",
+    "update_key*.xml", "*.dpapi", "*.dpapi.neu", "docs/intern/",
+    # coordination (DEC-395): nur README.md und tasks/COMPLETED/*.md (zusätzlich COORD_ALLOWED im Code)
+    "coordination/TASK-INDEX.md", "coordination/tasks/OPEN/", "coordination/tasks/IN_PROGRESS/",
+    "coordination/tasks/BLOCKED/", "coordination/.history/", "coordination/.audit.log", "coordination/.lock",
+    "coordination/inbox/", "coordination/planung.md", "coordination/entwicklung.md", "coordination/pruefung.md",
+    "coordination/architekt.md", "coordination/release.md", ".claude/testenv/", ".claude/settings.local.json",
     ".claude/old/", ".claude/archiv/", ".claude/*.gif", ".claude/*.mp4", "SFLIX_Tools/Doku/private_patterns.txt", "tmp/",
     "public_redactions*.txt", "private_patterns*.txt", "DECISIONS-intern*.md",
     # auch Kopien an anderen Orten und Varianten
@@ -294,7 +303,34 @@ def file_text(path):
 # ---------------------------------------------------------------- Bereinigung (DEC-394)
 # Nur die Kopien unter diesen Ordnern werden bereinigt; die Originale im Projekt bleiben unverändert,
 # alle übrigen Dateien werden 1:1 übertragen.
-REDACT_PREFIXES = (".claude/", "docs/")
+REDACT_PREFIXES = (".claude/", "docs/", "coordination/")
+# Aus coordination/ nur README.md und abgeschlossene Tickets (DEC-395); alles andere ist gesperrt,
+# zusätzlich zu .gitignore und Sperrliste
+COORD_ALLOWED = re.compile(r"^coordination/(?:README\.md|tasks/COMPLETED/SFLIX-\d{8}-\d+\.md)$", re.IGNORECASE)
+COORD_TICKET = re.compile(r"^coordination/tasks/COMPLETED/(SFLIX-\d{8}-\d+)\.md$", re.IGNORECASE)
+
+
+def ticket_key(ticket_id):
+    """Ticket-ID vergleichbar machen: Datum und Nummer numerisch (…-5 und …-005 sind dasselbe Ticket)."""
+    m = re.match(r"^SFLIX-(\d{8})-(\d+)$", ticket_id.strip(), re.IGNORECASE)
+    return (m.group(1), int(m.group(2))) if m else None
+# Pfade auf Laufwerken ausser C: (Netzlaufwerke) und UNC-Pfade werden ganz ersetzt (DEC-395); lokale
+# Freigaben auf 127.0.0.1/localhost (Testserver) bleiben. Erst ab einem Trenner nach dem Doppelpunkt,
+# damit "HH:MM" oder "a:b" nicht greifen.
+# Pfad bis zu Leerraum, Anführungszeichen, Klammer, Komma oder Semikolon; ein Punkt oder Doppelpunkt am
+# Ende gehört zum Satz
+_PATH_TAIL = r"(?:[^\s`'\"<>|*?)\],;]*[^\s`'\"<>|*?)\],;.:])?"
+# Laufwerksbuchstabe nur gross (M:\…): Regex-Text wie ^a:\d bleibt
+DRIVE_PATH = re.compile(r"(?<![\w])[ABD-Z]:(?:\\\\|\\|/)" + _PATH_TAIL)
+UNC_PATH = re.compile(r"(?<![\w:\\/])(?:\\\\\\\\|\\\\)([A-Za-z0-9][A-Za-z0-9._$-]*)(?:\\\\|\\|/)" + _PATH_TAIL)
+UNC_KEEP_HOSTS = ("127.0.0.1", "localhost")
+# Nur im Sicherheitsnetz (nicht ersetzen, sondern abbrechen): Laufwerke in Kleinbuchstaben, Reste eines
+# Pfads mit Leerzeichen nach <Netzlaufwerk>/<Freigabe>, Netzwerkpfade mit Rechnernamen (smb://, file://,
+# //host/, \\?\UNC\host)
+# (mindestens ein Ordnername mit Trenner danach, damit Regex-Text wie ^a:\d+$ nicht greift)
+SUSPECT_DRIVE = re.compile(r"(?<![\w])[abd-z]:(?:\\\\|\\|/)[\w%$][\w%$ .()-]+(?:\\\\|\\|/)")
+PATH_REST = re.compile(r"<(?:Netzlaufwerk|Freigabe)>[ (][^\s`'\"<>|]*[\\/]")
+SUSPECT_HOST = re.compile(r"(?:smb://|file://|(?<![:\w/])//|\\\\\?\\UNC\\)([A-Za-z0-9][A-Za-z0-9._$-]*)[\\/@]", re.IGNORECASE)
 REDACT_RULES_FILE = os.path.join("SFLIX_Tools", "Doku", "public_redactions.txt")
 IP_KEEP = ("127.0.0.1", "0.0.0.0")
 _OCTET = r"(?:25[0-5]|2[0-4]\d|[01]?\d?\d)"   # auch mit führender Null (192.168.001.005)
@@ -315,6 +351,7 @@ class Redactions:
 
     def __init__(self, source):
         self.remove, self.replace, self.forbidden = [], [], []
+        self.skip_tickets = {}   # Ticket-ID (gross) -> [Zeile, Treffer] (Regel "t", DEC-395)
         self.loaded = False
         path = os.path.join(source, REDACT_RULES_FILE)
         try:
@@ -324,9 +361,14 @@ class Redactions:
                     if not line.strip() or line.lstrip().startswith("#"):
                         continue
                     kind, body = line[:1], line[2:] if line[1:2] == " " else None
-                    if body is None or kind not in "-=!":
+                    if body is None or kind not in "-=!t":
                         raise SystemExit("FEHLER: %s Zeile %d: unbekanntes Format" % (REDACT_RULES_FILE, no))
-                    if kind == "=":
+                    if kind == "t":
+                        key = ticket_key(body)
+                        if key is None:
+                            raise SystemExit("FEHLER: %s Zeile %d: Ticket auslassen braucht eine Ticket-ID" % (REDACT_RULES_FILE, no))
+                        self.skip_tickets[key] = [no, 0]
+                    elif kind == "=":
                         m = re.match(r"^(.*?)\s->(?:\s(.*))?$", body)
                         if not m or not m.group(1):
                             raise SystemExit("FEHLER: %s Zeile %d: Ersetzen braucht 'Muster -> Ersatz'" % (REDACT_RULES_FILE, no))
@@ -398,6 +440,7 @@ class Redactions:
                 new = self.user_path.sub(lambda m: "%USERPROFILE%", new)
             if self.user_any is not None:
                 new = self.user_any.sub("<Benutzer>", new)
+            new = self._replace_paths(new)
             new, _ = self._replace_ips(new)
             if new != line:
                 changes.append((no, line, new))
@@ -418,10 +461,25 @@ class Redactions:
             found.append("Benutzername")
         if any(self._ip_hits(line) for line in lines):
             found.append("IP-Adresse")
+        if any(DRIVE_PATH.search(line) or SUSPECT_DRIVE.search(line) or PATH_REST.search(line) for line in lines):
+            found.append("Pfad auf einem Netzlaufwerk")
+        if any(m.group(1).lower() not in UNC_KEEP_HOSTS for line in lines for m in UNC_PATH.finditer(line)) or \
+                any(m.group(1).lower() not in UNC_KEEP_HOSTS for line in lines for m in SUSPECT_HOST.finditer(line)):
+            found.append("UNC- oder Netzwerkpfad")
         return found
+
+    @staticmethod
+    def _replace_paths(line):
+        """Netzlaufwerk- und UNC-Pfade ganz ersetzen (DEC-395); Testserver auf 127.0.0.1/localhost bleibt."""
+        line = UNC_PATH.sub(lambda m: m.group(0) if m.group(1).lower() in UNC_KEEP_HOSTS else "<Freigabe>", line)
+        return DRIVE_PATH.sub("<Netzlaufwerk>", line)
 
     def unused(self):
         return [rule[2] for rule in self.remove + self.replace if rule[3] == 0]
+
+    def unused_tickets(self):
+        """Regeln 'Ticket auslassen' ohne Treffer (Tippfehler?) -> Abbruch, nie stilles Übertragen."""
+        return [entry[0] for entry in self.skip_tickets.values() if entry[1] == 0]
 
 
 def redact_bytes(data, red):
@@ -456,8 +514,23 @@ def plan(source, target, pats, red, force=None):
     src_files, src_dirs, src_links = walk(source, rules, skip_git=True)
     dst_files, dst_dirs, dst_links = walk(target, rules, skip_git=True)
 
+    # coordination (DEC-395): ausgelassene Tickets (Regel "t") nicht übertragen; im Ziel werden sie dadurch gelöscht
+    tickets = {"uebertragen": 0, "ausgelassen": 0}
+    for key, rel in list(src_files.items()):
+        m = COORD_TICKET.match(rel)
+        if not m:
+            continue
+        entry = red.skip_tickets.get(ticket_key(m.group(1)))
+        if entry is not None:
+            entry[1] += 1
+            tickets["ausgelassen"] += 1
+            del src_files[key]
+        else:
+            tickets["uebertragen"] += 1
+
     sperre = parse_rules(SPERRLISTE)
-    blocked = [rel for rel in src_files.values() if ignored_with_parents(sperre, rel, False)]
+    blocked = [rel for rel in src_files.values() if ignored_with_parents(sperre, rel, False)
+               or (rel.lower().startswith("coordination/") and not COORD_ALLOWED.match(rel))]
     personal = []
     nested = [rel for rel in src_files.values() if rel.lower().endswith("/.gitignore")]
     hashes = {}
@@ -476,6 +549,13 @@ def plan(source, target, pats, red, force=None):
                 continue
             redacted[rel] = (cleaned, changes)
             scan = cleaned.decode("utf-8", errors="replace")
+            # Titel eines übertragenen Tickets mit verbotenem Begriff: ganzes Ticket auslassen statt bereinigen
+            m = COORD_TICKET.match(rel)
+            if m:
+                first = (data.decode("utf-8", errors="replace").lstrip("﻿").splitlines() or [""])[0]
+                if any(rx.search(first) for rx in red.forbidden):
+                    leftover.append((rel, "verbotener Begriff im Titel: Ticket mit Regel 't %s' in %s auslassen"
+                                     % (m.group(1).upper(), REDACT_RULES_FILE.replace("\\", "/"))))
             for what in red.leftovers(scan):
                 leftover.append((rel, what))
         else:
@@ -521,7 +601,7 @@ def plan(source, target, pats, red, force=None):
         "copy": copy, "replace": replace, "delete": delete, "case_fix": case_fix, "empty_dirs": empty_dirs,
         "blocked": blocked, "personal": personal, "src_links": src_links, "dst_links": dst_links,
         "dst_count": len(dst_files), "nested": nested, "hashes": hashes,
-        "redacted": redacted, "leftover": leftover,
+        "redacted": redacted, "leftover": leftover, "tickets": tickets,
     }
 
 
@@ -703,6 +783,12 @@ def main():
         out("Regeln in %s ergänzen oder die Datei anpassen." % REDACT_RULES_FILE.replace("\\", "/"))
         write_log(source, a.protokoll)
         return 1
+    if red.unused_tickets():
+        out("ABBRUCH: Regel 'Ticket auslassen' in Zeile %s von %s trifft kein abgeschlossenes Ticket "
+            "(Tippfehler oder Ticket nicht abgeschlossen?). Nichts geändert."
+            % (", ".join(str(n) for n in red.unused_tickets()), REDACT_RULES_FILE.replace("\\", "/")))
+        write_log(source, a.protokoll)
+        return 1
     changed_files = [(rel, ch) for rel, (data, ch) in sorted(p["redacted"].items()) if ch]
     if changed_files:
         out("Bereinigt (nur die Kopie, %s): %d Dateien" % (" und ".join(REDACT_PREFIXES), len(changed_files)))
@@ -712,6 +798,8 @@ def main():
                 for no, before, after in ch:
                     out("    Zeile %d vorher:  %s" % (no, before.rstrip("\r\n")))
                     out("    Zeile %d nachher: %s" % (no, "(entfernt)" if after is None else after.rstrip("\r\n")))
+    out("Tickets aus coordination: %d übertragen, %d ausgelassen (Regel t)"
+        % (p["tickets"]["uebertragen"], p["tickets"]["ausgelassen"]))
     for no in red.unused():
         out("WARNUNG: Regel in Zeile %d von %s greift in keiner Datei mehr." % (no, REDACT_RULES_FILE.replace("\\", "/")))
     if p["blocked"] or p["personal"]:

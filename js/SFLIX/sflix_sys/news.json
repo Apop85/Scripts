@@ -2,6 +2,46 @@
   "knownBugs": [],
   "versions": [
     {
+      "version": "2.0911",
+      "name": "2.9.11",
+      "items": [
+        {
+          "type": "INTERFACE",
+          "text": "Desktop 4.2.11: Wird STEFFLIX bei offenem Bild-im-Bild ein zweites Mal gestartet, endet das Bild-im-Bild wie mit „Zurück zum Player“: Das Video spielt im Hauptfenster weiter, und die Taskleiste zeigt wieder das normale Symbol.",
+          "component": "updater",
+          "componentVersion": "4.2.11",
+          "short": "Wird STEFFLIX bei offenem Bild-im-Bild ein zweites Mal gestartet, endet das Bild-im-Bild wie mit „Zurück zum Player“: Das Video spielt im Hauptfenster weiter, und die Taskleiste zeigt wieder das normale Symbol."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Kacheln: Eine gesehene Folge, die nochmals angefangen wurde, zeigt ihren Fortschritt statt „Gesehen“, bis sie wieder zu Ende ist.",
+          "component": "stefflix",
+          "componentVersion": "2.9.11",
+          "short": "Kacheln: Eine gesehene Folge, die nochmals angefangen wurde, zeigt ihren Fortschritt statt „Gesehen“, bis sie wieder zu Ende ist."
+        }
+      ]
+    },
+    {
+      "version": "2.0910",
+      "name": "2.9.10",
+      "items": [
+        {
+          "type": "BUGFIX",
+          "text": "Weiterschauen: Wird eine schon gesehene Folge nochmals angefangen und vor dem Ende verlassen, erscheint sie mit ihrer Position statt gleich der nächsten Folge. Gilt im Browser, im Desktop-Programm und in der App.",
+          "component": "stefflix",
+          "componentVersion": "2.9.10",
+          "short": "Weiterschauen: Wird eine schon gesehene Folge nochmals angefangen und vor dem Ende verlassen, erscheint sie mit ihrer Position statt gleich der nächsten Folge. Gilt im Browser, im Desktop-Programm und in der App."
+        },
+        {
+          "type": "BUGFIX",
+          "text": "Desktop 4.2.10: Nach dem Bild-im-Bild zeigt die Taskleiste wieder das normale Symbol von STEFFLIX statt des Bild-im-Bild-Symbols.",
+          "component": "updater",
+          "componentVersion": "4.2.10",
+          "short": "Nach dem Bild-im-Bild zeigt die Taskleiste wieder das normale Symbol von STEFFLIX statt des Bild-im-Bild-Symbols."
+        }
+      ]
+    },
+    {
       "version": "2.0909",
       "name": "2.9.9",
       "items": [

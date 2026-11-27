@@ -1,3 +1,3 @@
 // Alte Zahl zuerst: STEFFLIX und Updater bis 2.04 lesen nur diese Zeile
-var version = 2.0909;
-var versionName = "2.9.9";
+var version = 2.0911;
+var versionName = "2.9.11";

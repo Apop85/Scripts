@@ -32,6 +32,7 @@ Kanal: `window.chrome.webview` im Player-Fenster. JavaScript: `sendToDesktop`, `
 | `toolsShown` | – | Fenster der Tools sichtbar | Hinweis „Tools werden geöffnet …“ ausblenden |
 | `pipWindowReady` | – | Antwort auf `pipWindow` | Jetzt `requestWindow` aufrufen; bleibt die Antwort aus (1 s, damit der Rückfall noch innerhalb der Nutzeraktivierung des Klicks liegt) oder scheitert `requestWindow`, Rückfall auf das native BiB und bis zum Neuladen der Seite nur noch dieses (`docPipFailed`, DEC-353) |
 | `pipWindowClosed` | – | Eigenes Bild-im-Bild-Fenster geschlossen (auch durch Windows oder das Programmende) | Video zurückholen, falls `pagehide` im Bild-im-Bild-Dokument ausblieb |
+| `pipWindowBack` | – | Zweiter Start von `STEFFLIX.exe` bzw. die Tools holen den Player nach vorne, während das Hauptfenster für das eigene Bild-im-Bild ausgeblendet und dessen Fenster offen ist (`PlayerForm.ShowIfHiddenForPip`, DEC-396, seit Desktop 4.2.11 / STEFFLIX 2.9.11) | `closeDocPip(true)` wie „Zurück zum Player“: Video zurück ins Hauptfenster, spielt weiter, Bild-im-Bild-Fenster schliessen; die Seite meldet danach `pip` mit `on:false, paused:false` |
 
 Zusätzlich: Fremde Adressen öffnet der Desktop im Standardbrowser; beim Verlassen des Vollbilds ruft er `document.exitFullscreen` auf. Ist das eigene Bild-im-Bild eingeschaltet (`player.docpip`, Standard ein), setzt der Desktop vor jedem Dokument `window.sflixDocPip = true` (`AddScriptToExecuteOnDocumentCreated`).
 

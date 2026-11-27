@@ -1579,6 +1579,8 @@ function handleDesktopMessage(message) {
         onDesktopPipWindowReady();   // eigenes BiB-Fenster (player.js, DEC-351)
     } else if (message.event === "pipWindowClosed") {
         restoreDocPip(false);        // Fenster geschlossen, falls pagehide ausblieb
+    } else if (message.event === "pipWindowBack") {
+        closeDocPip(true);           // zweiter Start: wie "Zurück zum Player" (SFLIX-20261127-173)
     }
 }
 
